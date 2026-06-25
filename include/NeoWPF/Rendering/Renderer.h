@@ -11,7 +11,7 @@ struct CommandList {
     std::vector<DrawRect> rects;
     struct DrawTexturedQuad { float x; float y; float w; float h; float u0; float v0; float u1; float v1; uint32_t textureId; };
     std::vector<DrawTexturedQuad> texturedQuads;
-    void Clear() { rects.clear(); }
+    void Clear() { rects.clear(); texturedQuads.clear(); }
     void DrawRect(float x, float y, float w, float h, uint32_t color) { rects.push_back({x,y,w,h,color}); }
     void DrawTexturedQuad(float x, float y, float w, float h, float u0, float v0, float u1, float v1, uint32_t tex) { texturedQuads.push_back({x,y,w,h,u0,v0,u1,v1,tex}); }
 };
