@@ -92,7 +92,8 @@ void CreateWindowContext(HWND hwnd)
     unsigned int width = rc.right - rc.left;
     unsigned int height = rc.bottom - rc.top;
     if (width == 0 || height == 0) {
-        throw std::runtime_error("Window has zero size");
+        width = 1;
+        height = 1;
     }
 
     ComPtr<IDXGISwapChain> swapChain;
@@ -127,6 +128,7 @@ void CreateWindowContext(HWND hwnd)
 
 void ResizeWindowContext(HWND hwnd, unsigned int w, unsigned int h)
 {
+    if (w == 0 || h == 0) return;
     auto ctx = FindContext(hwnd);
     if (!ctx || !ctx->swapChain) return;
 

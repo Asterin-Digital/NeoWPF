@@ -39,6 +39,8 @@ namespace NeoWPF::Rendering::D3D11 {
 HRESULT CreateSwapChainForWindow(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain)
 {
     if (!g_device) return E_FAIL;
+    if (width == 0) width = 1;
+    if (height == 0) height = 1;
 
     ComPtr<IDXGIDevice> dxgiDevice;
     HRESULT hr = g_device.As(&dxgiDevice);
