@@ -141,6 +141,7 @@
     <ClInclude Include="include\NeoWPF\UI\Core\Visual.h" />
     <ClInclude Include="include\NeoWPF\UI\Layout\Panel.h" />
     <ClInclude Include="include\NeoWPF\UI\Layout\StackPanel.h" />
+    <ClInclude Include="include\NeoWPF\UI\Layout\Grid\Grid.h" />
     <ClInclude Include="include\NeoWPF\UI\Styling\DefaultStyles.h" />
     <ClInclude Include="include\NeoWPF\UI\UI.h" />
     <ClInclude Include="include\NeoWPF\UI\Styling\Style.h" />
@@ -160,6 +161,7 @@
     <ClCompile Include="src\UI\Core\Visual.cpp" />
     <ClCompile Include="src\UI\Layout\Panel.cpp" />
     <ClCompile Include="src\UI\Layout\StackPanel.cpp" />
+    <ClCompile Include="src\UI\Layout\Grid\Grid.cpp" />
     <ClCompile Include="src\UI\Styling\DefaultStyles.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
