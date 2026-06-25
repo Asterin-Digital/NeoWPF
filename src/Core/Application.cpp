@@ -7,6 +7,7 @@
 #include <chrono>
 #include <atomic>
 #include <mutex>
+#include <utility>
 
 namespace NeoWPF::Core {
 
@@ -23,6 +24,22 @@ void BuildVisualTreeCommands(NeoWPF::UI::Visual* visual, NeoWPF::Rendering::Comm
     }
 }
 
+void ClearVisualTreeDirty(NeoWPF::UI::Visual* visual)
+{
+    if (!visual) {
+        return;
+    }
+
+    visual->ClearTreeDirty();
+    if (auto uiElement = dynamic_cast<NeoWPF::UI::UIElement*>(visual)) {
+        uiElement->ClearDirty();
+    }
+
+    for (NeoWPF::UI::Visual* child : visual->GetVisualChildren()) {
+        ClearVisualTreeDirty(child);
+    }
+}
+
 struct AppState {
     HINSTANCE hInst = nullptr;
     HWND hwnd = nullptr;
@@ -30,9 +47,14 @@ struct AppState {
     std::thread renderThread;
     int exitCode = 0;
     NeoWPF::UI::FrameworkElement* rootVisual = nullptr;
-    
+
     std::mutex commandListMutex;
-    NeoWPF::Rendering::CommandList currentCommands;
+    NeoWPF::Rendering::CommandList renderCommandList;
+    NeoWPF::Rendering::CommandList buildCommandList;
+    bool commandListInitialized = false;
+
+    unsigned int lastClientWidth = 0;
+    unsigned int lastClientHeight = 0;
 };
 
 static AppState s_appState;
@@ -53,17 +75,20 @@ void StartRenderThread(HWND hwnd)
             GetClientRect(hwnd, &rc);
             unsigned int w = rc.right - rc.left;
             unsigned int h = rc.bottom - rc.top;
-            NeoWPF::Rendering::Renderer_Resize(w, h);
+            if (w != s_appState.lastClientWidth || h != s_appState.lastClientHeight) {
+                NeoWPF::Rendering::Renderer_Resize(w, h);
+                s_appState.lastClientWidth = w;
+                s_appState.lastClientHeight = h;
+            }
             NeoWPF::Rendering::Renderer_BeginFrame();
-            
-            // Acquire command list built by UI thread
+
+
             NeoWPF::Rendering::CommandList toRender;
             {
                 std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
-                toRender = s_appState.currentCommands;
-                s_appState.currentCommands.Clear();
+                toRender = s_appState.renderCommandList;
             }
-            
+
             NeoWPF::Rendering::Renderer_Execute(toRender);
             NeoWPF::Rendering::Renderer_Present();
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
@@ -91,16 +116,48 @@ int Application::Run(const wchar_t* title, int width, int height)
     ShowWindow(s_appState.hwnd, SW_SHOW);
     UpdateWindow(s_appState.hwnd);
     StartRenderThread(s_appState.hwnd);
+
+
+
+    if (s_appState.rootVisual) {
+        RECT rc;
+        GetClientRect(s_appState.hwnd, &rc);
+        unsigned int w = rc.right - rc.left;
+        unsigned int h = rc.bottom - rc.top;
+
+        // Run layout pass (measure / arrange)
+        s_appState.rootVisual->Measure(static_cast<int>(w), static_cast<int>(h));
+        s_appState.rootVisual->Arrange(static_cast<int>(w), static_cast<int>(h));
+
+        std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
+        s_appState.buildCommandList.Clear();
+        BuildVisualTreeCommands(s_appState.rootVisual, s_appState.buildCommandList);
+        std::swap(s_appState.buildCommandList, s_appState.renderCommandList);
+        s_appState.commandListInitialized = true;
+        ClearVisualTreeDirty(s_appState.rootVisual);
+    }
+
     MSG msg;
     while (GetMessage(&msg, nullptr, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
-        
-        // UI thread: Build render commands from visual tree
-        if (s_appState.rootVisual) {
+
+        if (s_appState.rootVisual && (!s_appState.commandListInitialized || s_appState.rootVisual->IsTreeDirty())) {
+            RECT rc;
+            GetClientRect(s_appState.hwnd, &rc);
+            unsigned int w = rc.right - rc.left;
+            unsigned int h = rc.bottom - rc.top;
+
+            // Run layout pass (measure / arrange)
+            s_appState.rootVisual->Measure(static_cast<int>(w), static_cast<int>(h));
+            s_appState.rootVisual->Arrange(static_cast<int>(w), static_cast<int>(h));
+
             std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
-            s_appState.currentCommands.Clear();
-            BuildVisualTreeCommands(s_appState.rootVisual, s_appState.currentCommands);
+            s_appState.buildCommandList.Clear();
+            BuildVisualTreeCommands(s_appState.rootVisual, s_appState.buildCommandList);
+            std::swap(s_appState.buildCommandList, s_appState.renderCommandList);
+            s_appState.commandListInitialized = true;
+            ClearVisualTreeDirty(s_appState.rootVisual);
         }
     }
     s_appState.exitCode = static_cast<int>(msg.wParam);

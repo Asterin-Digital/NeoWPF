@@ -17,6 +17,7 @@ public:
         if (!child) return;
         child->m_parent = this;
         m_children.push_back(child);
+        MarkTreeDirty();
     }
 
     void RemoveVisualChild(Visual* child) {
@@ -25,16 +26,31 @@ public:
             if (*it == child) {
                 m_children.erase(it);
                 child->m_parent = nullptr;
+                MarkTreeDirty();
                 return;
             }
         }
     }
+
+    bool IsTreeDirty() const noexcept { return m_isTreeDirty; }
+    void MarkTreeDirty() {
+        if (m_isTreeDirty) {
+            return;
+        }
+        m_isTreeDirty = true;
+        if (m_parent) {
+            m_parent->MarkTreeDirty();
+        }
+    }
+
+    void ClearTreeDirty() noexcept { m_isTreeDirty = false; }
 
     virtual void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) {}
 
 private:
     Visual* m_parent = nullptr;
     std::vector<Visual*> m_children;
+    bool m_isTreeDirty = false;
 };
 
 }

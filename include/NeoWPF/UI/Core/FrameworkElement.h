@@ -27,11 +27,17 @@ public:
     int GetFinalWidth() const noexcept { return m_finalWidth; }
     int GetFinalHeight() const noexcept { return m_finalHeight; }
 
+    void SetLayoutOffset(int x, int y) noexcept { m_offsetX = x; m_offsetY = y; }
+    int GetLayoutOffsetX() const noexcept { return m_offsetX; }
+    int GetLayoutOffsetY() const noexcept { return m_offsetY; }
+
 private:
     int m_desiredWidth = 0;
     int m_desiredHeight = 0;
     int m_finalWidth = 0;
     int m_finalHeight = 0;
+    int m_offsetX = 0;
+    int m_offsetY = 0;
 };
 
 }
