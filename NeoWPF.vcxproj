@@ -133,6 +133,7 @@
     <ClInclude Include="include\NeoWPF\Resources\Resources.h" />
     <ClInclude Include="include\NeoWPF\Styling\Styling.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Window.h" />
+    <ClInclude Include="include\NeoWPF\UI\Controls\Rectangle.h" />
     <ClInclude Include="include\NeoWPF\UI\Core\FrameworkElement.h" />
     <ClInclude Include="include\NeoWPF\UI\Core\UIElement.h" />
     <ClInclude Include="include\NeoWPF\UI\Core\Visual.h" />
@@ -151,6 +152,7 @@
     <ClCompile Include="src\Rendering\D3D11\ShaderSources.cpp" />
     <ClCompile Include="src\UI\Layout\Panel.cpp" />
     <ClCompile Include="src\UI\Layout\StackPanel.cpp" />
+    <ClCompile Include="src\UI\Controls\Rectangle.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
