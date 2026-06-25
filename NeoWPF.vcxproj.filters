@@ -15,37 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Animation\Timeline.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Binding\DependencyProperty.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Controls\Control.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Core\Application.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Core\Dispatcher.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Diagnostics\Logger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Input\InputManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Layout\Panel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Platform\NativeWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Rendering\Renderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\Visual.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Platform\Window.cpp">
@@ -55,6 +25,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Rendering\RenderScheduler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Diagnostics\Logger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Layout\Panel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Layout\StackPanel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -105,6 +84,27 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\Rendering\Renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Controls\Window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Core\FrameworkElement.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Core\UIElement.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Core\Visual.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\Diagnostics\Logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Layout\Panel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Layout\StackPanel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

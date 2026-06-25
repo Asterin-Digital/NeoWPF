@@ -7,5 +7,7 @@
 			"path": "../NeoApp"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"powershell.cwd": "NeoWPF"
+	}
 }

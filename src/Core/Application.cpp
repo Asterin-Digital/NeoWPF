@@ -125,7 +125,6 @@ int Application::Run(const wchar_t* title, int width, int height)
         unsigned int w = rc.right - rc.left;
         unsigned int h = rc.bottom - rc.top;
 
-        // Run layout pass (measure / arrange)
         s_appState.rootVisual->Measure(static_cast<int>(w), static_cast<int>(h));
         s_appState.rootVisual->Arrange(static_cast<int>(w), static_cast<int>(h));
 
@@ -148,7 +147,6 @@ int Application::Run(const wchar_t* title, int width, int height)
             unsigned int w = rc.right - rc.left;
             unsigned int h = rc.bottom - rc.top;
 
-            // Run layout pass (measure / arrange)
             s_appState.rootVisual->Measure(static_cast<int>(w), static_cast<int>(h));
             s_appState.rootVisual->Arrange(static_cast<int>(w), static_cast<int>(h));
 

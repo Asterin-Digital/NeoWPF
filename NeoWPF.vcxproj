@@ -79,7 +79,6 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Users\Katsu\source\repos\NeoWPF\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -92,7 +91,6 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Users\Katsu\source\repos\NeoWPF\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -103,7 +101,6 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Users\Katsu\source\repos\NeoWPF\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -116,7 +113,6 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Users\Katsu\source\repos\NeoWPF\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\NeoWPF\Animation\Animation.h" />
@@ -125,6 +121,7 @@
     <ClInclude Include="include\NeoWPF\Core\Application.h" />
     <ClInclude Include="include\NeoWPF\Core\Core.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Diagnostics.h" />
+    <ClInclude Include="include\NeoWPF\Diagnostics\Logger.h" />
     <ClInclude Include="include\NeoWPF\Input\Input.h" />
     <ClInclude Include="include\NeoWPF\Layout\Layout.h" />
     <ClInclude Include="include\NeoWPF\NeoWPF.h" />
@@ -132,15 +129,26 @@
     <ClInclude Include="include\NeoWPF\Platform\Window.h" />
     <ClInclude Include="include\NeoWPF\Rendering\Renderer.h" />
     <ClInclude Include="include\NeoWPF\Rendering\Rendering.h" />
+    <ClInclude Include="include\NeoWPF\Rendering\Shaders\ShaderSources.h" />
     <ClInclude Include="include\NeoWPF\Resources\Resources.h" />
     <ClInclude Include="include\NeoWPF\Styling\Styling.h" />
+    <ClInclude Include="include\NeoWPF\UI\Controls\Window.h" />
+    <ClInclude Include="include\NeoWPF\UI\Core\FrameworkElement.h" />
+    <ClInclude Include="include\NeoWPF\UI\Core\UIElement.h" />
+    <ClInclude Include="include\NeoWPF\UI\Core\Visual.h" />
+    <ClInclude Include="include\NeoWPF\UI\Layout\Panel.h" />
+    <ClInclude Include="include\NeoWPF\UI\Layout\StackPanel.h" />
     <ClInclude Include="include\NeoWPF\UI\UI.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Core\Application.cpp" />
+    <ClCompile Include="src\Diagnostics\Logger.cpp" />
     <ClCompile Include="src\Platform\Window.cpp" />
     <ClCompile Include="src\Rendering\Direct3D11Renderer.cpp" />
     <ClCompile Include="src\Rendering\RenderScheduler.cpp" />
+    <ClCompile Include="src\Rendering\Shaders\ShaderSources.cpp" />
+    <ClCompile Include="src\UI\Layout\Panel.cpp" />
+    <ClCompile Include="src\UI\Layout\StackPanel.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
