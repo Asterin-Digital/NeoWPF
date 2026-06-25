@@ -1,8 +1,10 @@
 #include <NeoWPF/Core/Application.h>
+#include <NeoWPF/Core/Root/RootVisuals.h>
 #include <NeoWPF/Platform/Window.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Core/Visual.h>
 #include <NeoWPF/UI/Core/FrameworkElement.h>
+#include <NeoWPF/UI/Controls/Window.h>
 #include <thread>
 #include <chrono>
 #include <atomic>
@@ -11,42 +13,12 @@
 
 namespace NeoWPF::Core {
 
-namespace {
-
-void BuildVisualTreeCommands(NeoWPF::UI::Visual* visual, NeoWPF::Rendering::CommandList& commands)
-{
-    if (!visual) {
-        return;
-    }
-    visual->BuildRenderCommands(commands);
-    for (NeoWPF::UI::Visual* child : visual->GetVisualChildren()) {
-        BuildVisualTreeCommands(child, commands);
-    }
-}
-
-void ClearVisualTreeDirty(NeoWPF::UI::Visual* visual)
-{
-    if (!visual) {
-        return;
-    }
-
-    visual->ClearTreeDirty();
-    if (auto uiElement = dynamic_cast<NeoWPF::UI::UIElement*>(visual)) {
-        uiElement->ClearDirty();
-    }
-
-    for (NeoWPF::UI::Visual* child : visual->GetVisualChildren()) {
-        ClearVisualTreeDirty(child);
-    }
-}
-
 struct AppState {
     HINSTANCE hInst = nullptr;
     HWND hwnd = nullptr;
     std::atomic<bool> running{false};
     std::thread renderThread;
     int exitCode = 0;
-    NeoWPF::UI::FrameworkElement* rootVisual = nullptr;
 
     std::mutex commandListMutex;
     NeoWPF::Rendering::CommandList renderCommandList;
@@ -97,8 +69,6 @@ void StartRenderThread(HWND hwnd)
     });
 }
 
-}
-
 void Application::Initialize()
 {
     s_appState.hInst = GetModuleHandleW(nullptr);
@@ -109,6 +79,13 @@ int Application::Run(const wchar_t* title, int width, int height)
     if (!s_appState.hInst) {
         s_appState.hInst = GetModuleHandleW(nullptr);
     }
+    const auto& visuals = NeoWPF::UI::Visual::GetRegisteredVisuals();
+    const auto rootInfo = FindRootVisual(visuals);
+    auto rootVisual = rootInfo.rootVisual;
+    if (rootInfo.rootWindow) {
+        title = rootInfo.rootWindow->GetTitle();
+    }
+
     s_appState.hwnd = NeoWPF::Platform::Window::CreateWindow(s_appState.hInst, title, width, height);
     if (!s_appState.hwnd) {
         return -1;
@@ -117,23 +94,24 @@ int Application::Run(const wchar_t* title, int width, int height)
     UpdateWindow(s_appState.hwnd);
     StartRenderThread(s_appState.hwnd);
 
+    RECT rc;
+    GetClientRect(s_appState.hwnd, &rc);
+    unsigned int w = rc.right - rc.left;
+    unsigned int h = rc.bottom - rc.top;
 
-
-    if (s_appState.rootVisual) {
-        RECT rc;
-        GetClientRect(s_appState.hwnd, &rc);
-        unsigned int w = rc.right - rc.left;
-        unsigned int h = rc.bottom - rc.top;
-
-        s_appState.rootVisual->Measure(static_cast<int>(w), static_cast<int>(h));
-        s_appState.rootVisual->Arrange(static_cast<int>(w), static_cast<int>(h));
-
-        std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
-        s_appState.buildCommandList.Clear();
-        BuildVisualTreeCommands(s_appState.rootVisual, s_appState.buildCommandList);
-        std::swap(s_appState.buildCommandList, s_appState.renderCommandList);
-        s_appState.commandListInitialized = true;
-        ClearVisualTreeDirty(s_appState.rootVisual);
+    std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
+    s_appState.buildCommandList.Clear();
+    if (rootVisual) {
+        LayoutAndBuildVisualTree(rootVisual, w, h, s_appState.buildCommandList);
+    } else {
+        LayoutAndBuildAllTopLevelVisuals(visuals, w, h, s_appState.buildCommandList);
+    }
+    std::swap(s_appState.buildCommandList, s_appState.renderCommandList);
+    s_appState.commandListInitialized = true;
+    if (rootVisual) {
+        ClearTopLevelVisualsDirty({rootVisual});
+    } else {
+        ClearTopLevelVisualsDirty(visuals);
     }
 
     MSG msg;
@@ -141,21 +119,36 @@ int Application::Run(const wchar_t* title, int width, int height)
         TranslateMessage(&msg);
         DispatchMessage(&msg);
 
-        if (s_appState.rootVisual && (!s_appState.commandListInitialized || s_appState.rootVisual->IsTreeDirty())) {
+        bool needsUpdate = !s_appState.commandListInitialized;
+        const auto& visuals = NeoWPF::UI::Visual::GetRegisteredVisuals();
+        for (auto visual : visuals) {
+            if (!visual->GetParent() && visual->IsTreeDirty()) {
+                needsUpdate = true;
+                break;
+            }
+        }
+
+        if (needsUpdate) {
             RECT rc;
             GetClientRect(s_appState.hwnd, &rc);
             unsigned int w = rc.right - rc.left;
             unsigned int h = rc.bottom - rc.top;
 
-            s_appState.rootVisual->Measure(static_cast<int>(w), static_cast<int>(h));
-            s_appState.rootVisual->Arrange(static_cast<int>(w), static_cast<int>(h));
-
             std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
             s_appState.buildCommandList.Clear();
-            BuildVisualTreeCommands(s_appState.rootVisual, s_appState.buildCommandList);
+            const auto rootInfo = FindRootVisual(visuals);
+            if (rootInfo.rootVisual) {
+                LayoutAndBuildVisualTree(rootInfo.rootVisual, w, h, s_appState.buildCommandList);
+            } else {
+                LayoutAndBuildAllTopLevelVisuals(visuals, w, h, s_appState.buildCommandList);
+            }
             std::swap(s_appState.buildCommandList, s_appState.renderCommandList);
             s_appState.commandListInitialized = true;
-            ClearVisualTreeDirty(s_appState.rootVisual);
+            if (rootInfo.rootVisual) {
+                ClearTopLevelVisualsDirty({rootInfo.rootVisual});
+            } else {
+                ClearTopLevelVisualsDirty(visuals);
+            }
         }
     }
     s_appState.exitCode = static_cast<int>(msg.wParam);
@@ -164,11 +157,6 @@ int Application::Run(const wchar_t* title, int width, int height)
         s_appState.renderThread.join();
     }
     return s_appState.exitCode;
-}
-
-void Application::SetRootVisual(NeoWPF::UI::FrameworkElement* rootVisual)
-{
-    s_appState.rootVisual = rootVisual;
 }
 
 void Application::Shutdown()

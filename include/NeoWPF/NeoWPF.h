@@ -8,5 +8,5 @@
 namespace NeoWPF {
     using Core::Application;
     using Platform::Window;
-    using UI::Rectangle;
+    using UI::Panel;
 }

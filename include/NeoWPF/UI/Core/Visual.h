@@ -8,10 +8,12 @@ namespace NeoWPF::UI {
 
 class Visual {
 public:
-    virtual ~Visual() = default;
+    Visual();
+    virtual ~Visual();
 
     Visual* GetParent() const noexcept { return m_parent; }
     const std::vector<Visual*>& GetVisualChildren() const noexcept { return m_children; }
+    static const std::vector<Visual*>& GetRegisteredVisuals();
 
     void AddVisualChild(Visual* child) {
         if (!child) return;
@@ -48,9 +50,38 @@ public:
     virtual void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) {}
 
 private:
+    static std::vector<Visual*>& GetRegistry();
+
     Visual* m_parent = nullptr;
     std::vector<Visual*> m_children;
     bool m_isTreeDirty = false;
 };
+
+inline Visual::Visual()
+{
+    GetRegistry().push_back(this);
+}
+
+inline Visual::~Visual()
+{
+    auto& registry = GetRegistry();
+    for (auto it = registry.begin(); it != registry.end(); ++it) {
+        if (*it == this) {
+            registry.erase(it);
+            break;
+        }
+    }
+}
+
+inline std::vector<Visual*>& Visual::GetRegistry()
+{
+    static std::vector<Visual*> registry;
+    return registry;
+}
+
+inline const std::vector<Visual*>& Visual::GetRegisteredVisuals()
+{
+    return GetRegistry();
+}
 
 }

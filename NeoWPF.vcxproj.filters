@@ -45,7 +45,10 @@
     <ClCompile Include="src\UI\Layout\StackPanel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Controls\Rectangle.cpp">
+    <ClCompile Include="src\UI\Styling\StyleManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Root\RootVisuals.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -89,6 +92,12 @@
     <ClInclude Include="include\NeoWPF\UI\UI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Styling\Style.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Styling\StyleManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="include\NeoWPF\Core\Application.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -120,6 +129,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Layout\StackPanel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\Rendering\Shaders\ShaderSources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\Core\Root\RootVisuals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Controls\Panel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
