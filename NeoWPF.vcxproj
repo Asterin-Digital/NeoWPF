@@ -147,6 +147,7 @@
     <ClCompile Include="src\Rendering\Renderer.cpp" />
     <ClCompile Include="src\Rendering\RenderScheduler.cpp" />
     <ClCompile Include="src\Rendering\D3D11\RendererBackend.cpp" />
+    <ClCompile Include="src\Rendering\D3D11\RendererBackend_Device.cpp" />
     <ClCompile Include="src\Rendering\D3D11\ShaderSources.cpp" />
     <ClCompile Include="src\UI\Layout\Panel.cpp" />
     <ClCompile Include="src\UI\Layout\StackPanel.cpp" />

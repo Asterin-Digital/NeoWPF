@@ -30,6 +30,9 @@
     <ClCompile Include="src\Rendering\D3D11\RendererBackend.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Rendering\D3D11\RendererBackend_Device.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\Rendering\D3D11\ShaderSources.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
