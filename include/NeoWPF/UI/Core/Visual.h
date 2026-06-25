@@ -57,31 +57,4 @@ private:
     bool m_isTreeDirty = false;
 };
 
-inline Visual::Visual()
-{
-    GetRegistry().push_back(this);
-}
-
-inline Visual::~Visual()
-{
-    auto& registry = GetRegistry();
-    for (auto it = registry.begin(); it != registry.end(); ++it) {
-        if (*it == this) {
-            registry.erase(it);
-            break;
-        }
-    }
-}
-
-inline std::vector<Visual*>& Visual::GetRegistry()
-{
-    static std::vector<Visual*> registry;
-    return registry;
-}
-
-inline const std::vector<Visual*>& Visual::GetRegisteredVisuals()
-{
-    return GetRegistry();
-}
-
 }

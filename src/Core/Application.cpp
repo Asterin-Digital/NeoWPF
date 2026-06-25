@@ -1,10 +1,13 @@
 #include <NeoWPF/Core/Application.h>
 #include <NeoWPF/Core/Root/RootVisuals.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Platform/Window.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Core/Visual.h>
 #include <NeoWPF/UI/Core/FrameworkElement.h>
 #include <NeoWPF/UI/Controls/Window.h>
+#include <NeoWPF/UI/Styling/DefaultStyles.h>
+#include <exception>
 #include <thread>
 #include <chrono>
 #include <atomic>
@@ -17,8 +20,13 @@ struct AppState {
     HINSTANCE hInst = nullptr;
     HWND hwnd = nullptr;
     std::atomic<bool> running{false};
+    std::atomic<bool> renderThreadInitialized{false};
+    std::atomic<bool> renderThreadInitFailed{false};
     std::thread renderThread;
     int exitCode = 0;
+
+    std::mutex renderInitMutex;
+    std::condition_variable renderInitCondition;
 
     std::mutex commandListMutex;
     NeoWPF::Rendering::CommandList renderCommandList;
@@ -34,14 +42,38 @@ static AppState s_appState;
 void StartRenderThread(HWND hwnd)
 {
     s_appState.running = true;
+    s_appState.renderThreadInitialized = false;
+    s_appState.renderThreadInitFailed = false;
     s_appState.renderThread = std::thread([hwnd]() {
         try {
             NeoWPF::Rendering::Renderer_Initialize(hwnd);
+            {
+                std::lock_guard<std::mutex> lock(s_appState.renderInitMutex);
+                s_appState.renderThreadInitialized = true;
+            }
+            s_appState.renderInitCondition.notify_one();
         }
-        catch (...) {
+        catch (const std::exception& ex) {
+            NeoWPF::Diagnostics::LogError("Render thread initialization failed: %s", ex.what());
+            {
+                std::lock_guard<std::mutex> lock(s_appState.renderInitMutex);
+                s_appState.renderThreadInitFailed = true;
+            }
+            s_appState.renderInitCondition.notify_one();
             s_appState.running = false;
             return;
         }
+        catch (...) {
+            NeoWPF::Diagnostics::LogError("Render thread initialization failed with unknown error");
+            {
+                std::lock_guard<std::mutex> lock(s_appState.renderInitMutex);
+                s_appState.renderThreadInitFailed = true;
+            }
+            s_appState.renderInitCondition.notify_one();
+            s_appState.running = false;
+            return;
+        }
+
         while (s_appState.running.load()) {
             RECT rc;
             GetClientRect(hwnd, &rc);
@@ -53,7 +85,6 @@ void StartRenderThread(HWND hwnd)
                 s_appState.lastClientHeight = h;
             }
             NeoWPF::Rendering::Renderer_BeginFrame();
-
 
             NeoWPF::Rendering::CommandList toRender;
             {
@@ -72,6 +103,7 @@ void StartRenderThread(HWND hwnd)
 void Application::Initialize()
 {
     s_appState.hInst = GetModuleHandleW(nullptr);
+    NeoWPF::UI::Styling::RegisterDefaultStyles();
 }
 
 int Application::Run(const wchar_t* title, int width, int height)
@@ -92,26 +124,42 @@ int Application::Run(const wchar_t* title, int width, int height)
     }
     ShowWindow(s_appState.hwnd, SW_SHOW);
     UpdateWindow(s_appState.hwnd);
-    StartRenderThread(s_appState.hwnd);
 
     RECT rc;
     GetClientRect(s_appState.hwnd, &rc);
-    unsigned int w = rc.right - rc.left;
-    unsigned int h = rc.bottom - rc.top;
+    unsigned int clientWidth = rc.right - rc.left;
+    unsigned int clientHeight = rc.bottom - rc.top;
 
-    std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
-    s_appState.buildCommandList.Clear();
-    if (rootVisual) {
-        LayoutAndBuildVisualTree(rootVisual, w, h, s_appState.buildCommandList);
-    } else {
-        LayoutAndBuildAllTopLevelVisuals(visuals, w, h, s_appState.buildCommandList);
+    {
+        std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
+        s_appState.buildCommandList.Clear();
+        LayoutAndBuildAllTopLevelVisuals(visuals, clientWidth, clientHeight, s_appState.buildCommandList);
+        std::swap(s_appState.buildCommandList, s_appState.renderCommandList);
+        s_appState.commandListInitialized = true;
     }
-    std::swap(s_appState.buildCommandList, s_appState.renderCommandList);
-    s_appState.commandListInitialized = true;
-    if (rootVisual) {
-        ClearTopLevelVisualsDirty({rootVisual});
-    } else {
-        ClearTopLevelVisualsDirty(visuals);
+    ClearTopLevelVisualsDirty(visuals);
+
+    StartRenderThread(s_appState.hwnd);
+
+    std::unique_lock<std::mutex> lock(s_appState.renderInitMutex);
+    if (!s_appState.renderInitCondition.wait_for(lock, std::chrono::seconds(2), [] {
+            return s_appState.renderThreadInitialized.load() || s_appState.renderThreadInitFailed.load();
+        })) {
+        MessageBoxW(nullptr, L"NeoWPF render initialization timed out.", L"NeoWPF Error", MB_OK | MB_ICONERROR);
+        s_appState.running = false;
+        if (s_appState.renderThread.joinable()) {
+            s_appState.renderThread.join();
+        }
+        return -1;
+    }
+
+    if (s_appState.renderThreadInitFailed.load()) {
+        MessageBoxW(nullptr, L"NeoWPF failed to initialize rendering.", L"NeoWPF Error", MB_OK | MB_ICONERROR);
+        s_appState.running = false;
+        if (s_appState.renderThread.joinable()) {
+            s_appState.renderThread.join();
+        }
+        return -1;
     }
 
     MSG msg;
@@ -128,29 +176,26 @@ int Application::Run(const wchar_t* title, int width, int height)
             }
         }
 
-        if (needsUpdate) {
-            RECT rc;
-            GetClientRect(s_appState.hwnd, &rc);
-            unsigned int w = rc.right - rc.left;
-            unsigned int h = rc.bottom - rc.top;
+        RECT rc;
+        GetClientRect(s_appState.hwnd, &rc);
+        unsigned int currentClientWidth = rc.right - rc.left;
+        unsigned int currentClientHeight = rc.bottom - rc.top;
+        if (currentClientWidth != s_appState.lastClientWidth || currentClientHeight != s_appState.lastClientHeight) {
+            needsUpdate = true;
+            s_appState.lastClientWidth = currentClientWidth;
+            s_appState.lastClientHeight = currentClientHeight;
+        }
 
+        if (needsUpdate) {
             std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
             s_appState.buildCommandList.Clear();
-            const auto rootInfo = FindRootVisual(visuals);
-            if (rootInfo.rootVisual) {
-                LayoutAndBuildVisualTree(rootInfo.rootVisual, w, h, s_appState.buildCommandList);
-            } else {
-                LayoutAndBuildAllTopLevelVisuals(visuals, w, h, s_appState.buildCommandList);
-            }
+            LayoutAndBuildAllTopLevelVisuals(visuals, currentClientWidth, currentClientHeight, s_appState.buildCommandList);
             std::swap(s_appState.buildCommandList, s_appState.renderCommandList);
             s_appState.commandListInitialized = true;
-            if (rootInfo.rootVisual) {
-                ClearTopLevelVisualsDirty({rootInfo.rootVisual});
-            } else {
-                ClearTopLevelVisualsDirty(visuals);
-            }
+            ClearTopLevelVisualsDirty(visuals);
         }
     }
+
     s_appState.exitCode = static_cast<int>(msg.wParam);
     s_appState.running = false;
     if (s_appState.renderThread.joinable()) {

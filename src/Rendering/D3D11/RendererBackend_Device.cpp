@@ -104,6 +104,10 @@ void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height
 #endif
     HRESULT hr = g_D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createFlags, nullptr, 0, D3D11_SDK_VERSION, &sd, swapChain, &g_device, &g_featureLevel, &g_context);
     if (FAILED(hr)) {
+        ::NeoWPF::Diagnostics::LogWarn("Hardware D3D11 device creation failed (0x%08X); falling back to WARP.", static_cast<unsigned int>(hr));
+        hr = g_D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_WARP, nullptr, createFlags, nullptr, 0, D3D11_SDK_VERSION, &sd, swapChain, &g_device, &g_featureLevel, &g_context);
+    }
+    if (FAILED(hr)) {
         throw std::runtime_error("D3D11 device/swapchain creation failed");
     }
 }
