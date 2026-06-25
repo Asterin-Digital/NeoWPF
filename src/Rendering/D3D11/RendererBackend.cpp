@@ -1,6 +1,5 @@
-#include <NeoWPF/Rendering/Renderer.h>
-#include <NeoWPF/Rendering/Shaders/ShaderSources.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Rendering/Renderer.h>
 #include <d3d11.h>
 #include <dxgi.h>
 #include <wrl.h>
@@ -10,9 +9,17 @@
 #include <string>
 #include <cstdint>
 #include <cstring>
+#include <Windows.h>
 
 using namespace NeoWPF::Rendering;
 using Microsoft::WRL::ComPtr;
+
+namespace NeoWPF::Rendering {
+namespace D3D11 {
+    const char* GetRectVertexShaderSource();
+    const char* GetRectPixelShaderSource();
+}
+}
 
 namespace {
     HWND g_hwnd = nullptr;
@@ -34,7 +41,10 @@ namespace {
     PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN g_D3D11CreateDeviceAndSwapChain = nullptr;
 }
 
-void NeoWPF::Rendering::Renderer_Initialize(HWND hwnd)
+namespace NeoWPF::Rendering {
+namespace D3D11 {
+
+void Initialize(HWND hwnd)
 {
     if (!g_d3d11Dll) {
         g_d3d11Dll = LoadLibraryW(L"d3d11.dll");
@@ -79,7 +89,6 @@ void NeoWPF::Rendering::Renderer_Initialize(HWND hwnd)
     D3D11_VIEWPORT vp = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
     g_context->RSSetViewports(1, &vp);
     g_hwnd = hwnd;
-
 
     if (!g_d3dcompiler) {
         g_d3dcompiler = LoadLibraryW(L"d3dcompiler_47.dll");
@@ -145,7 +154,6 @@ void NeoWPF::Rendering::Renderer_Initialize(HWND hwnd)
     if (vsBlob) vsBlob->Release();
     if (psBlob) psBlob->Release();
 
-
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DYNAMIC;
     bd.ByteWidth = sizeof(float) * 6 * 6 * 1024;
@@ -153,17 +161,15 @@ void NeoWPF::Rendering::Renderer_Initialize(HWND hwnd)
     bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     g_device->CreateBuffer(&bd, nullptr, &g_vertexBuffer);
 
-
     D3D11_BUFFER_DESC cbd = {};
     cbd.Usage = D3D11_USAGE_DYNAMIC;
-
     cbd.ByteWidth = 16;
     cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     g_device->CreateBuffer(&cbd, nullptr, &g_constantBuffer);
 }
 
-void NeoWPF::Rendering::Renderer_Shutdown()
+void Shutdown()
 {
     g_rtv.Reset();
     g_swapChain.Reset();
@@ -171,7 +177,7 @@ void NeoWPF::Rendering::Renderer_Shutdown()
     g_device.Reset();
 }
 
-void NeoWPF::Rendering::Renderer_Resize(unsigned int w, unsigned int h)
+void Resize(unsigned int w, unsigned int h)
 {
     if (!g_swapChain) return;
     g_context->OMSetRenderTargets(0, nullptr, nullptr);
@@ -187,11 +193,11 @@ void NeoWPF::Rendering::Renderer_Resize(unsigned int w, unsigned int h)
     g_context->RSSetViewports(1, &vp);
 }
 
-void NeoWPF::Rendering::Renderer_BeginFrame()
+void BeginFrame()
 {
 }
 
-void NeoWPF::Rendering::Renderer_Execute(const CommandList& cmd)
+void Execute(const CommandList& cmd)
 {
     if (!g_context || !g_rtv) return;
     float clearColor[4] = {0.125f, 0.125f, 0.125f, 1.0f};
@@ -202,7 +208,6 @@ void NeoWPF::Rendering::Renderer_Execute(const CommandList& cmd)
     verts.reserve(cmd.rects.size() * 6 + cmd.texturedQuads.size() * 6);
 
     auto pushRect = [&](float x, float y, float w, float h, float r, float g, float b, float a) {
-
         verts.push_back({x, y, r, g, b, a});
         verts.push_back({x + w, y, r, g, b, a});
         verts.push_back({x + w, y + h, r, g, b, a});
@@ -219,7 +224,6 @@ void NeoWPF::Rendering::Renderer_Execute(const CommandList& cmd)
         pushRect(r.x, r.y, r.w, r.h, red, green, blue, a);
     }
     for (const auto& q : cmd.texturedQuads) {
-
         uint32_t id = q.textureId;
         float r = ((id >> 16) & 0xFF) / 255.0f;
         float g = ((id >> 8) & 0xFF) / 255.0f;
@@ -228,12 +232,9 @@ void NeoWPF::Rendering::Renderer_Execute(const CommandList& cmd)
     }
 
     if (!verts.empty() && g_vs && g_ps && g_inputLayout && g_vertexBuffer) {
-
         D3D11_MAPPED_SUBRESOURCE mapped = {};
         if (SUCCEEDED(g_context->Map(g_constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
-
             float vp[2] = {0.0f, 0.0f};
-
             D3D11_VIEWPORT view;
             UINT num = 1;
             g_context->RSGetViewports(&num, &view);
@@ -242,7 +243,6 @@ void NeoWPF::Rendering::Renderer_Execute(const CommandList& cmd)
             memcpy(mapped.pData, vp, sizeof(vp));
             g_context->Unmap(g_constantBuffer.Get(), 0);
         }
-
 
         D3D11_MAPPED_SUBRESOURCE vmap = {};
         if (SUCCEEDED(g_context->Map(g_vertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &vmap))) {
@@ -262,16 +262,19 @@ void NeoWPF::Rendering::Renderer_Execute(const CommandList& cmd)
     }
 }
 
-uint32_t NeoWPF::Rendering::Renderer_CreateTexture(unsigned int w, unsigned int h, const void* rgbaData)
+uint32_t CreateTexture(unsigned int w, unsigned int h, const void* rgbaData)
 {
     return 1;
 }
 
-void NeoWPF::Rendering::Renderer_DestroyTexture(uint32_t id)
+void DestroyTexture(uint32_t id)
 {
 }
 
-void NeoWPF::Rendering::Renderer_Present()
+void Present()
 {
     if (g_swapChain) g_swapChain->Present(1, 0);
 }
+
+} // namespace D3D11
+} // namespace NeoWPF::Rendering

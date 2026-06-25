@@ -1,6 +1,6 @@
-#include <NeoWPF/Rendering/Shaders/ShaderSources.h>
+#include <NeoWPF/Rendering/Renderer.h>
 
-namespace NeoWPF::Rendering {
+namespace NeoWPF::Rendering::D3D11 {
 
 const char* GetRectVertexShaderSource()
 {
@@ -26,4 +26,4 @@ float4 PSMain(PSIn input) : SV_Target { return input.col; }
 )";
 }
 
-} // namespace NeoWPF::Rendering
+} // namespace NeoWPF::Rendering::D3D11
