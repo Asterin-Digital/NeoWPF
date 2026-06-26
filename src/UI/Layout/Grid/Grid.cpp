@@ -1,16 +1,15 @@
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Layout/Grid/GridLayout.h>
 #include <NeoWPF/UI/Core/FrameworkElement.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 
-// Windows macro conflicts Start
 #ifdef max
 #undef max
 #endif
 #ifdef min
 #undef min
 #endif
-// Windows macro conflicts End
 
 namespace NeoWPF::UI {
 
@@ -73,43 +72,199 @@ int Grid::GetColumnSpan(Visual* v)
 
 void Grid::Measure(int availableWidth, int availableHeight)
 {
-    auto layout = GridLayout::ComputeLayout(m_rowDefs, m_colDefs, availableWidth, availableHeight, GetVisualChildren());
+    NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Available: %dx%d", availableWidth, availableHeight);
 
-    int totalHeight = 0;
-    int totalWidth = 0;
-    for (int h : layout.rowHeights) totalHeight += h;
-    for (int w : layout.colWidths) totalWidth += w;
+    const int INF = 1000000;
+    int numRows = std::max(1, static_cast<int>(m_rowDefs.size()));
+    int numCols = std::max(1, static_cast<int>(m_colDefs.size()));
 
-    for (auto child : GetVisualChildren()) {
-        if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
-            int c = GetColumn(child);
-            int cspan = GetColumnSpan(child);
-            int measWidth = 0;
-            for (int i = c; i < c + cspan && i < static_cast<int>(layout.colWidths.size()); ++i) {
-                measWidth += layout.colWidths[i];
+    for (auto child : GetVisualChildren())
+    {
+        if (!child) continue;
+        auto fe = dynamic_cast<FrameworkElement*>(child);
+        if (!fe) continue;
+        int r = GetRow(child);
+        int c = GetColumn(child);
+        int rspan = GetRowSpan(child);
+        int cspan = GetColumnSpan(child);
+
+        bool measureWidth = (cspan == 1 && c < numCols && m_colDefs[c].mode == SizeMode::Auto);
+        bool measureHeight = (rspan == 1 && r < numRows && m_rowDefs[r].mode == SizeMode::Auto);
+
+        if (measureWidth || measureHeight)
+            fe->Measure(measureWidth ? INF : 0, measureHeight ? INF : 0);
+    }
+
+    std::vector<int> autoRowHeights(numRows, 0);
+    std::vector<int> autoColWidths(numCols, 0);
+
+    for (int r = 0; r < numRows; ++r)
+    {
+        if (m_rowDefs[r].mode == SizeMode::Auto)
+        {
+            int maxH = 0;
+            for (auto child : GetVisualChildren())
+            {
+                if (!child) continue;
+                if (GetRow(child) == r && GetRowSpan(child) == 1)
+                {
+                    auto fe = dynamic_cast<FrameworkElement*>(child);
+                    if (fe) maxH = std::max(maxH, fe->GetDesiredHeight());
+                }
             }
-
-            int r = GetRow(child);
-            int rspan = GetRowSpan(child);
-            int measHeight = 0;
-            for (int i = r; i < r + rspan && i < static_cast<int>(layout.rowHeights.size()); ++i) {
-                measHeight += layout.rowHeights[i];
-            }
-
-            fe->Measure(measWidth, measHeight);
+            autoRowHeights[r] = maxH;
+            NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Row %d Auto desired = %d", r, maxH);
         }
     }
 
-    SetDesiredSize(totalWidth, totalHeight);
+    for (int c = 0; c < numCols; ++c)
+    {
+        if (m_colDefs[c].mode == SizeMode::Auto)
+        {
+            int maxW = 0;
+            for (auto child : GetVisualChildren())
+            {
+                if (!child) continue;
+                if (GetColumn(child) == c && GetColumnSpan(child) == 1)
+                {
+                    auto fe = dynamic_cast<FrameworkElement*>(child);
+                    if (fe) maxW = std::max(maxW, fe->GetDesiredWidth());
+                }
+            }
+            autoColWidths[c] = maxW;
+            NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Col %d Auto desired = %d", c, maxW);
+        }
+    }
+
+    std::vector<Definition> measureRowDefs = m_rowDefs;
+    std::vector<Definition> measureColDefs = m_colDefs;
+    for (int r = 0; r < numRows; ++r)
+    {
+        if (measureRowDefs[r].mode == SizeMode::Auto)
+        {
+            measureRowDefs[r].mode = SizeMode::Fixed;
+            measureRowDefs[r].value = autoRowHeights[r];
+        }
+    }
+    for (int c = 0; c < numCols; ++c)
+    {
+        if (measureColDefs[c].mode == SizeMode::Auto)
+        {
+            measureColDefs[c].mode = SizeMode::Fixed;
+            measureColDefs[c].value = autoColWidths[c];
+        }
+    }
+
+    auto layout = GridLayout::ComputeLayout(measureRowDefs, measureColDefs,
+                                            availableWidth, availableHeight,
+                                            GetVisualChildren());
+
+    for (size_t i = 0; i < GetVisualChildren().size(); ++i)
+    {
+        auto child = GetVisualChildren()[i];
+        if (!child) continue;
+        auto fe = dynamic_cast<FrameworkElement*>(child);
+        if (!fe) continue;
+
+        int r = GetRow(child);
+        int c = GetColumn(child);
+        int rspan = GetRowSpan(child);
+        int cspan = GetColumnSpan(child);
+
+        int cellW = 0, cellH = 0;
+        for (int j = c; j < c + cspan && j < static_cast<int>(layout.colWidths.size()); ++j)
+            cellW += layout.colWidths[j];
+        for (int j = r; j < r + rspan && j < static_cast<int>(layout.rowHeights.size()); ++j)
+            cellH += layout.rowHeights[j];
+
+        fe->Measure(cellW, cellH);
+        NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Child[%zu] at (%d,%d) span(%d,%d): measured %dx%d, desired %dx%d",
+            i, r, c, rspan, cspan, cellW, cellH,
+            fe->GetDesiredWidth(), fe->GetDesiredHeight());
+    }
+
+    int totalW = 0, totalH = 0;
+    for (int w : layout.colWidths) totalW += w;
+    for (int h : layout.rowHeights) totalH += h;
+    SetDesiredSize(totalW, totalH);
+    NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Final desired size: %dx%d", totalW, totalH);
 }
 
 void Grid::Arrange(int finalWidth, int finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
+    NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Final size: %dx%d", finalWidth, finalHeight);
 
-    auto layout = GridLayout::ComputeLayout(m_rowDefs, m_colDefs, finalWidth, finalHeight, GetVisualChildren());
+    int numRows = std::max(1, static_cast<int>(m_rowDefs.size()));
+    int numCols = std::max(1, static_cast<int>(m_colDefs.size()));
 
-    for (auto child : GetVisualChildren()) {
+    std::vector<int> autoRowHeights(numRows, 0);
+    std::vector<int> autoColWidths(numCols, 0);
+
+    for (int r = 0; r < numRows; ++r)
+    {
+        if (m_rowDefs[r].mode == SizeMode::Auto)
+        {
+            int maxH = 0;
+            for (auto child : GetVisualChildren())
+            {
+                if (!child) continue;
+                if (GetRow(child) == r && GetRowSpan(child) == 1)
+                {
+                    auto fe = dynamic_cast<FrameworkElement*>(child);
+                    if (fe) maxH = std::max(maxH, fe->GetDesiredHeight());
+                }
+            }
+            autoRowHeights[r] = maxH;
+            NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Row %d Auto desired = %d", r, maxH);
+        }
+    }
+
+    for (int c = 0; c < numCols; ++c)
+    {
+        if (m_colDefs[c].mode == SizeMode::Auto)
+        {
+            int maxW = 0;
+            for (auto child : GetVisualChildren())
+            {
+                if (!child) continue;
+                if (GetColumn(child) == c && GetColumnSpan(child) == 1)
+                {
+                    auto fe = dynamic_cast<FrameworkElement*>(child);
+                    if (fe) maxW = std::max(maxW, fe->GetDesiredWidth());
+                }
+            }
+            autoColWidths[c] = maxW;
+            NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Col %d Auto desired = %d", c, maxW);
+        }
+    }
+
+    std::vector<Definition> arrangeRowDefs = m_rowDefs;
+    std::vector<Definition> arrangeColDefs = m_colDefs;
+    for (int r = 0; r < numRows; ++r)
+    {
+        if (arrangeRowDefs[r].mode == SizeMode::Auto)
+        {
+            arrangeRowDefs[r].mode = SizeMode::Fixed;
+            arrangeRowDefs[r].value = autoRowHeights[r];
+        }
+    }
+    for (int c = 0; c < numCols; ++c)
+    {
+        if (arrangeColDefs[c].mode == SizeMode::Auto)
+        {
+            arrangeColDefs[c].mode = SizeMode::Fixed;
+            arrangeColDefs[c].value = autoColWidths[c];
+        }
+    }
+
+    auto layout = GridLayout::ComputeLayout(arrangeRowDefs, arrangeColDefs,
+                                            finalWidth, finalHeight,
+                                            GetVisualChildren());
+
+    for (size_t i = 0; i < GetVisualChildren().size(); ++i)
+    {
+        auto child = GetVisualChildren()[i];
         if (!child) continue;
 
         int r = GetRow(child);
@@ -118,24 +273,21 @@ void Grid::Arrange(int finalWidth, int finalHeight)
         int cspan = GetColumnSpan(child);
 
         int x = 0, y = 0, w = 0, h = 0;
+        for (int j = 0; j < c && j < static_cast<int>(layout.colWidths.size()); ++j)
+            x += layout.colWidths[j];
+        for (int j = c; j < c + cspan && j < static_cast<int>(layout.colWidths.size()); ++j)
+            w += layout.colWidths[j];
+        for (int j = 0; j < r && j < static_cast<int>(layout.rowHeights.size()); ++j)
+            y += layout.rowHeights[j];
+        for (int j = r; j < r + rspan && j < static_cast<int>(layout.rowHeights.size()); ++j)
+            h += layout.rowHeights[j];
 
-        for (int i = 0; i < c && i < static_cast<int>(layout.colWidths.size()); ++i) {
-            x += layout.colWidths[i];
-        }
-        for (int i = c; i < c + cspan && i < static_cast<int>(layout.colWidths.size()); ++i) {
-            w += layout.colWidths[i];
-        }
-
-        for (int i = 0; i < r && i < static_cast<int>(layout.rowHeights.size()); ++i) {
-            y += layout.rowHeights[i];
-        }
-        for (int i = r; i < r + rspan && i < static_cast<int>(layout.rowHeights.size()); ++i) {
-            h += layout.rowHeights[i];
-        }
-
-        if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
+        if (auto fe = dynamic_cast<FrameworkElement*>(child))
+        {
             fe->Arrange(w, h);
             fe->SetLayoutOffset(x, y);
+            NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Child[%zu] at (%d,%d): pos(%d,%d) size(%dx%d)",
+                i, r, c, x, y, w, h);
         }
     }
 }

@@ -6,7 +6,7 @@
 
 namespace NeoWPF::UI {
 
-class Visual {
+class Visual : public std::enable_shared_from_this<Visual> {
 public:
     Visual();
     virtual ~Visual();
@@ -15,10 +15,16 @@ public:
     const std::vector<Visual*>& GetVisualChildren() const noexcept { return m_children; }
     static const std::vector<Visual*>& GetRegisteredVisuals();
 
+
+    static void CaptureRootVisuals();
+
     void AddVisualChild(Visual* child) {
         if (!child) return;
         child->m_parent = this;
         m_children.push_back(child);
+        if (!m_parent) {
+            KeepAliveAsRoot();
+        }
         MarkTreeDirty();
     }
 
@@ -51,6 +57,8 @@ public:
 
 private:
     static std::vector<Visual*>& GetRegistry();
+    static std::vector<std::shared_ptr<Visual>>& GetRootVisualReferences();
+    void KeepAliveAsRoot();
 
     Visual* m_parent = nullptr;
     std::vector<Visual*> m_children;

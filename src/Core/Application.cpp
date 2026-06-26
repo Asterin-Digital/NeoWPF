@@ -33,8 +33,6 @@ struct AppState {
     NeoWPF::Rendering::CommandList buildCommandList;
     bool commandListInitialized = false;
 
-    unsigned int lastClientWidth = 0;
-    unsigned int lastClientHeight = 0;
 };
 
 static AppState s_appState;
@@ -74,15 +72,16 @@ void StartRenderThread(HWND hwnd)
             return;
         }
 
+        unsigned int lastW = 0, lastH = 0;
         while (s_appState.running.load()) {
             RECT rc;
             GetClientRect(hwnd, &rc);
             unsigned int w = rc.right - rc.left;
             unsigned int h = rc.bottom - rc.top;
-            if (w != s_appState.lastClientWidth || h != s_appState.lastClientHeight) {
+            if (w != lastW || h != lastH) {
                 NeoWPF::Rendering::Renderer_Resize(w, h);
-                s_appState.lastClientWidth = w;
-                s_appState.lastClientHeight = h;
+                lastW = w;
+                lastH = h;
             }
             NeoWPF::Rendering::Renderer_BeginFrame();
 
@@ -104,6 +103,8 @@ void Application::Initialize()
 {
     s_appState.hInst = GetModuleHandleW(nullptr);
     NeoWPF::UI::Styling::RegisterDefaultStyles();
+
+    NeoWPF::UI::Visual::CaptureRootVisuals();
 }
 
 int Application::Run(const wchar_t* title, int width, int height)
@@ -163,6 +164,8 @@ int Application::Run(const wchar_t* title, int width, int height)
     }
 
     MSG msg;
+    unsigned int lastLayoutWidth = 0, lastLayoutHeight = 0;
+
     while (GetMessage(&msg, nullptr, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
@@ -180,10 +183,10 @@ int Application::Run(const wchar_t* title, int width, int height)
         GetClientRect(s_appState.hwnd, &rc);
         unsigned int currentClientWidth = rc.right - rc.left;
         unsigned int currentClientHeight = rc.bottom - rc.top;
-        if (currentClientWidth != s_appState.lastClientWidth || currentClientHeight != s_appState.lastClientHeight) {
+        if (currentClientWidth != lastLayoutWidth || currentClientHeight != lastLayoutHeight) {
             needsUpdate = true;
-            s_appState.lastClientWidth = currentClientWidth;
-            s_appState.lastClientHeight = currentClientHeight;
+            lastLayoutWidth = currentClientWidth;
+            lastLayoutHeight = currentClientHeight;
         }
 
         if (needsUpdate) {
