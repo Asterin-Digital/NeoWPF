@@ -1,6 +1,6 @@
 #pragma once
 
-#include <NeoWPF/UI/Layout/Panel.h>
+#include <NeoWPF/UI/Layout/Panel/Panel.h>
 
 namespace NeoWPF::UI {
 

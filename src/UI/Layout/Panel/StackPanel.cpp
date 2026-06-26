@@ -1,4 +1,4 @@
-#include <NeoWPF/UI/Layout/StackPanel.h>
+#include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 #include <NeoWPF/UI/Core/Visual.h>
 #include <algorithm>
 

@@ -1,6 +1,6 @@
 #include <NeoWPF/UI/Styling/StyleManager.h>
 #include <NeoWPF/UI/Styling/Style.h>
-#include <NeoWPF/UI/Layout/Panel.h>
+#include <NeoWPF/UI/Layout/Panel/Panel.h>
 #include <typeindex>
 
 namespace NeoWPF::UI::Styling {

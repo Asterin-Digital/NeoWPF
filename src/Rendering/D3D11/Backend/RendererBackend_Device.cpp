@@ -1,5 +1,6 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/Rendering/Shaders/ShaderSources.h>
 #include <d3d11.h>
 #include <dxgi.h>
 #include <wrl.h>
@@ -18,6 +19,10 @@ namespace NeoWPF::Rendering::D3D11 {
     ComPtr<ID3D11VertexShader> g_vs;
     ComPtr<ID3D11PixelShader> g_ps;
     ComPtr<ID3D11InputLayout> g_inputLayout;
+    ComPtr<ID3D11VertexShader> g_vsText;
+    ComPtr<ID3D11PixelShader> g_psText;
+    ComPtr<ID3D11InputLayout> g_inputLayoutText;
+    ComPtr<ID3D11SamplerState> g_samplerState;
     ComPtr<ID3D11Buffer> g_vertexBuffer;
     ComPtr<ID3D11Buffer> g_constantBuffer;
 
@@ -129,7 +134,7 @@ void EnsureCompilerLoaded()
 
 void CompileShaders()
 {
-    if (g_vs && g_ps && g_inputLayout) return;
+    if (g_vs && g_ps && g_inputLayout && g_vsText && g_psText && g_inputLayoutText && g_samplerState) return;
     EnsureCompilerLoaded();
 
     std::string vsSrc = D3D11::GetRectVertexShaderSource();
@@ -171,6 +176,55 @@ void CompileShaders()
 
     hr = g_device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, &g_ps);
     if (FAILED(hr)) throw std::runtime_error("Failed to create pixel shader");
+
+    {
+        std::string textVsSrc = D3D11::GetTextVertexShaderSource();
+        std::string textPsSrc = D3D11::GetTextPixelShaderSource();
+        ComPtr<ID3DBlob> textVsBlob;
+        ComPtr<ID3DBlob> textPsBlob;
+        ComPtr<ID3DBlob> errBlob;
+
+        hr = g_D3DCompile(textVsSrc.c_str(), textVsSrc.size(), nullptr, nullptr, nullptr, "VSMain", "vs_4_0", 0, 0, &textVsBlob, &errBlob);
+        if (FAILED(hr) || !textVsBlob) {
+            if (errBlob) {
+                ::NeoWPF::Diagnostics::LogError("Text vertex shader compile error: %s", static_cast<const char*>(errBlob->GetBufferPointer()));
+            }
+            throw std::runtime_error("Text vertex shader compilation failed");
+        }
+
+        hr = g_device->CreateVertexShader(textVsBlob->GetBufferPointer(), textVsBlob->GetBufferSize(), nullptr, &g_vsText);
+        if (FAILED(hr)) throw std::runtime_error("Failed to create text vertex shader");
+
+        D3D11_INPUT_ELEMENT_DESC textElems[] = {
+            {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+            {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
+            {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        };
+        hr = g_device->CreateInputLayout(textElems, _countof(textElems), textVsBlob->GetBufferPointer(), textVsBlob->GetBufferSize(), &g_inputLayoutText);
+        if (FAILED(hr)) throw std::runtime_error("Failed to create text input layout");
+
+        hr = g_D3DCompile(textPsSrc.c_str(), textPsSrc.size(), nullptr, nullptr, nullptr, "PSMain", "ps_4_0", 0, 0, &textPsBlob, &errBlob);
+        if (FAILED(hr) || !textPsBlob) {
+            if (errBlob) {
+                ::NeoWPF::Diagnostics::LogError("Text pixel shader compile error: %s", static_cast<const char*>(errBlob->GetBufferPointer()));
+            }
+            throw std::runtime_error("Text pixel shader compilation failed");
+        }
+
+        hr = g_device->CreatePixelShader(textPsBlob->GetBufferPointer(), textPsBlob->GetBufferSize(), nullptr, &g_psText);
+        if (FAILED(hr)) throw std::runtime_error("Failed to create text pixel shader");
+    }
+
+    D3D11_SAMPLER_DESC sampDesc = {};
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = g_device->CreateSamplerState(&sampDesc, &g_samplerState);
+    if (FAILED(hr)) throw std::runtime_error("Failed to create sampler state");
 }
 
 void EnsureBuffers()

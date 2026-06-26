@@ -1,4 +1,4 @@
-#include <NeoWPF/UI/Layout/Panel.h>
+#include <NeoWPF/UI/Layout/Panel/Panel.h>
 #include <NeoWPF/UI/Core/Visual.h>
 #include <algorithm>
 

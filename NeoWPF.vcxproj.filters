@@ -27,22 +27,22 @@
     <ClCompile Include="src\Rendering\RenderScheduler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Rendering\D3D11\RendererBackend.cpp">
+    <ClCompile Include="src\Rendering\D3D11\Backend\RendererBackend.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Rendering\D3D11\RendererBackend_Device.cpp">
+    <ClCompile Include="src\Rendering\D3D11\Backend\RendererBackend_Device.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Rendering\D3D11\ShaderSources.cpp">
+    <ClCompile Include="src\Rendering\D3D11\Backend\ShaderSources.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Diagnostics\Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Layout\Panel.cpp">
+    <ClCompile Include="src\UI\Layout\Panel\Panel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Layout\StackPanel.cpp">
+    <ClCompile Include="src\UI\Layout\Panel\StackPanel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Styling\StyleManager.cpp">
@@ -55,6 +55,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Styling\DefaultStyles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Layout\Grid\Grid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Layout\Grid\GridLayout.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -131,10 +137,10 @@
     <ClInclude Include="include\NeoWPF\Diagnostics\Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Layout\Panel.h">
+    <ClInclude Include="include\NeoWPF\UI\Layout\Panel\Panel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Layout\StackPanel.h">
+    <ClInclude Include="include\NeoWPF\UI\Layout\Panel\StackPanel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\Rendering\Shaders\ShaderSources.h">
@@ -147,6 +153,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Styling\DefaultStyles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Layout\Grid\Grid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Layout\Grid\GridLayout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
