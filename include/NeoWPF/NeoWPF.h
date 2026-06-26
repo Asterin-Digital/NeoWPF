@@ -11,4 +11,5 @@ namespace NeoWPF {
     using UI::Panel;
     using UI::StackPanel;
     using UI::Grid;
+    using UI::TextBlock;
 }

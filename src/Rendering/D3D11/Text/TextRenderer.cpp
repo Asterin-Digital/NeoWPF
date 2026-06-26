@@ -126,7 +126,7 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
         HRESULT hr = factory->CreateRenderingParams(&renderingParams);
         if (FAILED(hr)) return hr;
 
-        const DWRITE_RENDERING_MODE renderingMode = DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC;
+        const DWRITE_RENDERING_MODE renderingMode = DWRITE_RENDERING_MODE_DEFAULT;
         const DWRITE_TEXTURE_TYPE textureType = DWRITE_TEXTURE_ALIASED_1x1;
         ComPtr<IDWriteGlyphRunAnalysis> glyphRunAnalysis;
         hr = factory->CreateGlyphRunAnalysis(
@@ -225,9 +225,17 @@ TextMetrics MeasureText(const std::wstring& text, int fontSize, int maxWidth, in
         return {};
     }
 
+    DWRITE_OVERHANG_METRICS overhang = {};
+    hr = textLayout->GetOverhangMetrics(&overhang);
+    if (FAILED(hr)) {
+        return {};
+    }
+
+    float desiredWidth = metrics.widthIncludingTrailingWhitespace + std::fabs(overhang.left) + std::fabs(overhang.right);
+    float desiredHeight = metrics.height + std::fabs(overhang.top) + std::fabs(overhang.bottom);
     return {
-        static_cast<int>(std::ceil(metrics.widthIncludingTrailingWhitespace)),
-        static_cast<int>(std::ceil(metrics.height))
+        static_cast<int>(std::ceil(desiredWidth)),
+        static_cast<int>(std::ceil(desiredHeight))
     };
 }
 
@@ -246,7 +254,7 @@ std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, in
 
     outWidth = metrics.width;
     outHeight = metrics.height;
-    std::vector<uint8_t> bitmap(static_cast<size_t>(outWidth) * static_cast<size_t>(outHeight) * 4);
+    std::vector<uint8_t> bitmap(static_cast<size_t>(outWidth) * static_cast<size_t>(outHeight) * 4, 0);
 
     ComPtr<IDWriteFactory> factory = GetDWriteFactory();
     ComPtr<IDWriteTextFormat> textFormat = CreateTextFormat(fontSize);
@@ -257,8 +265,17 @@ std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, in
         return {};
     }
 
+    DWRITE_OVERHANG_METRICS overhang = {};
+    hr = textLayout->GetOverhangMetrics(&overhang);
+    if (FAILED(hr)) {
+        return {};
+    }
+
+    float baselineOriginX = -overhang.left;
+    float baselineOriginY = -overhang.top;
+
     BitmapTextRenderer* renderer = new BitmapTextRenderer(factory, &bitmap, outWidth, outHeight);
-    hr = textLayout->Draw(nullptr, renderer, 0.0f, 0.0f);
+    hr = textLayout->Draw(nullptr, renderer, baselineOriginX, baselineOriginY);
     renderer->Release();
 
     if (FAILED(hr)) {

@@ -126,20 +126,6 @@ int Application::Run(const wchar_t* title, int width, int height)
     ShowWindow(s_appState.hwnd, SW_SHOW);
     UpdateWindow(s_appState.hwnd);
 
-    RECT rc;
-    GetClientRect(s_appState.hwnd, &rc);
-    unsigned int clientWidth = rc.right - rc.left;
-    unsigned int clientHeight = rc.bottom - rc.top;
-
-    {
-        std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
-        s_appState.buildCommandList.Clear();
-        LayoutAndBuildAllTopLevelVisuals(visuals, clientWidth, clientHeight, s_appState.buildCommandList);
-        std::swap(s_appState.buildCommandList, s_appState.renderCommandList);
-        s_appState.commandListInitialized = true;
-    }
-    ClearTopLevelVisualsDirty(visuals);
-
     StartRenderThread(s_appState.hwnd);
 
     std::unique_lock<std::mutex> lock(s_appState.renderInitMutex);
@@ -153,6 +139,29 @@ int Application::Run(const wchar_t* title, int width, int height)
         }
         return -1;
     }
+
+    if (s_appState.renderThreadInitFailed.load()) {
+        MessageBoxW(nullptr, L"NeoWPF failed to initialize rendering.", L"NeoWPF Error", MB_OK | MB_ICONERROR);
+        s_appState.running = false;
+        if (s_appState.renderThread.joinable()) {
+            s_appState.renderThread.join();
+        }
+        return -1;
+    }
+
+    RECT rc;
+    GetClientRect(s_appState.hwnd, &rc);
+    unsigned int clientWidth = rc.right - rc.left;
+    unsigned int clientHeight = rc.bottom - rc.top;
+
+    {
+        std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
+        s_appState.buildCommandList.Clear();
+        LayoutAndBuildAllTopLevelVisuals(visuals, clientWidth, clientHeight, s_appState.buildCommandList);
+        std::swap(s_appState.buildCommandList, s_appState.renderCommandList);
+        s_appState.commandListInitialized = true;
+    }
+    ClearTopLevelVisualsDirty(visuals);
 
     if (s_appState.renderThreadInitFailed.load()) {
         MessageBoxW(nullptr, L"NeoWPF failed to initialize rendering.", L"NeoWPF Error", MB_OK | MB_ICONERROR);
