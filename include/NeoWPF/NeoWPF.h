@@ -9,4 +9,6 @@ namespace NeoWPF {
     using Core::Application;
     using Platform::Window;
     using UI::Panel;
+    using UI::StackPanel;
+    using UI::Grid;
 }
