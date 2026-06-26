@@ -80,5 +80,12 @@ namespace D3D11 {
         g_textures.erase(id);
     }
 
+    ComPtr<ID3D11ShaderResourceView> GetTextureShaderResourceView(uint32_t id)
+    {
+        std::lock_guard<std::mutex> lock(g_textureMutex);
+        auto it = g_textureViews.find(id);
+        return it == g_textureViews.end() ? nullptr : it->second;
+    }
+
 }
 }
