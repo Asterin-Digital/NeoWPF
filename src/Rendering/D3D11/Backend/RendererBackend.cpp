@@ -225,6 +225,21 @@ void Execute(const CommandList& cmd)
     float clearColor[4] = {0.125f, 0.125f, 0.125f, 1.0f};
     g_context->ClearRenderTargetView(ctx->rtv.Get(), clearColor);
 
+    // Create blend state for text (once)
+    static ComPtr<ID3D11BlendState> g_blendState;
+    if (!g_blendState) {
+        D3D11_BLEND_DESC blendDesc = {};
+        blendDesc.RenderTarget[0].BlendEnable = TRUE;
+        blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+        blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+        blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+        blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+        blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+        blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+        blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+        g_device->CreateBlendState(&blendDesc, &g_blendState);
+    }
+
     struct Vertex { float x, y; float r, g, b, a; };
     std::vector<Vertex> rectVerts;
     rectVerts.reserve(cmd.rects.size() * 6);
@@ -289,6 +304,10 @@ void Execute(const CommandList& cmd)
     }
 
     if (!textVerts.empty() && g_vsText && g_psText && g_inputLayoutText && g_vertexBuffer && g_samplerState) {
+        // ENABLE ALPHA BLENDING
+        float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+        g_context->OMSetBlendState(g_blendState.Get(), blendFactor, 0xffffffff);
+
         D3D11_MAPPED_SUBRESOURCE mapped = {};
         if (SUCCEEDED(g_context->Map(g_constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
             float vp[2] = {static_cast<float>(ctx->width), static_cast<float>(ctx->height)};
@@ -329,6 +348,9 @@ void Execute(const CommandList& cmd)
             vertexStart += static_cast<UINT>(batchCount * 6);
             qi += batchCount;
         }
+
+        // DISABLE ALPHA BLENDING (reset to default)
+        g_context->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
     }
 }
 

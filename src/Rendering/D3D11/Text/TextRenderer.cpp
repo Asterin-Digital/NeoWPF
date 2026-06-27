@@ -1,4 +1,5 @@
 #include <NeoWPF/Rendering/TextRenderer.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <Windows.h>
 #include <dwrite.h>
 #include <wrl.h>
@@ -55,10 +56,14 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
     std::vector<uint8_t>* bitmap;
     int width;
     int height;
+    float paddingLeft;
+    float paddingTop;
     long refCount = 1;
 
-    BitmapTextRenderer(ComPtr<IDWriteFactory> factory, std::vector<uint8_t>* bitmap, int width, int height)
-        : factory(std::move(factory)), bitmap(bitmap), width(width), height(height)
+    BitmapTextRenderer(ComPtr<IDWriteFactory> factory, std::vector<uint8_t>* bitmap,
+                       int width, int height, float padLeft, float padTop)
+        : factory(std::move(factory)), bitmap(bitmap), width(width), height(height),
+          paddingLeft(padLeft), paddingTop(padTop)
     {
     }
 
@@ -88,28 +93,22 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
         return count;
     }
 
-    STDMETHOD(IsPixelSnappingDisabled)(void* clientDrawingContext, BOOL* isDisabled) override
+    STDMETHOD(IsPixelSnappingDisabled)(void*, BOOL* isDisabled) override
     {
-        if (!isDisabled) return E_POINTER;
         *isDisabled = FALSE;
         return S_OK;
     }
 
-    STDMETHOD(GetCurrentTransform)(void* clientDrawingContext, DWRITE_MATRIX* transform) override
+    STDMETHOD(GetCurrentTransform)(void*, DWRITE_MATRIX* transform) override
     {
-        if (!transform) return E_POINTER;
-        transform->m11 = 1.0f;
-        transform->m12 = 0.0f;
-        transform->m21 = 0.0f;
-        transform->m22 = 1.0f;
-        transform->dx = 0.0f;
-        transform->dy = 0.0f;
+        transform->m11 = 1.0f; transform->m12 = 0.0f;
+        transform->m21 = 0.0f; transform->m22 = 1.0f;
+        transform->dx = 0.0f;  transform->dy = 0.0f;
         return S_OK;
     }
 
-    STDMETHOD(GetPixelsPerDip)(void* clientDrawingContext, FLOAT* pixelsPerDip) override
+    STDMETHOD(GetPixelsPerDip)(void*, FLOAT* pixelsPerDip) override
     {
-        if (!pixelsPerDip) return E_POINTER;
         *pixelsPerDip = 1.0f;
         return S_OK;
     }
@@ -120,14 +119,21 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
         const DWRITE_GLYPH_RUN_DESCRIPTION* glyphRunDescription,
         IUnknown* clientDrawingEffect) override
     {
-        if (!glyphRun || !bitmap) return E_INVALIDARG;
+        if (!glyphRun || !bitmap) {
+            ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: null glyphRun or bitmap");
+            return E_INVALIDARG;
+        }
 
         ComPtr<IDWriteRenderingParams> renderingParams;
         HRESULT hr = factory->CreateRenderingParams(&renderingParams);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr)) {
+            ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: CreateRenderingParams failed 0x%08X", (unsigned int)hr);
+            return hr;
+        }
 
-        const DWRITE_RENDERING_MODE renderingMode = DWRITE_RENDERING_MODE_DEFAULT;
+        const DWRITE_RENDERING_MODE renderingMode = DWRITE_RENDERING_MODE_ALIASED;
         const DWRITE_TEXTURE_TYPE textureType = DWRITE_TEXTURE_ALIASED_1x1;
+
         ComPtr<IDWriteGlyphRunAnalysis> glyphRunAnalysis;
         hr = factory->CreateGlyphRunAnalysis(
             glyphRun,
@@ -138,15 +144,24 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
             baselineOriginX,
             baselineOriginY,
             &glyphRunAnalysis);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr)) {
+            ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: CreateGlyphRunAnalysis failed 0x%08X", (unsigned int)hr);
+            return hr;
+        }
 
         RECT textureBounds;
         hr = glyphRunAnalysis->GetAlphaTextureBounds(textureType, &textureBounds);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr)) {
+            ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: GetAlphaTextureBounds failed 0x%08X", (unsigned int)hr);
+            return hr;
+        }
 
         int textureWidth = textureBounds.right - textureBounds.left;
         int textureHeight = textureBounds.bottom - textureBounds.top;
-        if (textureWidth <= 0 || textureHeight <= 0) return S_OK;
+        if (textureWidth <= 0 || textureHeight <= 0) {
+            ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: zero texture size %dx%d", textureWidth, textureHeight);
+            return S_OK;
+        }
 
         UINT32 textureBufferSize = static_cast<UINT32>(textureWidth) * static_cast<UINT32>(textureHeight);
         std::vector<BYTE> alphaData(textureBufferSize);
@@ -154,11 +169,15 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
             &textureBounds,
             alphaData.data(),
             textureBufferSize);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr)) {
+            ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: CreateAlphaTexture failed 0x%08X", (unsigned int)hr);
+            return hr;
+        }
 
-        int originX = textureBounds.left;
-        int originY = textureBounds.top;
+        int originX = static_cast<int>(std::floor(paddingLeft + baselineOriginX + textureBounds.left));
+        int originY = static_cast<int>(std::floor(paddingTop  + baselineOriginY + textureBounds.top));
 
+        int pixelsWritten = 0;
         for (int row = 0; row < textureHeight; ++row) {
             int dstY = originY + row;
             if (dstY < 0 || dstY >= height) continue;
@@ -168,35 +187,23 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
                 int dstX = originX + col;
                 if (dstX < 0 || dstX >= width) continue;
                 uint8_t alpha = rowData[col];
+                if (alpha == 0) continue;
                 size_t pixelIndex = (static_cast<size_t>(dstY) * width + static_cast<size_t>(dstX)) * 4;
                 (*bitmap)[pixelIndex + 0] = 255;
                 (*bitmap)[pixelIndex + 1] = 255;
                 (*bitmap)[pixelIndex + 2] = 255;
                 (*bitmap)[pixelIndex + 3] = alpha;
+                pixelsWritten++;
             }
         }
 
+        ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: wrote %d pixels", pixelsWritten);
         return S_OK;
     }
 
-    STDMETHOD(DrawUnderline)(void* clientDrawingContext, FLOAT baselineOriginX, FLOAT baselineOriginY,
-        const DWRITE_UNDERLINE* underline, IUnknown* clientDrawingEffect) override
-    {
-        return S_OK;
-    }
-
-    STDMETHOD(DrawStrikethrough)(void* clientDrawingContext, FLOAT baselineOriginX, FLOAT baselineOriginY,
-        const DWRITE_STRIKETHROUGH* strikethrough, IUnknown* clientDrawingEffect) override
-    {
-        return S_OK;
-    }
-
-    STDMETHOD(DrawInlineObject)(void* clientDrawingContext, FLOAT originX, FLOAT originY,
-        IDWriteInlineObject* inlineObject, BOOL isSideways, BOOL isRightToLeft,
-        IUnknown* clientDrawingEffect) override
-    {
-        return E_NOTIMPL;
-    }
+    STDMETHOD(DrawUnderline)(void*, FLOAT, FLOAT, const DWRITE_UNDERLINE*, IUnknown*) override { return S_OK; }
+    STDMETHOD(DrawStrikethrough)(void*, FLOAT, FLOAT, const DWRITE_STRIKETHROUGH*, IUnknown*) override { return S_OK; }
+    STDMETHOD(DrawInlineObject)(void*, FLOAT, FLOAT, IDWriteInlineObject*, BOOL, BOOL, IUnknown*) override { return E_NOTIMPL; }
 };
 
 }
@@ -244,11 +251,15 @@ std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, in
     outWidth = 0;
     outHeight = 0;
     if (text.empty()) {
+        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: empty text");
         return {};
     }
 
     TextMetrics metrics = MeasureText(text, fontSize, 0, 0);
+    ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: MeasureText returned %d x %d", metrics.width, metrics.height);
+
     if (metrics.width <= 0 || metrics.height <= 0) {
+        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: zero bitmap size, cannot render");
         return {};
     }
 
@@ -260,27 +271,46 @@ std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, in
     ComPtr<IDWriteTextFormat> textFormat = CreateTextFormat(fontSize);
 
     ComPtr<IDWriteTextLayout> textLayout;
-    HRESULT hr = factory->CreateTextLayout(text.c_str(), static_cast<UINT32>(text.length()), textFormat.Get(), static_cast<FLOAT>(outWidth), static_cast<FLOAT>(outHeight), &textLayout);
+    HRESULT hr = factory->CreateTextLayout(
+        text.c_str(), static_cast<UINT32>(text.length()),
+        textFormat.Get(),
+        static_cast<FLOAT>(outWidth), static_cast<FLOAT>(outHeight),
+        &textLayout);
     if (FAILED(hr)) {
+        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: CreateTextLayout failed 0x%08X", static_cast<unsigned int>(hr));
         return {};
     }
 
     DWRITE_OVERHANG_METRICS overhang = {};
     hr = textLayout->GetOverhangMetrics(&overhang);
     if (FAILED(hr)) {
+        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: GetOverhangMetrics failed 0x%08X", static_cast<unsigned int>(hr));
         return {};
     }
 
-    float baselineOriginX = -overhang.left;
-    float baselineOriginY = -overhang.top;
+    ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: overhang left=%.2f top=%.2f right=%.2f bottom=%.2f",
+        overhang.left, overhang.top, overhang.right, overhang.bottom);
 
-    BitmapTextRenderer* renderer = new BitmapTextRenderer(factory, &bitmap, outWidth, outHeight);
-    hr = textLayout->Draw(nullptr, renderer, baselineOriginX, baselineOriginY);
+    float paddingLeft = std::fabs(overhang.left);
+    float paddingTop  = std::fabs(overhang.top);
+
+    BitmapTextRenderer* renderer = new BitmapTextRenderer(factory, &bitmap, outWidth, outHeight, paddingLeft, paddingTop);
+    hr = textLayout->Draw(nullptr, renderer, 0.0f, 0.0f);
     renderer->Release();
 
     if (FAILED(hr)) {
+        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: Draw failed 0x%08X", static_cast<unsigned int>(hr));
         return {};
     }
+
+    bool hasAlpha = false;
+    for (size_t i = 3; i < bitmap.size(); i += 4) {
+        if (bitmap[i] != 0) {
+            hasAlpha = true;
+            break;
+        }
+    }
+    ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: bitmap hasAlpha = %d, size=%dx%d", hasAlpha, outWidth, outHeight);
 
     return bitmap;
 }
