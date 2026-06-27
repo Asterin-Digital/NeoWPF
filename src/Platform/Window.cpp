@@ -1,4 +1,5 @@
 #include <NeoWPF/Platform/Window.h>
+#include <NeoWPF/Input/InputManager.h>
 #include <windowsx.h>
 
 namespace {
@@ -11,6 +12,91 @@ LRESULT CALLBACK NeoWPFWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
     case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
+
+    case WM_MOUSEMOVE:
+    {
+        int x = GET_X_LPARAM(lParam);
+        int y = GET_Y_LPARAM(lParam);
+        std::uint32_t buttonState = static_cast<std::uint32_t>(wParam);
+        NeoWPF::Input::InputManager::GetInstance().ProcessMouseInput(x, y, buttonState);
+        return 0;
+    }
+
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    {
+        int x = GET_X_LPARAM(lParam);
+        int y = GET_Y_LPARAM(lParam);
+        std::uint32_t buttonState = static_cast<std::uint32_t>(wParam);
+        if (uMsg == WM_LBUTTONDOWN)
+            buttonState |= 0x01;
+        else
+            buttonState &= ~0x01;
+        NeoWPF::Input::InputManager::GetInstance().ProcessMouseInput(x, y, buttonState);
+        return 0;
+    }
+
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    {
+        int x = GET_X_LPARAM(lParam);
+        int y = GET_Y_LPARAM(lParam);
+        std::uint32_t buttonState = static_cast<std::uint32_t>(wParam);
+        if (uMsg == WM_RBUTTONDOWN)
+            buttonState |= 0x02;
+        else
+            buttonState &= ~0x02;
+        NeoWPF::Input::InputManager::GetInstance().ProcessMouseInput(x, y, buttonState);
+        return 0;
+    }
+
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    {
+        int x = GET_X_LPARAM(lParam);
+        int y = GET_Y_LPARAM(lParam);
+        std::uint32_t buttonState = static_cast<std::uint32_t>(wParam);
+        if (uMsg == WM_MBUTTONDOWN)
+            buttonState |= 0x04;
+        else
+            buttonState &= ~0x04;
+        NeoWPF::Input::InputManager::GetInstance().ProcessMouseInput(x, y, buttonState);
+        return 0;
+    }
+
+    case WM_MOUSEWHEEL:
+    {
+        int x = GET_X_LPARAM(lParam);
+        int y = GET_Y_LPARAM(lParam);
+        int wheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+        std::uint32_t buttonState = GET_KEYSTATE_WPARAM(wParam);
+        NeoWPF::Input::InputManager::GetInstance().ProcessMouseInput(x, y, buttonState, wheelDelta);
+        return 0;
+    }
+
+    case WM_KEYDOWN:
+    {
+        int keyCode = static_cast<int>(wParam);
+        int repeatCount = static_cast<int>(lParam) & 0xFFFF;
+        NeoWPF::Input::InputManager::GetInstance().ProcessKeyboardInput(keyCode, true, 0, repeatCount);
+        return 0;
+    }
+
+    case WM_KEYUP:
+    {
+        int keyCode = static_cast<int>(wParam);
+        int repeatCount = static_cast<int>(lParam) & 0xFFFF;
+        NeoWPF::Input::InputManager::GetInstance().ProcessKeyboardInput(keyCode, false, 0, repeatCount);
+        return 0;
+    }
+
+    case WM_CHAR:
+    {
+        wchar_t charCode = static_cast<wchar_t>(wParam);
+        NeoWPF::Input::InputManager::GetInstance().ProcessKeyboardInput(0, true, charCode, 1);
+        return 0;
+    }
+
     default:
         return DefWindowProcW(hwnd, uMsg, wParam, lParam);
     }

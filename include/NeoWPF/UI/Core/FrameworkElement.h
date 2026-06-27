@@ -31,6 +31,8 @@ public:
     int GetLayoutOffsetX() const noexcept { return m_offsetX; }
     int GetLayoutOffsetY() const noexcept { return m_offsetY; }
 
+    void GetAbsolutePosition(int& outX, int& outY) const noexcept;
+
 private:
     int m_desiredWidth = 0;
     int m_desiredHeight = 0;

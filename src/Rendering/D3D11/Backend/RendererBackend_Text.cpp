@@ -1,6 +1,6 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
-#include <NeoWPF/Rendering/Shaders/ShaderSources.h>
+#include <NeoWPF/Rendering/ShaderSources.h>
 #include <d3d11.h>
 #include <wrl.h>
 #include <vector>

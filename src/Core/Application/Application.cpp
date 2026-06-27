@@ -1,4 +1,4 @@
-#include <NeoWPF/Core/Application.h>
+#include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Core/Root/RootVisuals.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Platform/Window.h>
@@ -7,6 +7,7 @@
 #include <NeoWPF/UI/Core/FrameworkElement.h>
 #include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/UI/Styling/DefaultStyles.h>
+#include <NeoWPF/Input/InputManager.h>
 #include <exception>
 #include <thread>
 #include <chrono>
@@ -162,6 +163,8 @@ int Application::Run(const wchar_t* title, int width, int height)
         s_appState.commandListInitialized = true;
     }
     ClearTopLevelVisualsDirty(visuals);
+
+    NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual));
 
     if (s_appState.renderThreadInitFailed.load()) {
         MessageBoxW(nullptr, L"NeoWPF failed to initialize rendering.", L"NeoWPF Error", MB_OK | MB_ICONERROR);

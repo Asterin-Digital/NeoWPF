@@ -118,12 +118,16 @@
     <ClInclude Include="include\NeoWPF\Animation\Animation.h" />
     <ClInclude Include="include\NeoWPF\Binding\Binding.h" />
     <ClInclude Include="include\NeoWPF\Controls\Controls.h" />
-    <ClInclude Include="include\NeoWPF\Core\Application.h" />
+    <ClInclude Include="include\NeoWPF\Core\Application\Application.h" />
     <ClInclude Include="include\NeoWPF\Core\Core.h" />
     <ClInclude Include="include\NeoWPF\Core\Root\RootVisuals.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Diagnostics.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Logger.h" />
     <ClInclude Include="include\NeoWPF\Input\Input.h" />
+    <ClInclude Include="include\NeoWPF\Input\InputManager.h" />
+    <ClInclude Include="include\NeoWPF\Input\Core\Events.h" />
+    <ClInclude Include="include\NeoWPF\Input\Core\RoutedEvent.h" />
+    <ClInclude Include="include\NeoWPF\Input\Core\EventHandler.h" />
     <ClInclude Include="include\NeoWPF\Layout\Layout.h" />
     <ClInclude Include="include\NeoWPF\NeoWPF.h" />
     <ClInclude Include="include\NeoWPF\Platform\Platform.h" />
@@ -151,11 +155,14 @@
     <ClInclude Include="include\NeoWPF\UI\Styling\StyleManager.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Core\Application.cpp" />
+    <ClCompile Include="src\Core\Application\Application.cpp" />
     <ClCompile Include="src\Core\Root\RootVisuals.cpp" />
     <ClCompile Include="src\UI\Styling\StyleManager.cpp" />
     <ClCompile Include="src\Diagnostics\Logger.cpp" />
     <ClCompile Include="src\Platform\Window.cpp" />
+    <ClCompile Include="src\Input\Core\Events.cpp" />
+    <ClCompile Include="src\Input\InputManager.cpp" />
+    <ClCompile Include="src\UI\Core\FrameworkElement.cpp" />
     <ClCompile Include="src\Rendering\Renderer.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Text\TextRenderer.cpp" />
     <ClCompile Include="src\Rendering\RenderScheduler.cpp" />
