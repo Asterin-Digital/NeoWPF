@@ -96,4 +96,58 @@ void TextBlock::EnsureTextTexture()
     m_textDirty = false;
 }
 
+void TextBlock::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
+{
+    if (!m_interactable)
+    {
+        return;
+    }
+    FrameworkElement::OnMouseInput(args);
+}
+
+void TextBlock::OnMouseDown(int x, int y, std::uint32_t buttonState)
+{
+    if (!m_interactable)
+    {
+        return;
+    }
+    FrameworkElement::OnMouseDown(x, y, buttonState);
+}
+
+void TextBlock::OnMouseUp(int x, int y, std::uint32_t buttonState)
+{
+    if (!m_interactable)
+    {
+        return;
+    }
+    FrameworkElement::OnMouseUp(x, y, buttonState);
+}
+
+void TextBlock::OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args)
+{
+    if (!m_interactable)
+    {
+        return;
+    }
+    FrameworkElement::OnMouseEnter(args);
+}
+
+void TextBlock::OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args)
+{
+    if (!m_interactable)
+    {
+        return;
+    }
+    FrameworkElement::OnMouseLeave(args);
+}
+
+void TextBlock::OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args)
+{
+    if (!m_interactable)
+    {
+        return;
+    }
+    FrameworkElement::OnKeyboardInput(args);
+}
+
 }
