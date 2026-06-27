@@ -56,14 +56,10 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
     std::vector<uint8_t>* bitmap;
     int width;
     int height;
-    float paddingLeft;
-    float paddingTop;
     long refCount = 1;
 
-    BitmapTextRenderer(ComPtr<IDWriteFactory> factory, std::vector<uint8_t>* bitmap,
-                       int width, int height, float padLeft, float padTop)
-        : factory(std::move(factory)), bitmap(bitmap), width(width), height(height),
-          paddingLeft(padLeft), paddingTop(padTop)
+    BitmapTextRenderer(ComPtr<IDWriteFactory> factory, std::vector<uint8_t>* bitmap, int width, int height)
+        : factory(std::move(factory)), bitmap(bitmap), width(width), height(height)
     {
     }
 
@@ -174,8 +170,8 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
             return hr;
         }
 
-        int originX = static_cast<int>(std::floor(paddingLeft + baselineOriginX + textureBounds.left));
-        int originY = static_cast<int>(std::floor(paddingTop  + baselineOriginY + textureBounds.top));
+        int originX = static_cast<int>(std::floor(baselineOriginX + textureBounds.left));
+        int originY = static_cast<int>(std::floor(baselineOriginY + textureBounds.top));
 
         int pixelsWritten = 0;
         for (int row = 0; row < textureHeight; ++row) {
@@ -197,7 +193,7 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
             }
         }
 
-        ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: wrote %d pixels", pixelsWritten);
+        ::NeoWPF::Diagnostics::LogInfo("DrawGlyphRun: wrote %d pixels", pixelsWritten);
         return S_OK;
     }
 
@@ -256,7 +252,7 @@ std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, in
     }
 
     TextMetrics metrics = MeasureText(text, fontSize, 0, 0);
-    ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: MeasureText returned %d x %d", metrics.width, metrics.height);
+    ::NeoWPF::Diagnostics::LogInfo("RenderTextBitmap: MeasureText returned %d x %d", metrics.width, metrics.height);
 
     if (metrics.width <= 0 || metrics.height <= 0) {
         ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: zero bitmap size, cannot render");
@@ -281,20 +277,7 @@ std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, in
         return {};
     }
 
-    DWRITE_OVERHANG_METRICS overhang = {};
-    hr = textLayout->GetOverhangMetrics(&overhang);
-    if (FAILED(hr)) {
-        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: GetOverhangMetrics failed 0x%08X", static_cast<unsigned int>(hr));
-        return {};
-    }
-
-    ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: overhang left=%.2f top=%.2f right=%.2f bottom=%.2f",
-        overhang.left, overhang.top, overhang.right, overhang.bottom);
-
-    float paddingLeft = std::fabs(overhang.left);
-    float paddingTop  = std::fabs(overhang.top);
-
-    BitmapTextRenderer* renderer = new BitmapTextRenderer(factory, &bitmap, outWidth, outHeight, paddingLeft, paddingTop);
+    BitmapTextRenderer* renderer = new BitmapTextRenderer(factory, &bitmap, outWidth, outHeight);
     hr = textLayout->Draw(nullptr, renderer, 0.0f, 0.0f);
     renderer->Release();
 
@@ -310,7 +293,7 @@ std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, in
             break;
         }
     }
-    ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: bitmap hasAlpha = %d, size=%dx%d", hasAlpha, outWidth, outHeight);
+    ::NeoWPF::Diagnostics::LogInfo("RenderTextBitmap: bitmap hasAlpha = %d, size=%dx%d", hasAlpha, outWidth, outHeight);
 
     return bitmap;
 }
