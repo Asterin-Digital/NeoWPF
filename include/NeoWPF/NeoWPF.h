@@ -13,4 +13,14 @@ namespace NeoWPF {
     using UI::StackPanel;
     using UI::Grid;
     using UI::TextBlock;
+    using Input::InputManager;
+    
+    namespace Input {
+        using Core::MouseEventArgs;
+        using Core::KeyboardEventArgs;
+        using Core::RoutedEvent;
+        using Core::RoutingStrategy;
+        using Core::MouseEventHandler;
+        using Core::KeyboardEventHandler;
+    }
 }

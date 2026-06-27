@@ -6,11 +6,10 @@
 
 namespace NeoWPF::Input
 {
-    static InputManager g_inputManager;
-
     InputManager& InputManager::GetInstance()
     {
-        return g_inputManager;
+        static InputManager instance;
+        return instance;
     }
 
     void InputManager::ProcessMouseInput(int x, int y, std::uint32_t buttonState, int wheelDelta)
