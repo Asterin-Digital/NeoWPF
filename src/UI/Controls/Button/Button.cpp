@@ -140,11 +140,7 @@ void Button::OnMouseUp(int x, int y, std::uint32_t buttonState)
 
 void Button::RaiseClick()
 {
-    for (auto& handler : m_clickHandlers) {
-        if (handler) {
-            handler();
-        }
-    }
+    Click.Invoke();
 }
 
 }

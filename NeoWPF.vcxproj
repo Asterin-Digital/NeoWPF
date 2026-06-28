@@ -133,11 +133,14 @@
     <ClInclude Include="include\NeoWPF\Platform\Platform.h" />
     <ClInclude Include="include\NeoWPF\Platform\Window.h" />
     <ClInclude Include="include\NeoWPF\Rendering\Renderer.h" />
+    <ClInclude Include="include\NeoWPF\Rendering\ShaderSources.h" />
     <ClInclude Include="include\NeoWPF\Rendering\TextRenderer.h" />
     <ClInclude Include="include\NeoWPF\Rendering\Rendering.h" />
     <ClInclude Include="include\NeoWPF\Rendering\Shaders\ShaderSources.h" />
     <ClInclude Include="include\NeoWPF\Resources\Resources.h" />
     <ClInclude Include="include\NeoWPF\Styling\Styling.h" />
+    <ClInclude Include="include\NeoWPF\UI\Controls\Button\Button.h" />
+    <ClInclude Include="include\NeoWPF\UI\Controls\Button\ButtonTemplate.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Panel.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Window.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Rectangle.h" />
@@ -159,6 +162,8 @@
   <ItemGroup>
     <ClCompile Include="src\Core\Application\Application.cpp" />
     <ClCompile Include="src\Core\Root\RootVisuals.cpp" />
+    <ClCompile Include="src\UI\Controls\Button\Button.cpp" />
+    <ClCompile Include="src\UI\Controls\Button\ButtonTemplate.cpp" />
     <ClCompile Include="src\UI\Styling\StyleManager.cpp" />
     <ClCompile Include="src\Diagnostics\Logger.cpp" />
     <ClCompile Include="src\Platform\Window.cpp" />

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <string>
-#include <functional>
 #include <NeoWPF/UI/Core/FrameworkElement.h>
+#include <NeoWPF/Core/Events/Event.h>
 
 namespace NeoWPF::Input::Core {
     class MouseEventArgs;
@@ -40,9 +40,8 @@ public:
     // Event handlers
     void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
 
-    // Click event
-    using ClickHandler = std::function<void()>;
-    void Subscribe(ClickHandler handler) { m_clickHandlers.push_back(handler); }
+    // Click event - public for direct subscription with +=
+    NeoWPF::Core::Event<> Click;
 
 private:
     std::wstring m_text;
@@ -55,8 +54,6 @@ private:
     int m_textWidth = 0;
     int m_textHeight = 0;
     bool m_textDirty = true;
-
-    std::vector<ClickHandler> m_clickHandlers;
 
     void EnsureTextTexture();
     void RaiseClick();

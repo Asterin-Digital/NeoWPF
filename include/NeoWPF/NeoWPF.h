@@ -13,6 +13,7 @@ namespace NeoWPF {
     using UI::StackPanel;
     using UI::Grid;
     using UI::TextBlock;
+    using UI::Controls::Button;
     using Input::InputManager;
     
     namespace Input {
