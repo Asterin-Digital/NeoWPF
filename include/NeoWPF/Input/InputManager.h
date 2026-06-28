@@ -37,11 +37,13 @@ namespace NeoWPF::Input
         InputManager(const InputManager&) = delete;
         InputManager& operator=(const InputManager&) = delete;
 
-        NeoWPF::UI::UIElement* HitTestElement(NeoWPF::UI::UIElement* element, int x, int y);
+        NeoWPF::UI::UIElement* HitTestElement(NeoWPF::UI::UIElement* element, int x, int y, int depth = 0);
         void RouteMouseEvent(NeoWPF::UI::UIElement* targetElement, const Core::RoutedEvent& eventDef, 
                             int x, int y, std::uint32_t buttonState, int wheelDelta);
         void RouteKeyboardEvent(NeoWPF::UI::UIElement* targetElement, const Core::RoutedEvent& eventDef,
                                int keyCode, bool isKeyDown, wchar_t charCode, int repeatCount);
+
+        static bool s_hitTestLogging;
 
         NeoWPF::UI::UIElement* m_rootElement = nullptr;
         NeoWPF::UI::UIElement* m_focusedElement = nullptr;

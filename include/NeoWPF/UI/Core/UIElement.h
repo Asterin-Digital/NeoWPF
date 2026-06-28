@@ -28,6 +28,9 @@ public:
     virtual void Measure(int availableWidth, int availableHeight) {}
     virtual void Arrange(int finalWidth, int finalHeight) {}
 
+    virtual bool IsHitTestVisible() const noexcept { return true; }
+    virtual bool IsInteractable() const noexcept { return true; }
+
     virtual void OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args) {}
     virtual void OnMouseDown(int x, int y, std::uint32_t buttonState) {}
     virtual void OnMouseUp(int x, int y, std::uint32_t buttonState) {}

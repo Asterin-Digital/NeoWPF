@@ -30,15 +30,8 @@ public:
     void Arrange(int finalWidth, int finalHeight) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
-    void OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args) override;
-    void OnMouseDown(int x, int y, std::uint32_t buttonState) override;
-    void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
-    void OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args) override;
-    void OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args) override;
-    void OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args) override;
-
-    bool IsInteractable() const noexcept { return m_interactable; }
-    void SetInteractable(bool interactable) noexcept { m_interactable = interactable; }
+    bool IsHitTestVisible() const noexcept override { return m_isHitTestVisible; }
+    void SetHitTestVisible(bool visible) noexcept { m_isHitTestVisible = visible; }
 
 private:
     std::wstring m_text;
@@ -48,7 +41,7 @@ private:
     int m_textWidth = 0;
     int m_textHeight = 0;
     bool m_textDirty = true;
-    bool m_interactable = false;
+    bool m_isHitTestVisible = true;
 
     void EnsureTextTexture();
 };
