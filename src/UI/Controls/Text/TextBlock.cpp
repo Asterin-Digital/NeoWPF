@@ -51,9 +51,12 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         return;
     }
 
+    int absX, absY;
+    GetAbsolutePosition(absX, absY);
+
     commands.DrawTexturedQuad(
-        static_cast<float>(GetLayoutOffsetX()),
-        static_cast<float>(GetLayoutOffsetY()),
+        static_cast<float>(absX),
+        static_cast<float>(absY),
         static_cast<float>(m_textWidth),
         static_cast<float>(m_textHeight),
         0.0f, 0.0f,

@@ -12,7 +12,9 @@
 
 namespace NeoWPF::UI {
 
-GridLayoutResult GridLayout::ComputeLayout(
+    bool GridLayout::s_gridLogging = true; // Please do not turn this on unless ur debugging something
+
+    GridLayoutResult GridLayout::ComputeLayout(
     const std::vector<Grid::Definition>& rowDefs,
     const std::vector<Grid::Definition>& colDefs,
     int availableWidth,
@@ -22,7 +24,7 @@ GridLayoutResult GridLayout::ComputeLayout(
     int numRows = std::max(1, static_cast<int>(rowDefs.size()));
     int numCols = std::max(1, static_cast<int>(colDefs.size()));
 
-    NeoWPF::Diagnostics::LogInfo("[Grid] ComputeLayout: Available %dx%d, Grid %dx%d, %zu children",
+    if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] ComputeLayout: Available %dx%d, Grid %dx%d, %zu children",
         availableWidth, availableHeight, numCols, numRows, children.size());
 
     GridLayoutResult result;
@@ -39,12 +41,12 @@ GridLayoutResult GridLayout::ComputeLayout(
         if (def.mode == SizeMode::Fixed) {
             result.rowHeights[r] = def.value;
             totalFixedHeight += def.value;
-            NeoWPF::Diagnostics::LogInfo("[Grid] Row %d: Fixed %d", r, def.value);
+            if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Row %d: Fixed %d", r, def.value);
         } else if (def.mode == SizeMode::Star) {
             starRowCount += def.value > 0 ? def.value : 1;
-            NeoWPF::Diagnostics::LogInfo("[Grid] Row %d: Star(%.0f)", r, (float)def.value);
+            if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Row %d: Star(%.0f)", r, (float)def.value);
         } else {
-            NeoWPF::Diagnostics::LogInfo("[Grid] Row %d: Auto", r);
+            if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Row %d: Auto", r);
         }
     }
 
@@ -53,12 +55,12 @@ GridLayoutResult GridLayout::ComputeLayout(
         if (def.mode == SizeMode::Fixed) {
             result.colWidths[c] = def.value;
             totalFixedWidth += def.value;
-            NeoWPF::Diagnostics::LogInfo("[Grid] Col %d: Fixed %d", c, def.value);
+            if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Col %d: Fixed %d", c, def.value);
         } else if (def.mode == SizeMode::Star) {
             starColCount += def.value > 0 ? def.value : 1;
-            NeoWPF::Diagnostics::LogInfo("[Grid] Col %d: Star(%.0f)", c, (float)def.value);
+            if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Col %d: Star(%.0f)", c, (float)def.value);
         } else {
-            NeoWPF::Diagnostics::LogInfo("[Grid] Col %d: Auto", c);
+            if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Col %d: Auto", c);
         }
     }
 
@@ -68,7 +70,7 @@ GridLayoutResult GridLayout::ComputeLayout(
     int starHeightPerUnit = starRowCount > 0 ? remainingHeight / starRowCount : 0;
     int starWidthPerUnit = starColCount > 0 ? remainingWidth / starColCount : 0;
 
-    NeoWPF::Diagnostics::LogInfo("[Grid] Star calculation: rows=%d(perUnit=%d), cols=%d(perUnit=%d)",
+    if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Star calculation: rows=%d(perUnit=%d), cols=%d(perUnit=%d)",
         starRowCount, starHeightPerUnit, starColCount, starWidthPerUnit);
 
     for (int r = 0; r < numRows; ++r) {
@@ -76,7 +78,7 @@ GridLayoutResult GridLayout::ComputeLayout(
         if (def.mode == SizeMode::Star) {
             int starCount = def.value > 0 ? def.value : 1;
             result.rowHeights[r] = starHeightPerUnit * starCount;
-            NeoWPF::Diagnostics::LogInfo("[Grid] Row %d (Star): %d", r, result.rowHeights[r]);
+            if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Row %d (Star): %d", r, result.rowHeights[r]);
         }
     }
 
@@ -85,7 +87,7 @@ GridLayoutResult GridLayout::ComputeLayout(
         if (def.mode == SizeMode::Star) {
             int starCount = def.value > 0 ? def.value : 1;
             result.colWidths[c] = starWidthPerUnit * starCount;
-            NeoWPF::Diagnostics::LogInfo("[Grid] Col %d (Star): %d", c, result.colWidths[c]);
+            if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Col %d (Star): %d", c, result.colWidths[c]);
         }
     }
 
@@ -113,7 +115,7 @@ GridLayoutResult GridLayout::ComputeLayout(
     for (int r = 0; r < numRows; ++r) totalH += result.rowHeights[r];
     for (int c = 0; c < numCols; ++c) totalW += result.colWidths[c];
 
-    NeoWPF::Diagnostics::LogInfo("[Grid] Layout (Auto=0): %dx%d", totalW, totalH);
+    if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Layout (Auto=0): %dx%d", totalW, totalH);
 
     return result;
 }

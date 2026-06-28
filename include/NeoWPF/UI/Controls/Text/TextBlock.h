@@ -2,6 +2,7 @@
 
 #include <string>
 #include <NeoWPF/UI/Core/FrameworkElement.h>
+#include <NeoWPF/UI/Core/IContentAware.h>
 #include <NeoWPF/Rendering/Renderer.h>
 
 namespace NeoWPF::Input::Core
@@ -12,7 +13,7 @@ namespace NeoWPF::Input::Core
 
 namespace NeoWPF::UI {
 
-class TextBlock : public FrameworkElement {
+class TextBlock : public FrameworkElement, public IContentAware {
 public:
     TextBlock();
     ~TextBlock();
@@ -32,6 +33,11 @@ public:
 
     bool IsHitTestVisible() const noexcept override { return m_isHitTestVisible; }
     void SetHitTestVisible(bool visible) noexcept { m_isHitTestVisible = visible; }
+
+    ContentBounds GetContentBounds() const noexcept override { return {m_textWidth, m_textHeight}; }
+
+    int GetContentWidth() const noexcept { return m_textWidth; }
+    int GetContentHeight() const noexcept { return m_textHeight; }
 
 private:
     std::wstring m_text;

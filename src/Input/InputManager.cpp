@@ -2,12 +2,13 @@
 #include <NeoWPF/Input/Core/Events.h>
 #include <NeoWPF/UI/Core/UIElement.h>
 #include <NeoWPF/UI/Core/FrameworkElement.h>
+#include <NeoWPF/UI/Core/IContentAware.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 
 namespace NeoWPF::Input
 {
-    bool InputManager::s_hitTestLogging = false;
+    bool InputManager::s_hitTestLogging = false; // Please do not turn this on unless ur debugging something
 
     InputManager& InputManager::GetInstance()
     {
@@ -164,6 +165,36 @@ namespace NeoWPF::Input
         }
 
         NeoWPF::UI::UIElement* deepestHit = isHitTestVisible ? element : nullptr;
+
+        // Content-aware hit testing: Check if element implements IContentAware interface
+        // (e.g., TextBlock only responds to hits over actual text, not allocated space)
+        if (deepestHit)
+        {
+            auto contentAware = dynamic_cast<NeoWPF::UI::IContentAware*>(element);
+            if (contentAware)
+            {
+                NeoWPF::UI::ContentBounds contentBounds = contentAware->GetContentBounds();
+
+                if (contentBounds.width > 0 && contentBounds.height > 0)
+                {
+                    int absX, absY;
+                    fw->GetAbsolutePosition(absX, absY);
+
+                    if (x < absX || x >= absX + contentBounds.width || y < absY || y >= absY + contentBounds.height)
+                    {
+                        if (s_hitTestLogging)
+                        {
+                            NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - OUTSIDE", indent, absX, absY, contentBounds.width, contentBounds.height);
+                        }
+                        deepestHit = nullptr;
+                    }
+                    else if (s_hitTestLogging)
+                    {
+                        NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - INSIDE", indent, absX, absY, contentBounds.width, contentBounds.height);
+                    }
+                }
+            }
+        }
 
         auto children = element->GetVisualChildren();
         if (s_hitTestLogging && !children.empty())

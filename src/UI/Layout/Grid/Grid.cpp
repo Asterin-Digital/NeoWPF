@@ -72,7 +72,7 @@ int Grid::GetColumnSpan(Visual* v)
 
 void Grid::Measure(int availableWidth, int availableHeight)
 {
-    NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Available: %dx%d", availableWidth, availableHeight);
+    if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Available: %dx%d", availableWidth, availableHeight);
 
     const int INF = 1000000;
     int numRows = std::max(1, static_cast<int>(m_rowDefs.size()));
@@ -113,7 +113,7 @@ void Grid::Measure(int availableWidth, int availableHeight)
                 }
             }
             autoRowHeights[r] = maxH;
-            NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Row %d Auto desired = %d", r, maxH);
+            if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Row %d Auto desired = %d", r, maxH);
         }
     }
 
@@ -132,7 +132,7 @@ void Grid::Measure(int availableWidth, int availableHeight)
                 }
             }
             autoColWidths[c] = maxW;
-            NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Col %d Auto desired = %d", c, maxW);
+            if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Col %d Auto desired = %d", c, maxW);
         }
     }
 
@@ -178,7 +178,7 @@ void Grid::Measure(int availableWidth, int availableHeight)
             cellH += layout.rowHeights[j];
 
         fe->Measure(cellW, cellH);
-        NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Child[%zu] at (%d,%d) span(%d,%d): measured %dx%d, desired %dx%d",
+        if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Child[%zu] at (%d,%d) span(%d,%d): measured %dx%d, desired %dx%d",
             i, r, c, rspan, cspan, cellW, cellH,
             fe->GetDesiredWidth(), fe->GetDesiredHeight());
     }
@@ -187,13 +187,13 @@ void Grid::Measure(int availableWidth, int availableHeight)
     for (int w : layout.colWidths) totalW += w;
     for (int h : layout.rowHeights) totalH += h;
     SetDesiredSize(totalW, totalH);
-    NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Final desired size: %dx%d", totalW, totalH);
+    if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Final desired size: %dx%d", totalW, totalH);
 }
 
 void Grid::Arrange(int finalWidth, int finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
-    NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Final size: %dx%d", finalWidth, finalHeight);
+    if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Final size: %dx%d", finalWidth, finalHeight);
 
     int numRows = std::max(1, static_cast<int>(m_rowDefs.size()));
     int numCols = std::max(1, static_cast<int>(m_colDefs.size()));
@@ -216,7 +216,7 @@ void Grid::Arrange(int finalWidth, int finalHeight)
                 }
             }
             autoRowHeights[r] = maxH;
-            NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Row %d Auto desired = %d", r, maxH);
+            if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Row %d Auto desired = %d", r, maxH);
         }
     }
 
@@ -235,7 +235,7 @@ void Grid::Arrange(int finalWidth, int finalHeight)
                 }
             }
             autoColWidths[c] = maxW;
-            NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Col %d Auto desired = %d", c, maxW);
+            if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Col %d Auto desired = %d", c, maxW);
         }
     }
 
@@ -286,7 +286,7 @@ void Grid::Arrange(int finalWidth, int finalHeight)
         {
             fe->Arrange(w, h);
             fe->SetLayoutOffset(x, y);
-            NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Child[%zu] at (%d,%d): pos(%d,%d) size(%dx%d)",
+            if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Child[%zu] at (%d,%d): pos(%d,%d) size(%dx%d)",
                 i, r, c, x, y, w, h);
         }
     }
