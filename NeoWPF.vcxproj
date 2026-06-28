@@ -153,6 +153,8 @@
     <ClInclude Include="include\NeoWPF\UI\UI.h" />
     <ClInclude Include="include\NeoWPF\UI\Styling\Style.h" />
     <ClInclude Include="include\NeoWPF\UI\Styling\StyleManager.h" />
+    <ClInclude Include="include\NeoWPF\UI\Controls\Templates\ControlTemplate.h" />
+    <ClInclude Include="include\NeoWPF\UI\Controls\Templates\TemplateParts.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Core\Application\Application.cpp" />
@@ -177,6 +179,7 @@
     <ClCompile Include="src\UI\Layout\Grid\Grid.cpp" />
     <ClCompile Include="src\UI\Layout\Grid\GridLayout.cpp" />
     <ClCompile Include="src\UI\Styling\DefaultStyles.cpp" />
+    <ClCompile Include="src\UI\Controls\Templates\ControlTemplate.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
