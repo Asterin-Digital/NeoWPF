@@ -39,12 +39,12 @@ public:
     virtual bool IsHitTestVisible() const noexcept { return true; }
     virtual bool IsInteractable() const noexcept { return true; }
 
-    void SetTemplate(const std::shared_ptr<NeoWPF::UI::Controls::Templates::ControlTemplateBase>& templatePtr) {
+    void SetTemplate(const std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase>& templatePtr) {
         m_template = templatePtr;
         m_hasTemplateApplied = false;
     }
 
-    const std::shared_ptr<NeoWPF::UI::Controls::Templates::ControlTemplateBase>& GetTemplate() const noexcept { return m_template; }
+    const std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase>& GetTemplate() const noexcept { return m_template; }
 
     bool HasTemplate() const noexcept { return static_cast<bool>(m_template); }
 
@@ -88,7 +88,7 @@ private:
     bool m_isEnabled = true;
     bool m_isDirty = true;
     bool m_hasTemplateApplied = false;
-    std::shared_ptr<NeoWPF::UI::Controls::Templates::ControlTemplateBase> m_template;
+    std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase> m_template;
     std::unordered_map<std::string, Visual*> m_templateChildren;
 };
 

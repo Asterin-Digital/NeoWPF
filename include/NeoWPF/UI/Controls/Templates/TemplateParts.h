@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace NeoWPF::UI::Controls::Templates {
+namespace NeoWPF::UI::Templates {
 
 struct TemplateParts {
     static constexpr const char* Content = "Content";
@@ -10,4 +10,4 @@ struct TemplateParts {
     static constexpr const char* Root = "Root";
 };
 
-} // namespace NeoWPF::UI::Controls::Templates
+} // namespace NeoWPF::UI::Templates

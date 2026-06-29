@@ -9,7 +9,7 @@ class UIElement;
 class Visual;
 }
 
-namespace NeoWPF::UI::Controls::Templates {
+namespace NeoWPF::UI::Templates {
 
 struct TemplatePart {
     std::string Name;
@@ -56,4 +56,4 @@ private:
     Builder m_builder;
 };
 
-} // namespace NeoWPF::UI::Controls::Templates
+} // namespace NeoWPF::UI::Templates

@@ -2,7 +2,7 @@
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 
-namespace NeoWPF::UI::Controls {
+namespace NeoWPF::UI {
 
 Button::Button()
     : FrameworkElement()

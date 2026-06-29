@@ -3,7 +3,7 @@
 #include <NeoWPF/UI/Core/Visual.h>
 #include <utility>
 
-namespace NeoWPF::UI::Controls::Templates {
+namespace NeoWPF::UI::Templates {
 
 bool ControlTemplateBase::CanApplyTo(UIElement* element) const
 {
@@ -71,4 +71,4 @@ void ControlTemplate::Apply(UIElement* element)
     m_builder(element, builder);
 }
 
-} // namespace NeoWPF::UI::Controls::Templates
+} // namespace NeoWPF::UI::Templates

@@ -18,7 +18,7 @@ public:
         }
         m_content = content;
         if (m_content) {
-            AddVisualChild(m_content);
+            AddChild(m_content);
         }
     }
 

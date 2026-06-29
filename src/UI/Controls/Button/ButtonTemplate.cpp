@@ -1,10 +1,10 @@
 #include <NeoWPF/UI/Controls/Button/ButtonTemplate.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
 
-namespace NeoWPF::UI::Controls {
+namespace NeoWPF::UI {
 
 ButtonTemplate::ButtonTemplate()
-    : ControlTemplate([](UIElement* element, Templates::ControlTemplateBuilder& builder) {
+    : Templates::ControlTemplate([](UIElement* element, Templates::ControlTemplateBuilder& builder) {
     })
 {
 }

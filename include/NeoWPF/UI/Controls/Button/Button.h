@@ -8,7 +8,7 @@ namespace NeoWPF::Input::Core {
     class MouseEventArgs;
 }
 
-namespace NeoWPF::UI::Controls {
+namespace NeoWPF::UI {
 
 class Button : public FrameworkElement {
 public:
@@ -48,6 +48,8 @@ private:
     uint32_t m_textColor = 0xFF000000u;
     uint32_t m_backgroundColor = 0xFFC0C0C0u;
     int m_fontSize = 16;
+
+private:
     int m_padding = 8;
     bool m_isEnabled = true;
     uint32_t m_textureId = 0;

@@ -20,7 +20,7 @@ class ButtonStyle : public Style {
 public:
     void Apply(NeoWPF::UI::UIElement* element) override
     {
-        if (auto button = dynamic_cast<NeoWPF::UI::Controls::Button*>(element)) {
+        if (auto button = dynamic_cast<NeoWPF::UI::Button*>(element)) {
             button->SetTextColor(0xFF000000u);
             button->SetFontSize(14);
             button->SetPadding(8);
@@ -32,7 +32,7 @@ public:
 void RegisterDefaultStyles()
 {
     StyleManager::RegisterDefault(typeid(NeoWPF::UI::Panel), std::make_shared<PanelStyle>());
-    StyleManager::RegisterDefault(typeid(NeoWPF::UI::Controls::Button), std::make_shared<ButtonStyle>());
+    StyleManager::RegisterDefault(typeid(NeoWPF::UI::Button), std::make_shared<ButtonStyle>());
 }
 
 }
