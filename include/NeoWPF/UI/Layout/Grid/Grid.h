@@ -1,6 +1,7 @@
 #pragma once
 
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
+#include <initializer_list>
 #include <vector>
 #include <unordered_map>
 
@@ -14,6 +15,8 @@ enum class SizeMode {
 
 class Grid : public Panel {
 public:
+    using Panel::AddChild;
+
     struct Definition {
         SizeMode mode = SizeMode::Auto;
         int value = 0;
@@ -22,7 +25,11 @@ public:
     Grid() = default;
 
     void AddRow(SizeMode mode = SizeMode::Auto, int value = 0) { m_rowDefs.push_back({mode, value}); }
+    void AddRows(std::initializer_list<Definition> defs) { m_rowDefs.insert(m_rowDefs.end(), defs.begin(), defs.end()); }
     void AddColumn(SizeMode mode = SizeMode::Auto, int value = 0) { m_colDefs.push_back({mode, value}); }
+    void AddColumns(std::initializer_list<Definition> defs) { m_colDefs.insert(m_colDefs.end(), defs.begin(), defs.end()); }
+
+    void AddChild(Visual* child, int row, int column, int rowSpan = 1, int columnSpan = 1);
 
     static void SetRow(Visual* v, int r);
     static void SetColumn(Visual* v, int c);

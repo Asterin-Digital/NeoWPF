@@ -89,11 +89,26 @@ namespace NeoWPF {
 
         @details
         Supports `Auto`, `Fixed` and star (`*`) sizing for rows and columns.
-        Use `Grid` when you need multi-dimensional layouts. Attach row and
-        column indexes to children using the Grid helpers.
+        Use `Grid` when you need multi-dimensional layouts. Define rows and
+        columns with `AddRow` / `AddColumn`, then place children in cells.
 
         @example
-        // Create a 2x2 grid and place children using SetRow/SetColumn.
+        // Create a 2x2 grid and place children using the compact overload
+        auto grid = std::make_shared<NeoWPF::Grid>();
+        grid->AddRow(NeoWPF::UI::SizeMode::Star, 1);
+        grid->AddRow(NeoWPF::UI::SizeMode::Star, 1);
+        grid->AddColumn(NeoWPF::UI::SizeMode::Star, 1);
+        grid->AddColumn(NeoWPF::UI::SizeMode::Star, 1);
+
+        auto child = std::make_shared<NeoWPF::UI::Panel>();
+        grid->AddChild(child.get(), 0, 1);
+
+        @example
+        // The verbose form is equivalent and works through the existing row/column setters.
+        auto child2 = std::make_shared<NeoWPF::UI::Panel>();
+        NeoWPF::Grid::SetRow(child2.get(), 1);
+        NeoWPF::Grid::SetColumn(child2.get(), 0);
+        grid->AddChild(child2.get());
 
         @since 1.0
     */

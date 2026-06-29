@@ -71,6 +71,17 @@ int Grid::GetColumnSpan(Visual* v)
     return it == s_colSpanMap.end() ? 1 : it->second;
 }
 
+void Grid::AddChild(Visual* child, int row, int column, int rowSpan, int columnSpan)
+{
+    if (!child) return;
+
+    SetRow(child, row);
+    SetColumn(child, column);
+    SetRowSpan(child, rowSpan);
+    SetColumnSpan(child, columnSpan);
+    Panel::AddChild(child);
+}
+
 void Grid::Measure(int availableWidth, int availableHeight)
 {
     if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Available: %dx%d", availableWidth, availableHeight);
