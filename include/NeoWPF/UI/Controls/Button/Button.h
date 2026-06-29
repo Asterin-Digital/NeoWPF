@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <NeoWPF/UI/Core/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Core/Events/Event.h>
 
 namespace NeoWPF::Input::Core {

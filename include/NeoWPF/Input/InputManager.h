@@ -1,6 +1,6 @@
 #pragma once
 
-#include <NeoWPF/UI/Core/UIElement.h>
+#include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <memory>
 #include <unordered_map>

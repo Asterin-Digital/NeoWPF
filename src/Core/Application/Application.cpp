@@ -3,8 +3,8 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Platform/Window.h>
 #include <NeoWPF/Rendering/Renderer.h>
-#include <NeoWPF/UI/Core/Visual.h>
-#include <NeoWPF/UI/Core/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/UI/Styling/DefaultStyles.h>
 #include <NeoWPF/Input/InputManager.h>

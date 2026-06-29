@@ -1,14 +1,14 @@
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/Input/Core/Events.h>
-#include <NeoWPF/UI/Core/UIElement.h>
-#include <NeoWPF/UI/Core/FrameworkElement.h>
-#include <NeoWPF/UI/Core/IContentAware.h>
+#include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Element/IContentAware.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 
 namespace NeoWPF::Input
 {
-    bool InputManager::s_hitTestLogging = false; // Please do not turn this on unless ur debugging something
+    bool InputManager::s_hitTestLogging = false;
 
     InputManager& InputManager::GetInstance()
     {
@@ -166,8 +166,6 @@ namespace NeoWPF::Input
 
         NeoWPF::UI::UIElement* deepestHit = isHitTestVisible ? element : nullptr;
 
-        // Content-aware hit testing: Check if element implements IContentAware interface
-        // (e.g., TextBlock only responds to hits over actual text, not allocated space)
         if (deepestHit)
         {
             auto contentAware = dynamic_cast<NeoWPF::UI::IContentAware*>(element);

@@ -1,6 +1,6 @@
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
-#include <NeoWPF/UI/Core/UIElement.h>
-#include <NeoWPF/UI/Core/Visual.h>
+#include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/UI/Core/Element/Visual.h>
 #include <utility>
 
 namespace NeoWPF::UI::Templates {

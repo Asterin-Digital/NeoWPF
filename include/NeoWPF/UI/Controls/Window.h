@@ -1,6 +1,6 @@
 #pragma once
 
-#include <NeoWPF/UI/Core/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 
 namespace NeoWPF::UI {
 

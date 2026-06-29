@@ -1,6 +1,6 @@
 #pragma once
 
-#include <NeoWPF/UI/Core/Visual.h>
+#include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <vector>
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <NeoWPF/UI/Core/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Rendering/Renderer.h>
 
 namespace NeoWPF::Input::Core

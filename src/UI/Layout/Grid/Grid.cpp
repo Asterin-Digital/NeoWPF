@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Layout/Grid/GridLayout.h>
-#include <NeoWPF/UI/Core/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Alignment/Alignment.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 
@@ -284,10 +285,24 @@ void Grid::Arrange(int finalWidth, int finalHeight)
 
         if (auto fe = dynamic_cast<FrameworkElement*>(child))
         {
+
             fe->Arrange(w, h);
-            fe->SetLayoutOffset(x, y);
-            if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Child[%zu] at (%d,%d): pos(%d,%d) size(%dx%d)",
-                i, r, c, x, y, w, h);
+
+
+            int alignedX = 0, alignedY = 0, alignedW = w, alignedH = h;
+            Alignment::ApplyAlignment(
+                fe,
+                w, h,
+                fe->GetHorizontalAlignment(),
+                fe->GetVerticalAlignment(),
+                alignedX, alignedY, alignedW, alignedH
+            );
+
+
+            fe->Arrange(alignedW, alignedH);
+            fe->SetLayoutOffset(x + alignedX, y + alignedY);
+            if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Child[%zu] at (%d,%d): pos(%d,%d) size(%dx%d) [aligned within cell %dx%d]",
+                i, r, c, x + alignedX, y + alignedY, alignedW, alignedH, w, h);
         }
     }
 }

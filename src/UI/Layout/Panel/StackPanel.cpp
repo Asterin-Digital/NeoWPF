@@ -1,5 +1,5 @@
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
-#include <NeoWPF/UI/Core/Visual.h>
+#include <NeoWPF/UI/Core/Element/Visual.h>
 #include <algorithm>
 
 namespace NeoWPF::UI {

@@ -1,5 +1,5 @@
 #include <NeoWPF/UI/Layout/Grid/GridLayout.h>
-#include <NeoWPF/UI/Core/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 

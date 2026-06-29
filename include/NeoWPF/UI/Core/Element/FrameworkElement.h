@@ -1,6 +1,7 @@
 #pragma once
 
-#include <NeoWPF/UI/Core/UIElement.h>
+#include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/UI/Core/Alignment/Alignment.h>
 
 namespace NeoWPF::UI {
 
@@ -31,6 +32,12 @@ public:
     int GetLayoutOffsetX() const noexcept { return m_offsetX; }
     int GetLayoutOffsetY() const noexcept { return m_offsetY; }
 
+    HorizontalAlignment GetHorizontalAlignment() const noexcept { return m_horizontalAlignment; }
+    void SetHorizontalAlignment(HorizontalAlignment align) noexcept { m_horizontalAlignment = align; }
+
+    VerticalAlignment GetVerticalAlignment() const noexcept { return m_verticalAlignment; }
+    void SetVerticalAlignment(VerticalAlignment align) noexcept { m_verticalAlignment = align; }
+
     void GetAbsolutePosition(int& outX, int& outY) const noexcept;
 
 private:
@@ -40,6 +47,8 @@ private:
     int m_finalHeight = 0;
     int m_offsetX = 0;
     int m_offsetY = 0;
+    HorizontalAlignment m_horizontalAlignment = HorizontalAlignment::Stretch;
+    VerticalAlignment m_verticalAlignment = VerticalAlignment::Stretch;
 };
 
 }

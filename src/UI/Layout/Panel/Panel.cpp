@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
-#include <NeoWPF/UI/Core/Visual.h>
+#include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/UI/Core/Alignment/Alignment.h>
 #include <algorithm>
 
 namespace NeoWPF::UI {
@@ -29,8 +30,18 @@ void Panel::Arrange(int finalWidth, int finalHeight)
 
     for (auto child : GetVisualChildren()) {
         if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
-            fe->Arrange(fe->GetDesiredWidth(), fe->GetDesiredHeight());
-            fe->SetLayoutOffset(0, 0);
+
+            int alignedX = 0, alignedY = 0, alignedW = finalWidth, alignedH = finalHeight;
+            Alignment::ApplyAlignment(
+                fe,
+                finalWidth, finalHeight,
+                fe->GetHorizontalAlignment(),
+                fe->GetVerticalAlignment(),
+                alignedX, alignedY, alignedW, alignedH
+            );
+
+            fe->Arrange(alignedW, alignedH);
+            fe->SetLayoutOffset(alignedX, alignedY);
         }
     }
 }

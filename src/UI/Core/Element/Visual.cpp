@@ -1,4 +1,4 @@
-#include <NeoWPF/UI/Core/Visual.h>
+#include <NeoWPF/UI/Core/Element/Visual.h>
 
 namespace NeoWPF::UI {
 

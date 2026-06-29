@@ -1,5 +1,5 @@
 #include <NeoWPF/Core/Root/RootVisuals.h>
-#include <NeoWPF/UI/Core/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Controls/Window.h>
 
 namespace NeoWPF::Core {

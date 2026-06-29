@@ -1,8 +1,8 @@
 #pragma once
 
 #include <string>
-#include <NeoWPF/UI/Core/FrameworkElement.h>
-#include <NeoWPF/UI/Core/IContentAware.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Element/IContentAware.h>
 #include <NeoWPF/Rendering/Renderer.h>
 
 namespace NeoWPF::Input::Core
