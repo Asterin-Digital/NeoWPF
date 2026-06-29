@@ -7,11 +7,15 @@ namespace NeoWPF::UI {
 Button::Button()
     : FrameworkElement()
 {
+    SetHorizontalAlignment(HorizontalAlignment::Left);
+    SetVerticalAlignment(VerticalAlignment::Top);
 }
 
 Button::Button(const std::wstring& text)
     : FrameworkElement()
 {
+    SetHorizontalAlignment(HorizontalAlignment::Left);
+    SetVerticalAlignment(VerticalAlignment::Top);
     SetText(text);
 }
 
@@ -37,7 +41,7 @@ void Button::Measure(int availableWidth, int availableHeight)
         return;
     }
 
-    auto metrics = NeoWPF::Rendering::Text::MeasureText(m_text, m_fontSize, availableWidth, availableHeight);
+    auto metrics = NeoWPF::Rendering::Text::MeasureText(m_text, m_fontSize, 0, 0);
     int measuredWidth = metrics.width + (m_padding * 2);
     int measuredHeight = metrics.height + (m_padding * 2);
     SetDesiredSize(measuredWidth, measuredHeight);

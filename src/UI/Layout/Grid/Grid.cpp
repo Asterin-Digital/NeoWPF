@@ -179,9 +179,13 @@ void Grid::Measure(int availableWidth, int availableHeight)
             cellH += layout.rowHeights[j];
 
         fe->Measure(cellW, cellH);
-        if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Child[%zu] at (%d,%d) span(%d,%d): measured %dx%d, desired %dx%d",
-            i, r, c, rspan, cspan, cellW, cellH,
-            fe->GetDesiredWidth(), fe->GetDesiredHeight());
+        if (GridLayout::s_gridLogging) {
+            NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Child[%zu] at (%d,%d) span(%d,%d): cell %dx%d, desired %dx%d, horizontal=%d vertical=%d",
+                i, r, c, rspan, cspan, cellW, cellH,
+                fe->GetDesiredWidth(), fe->GetDesiredHeight(),
+                static_cast<int>(fe->GetHorizontalAlignment()),
+                static_cast<int>(fe->GetVerticalAlignment()));
+        }
     }
 
     int totalW = 0, totalH = 0;
@@ -194,66 +198,28 @@ void Grid::Measure(int availableWidth, int availableHeight)
 void Grid::Arrange(int finalWidth, int finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
-    if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Final size: %dx%d", finalWidth, finalHeight);
+    if (GridLayout::s_gridLogging)
+        NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Final size: %dx%d", finalWidth, finalHeight);
 
     int numRows = std::max(1, static_cast<int>(m_rowDefs.size()));
     int numCols = std::max(1, static_cast<int>(m_colDefs.size()));
 
+
     std::vector<int> autoRowHeights(numRows, 0);
     std::vector<int> autoColWidths(numCols, 0);
 
-    for (int r = 0; r < numRows; ++r)
-    {
-        if (m_rowDefs[r].mode == SizeMode::Auto)
-        {
-            int maxH = 0;
-            for (auto child : GetVisualChildren())
-            {
-                if (!child) continue;
-                if (GetRow(child) == r && GetRowSpan(child) == 1)
-                {
-                    auto fe = dynamic_cast<FrameworkElement*>(child);
-                    if (fe) maxH = std::max(maxH, fe->GetDesiredHeight());
-                }
-            }
-            autoRowHeights[r] = maxH;
-            if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Row %d Auto desired = %d", r, maxH);
-        }
-    }
 
-    for (int c = 0; c < numCols; ++c)
-    {
-        if (m_colDefs[c].mode == SizeMode::Auto)
-        {
-            int maxW = 0;
-            for (auto child : GetVisualChildren())
-            {
-                if (!child) continue;
-                if (GetColumn(child) == c && GetColumnSpan(child) == 1)
-                {
-                    auto fe = dynamic_cast<FrameworkElement*>(child);
-                    if (fe) maxW = std::max(maxW, fe->GetDesiredWidth());
-                }
-            }
-            autoColWidths[c] = maxW;
-            if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Col %d Auto desired = %d", c, maxW);
-        }
-    }
 
     std::vector<Definition> arrangeRowDefs = m_rowDefs;
     std::vector<Definition> arrangeColDefs = m_colDefs;
-    for (int r = 0; r < numRows; ++r)
-    {
-        if (arrangeRowDefs[r].mode == SizeMode::Auto)
-        {
+    for (int r = 0; r < numRows; ++r) {
+        if (arrangeRowDefs[r].mode == SizeMode::Auto) {
             arrangeRowDefs[r].mode = SizeMode::Fixed;
             arrangeRowDefs[r].value = autoRowHeights[r];
         }
     }
-    for (int c = 0; c < numCols; ++c)
-    {
-        if (arrangeColDefs[c].mode == SizeMode::Auto)
-        {
+    for (int c = 0; c < numCols; ++c) {
+        if (arrangeColDefs[c].mode == SizeMode::Auto) {
             arrangeColDefs[c].mode = SizeMode::Fixed;
             arrangeColDefs[c].value = autoColWidths[c];
         }
@@ -263,8 +229,8 @@ void Grid::Arrange(int finalWidth, int finalHeight)
                                             finalWidth, finalHeight,
                                             GetVisualChildren());
 
-    for (size_t i = 0; i < GetVisualChildren().size(); ++i)
-    {
+
+    for (size_t i = 0; i < GetVisualChildren().size(); ++i) {
         auto child = GetVisualChildren()[i];
         if (!child) continue;
 
@@ -272,6 +238,7 @@ void Grid::Arrange(int finalWidth, int finalHeight)
         int c = GetColumn(child);
         int rspan = GetRowSpan(child);
         int cspan = GetColumnSpan(child);
+
 
         int x = 0, y = 0, w = 0, h = 0;
         for (int j = 0; j < c && j < static_cast<int>(layout.colWidths.size()); ++j)
@@ -283,26 +250,67 @@ void Grid::Arrange(int finalWidth, int finalHeight)
         for (int j = r; j < r + rspan && j < static_cast<int>(layout.rowHeights.size()); ++j)
             h += layout.rowHeights[j];
 
-        if (auto fe = dynamic_cast<FrameworkElement*>(child))
-        {
-
-            fe->Arrange(w, h);
+        auto fe = dynamic_cast<FrameworkElement*>(child);
+        if (!fe) continue;
 
 
-            int alignedX = 0, alignedY = 0, alignedW = w, alignedH = h;
-            Alignment::ApplyAlignment(
-                fe,
-                w, h,
-                fe->GetHorizontalAlignment(),
-                fe->GetVerticalAlignment(),
-                alignedX, alignedY, alignedW, alignedH
-            );
+        int desiredW = fe->GetDesiredWidth();
+        int desiredH = fe->GetDesiredHeight();
 
 
-            fe->Arrange(alignedW, alignedH);
-            fe->SetLayoutOffset(x + alignedX, y + alignedY);
-            if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Child[%zu] at (%d,%d): pos(%d,%d) size(%dx%d) [aligned within cell %dx%d]",
-                i, r, c, x + alignedX, y + alignedY, alignedW, alignedH, w, h);
+        int alignedX = 0, alignedY = 0;
+        int alignedW = desiredW;
+        int alignedH = desiredH;
+
+
+        switch (fe->GetHorizontalAlignment()) {
+            case HorizontalAlignment::Left:
+                alignedX = 0;
+                alignedW = desiredW;
+                break;
+            case HorizontalAlignment::Center:
+                alignedX = (w - desiredW) / 2;
+                alignedW = desiredW;
+                break;
+            case HorizontalAlignment::Right:
+                alignedX = w - desiredW;
+                alignedW = desiredW;
+                break;
+            case HorizontalAlignment::Stretch:
+                alignedX = 0;
+                alignedW = w;
+                break;
+        }
+
+
+        switch (fe->GetVerticalAlignment()) {
+            case VerticalAlignment::Top:
+                alignedY = 0;
+                alignedH = desiredH;
+                break;
+            case VerticalAlignment::Center:
+                alignedY = (h - desiredH) / 2;
+                alignedH = desiredH;
+                break;
+            case VerticalAlignment::Bottom:
+                alignedY = h - desiredH;
+                alignedH = desiredH;
+                break;
+            case VerticalAlignment::Stretch:
+                alignedY = 0;
+                alignedH = h;
+                break;
+        }
+
+
+        fe->Arrange(alignedW, alignedH);
+        fe->SetLayoutOffset(x + alignedX, y + alignedY);
+
+        if (GridLayout::s_gridLogging) {
+            NeoWPF::Diagnostics::LogInfo(
+                "[Grid::Arrange] Child[%zu] at (%d,%d): pos(%d,%d) size(%dx%d) [cell %dx%d] desired=%dx%d",
+                i, r, c, x + alignedX, y + alignedY, alignedW, alignedH, w, h,
+                desiredW, desiredH);
         }
     }
 }

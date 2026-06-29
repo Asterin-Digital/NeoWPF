@@ -173,6 +173,7 @@
     <ClCompile Include="src\Input\Core\Events.cpp" />
     <ClCompile Include="src\Input\InputManager.cpp" />
     <ClCompile Include="src\UI\Core\Element\FrameworkElement.cpp" />
+    <ClCompile Include="src\UI\Core\Element\UIElement.cpp" />
     <ClCompile Include="src\Rendering\Renderer.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Text\TextRenderer.cpp" />
     <ClCompile Include="src\Rendering\RenderScheduler.cpp" />

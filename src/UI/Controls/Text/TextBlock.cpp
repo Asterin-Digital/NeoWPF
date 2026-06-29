@@ -6,6 +6,8 @@ namespace NeoWPF::UI {
 
 TextBlock::TextBlock()
 {
+    SetHorizontalAlignment(HorizontalAlignment::Left);
+    SetVerticalAlignment(VerticalAlignment::Top);
 }
 
 TextBlock::~TextBlock()
@@ -33,7 +35,7 @@ void TextBlock::Measure(int availableWidth, int availableHeight)
         return;
     }
 
-    auto metrics = NeoWPF::Rendering::Text::MeasureText(m_text, m_fontSize, availableWidth, availableHeight);
+    auto metrics = NeoWPF::Rendering::Text::MeasureText(m_text, m_fontSize, 0, 0);
     SetDesiredSize(metrics.width, metrics.height);
 }
 

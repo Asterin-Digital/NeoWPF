@@ -3,7 +3,21 @@
 #include <NeoWPF/UI/Core/Alignment/Alignment.h>
 #include <algorithm>
 
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+
 namespace NeoWPF::UI {
+
+namespace {
+int ClampToDesired(int value, int desired)
+{
+    return std::min(value, desired);
+}
+}
 
 void Panel::Measure(int availableWidth, int availableHeight)
 {
@@ -18,7 +32,7 @@ void Panel::Measure(int availableWidth, int availableHeight)
     }
 
     if (GetVisualChildren().empty()) {
-        SetDesiredSize(availableWidth, availableHeight);
+        SetDesiredSize(0, 0);
     } else {
         SetDesiredSize(maxW, maxH);
     }
@@ -31,7 +45,7 @@ void Panel::Arrange(int finalWidth, int finalHeight)
     for (auto child : GetVisualChildren()) {
         if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
 
-            int alignedX = 0, alignedY = 0, alignedW = finalWidth, alignedH = finalHeight;
+            int alignedX = 0, alignedY = 0, alignedW = fe->GetDesiredWidth(), alignedH = fe->GetDesiredHeight();
             Alignment::ApplyAlignment(
                 fe,
                 finalWidth, finalHeight,
@@ -39,6 +53,13 @@ void Panel::Arrange(int finalWidth, int finalHeight)
                 fe->GetVerticalAlignment(),
                 alignedX, alignedY, alignedW, alignedH
             );
+
+            if (fe->GetHorizontalAlignment() != HorizontalAlignment::Stretch) {
+                alignedW = fe->GetDesiredWidth();
+            }
+            if (fe->GetVerticalAlignment() != VerticalAlignment::Stretch) {
+                alignedH = fe->GetDesiredHeight();
+            }
 
             fe->Arrange(alignedW, alignedH);
             fe->SetLayoutOffset(alignedX, alignedY);
