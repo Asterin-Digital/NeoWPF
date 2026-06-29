@@ -51,7 +51,7 @@
     <ClCompile Include="src\Core\Root\RootVisuals.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Core\Visual.cpp">
+    <ClCompile Include="src\UI\Core\Element\Visual.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Styling\DefaultStyles.cpp">
@@ -81,7 +81,7 @@
     <ClCompile Include="src\Input\InputManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Core\FrameworkElement.cpp">
+    <ClCompile Include="src\UI\Core\Element\FrameworkElement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Controls\Button\Button.cpp">
@@ -158,13 +158,13 @@
     <ClInclude Include="include\NeoWPF\UI\Controls\Rectangle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Core\FrameworkElement.h">
+    <ClInclude Include="include\NeoWPF\UI\Core\Element\FrameworkElement.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Core\UIElement.h">
+    <ClInclude Include="include\NeoWPF\UI\Core\Element\UIElement.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Core\Visual.h">
+    <ClInclude Include="include\NeoWPF\UI\Core\Element\Visual.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\Diagnostics\Logger.h">
@@ -219,6 +219,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Controls\Button\ButtonTemplate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Core\Element\IContentAware.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

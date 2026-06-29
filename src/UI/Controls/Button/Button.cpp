@@ -9,6 +9,12 @@ Button::Button()
 {
 }
 
+Button::Button(const std::wstring& text)
+    : FrameworkElement()
+{
+    SetText(text);
+}
+
 Button::~Button()
 {
     if (m_textureId != 0) {

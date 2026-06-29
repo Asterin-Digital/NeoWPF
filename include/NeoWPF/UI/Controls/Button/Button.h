@@ -13,6 +13,7 @@ namespace NeoWPF::UI {
 class Button : public FrameworkElement {
 public:
     Button();
+    Button(const std::wstring& text);
     ~Button();
 
     void SetText(const std::wstring& text);
