@@ -8,7 +8,14 @@ namespace NeoWPF::Input::Core {
     class MouseEventArgs;
 }
 
+namespace NeoWPF::UI::Styling {
+    class Style;  // forward declare
+}
+
 namespace NeoWPF::UI {
+
+class ButtonStyle;  // forward declare, defined in Button.Styles.cpp
+void RegisterButtonStyles();
 
 class Button : public FrameworkElement {
 public:

@@ -165,8 +165,11 @@
     <ClCompile Include="src\Core\Application\Application.cpp" />
     <ClCompile Include="src\Core\Root\RootVisuals.cpp" />
     <ClCompile Include="src\UI\Controls\Button\Button.cpp" />
+    <ClCompile Include="src\UI\Controls\Button\Button.Styles.cpp" />
     <ClCompile Include="src\UI\Controls\Button\ButtonTemplate.cpp" />
+    <ClCompile Include="src\UI\Controls\Text\TextBlock.Styles.cpp" />
     <ClCompile Include="src\UI\Core\Alignment\Alignment.cpp" />
+    <ClCompile Include="src\UI\Layout\Panel\Panel.Styles.cpp" />
     <ClCompile Include="src\UI\Styling\StyleManager.cpp" />
     <ClCompile Include="src\Diagnostics\Logger.cpp" />
     <ClCompile Include="src\Platform\Window.cpp" />

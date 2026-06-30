@@ -4,6 +4,10 @@
 // so I can quickly fix it! :>
 ////////////////////////////////////////////////////////////
 
+// @since tags are for when that API appeared in the fraemwork,
+// you may see a lot of them appear since 1.0, that's because they appeared
+// before NeoWPF but published, meaning they have been there since version 1.0
+
 #pragma once
 
 #include <NeoWPF/Core/Application/Application.h>

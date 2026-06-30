@@ -11,7 +11,14 @@ namespace NeoWPF::Input::Core
     class KeyboardEventArgs;
 }
 
+namespace NeoWPF::UI::Styling {
+    class Style;  // forward declare
+}
+
 namespace NeoWPF::UI {
+
+class TextBlockStyle;  // forward declare, defined in TextBlock.Styles.cpp
+void RegisterTextBlockStyles();
 
 class TextBlock : public FrameworkElement, public IContentAware {
 public:

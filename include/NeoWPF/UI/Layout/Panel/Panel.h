@@ -10,6 +10,8 @@ namespace NeoWPF::Input::Core
 
 namespace NeoWPF::UI {
 
+void RegisterPanelStyles();
+
 class Panel : public FrameworkElement {
 public:
     void Measure(int availableWidth, int availableHeight) override;
