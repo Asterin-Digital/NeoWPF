@@ -107,8 +107,47 @@ void Grid::Measure(int availableWidth, int availableHeight)
             fe->Measure(measureWidth ? INF : 0, measureHeight ? INF : 0);
     }
 
-    std::vector<int> autoRowHeights(numRows, 0);
-    std::vector<int> autoColWidths(numCols, 0);
+    std::vector<int> autoRowHeights;
+    std::vector<int> autoColWidths;
+
+    if (static_cast<int>(m_autoRowHeights.size()) == numRows) {
+        autoRowHeights = m_autoRowHeights;
+    } else {
+        autoRowHeights.assign(numRows, 0);
+    }
+    if (static_cast<int>(m_autoColWidths.size()) == numCols) {
+        autoColWidths = m_autoColWidths;
+    } else {
+        autoColWidths.assign(numCols, 0);
+    }
+
+    for (int r = 0; r < numRows; ++r) {
+        if (m_rowDefs[r].mode == SizeMode::Auto) {
+            int maxH = 0;
+            for (auto child : GetVisualChildren()) {
+                if (!child) continue;
+                if (GetRow(child) == r && GetRowSpan(child) == 1) {
+                    auto fe = dynamic_cast<FrameworkElement*>(child);
+                    if (fe) maxH = std::max(maxH, fe->GetDesiredHeight());
+                }
+            }
+            autoRowHeights[r] = maxH;
+        }
+    }
+
+    for (int c = 0; c < numCols; ++c) {
+        if (m_colDefs[c].mode == SizeMode::Auto) {
+            int maxW = 0;
+            for (auto child : GetVisualChildren()) {
+                if (!child) continue;
+                if (GetColumn(child) == c && GetColumnSpan(child) == 1) {
+                    auto fe = dynamic_cast<FrameworkElement*>(child);
+                    if (fe) maxW = std::max(maxW, fe->GetDesiredWidth());
+                }
+            }
+            autoColWidths[c] = maxW;
+        }
+    }
 
     for (int r = 0; r < numRows; ++r)
     {
@@ -150,6 +189,8 @@ void Grid::Measure(int availableWidth, int availableHeight)
 
     std::vector<Definition> measureRowDefs = m_rowDefs;
     std::vector<Definition> measureColDefs = m_colDefs;
+    m_autoRowHeights = autoRowHeights;
+    m_autoColWidths = autoColWidths;
     for (int r = 0; r < numRows; ++r)
     {
         if (measureRowDefs[r].mode == SizeMode::Auto)
@@ -219,7 +260,33 @@ void Grid::Arrange(int finalWidth, int finalHeight)
     std::vector<int> autoRowHeights(numRows, 0);
     std::vector<int> autoColWidths(numCols, 0);
 
+    for (int r = 0; r < numRows; ++r) {
+        if (m_rowDefs[r].mode == SizeMode::Auto) {
+            int maxH = 0;
+            for (auto child : GetVisualChildren()) {
+                if (!child) continue;
+                if (GetRow(child) == r && GetRowSpan(child) == 1) {
+                    auto fe = dynamic_cast<FrameworkElement*>(child);
+                    if (fe) maxH = std::max(maxH, fe->GetDesiredHeight());
+                }
+            }
+            autoRowHeights[r] = maxH;
+        }
+    }
 
+    for (int c = 0; c < numCols; ++c) {
+        if (m_colDefs[c].mode == SizeMode::Auto) {
+            int maxW = 0;
+            for (auto child : GetVisualChildren()) {
+                if (!child) continue;
+                if (GetColumn(child) == c && GetColumnSpan(child) == 1) {
+                    auto fe = dynamic_cast<FrameworkElement*>(child);
+                    if (fe) maxW = std::max(maxW, fe->GetDesiredWidth());
+                }
+            }
+            autoColWidths[c] = maxW;
+        }
+    }
 
     std::vector<Definition> arrangeRowDefs = m_rowDefs;
     std::vector<Definition> arrangeColDefs = m_colDefs;

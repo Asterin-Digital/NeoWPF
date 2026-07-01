@@ -47,6 +47,8 @@ public:
 private:
     std::vector<Definition> m_rowDefs;
     std::vector<Definition> m_colDefs;
+    std::vector<int> m_autoRowHeights;
+    std::vector<int> m_autoColWidths;
 
     static std::unordered_map<Visual*, int> s_rowMap;
     static std::unordered_map<Visual*, int> s_colMap;
