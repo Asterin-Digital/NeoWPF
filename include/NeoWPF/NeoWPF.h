@@ -104,6 +104,21 @@ namespace NeoWPF {
 
     /*
         @summary
+        Lightweight editable text control.
+
+        @details
+        Use TextBox for simple single-line text input.
+
+        Example:
+           @todo
+           add a proper example
+
+        @since 1.0
+    */
+    using UI::TextBox;
+
+    /*
+        @summary
         Push button control with a Click event.
 
         @details

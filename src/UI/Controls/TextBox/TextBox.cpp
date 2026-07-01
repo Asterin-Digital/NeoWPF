@@ -38,7 +38,8 @@ void TextBox::Measure(int availableWidth, int availableHeight)
     }
 
     auto metrics = NeoWPF::Rendering::Text::MeasureText(m_text, m_fontSize, 0, 0);
-    SetDesiredSize(std::max(120, metrics.width + (m_padding * 2)), metrics.height + (m_padding * 2));
+    const int desiredWidth = (metrics.width + (m_padding * 2) > 120) ? (metrics.width + (m_padding * 2)) : 120;
+    SetDesiredSize(desiredWidth, metrics.height + (m_padding * 2));
 }
 
 void TextBox::Arrange(int finalWidth, int finalHeight)
