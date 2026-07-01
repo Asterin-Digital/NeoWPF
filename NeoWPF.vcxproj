@@ -186,12 +186,19 @@
     <ClCompile Include="src\Rendering\D3D11\Backend\ShaderSources.cpp" />
     <ClCompile Include="src\UI\Core\Element\Visual.cpp" />
     <ClCompile Include="src\UI\Controls\Text\TextBlock.cpp" />
+    <ClCompile Include="src\UI\Controls\TextBox\TextBox.cpp" />
+    <ClCompile Include="src\UI\Controls\TextBox\TextBox.Styles.cpp" />
+    <ClCompile Include="src\UI\Controls\TextBox\TextBoxTemplate.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\Panel.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\StackPanel.cpp" />
     <ClCompile Include="src\UI\Layout\Grid\Grid.cpp" />
     <ClCompile Include="src\UI\Layout\Grid\GridLayout.cpp" />
     <ClCompile Include="src\UI\Styling\DefaultStyles.cpp" />
     <ClCompile Include="src\UI\Controls\Templates\ControlTemplate.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="docs\CommentFormatting.md" />
+    <None Include="docs\CommentingRules.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

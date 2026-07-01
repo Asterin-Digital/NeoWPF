@@ -1,13 +1,3 @@
-////////////////////////////////////////////////////////////
-// Documentation is AI-Generated to save myself some time
-// If you notice any mistakes or bad example, please tell me
-// so I can quickly fix it! :>
-////////////////////////////////////////////////////////////
-
-// @since tags are for when that API appeared in the fraemwork,
-// you may see a lot of them appear since 1.0, that's because they appeared
-// before NeoWPF but published, meaning they have been there since version 1.0
-
 #pragma once
 
 #include <NeoWPF/Core/Application/Application.h>
@@ -24,153 +14,125 @@ namespace NeoWPF {
 
         @details
         Provides initialization, the main run loop, shutdown and access to
-        the current application instance. Typical startup: call
-        `Application::Initialize()` then `Application::Run()`.
+        the current application instance. Typical startup sequence:
+        call `Application::Initialize()` then `Application::Run()`.
 
-        @example
-        NeoWPF::Application::Initialize();
-        return NeoWPF::Application::Run();
+        Example:
+            NeoWPF::Application::Initialize();
+            return NeoWPF::Application::Run();
 
         @since 1.0
     */
-
     using Core::Application;
-
 
     /*
         @summary
-        Platform window wrapper (native `HWND` on Windows).
+        Platform window wrapper (native HWND on Windows).
 
         @details
         Thin convenience wrapper around the native window handle which
-        provides creation helpers and basic callbacks (resize, etc.). Use
-        `Platform::Window::CreateWindow(...)` to obtain a platform window.
-
-        @note
-        This type represents the OS window; the UI-level `UI::Window`
-        control is a separate consumable that can be hosted in the visual
-        tree.
+        provides creation helpers and basic callbacks (resize, visibility,
+        etc.). This represents the OS-level window; the UI `UI::Window`
+        is a separate visual control that can be hosted in the visual tree.
 
         @since 1.0
     */
-
     using Platform::Window;
-
 
     /*
         @summary
         Generic panel base used for building layout containers.
 
         @details
-        `Panel` is the base class for layout containers (StackPanel, Grid,
-        etc.). Use it when you need a lightweight container for child
-        elements and backgrounds.
+        `Panel` is the lightweight foundation for layout containers such as
+        StackPanel and Grid. Use it when you need a background or a simple
+        container for child elements. Panels participate in measure/arrange
+        passes and report desired size accordingly.
 
         @since 1.0
     */
-
     using UI::Panel;
-
 
     /*
         @summary
         Vertical or horizontal stack layout.
 
         @details
-        Lay out children sequentially in one axis. Configure orientation via
-        the control's properties (see `StackPanel` API). Use for simple
-        column/row-like layouts where complex grid behavior is unnecessary.
+        Lay out children sequentially along one axis. Configure orientation
+        and spacing via the control's properties. Use for simple column or
+        row-like layouts when Grid semantics are unnecessary.
 
         @since 1.0
     */
-
     using UI::StackPanel;
-
 
     /*
         @summary
         Flexible grid layout with row/column sizing modes.
 
         @details
-        Supports `Auto`, `Fixed` and star (`*`) sizing for rows and columns.
-        Use `Grid` when you need multi-dimensional layouts. Define rows and
-        columns with `AddRow` / `AddColumn`, then place children in cells.
+        Supports Auto, Fixed and Star sizing for rows and columns. Define
+        dimensions with AddRow/AddColumn and place children using AddChild
+        or Grid::SetRow/SetColumn. Auto sized rows/columns measure children
+        with infinite space on the respective axis and use the children's
+        desired sizes when arranging.
 
-        @example
-        // Create a 2x2 grid and place children using the compact overload
-        auto grid = std::make_shared<NeoWPF::Grid>();
-        grid->AddRow(NeoWPF::UI::SizeMode::Star, 1);
-        grid->AddRow(NeoWPF::UI::SizeMode::Star, 1);
-        grid->AddColumn(NeoWPF::UI::SizeMode::Star, 1);
-        grid->AddColumn(NeoWPF::UI::SizeMode::Star, 1);
-
-        auto child = std::make_shared<NeoWPF::UI::Panel>();
-        grid->AddChild(child.get(), 0, 1);
-
-        @example
-        // The verbose form is equivalent and works through the existing row/column setters.
-        auto child2 = std::make_shared<NeoWPF::UI::Panel>();
-        NeoWPF::Grid::SetRow(child2.get(), 1);
-        NeoWPF::Grid::SetColumn(child2.get(), 0);
-        grid->AddChild(child2.get());
+        Example:
+            auto grid = std::make_shared<NeoWPF::Grid>();
+            grid->AddRow(NeoWPF::UI::SizeMode::Auto, 0);
+            grid->AddRow(NeoWPF::UI::SizeMode::Star, 1);
+            grid->AddColumn(NeoWPF::UI::SizeMode::Star, 1);
+            grid->AddChild(child.get(), 0, 0);
 
         @since 1.0
     */
-
     using UI::Grid;
-
 
     /*
         @summary
         Lightweight text control for displaying read-only strings.
 
         @details
-        Use `TextBlock` to render simple text. Configure font size, color and
-        wrapping via the control's public properties. `TextBlock` participates
-        in measure/arrange and reports its desired size.
+        Use TextBlock to render simple text. Configure font size, color and
+        wrapping via the control's public properties. TextBlock participates
+        in measure/arrange and reports its desired size based on measured
+        text metrics.
 
         @since 1.0
     */
-
     using UI::TextBlock;
-
 
     /*
         @summary
-        Push button control with a `Click` event.
+        Push button control with a Click event.
 
         @details
-        `Button` is an interactive control raising a public `Click` event.
-        Subscribe with `+=` to handle presses. Configure appearance via
-        background, padding and template APIs.
+        Button is an interactive control that raises a Click event. Subscribe
+        with `+=` to handle presses. Configure appearance via background,
+        padding and template APIs. The control measures its content and
+        reports an appropriate desired size.
 
-        @example
-        NeoWPF::Button* b = new NeoWPF::Button();
-        b->SetText(L"OK");
-        b->Click += [](auto&&){ // handler };
+        Example:
+            auto btn = std::make_shared<NeoWPF::Button>(L"OK");
+            btn->Click += [](){ // handler };
 
         @since 1.0
     */
-
     using UI::Button;
-
 
     /*
         @summary
         Central input dispatcher and hit-test helper.
 
         @details
-        `InputManager` processes raw platform input, performs hit-testing
+        InputManager processes raw platform input, performs hit-testing
         against the visual tree, manages focus and mouse capture. Call
-        `ProcessMouseInput` / `ProcessKeyboardInput` from your platform
-        integration layer, or rely on the provided platform glue which does
-        this for you.
+        ProcessMouseInput/ProcessKeyboardInput from the platform layer or
+        rely on the provided platform glue.
 
         @since 1.0
     */
-
     using Input::InputManager;
-
 
     namespace Input {
 
@@ -180,9 +142,7 @@ namespace NeoWPF {
 
             @since 1.0
         */
-
         using Core::MouseEventArgs;
-
 
         /*
             @summary
@@ -190,9 +150,7 @@ namespace NeoWPF {
 
             @since 1.0
         */
-
         using Core::KeyboardEventArgs;
-
 
         /*
             @summary
@@ -200,9 +158,7 @@ namespace NeoWPF {
 
             @since 1.0
         */
-
         using Core::RoutedEvent;
-
 
         /*
             @summary
@@ -210,9 +166,7 @@ namespace NeoWPF {
 
             @since 1.0
         */
-
         using Core::RoutingStrategy;
-
 
         /*
             @summary
@@ -220,9 +174,7 @@ namespace NeoWPF {
 
             @since 1.0
         */
-
         using Core::MouseEventHandler;
-
 
         /*
             @summary
@@ -230,7 +182,6 @@ namespace NeoWPF {
 
             @since 1.0
         */
-
         using Core::KeyboardEventHandler;
 
     }
