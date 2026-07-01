@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Rendering/Renderer.h>
@@ -7,10 +8,10 @@
 
 namespace NeoWPF::UI {
 
-class TextBoxStyle;  // forward declare, defined in TextBox.Styles.cpp
+class TextBoxStyle;  
 void RegisterTextBoxStyles();
 
-class TextBoxTemplate;  // forward declare, defined in TextBoxTemplate.cpp
+class TextBoxTemplate; 
 
 class TextBox : public FrameworkElement {
 public:
@@ -32,6 +33,12 @@ public:
     void SetPadding(int padding) noexcept { m_padding = padding; InvalidateVisual(); }
     int GetPadding() const noexcept { return m_padding; }
 
+    void SetBorderColor(uint32_t color) noexcept { m_borderColor = color; InvalidateVisual(); }
+    uint32_t GetBorderColor() const noexcept { return m_borderColor; }
+
+    void SetCaretColor(uint32_t color) noexcept { m_caretColor = color; InvalidateVisual(); }
+    uint32_t GetCaretColor() const noexcept { return m_caretColor; }
+
     void Measure(int availableWidth, int availableHeight) override;
     void Arrange(int finalWidth, int finalHeight) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
@@ -39,10 +46,18 @@ public:
     bool IsHitTestVisible() const noexcept override { return true; }
     bool IsInteractable() const noexcept override { return m_isEnabled; }
 
+    void OnMouseDown(int x, int y, std::uint32_t buttonState) override;
+    void OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args) override;
+    void OnGotFocus() override;
+    void OnLostFocus() override;
+
 private:
     std::wstring m_text;
+    std::size_t m_caretPosition = 0;
     uint32_t m_textColor = 0xFF000000u;
     uint32_t m_backgroundColor = 0xFFFFFFFFu;
+    uint32_t m_borderColor = 0xFF666666u;
+    uint32_t m_caretColor = 0xFF000000u;
     int m_fontSize = 16;
     int m_padding = 4;
     bool m_isEnabled = true;
@@ -51,8 +66,13 @@ private:
     int m_textWidth = 0;
     int m_textHeight = 0;
     bool m_textDirty = true;
+    bool m_isFocused = false;
 
     void EnsureTextTexture();
+    void InsertCharacter(wchar_t character);
+    void RemoveCharacter(bool backspace);
+    void UpdateCaretFromMouse(int x);
+    int GetCaretX() const;
 };
 
 class TextBoxTemplate : public Templates::ControlTemplate {

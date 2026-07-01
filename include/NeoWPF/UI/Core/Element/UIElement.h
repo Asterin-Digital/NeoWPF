@@ -54,6 +54,8 @@ public:
     virtual void OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args) {}
     virtual void OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args) {}
     virtual void OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args) {}
+    virtual void OnGotFocus() {}
+    virtual void OnLostFocus() {}
 
 private:
     bool m_isVisible = true;

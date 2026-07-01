@@ -245,7 +245,17 @@ namespace NeoWPF::Input
             return;
         }
 
+        if (m_focusedElement)
+        {
+            m_focusedElement->OnLostFocus();
+        }
+
         m_focusedElement = element;
+
+        if (m_focusedElement)
+        {
+            m_focusedElement->OnGotFocus();
+        }
     }
 
     void InputManager::SetMouseCapture(NeoWPF::UI::UIElement* element)
