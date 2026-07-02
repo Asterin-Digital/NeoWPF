@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 
 namespace NeoWPF::UI {
 
@@ -28,6 +29,8 @@ public:
     void ClearTreeDirty() noexcept { m_isTreeDirty = false; }
 
     virtual void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) {}
+
+    void DumpVisualTree(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options = NeoWPF::Diagnostics::VisualTreeDumpOptions{}) const;
 
 private:
     static std::vector<Visual*>& GetRegistry();

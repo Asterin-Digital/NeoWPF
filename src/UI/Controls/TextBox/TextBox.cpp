@@ -13,7 +13,7 @@
 #undef min
 #endif
 
-bool NeoWPF::UI::TextBox::s_textBoxDebug = true; // Please do not turn this on unless ur debugging something
+bool NeoWPF::UI::TextBox::s_textBoxDebug = false; // Please do not turn this on unless ur debugging something
 
 namespace NeoWPF::UI {
 

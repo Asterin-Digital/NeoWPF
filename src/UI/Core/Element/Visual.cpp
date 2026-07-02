@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 
 namespace NeoWPF::UI {
 
@@ -105,6 +106,11 @@ void Visual::CaptureRootVisuals()
             }
         }
     }
+}
+
+void Visual::DumpVisualTree(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options) const
+{
+    NeoWPF::Diagnostics::VisualTreeDumper::DumpTree(const_cast<Visual*>(this), options);
 }
 
 }

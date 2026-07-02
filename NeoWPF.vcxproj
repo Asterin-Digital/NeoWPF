@@ -123,6 +123,7 @@
     <ClInclude Include="include\NeoWPF\Core\Root\RootVisuals.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Diagnostics.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Logger.h" />
+    <ClInclude Include="include\NeoWPF\Diagnostics\VisualTreeDumper.h" />
     <ClInclude Include="include\NeoWPF\Input\Input.h" />
     <ClInclude Include="include\NeoWPF\Input\InputManager.h" />
     <ClInclude Include="include\NeoWPF\Input\Core\Events.h" />
@@ -172,6 +173,7 @@
     <ClCompile Include="src\UI\Layout\Panel\Panel.Styles.cpp" />
     <ClCompile Include="src\UI\Styling\StyleManager.cpp" />
     <ClCompile Include="src\Diagnostics\Logger.cpp" />
+    <ClCompile Include="src\Diagnostics\VisualTreeDumper.cpp" />
     <ClCompile Include="src\Platform\Window.cpp" />
     <ClCompile Include="src\Input\Core\Events.cpp" />
     <ClCompile Include="src\Input\InputManager.cpp" />

@@ -1,6 +1,7 @@
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Core/Root/RootVisuals.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <NeoWPF/Platform/Window.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
@@ -55,7 +56,7 @@ void StartRenderThread()
     s_appState.renderThreadInitFailed = false;
     s_appState.renderThread = std::thread([]() {
         try {
-            // Initialize renderer for all windows
+
             {
                 std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
                 for (const auto& windowState : s_appState.windows) {
@@ -89,7 +90,7 @@ void StartRenderThread()
             return;
         }
 
-        // Render loop
+
         while (s_appState.running.load()) {
             std::vector<WindowState> windowsSnapshot;
             {
@@ -97,13 +98,13 @@ void StartRenderThread()
                 windowsSnapshot = s_appState.windows;
             }
 
-            // Render each window
+
             for (const auto& windowState : windowsSnapshot) {
                 RECT rc;
                 GetClientRect(windowState.hwnd, &rc);
                 unsigned int w = rc.right - rc.left;
                 unsigned int h = rc.bottom - rc.top;
-                
+
                 if (w > 0 && h > 0) {
                     NeoWPF::Rendering::Renderer_Resize(w, h);
                     NeoWPF::Rendering::Renderer_BeginFrame();
@@ -122,7 +123,7 @@ void StartRenderThread()
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
         }
 
-        // Shutdown renderer
+
         {
             std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
             for (const auto& windowState : s_appState.windows) {
@@ -201,7 +202,7 @@ int Application::Run()
         return -1;
     }
 
-    // Get the primary window for layout
+
     HWND primaryWindow = nullptr;
     {
         std::lock_guard<std::mutex> wlock(s_appState.windowsMutex);
@@ -216,7 +217,7 @@ int Application::Run()
         return -1;
     }
 
-    // Initial layout
+
     RECT rc;
     GetClientRect(primaryWindow, &rc);
     unsigned int clientWidth = rc.right - rc.left;
@@ -236,7 +237,7 @@ int Application::Run()
     auto rootVisual = rootInfos.rootVisual;
     NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual));
 
-    // Message loop
+
     MSG msg;
     unsigned int lastLayoutWidth = 0, lastLayoutHeight = 0;
 
@@ -244,7 +245,7 @@ int Application::Run()
         TranslateMessage(&msg);
         DispatchMessage(&msg);
 
-        // Check if any windows are still open
+
         {
             std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
             bool anyWindowOpen = false;
@@ -294,7 +295,7 @@ int Application::Run()
         s_appState.renderThread.join();
     }
 
-    // Clean up windows
+
     {
         std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
         s_appState.windows.clear();
@@ -312,6 +313,22 @@ void Application::Shutdown()
 Application* Application::Current()
 {
     return s_current;
+}
+
+void Application::DumpVisualTree(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options)
+{
+    const auto& registeredVisuals = NeoWPF::UI::Visual::GetRegisteredVisuals();
+    if (registeredVisuals.empty()) {
+        NeoWPF::Diagnostics::LogWarn("No visual tree to dump - no registered root visuals");
+        return;
+    }
+
+
+    for (auto rootVisual : registeredVisuals) {
+        if (!rootVisual->GetParent()) {
+            NeoWPF::Diagnostics::VisualTreeDumper::DumpTree(rootVisual, options);
+        }
+    }
 }
 
 }

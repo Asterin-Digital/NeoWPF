@@ -54,7 +54,7 @@ public:
 private:
     std::wstring m_text;
     uint32_t m_textColor = 0xFF000000u;
-    uint32_t m_backgroundColor = 0xFFC0C0C0u;
+    uint32_t m_backgroundColor = 0xFF2F2F2Fu;
     int m_fontSize = 16;
 
 private:
