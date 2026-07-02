@@ -20,7 +20,7 @@ namespace NeoWPF::UI {
 TextBox::TextBox()
     : FrameworkElement()
 {
-    SetHorizontalAlignment(HorizontalAlignment::Stretch);
+    SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
 }
 
@@ -54,11 +54,16 @@ void TextBox::Measure(int availableWidth, int availableHeight)
     const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, 0, 0);
     const int minHeight = std::max(baseMetrics.height, m_fontSize) + (m_padding * 2);
 
-    int desiredWidth = availableWidth > 0 ? availableWidth : minWidth;
+    int desiredWidth = minWidth;
     int desiredHeight = minHeight;
     if (!m_text.empty()) {
         const auto metrics = NeoWPF::Rendering::Text::MeasureText(m_text, m_fontSize, 0, 0);
+        desiredWidth = std::max(metrics.width + (m_padding * 2), minWidth);
         desiredHeight = std::max(metrics.height + (m_padding * 2), minHeight);
+    }
+
+    if (availableWidth > 0) {
+        desiredWidth = std::min(desiredWidth, availableWidth);
     }
 
     if (s_textBoxDebug) {
@@ -133,6 +138,10 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const int drawWidth = std::min(m_textWidth, visibleTextWidth);
         const float uvRight = drawWidth > 0 ? static_cast<float>(drawWidth) / static_cast<float>(m_textWidth) : 1.0f;
 
+        if (s_textBoxDebug) {
+            NeoWPF::Diagnostics::LogInfo("[TextBox] BuildRenderCommands: finalWidth=%d visibleTextWidth=%d textWidth=%d drawWidth=%d uvRight=%.3f", GetFinalWidth(), visibleTextWidth, m_textWidth, drawWidth, uvRight);
+        }
+
         commands.DrawTexturedQuad(
             static_cast<float>(absX + m_padding),
             static_cast<float>(absY + m_padding),
@@ -146,8 +155,12 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     if (m_isFocused) {
         const int visibleTextWidth = std::max(0, GetFinalWidth() - (m_padding * 2));
         int caretX = GetCaretX();
+        int rawCaretX = caretX;
         caretX = std::min(caretX, visibleTextWidth);
         const int caretHeight = std::max(1, GetCaretHeight());
+        if (s_textBoxDebug) {
+            NeoWPF::Diagnostics::LogInfo("[TextBox] BuildRenderCommands: caretPosition=%zu rawCaretX=%d clampedCaretX=%d visibleTextWidth=%d", m_caretPosition, rawCaretX, caretX, visibleTextWidth);
+        }
         commands.DrawRect(
             static_cast<float>(absX + m_padding + caretX),
             static_cast<float>(absY + m_padding),

@@ -1,8 +1,15 @@
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <Windows.h>
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
+#endif
 #include <dwrite.h>
 #include <wrl.h>
+#include <algorithm>
 #include <cmath>
 #include <mutex>
 #include <stdexcept>
@@ -12,6 +19,8 @@ using Microsoft::WRL::ComPtr;
 namespace NeoWPF::Rendering::Text {
 
 namespace {
+
+static bool s_textRendererDebug = true;
 
 ComPtr<IDWriteFactory> GetDWriteFactory()
 {
@@ -152,6 +161,10 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
             return hr;
         }
 
+            if (s_textRendererDebug) {
+                ::NeoWPF::Diagnostics::LogInfo("[TextRenderer] DrawGlyphRun: textureBounds L=%d T=%d R=%d B=%d", textureBounds.left, textureBounds.top, textureBounds.right, textureBounds.bottom);
+            }
+
         int textureWidth = textureBounds.right - textureBounds.left;
         int textureHeight = textureBounds.bottom - textureBounds.top;
         if (textureWidth <= 0 || textureHeight <= 0) {
@@ -169,9 +182,68 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
             ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: CreateAlphaTexture failed 0x%08X", (unsigned int)hr);
             return hr;
         }
+            UINT32 nonZeroAlpha = 0;
+            int firstNonZero = -1;
+            int lastNonZero = -1;
+            for (UINT32 i = 0; i < textureBufferSize; ++i) {
+                if (alphaData[i] != 0) {
+                    ++nonZeroAlpha;
+                    if (firstNonZero == -1) firstNonZero = static_cast<int>(i);
+                    lastNonZero = static_cast<int>(i);
+                }
+            }
+            if (s_textRendererDebug) {
+                ::NeoWPF::Diagnostics::LogInfo("[TextRenderer] DrawGlyphRun: CreateAlphaTexture succeeded bufferSize=%u nonZero=%u firstNonZero=%d lastNonZero=%d", textureBufferSize, nonZeroAlpha, firstNonZero, lastNonZero);
+            }
+
+
+        float adjustedBaselineY = baselineOriginY;
+        float destTop = adjustedBaselineY + static_cast<float>(textureBounds.top);
+        float destBottom = destTop + static_cast<float>(textureHeight);
+        if (destTop < 0.0f) {
+            adjustedBaselineY -= destTop;
+        }
+        if (destBottom > static_cast<float>(height)) {
+            adjustedBaselineY -= (destBottom - static_cast<float>(height));
+        }
 
         int originX = static_cast<int>(std::floor(baselineOriginX + textureBounds.left));
-        int originY = static_cast<int>(std::floor(baselineOriginY + textureBounds.top));
+        int originY = static_cast<int>(std::floor(adjustedBaselineY + textureBounds.top));
+
+
+        int extraLeft = std::max(0, -originX);
+        int extraTop = std::max(0, -originY);
+        int extraRight = std::max(0, originX + textureWidth - width);
+        int extraBottom = std::max(0, originY + textureHeight - height);
+
+        if (extraLeft || extraTop || extraRight || extraBottom) {
+            int newWidth = width + extraLeft + extraRight;
+            int newHeight = height + extraTop + extraBottom;
+            std::vector<uint8_t> newBitmap(static_cast<size_t>(newWidth) * static_cast<size_t>(newHeight) * 4, 0);
+
+            for (int r = 0; r < height; ++r) {
+                for (int c = 0; c < width; ++c) {
+                    size_t oldIdx = (static_cast<size_t>(r) * width + static_cast<size_t>(c)) * 4;
+                    size_t newIdx = (static_cast<size_t>(r + extraTop) * newWidth + static_cast<size_t>(c + extraLeft)) * 4;
+                    newBitmap[newIdx + 0] = (*bitmap)[oldIdx + 0];
+                    newBitmap[newIdx + 1] = (*bitmap)[oldIdx + 1];
+                    newBitmap[newIdx + 2] = (*bitmap)[oldIdx + 2];
+                    newBitmap[newIdx + 3] = (*bitmap)[oldIdx + 3];
+                }
+            }
+            (*bitmap) = std::move(newBitmap);
+            originX += extraLeft;
+            originY += extraTop;
+            width = newWidth;
+            height = newHeight;
+            if (s_textRendererDebug) {
+                ::NeoWPF::Diagnostics::LogInfo("[TextRenderer] DrawGlyphRun: expanded bitmap to %dx%d (L=%d T=%d R=%d B=%d)", width, height, extraLeft, extraTop, extraRight, extraBottom);
+            }
+        }
+
+        if (s_textRendererDebug) {
+            ::NeoWPF::Diagnostics::LogInfo("[TextRenderer] DrawGlyphRun: originX=%d originY=%d textureWidth=%d textureHeight=%d", originX, originY, textureWidth, textureHeight);
+        }
 
         int pixelsWritten = 0;
         for (int row = 0; row < textureHeight; ++row) {
@@ -193,7 +265,9 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
             }
         }
 
-        ::NeoWPF::Diagnostics::LogInfo("DrawGlyphRun: wrote %d pixels", pixelsWritten);
+        if (s_textRendererDebug) {
+            ::NeoWPF::Diagnostics::LogInfo("[TextRenderer] DrawGlyphRun: wrote %d pixels, texture=%dx%d", pixelsWritten, textureWidth, textureHeight);
+        }
         return S_OK;
     }
 
@@ -234,11 +308,34 @@ TextMetrics MeasureText(const std::wstring& text, int fontSize, int maxWidth, in
         return {};
     }
 
-    float desiredWidth = metrics.widthIncludingTrailingWhitespace + std::fabs(overhang.left) + std::fabs(overhang.right);
-    float desiredHeight = metrics.height + std::fabs(overhang.top) + std::fabs(overhang.bottom);
+    float desiredWidth = metrics.widthIncludingTrailingWhitespace;
+    if (overhang.left < 0.0f) {
+        desiredWidth += -overhang.left;
+    }
+    if (overhang.right > 0.0f) {
+        desiredWidth += overhang.right;
+    }
+
+    float desiredHeight = metrics.height;
+    if (overhang.top < 0.0f) {
+        desiredHeight += -overhang.top;
+    }
+    if (overhang.bottom > 0.0f) {
+        desiredHeight += overhang.bottom;
+    }
+
+    int resultWidth = static_cast<int>(std::ceil(desiredWidth));
+    int resultHeight = static_cast<int>(std::ceil(desiredHeight));
+    if (s_textRendererDebug) {
+        ::NeoWPF::Diagnostics::LogInfo("[TextRenderer] MeasureText: textLength=%zu fontSize=%d layout=%gx%g metrics.width=%g widthInclTrailing=%g overhang.l=%g overhang.r=%g => %dx%d",
+            text.size(), fontSize, layoutWidth, layoutHeight,
+            metrics.width, metrics.widthIncludingTrailingWhitespace,
+            overhang.left, overhang.right,
+            resultWidth, resultHeight);
+    }
     return {
-        static_cast<int>(std::ceil(desiredWidth)),
-        static_cast<int>(std::ceil(desiredHeight))
+        resultWidth,
+        resultHeight
     };
 }
 
@@ -252,7 +349,9 @@ std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, in
     }
 
     TextMetrics metrics = MeasureText(text, fontSize, 0, 0);
-    ::NeoWPF::Diagnostics::LogInfo("RenderTextBitmap: MeasureText returned %d x %d", metrics.width, metrics.height);
+    if (s_textRendererDebug) {
+        ::NeoWPF::Diagnostics::LogInfo("[TextRenderer] RenderTextBitmap: MeasureText returned %d x %d for textLength=%zu", metrics.width, metrics.height, text.size());
+    }
 
     if (metrics.width <= 0 || metrics.height <= 0) {
         ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: zero bitmap size, cannot render");
@@ -277,8 +376,46 @@ std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, in
         return {};
     }
 
+    DWRITE_OVERHANG_METRICS overhang = {};
+    hr = textLayout->GetOverhangMetrics(&overhang);
+    if (FAILED(hr)) {
+        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: GetOverhangMetrics failed 0x%08X", static_cast<unsigned int>(hr));
+        return {};
+    }
+
+    UINT32 lineMetricsCount = 0;
+    hr = textLayout->GetLineMetrics(nullptr, 0, &lineMetricsCount);
+    if (FAILED(hr) && hr != HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) {
+        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: GetLineMetrics failed preparation 0x%08X count=%u", static_cast<unsigned int>(hr), lineMetricsCount);
+        return {};
+    }
+    if (lineMetricsCount == 0) {
+        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: GetLineMetrics returned zero line count");
+        return {};
+    }
+
+    std::vector<DWRITE_LINE_METRICS> lineMetrics(lineMetricsCount);
+    hr = textLayout->GetLineMetrics(lineMetrics.data(), lineMetricsCount, &lineMetricsCount);
+    if (FAILED(hr) || lineMetricsCount == 0) {
+        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: GetLineMetrics failed on second pass 0x%08X count=%u", static_cast<unsigned int>(hr), lineMetricsCount);
+        return {};
+    }
+
+    const float baselineOriginX = overhang.left < 0.0f ? -overhang.left : 0.0f;
+
+    const float baselineOriginY = static_cast<float>(lineMetrics[0].baseline) - std::min(0.0f, overhang.top);
+    if (s_textRendererDebug) {
+        ::NeoWPF::Diagnostics::LogInfo("[TextRenderer] RenderTextBitmap: baselineOriginX=%.3f baselineOriginY=%.3f overhang.l=%g overhang.r=%g overhang.t=%g overhang.b=%g lineBaseline=%u",
+            baselineOriginX, baselineOriginY,
+            overhang.left, overhang.right, overhang.top, overhang.bottom,
+            lineMetrics[0].baseline);
+    }
+
     BitmapTextRenderer* renderer = new BitmapTextRenderer(factory, &bitmap, outWidth, outHeight);
-    hr = textLayout->Draw(nullptr, renderer, 0.0f, 0.0f);
+    hr = textLayout->Draw(nullptr, renderer, baselineOriginX, baselineOriginY);
+
+    outWidth = renderer->width;
+    outHeight = renderer->height;
     renderer->Release();
 
     if (FAILED(hr)) {
@@ -293,7 +430,9 @@ std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, in
             break;
         }
     }
-    ::NeoWPF::Diagnostics::LogInfo("RenderTextBitmap: bitmap hasAlpha = %d, size=%dx%d", hasAlpha, outWidth, outHeight);
+    if (s_textRendererDebug) {
+        ::NeoWPF::Diagnostics::LogInfo("[TextRenderer] RenderTextBitmap: bitmap hasAlpha = %d, size=%dx%d, byteSize=%zu", hasAlpha, outWidth, outHeight, bitmap.size());
+    }
 
     return bitmap;
 }
