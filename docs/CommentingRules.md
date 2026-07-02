@@ -1,4 +1,4 @@
-## How to use comments in code, for AI agents
+## How to use comments in code
 
 ### Where to write comments?
 

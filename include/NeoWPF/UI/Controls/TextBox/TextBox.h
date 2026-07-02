@@ -73,6 +73,7 @@ private:
     void RemoveCharacter(bool backspace);
     void UpdateCaretFromMouse(int x);
     int GetCaretX() const;
+    int GetCaretHeight() const;
 };
 
 class TextBoxTemplate : public Templates::ControlTemplate {

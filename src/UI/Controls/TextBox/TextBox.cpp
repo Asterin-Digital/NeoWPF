@@ -200,7 +200,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     if (m_isFocused) {
         const int caretX = GetCaretX();
-        const int caretHeight = std::max(1, m_textHeight > 0 ? m_textHeight : m_fontSize);
+        const int caretHeight = std::max(1, GetCaretHeight());
         commands.DrawRect(
             static_cast<float>(absX + m_padding + caretX),
             static_cast<float>(absY + m_padding),
@@ -271,6 +271,18 @@ int TextBox::GetCaretX() const
     const std::wstring prefix = m_text.substr(0, m_caretPosition);
     const auto metrics = NeoWPF::Rendering::Text::MeasureText(prefix, m_fontSize, 0, 0);
     return metrics.width;
+}
+
+int TextBox::GetCaretHeight() const
+{
+    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, 0, 0);
+    const int baselineHeight = std::max(baseMetrics.height, m_fontSize);
+
+    if (m_textHeight > 0) {
+        return std::max(baselineHeight, m_textHeight);
+    }
+
+    return baselineHeight;
 }
 
 void TextBox::EnsureTextTexture()
