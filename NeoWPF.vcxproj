@@ -187,6 +187,7 @@
     <ClCompile Include="src\UI\Core\Element\Visual.cpp" />
     <ClCompile Include="src\UI\Controls\Text\TextBlock.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\TextBox.cpp" />
+    <ClCompile Include="src\UI\Controls\TextBox\TextBox.Editing.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\TextBox.Styles.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\TextBoxTemplate.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\Panel.cpp" />

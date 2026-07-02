@@ -78,6 +78,9 @@
     <ClCompile Include="src\UI\Controls\TextBox\TextBox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\UI\Controls\TextBox\TextBox.Editing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\UI\Controls\TextBox\TextBox.Styles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
