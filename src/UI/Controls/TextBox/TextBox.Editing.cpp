@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Input/Core/Events.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <algorithm>
@@ -19,6 +20,10 @@ void TextBox::OnMouseDown(int x, int y, std::uint32_t buttonState)
 {
     if (!m_isEnabled) {
         return;
+    }
+
+    if (true) {
+        NeoWPF::Diagnostics::LogInfo("[TextBox] OnMouseDown: x=%d, buttonState=%u", x, buttonState);
     }
 
     UpdateCaretFromMouse(x);
@@ -80,6 +85,9 @@ void TextBox::OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args)
     }
 
     if (changed) {
+        if (true) {
+            NeoWPF::Diagnostics::LogInfo("[TextBox] OnKeyboardInput: keyCode=%d charCode=%u caret=%zu textLength=%zu", keyCode, static_cast<unsigned int>(charCode), m_caretPosition, m_text.size());
+        }
         args->SetHandled(true);
         InvalidateVisual();
     }
@@ -87,6 +95,7 @@ void TextBox::OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args)
 
 void TextBox::InsertCharacter(wchar_t character)
 {
+    NeoWPF::Diagnostics::LogInfo("[TextBox] InsertCharacter: char=%u caret=%zu", static_cast<unsigned int>(character), m_caretPosition);
     m_text.insert(m_caretPosition, 1, character);
     ++m_caretPosition;
     m_textDirty = true;
@@ -95,6 +104,7 @@ void TextBox::InsertCharacter(wchar_t character)
 
 void TextBox::RemoveCharacter(bool backspace)
 {
+    NeoWPF::Diagnostics::LogInfo("[TextBox] RemoveCharacter: backspace=%d caret=%zu textLength=%zu", backspace ? 1 : 0, m_caretPosition, m_text.size());
     if (backspace) {
         if (m_caretPosition == 0) {
             return;
@@ -117,6 +127,10 @@ void TextBox::UpdateCaretFromMouse(int x)
     GetAbsolutePosition(absX, absY);
 
     const int localX = x - absX - m_padding;
+    if (s_textBoxDebug) {
+        NeoWPF::Diagnostics::LogInfo("[TextBox] UpdateCaretFromMouse: x=%d absX=%d localX=%d textLength=%zu", x, absX, localX, m_text.size());
+    }
+
     if (localX <= 0) {
         m_caretPosition = 0;
         return;
@@ -135,16 +149,25 @@ void TextBox::UpdateCaretFromMouse(int x)
     }
 
     m_caretPosition = bestPosition;
+    if (s_textBoxDebug) {
+        NeoWPF::Diagnostics::LogInfo("[TextBox] UpdateCaretFromMouse: chosen caret=%zu bestDistance=%d", m_caretPosition, bestDistance);
+    }
 }
 
 int TextBox::GetCaretX() const
 {
     if (m_caretPosition == 0) {
+        if (s_textBoxDebug) {
+            NeoWPF::Diagnostics::LogInfo("[TextBox] GetCaretX: caretPosition=0 -> x=0");
+        }
         return 0;
     }
 
     const std::wstring prefix = m_text.substr(0, m_caretPosition);
     const auto metrics = NeoWPF::Rendering::Text::MeasureText(prefix, m_fontSize, 0, 0);
+    if (s_textBoxDebug) {
+        NeoWPF::Diagnostics::LogInfo("[TextBox] GetCaretX: caretPosition=%zu x=%d", m_caretPosition, metrics.width);
+    }
     return metrics.width;
 }
 

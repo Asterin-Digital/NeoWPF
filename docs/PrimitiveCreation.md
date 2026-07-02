@@ -2,8 +2,8 @@
 
 First of all, an UI primitive primarily consists of 3 files:
 -The main file
--The styling file (if it applies)
--The template file (if it applies)
+-The styling file (if your primitive needs it)
+-The template file (if your primitive needs it)
 -And any other file that you desire or need to create.
 
 for example, you have the button UI primitive, which consists of:

@@ -15,6 +15,8 @@ class TextBoxTemplate;
 
 class TextBox : public FrameworkElement {
 public:
+    static bool s_textBoxDebug;
+
     TextBox();
     ~TextBox();
 
