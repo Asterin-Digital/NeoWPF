@@ -45,14 +45,19 @@ void TextBox::SetText(const std::wstring& text)
 
 void TextBox::Measure(int availableWidth, int availableHeight)
 {
+    const int minWidth = 120;
+    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, 0, 0);
+    const int minHeight = std::max(baseMetrics.height, m_fontSize) + (m_padding * 2);
+
     if (m_text.empty()) {
-        SetDesiredSize(120, m_fontSize + (m_padding * 2));
+        SetDesiredSize(minWidth, minHeight);
         return;
     }
 
     auto metrics = NeoWPF::Rendering::Text::MeasureText(m_text, m_fontSize, 0, 0);
-    const int desiredWidth = (metrics.width + (m_padding * 2) > 120) ? (metrics.width + (m_padding * 2)) : 120;
-    SetDesiredSize(desiredWidth, metrics.height + (m_padding * 2));
+    const int desiredWidth = std::max(metrics.width + (m_padding * 2), minWidth);
+    const int desiredHeight = std::max(metrics.height + (m_padding * 2), minHeight);
+    SetDesiredSize(desiredWidth, desiredHeight);
 }
 
 void TextBox::Arrange(int finalWidth, int finalHeight)

@@ -10,10 +10,10 @@ public:
     void Apply(UIElement* element) override
     {
         if (auto button = dynamic_cast<UI::Button*>(element)) {
-            button->SetTextColor(0xFF212121u);
+            button->SetTextColor(0xFFEDEDEDu);
             button->SetFontSize(14);
             button->SetPadding(10);
-            button->SetBackgroundColor(0xFFF0F0F0u);
+            button->SetBackgroundColor(0xFF3A3A3Au);
         }
     }
 };

@@ -10,7 +10,7 @@ public:
     void Apply(UIElement* element) override
     {
         if (auto panel = dynamic_cast<UI::Panel*>(element)) {
-            panel->SetBackgroundColor(0xFF2B2B2Bu);
+            panel->SetBackgroundColor(0xFF1E1E1Eu);
         }
     }
 };

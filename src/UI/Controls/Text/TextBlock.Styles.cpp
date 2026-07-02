@@ -10,7 +10,7 @@ public:
     void Apply(UIElement* element) override
     {
         if (auto textBlock = dynamic_cast<UI::TextBlock*>(element)) {
-            textBlock->SetTextColor(0xFF212121u);
+            textBlock->SetTextColor(0xFFEDEDEDu);
             textBlock->SetFontSize(12);
         }
     }
