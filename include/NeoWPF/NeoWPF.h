@@ -107,11 +107,21 @@ namespace NeoWPF {
         Lightweight editable text control.
 
         @details
-        Use TextBox for simple single-line text input.
+        Use TextBox for simple single-line text input or multiline editing.
 
-        Example:
-           @todo
-           add a proper example
+        Example (Single-Line):
+            auto textBox = std::make_shared<NeoWPF::TextBox>();
+            textBox->SetText(L"Enter your name...");
+            textBox->SetFontSize(16);
+            textBox->SetPadding(6);
+
+        Example (Multi-Line):
+            auto multiLineTextBox = std::make_shared<NeoWPF::TextBox>();
+            multiLineTextBox->SetText(L"First line\nSecond line");
+            multiLineTextBox->SetAcceptsReturn(true);
+            multiLineTextBox->SetTextWrapping(true);
+            multiLineTextBox->SetFontSize(16);
+            multiLineTextBox->SetPadding(6);
 
         @since 1.0
     */

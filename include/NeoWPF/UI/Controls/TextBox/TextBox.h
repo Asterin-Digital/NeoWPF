@@ -25,6 +25,9 @@ public:
     void SetText(const std::wstring& text);
     const std::wstring& GetText() const noexcept { return m_text; }
 
+    void SetReadOnly(bool value) noexcept { m_isReadOnly = value; InvalidateVisual(); }
+    bool IsReadOnly() const noexcept { return m_isReadOnly; }
+
     void SetTextColor(uint32_t color) noexcept { m_textColor = color; InvalidateVisual(); }
     uint32_t GetTextColor() const noexcept { return m_textColor; }
 
@@ -78,6 +81,7 @@ private:
     int m_fontSize = 16;
     int m_padding = 4;
     bool m_isEnabled = true;
+    bool m_isReadOnly = false;
     bool m_acceptsReturn = false;
     bool m_textWrapping = false;
 

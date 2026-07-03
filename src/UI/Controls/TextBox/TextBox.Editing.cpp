@@ -41,6 +41,11 @@ void TextBox::OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args)
     const wchar_t charCode = args->GetCharCode();
     bool changed = false;
 
+    if (m_isReadOnly && (charCode != 0 || keyCode == VK_BACK || keyCode == VK_DELETE || keyCode == VK_RETURN)) {
+        args->SetHandled(true);
+        return;
+    }
+
     if (charCode != 0 && charCode != L'\r' && charCode != L'\n' && charCode != L'\t' && charCode != 8) {
         InsertCharacter(charCode);
         changed = true;
