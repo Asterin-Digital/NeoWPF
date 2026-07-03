@@ -13,7 +13,7 @@ public:
             textBox->SetTextColor(0xFFEDEDEDu);
             textBox->SetBackgroundColor(0xFF2F2F2Fu);
             textBox->SetBorderColor(0xFF666666u);
-            textBox->SetCaretColor(0xFFEDEDEDu);
+            textBox->SetCaretColor(0xFFFFFFFFu);
             textBox->SetFontSize(14);
             textBox->SetPadding(4);
         }

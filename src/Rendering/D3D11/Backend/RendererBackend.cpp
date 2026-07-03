@@ -171,7 +171,7 @@ void DestroyWindowContext(HWND hwnd)
     }
 }
 
-} // namespace
+}
 
 namespace NeoWPF::Rendering {
 namespace D3D11 {
@@ -225,7 +225,7 @@ void Execute(const CommandList& cmd)
     float clearColor[4] = {0.125f, 0.125f, 0.125f, 1.0f};
     g_context->ClearRenderTargetView(ctx->rtv.Get(), clearColor);
 
-    // Create blend state for text (once)
+
     static ComPtr<ID3D11BlendState> g_blendState;
     if (!g_blendState) {
         D3D11_BLEND_DESC blendDesc = {};
@@ -275,6 +275,9 @@ void Execute(const CommandList& cmd)
             g_context->Unmap(g_vertexBuffer.Get(), 0);
         }
 
+        float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+        g_context->OMSetBlendState(g_blendState.Get(), blendFactor, 0xffffffff);
+
         UINT stride = sizeof(Vertex);
         UINT offset = 0;
         g_context->IASetInputLayout(g_inputLayout.Get());
@@ -284,6 +287,8 @@ void Execute(const CommandList& cmd)
         g_context->PSSetShader(g_ps.Get(), nullptr, 0);
         g_context->VSSetConstantBuffers(0, 1, g_constantBuffer.GetAddressOf());
         g_context->Draw(static_cast<UINT>(rectVerts.size()), 0);
+
+        g_context->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
     }
 
     struct TextVertex { float x, y; float u, v; float r, g, b, a; };
@@ -304,7 +309,7 @@ void Execute(const CommandList& cmd)
     }
 
     if (!textVerts.empty() && g_vsText && g_psText && g_inputLayoutText && g_vertexBuffer && g_samplerState) {
-        // ENABLE ALPHA BLENDING
+
         float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         g_context->OMSetBlendState(g_blendState.Get(), blendFactor, 0xffffffff);
 
@@ -349,7 +354,7 @@ void Execute(const CommandList& cmd)
             qi += batchCount;
         }
 
-        // DISABLE ALPHA BLENDING (reset to default)
+
         g_context->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
     }
 }
@@ -361,5 +366,5 @@ void Present()
     ctx->swapChain->Present(1, 0);
 }
 
-} // namespace D3D11
-} // namespace NeoWPF::Rendering
+}
+}

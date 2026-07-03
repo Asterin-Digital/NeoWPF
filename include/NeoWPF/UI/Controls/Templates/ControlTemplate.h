@@ -1,6 +1,6 @@
 #pragma once
 
-#include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -21,6 +21,7 @@ public:
     virtual ~ControlTemplateBase() = default;
     virtual bool CanApplyTo(UIElement* element) const;
     virtual void Apply(UIElement* element) = 0;
+    virtual Visual* GetVisualTreeRoot() const noexcept { return nullptr; }
 
     void AddRequiredPart(const std::string& name, bool required = true);
     bool HasRequiredParts() const noexcept;
@@ -30,30 +31,28 @@ protected:
     std::vector<TemplatePart> m_requiredParts;
 };
 
-class ControlTemplateBuilder {
-public:
-    explicit ControlTemplateBuilder(UIElement* control);
-
-    UIElement* GetControl() const noexcept;
-
-    void RegisterPart(const std::string& name, Visual* child);
-    void AttachChild(Visual* child, const std::string& partName = {});
-
-private:
-    UIElement* m_control;
-};
-
 class ControlTemplate : public ControlTemplateBase {
 public:
-    using Builder = std::function<void(UIElement*, ControlTemplateBuilder&)>;
-
-    explicit ControlTemplate(Builder builder);
+    explicit ControlTemplate();
 
     bool CanApplyTo(UIElement* element) const override;
     void Apply(UIElement* element) override;
+    Visual* GetVisualTreeRoot() const noexcept override;
+
+    void SetVisualTree(std::shared_ptr<Visual> visualTree);
+    std::shared_ptr<Visual> GetVisualTree() const noexcept;
+
+    void AddVisualChild(std::shared_ptr<Visual> visualChild);
+    void AddTemplateChild(const std::string& name, std::shared_ptr<Visual> visualChild);
 
 private:
-    Builder m_builder;
+    struct TemplateChild {
+        std::string Name;
+        std::shared_ptr<Visual> Visual;
+    };
+
+    std::shared_ptr<Visual> m_visualTree;
+    std::vector<TemplateChild> m_templateChildren;
 };
 
 } // namespace NeoWPF::UI::Templates

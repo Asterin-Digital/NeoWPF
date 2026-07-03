@@ -63,6 +63,9 @@
     <ClCompile Include="src\UI\Controls\Templates\ControlTemplate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\UI\Controls\Templates\TemplateVisual.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\UI\Layout\Grid\Grid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -231,9 +234,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Controls\Text\TextBlock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Controls\TextBox\TextBox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\Input\InputManager.h">

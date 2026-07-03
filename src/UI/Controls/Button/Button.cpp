@@ -1,6 +1,14 @@
 #include <NeoWPF/UI/Controls/Button/Button.h>
+#include <NeoWPF/UI/Controls/Button/ButtonTemplate.h>
+#include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
+#include <algorithm>
+#include <memory>
+
+#ifdef max
+#undef max
+#endif
 
 namespace NeoWPF::UI {
 
@@ -9,6 +17,8 @@ Button::Button()
 {
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
+    SetTemplate(std::make_shared<ButtonTemplate>());
+    ApplyTemplate();
 }
 
 Button::Button(const std::wstring& text)
@@ -16,6 +26,8 @@ Button::Button(const std::wstring& text)
 {
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
+    SetTemplate(std::make_shared<ButtonTemplate>());
+    ApplyTemplate();
     SetText(text);
 }
 
@@ -60,41 +72,56 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     int absX, absY;
     GetAbsolutePosition(absX, absY);
 
-    // Draw background rectangle
-    commands.DrawRect(
-        static_cast<float>(absX),
-        static_cast<float>(absY),
-        static_cast<float>(GetFinalWidth()),
-        static_cast<float>(GetFinalHeight()),
-        m_backgroundColor);
+    auto* background = dynamic_cast<Templates::TemplateVisual*>(FindTemplateChild("PART_Background"));
+    if (background) {
+        background->SetRect(absX, absY, GetFinalWidth(), GetFinalHeight());
+        background->BuildRenderCommands(commands);
+    }
+    else {
+        commands.DrawRect(
+            static_cast<float>(absX),
+            static_cast<float>(absY),
+            static_cast<float>(GetFinalWidth()),
+            static_cast<float>(GetFinalHeight()),
+            m_backgroundColor);
 
-    // Draw border
-    commands.DrawRect(
-        static_cast<float>(absX),
-        static_cast<float>(absY),
-        static_cast<float>(GetFinalWidth()),
-        1.0f,
-        0xFF333333u);
-    commands.DrawRect(
-        static_cast<float>(absX),
-        static_cast<float>(absY + GetFinalHeight() - 1),
-        static_cast<float>(GetFinalWidth()),
-        1.0f,
-        0xFF333333u);
-    commands.DrawRect(
-        static_cast<float>(absX),
-        static_cast<float>(absY),
-        1.0f,
-        static_cast<float>(GetFinalHeight()),
-        0xFF333333u);
-    commands.DrawRect(
-        static_cast<float>(absX + GetFinalWidth() - 1),
-        static_cast<float>(absY),
-        1.0f,
-        static_cast<float>(GetFinalHeight()),
-        0xFF333333u);
+        commands.DrawRect(
+            static_cast<float>(absX),
+            static_cast<float>(absY),
+            static_cast<float>(GetFinalWidth()),
+            1.0f,
+            0xFF333333u);
+        commands.DrawRect(
+            static_cast<float>(absX),
+            static_cast<float>(absY + GetFinalHeight() - 1),
+            static_cast<float>(GetFinalWidth()),
+            1.0f,
+            0xFF333333u);
+        commands.DrawRect(
+            static_cast<float>(absX),
+            static_cast<float>(absY),
+            1.0f,
+            static_cast<float>(GetFinalHeight()),
+            0xFF333333u);
+        commands.DrawRect(
+            static_cast<float>(absX + GetFinalWidth() - 1),
+            static_cast<float>(absY),
+            1.0f,
+            static_cast<float>(GetFinalHeight()),
+            0xFF333333u);
+    }
 
-    // Draw text if available
+    auto* contentHost = dynamic_cast<Templates::TemplateVisual*>(FindTemplateChild("PART_ContentHost"));
+    if (contentHost) {
+        const int inset = std::max(0, m_padding);
+        contentHost->SetRect(absX + inset, absY + inset, std::max(0, GetFinalWidth() - (inset * 2)), std::max(0, GetFinalHeight() - (inset * 2)));
+        contentHost->SetFillColor(0x00000000u);
+        contentHost->SetBorderColor(0x00000000u);
+        contentHost->SetBorderThickness(0);
+        contentHost->BuildRenderCommands(commands);
+    }
+
+
     if (m_textureId != 0 && m_textWidth > 0 && m_textHeight > 0) {
         commands.DrawTexturedQuad(
             static_cast<float>(absX + m_padding),

@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
+#include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
@@ -9,11 +10,22 @@
 #undef max
 #endif
 
+namespace {
+    uint32_t GetCaretTextureId() {
+        static uint32_t s_caretTextureId = 0;
+        if (s_caretTextureId == 0) {
+            const uint32_t whitePixel = 0xFFFFFFFFu;
+            s_caretTextureId = NeoWPF::Rendering::Renderer_CreateTexture(1, 1, &whitePixel);
+        }
+        return s_caretTextureId;
+    }
+}
+
 #ifdef min
 #undef min
 #endif
 
-bool NeoWPF::UI::TextBox::s_textBoxDebug = true; // Please do not turn this on unless ur debugging something
+bool NeoWPF::UI::TextBox::s_textBoxDebug = false; // Please do not turn this on unless ur debugging something
 
 namespace NeoWPF::UI {
 
@@ -119,37 +131,54 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     int absX, absY;
     GetAbsolutePosition(absX, absY);
 
-    commands.DrawRect(
-        static_cast<float>(absX),
-        static_cast<float>(absY),
-        static_cast<float>(GetFinalWidth()),
-        static_cast<float>(GetFinalHeight()),
-        m_backgroundColor);
+    auto* border = dynamic_cast<Templates::TemplateVisual*>(FindTemplateChild("PART_Border"));
+    if (border) {
+        border->SetRect(absX, absY, GetFinalWidth(), GetFinalHeight());
+        border->BuildRenderCommands(commands);
+    }
+    else {
+        commands.DrawRect(
+            static_cast<float>(absX),
+            static_cast<float>(absY),
+            static_cast<float>(GetFinalWidth()),
+            static_cast<float>(GetFinalHeight()),
+            m_backgroundColor);
 
-    commands.DrawRect(
-        static_cast<float>(absX),
-        static_cast<float>(absY),
-        static_cast<float>(GetFinalWidth()),
-        1.0f,
-        m_borderColor);
-    commands.DrawRect(
-        static_cast<float>(absX),
-        static_cast<float>(absY + GetFinalHeight() - 1),
-        static_cast<float>(GetFinalWidth()),
-        1.0f,
-        m_borderColor);
-    commands.DrawRect(
-        static_cast<float>(absX),
-        static_cast<float>(absY),
-        1.0f,
-        static_cast<float>(GetFinalHeight()),
-        m_borderColor);
-    commands.DrawRect(
-        static_cast<float>(absX + GetFinalWidth() - 1),
-        static_cast<float>(absY),
-        1.0f,
-        static_cast<float>(GetFinalHeight()),
-        m_borderColor);
+        commands.DrawRect(
+            static_cast<float>(absX),
+            static_cast<float>(absY),
+            static_cast<float>(GetFinalWidth()),
+            1.0f,
+            m_borderColor);
+        commands.DrawRect(
+            static_cast<float>(absX),
+            static_cast<float>(absY + GetFinalHeight() - 1),
+            static_cast<float>(GetFinalWidth()),
+            1.0f,
+            m_borderColor);
+        commands.DrawRect(
+            static_cast<float>(absX),
+            static_cast<float>(absY),
+            1.0f,
+            static_cast<float>(GetFinalHeight()),
+            m_borderColor);
+        commands.DrawRect(
+            static_cast<float>(absX + GetFinalWidth() - 1),
+            static_cast<float>(absY),
+            1.0f,
+            static_cast<float>(GetFinalHeight()),
+            m_borderColor);
+    }
+
+    auto* contentHost = dynamic_cast<Templates::TemplateVisual*>(FindTemplateChild("PART_ContentHost"));
+    if (contentHost) {
+        const int inset = std::max(0, m_padding);
+        contentHost->SetRect(absX + inset, absY + inset, std::max(0, GetFinalWidth() - (inset * 2)), std::max(0, GetFinalHeight() - (inset * 2)));
+        contentHost->SetFillColor(0x00000000u);
+        contentHost->SetBorderColor(0x00000000u);
+        contentHost->SetBorderThickness(0);
+        contentHost->BuildRenderCommands(commands);
+    }
 
     int currentY = 0;
     for (const auto& line : m_lineRenderData) {
@@ -193,12 +222,16 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         if (s_textBoxDebug) {
             NeoWPF::Diagnostics::LogInfo("[TextBox] BuildRenderCommands: caretPosition=%zu rawCaretX=%d clampedCaretX=%d caretY=%d caretVerticalOffset=%d visibleTextWidth=%d", m_caretPosition, rawCaretX, caretX, caretY, caretVerticalOffset, visibleTextWidth);
         }
-        commands.DrawRect(
+
+        const uint32_t caretTextureId = GetCaretTextureId();
+        commands.DrawTexturedQuad(
             static_cast<float>(absX + m_padding + caretX),
             static_cast<float>(absY + m_padding + caretY + caretVerticalOffset),
             1.0f,
             static_cast<float>(caretHeight),
-            m_caretColor);
+            0.0f, 0.0f,
+            1.0f, 1.0f,
+            caretTextureId);
     }
 }
 

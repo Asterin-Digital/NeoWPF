@@ -1,7 +1,6 @@
 #pragma once
 
 #include <NeoWPF/UI/Core/Element/Visual.h>
-#include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -14,6 +13,10 @@ namespace NeoWPF::Input::Core
 
 namespace NeoWPF::UI {
 class UIElement;
+}
+
+namespace NeoWPF::UI::Templates {
+class ControlTemplateBase;
 }
 
 namespace NeoWPF::UI {
@@ -42,6 +45,7 @@ public:
     bool HasTemplate() const noexcept { return static_cast<bool>(m_template); }
 
     bool ApplyTemplate();
+    void ClearTemplateVisualRoot() noexcept;
 
     void RegisterTemplateChild(const std::string& name, Visual* child);
     Visual* FindTemplateChild(const std::string& name) const;
@@ -64,6 +68,7 @@ private:
     bool m_hasTemplateApplied = false;
     std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase> m_template;
     std::unordered_map<std::string, Visual*> m_templateChildren;
+    Visual* m_appliedTemplateRoot = nullptr;
 };
 
 }

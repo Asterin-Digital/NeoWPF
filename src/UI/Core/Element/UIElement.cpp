@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 
 namespace NeoWPF::UI {
 
@@ -13,6 +14,11 @@ void UIElement::ClearDirty() noexcept {
 }
 
 void UIElement::SetTemplate(const std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase>& templatePtr) {
+    if (m_appliedTemplateRoot) {
+        RemoveVisualChild(m_appliedTemplateRoot);
+        m_appliedTemplateRoot = nullptr;
+    }
+
     m_template = templatePtr;
     m_hasTemplateApplied = false;
 }
@@ -22,9 +28,22 @@ bool UIElement::ApplyTemplate() {
         return false;
     }
 
+    if (m_appliedTemplateRoot) {
+        RemoveVisualChild(m_appliedTemplateRoot);
+        m_appliedTemplateRoot = nullptr;
+    }
+
     m_template->Apply(this);
+    m_appliedTemplateRoot = m_template->GetVisualTreeRoot();
     m_hasTemplateApplied = true;
     return true;
+}
+
+void UIElement::ClearTemplateVisualRoot() noexcept {
+    if (m_appliedTemplateRoot) {
+        RemoveVisualChild(m_appliedTemplateRoot);
+        m_appliedTemplateRoot = nullptr;
+    }
 }
 
 void UIElement::RegisterTemplateChild(const std::string& name, Visual* child) {

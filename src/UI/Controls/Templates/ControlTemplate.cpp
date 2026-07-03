@@ -1,7 +1,6 @@
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
-#include <utility>
 
 namespace NeoWPF::UI::Templates {
 
@@ -26,49 +25,70 @@ const std::vector<TemplatePart>& ControlTemplateBase::GetRequiredParts() const n
     return m_requiredParts;
 }
 
-ControlTemplateBuilder::ControlTemplateBuilder(UIElement* control)
-    : m_control(control)
-{
-}
-
-UIElement* ControlTemplateBuilder::GetControl() const noexcept
-{
-    return m_control;
-}
-
-void ControlTemplateBuilder::RegisterPart(const std::string& name, Visual* child)
-{
-    if (!m_control || name.empty() || !child) return;
-    m_control->RegisterTemplateChild(name, child);
-}
-
-void ControlTemplateBuilder::AttachChild(Visual* child, const std::string& partName)
-{
-    if (!m_control || !child) return;
-    m_control->AddVisualChild(child);
-    if (!partName.empty()) {
-        RegisterPart(partName, child);
-    }
-}
-
-ControlTemplate::ControlTemplate(Builder builder)
-    : m_builder(std::move(builder))
-{
-}
+ControlTemplate::ControlTemplate() = default;
 
 bool ControlTemplate::CanApplyTo(UIElement* element) const
 {
     return ControlTemplateBase::CanApplyTo(element);
 }
 
+Visual* ControlTemplate::GetVisualTreeRoot() const noexcept
+{
+    return m_visualTree.get();
+}
+
 void ControlTemplate::Apply(UIElement* element)
 {
-    if (!element || !m_builder) {
+    if (!element) {
         return;
     }
 
-    ControlTemplateBuilder builder(element);
-    m_builder(element, builder);
+    element->ClearTemplateChildren();
+
+    if (!m_visualTree) {
+        m_visualTree = std::make_shared<Visual>();
+    }
+
+    for (const auto& child : m_templateChildren) {
+        if (child.Name.empty() || !child.Visual || child.Visual.get() == m_visualTree.get()) {
+            continue;
+        }
+
+        m_visualTree->AddVisualChild(child.Visual.get());
+        element->RegisterTemplateChild(child.Name, child.Visual.get());
+    }
+}
+
+void ControlTemplate::SetVisualTree(std::shared_ptr<Visual> visualTree)
+{
+    m_visualTree = std::move(visualTree);
+}
+
+std::shared_ptr<Visual> ControlTemplate::GetVisualTree() const noexcept
+{
+    return m_visualTree;
+}
+
+void ControlTemplate::AddVisualChild(std::shared_ptr<Visual> visualChild)
+{
+    if (!visualChild) {
+        return;
+    }
+
+    if (!m_visualTree) {
+        m_visualTree = std::make_shared<Visual>();
+    }
+
+    m_visualTree->AddVisualChild(visualChild.get());
+}
+
+void ControlTemplate::AddTemplateChild(const std::string& name, std::shared_ptr<Visual> visualChild)
+{
+    if (name.empty() || !visualChild) {
+        return;
+    }
+
+    m_templateChildren.push_back({name, std::move(visualChild)});
 }
 
 } // namespace NeoWPF::UI::Templates
