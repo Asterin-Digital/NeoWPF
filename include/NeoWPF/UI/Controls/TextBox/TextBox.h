@@ -75,7 +75,7 @@ private:
     std::wstring m_text;
     std::size_t m_caretPosition = 0;
     uint32_t m_textColor = 0xFF000000u;
-    uint32_t m_backgroundColor = 0xFFFFFFFFu;
+    uint32_t m_backgroundColor = 0xFF2F2F2Fu;
     uint32_t m_borderColor = 0xFF666666u;
     uint32_t m_caretColor = 0xFF000000u;
     int m_fontSize = 16;

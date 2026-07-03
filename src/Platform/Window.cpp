@@ -13,6 +13,9 @@ LRESULT CALLBACK NeoWPFWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
         PostQuitMessage(0);
         return 0;
 
+    case WM_ERASEBKGND:
+        return TRUE;
+
     case WM_MOUSEMOVE:
     {
         int x = GET_X_LPARAM(lParam);

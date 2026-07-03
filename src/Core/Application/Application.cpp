@@ -166,9 +166,6 @@ HWND Application::CreateWindow(const wchar_t* title, int width, int height)
         s_appState.windows.push_back(windowState);
     }
 
-    ::ShowWindow(hwnd, SW_SHOW);
-    ::UpdateWindow(hwnd);
-
     return hwnd;
 }
 
@@ -237,6 +234,9 @@ int Application::Run()
     auto rootVisual = rootInfos.rootVisual;
     NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual));
 
+    ::ShowWindow(primaryWindow, SW_SHOW);
+    ::UpdateWindow(primaryWindow);
+    ::RedrawWindow(primaryWindow, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 
     MSG msg;
     unsigned int lastLayoutWidth = 0, lastLayoutHeight = 0;

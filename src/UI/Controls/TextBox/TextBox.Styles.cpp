@@ -11,7 +11,7 @@ public:
     {
         if (auto textBox = dynamic_cast<UI::TextBox*>(element)) {
             textBox->SetTextColor(0xFFEDEDEDu);
-            textBox->SetBackgroundColor(0xFF2A2A2Au);
+            textBox->SetBackgroundColor(0xFF2F2F2Fu);
             textBox->SetBorderColor(0xFF666666u);
             textBox->SetCaretColor(0xFFEDEDEDu);
             textBox->SetFontSize(14);
