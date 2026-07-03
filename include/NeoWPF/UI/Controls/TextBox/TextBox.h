@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
+#include <vector>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
@@ -35,6 +37,12 @@ public:
     void SetPadding(int padding) noexcept { m_padding = padding; InvalidateVisual(); }
     int GetPadding() const noexcept { return m_padding; }
 
+    void SetAcceptsReturn(bool value) noexcept { m_acceptsReturn = value; InvalidateVisual(); }
+    bool GetAcceptsReturn() const noexcept { return m_acceptsReturn; }
+
+    void SetTextWrapping(bool value) noexcept { m_textWrapping = value; m_textDirty = true; InvalidateVisual(); }
+    bool GetTextWrapping() const noexcept { return m_textWrapping; }
+
     void SetBorderColor(uint32_t color) noexcept { m_borderColor = color; InvalidateVisual(); }
     uint32_t GetBorderColor() const noexcept { return m_borderColor; }
 
@@ -54,6 +62,13 @@ public:
     void OnLostFocus() override;
 
 private:
+    struct LineRenderData {
+        uint32_t textureId = 0;
+        int width = 0;
+        int height = 0;
+        int lineHeight = 0;
+    };
+
     std::wstring m_text;
     std::size_t m_caretPosition = 0;
     uint32_t m_textColor = 0xFF000000u;
@@ -63,19 +78,24 @@ private:
     int m_fontSize = 16;
     int m_padding = 4;
     bool m_isEnabled = true;
+    bool m_acceptsReturn = false;
+    bool m_textWrapping = false;
 
-    uint32_t m_textureId = 0;
-    int m_textWidth = 0;
-    int m_textHeight = 0;
+    std::vector<LineRenderData> m_lineRenderData;
     bool m_textDirty = true;
     bool m_isFocused = false;
 
     void EnsureTextTexture();
+    int GetLineVisualOffset(std::size_t lineIndex) const;
     void InsertCharacter(wchar_t character);
     void RemoveCharacter(bool backspace);
-    void UpdateCaretFromMouse(int x);
+    void UpdateCaretFromMouse(int x, int y);
     int GetCaretX() const;
+    int GetCaretY() const;
     int GetCaretHeight() const;
+    std::pair<std::size_t, std::size_t> GetCaretLineColumn(std::size_t caretPosition) const;
+    void MoveCaretToLineColumn(std::size_t lineIndex, std::size_t column);
+    int GetLineHeight(const std::wstring& line) const;
 };
 
 class TextBoxTemplate : public Templates::ControlTemplate {

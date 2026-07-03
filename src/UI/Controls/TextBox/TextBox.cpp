@@ -13,7 +13,7 @@
 #undef min
 #endif
 
-bool NeoWPF::UI::TextBox::s_textBoxDebug = false; // Please do not turn this on unless ur debugging something
+bool NeoWPF::UI::TextBox::s_textBoxDebug = true; // Please do not turn this on unless ur debugging something
 
 namespace NeoWPF::UI {
 
@@ -26,10 +26,13 @@ TextBox::TextBox()
 
 TextBox::~TextBox()
 {
-    if (m_textureId != 0) {
-        NeoWPF::Rendering::Renderer_DestroyTexture(m_textureId);
-        m_textureId = 0;
+    for (auto& line : m_lineRenderData) {
+        if (line.textureId != 0) {
+            NeoWPF::Rendering::Renderer_DestroyTexture(line.textureId);
+            line.textureId = 0;
+        }
     }
+    m_lineRenderData.clear();
 }
 
 void TextBox::SetText(const std::wstring& text)
@@ -57,9 +60,24 @@ void TextBox::Measure(int availableWidth, int availableHeight)
     int desiredWidth = minWidth;
     int desiredHeight = minHeight;
     if (!m_text.empty()) {
-        const auto metrics = NeoWPF::Rendering::Text::MeasureText(m_text, m_fontSize, 0, 0);
-        desiredWidth = std::max(metrics.width + (m_padding * 2), minWidth);
-        desiredHeight = std::max(metrics.height + (m_padding * 2), minHeight);
+        const int maxWidth = std::max(0, availableWidth > 0 ? availableWidth - (m_padding * 2) : 0);
+        const int maxHeight = std::max(0, availableHeight > 0 ? availableHeight - (m_padding * 2) : 0);
+        int contentHeight = 0;
+        std::size_t lineStart = 0;
+        while (lineStart <= m_text.size()) {
+            const std::size_t lineBreak = m_text.find(L'\n', lineStart);
+            const std::size_t lineEnd = lineBreak == std::wstring::npos ? m_text.size() : lineBreak;
+            const std::wstring lineText = m_text.substr(lineStart, lineEnd - lineStart);
+            const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(lineText.empty() ? L"W" : lineText, m_fontSize, maxWidth, maxHeight);
+            const int lineHeight = std::max(baseMetrics.height, std::max(lineMetrics.height, m_fontSize));
+            contentHeight += lineHeight;
+            desiredWidth = std::max(desiredWidth, lineMetrics.width + (m_padding * 2));
+            if (lineBreak == std::wstring::npos) {
+                break;
+            }
+            lineStart = lineEnd + 1;
+        }
+        desiredHeight = std::max(contentHeight + (m_padding * 2), minHeight);
     }
 
     if (availableWidth > 0) {
@@ -77,7 +95,7 @@ void TextBox::Arrange(int finalWidth, int finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
     if (s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] Arrange: final=%dx%d, textDirty=%d, tex=%dx%d", finalWidth, finalHeight, m_textDirty ? 1 : 0, m_textWidth, m_textHeight);
+        NeoWPF::Diagnostics::LogInfo("[TextBox] Arrange: final=%dx%d, textDirty=%d, lineCount=%zu", finalWidth, finalHeight, m_textDirty ? 1 : 0, m_lineRenderData.size());
     }
     if (m_textDirty) {
         EnsureTextTexture();
@@ -133,41 +151,66 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         static_cast<float>(GetFinalHeight()),
         m_borderColor);
 
-    if (m_textureId != 0 && m_textWidth > 0 && m_textHeight > 0) {
+    int currentY = 0;
+    for (const auto& line : m_lineRenderData) {
+        if (line.textureId == 0 || line.width <= 0 || line.height <= 0) {
+            currentY += std::max(1, line.lineHeight);
+            continue;
+        }
+
         const int visibleTextWidth = std::max(0, GetFinalWidth() - (m_padding * 2));
-        const int drawWidth = std::min(m_textWidth, visibleTextWidth);
-        const float uvRight = drawWidth > 0 ? static_cast<float>(drawWidth) / static_cast<float>(m_textWidth) : 1.0f;
+        const int drawWidth = std::min(line.width, visibleTextWidth);
+        const float uvRight = drawWidth > 0 ? static_cast<float>(drawWidth) / static_cast<float>(line.width) : 1.0f;
+        const int drawHeight = std::max(1, line.height);
+        const float uvBottom = drawHeight > 0 ? static_cast<float>(drawHeight) / static_cast<float>(line.height) : 1.0f;
+        const int lineVerticalOffset = GetLineVisualOffset(static_cast<std::size_t>(&line - &m_lineRenderData[0]));
 
         if (s_textBoxDebug) {
-            NeoWPF::Diagnostics::LogInfo("[TextBox] BuildRenderCommands: finalWidth=%d visibleTextWidth=%d textWidth=%d drawWidth=%d uvRight=%.3f", GetFinalWidth(), visibleTextWidth, m_textWidth, drawWidth, uvRight);
+            NeoWPF::Diagnostics::LogInfo("[TextBox] BuildRenderCommands: line=%zu width=%d height=%d drawWidth=%d drawHeight=%d uvRight=%.3f uvBottom=%.3f", m_lineRenderData.size() > 0 ? static_cast<std::size_t>(&line - &m_lineRenderData[0]) : 0, line.width, line.height, drawWidth, drawHeight, uvRight, uvBottom);
         }
 
         commands.DrawTexturedQuad(
             static_cast<float>(absX + m_padding),
-            static_cast<float>(absY + m_padding),
+            static_cast<float>(absY + m_padding + currentY + lineVerticalOffset),
             static_cast<float>(drawWidth),
-            static_cast<float>(m_textHeight),
+            static_cast<float>(drawHeight),
             0.0f, 0.0f,
-            uvRight, 1.0f,
-            m_textureId);
+            uvRight, uvBottom,
+            line.textureId);
+
+        currentY += std::max(1, line.lineHeight);
     }
 
     if (m_isFocused) {
         const int visibleTextWidth = std::max(0, GetFinalWidth() - (m_padding * 2));
         int caretX = GetCaretX();
         int rawCaretX = caretX;
+        int caretY = GetCaretY();
         caretX = std::min(caretX, visibleTextWidth);
         const int caretHeight = std::max(1, GetCaretHeight());
+        const auto [caretLineIndex, _] = GetCaretLineColumn(m_caretPosition);
+        const int caretVerticalOffset = GetLineVisualOffset(caretLineIndex);
         if (s_textBoxDebug) {
-            NeoWPF::Diagnostics::LogInfo("[TextBox] BuildRenderCommands: caretPosition=%zu rawCaretX=%d clampedCaretX=%d visibleTextWidth=%d", m_caretPosition, rawCaretX, caretX, visibleTextWidth);
+            NeoWPF::Diagnostics::LogInfo("[TextBox] BuildRenderCommands: caretPosition=%zu rawCaretX=%d clampedCaretX=%d caretY=%d caretVerticalOffset=%d visibleTextWidth=%d", m_caretPosition, rawCaretX, caretX, caretY, caretVerticalOffset, visibleTextWidth);
         }
         commands.DrawRect(
             static_cast<float>(absX + m_padding + caretX),
-            static_cast<float>(absY + m_padding),
+            static_cast<float>(absY + m_padding + caretY + caretVerticalOffset),
             1.0f,
             static_cast<float>(caretHeight),
             m_caretColor);
     }
+}
+
+int TextBox::GetLineVisualOffset(std::size_t lineIndex) const
+{
+    if (lineIndex < m_lineRenderData.size()) {
+        const auto& line = m_lineRenderData[lineIndex];
+        if (line.height > 0 && line.lineHeight > line.height) {
+            return (line.lineHeight - line.height) / 2;
+        }
+    }
+    return 0;
 }
 
 void TextBox::EnsureTextTexture()
@@ -177,37 +220,59 @@ void TextBox::EnsureTextTexture()
     }
 
     if (s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] EnsureTextTexture: textLength=%zu, oldTexture=%u", m_text.size(), m_textureId);
+        NeoWPF::Diagnostics::LogInfo("[TextBox] EnsureTextTexture: textLength=%zu, lineCount=%zu", m_text.size(), m_lineRenderData.size());
     }
 
-    if (m_textureId != 0) {
-        NeoWPF::Rendering::Renderer_DestroyTexture(m_textureId);
-        m_textureId = 0;
+    for (auto& line : m_lineRenderData) {
+        if (line.textureId != 0) {
+            NeoWPF::Rendering::Renderer_DestroyTexture(line.textureId);
+            line.textureId = 0;
+        }
     }
+    m_lineRenderData.clear();
 
     if (m_text.empty()) {
-        m_textWidth = 0;
-        m_textHeight = 0;
         m_textDirty = false;
         return;
     }
 
-    int width = 0;
-    int height = 0;
-    auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(m_text, m_fontSize, width, height);
-    if (s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] RenderTextBitmap result: width=%d height=%d, bitmapSize=%zu", width, height, bitmap.size());
-    }
-    if (bitmap.empty() || width == 0 || height == 0) {
-        m_textWidth = 0;
-        m_textHeight = 0;
-        m_textDirty = false;
-        return;
+    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, 0, 0);
+    std::size_t lineStart = 0;
+    while (lineStart <= m_text.size()) {
+        const std::size_t lineEnd = m_text.find(L'\n', lineStart);
+        const std::size_t nextLine = lineEnd == std::wstring::npos ? m_text.size() : lineEnd;
+        const std::wstring lineText = m_text.substr(lineStart, nextLine - lineStart);
+
+        LineRenderData lineData;
+        if (!lineText.empty()) {
+            int width = 0;
+            int height = 0;
+            auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(lineText, m_fontSize, width, height);
+            if (s_textBoxDebug) {
+                NeoWPF::Diagnostics::LogInfo("[TextBox] RenderTextBitmap result: line='%ls' width=%d height=%d bitmapSize=%zu", lineText.c_str(), width, height, bitmap.size());
+            }
+            if (!bitmap.empty() && width > 0 && height > 0) {
+                lineData.textureId = NeoWPF::Rendering::Renderer_CreateTexture(static_cast<unsigned int>(width), static_cast<unsigned int>(height), bitmap.data());
+                lineData.width = width;
+                lineData.height = height;
+            }
+        }
+
+        const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(lineText.empty() ? L"W" : lineText, m_fontSize, 0, 0);
+        if (lineData.height > 0) {
+            lineData.lineHeight = lineData.height;
+        }
+        else {
+            lineData.lineHeight = std::max(baseMetrics.height, std::max(lineMetrics.height, m_fontSize));
+        }
+        m_lineRenderData.push_back(lineData);
+
+        if (lineEnd == std::wstring::npos) {
+            break;
+        }
+        lineStart = lineEnd + 1;
     }
 
-    m_textureId = NeoWPF::Rendering::Renderer_CreateTexture(static_cast<unsigned int>(width), static_cast<unsigned int>(height), bitmap.data());
-    m_textWidth = width;
-    m_textHeight = height;
     m_textDirty = false;
 }
 
