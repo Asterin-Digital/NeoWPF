@@ -41,40 +41,6 @@ namespace NeoWPF::Rendering::D3D11 {
 
 namespace NeoWPF::Rendering::D3D11 {
 
-HRESULT CreateSwapChainForWindow(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain)
-{
-    if (!g_device) return E_FAIL;
-    if (width == 0) width = 1;
-    if (height == 0) height = 1;
-
-    ComPtr<IDXGIDevice> dxgiDevice;
-    HRESULT hr = g_device.As(&dxgiDevice);
-    if (FAILED(hr)) return hr;
-
-    ComPtr<IDXGIAdapter> adapter;
-    hr = dxgiDevice->GetAdapter(&adapter);
-    if (FAILED(hr)) return hr;
-
-    ComPtr<IDXGIFactory> factory;
-    hr = adapter->GetParent(IID_PPV_ARGS(&factory));
-    if (FAILED(hr)) return hr;
-
-    DXGI_SWAP_CHAIN_DESC sd = {};
-    sd.BufferCount = 2;
-    sd.BufferDesc.Width = width;
-    sd.BufferDesc.Height = height;
-    sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    sd.OutputWindow = hwnd;
-    sd.SampleDesc.Count = 1;
-    sd.Windowed = TRUE;
-    sd.BufferDesc.RefreshRate.Numerator = 60;
-    sd.BufferDesc.RefreshRate.Denominator = 1;
-    sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-
-    return factory->CreateSwapChain(g_device.Get(), &sd, swapChain);
-}
-
 void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain)
 {
     if (!g_d3d11Dll) {
@@ -115,6 +81,40 @@ void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height
     if (FAILED(hr)) {
         throw std::runtime_error("D3D11 device/swapchain creation failed");
     }
+}
+
+HRESULT CreateSwapChainForWindow(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain)
+{
+    if (!g_device || !swapChain) return E_FAIL;
+    if (width == 0) width = 1;
+    if (height == 0) height = 1;
+
+    ComPtr<IDXGIDevice> dxgiDevice;
+    HRESULT hr = g_device.As(&dxgiDevice);
+    if (FAILED(hr)) return hr;
+
+    ComPtr<IDXGIAdapter> adapter;
+    hr = dxgiDevice->GetAdapter(&adapter);
+    if (FAILED(hr)) return hr;
+
+    ComPtr<IDXGIFactory> factory;
+    hr = adapter->GetParent(IID_PPV_ARGS(&factory));
+    if (FAILED(hr)) return hr;
+
+    DXGI_SWAP_CHAIN_DESC sd = {};
+    sd.BufferCount = 2;
+    sd.BufferDesc.Width = width;
+    sd.BufferDesc.Height = height;
+    sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    sd.OutputWindow = hwnd;
+    sd.SampleDesc.Count = 1;
+    sd.Windowed = TRUE;
+    sd.BufferDesc.RefreshRate.Numerator = 60;
+    sd.BufferDesc.RefreshRate.Denominator = 1;
+    sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+
+    return factory->CreateSwapChain(g_device.Get(), &sd, swapChain);
 }
 
 void EnsureCompilerLoaded()

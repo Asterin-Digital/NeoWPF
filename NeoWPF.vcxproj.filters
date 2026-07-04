@@ -21,19 +21,25 @@
     <ClCompile Include="src\Platform\Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Rendering\Renderer.cpp">
+    <ClCompile Include="src\Rendering\Core\Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Rendering\RenderScheduler.cpp">
+    <ClCompile Include="src\Rendering\Core\RenderScheduler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Rendering\D3D11\Backend\RendererBackend.cpp">
+    <ClCompile Include="src\Rendering\D3D11\Renderer\RendererBackend.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Rendering\D3D11\Backend\RendererBackend_Device.cpp">
+    <ClCompile Include="src\Rendering\D3D11\Device\Device.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Rendering\D3D11\Backend\ShaderSources.cpp">
+    <ClCompile Include="src\Rendering\D3D11\Shaders\VertexShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Rendering\D3D11\Shaders\PixelShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Rendering\D3D11\Shaders\ShaderManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Diagnostics\Logger.cpp">
@@ -75,7 +81,13 @@
     <ClCompile Include="src\Rendering\D3D11\Text\TextRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Rendering\D3D11\Backend\RendererBackend_Text.cpp">
+    <ClCompile Include="src\Rendering\D3D11\Text\TextDWrite.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Rendering\D3D11\Text\TextBitmap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Rendering\D3D11\Device\Resources.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Controls\Text\TextBlock.cpp">

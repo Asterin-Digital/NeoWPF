@@ -12,7 +12,7 @@
 
 namespace NeoWPF::UI {
 
-    bool GridLayout::s_gridLogging = false; // Please do not turn this on unless ur debugging something
+    bool GridLayout::s_gridLogging = true; // Please do not turn this on unless ur debugging something
 
     GridLayoutResult GridLayout::ComputeLayout(
     const std::vector<Grid::Definition>& rowDefs,
