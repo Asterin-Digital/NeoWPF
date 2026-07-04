@@ -63,7 +63,8 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         static_cast<float>(m_textHeight),
         0.0f, 0.0f,
         1.0f, 1.0f,
-        m_textureId);
+        m_textureId,
+        GetOpacity());
 }
 
 void TextBlock::EnsureTextTexture()

@@ -75,6 +75,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto* background = dynamic_cast<Templates::TemplateVisual*>(FindTemplateChild("PART_Background"));
     if (background) {
         background->SetRect(absX, absY, GetFinalWidth(), GetFinalHeight());
+        background->SetOpacity(GetOpacity());
         background->BuildRenderCommands(commands);
     }
     else {
@@ -83,32 +84,37 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             static_cast<float>(absY),
             static_cast<float>(GetFinalWidth()),
             static_cast<float>(GetFinalHeight()),
-            m_backgroundColor);
+            m_backgroundColor,
+            GetOpacity());
 
         commands.DrawRect(
             static_cast<float>(absX),
             static_cast<float>(absY),
             static_cast<float>(GetFinalWidth()),
             1.0f,
-            0xFF333333u);
+            0xFF333333u,
+            GetOpacity());
         commands.DrawRect(
             static_cast<float>(absX),
             static_cast<float>(absY + GetFinalHeight() - 1),
             static_cast<float>(GetFinalWidth()),
             1.0f,
-            0xFF333333u);
+            0xFF333333u,
+            GetOpacity());
         commands.DrawRect(
             static_cast<float>(absX),
             static_cast<float>(absY),
             1.0f,
             static_cast<float>(GetFinalHeight()),
-            0xFF333333u);
+            0xFF333333u,
+            GetOpacity());
         commands.DrawRect(
             static_cast<float>(absX + GetFinalWidth() - 1),
             static_cast<float>(absY),
             1.0f,
             static_cast<float>(GetFinalHeight()),
-            0xFF333333u);
+            0xFF333333u,
+            GetOpacity());
     }
 
     auto* contentHost = dynamic_cast<Templates::TemplateVisual*>(FindTemplateChild("PART_ContentHost"));
@@ -118,6 +124,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         contentHost->SetFillColor(0x00000000u);
         contentHost->SetBorderColor(0x00000000u);
         contentHost->SetBorderThickness(0);
+        contentHost->SetOpacity(GetOpacity());
         contentHost->BuildRenderCommands(commands);
     }
 
@@ -130,7 +137,8 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             static_cast<float>(m_textHeight),
             0.0f, 0.0f,
             1.0f, 1.0f,
-            m_textureId);
+            m_textureId,
+            GetOpacity());
     }
 }
 

@@ -34,6 +34,22 @@ void TemplateVisual::SetBorderThickness(int thickness) noexcept
     MarkTreeDirty();
 }
 
+void TemplateVisual::SetOpacity(float opacity) noexcept
+{
+    if (opacity < 0.0f) {
+        opacity = 0.0f;
+    } else if (opacity > 1.0f) {
+        opacity = 1.0f;
+    }
+    m_opacity = opacity;
+    MarkTreeDirty();
+}
+
+float TemplateVisual::GetOpacity() const noexcept
+{
+    return m_opacity;
+}
+
 void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
     if (m_width <= 0 || m_height <= 0) {
@@ -45,7 +61,8 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
         static_cast<float>(m_y),
         static_cast<float>(m_width),
         static_cast<float>(m_height),
-        m_fillColor);
+        m_fillColor,
+        m_opacity);
 
     if (m_borderThickness <= 0) {
         return;
@@ -57,25 +74,29 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
         static_cast<float>(m_y),
         static_cast<float>(m_width),
         static_cast<float>(thickness),
-        m_borderColor);
+        m_borderColor,
+        m_opacity);
     commands.DrawRect(
         static_cast<float>(m_x),
         static_cast<float>(m_y + m_height - thickness),
         static_cast<float>(m_width),
         static_cast<float>(thickness),
-        m_borderColor);
+        m_borderColor,
+        m_opacity);
     commands.DrawRect(
         static_cast<float>(m_x),
         static_cast<float>(m_y),
         static_cast<float>(thickness),
         static_cast<float>(m_height),
-        m_borderColor);
+        m_borderColor,
+        m_opacity);
     commands.DrawRect(
         static_cast<float>(m_x + m_width - thickness),
         static_cast<float>(m_y),
         static_cast<float>(thickness),
         static_cast<float>(m_height),
-        m_borderColor);
+        m_borderColor,
+        m_opacity);
 }
 
 } // namespace NeoWPF::UI::Templates

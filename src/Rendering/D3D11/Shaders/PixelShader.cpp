@@ -23,4 +23,4 @@ float4 PSMain(PSIn input) : SV_Target {
 )";
 }
 
-} // namespace NeoWPF::Rendering::D3D11
+}

@@ -75,7 +75,8 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             static_cast<float>(GetLayoutOffsetY()),
             static_cast<float>(GetFinalWidth()),
             static_cast<float>(GetFinalHeight()),
-            m_backgroundColor);
+            m_backgroundColor,
+            GetOpacity());
     }
 
     for (auto child : GetVisualChildren()) {

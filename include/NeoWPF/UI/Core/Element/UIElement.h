@@ -29,6 +29,19 @@ public:
     bool IsEnabled() const noexcept { return m_isEnabled; }
     void SetEnabled(bool enabled) noexcept { m_isEnabled = enabled; }
 
+    float GetOpacity() const noexcept { return m_opacity; }
+    void SetOpacity(float opacity) noexcept {
+        if (opacity < 0.0f) {
+            opacity = 0.0f;
+        } else if (opacity > 1.0f) {
+            opacity = 1.0f;
+        }
+        if (m_opacity != opacity) {
+            m_opacity = opacity;
+            InvalidateVisual();
+        }
+    }
+
     void InvalidateVisual();
     bool IsDirty() const noexcept { return m_isDirty; }
     void ClearDirty() noexcept;
@@ -65,6 +78,7 @@ private:
     bool m_isVisible = true;
     bool m_isEnabled = true;
     bool m_isDirty = true;
+    float m_opacity = 1.0f;
     bool m_hasTemplateApplied = false;
     std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase> m_template;
     std::unordered_map<std::string, Visual*> m_templateChildren;

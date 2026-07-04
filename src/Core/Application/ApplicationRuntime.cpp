@@ -19,7 +19,7 @@ namespace {
 
 AppState s_appState;
 
-} // namespace
+}
 
 AppState& GetAppState() { return s_appState; }
 

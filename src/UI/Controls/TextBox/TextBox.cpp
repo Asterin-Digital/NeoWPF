@@ -134,6 +134,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto* border = dynamic_cast<Templates::TemplateVisual*>(FindTemplateChild("PART_Border"));
     if (border) {
         border->SetRect(absX, absY, GetFinalWidth(), GetFinalHeight());
+        border->SetOpacity(GetOpacity());
         border->BuildRenderCommands(commands);
     }
     else {
@@ -142,32 +143,37 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             static_cast<float>(absY),
             static_cast<float>(GetFinalWidth()),
             static_cast<float>(GetFinalHeight()),
-            m_backgroundColor);
+            m_backgroundColor,
+            GetOpacity());
 
         commands.DrawRect(
             static_cast<float>(absX),
             static_cast<float>(absY),
             static_cast<float>(GetFinalWidth()),
             1.0f,
-            m_borderColor);
+            m_borderColor,
+            GetOpacity());
         commands.DrawRect(
             static_cast<float>(absX),
             static_cast<float>(absY + GetFinalHeight() - 1),
             static_cast<float>(GetFinalWidth()),
             1.0f,
-            m_borderColor);
+            m_borderColor,
+            GetOpacity());
         commands.DrawRect(
             static_cast<float>(absX),
             static_cast<float>(absY),
             1.0f,
             static_cast<float>(GetFinalHeight()),
-            m_borderColor);
+            m_borderColor,
+            GetOpacity());
         commands.DrawRect(
             static_cast<float>(absX + GetFinalWidth() - 1),
             static_cast<float>(absY),
             1.0f,
             static_cast<float>(GetFinalHeight()),
-            m_borderColor);
+            m_borderColor,
+            GetOpacity());
     }
 
     auto* contentHost = dynamic_cast<Templates::TemplateVisual*>(FindTemplateChild("PART_ContentHost"));
@@ -177,6 +183,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         contentHost->SetFillColor(0x00000000u);
         contentHost->SetBorderColor(0x00000000u);
         contentHost->SetBorderThickness(0);
+        contentHost->SetOpacity(GetOpacity());
         contentHost->BuildRenderCommands(commands);
     }
 
@@ -205,7 +212,8 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             static_cast<float>(drawHeight),
             0.0f, 0.0f,
             uvRight, uvBottom,
-            line.textureId);
+            line.textureId,
+            GetOpacity());
 
         currentY += std::max(1, line.lineHeight);
     }
@@ -231,7 +239,8 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             static_cast<float>(caretHeight),
             0.0f, 0.0f,
             1.0f, 1.0f,
-            caretTextureId);
+            caretTextureId,
+            GetOpacity());
     }
 }
 

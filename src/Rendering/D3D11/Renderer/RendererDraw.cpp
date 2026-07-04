@@ -72,11 +72,12 @@ void ExecuteRendererDraw(const CommandList& cmd)
     };
 
     for (const auto& r : cmd.rects) {
-        const float a = ((r.color >> 24) & 0xFF) / 255.0f;
+        const float baseAlpha = ((r.color >> 24) & 0xFF) / 255.0f;
         const float red = ((r.color >> 16) & 0xFF) / 255.0f;
         const float green = ((r.color >> 8) & 0xFF) / 255.0f;
         const float blue = (r.color & 0xFF) / 255.0f;
-        pushRect(r.x, r.y, r.w, r.h, red, green, blue, a);
+        const float alpha = baseAlpha * r.opacity;
+        pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha);
     }
 
     if (!rectVerts.empty() && g_vs && g_ps && g_inputLayout && g_vertexBuffer) {
@@ -112,17 +113,17 @@ void ExecuteRendererDraw(const CommandList& cmd)
     std::vector<TextVertex> textVerts;
     textVerts.reserve(cmd.texturedQuads.size() * 6);
 
-    auto pushTextQuad = [&](float x, float y, float w, float h, float u0, float v0, float u1, float v1) {
-        textVerts.push_back({x, y, u0, v0, 1.0f, 1.0f, 1.0f, 1.0f});
-        textVerts.push_back({x + w, y, u1, v0, 1.0f, 1.0f, 1.0f, 1.0f});
-        textVerts.push_back({x + w, y + h, u1, v1, 1.0f, 1.0f, 1.0f, 1.0f});
-        textVerts.push_back({x + w, y + h, u1, v1, 1.0f, 1.0f, 1.0f, 1.0f});
-        textVerts.push_back({x, y + h, u0, v1, 1.0f, 1.0f, 1.0f, 1.0f});
-        textVerts.push_back({x, y, u0, v0, 1.0f, 1.0f, 1.0f, 1.0f});
+    auto pushTextQuad = [&](float x, float y, float w, float h, float u0, float v0, float u1, float v1, float opacity) {
+        textVerts.push_back({x, y, u0, v0, 1.0f, 1.0f, 1.0f, opacity});
+        textVerts.push_back({x + w, y, u1, v0, 1.0f, 1.0f, 1.0f, opacity});
+        textVerts.push_back({x + w, y + h, u1, v1, 1.0f, 1.0f, 1.0f, opacity});
+        textVerts.push_back({x + w, y + h, u1, v1, 1.0f, 1.0f, 1.0f, opacity});
+        textVerts.push_back({x, y + h, u0, v1, 1.0f, 1.0f, 1.0f, opacity});
+        textVerts.push_back({x, y, u0, v0, 1.0f, 1.0f, 1.0f, opacity});
     };
 
     for (const auto& q : cmd.texturedQuads) {
-        pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1);
+        pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.opacity);
     }
 
     if (!textVerts.empty() && g_vsText && g_psText && g_inputLayoutText && g_vertexBuffer && g_samplerState) {
