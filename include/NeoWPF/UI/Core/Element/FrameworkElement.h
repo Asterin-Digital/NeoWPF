@@ -5,6 +5,12 @@
 
 namespace NeoWPF::UI {
 
+enum class LayoutSizeMode {
+    Auto,
+    Stretch,
+    Explicit
+};
+
 class FrameworkElement : public UIElement {
 public:
     int GetDesiredWidth() const noexcept { return m_desiredWidth; }
@@ -32,6 +38,20 @@ public:
     int GetLayoutOffsetX() const noexcept { return m_offsetX; }
     int GetLayoutOffsetY() const noexcept { return m_offsetY; }
 
+    LayoutSizeMode GetWidthMode() const noexcept { return m_widthMode; }
+    void SetWidthMode(LayoutSizeMode mode) noexcept { m_widthMode = mode; InvalidateVisual(); }
+
+    LayoutSizeMode GetHeightMode() const noexcept { return m_heightMode; }
+    void SetHeightMode(LayoutSizeMode mode) noexcept { m_heightMode = mode; InvalidateVisual(); }
+
+    void SetWidth(int width) noexcept { m_widthMode = LayoutSizeMode::Explicit; m_explicitWidth = width < 0 ? 0 : width; InvalidateVisual(); }
+    void SetHeight(int height) noexcept { m_heightMode = LayoutSizeMode::Explicit; m_explicitHeight = height < 0 ? 0 : height; InvalidateVisual(); }
+    void ClearWidth() noexcept { m_widthMode = LayoutSizeMode::Auto; m_explicitWidth = 0; InvalidateVisual(); }
+    void ClearHeight() noexcept { m_heightMode = LayoutSizeMode::Auto; m_explicitHeight = 0; InvalidateVisual(); }
+
+    int ResolveWidth(int availableWidth, int desiredWidth) const;
+    int ResolveHeight(int availableHeight, int desiredHeight) const;
+
     HorizontalAlignment GetHorizontalAlignment() const noexcept { return m_horizontalAlignment; }
     void SetHorizontalAlignment(HorizontalAlignment align) noexcept { m_horizontalAlignment = align; }
 
@@ -47,6 +67,10 @@ private:
     int m_finalHeight = 0;
     int m_offsetX = 0;
     int m_offsetY = 0;
+    LayoutSizeMode m_widthMode = LayoutSizeMode::Auto;
+    LayoutSizeMode m_heightMode = LayoutSizeMode::Auto;
+    int m_explicitWidth = 0;
+    int m_explicitHeight = 0;
     HorizontalAlignment m_horizontalAlignment = HorizontalAlignment::Stretch;
     VerticalAlignment m_verticalAlignment = VerticalAlignment::Stretch;
 };

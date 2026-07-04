@@ -94,10 +94,7 @@ namespace NeoWPF {
 
         @details
         Use TextBlock to render simple text. Configure font size, color and
-        wrapping via the control's public properties. TextBlock participates
-        in measure/arrange and reports its desired size based on measured
-        text metrics.
-
+        wrapping via the control's public properties.
         @since 1.0
     */
     using UI::TextBlock;
