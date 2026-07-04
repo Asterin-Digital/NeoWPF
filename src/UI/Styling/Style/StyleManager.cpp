@@ -1,4 +1,4 @@
-#include <NeoWPF/UI/Styling/StyleManager.h>
+#include <NeoWPF/UI/Styling/Style/StyleManager.h>
 
 namespace NeoWPF::UI::Styling {
 

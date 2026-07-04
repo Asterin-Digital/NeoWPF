@@ -9,12 +9,12 @@ namespace NeoWPF::Input::Core {
 }
 
 namespace NeoWPF::UI::Styling {
-    class Style;  // forward declare
+    class Style;  
 }
 
 namespace NeoWPF::UI {
 
-class ButtonStyle;  // forward declare, defined in Button.Styles.cpp
+class ButtonStyle;  
 void RegisterButtonStyles();
 
 class Button : public FrameworkElement {
@@ -45,10 +45,8 @@ public:
     bool IsHitTestVisible() const noexcept override { return true; }
     bool IsInteractable() const noexcept override { return m_isEnabled; }
 
-    // Event handlers
     void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
 
-    // Click event - public for direct subscription with +=
     NeoWPF::Core::Event<> Click;
 
 private:

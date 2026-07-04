@@ -123,7 +123,9 @@
     <ClInclude Include="include\NeoWPF\Binding\Binding.h" />
     <ClInclude Include="include\NeoWPF\Controls\Controls.h" />
     <ClInclude Include="include\NeoWPF\Core\Application\Application.h" />
+    <ClInclude Include="include\NeoWPF\Core\Application\ApplicationInternal.h" />
     <ClInclude Include="include\NeoWPF\Core\Core.h" />
+    <ClInclude Include="include\NeoWPF\Core\Events\Event.h" />
     <ClInclude Include="include\NeoWPF\Core\Root\RootVisuals.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Diagnostics.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Logger.h" />
@@ -168,14 +170,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Core\Application\Application.cpp" />
+    <ClCompile Include="src\Core\Application\ApplicationRuntime.cpp" />
+    <ClCompile Include="src\Core\Application\ApplicationWindows.cpp" />
+    <ClCompile Include="src\Core\Application\ApplicationStartup.cpp" />
     <ClCompile Include="src\Core\Root\RootVisuals.cpp" />
     <ClCompile Include="src\UI\Controls\Button\Button.cpp" />
     <ClCompile Include="src\UI\Controls\Button\Button.Styles.cpp" />
     <ClCompile Include="src\UI\Controls\Button\ButtonTemplate.cpp" />
     <ClCompile Include="src\UI\Controls\Text\TextBlock.Styles.cpp" />
-    <ClCompile Include="src\UI\Core\Alignment\Alignment.cpp" />
+    <ClCompile Include="src\UI\Layout\Alignment\Alignment.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\Panel.Styles.cpp" />
-    <ClCompile Include="src\UI\Styling\StyleManager.cpp" />
+    <ClCompile Include="src\UI\Styling\Style\StyleManager.cpp" />
     <ClCompile Include="src\Diagnostics\Logger.cpp" />
     <ClCompile Include="src\Diagnostics\VisualTreeDumper.cpp" />
     <ClCompile Include="src\Platform\Window.cpp" />
@@ -206,7 +211,7 @@
     <ClCompile Include="src\UI\Layout\Panel\StackPanel.cpp" />
     <ClCompile Include="src\UI\Layout\Grid\Grid.cpp" />
     <ClCompile Include="src\UI\Layout\Grid\GridLayout.cpp" />
-    <ClCompile Include="src\UI\Styling\DefaultStyles.cpp" />
+    <ClCompile Include="src\UI\Styling\Style\DefaultStyles.cpp" />
     <ClCompile Include="src\UI\Controls\Templates\ControlTemplate.cpp" />
     <ClCompile Include="src\UI\Controls\Templates\TemplateVisual.cpp" />
   </ItemGroup>

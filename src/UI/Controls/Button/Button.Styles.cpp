@@ -1,6 +1,6 @@
 #include <NeoWPF/UI/Controls/Button/Button.h>
-#include <NeoWPF/UI/Styling/StyleManager.h>
-#include <NeoWPF/UI/Styling/Style.h>
+#include <NeoWPF/UI/Styling/Style/StyleManager.h>
+#include <NeoWPF/UI/Styling/Style/Style.h>
 #include <typeindex>
 
 namespace NeoWPF::UI::Styling {
