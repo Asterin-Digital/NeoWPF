@@ -1,7 +1,7 @@
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Layout/Grid/GridLayout.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
-#include <NeoWPF/UI/Core/Alignment/Alignment.h>
+#include <NeoWPF/UI/Layout/Alignment/Alignment.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 

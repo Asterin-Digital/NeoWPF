@@ -1,7 +1,7 @@
 #pragma once
 
 #include <NeoWPF/UI/Core/Element/UIElement.h>
-#include <NeoWPF/UI/Core/Alignment/Alignment.h>
+#include <NeoWPF/UI/Layout/Alignment/Alignment.h>
 
 namespace NeoWPF::UI {
 
