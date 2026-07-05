@@ -153,6 +153,8 @@
     <ClInclude Include="include\NeoWPF\UI\Animation\Core\Timeline.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Button\Button.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Button\ButtonTemplate.h" />
+    <ClInclude Include="include\NeoWPF\UI\Controls\ScrollBar\ScrollBar.h" />
+    <ClInclude Include="include\NeoWPF\UI\Controls\ScrollBar\ScrollBarTemplate.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Panel.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Window.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Rectangle.h" />
@@ -186,6 +188,9 @@
     <ClCompile Include="src\UI\Controls\Button\Button.cpp" />
     <ClCompile Include="src\UI\Controls\Button\Button.Styles.cpp" />
     <ClCompile Include="src\UI\Controls\Button\ButtonTemplate.cpp" />
+    <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBar.cpp" />
+    <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBar.Styles.cpp" />
+    <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBarTemplate.cpp" />
     <ClCompile Include="src\UI\Controls\Text\TextBlock.Styles.cpp" />
     <ClCompile Include="src\UI\Layout\Alignment\Alignment.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\Panel.Styles.cpp" />
@@ -205,6 +210,7 @@
     <ClCompile Include="src\Rendering\D3D11\Renderer\RendererBackend.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Renderer\RendererWindowing.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Renderer\RendererDraw.cpp" />
+    <ClCompile Include="src\Rendering\D3D11\Renderer\RendererClipping.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Device\Device.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Device\Resources.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Shaders\VertexShader.cpp" />

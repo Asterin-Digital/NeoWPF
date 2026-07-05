@@ -24,6 +24,8 @@ namespace NeoWPF {
 
     using UI::Button;
 
+    using UI::ScrollBar;
+
     using Input::InputManager;
 
     namespace Input {

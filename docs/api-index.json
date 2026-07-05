@@ -3,6 +3,267 @@
     {
       "kind": "method",
       "name": "Arrange",
+      "source": "Button",
+      "summary": "Positions the button inside its box",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "finalWidth",
+          "text": "The width for the button."
+        },
+        {
+          "name": "finalHeight",
+          "text": "The height for the button."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "BuildRenderCommands",
+      "source": "Button",
+      "summary": "Builds the render commands for the button.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "class",
+      "name": "Button",
+      "source": "Button",
+      "summary": "A simple button control",
+      "details": "This is the basic clickable thing you use for actions. It can show text, change colors,\nand raise `Click` when the user presses it.",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Button",
+      "source": "Button",
+      "summary": "Creates a new button with some starting text.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "text",
+          "text": "The text to show inside the button."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "EnsureTextTexture",
+      "source": "Button",
+      "summary": "Makes sure the text texture exists before drawing.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetBackgroundColor",
+      "source": "Button",
+      "summary": "Returns the current background color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetFontSize",
+      "source": "Button",
+      "summary": "Returns the current font size.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetPadding",
+      "source": "Button",
+      "summary": "Returns the current padding.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetText",
+      "source": "Button",
+      "summary": "Returns the current button text.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetTextColor",
+      "source": "Button",
+      "summary": "Returns the current text color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "IsHitTestVisible",
+      "source": "Button",
+      "summary": "Controls whether the button can be hit by mouse input.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "IsInteractable",
+      "source": "Button",
+      "summary": "Returns whether the button is currently interactable.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Measure",
+      "source": "Button",
+      "summary": "Measures the button and decides how much space it needs.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "availableWidth",
+          "text": "Width available for layout."
+        },
+        {
+          "name": "availableHeight",
+          "text": "Height available for layout."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "OnMouseUp",
+      "source": "Button",
+      "summary": "Handles mouse-up input.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "x",
+          "text": "The x position of the mouse."
+        },
+        {
+          "name": "y",
+          "text": "The y position of the mouse."
+        },
+        {
+          "name": "buttonState",
+          "text": "The mouse button state."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "RaiseClick",
+      "source": "Button",
+      "summary": "Raises the Click event.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetBackgroundColor",
+      "source": "Button",
+      "summary": "Sets the background color.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "color",
+          "text": "ARGB color value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetFontSize",
+      "source": "Button",
+      "summary": "Sets the font size used for the button text.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "fontSize",
+          "text": "Size in pixels."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetPadding",
+      "source": "Button",
+      "summary": "Sets the padding around the text inside the button.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "padding",
+          "text": "Padding in pixels."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetText",
+      "source": "Button",
+      "summary": "Replaces the button text.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "text",
+          "text": "The new text to display."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetTextColor",
+      "source": "Button",
+      "summary": "Sets the text color.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "color",
+          "text": "ARGB color value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Arrange",
       "source": "FrameworkElement",
       "summary": "Places the element in its final bounds.",
       "details": "",
@@ -71,26 +332,6 @@
           "text": "The animation duration in seconds."
         }
       ],
-      "isInternal": false
-    },
-    {
-      "kind": "method",
-      "name": "ClearHeight",
-      "source": "FrameworkElement",
-      "summary": "Clears any explicit height and falls back to auto sizing.",
-      "details": "",
-      "example": "",
-      "params": [],
-      "isInternal": false
-    },
-    {
-      "kind": "method",
-      "name": "ClearWidth",
-      "source": "FrameworkElement",
-      "summary": "Clears any explicit width and falls back to auto sizing.",
-      "details": "",
-      "example": "",
-      "params": [],
       "isInternal": false
     },
     {
@@ -302,9 +543,9 @@
       "kind": "method",
       "name": "SetHeight",
       "source": "FrameworkElement",
-      "summary": "Sets an explicit height for the element.",
+      "summary": "Sets a preferred height for the element.",
       "details": "",
-      "example": "element->SetHeight(48);",
+      "example": "",
       "params": [
         {
           "name": "height",
@@ -381,9 +622,9 @@
       "kind": "method",
       "name": "SetWidth",
       "source": "FrameworkElement",
-      "summary": "Sets an explicit width for the element.",
+      "summary": "Sets a preferred width for the element.",
       "details": "",
-      "example": "element->SetWidth(160);",
+      "example": "",
       "params": [
         {
           "name": "width",
@@ -709,6 +950,401 @@
       "example": "",
       "params": [],
       "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Arrange",
+      "source": "TextBox",
+      "summary": "Arranges the control into its final bounds.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "BuildRenderCommands",
+      "source": "TextBox",
+      "summary": "Produces rendering commands for the frame.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "EnsureTextTexture",
+      "source": "TextBox",
+      "summary": "Ensure GPU texture(s) backing the rendered text are present.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetCaretHeight",
+      "source": "TextBox",
+      "summary": "Returns the caret height used for rendering.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetCaretLineColumn",
+      "source": "TextBox",
+      "summary": "Converts a flat caret position into line/column pair.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetCaretX",
+      "source": "TextBox",
+      "summary": "Computes the caret X position in pixels.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetCaretY",
+      "source": "TextBox",
+      "summary": "Computes the caret Y position in pixels.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetLineHeight",
+      "source": "TextBox",
+      "summary": "Returns the measured height for a given line string.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetLineVisualOffset",
+      "source": "TextBox",
+      "summary": "Returns the visual X offset for the given rendered line.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetText",
+      "source": "TextBox",
+      "summary": "Returns the current text.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "InsertCharacter",
+      "source": "TextBox",
+      "summary": "Inserts a character at the current caret position.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "IsHitTestVisible",
+      "source": "TextBox",
+      "summary": "Controls whether the TextBox participates in hit testing.",
+      "details": "By default a TextBox is hit-test visible so it receives mouse events. Call\n`SetHitTestVisible(false)` to opt out and allow events to pass through.",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Measure",
+      "source": "TextBox",
+      "summary": "Measures desired size for layout.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "MoveCaretToLineColumn",
+      "source": "TextBox",
+      "summary": "Move caret to a specific line and column.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "OnGotFocus",
+      "source": "TextBox",
+      "summary": "Called when the control receives focus.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "OnKeyboardInput",
+      "source": "TextBox",
+      "summary": "Keyboard input handler (text input and navigation).",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "OnLostFocus",
+      "source": "TextBox",
+      "summary": "Called when the control loses focus.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "OnMouseDown",
+      "source": "TextBox",
+      "summary": "Mouse-down handler (used for caret placement and selection).",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "RemoveCharacter",
+      "source": "TextBox",
+      "summary": "Removes a character (backspace/delete behavior).",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetAcceptsReturn",
+      "source": "TextBox",
+      "summary": "Controls whether the control accepts newline input.",
+      "details": "",
+      "example": "tb->SetAcceptsReturn(true); // multiline input when used inside a taller container",
+      "params": [
+        {
+          "name": "value",
+          "text": "`true` to accept returns; `false` to ignore them."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetBackgroundColor",
+      "source": "TextBox",
+      "summary": "Background color for the text box.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "color",
+          "text": "ARGB color value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetBorderColor",
+      "source": "TextBox",
+      "summary": "Border color for the control.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "color",
+          "text": "ARGB color value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetCaretColor",
+      "source": "TextBox",
+      "summary": "Caret (cursor) color.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "color",
+          "text": "ARGB color value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetFontSize",
+      "source": "TextBox",
+      "summary": "Sets the font size for text rendering.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "fontSize",
+          "text": "Size in pixels."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetHitTestVisible",
+      "source": "TextBox",
+      "summary": "Enable or disable hit testing for this control.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "value",
+          "text": "`true` to receive mouse events (default), `false` to ignore them."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetPadding",
+      "source": "TextBox",
+      "summary": "Sets padding applied around the text.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "padding",
+          "text": "Pixels of padding on all sides."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetReadOnly",
+      "source": "TextBox",
+      "summary": "Put the box into read-only mode.",
+      "details": "",
+      "example": "tb->SetReadOnly(true); // useful for read-only editors",
+      "params": [
+        {
+          "name": "value",
+          "text": "`true` to disable editing, `false` to allow edits."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetText",
+      "source": "TextBox",
+      "summary": "Replaces the current text.",
+      "details": "",
+      "example": "tb->SetText(L\"Paste this in\");",
+      "params": [
+        {
+          "name": "text",
+          "text": "New text to display."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetTextColor",
+      "source": "TextBox",
+      "summary": "Text color used for rendering.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "color",
+          "text": "ARGB color value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetTextWrapping",
+      "source": "TextBox",
+      "summary": "Enables basic text wrapping.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "value",
+          "text": "`true` to wrap long lines, `false` to keep a single line."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "class",
+      "name": "TextBox",
+      "source": "TextBox",
+      "summary": "A single-line (or wrapping) text input control.",
+      "details": "`TextBox` renders editable text, manages a caret, and fires `TextChanged` when the content\nchanges. It supports read-only mode, basic wrapping, and appearance options (colors, font\nsize, padding). Use this control for simple text input inside layouts.",
+      "example": "auto tb = std::make_shared<NeoWPF::UI::TextBox>();\ntb->SetText(L\"Hello world\");\ntb->SetFontSize(14);\ntb->SetPadding(6);\n// register a handler function: avoid inlined block comments inside the example\ntb->TextChanged += OnTextChanged;",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "TextBox",
+      "source": "TextBox",
+      "summary": "Creates a new TextBox with sensible defaults.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "TextBox",
+      "source": "TextBox",
+      "summary": "Destroys the TextBox and frees any backing render resources.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "UpdateCaretFromMouse",
+      "source": "TextBox",
+      "summary": "Updates caret position based on mouse coordinates.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
     }
   ]
 }

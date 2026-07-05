@@ -1,0 +1,29 @@
+#include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
+#include <NeoWPF/UI/Styling/Style/StyleManager.h>
+#include <NeoWPF/UI/Styling/Style/Style.h>
+#include <typeindex>
+
+namespace NeoWPF::UI::Styling {
+
+class ScrollBarStyle : public Style {
+public:
+    void Apply(UIElement* element) override
+    {
+        if (auto scrollbar = dynamic_cast<UI::ScrollBar*>(element)) {
+            scrollbar->SetTrackColor(0xFF2A2A2Au);
+            scrollbar->SetThumbColor(0xFF5A5A5Au);
+            scrollbar->SetThumbSize(24);
+        }
+    }
+};
+
+}
+
+namespace NeoWPF::UI {
+
+void RegisterScrollBarStyles()
+{
+    Styling::StyleManager::RegisterDefault(typeid(ScrollBar), std::make_shared<Styling::ScrollBarStyle>());
+}
+
+}

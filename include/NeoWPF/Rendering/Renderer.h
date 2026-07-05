@@ -1,5 +1,6 @@
 #pragma once
 
+#include <NeoWPF/Rendering/Clipping.h>
 #include <Windows.h>
 #include <vector>
 #include <cstdint>
@@ -7,13 +8,13 @@
 namespace NeoWPF::Rendering {
 
 struct CommandList {
-    struct DrawRect { float x; float y; float w; float h; uint32_t color; float opacity; };
+    struct DrawRect { float x; float y; float w; float h; uint32_t color; float opacity; ClipRect clip; };
     std::vector<DrawRect> rects;
-    struct DrawTexturedQuad { float x; float y; float w; float h; float u0; float v0; float u1; float v1; uint32_t textureId; float opacity; };
+    struct DrawTexturedQuad { float x; float y; float w; float h; float u0; float v0; float u1; float v1; uint32_t textureId; float opacity; ClipRect clip; };
     std::vector<DrawTexturedQuad> texturedQuads;
     void Clear() { rects.clear(); texturedQuads.clear(); }
-    void DrawRect(float x, float y, float w, float h, uint32_t color, float opacity = 1.0f) { rects.push_back({x,y,w,h,color,opacity}); }
-    void DrawTexturedQuad(float x, float y, float w, float h, float u0, float v0, float u1, float v1, uint32_t tex, float opacity = 1.0f) { texturedQuads.push_back({x,y,w,h,u0,v0,u1,v1,tex,opacity}); }
+    void DrawRect(float x, float y, float w, float h, uint32_t color, float opacity = 1.0f, const ClipRect& clip = ClipRect{}) { rects.push_back({x,y,w,h,color,opacity,clip}); }
+    void DrawTexturedQuad(float x, float y, float w, float h, float u0, float v0, float u1, float v1, uint32_t tex, float opacity = 1.0f, const ClipRect& clip = ClipRect{}) { texturedQuads.push_back({x,y,w,h,u0,v0,u1,v1,tex,opacity,clip}); }
 };
 
 void Renderer_Initialize(HWND hwnd);

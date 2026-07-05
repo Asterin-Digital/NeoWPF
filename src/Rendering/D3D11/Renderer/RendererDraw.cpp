@@ -1,4 +1,5 @@
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/Rendering/Clipping.h>
 #include <d3d11.h>
 #include <wrl.h>
 #include <vector>
@@ -77,7 +78,19 @@ void ExecuteRendererDraw(const CommandList& cmd)
         const float green = ((r.color >> 8) & 0xFF) / 255.0f;
         const float blue = (r.color & 0xFF) / 255.0f;
         const float alpha = baseAlpha * r.opacity;
-        pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha);
+
+        float clippedX = 0.0f;
+        float clippedY = 0.0f;
+        float clippedW = 0.0f;
+        float clippedH = 0.0f;
+        const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
+        if (clipped) {
+            if (clippedW > 0.0f && clippedH > 0.0f) {
+                pushRect(clippedX, clippedY, clippedW, clippedH, red, green, blue, alpha);
+            }
+        } else {
+            pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha);
+        }
     }
 
     if (!rectVerts.empty() && g_vs && g_ps && g_inputLayout && g_vertexBuffer) {
@@ -123,7 +136,18 @@ void ExecuteRendererDraw(const CommandList& cmd)
     };
 
     for (const auto& q : cmd.texturedQuads) {
-        pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.opacity);
+        float clippedX = 0.0f;
+        float clippedY = 0.0f;
+        float clippedW = 0.0f;
+        float clippedH = 0.0f;
+        const bool clipped = ClipRectToBounds(q.x, q.y, q.w, q.h, q.clip, clippedX, clippedY, clippedW, clippedH);
+        if (clipped) {
+            if (clippedW > 0.0f && clippedH > 0.0f) {
+                pushTextQuad(clippedX, clippedY, clippedW, clippedH, q.u0, q.v0, q.u1, q.v1, q.opacity);
+            }
+        } else {
+            pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.opacity);
+        }
     }
 
     if (!textVerts.empty() && g_vsText && g_psText && g_inputLayoutText && g_vertexBuffer && g_samplerState) {
