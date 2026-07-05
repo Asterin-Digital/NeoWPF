@@ -12,17 +12,18 @@ namespace NeoWPF::Input::Core
 }
 
 namespace NeoWPF::UI::Styling {
-    class Style;  // forward declare
+    class Style;
 }
 
 namespace NeoWPF::UI {
 
-class TextBlockStyle;  // forward declare, defined in TextBlock.Styles.cpp
+class TextBlockStyle;
 void RegisterTextBlockStyles();
 
 class TextBlock : public FrameworkElement, public IContentAware {
 public:
     TextBlock();
+    explicit TextBlock(const std::wstring& text);
     ~TextBlock();
 
     void SetText(const std::wstring& text);

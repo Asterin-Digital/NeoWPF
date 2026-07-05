@@ -10,6 +10,11 @@ TextBlock::TextBlock()
     SetVerticalAlignment(VerticalAlignment::Top);
 }
 
+TextBlock::TextBlock(const std::wstring& text) : TextBlock()
+{
+    SetText(text);
+}
+
 TextBlock::~TextBlock()
 {
     if (m_textureId != 0) {

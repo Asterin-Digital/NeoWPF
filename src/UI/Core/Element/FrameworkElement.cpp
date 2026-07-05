@@ -13,24 +13,30 @@ namespace UI
 {
     int FrameworkElement::ResolveWidth(int availableWidth, int desiredWidth) const
     {
-        if (m_widthMode == LayoutSizeMode::Explicit) {
-            return (std::max)(0, m_explicitWidth);
-        }
         if (m_widthMode == LayoutSizeMode::Stretch) {
             return (std::max)(0, availableWidth);
         }
-        return (std::max)(0, desiredWidth);
+
+        if (!GetParent() && availableWidth > 0) {
+            return (std::max)(0, availableWidth);
+        }
+
+        const int preferredWidth = m_width > 0 ? m_width : desiredWidth;
+        return (std::max)(0, preferredWidth);
     }
 
     int FrameworkElement::ResolveHeight(int availableHeight, int desiredHeight) const
     {
-        if (m_heightMode == LayoutSizeMode::Explicit) {
-            return (std::max)(0, m_explicitHeight);
-        }
         if (m_heightMode == LayoutSizeMode::Stretch) {
             return (std::max)(0, availableHeight);
         }
-        return (std::max)(0, desiredHeight);
+
+        if (!GetParent() && availableHeight > 0) {
+            return (std::max)(0, availableHeight);
+        }
+
+        const int preferredHeight = m_height > 0 ? m_height : desiredHeight;
+        return (std::max)(0, preferredHeight);
     }
 
     void FrameworkElement::BeginAnimation(int fromWidth, int toWidth, int fromHeight, int toHeight, float durationSeconds)

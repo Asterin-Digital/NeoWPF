@@ -2,6 +2,413 @@
   "entries": [
     {
       "kind": "method",
+      "name": "Arrange",
+      "source": "FrameworkElement",
+      "summary": "Places the element in its final bounds.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "finalWidth",
+          "text": "The width assigned to the element."
+        },
+        {
+          "name": "finalHeight",
+          "text": "The height assigned to the element."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "BeginAnimation",
+      "source": "FrameworkElement",
+      "summary": "Animates a size change from one rectangle to another.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "fromWidth",
+          "text": "The starting width."
+        },
+        {
+          "name": "toWidth",
+          "text": "The target width."
+        },
+        {
+          "name": "fromHeight",
+          "text": "The starting height."
+        },
+        {
+          "name": "toHeight",
+          "text": "The target height."
+        },
+        {
+          "name": "durationSeconds",
+          "text": "The animation duration in seconds."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "BeginAnimation",
+      "source": "FrameworkElement",
+      "summary": "Animates the element toward a target alignment inside its parent.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "horizontal",
+          "text": "The target horizontal alignment."
+        },
+        {
+          "name": "vertical",
+          "text": "The target vertical alignment."
+        },
+        {
+          "name": "durationSeconds",
+          "text": "The animation duration in seconds."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "ClearHeight",
+      "source": "FrameworkElement",
+      "summary": "Clears any explicit height and falls back to auto sizing.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "ClearWidth",
+      "source": "FrameworkElement",
+      "summary": "Clears any explicit width and falls back to auto sizing.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetAbsolutePosition",
+      "source": "FrameworkElement",
+      "summary": "Returns the element's position in absolute coordinates.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "outX",
+          "text": "Receives the absolute X position."
+        },
+        {
+          "name": "outY",
+          "text": "Receives the absolute Y position."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetDesiredHeight",
+      "source": "FrameworkElement",
+      "summary": "Returns the size the element wants during measurement.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetDesiredWidth",
+      "source": "FrameworkElement",
+      "summary": "Returns the size the element wants during measurement.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetFinalHeight",
+      "source": "FrameworkElement",
+      "summary": "Returns the height assigned during arrange.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetFinalWidth",
+      "source": "FrameworkElement",
+      "summary": "Returns the width assigned during arrange.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetHeightMode",
+      "source": "FrameworkElement",
+      "summary": "Returns the height sizing mode.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetHorizontalAlignment",
+      "source": "FrameworkElement",
+      "summary": "Returns the horizontal alignment used when the element is placed in a parent.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetLayoutOffsetX",
+      "source": "FrameworkElement",
+      "summary": "Returns the X offset used for layout placement.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetLayoutOffsetY",
+      "source": "FrameworkElement",
+      "summary": "Returns the Y offset used for layout placement.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetVerticalAlignment",
+      "source": "FrameworkElement",
+      "summary": "Returns the vertical alignment used when the element is placed in a parent.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetWidthMode",
+      "source": "FrameworkElement",
+      "summary": "Returns the width sizing mode.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "enum",
+      "name": "LayoutSizeMode",
+      "source": "FrameworkElement",
+      "summary": "Controls how a framework element resolves its width or height.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Measure",
+      "source": "FrameworkElement",
+      "summary": "Measures the element using the available space.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "availableWidth",
+          "text": "The width available to the element."
+        },
+        {
+          "name": "availableHeight",
+          "text": "The height available to the element."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "ResolveHeight",
+      "source": "FrameworkElement",
+      "summary": "Resolves the final height for the current sizing mode.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "availableHeight",
+          "text": "The height available to the element."
+        },
+        {
+          "name": "desiredHeight",
+          "text": "The height the element wants."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "ResolveWidth",
+      "source": "FrameworkElement",
+      "summary": "Resolves the final width for the current sizing mode.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "availableWidth",
+          "text": "The width available to the element."
+        },
+        {
+          "name": "desiredWidth",
+          "text": "The width the element wants."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetDesiredSize",
+      "source": "FrameworkElement",
+      "summary": "Sets the size the element reports during measurement.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "width",
+          "text": "The desired width."
+        },
+        {
+          "name": "height",
+          "text": "The desired height."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetHeight",
+      "source": "FrameworkElement",
+      "summary": "Sets an explicit height for the element.",
+      "details": "",
+      "example": "element->SetHeight(48);",
+      "params": [
+        {
+          "name": "height",
+          "text": "The height to use."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetHeightMode",
+      "source": "FrameworkElement",
+      "summary": "Sets the height sizing mode.",
+      "details": "",
+      "example": "element->SetHeightMode(NeoWPF::UI::LayoutSizeMode::Auto);",
+      "params": [
+        {
+          "name": "mode",
+          "text": "The new height mode."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetHorizontalAlignment",
+      "source": "FrameworkElement",
+      "summary": "Sets the horizontal alignment used when the element is placed in a parent.",
+      "details": "",
+      "example": "element->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Center);",
+      "params": [
+        {
+          "name": "align",
+          "text": "The alignment to use."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetLayoutOffset",
+      "source": "FrameworkElement",
+      "summary": "Moves the element in layout coordinates.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "x",
+          "text": "The new X offset."
+        },
+        {
+          "name": "y",
+          "text": "The new Y offset."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetVerticalAlignment",
+      "source": "FrameworkElement",
+      "summary": "Sets the vertical alignment used when the element is placed in a parent.",
+      "details": "",
+      "example": "element->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Center);",
+      "params": [
+        {
+          "name": "align",
+          "text": "The alignment to use."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetWidth",
+      "source": "FrameworkElement",
+      "summary": "Sets an explicit width for the element.",
+      "details": "",
+      "example": "element->SetWidth(160);",
+      "params": [
+        {
+          "name": "width",
+          "text": "The width to use."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetWidthMode",
+      "source": "FrameworkElement",
+      "summary": "Sets the width sizing mode.",
+      "details": "",
+      "example": "element->SetWidthMode(NeoWPF::UI::LayoutSizeMode::Stretch);",
+      "params": [
+        {
+          "name": "mode",
+          "text": "The new width mode."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "AddChild",
       "source": "Grid",
       "summary": "Places a child in a grid cell.",
@@ -28,7 +435,8 @@
           "name": "columnSpan",
           "text": "How many columns the child should cover."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -46,7 +454,8 @@
           "name": "value",
           "text": "The pixel size for Fixed columns or the weight for Star columns. Auto columns ignore this."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -60,7 +469,8 @@
           "name": "defs",
           "text": "The columns to add, in order."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -78,7 +488,8 @@
           "name": "value",
           "text": "The pixel size for Fixed rows or the weight for Star rows. Auto rows ignore this."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -92,7 +503,8 @@
           "name": "defs",
           "text": "The rows to add, in order."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -110,7 +522,8 @@
           "name": "finalHeight",
           "text": "The height assigned to the grid."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "struct",
@@ -119,7 +532,8 @@
       "summary": "Holds sizing information for a grid row or column.",
       "details": "",
       "example": "",
-      "params": []
+      "params": [],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -133,7 +547,8 @@
           "name": "child",
           "text": "The child to inspect."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -147,7 +562,8 @@
           "name": "child",
           "text": "The child to inspect."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -161,7 +577,8 @@
           "name": "child",
           "text": "The child to inspect."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -175,7 +592,8 @@
           "name": "child",
           "text": "The child to inspect."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "class",
@@ -184,7 +602,8 @@
       "summary": "Lays out children in a grid of rows and columns.",
       "details": "Rows and columns must be added before children can be placed. Row and column indices are zero-based.",
       "example": "auto grid = std::make_shared<NeoWPF::UI::Grid>();\ngrid->AddRow(NeoWPF::UI::SizeMode::Auto, 0);\ngrid->AddColumn(NeoWPF::UI::SizeMode::Star, 1);\ngrid->AddChild(button.get(), 0, 0);",
-      "params": []
+      "params": [],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -202,7 +621,8 @@
           "name": "availableHeight",
           "text": "The height available to the grid."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -220,7 +640,8 @@
           "name": "column",
           "text": "The column index."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -238,7 +659,8 @@
           "name": "span",
           "text": "The number of columns the child should cover."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -256,7 +678,8 @@
           "name": "row",
           "text": "The row index."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -274,7 +697,8 @@
           "name": "span",
           "text": "The number of rows the child should cover."
         }
-      ]
+      ],
+      "isInternal": false
     },
     {
       "kind": "enum",
@@ -283,7 +707,8 @@
       "summary": "Defines how a row or column should size itself.",
       "details": "Auto lets the row or column fit its contents, Fixed uses the value you give it, and Star takes the remaining space.",
       "example": "",
-      "params": []
+      "params": [],
+      "isInternal": false
     }
   ]
 }

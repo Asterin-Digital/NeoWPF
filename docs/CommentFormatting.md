@@ -23,6 +23,7 @@
 | `@since`        | Version the API was introduced.                 |
 | `@related`      | Related declarations.                           |
 | `@todo`         | Planned improvements or missing functionality.  |
+| `@internal      | Internal methods that aren't public API's       |
 
 ## Example
 

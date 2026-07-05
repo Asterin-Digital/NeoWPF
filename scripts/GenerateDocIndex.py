@@ -40,6 +40,7 @@ def parse_doc_comment(comment: str) -> Dict[str, object]:
         "example": [],
         "params": [],
     }
+    is_internal = False
 
     current_tag: Optional[str] = None
     current_param: Optional[Dict[str, object]] = None
@@ -55,6 +56,10 @@ def parse_doc_comment(comment: str) -> Dict[str, object]:
             tag = line[1:].split()[0]
             current_tag = tag
             current_param = None
+
+            if tag == "internal":
+                is_internal = True
+                continue
 
             remainder = line[len(tag) + 1:].strip()
             if tag == "param":
@@ -84,6 +89,7 @@ def parse_doc_comment(comment: str) -> Dict[str, object]:
         "details": join_block(sections["details"]),
         "example": join_block(sections["example"]),
         "params": params,
+        "isInternal": is_internal,
     }
 
 
@@ -183,6 +189,7 @@ def parse_header(path: Path, repo_root: Path) -> List[Dict[str, object]]:
             "details": doc["details"],
             "example": doc["example"],
             "params": doc["params"],
+            "isInternal": doc["isInternal"],
         })
 
     return entries
