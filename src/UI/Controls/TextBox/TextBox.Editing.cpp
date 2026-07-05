@@ -18,7 +18,7 @@ namespace NeoWPF::UI {
 
 void TextBox::OnMouseDown(int x, int y, std::uint32_t buttonState)
 {
-    if (!m_isEnabled) {
+    if (!IsEnabled()) {
         return;
     }
 
@@ -33,7 +33,7 @@ void TextBox::OnMouseDown(int x, int y, std::uint32_t buttonState)
 
 void TextBox::OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args)
 {
-    if (!args || !m_isEnabled || !args->IsKeyDown()) {
+    if (!args || !IsEnabled() || !args->IsKeyDown()) {
         return;
     }
 

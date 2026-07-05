@@ -43,7 +43,7 @@ public:
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
     bool IsHitTestVisible() const noexcept override { return true; }
-    bool IsInteractable() const noexcept override { return m_isEnabled; }
+    bool IsInteractable() const noexcept override { return IsEnabled(); }
 
     void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
 

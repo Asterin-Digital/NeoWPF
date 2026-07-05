@@ -254,4 +254,4 @@ void InitializeCommonResources()
     EnsureBuffers();
 }
 
-} // namespace NeoWPF::Rendering::D3D11
+}

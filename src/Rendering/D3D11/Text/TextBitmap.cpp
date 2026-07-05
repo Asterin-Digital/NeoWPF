@@ -200,7 +200,7 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
     STDMETHOD(DrawInlineObject)(void*, FLOAT, FLOAT, IDWriteInlineObject*, BOOL, BOOL, IUnknown*) override { return E_NOTIMPL; }
 };
 
-} // namespace
+}
 
 TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight);
 
@@ -301,4 +301,4 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
     return bitmap;
 }
 
-} // namespace NeoWPF::Rendering::Text
+}

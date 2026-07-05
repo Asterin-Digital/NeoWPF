@@ -76,9 +76,11 @@ public:
     virtual void OnGotFocus() {}
     virtual void OnLostFocus() {}
 
+protected:
+    bool m_isEnabled = true;
+
 private:
     bool m_isVisible = true;
-    bool m_isEnabled = true;
     bool m_isDirty = true;
     float m_opacity = 1.0f;
     bool m_hasTemplateApplied = false;

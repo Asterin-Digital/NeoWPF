@@ -175,4 +175,4 @@ void ExecuteRendererDraw(const CommandList& cmd)
     }
 }
 
-} // namespace NeoWPF::Rendering::D3D11
+}

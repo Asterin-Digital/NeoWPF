@@ -178,7 +178,7 @@ void Button::EnsureTextTexture()
 
 void Button::OnMouseUp(int x, int y, std::uint32_t buttonState)
 {
-    if (m_isEnabled) {
+    if (IsEnabled()) {
         RaiseClick();
     }
 }

@@ -60,7 +60,7 @@ ComPtr<IDWriteTextFormat> CreateTextFormat(int fontSize)
     return textFormat;
 }
 
-} // namespace
+}
 
 TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight)
 {
@@ -120,4 +120,4 @@ TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, int 
     return {resultWidth, resultHeight};
 }
 
-} // namespace NeoWPF::Rendering::Text
+}

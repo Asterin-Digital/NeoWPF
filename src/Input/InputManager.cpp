@@ -158,10 +158,20 @@ namespace NeoWPF::Input
             }
         }
 
-        bool isHitTestVisible = element->IsHitTestVisible();
+        const bool isEnabled = element->IsEnabled();
+        const bool isHitTestVisible = element->IsHitTestVisible();
         if (s_hitTestLogging)
         {
-            NeoWPF::Diagnostics::LogInfo("[HitTest] %s  IsHitTestVisible: %s", indent, isHitTestVisible ? "true" : "false");
+            NeoWPF::Diagnostics::LogInfo("[HitTest] %s  IsEnabled: %s, IsHitTestVisible: %s", indent, isEnabled ? "true" : "false", isHitTestVisible ? "true" : "false");
+        }
+
+        if (!isEnabled)
+        {
+            if (s_hitTestLogging)
+            {
+                NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Result: PASS (element is disabled)", indent);
+            }
+            return nullptr;
         }
 
         NeoWPF::UI::UIElement* deepestHit = isHitTestVisible ? element : nullptr;
