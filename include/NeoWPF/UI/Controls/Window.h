@@ -1,5 +1,8 @@
 #pragma once
 
+// Note: do NOT set the content of the window to anything, let NeoWPF handle it
+// Setting the root content to something will lead to unexpected issues with the layout
+
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 
 namespace NeoWPF::UI {

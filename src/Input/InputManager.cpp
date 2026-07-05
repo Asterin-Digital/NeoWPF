@@ -8,7 +8,7 @@
 
 namespace NeoWPF::Input
 {
-    bool InputManager::s_hitTestLogging = false;
+    bool InputManager::s_hitTestLogging = true;
 
     InputManager& InputManager::GetInstance()
     {

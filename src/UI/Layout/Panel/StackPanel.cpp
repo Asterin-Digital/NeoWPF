@@ -11,20 +11,28 @@ void StackPanel::Measure(int availableWidth, int availableHeight)
     for (auto child : GetVisualChildren()) {
         if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
             fe->Measure(availableWidth, availableHeight);
-            totalHeight += fe->GetDesiredHeight();
-            maxWidth = (std::max)(maxWidth, fe->GetDesiredWidth());
+            const int resolvedW = fe->ResolveWidth(availableWidth, fe->GetDesiredWidth());
+            const int resolvedH = fe->ResolveHeight(availableHeight, fe->GetDesiredHeight());
+            fe->SetDesiredSize(resolvedW, resolvedH);
+            totalHeight += resolvedH;
+            maxWidth = (std::max)(maxWidth, resolvedW);
         }
     }
-    SetDesiredSize(maxWidth, totalHeight);
+
+    const int desiredW = ResolveWidth(availableWidth, maxWidth);
+    const int desiredH = ResolveHeight(availableHeight, totalHeight);
+    SetDesiredSize(desiredW, desiredH);
 }
 
 void StackPanel::Arrange(int finalWidth, int finalHeight)
 {
+    FrameworkElement::Arrange(finalWidth, finalHeight);
+
     int y = 0;
     for (auto child : GetVisualChildren()) {
         if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
-            int childW = finalWidth;
-            int childH = fe->GetDesiredHeight();
+            const int childW = fe->ResolveWidth(finalWidth, fe->GetDesiredWidth());
+            const int childH = fe->ResolveHeight(finalHeight, fe->GetDesiredHeight());
             fe->Arrange(childW, childH);
             fe->SetLayoutOffset(0, y);
             y += childH;
