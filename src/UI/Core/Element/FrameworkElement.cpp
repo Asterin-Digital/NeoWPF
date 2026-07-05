@@ -50,8 +50,10 @@ namespace UI
 
     void FrameworkElement::GetAbsolutePosition(int& outX, int& outY) const noexcept
     {
-        outX = m_offsetX;
-        outY = m_offsetY;
+
+        outX = m_offsetX + m_renderOffsetX;
+        outY = m_offsetY + m_renderOffsetY;
+
 
         Visual* parent = GetParent();
         while (parent)
@@ -59,13 +61,11 @@ namespace UI
             auto fw = dynamic_cast<FrameworkElement*>(parent);
             if (fw)
             {
-                outX += fw->GetLayoutOffsetX();
-                outY += fw->GetLayoutOffsetY();
+                outX += fw->GetLayoutOffsetX() + fw->GetRenderOffsetX();
+                outY += fw->GetLayoutOffsetY() + fw->GetRenderOffsetY();
             }
             parent = parent->GetParent();
         }
-        outX += m_renderOffsetX;
-        outY += m_renderOffsetY;
     }
 
     void FrameworkElement::BeginAnimation(HorizontalAlignment horizontal, VerticalAlignment vertical, float durationSeconds)
