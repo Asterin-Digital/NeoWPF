@@ -194,7 +194,7 @@ namespace NeoWPF::Input
             }
         }
 
-        auto children = element->GetVisualChildren();
+        auto children = element->GetVisualChildrenInZOrder();
         if (s_hitTestLogging && !children.empty())
         {
             NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Testing %d children (in reverse order - top-most first)...", indent, (int)children.size());

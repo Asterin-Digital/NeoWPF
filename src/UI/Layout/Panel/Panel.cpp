@@ -91,7 +91,7 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             GetOpacity());
     }
 
-    for (auto child : GetVisualChildren()) {
+    for (auto child : GetVisualChildrenInZOrder()) {
         if (child) {
             child->BuildRenderCommands(commands);
         }

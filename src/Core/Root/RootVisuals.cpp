@@ -12,7 +12,7 @@ void BuildVisualTreeCommands(NeoWPF::UI::Visual* visual, NeoWPF::Rendering::Comm
         return;
     }
     visual->BuildRenderCommands(commands);
-    for (NeoWPF::UI::Visual* child : visual->GetVisualChildren()) {
+    for (NeoWPF::UI::Visual* child : visual->GetVisualChildrenInZOrder()) {
         BuildVisualTreeCommands(child, commands);
     }
 }

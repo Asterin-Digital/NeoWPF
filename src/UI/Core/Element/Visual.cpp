@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
+#include <algorithm>
 
 namespace NeoWPF::UI {
 
@@ -30,6 +31,15 @@ void Visual::RemoveVisualChild(Visual* child)
             return;
         }
     }
+}
+
+std::vector<Visual*> Visual::GetVisualChildrenInZOrder() const
+{
+    std::vector<Visual*> orderedChildren = m_children;
+    std::stable_sort(orderedChildren.begin(), orderedChildren.end(), [](Visual* left, Visual* right) {
+        return left->GetZIndex() < right->GetZIndex();
+    });
+    return orderedChildren;
 }
 
 void Visual::MarkTreeDirty()
