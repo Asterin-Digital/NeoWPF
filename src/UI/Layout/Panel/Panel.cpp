@@ -24,6 +24,12 @@ void Panel::Measure(int availableWidth, int availableHeight)
     int maxW = 0;
     int maxH = 0;
     for (auto child : GetVisualChildren()) {
+        if (auto uiChild = dynamic_cast<UIElement*>(child)) {
+            if (!uiChild->IsVisible()) {
+                continue;
+            }
+        }
+
         if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
             fe->Measure(availableWidth, availableHeight);
             const int resolvedW = fe->ResolveWidth(availableWidth, fe->GetDesiredWidth());
@@ -49,6 +55,12 @@ void Panel::Arrange(int finalWidth, int finalHeight)
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
     for (auto child : GetVisualChildren()) {
+        if (auto uiChild = dynamic_cast<UIElement*>(child)) {
+            if (!uiChild->IsVisible()) {
+                continue;
+            }
+        }
+
         if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
             const int resolvedW = fe->ResolveWidth(finalWidth, fe->GetDesiredWidth());
             const int resolvedH = fe->ResolveHeight(finalHeight, fe->GetDesiredHeight());
@@ -77,6 +89,10 @@ void Panel::Arrange(int finalWidth, int finalHeight)
 
 void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
+    if (!IsVisible()) {
+        return;
+    }
+
     int absX = 0;
     int absY = 0;
     GetAbsolutePosition(absX, absY);
@@ -92,9 +108,17 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
 
     for (auto child : GetVisualChildrenInZOrder()) {
-        if (child) {
-            child->BuildRenderCommands(commands);
+        if (!child) {
+            continue;
         }
+
+        if (auto uiChild = dynamic_cast<UIElement*>(child)) {
+            if (!uiChild->IsVisible()) {
+                continue;
+            }
+        }
+
+        child->BuildRenderCommands(commands);
     }
 }
 

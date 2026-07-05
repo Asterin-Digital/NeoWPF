@@ -24,7 +24,12 @@ namespace NeoWPF::UI {
 class UIElement : public Visual {
 public:
     bool IsVisible() const noexcept { return m_isVisible; }
-    void SetVisibility(bool visible) noexcept { m_isVisible = visible; }
+    void SetVisibility(bool visible) noexcept {
+        if (m_isVisible != visible) {
+            m_isVisible = visible;
+            InvalidateVisual();
+        }
+    }
 
     bool IsEnabled() const noexcept { return m_isEnabled; }
     void SetEnabled(bool enabled) noexcept { m_isEnabled = enabled; }

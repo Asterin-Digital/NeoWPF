@@ -134,6 +134,15 @@ namespace NeoWPF::Input
             NeoWPF::Diagnostics::LogInfo("[HitTest] %s├─ Testing element at depth %d", indent, depth);
         }
 
+        if (!element->IsVisible())
+        {
+            if (s_hitTestLogging)
+            {
+                NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Result: PASS (element is not visible)", indent);
+            }
+            return nullptr;
+        }
+
         auto fw = dynamic_cast<NeoWPF::UI::FrameworkElement*>(element);
         if (fw)
         {
