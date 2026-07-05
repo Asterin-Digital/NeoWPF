@@ -61,6 +61,7 @@ void TextBox::SetText(const std::wstring& text)
     m_caretPosition = std::min(m_caretPosition, m_text.size());
     m_textDirty = true;
     InvalidateVisual();
+    TextChanged.Invoke(m_text);
 }
 
 void TextBox::Measure(int availableWidth, int availableHeight)

@@ -139,6 +139,7 @@ void TextBox::InsertCharacter(wchar_t character)
     ++m_caretPosition;
     m_textDirty = true;
     InvalidateVisual();
+    TextChanged.Invoke(m_text);
 }
 
 void TextBox::RemoveCharacter(bool backspace)
@@ -165,6 +166,7 @@ void TextBox::RemoveCharacter(bool backspace)
     m_caretPosition = std::min(m_caretPosition, m_text.size());
     m_textDirty = true;
     InvalidateVisual();
+    TextChanged.Invoke(m_text);
 }
 
 void TextBox::UpdateCaretFromMouse(int x, int y)

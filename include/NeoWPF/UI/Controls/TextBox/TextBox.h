@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <NeoWPF/Core/Events/Event.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
@@ -24,6 +25,8 @@ public:
 
     void SetText(const std::wstring& text);
     const std::wstring& GetText() const noexcept { return m_text; }
+
+    NeoWPF::Core::Event<const std::wstring&> TextChanged;
 
     void SetReadOnly(bool value) noexcept { m_isReadOnly = value; InvalidateVisual(); }
     bool IsReadOnly() const noexcept { return m_isReadOnly; }
