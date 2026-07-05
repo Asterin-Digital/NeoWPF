@@ -16,7 +16,6 @@ public:
     }
 
     Event& operator-=(const Delegate& handler) {
-        // Simple removal - in production, we'd use type erasure or comparison
         return *this;
     }
 

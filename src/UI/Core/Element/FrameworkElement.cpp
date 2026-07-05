@@ -1,4 +1,7 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Animation/AnimationController.h>
+#include <NeoWPF/UI/Animation/Core/Timeline.h>
+#include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
 #include <algorithm>
 
 #ifdef max
@@ -30,6 +33,21 @@ namespace UI
         return (std::max)(0, desiredHeight);
     }
 
+    void FrameworkElement::BeginAnimation(int fromWidth, int toWidth, int fromHeight, int toHeight, float durationSeconds)
+    {
+        using namespace NeoWPF::UI::Animation;
+        auto storyboard = std::make_shared<Storyboard>();
+        auto widthTimeline = std::make_shared<Timeline>(static_cast<float>(fromWidth), static_cast<float>(toWidth), durationSeconds, [this](float value) {
+            this->SetWidth(static_cast<int>(value));
+        });
+        auto heightTimeline = std::make_shared<Timeline>(static_cast<float>(fromHeight), static_cast<float>(toHeight), durationSeconds, [this](float value) {
+            this->SetHeight(static_cast<int>(value));
+        });
+        storyboard->AddTimeline(widthTimeline);
+        storyboard->AddTimeline(heightTimeline);
+        NeoWPF::UI::AddStoryboard(storyboard);
+    }
+
     void FrameworkElement::GetAbsolutePosition(int& outX, int& outY) const noexcept
     {
         outX = m_offsetX;
@@ -46,6 +64,51 @@ namespace UI
             }
             parent = parent->GetParent();
         }
+        outX += m_renderOffsetX;
+        outY += m_renderOffsetY;
+    }
+
+    void FrameworkElement::BeginAnimation(HorizontalAlignment horizontal, VerticalAlignment vertical, float durationSeconds)
+    {
+        Visual* parent = GetParent();
+        if (!parent) {
+            return;
+        }
+
+        auto parentFE = dynamic_cast<FrameworkElement*>(parent);
+        int parentWidth = parentFE ? parentFE->GetFinalWidth() : 0;
+        int parentHeight = parentFE ? parentFE->GetFinalHeight() : 0;
+
+        int childWidth = GetFinalWidth() > 0 ? GetFinalWidth() : GetDesiredWidth();
+        int childHeight = GetFinalHeight() > 0 ? GetFinalHeight() : GetDesiredHeight();
+
+        int targetX = 0;
+        switch (horizontal) {
+            case HorizontalAlignment::Left: targetX = 0; break;
+            case HorizontalAlignment::Center: targetX = (parentWidth - childWidth) / 2; break;
+            case HorizontalAlignment::Right: targetX = parentWidth - childWidth; break;
+            case HorizontalAlignment::Stretch: targetX = 0; break;
+        }
+
+        int targetY = 0;
+        switch (vertical) {
+            case VerticalAlignment::Top: targetY = 0; break;
+            case VerticalAlignment::Center: targetY = (parentHeight - childHeight) / 2; break;
+            case VerticalAlignment::Bottom: targetY = parentHeight - childHeight; break;
+            case VerticalAlignment::Stretch: targetY = 0; break;
+        }
+
+        using namespace NeoWPF::UI::Animation;
+        auto storyboard = std::make_shared<Storyboard>();
+        auto xTimeline = std::make_shared<Timeline>(static_cast<float>(GetRenderOffsetX()), static_cast<float>(targetX - GetLayoutOffsetX()), durationSeconds, [this](float value) {
+            this->SetRenderOffset(static_cast<int>(value), this->GetRenderOffsetY());
+        });
+        auto yTimeline = std::make_shared<Timeline>(static_cast<float>(GetRenderOffsetY()), static_cast<float>(targetY - GetLayoutOffsetY()), durationSeconds, [this](float value) {
+            this->SetRenderOffset(this->GetRenderOffsetX(), static_cast<int>(value));
+        });
+        storyboard->AddTimeline(xTimeline);
+        storyboard->AddTimeline(yTimeline);
+        NeoWPF::UI::AddStoryboard(storyboard);
     }
 }
 }

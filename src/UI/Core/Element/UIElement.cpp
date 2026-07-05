@@ -1,4 +1,7 @@
 #include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/UI/Animation/AnimationController.h>
+#include <NeoWPF/UI/Animation/Core/Timeline.h>
+#include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 
 namespace NeoWPF::UI {
@@ -11,6 +14,16 @@ void UIElement::InvalidateVisual() {
 void UIElement::ClearDirty() noexcept {
     m_isDirty = false;
     ClearTreeDirty();
+}
+
+void UIElement::BeginAnimation(float from, float to, float durationSeconds) {
+    using namespace NeoWPF::UI::Animation;
+    auto storyboard = std::make_shared<Storyboard>();
+    auto timeline = std::make_shared<Timeline>(from, to, durationSeconds, [this](float value) {
+        this->SetOpacity(value);
+    });
+    storyboard->AddTimeline(timeline);
+    NeoWPF::UI::AddStoryboard(storyboard);
 }
 
 void UIElement::SetTemplate(const std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase>& templatePtr) {
@@ -67,4 +80,4 @@ void UIElement::ClearTemplateChildren() noexcept {
     m_hasTemplateApplied = false;
 }
 
-} // namespace NeoWPF::UI
+}

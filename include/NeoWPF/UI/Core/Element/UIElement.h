@@ -46,6 +46,8 @@ public:
     bool IsDirty() const noexcept { return m_isDirty; }
     void ClearDirty() noexcept;
 
+    void BeginAnimation(float from, float to, float durationSeconds);
+
     virtual void Measure(int availableWidth, int availableHeight) {}
     virtual void Arrange(int finalWidth, int finalHeight) {}
 

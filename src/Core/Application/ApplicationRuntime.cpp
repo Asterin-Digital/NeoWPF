@@ -8,6 +8,7 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/Input/InputManager.h>
+#include <NeoWPF/UI/Animation/AnimationController.h>
 #include <chrono>
 #include <exception>
 #include <mutex>
@@ -154,6 +155,8 @@ int RunApplicationMessageLoop()
     while (GetMessage(&msg, nullptr, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
+
+        NeoWPF::UI::Tick();
 
         {
             std::lock_guard<std::mutex> lock(s_appState.windowsMutex);

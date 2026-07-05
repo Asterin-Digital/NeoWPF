@@ -34,9 +34,12 @@ public:
     int GetFinalWidth() const noexcept { return m_finalWidth; }
     int GetFinalHeight() const noexcept { return m_finalHeight; }
 
-    void SetLayoutOffset(int x, int y) noexcept { m_offsetX = x; m_offsetY = y; }
+    void SetLayoutOffset(int x, int y) noexcept { m_offsetX = x; m_offsetY = y; InvalidateVisual(); }
     int GetLayoutOffsetX() const noexcept { return m_offsetX; }
     int GetLayoutOffsetY() const noexcept { return m_offsetY; }
+
+    void BeginAnimation(int fromWidth, int toWidth, int fromHeight, int toHeight, float durationSeconds);
+    void BeginAnimation(HorizontalAlignment horizontal, VerticalAlignment vertical, float durationSeconds);
 
     LayoutSizeMode GetWidthMode() const noexcept { return m_widthMode; }
     void SetWidthMode(LayoutSizeMode mode) noexcept { m_widthMode = mode; InvalidateVisual(); }
@@ -68,9 +71,15 @@ private:
     int m_offsetX = 0;
     int m_offsetY = 0;
     LayoutSizeMode m_widthMode = LayoutSizeMode::Auto;
+    int m_renderOffsetX = 0;
+    int m_renderOffsetY = 0;
     LayoutSizeMode m_heightMode = LayoutSizeMode::Auto;
     int m_explicitWidth = 0;
     int m_explicitHeight = 0;
+
+    void SetRenderOffset(int x, int y) noexcept { m_renderOffsetX = x; m_renderOffsetY = y; InvalidateVisual(); }
+    int GetRenderOffsetX() const noexcept { return m_renderOffsetX; }
+    int GetRenderOffsetY() const noexcept { return m_renderOffsetY; }
     HorizontalAlignment m_horizontalAlignment = HorizontalAlignment::Stretch;
     VerticalAlignment m_verticalAlignment = VerticalAlignment::Stretch;
 };
