@@ -203,6 +203,21 @@ void TextBox::UpdateCaretFromMouse(int x, int y)
         ++targetLine;
     }
 
+    if (lineStart > m_text.size()) {
+        lineStart = m_text.size();
+    }
+    if (lineEnd > m_text.size()) {
+        lineEnd = m_text.size();
+    }
+
+    if (lineStart == m_text.size()) {
+        m_caretPosition = m_text.size();
+        if (s_textBoxDebug) {
+            NeoWPF::Diagnostics::LogInfo("[TextBox] UpdateCaretFromMouse: chosen caret=%zu bestDistance=%d targetLine=%zu", m_caretPosition, 0, targetLine);
+        }
+        return;
+    }
+
     std::size_t bestPosition = lineStart;
     int bestDistance = std::numeric_limits<int>::max();
     const std::wstring lineText = m_text.substr(lineStart, lineEnd - lineStart);

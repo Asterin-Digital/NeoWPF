@@ -1,13 +1,15 @@
-## How to properly create an UI primitive
+## How to properly create a UI primitive
 
-First of all, an UI primitive primarily consists of 3 files:
+First of all, a ui primitive typically consists of 4 files (depending on what ui primitive you're working with)
 -The main file
 -The styling file (if your primitive needs it)
 -The template file (if your primitive needs it)
+-The states file (if your primitive needs it)
 -And any other file that you desire or need to create.
 
 for example, you have the button UI primitive, which consists of:
 -Button.cpp
+-Button.States.cpp
 -Button.Styles.cpp
 -ButtonTemplate.cpp
 
@@ -26,6 +28,7 @@ You must also mirror the folder structure inside include/NeoWPF/ that you create
 
 For a ControlTemplate, you can begin by defining required and non required parts for the template to be valid.
 For default styles simply specify the default colors of the UI element as the minimum.
+For states, define the commons states that your primitive can have and add the default colors for them in styles
 
 After you have created all these files and you are sure that NeoWPF builds, proceed to do this after:
 -Commit the change using Git using this template "Feat: Added base implementation for {name}

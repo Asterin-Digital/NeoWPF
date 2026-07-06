@@ -2,6 +2,117 @@
   "entries": [
     {
       "kind": "method",
+      "name": "ClearDeveloperMessages",
+      "source": "Application",
+      "summary": "Clears all active developer messages.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "CreateWindow",
+      "source": "Application",
+      "summary": "Creates the main application window.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "title",
+          "text": "The window title."
+        },
+        {
+          "name": "width",
+          "text": "The initial window width."
+        },
+        {
+          "name": "height",
+          "text": "The initial window height."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Current",
+      "source": "Application",
+      "summary": "Returns the current application instance.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "DumpVisualTree",
+      "source": "Application",
+      "summary": "Dumps the current visual tree for debugging.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "options",
+          "text": "Options that control what data is included in the dump."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "Initialize",
+      "source": "Application",
+      "summary": "Initializes the NeoWPF application runtime.",
+      "details": "Call this before creating windows or entering the main loop.",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Run",
+      "source": "Application",
+      "summary": "Runs the application message loop.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "ShowDeveloperMessage",
+      "source": "Application",
+      "summary": "Shows a developer-facing message in the debug UI.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "title",
+          "text": "The message title."
+        },
+        {
+          "name": "message",
+          "text": "The body text of the message."
+        },
+        {
+          "name": "severity",
+          "text": "The severity level for the developer message."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "Shutdown",
+      "source": "Application",
+      "summary": "Shuts down the application and cleans up runtime resources.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "Arrange",
       "source": "Button",
       "summary": "Positions the button inside its box",
@@ -1317,6 +1428,16 @@
     },
     {
       "kind": "method",
+      "name": "ApplyVisualState",
+      "source": "TextBox",
+      "summary": "Apply a visual state to the TextBox.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
       "name": "Arrange",
       "source": "TextBox",
       "summary": "Arranges the control into its final bounds.",
@@ -1414,6 +1535,16 @@
       "example": "",
       "params": [],
       "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "InitializeVisualStates",
+      "source": "TextBox",
+      "summary": "Initialize visual state groups for the TextBox.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
     },
     {
       "kind": "method",
@@ -1709,6 +1840,343 @@
       "example": "",
       "params": [],
       "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "AddGroup",
+      "source": "VisualStateManager",
+      "summary": "Adds a visual state group.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "group",
+          "text": "The group to add."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "AddState",
+      "source": "VisualStateManager",
+      "summary": "Adds a state to the group.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "state",
+          "text": "The visual state to add."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "ApplyVisualStateTransition",
+      "source": "VisualStateManager",
+      "summary": "Applies the transition logic for a visual state.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "element",
+          "text": "The element that owns or hosts the visual state."
+        },
+        {
+          "name": "state",
+          "text": "The visual state being activated."
+        },
+        {
+          "name": "useTransitions",
+          "text": "Whether storyboard transitions should be played."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "FindGroup",
+      "source": "VisualStateManager",
+      "summary": "Finds a group by name.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "name",
+          "text": "The group identifier."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "FindState",
+      "source": "VisualStateManager",
+      "summary": "Finds a state by name.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "name",
+          "text": "The name to look for."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "FindState",
+      "source": "VisualStateManager",
+      "summary": "Finds a state inside a named group.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "groupName",
+          "text": "The group identifier."
+        },
+        {
+          "name": "stateName",
+          "text": "The state identifier."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetCurrentState",
+      "source": "VisualStateManager",
+      "summary": "Returns the currently active state for the group.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetGroups",
+      "source": "VisualStateManager",
+      "summary": "Returns all registered state groups.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetName",
+      "source": "VisualStateManager",
+      "summary": "Returns the current state name.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetName",
+      "source": "VisualStateManager",
+      "summary": "Returns the group name.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetStates",
+      "source": "VisualStateManager",
+      "summary": "Returns all states in this group.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetStoryboard",
+      "source": "VisualStateManager",
+      "summary": "Returns the storyboard associated with this state.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetTargetName",
+      "source": "VisualStateManager",
+      "summary": "Returns the target element name for this state.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GoToState",
+      "source": "VisualStateManager",
+      "summary": "Transitions the element to a state within a specific group.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "element",
+          "text": "The UI element that owns the visual state."
+        },
+        {
+          "name": "groupName",
+          "text": "The state group to search."
+        },
+        {
+          "name": "stateName",
+          "text": "The target state name."
+        },
+        {
+          "name": "useTransitions",
+          "text": "Whether storyboard transitions should be played."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GoToState",
+      "source": "VisualStateManager",
+      "summary": "Searches all groups and transitions the element to the first matching state.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "element",
+          "text": "The UI element that owns the visual state."
+        },
+        {
+          "name": "stateName",
+          "text": "The target state name."
+        },
+        {
+          "name": "useTransitions",
+          "text": "Whether storyboard transitions should be played."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "HasStoryboard",
+      "source": "VisualStateManager",
+      "summary": "Returns whether this state has a storyboard.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetCurrentState",
+      "source": "VisualStateManager",
+      "summary": "Sets the currently active state.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "state",
+          "text": "The visual state to activate."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetName",
+      "source": "VisualStateManager",
+      "summary": "Sets the state identifier.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "name",
+          "text": "The state name."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetName",
+      "source": "VisualStateManager",
+      "summary": "Sets the group name.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "name",
+          "text": "The state group identifier."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetStoryboard",
+      "source": "VisualStateManager",
+      "summary": "Assigns a storyboard to play when the state becomes active.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "storyboard",
+          "text": "The storyboard to run for this state."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetTargetName",
+      "source": "VisualStateManager",
+      "summary": "Sets the target element name for this state.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "targetName",
+          "text": "The named element to target when the state is activated."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "class",
+      "name": "VisualState",
+      "source": "VisualStateManager",
+      "summary": "Represents a named visual state with an optional storyboard.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "class",
+      "name": "VisualStateGroup",
+      "source": "VisualStateManager",
+      "summary": "Holds a set of related visual states and the group's active state.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "class",
+      "name": "VisualStateManager",
+      "source": "VisualStateManager",
+      "summary": "Manages visual state groups and transitions for a UI element.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
     }
   ]
 }
