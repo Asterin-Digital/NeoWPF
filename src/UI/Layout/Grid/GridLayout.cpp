@@ -12,17 +12,87 @@
 
 namespace NeoWPF::UI {
 
-    bool GridLayout::s_gridLogging = true; // Please do not turn this on unless ur debugging something
+namespace {
+std::vector<Grid::Definition> NormalizeDefinitions(
+    const std::vector<Grid::Definition>& defs,
+    const std::vector<int>& autoSizes)
+{
+    std::vector<Grid::Definition> normalized = defs;
+    if (normalized.empty()) {
+        normalized.push_back({SizeMode::Auto, 0});
+    }
 
-    GridLayoutResult GridLayout::ComputeLayout(
+    for (size_t i = 0; i < normalized.size(); ++i) {
+        if (normalized[i].mode == SizeMode::Auto) {
+            normalized[i].mode = SizeMode::Fixed;
+            normalized[i].value = i < autoSizes.size() ? autoSizes[i] : 0;
+        }
+    }
+
+    return normalized;
+}
+
+std::vector<int> ResolveAutoSizes(
+    const std::vector<Grid::Definition>& defs,
+    const std::vector<Visual*>& children,
+    bool resolveRowHeights)
+{
+    const int count = std::max(1, static_cast<int>(defs.size()));
+    std::vector<int> autoSizes(count, 0);
+
+    for (int index = 0; index < count; ++index) {
+        if (defs[index].mode != SizeMode::Auto) {
+            continue;
+        }
+
+        int maxSize = 0;
+        for (auto child : children) {
+            if (!child) {
+                continue;
+            }
+
+            if (resolveRowHeights) {
+                if (Grid::GetRow(child) == index && Grid::GetRowSpan(child) == 1) {
+                    if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
+                        maxSize = std::max(maxSize, fe->GetDesiredHeight());
+                    }
+                }
+            } else {
+                if (Grid::GetColumn(child) == index && Grid::GetColumnSpan(child) == 1) {
+                    if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
+                        maxSize = std::max(maxSize, fe->GetDesiredWidth());
+                    }
+                }
+            }
+        }
+
+        autoSizes[index] = maxSize;
+    }
+
+    return autoSizes;
+}
+}
+
+bool GridLayout::s_gridLogging = true; // Please do not turn this on unless ur debugging something
+
+GridLayoutResult GridLayout::ComputeLayout(
     const std::vector<Grid::Definition>& rowDefs,
     const std::vector<Grid::Definition>& colDefs,
     int availableWidth,
     int availableHeight,
     const std::vector<Visual*>& children)
 {
-    int numRows = std::max(1, static_cast<int>(rowDefs.size()));
-    int numCols = std::max(1, static_cast<int>(colDefs.size()));
+    std::vector<Grid::Definition> effectiveRowDefs = rowDefs;
+    std::vector<Grid::Definition> effectiveColDefs = colDefs;
+    if (effectiveRowDefs.empty()) {
+        effectiveRowDefs.push_back({SizeMode::Auto, 0});
+    }
+    if (effectiveColDefs.empty()) {
+        effectiveColDefs.push_back({SizeMode::Auto, 0});
+    }
+
+    int numRows = std::max(1, static_cast<int>(effectiveRowDefs.size()));
+    int numCols = std::max(1, static_cast<int>(effectiveColDefs.size()));
 
     if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] ComputeLayout: Available %dx%d, Grid %dx%d, %zu children",
         availableWidth, availableHeight, numCols, numRows, children.size());
@@ -37,7 +107,7 @@ namespace NeoWPF::UI {
     int starColCount = 0;
 
     for (int r = 0; r < numRows; ++r) {
-        const auto& def = rowDefs[r];
+        const auto& def = effectiveRowDefs[r];
         if (def.mode == SizeMode::Fixed) {
             result.rowHeights[r] = def.value;
             totalFixedHeight += def.value;
@@ -51,7 +121,7 @@ namespace NeoWPF::UI {
     }
 
     for (int c = 0; c < numCols; ++c) {
-        const auto& def = colDefs[c];
+        const auto& def = effectiveColDefs[c];
         if (def.mode == SizeMode::Fixed) {
             result.colWidths[c] = def.value;
             totalFixedWidth += def.value;
@@ -74,7 +144,7 @@ namespace NeoWPF::UI {
         starRowCount, starHeightPerUnit, starColCount, starWidthPerUnit);
 
     for (int r = 0; r < numRows; ++r) {
-        const auto& def = rowDefs[r];
+        const auto& def = effectiveRowDefs[r];
         if (def.mode == SizeMode::Star) {
             int starCount = def.value > 0 ? def.value : 1;
             result.rowHeights[r] = starHeightPerUnit * starCount;
@@ -83,7 +153,7 @@ namespace NeoWPF::UI {
     }
 
     for (int c = 0; c < numCols; ++c) {
-        const auto& def = colDefs[c];
+        const auto& def = effectiveColDefs[c];
         if (def.mode == SizeMode::Star) {
             int starCount = def.value > 0 ? def.value : 1;
             result.colWidths[c] = starWidthPerUnit * starCount;
@@ -95,7 +165,7 @@ namespace NeoWPF::UI {
     for (int h : result.rowHeights) usedHeight += h;
     int heightRemainder = availableHeight - usedHeight;
     for (int r = 0; r < numRows && heightRemainder > 0; ++r) {
-        if (rowDefs[r].mode == SizeMode::Star) {
+        if (effectiveRowDefs[r].mode == SizeMode::Star) {
             ++result.rowHeights[r];
             --heightRemainder;
         }
@@ -105,7 +175,7 @@ namespace NeoWPF::UI {
     for (int w : result.colWidths) usedWidth += w;
     int widthRemainder = availableWidth - usedWidth;
     for (int c = 0; c < numCols && widthRemainder > 0; ++c) {
-        if (colDefs[c].mode == SizeMode::Star) {
+        if (effectiveColDefs[c].mode == SizeMode::Star) {
             ++result.colWidths[c];
             --widthRemainder;
         }
@@ -118,6 +188,60 @@ namespace NeoWPF::UI {
     if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Layout (Auto=0): %dx%d", totalW, totalH);
 
     return result;
+}
+
+GridLayoutMetrics GridLayout::ComputeMetrics(
+    const std::vector<Grid::Definition>& rowDefs,
+    const std::vector<Grid::Definition>& colDefs,
+    int availableWidth,
+    int availableHeight,
+    const std::vector<Visual*>& children)
+{
+    GridLayoutMetrics metrics;
+    metrics.autoRowHeights = ResolveAutoSizes(rowDefs, children, true);
+    metrics.autoColWidths = ResolveAutoSizes(colDefs, children, false);
+
+    auto resolvedRowDefs = NormalizeDefinitions(rowDefs, metrics.autoRowHeights);
+    auto resolvedColDefs = NormalizeDefinitions(colDefs, metrics.autoColWidths);
+
+    const auto layout = ComputeLayout(resolvedRowDefs, resolvedColDefs, availableWidth, availableHeight, children);
+    metrics.rowHeights = layout.rowHeights;
+    metrics.colWidths = layout.colWidths;
+    metrics.childLayouts.resize(children.size());
+
+    for (size_t i = 0; i < children.size(); ++i) {
+        auto child = children[i];
+        if (!child) {
+            continue;
+        }
+
+        int r = Grid::GetRow(child);
+        int c = Grid::GetColumn(child);
+        int rspan = Grid::GetRowSpan(child);
+        int cspan = Grid::GetColumnSpan(child);
+
+        int x = 0;
+        int y = 0;
+        int w = 0;
+        int h = 0;
+
+        for (int j = 0; j < c && j < static_cast<int>(metrics.colWidths.size()); ++j) {
+            x += metrics.colWidths[j];
+        }
+        for (int j = c; j < c + cspan && j < static_cast<int>(metrics.colWidths.size()); ++j) {
+            w += metrics.colWidths[j];
+        }
+        for (int j = 0; j < r && j < static_cast<int>(metrics.rowHeights.size()); ++j) {
+            y += metrics.rowHeights[j];
+        }
+        for (int j = r; j < r + rspan && j < static_cast<int>(metrics.rowHeights.size()); ++j) {
+            h += metrics.rowHeights[j];
+        }
+
+        metrics.childLayouts[i] = {x, y, w, h};
+    }
+
+    return metrics;
 }
 
 }
