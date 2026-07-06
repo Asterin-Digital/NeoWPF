@@ -14,6 +14,7 @@
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
 #include <NeoWPF/UI/Styling/Style/Style.h>
 #include <NeoWPF/UI/Styling/Style/StyleManager.h>
+#include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateParts.h>
 

@@ -2,7 +2,6 @@
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/Input/Core/Events.h>
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
-#include <NeoWPF/UI/Controls/ScrollBar/ScrollBarTemplate.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <algorithm>

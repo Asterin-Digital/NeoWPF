@@ -1,5 +1,7 @@
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <NeoWPF/UI/Styling/Style/Style.h>
+#include <NeoWPF/UI/Styling/Style/StyleManager.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
@@ -25,7 +27,7 @@ namespace {
 #undef min
 #endif
 
-bool NeoWPF::UI::TextBox::s_textBoxDebug = false; // Please do not turn this on unless ur debugging something
+bool NeoWPF::UI::TextBox::s_textBoxDebug = false;
 
 namespace NeoWPF::UI {
 
@@ -34,6 +36,13 @@ TextBox::TextBox()
 {
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
+
+    if (auto style = Styling::StyleManager::GetDefault(typeid(TextBox))) {
+        style->Apply(this);
+    }
+
+    InitializeVisualStates();
+    ApplyVisualState("Normal", false);
 }
 
 TextBox::~TextBox()
@@ -115,17 +124,7 @@ void TextBox::Arrange(int finalWidth, int finalHeight)
     }
 }
 
-void TextBox::OnGotFocus()
-{
-    m_isFocused = true;
-    InvalidateVisual();
-}
 
-void TextBox::OnLostFocus()
-{
-    m_isFocused = false;
-    InvalidateVisual();
-}
 
 void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {

@@ -157,6 +157,7 @@
     <ClInclude Include="include\NeoWPF\UI\Controls\ScrollBar\ScrollBar.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\ScrollBar\ScrollBarTemplate.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Panel.h" />
+    <ClInclude Include="include\NeoWPF\UI\Controls\TextBox\TextBox.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Window.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Rectangle.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Text\TextBlock.h" />
@@ -173,6 +174,7 @@
     <ClInclude Include="include\NeoWPF\UI\UI.h" />
     <ClInclude Include="include\NeoWPF\UI\Styling\Style.h" />
     <ClInclude Include="include\NeoWPF\UI\Styling\StyleManager.h" />
+    <ClInclude Include="include\NeoWPF\UI\Styling\State\VisualStateManager.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Templates\ControlTemplate.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Templates\TemplateParts.h" />
   </ItemGroup>
@@ -189,6 +191,7 @@
     <ClCompile Include="src\UI\Animation\Core\Timeline.cpp" />
     <ClCompile Include="src\UI\Controls\Button\Button.cpp" />
     <ClCompile Include="src\UI\Controls\Button\Button.Styles.cpp" />
+    <ClCompile Include="src\UI\Controls\Button\Button.States.cpp" />
     <ClCompile Include="src\UI\Controls\Button\ButtonTemplate.cpp" />
     <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBar.cpp" />
     <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBar.Styles.cpp" />
@@ -221,6 +224,7 @@
     <ClCompile Include="src\UI\Core\Element\Visual.cpp" />
     <ClCompile Include="src\UI\Controls\Text\TextBlock.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\TextBox.cpp" />
+    <ClCompile Include="src\UI\Controls\TextBox\TextBox.States.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\TextBox.Editing.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\TextBox.Styles.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\TextBoxTemplate.cpp" />
@@ -229,6 +233,9 @@
     <ClCompile Include="src\UI\Layout\Grid\Grid.cpp" />
     <ClCompile Include="src\UI\Layout\Grid\GridLayout.cpp" />
     <ClCompile Include="src\UI\Styling\Style\DefaultStyles.cpp" />
+    <ClCompile Include="src\UI\Styling\State\Core\VisualStateCore.cpp" />
+    <ClCompile Include="src\UI\Styling\State\Transitions\VisualStateTransitions.cpp" />
+    <ClCompile Include="src\UI\Styling\State\VisualStateManager.cpp" />
     <ClCompile Include="src\UI\Controls\Templates\ControlTemplate.cpp" />
     <ClCompile Include="src\UI\Controls\Templates\TemplateVisual.cpp" />
   </ItemGroup>

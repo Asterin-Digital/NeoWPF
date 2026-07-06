@@ -80,4 +80,23 @@ void UIElement::ClearTemplateChildren() noexcept {
     m_hasTemplateApplied = false;
 }
 
+void UIElement::SetProperty(const std::string& name, uint32_t value) {
+    if (name.empty()) {
+        return;
+    }
+    m_properties[name] = value;
+}
+
+bool UIElement::TryGetProperty(const std::string& name, uint32_t& outValue) const {
+    if (name.empty()) {
+        return false;
+    }
+    auto it = m_properties.find(name);
+    if (it == m_properties.end()) {
+        return false;
+    }
+    outValue = it->second;
+    return true;
+}
+
 }

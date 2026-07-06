@@ -72,6 +72,9 @@ public:
     bool HasTemplateChild(const std::string& name) const;
     void ClearTemplateChildren() noexcept;
 
+    void SetProperty(const std::string& name, uint32_t value);
+    bool TryGetProperty(const std::string& name, uint32_t& outValue) const;
+
     virtual void OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args) {}
     virtual void OnMouseDown(int x, int y, std::uint32_t buttonState) {}
     virtual void OnMouseUp(int x, int y, std::uint32_t buttonState) {}
@@ -91,6 +94,7 @@ private:
     bool m_hasTemplateApplied = false;
     std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase> m_template;
     std::unordered_map<std::string, Visual*> m_templateChildren;
+    std::unordered_map<std::string, uint32_t> m_properties;
     Visual* m_appliedTemplateRoot = nullptr;
 };
 

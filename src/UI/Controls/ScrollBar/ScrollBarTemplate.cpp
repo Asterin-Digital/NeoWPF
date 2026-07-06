@@ -1,4 +1,4 @@
-#include <NeoWPF/UI/Controls/ScrollBar/ScrollBarTemplate.h>
+#include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>

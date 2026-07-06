@@ -1,4 +1,3 @@
-#include <NeoWPF/UI/Controls/Button/ButtonTemplate.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <memory>

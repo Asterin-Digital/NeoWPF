@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <cstdint>
 #include <string>
 #include <utility>
@@ -8,6 +9,7 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
+#include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 
 namespace NeoWPF::UI {
 
@@ -248,6 +250,22 @@ public:
     */
     void OnLostFocus() override;
 
+    /*
+        @summary
+        Initialize visual state groups for the TextBox.
+
+        @internal
+    */
+    void InitializeVisualStates();
+
+    /*
+        @summary
+        Apply a visual state to the TextBox.
+
+        @internal
+    */
+    void ApplyVisualState(const std::string& stateName, bool useTransitions = false);
+
 private:
     struct LineRenderData {
         uint32_t textureId = 0;
@@ -268,6 +286,9 @@ private:
     bool m_acceptsReturn = false;
     bool m_textWrapping = false;
     bool m_isHitTestVisible = true;
+
+    std::shared_ptr<Styling::VisualStateManager> m_visualStateManager;
+    std::string m_currentVisualState;
 
     std::vector<LineRenderData> m_lineRenderData;
     bool m_textDirty = true;

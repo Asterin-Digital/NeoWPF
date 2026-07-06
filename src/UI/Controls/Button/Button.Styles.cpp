@@ -14,6 +14,11 @@ public:
             button->SetFontSize(14);
             button->SetPadding(10);
             button->SetBackgroundColor(0xFF3A3A3Au);
+
+            button->SetProperty("VisualState.Normal.Background", 0xFF3A3A3Au);
+            button->SetProperty("VisualState.MouseOver.Background", 0xFF5A7A9Au);
+            button->SetProperty("VisualState.Pressed.Background", 0xFF1A1A1Au);
+            button->SetProperty("VisualState.Disabled.Background", 0xFF2A2A2Au);
         }
     }
 };

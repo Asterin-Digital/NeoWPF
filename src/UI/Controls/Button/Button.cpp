@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Controls/Button/Button.h>
-#include <NeoWPF/UI/Controls/Button/ButtonTemplate.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <NeoWPF/UI/Styling/Style/Style.h>
+#include <NeoWPF/UI/Styling/Style/StyleManager.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <algorithm>
@@ -19,6 +20,13 @@ Button::Button()
     SetVerticalAlignment(VerticalAlignment::Top);
     SetTemplate(std::make_shared<ButtonTemplate>());
     ApplyTemplate();
+    
+    if (auto style = Styling::StyleManager::GetDefault(typeid(Button))) {
+        style->Apply(this);
+    }
+    
+    InitializeVisualStates();
+    ApplyVisualState("Normal", false);
 }
 
 Button::Button(const std::wstring& text)
@@ -28,6 +36,13 @@ Button::Button(const std::wstring& text)
     SetVerticalAlignment(VerticalAlignment::Top);
     SetTemplate(std::make_shared<ButtonTemplate>());
     ApplyTemplate();
+    
+    if (auto style = Styling::StyleManager::GetDefault(typeid(Button))) {
+        style->Apply(this);
+    }
+    
+    InitializeVisualStates();
+    ApplyVisualState("Normal", false);
     SetText(text);
 }
 
@@ -75,6 +90,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto* background = dynamic_cast<Templates::TemplateVisual*>(FindTemplateChild("PART_Background"));
     if (background) {
         background->SetRect(absX, absY, GetFinalWidth(), GetFinalHeight());
+        background->SetFillColor(m_backgroundColor);
         background->SetOpacity(GetOpacity());
         background->BuildRenderCommands(commands);
     }
@@ -174,13 +190,6 @@ void Button::EnsureTextTexture()
     m_textWidth = width;
     m_textHeight = height;
     m_textDirty = false;
-}
-
-void Button::OnMouseUp(int x, int y, std::uint32_t buttonState)
-{
-    if (IsEnabled()) {
-        RaiseClick();
-    }
 }
 
 void Button::RaiseClick()

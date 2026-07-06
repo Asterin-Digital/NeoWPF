@@ -3,6 +3,7 @@
 #include <NeoWPF/Core/Events/Event.h>
 #include <NeoWPF/Input/Core/Events.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <cstdint>
 
 namespace NeoWPF::UI {
@@ -282,6 +283,11 @@ private:
     int m_dragStartPointer = 0;
     FrameworkElement* m_scrollTarget = nullptr;
     FrameworkElement* m_viewportElement = nullptr;
+};
+
+class ScrollBarTemplate : public Templates::ControlTemplate {
+public:
+    ScrollBarTemplate();
 };
 
 }

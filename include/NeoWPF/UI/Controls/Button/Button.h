@@ -1,8 +1,11 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/Core/Events/Event.h>
+#include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 
 namespace NeoWPF::Input::Core {
     class MouseEventArgs;
@@ -163,6 +166,10 @@ public:
     */
     bool IsInteractable() const noexcept override { return IsEnabled(); }
 
+    void OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args) override;
+    void OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args) override;
+    void OnMouseDown(int x, int y, std::uint32_t buttonState) override;
+
     /*
         @summary
         Handles mouse-up input.
@@ -198,6 +205,8 @@ private:
     int m_textWidth = 0;
     int m_textHeight = 0;
     bool m_textDirty = true;
+    std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> m_visualStateManager;
+    std::string m_currentVisualState;
 
     /*
         @summary
@@ -206,6 +215,8 @@ private:
         @internal
     */
     void EnsureTextTexture();
+    void InitializeVisualStates();
+    void ApplyVisualState(const std::string& stateName, bool useTransitions = false);
 
     /*
         @summary
@@ -214,6 +225,11 @@ private:
         @internal
     */
     void RaiseClick();
+};
+
+class ButtonTemplate : public Templates::ControlTemplate {
+public:
+    ButtonTemplate();
 };
 
 }
