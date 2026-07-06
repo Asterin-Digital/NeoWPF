@@ -93,13 +93,19 @@
     <ClCompile Include="src\UI\Controls\TextBox\TextBox.States.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Controls\TextBox\TextBox.Editing.cpp">
+    <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxEditing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Controls\TextBox\TextBox.Styles.cpp">
+    <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxGeometry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Controls\TextBox\TextBoxTemplate.cpp">
+    <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxStates.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxStyles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxTemplate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Input\Core\Events.cpp">
@@ -190,6 +196,24 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Rendering\D3D11\Renderer\RendererClipping.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxStates.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxStyles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxTemplate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\Text\Visual\TextBlockStyles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\ScrollBar\Visual\ScrollBarStyles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\ScrollBar\Visual\ScrollBarTemplate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
