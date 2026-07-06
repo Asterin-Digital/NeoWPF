@@ -1,12 +1,42 @@
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <algorithm>
+#include <memory>
+#include <string>
 
 namespace NeoWPF::UI {
+namespace {
+
+bool ShouldWarnDanglingChild(Visual* child)
+{
+    if (!child || NeoWPF::Diagnostics::IsDeveloperWarningSuppressionEnabled()) {
+        return false;
+    }
+
+    try {
+        auto self = child->shared_from_this();
+        (void)self;
+        return false;
+    } catch (const std::bad_weak_ptr&) {
+        return true;
+    }
+}
+
+}
 
 void Visual::AddVisualChild(Visual* child)
 {
     if (!child) return;
+
+    if (ShouldWarnDanglingChild(child)) {
+        const std::wstring title = std::wstring(NeoWPF::Diagnostics::DeveloperWarnings::kDanglingChildReferenceCode) + L": dangling child reference detected";
+        NeoWPF::Diagnostics::QueueDeveloperWarning(
+            title,
+            L"A visual child was attached through a raw pointer without active shared ownership. Keep the child alive with a shared_ptr or store it in a container to avoid dangling references during layout.",
+            NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
+    }
+
     child->m_parent = this;
     m_children.push_back(child);
     if (!m_parent) {

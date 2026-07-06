@@ -9,6 +9,7 @@
 #include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
+#include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <chrono>
 #include <exception>
 #include <mutex>
@@ -78,17 +79,23 @@ void StartRenderThread()
                 unsigned int h = rc.bottom - rc.top;
 
                 if (w > 0 && h > 0) {
-                    NeoWPF::Rendering::Renderer_Resize(w, h);
-                    NeoWPF::Rendering::Renderer_BeginFrame();
+                    try {
+                        NeoWPF::Rendering::Renderer_Resize(w, h);
+                        NeoWPF::Rendering::Renderer_BeginFrame();
 
-                    NeoWPF::Rendering::CommandList toRender;
-                    {
-                        std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
-                        toRender = s_appState.renderCommandList;
+                        NeoWPF::Rendering::CommandList toRender;
+                        {
+                            std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
+                            toRender = s_appState.renderCommandList;
+                        }
+
+                        NeoWPF::Rendering::Renderer_Execute(toRender);
+                        NeoWPF::Rendering::Renderer_Present();
+                    } catch (const std::exception& ex) {
+                        NeoWPF::Diagnostics::LogError("Render frame failed: %s", ex.what());
+                    } catch (...) {
+                        NeoWPF::Diagnostics::LogError("Render frame failed with unknown error");
                     }
-
-                    NeoWPF::Rendering::Renderer_Execute(toRender);
-                    NeoWPF::Rendering::Renderer_Present();
                 }
             }
 
@@ -192,6 +199,7 @@ int RunApplicationMessageLoop()
         }
 
         if (needsUpdate) {
+            NeoWPF::Diagnostics::ProcessPendingDeveloperWarnings();
             std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
             s_appState.buildCommandList.Clear();
             LayoutAndBuildAllTopLevelVisuals(visuals, currentClientWidth, currentClientHeight, s_appState.buildCommandList);

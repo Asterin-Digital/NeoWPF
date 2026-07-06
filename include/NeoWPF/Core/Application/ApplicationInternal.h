@@ -3,13 +3,20 @@
 #include <Windows.h>
 #include <atomic>
 #include <condition_variable>
+#include <memory>
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/Core/Application/Application.h>
 
 namespace NeoWPF::Diagnostics {
 struct VisualTreeDumpOptions;
+}
+
+namespace NeoWPF::UI {
+class Visual;
 }
 
 namespace NeoWPF::Core {
@@ -25,6 +32,7 @@ struct AppState {
     HINSTANCE hInst = nullptr;
     std::vector<WindowState> windows;
     std::atomic<bool> running{false};
+    std::shared_ptr<NeoWPF::UI::Visual> developerWarningOverlayHost;
     std::atomic<bool> renderThreadInitialized{false};
     std::atomic<bool> renderThreadInitFailed{false};
     std::thread renderThread;
@@ -38,6 +46,8 @@ struct AppState {
     NeoWPF::Rendering::CommandList renderCommandList;
     NeoWPF::Rendering::CommandList buildCommandList;
     bool commandListInitialized = false;
+    std::vector<NeoWPF::Diagnostics::DeveloperWarningMessage> pendingDeveloperMessages;
+    std::vector<std::shared_ptr<NeoWPF::UI::Visual>> developerOverlayVisuals;
 };
 
 AppState& GetAppState();

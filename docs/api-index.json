@@ -336,6 +336,25 @@
     },
     {
       "kind": "method",
+      "name": "GetAbsoluteLayoutPosition",
+      "source": "FrameworkElement",
+      "summary": "Returns the element's absolute layout position, excluding render offset.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "outX",
+          "text": "Receives the absolute X position."
+        },
+        {
+          "name": "outY",
+          "text": "Receives the absolute Y position."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
       "name": "GetAbsolutePosition",
       "source": "FrameworkElement",
       "summary": "Returns the element's position in absolute coordinates.",
@@ -351,6 +370,16 @@
           "text": "Receives the absolute Y position."
         }
       ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetClipRect",
+      "source": "FrameworkElement",
+      "summary": "Returns the clip rectangle for the element's current arranged bounds.",
+      "details": "",
+      "example": "",
+      "params": [],
       "isInternal": true
     },
     {
@@ -454,6 +483,16 @@
       "isInternal": false
     },
     {
+      "kind": "method",
+      "name": "IsClipToBounds",
+      "source": "FrameworkElement",
+      "summary": "Returns whether the element clips its rendered content to its own bounds.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
       "kind": "enum",
       "name": "LayoutSizeMode",
       "source": "FrameworkElement",
@@ -519,6 +558,16 @@
         }
       ],
       "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetClipToBounds",
+      "source": "FrameworkElement",
+      "summary": "Enables or disables clipping of the element's rendered content to its own bounds.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -950,6 +999,321 @@
       "example": "",
       "params": [],
       "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Arrange",
+      "source": "ScrollBar",
+      "summary": "Arranges the scrollbar into its final bounds.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "BuildRenderCommands",
+      "source": "ScrollBar",
+      "summary": "Builds the render commands for the track and thumb.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetOrientation",
+      "source": "ScrollBar",
+      "summary": "Returns the current scrollbar direction.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetScrollRange",
+      "source": "ScrollBar",
+      "summary": "Computes the available scroll range.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetThumbColor",
+      "source": "ScrollBar",
+      "summary": "Returns the current thumb color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetThumbLength",
+      "source": "ScrollBar",
+      "summary": "Computes the visual thumb length.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetThumbPosition",
+      "source": "ScrollBar",
+      "summary": "Computes the thumb's current position along the track.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetThumbSize",
+      "source": "ScrollBar",
+      "summary": "Returns the current thumb size.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetTrackColor",
+      "source": "ScrollBar",
+      "summary": "Returns the current track color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetValue",
+      "source": "ScrollBar",
+      "summary": "Returns the current scroll position.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Measure",
+      "source": "ScrollBar",
+      "summary": "Measures the scrollbar's desired size.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "OnMouseDown",
+      "source": "ScrollBar",
+      "summary": "Handles mouse-down input for dragging the thumb.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "OnMouseInput",
+      "source": "ScrollBar",
+      "summary": "Handles mouse movement while dragging the thumb.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "OnMouseUp",
+      "source": "ScrollBar",
+      "summary": "Handles mouse-up input when dragging ends.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "class",
+      "name": "ScrollBar",
+      "source": "ScrollBar",
+      "summary": "A simple scrollbar for vertical or horizontal scrolling.",
+      "details": "Drop this on a panel or content surface when you want a basic scroll thumb. It works best\nwhen you hook it up to the content element and the visible viewport, then let it report a\ncurrent value as the user drags.",
+      "example": "auto scrollBar = std::make_shared<NeoWPF::UI::ScrollBar>();\nscrollBar->SetOrientation(ScrollBarOrientation::Vertical);\nscrollBar->SetScrollTarget(contentHost);\nscrollBar->SetViewportElement(viewport);\nscrollBar->SetValue(120);",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetContentSize",
+      "source": "ScrollBar",
+      "summary": "Updates the total scrollable content size.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "size",
+          "text": "Total size of the content in scroll direction."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetOrientation",
+      "source": "ScrollBar",
+      "summary": "Chooses whether the scrollbar runs vertically or horizontally.",
+      "details": "",
+      "example": "scrollBar->SetOrientation(ScrollBarOrientation::Horizontal);",
+      "params": [
+        {
+          "name": "orientation",
+          "text": "The direction the thumb should travel."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetScrollTarget",
+      "source": "ScrollBar",
+      "summary": "Wires the scrollbar to the element that actually scrolls.",
+      "details": "",
+      "example": "scrollBar->SetScrollTarget(contentHost);",
+      "params": [
+        {
+          "name": "target",
+          "text": "The content element whose position should be offset by the scrollbar value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetThumbColor",
+      "source": "ScrollBar",
+      "summary": "Sets the thumb color.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "color",
+          "text": "ARGB color value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetThumbSize",
+      "source": "ScrollBar",
+      "summary": "Sets the thumb size in pixels.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "size",
+          "text": "A minimum-sized thumb; values below 1 are clamped to 1."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetTrackColor",
+      "source": "ScrollBar",
+      "summary": "Sets the track color behind the thumb.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "color",
+          "text": "ARGB color value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetValue",
+      "source": "ScrollBar",
+      "summary": "Sets the current scroll position.",
+      "details": "",
+      "example": "scrollBar->SetValue(240);",
+      "params": [
+        {
+          "name": "value",
+          "text": "The new value, clamped to the available scroll range."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetViewportElement",
+      "source": "ScrollBar",
+      "summary": "Wires the scrollbar to the visible viewport element.",
+      "details": "",
+      "example": "scrollBar->SetViewportElement(viewport);",
+      "params": [
+        {
+          "name": "viewportElement",
+          "text": "The element that represents the visible area the user sees."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetViewportSize",
+      "source": "ScrollBar",
+      "summary": "Updates the visible viewport size.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "size",
+          "text": "Visible size of the viewport in scroll direction."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "UpdateScrollState",
+      "source": "ScrollBar",
+      "summary": "Recomputes content and viewport size, then updates the target.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "UpdateScrollTarget",
+      "source": "ScrollBar",
+      "summary": "Pushes the current scroll value into the scroll target.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "UpdateValueFromPosition",
+      "source": "ScrollBar",
+      "summary": "Updates the current value based on a pointer position.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
     },
     {
       "kind": "method",

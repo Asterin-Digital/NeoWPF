@@ -9,7 +9,7 @@ namespace {
 
 AppState& App() { return GetAppState(); }
 
-} // namespace
+}
 
 HWND CreateApplicationWindow(const wchar_t* title, int width, int height)
 {

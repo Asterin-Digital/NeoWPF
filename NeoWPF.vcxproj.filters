@@ -150,6 +150,33 @@
     <ClCompile Include="src\UI\Styling\Style\DefaultStyles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Diagnostics\DeveloperWarnings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Animation\AnimationController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Animation\Storyboards\Storyboard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Animation\Core\Clock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Animation\Core\Timeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBar.Styles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBarTemplate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Rendering\D3D11\Renderer\RendererClipping.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\NeoWPF\Animation\Animation.h">
@@ -294,6 +321,30 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\Core\Events\Event.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Animation\Animation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Animation\AnimationController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Animation\Storyboards\Storyboard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Animation\Core\Clock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Animation\Core\Timeline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Controls\ScrollBar\ScrollBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Controls\ScrollBar\ScrollBarTemplate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\Diagnostics\DeveloperWarnings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

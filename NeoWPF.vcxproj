@@ -127,6 +127,7 @@
     <ClInclude Include="include\NeoWPF\Core\Core.h" />
     <ClInclude Include="include\NeoWPF\Core\Events\Event.h" />
     <ClInclude Include="include\NeoWPF\Core\Root\RootVisuals.h" />
+    <ClInclude Include="include\NeoWPF\Diagnostics\DeveloperWarnings.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Diagnostics.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Logger.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\VisualTreeDumper.h" />
@@ -180,6 +181,7 @@
     <ClCompile Include="src\Core\Application\ApplicationRuntime.cpp" />
     <ClCompile Include="src\Core\Application\ApplicationWindows.cpp" />
     <ClCompile Include="src\Core\Application\ApplicationStartup.cpp" />
+    <ClCompile Include="src\Diagnostics\DeveloperWarnings.cpp" />
     <ClCompile Include="src\Core\Root\RootVisuals.cpp" />
     <ClCompile Include="src\UI\Animation\AnimationController.cpp" />
     <ClCompile Include="src\UI\Animation\Storyboards\Storyboard.cpp" />

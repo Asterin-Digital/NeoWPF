@@ -1,7 +1,8 @@
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
-#include <NeoWPF/UI/Styling/Style/DefaultStyles.h>
+#include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/UI/Styling/Style/DefaultStyles.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 
@@ -71,6 +72,16 @@ Application* Application::Current()
 void Application::DumpVisualTree(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options)
 {
     DumpVisualTreeImpl(options);
+}
+
+void Application::ShowDeveloperMessage(const std::wstring& title, const std::wstring& message, DeveloperMessageSeverity severity)
+{
+    NeoWPF::Diagnostics::QueueDeveloperWarning(title, message, severity);
+}
+
+void Application::ClearDeveloperMessages()
+{
+    NeoWPF::Diagnostics::ClearDeveloperWarnings();
 }
 
 }
