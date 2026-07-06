@@ -10,7 +10,8 @@ cbuffer CB { float2 viewport; };
 struct PSIn { float4 pos : SV_POSITION; float4 col : COLOR; };
 PSIn VSMain(VSIn input) {
     PSIn o;
-    float2 ndc = (input.pos / viewport) * float2(2.0f, -2.0f) + float2(-1.0f, 1.0f);
+    float2 halfPixel = float2(0.5f / viewport.x, 0.5f / viewport.y);
+    float2 ndc = ((input.pos + halfPixel) / viewport) * float2(2.0f, -2.0f) + float2(-1.0f, 1.0f);
     o.pos = float4(ndc.xy, 0.0f, 1.0f);
     o.col = input.col;
     return o;

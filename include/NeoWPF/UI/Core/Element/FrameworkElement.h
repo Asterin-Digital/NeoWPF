@@ -2,8 +2,19 @@
 
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Layout/Alignment/Alignment.h>
+#include <algorithm>
+
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
 
 namespace NeoWPF::UI {
+
+class ScrollBar;
 
 /*
     @summary
@@ -15,6 +26,7 @@ enum class LayoutSizeMode {
 };
 
 class FrameworkElement : public UIElement {
+    friend class ScrollBar;
 public:
     /*
         @summary
@@ -98,6 +110,66 @@ public:
         @internal
     */
     int GetFinalHeight() const noexcept { return m_finalHeight; }
+
+    /*
+        @summary
+        Returns whether the element clips its rendered content to its own bounds.
+    */
+    bool IsClipToBounds() const noexcept { return m_clipToBounds; }
+
+    /*
+        @summary
+        Enables or disables clipping of the element's rendered content to its own bounds.
+    */
+    void SetClipToBounds(bool clipToBounds) noexcept {
+        if (m_clipToBounds != clipToBounds) {
+            m_clipToBounds = clipToBounds;
+            InvalidateVisual();
+        }
+    }
+
+    /*
+        @summary
+        Returns the clip rectangle for the element's current arranged bounds.
+
+        @internal 
+    */
+    NeoWPF::Rendering::ClipRect GetClipRect() const noexcept {
+        NeoWPF::Rendering::ClipRect clip{};
+        if (m_clipToBounds && m_finalWidth > 0 && m_finalHeight > 0) {
+            int absX = 0;
+            int absY = 0;
+            GetAbsolutePosition(absX, absY);
+
+            clip.x = static_cast<float>(absX);
+            clip.y = static_cast<float>(absY);
+            clip.w = static_cast<float>(m_finalWidth);
+            clip.h = static_cast<float>(m_finalHeight);
+            clip.active = true;
+        }
+
+        auto parent = dynamic_cast<FrameworkElement*>(GetParent());
+        if (parent) {
+            const auto parentClip = parent->GetClipRect();
+            if (parentClip.active) {
+                if (!clip.active) {
+                    return parentClip;
+                }
+
+                const float left = std::max(clip.x, parentClip.x);
+                const float top = std::max(clip.y, parentClip.y);
+                const float right = std::min(clip.x + clip.w, parentClip.x + parentClip.w);
+                const float bottom = std::min(clip.y + clip.h, parentClip.y + parentClip.h);
+                if (right <= left || bottom <= top) {
+                    return NeoWPF::Rendering::ClipRect{};
+                }
+
+                return NeoWPF::Rendering::ClipRect{left, top, right - left, bottom - top, true};
+            }
+        }
+
+        return clip;
+    }
 
     /*
         @summary
@@ -297,6 +369,20 @@ public:
     */
     void GetAbsolutePosition(int& outX, int& outY) const noexcept;
 
+    /*
+        @summary
+        Returns the element's absolute layout position, excluding render offset.
+
+        @param outX
+        Receives the absolute X position.
+
+        @param outY
+        Receives the absolute Y position.
+
+        @internal
+    */
+    void GetAbsoluteLayoutPosition(int& outX, int& outY) const noexcept;
+
 private:
     int m_desiredWidth = 0;
     int m_desiredHeight = 0;
@@ -310,10 +396,14 @@ private:
     int m_renderOffsetY = 0;
     LayoutSizeMode m_heightMode = LayoutSizeMode::Auto;
     int m_height = 0;
+    bool m_clipToBounds = false;
 
+protected:
     void SetRenderOffset(int x, int y) noexcept { m_renderOffsetX = x; m_renderOffsetY = y; InvalidateVisual(); }
     int GetRenderOffsetX() const noexcept { return m_renderOffsetX; }
     int GetRenderOffsetY() const noexcept { return m_renderOffsetY; }
+
+private:
     HorizontalAlignment m_horizontalAlignment = HorizontalAlignment::Stretch;
     VerticalAlignment m_verticalAlignment = VerticalAlignment::Stretch;
 };

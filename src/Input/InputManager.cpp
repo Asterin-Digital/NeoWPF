@@ -23,8 +23,23 @@ namespace NeoWPF::Input
 
         if (m_captureElement)
         {
+            auto* captured = m_captureElement;
             Core::MouseEventArgs args(x, y, buttonState, wheelDelta);
-            m_captureElement->OnMouseInput(&args);
+            if ((buttonState & 0x01) != (m_prevMouseButtonState & 0x01))
+            {
+                if ((buttonState & 0x01) != 0)
+                {
+                    captured->OnMouseDown(x, y, buttonState);
+                }
+                else
+                {
+                    captured->OnMouseUp(x, y, buttonState);
+                }
+            }
+            if (captured)
+            {
+                captured->OnMouseInput(&args);
+            }
             m_mouseButtonState = buttonState;
             m_prevMouseButtonState = buttonState;
             return;
@@ -194,20 +209,30 @@ namespace NeoWPF::Input
 
                 if (contentBounds.width > 0 && contentBounds.height > 0)
                 {
-                    int absX, absY;
-                    fw->GetAbsolutePosition(absX, absY);
-
-                    if (x < absX || x >= absX + contentBounds.width || y < absY || y >= absY + contentBounds.height)
+                    if (!fw)
                     {
                         if (s_hitTestLogging)
                         {
-                            NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - OUTSIDE", indent, absX, absY, contentBounds.width, contentBounds.height);
+                            NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Content-aware element is not a FrameworkElement", indent);
                         }
-                        deepestHit = nullptr;
                     }
-                    else if (s_hitTestLogging)
+                    else
                     {
-                        NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - INSIDE", indent, absX, absY, contentBounds.width, contentBounds.height);
+                        int absX, absY;
+                        fw->GetAbsolutePosition(absX, absY);
+
+                        if (x < absX || x >= absX + contentBounds.width || y < absY || y >= absY + contentBounds.height)
+                        {
+                            if (s_hitTestLogging)
+                            {
+                                NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - OUTSIDE", indent, absX, absY, contentBounds.width, contentBounds.height);
+                            }
+                            deepestHit = nullptr;
+                        }
+                        else if (s_hitTestLogging)
+                        {
+                            NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - INSIDE", indent, absX, absY, contentBounds.width, contentBounds.height);
+                        }
                     }
                 }
             }

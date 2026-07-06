@@ -2,6 +2,7 @@
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Layout/Alignment/Alignment.h>
 #include <algorithm>
+#include <vector>
 
 #ifdef min
 #undef min
@@ -17,13 +18,105 @@ int ClampToDesired(int value, int desired)
 {
     return std::min(value, desired);
 }
+
+bool IsAncestorInParentChain(NeoWPF::UI::Visual* node, NeoWPF::UI::Visual* possibleAncestor)
+{
+    for (auto* parent = node->GetParent(); parent; parent = parent->GetParent()) {
+        if (parent == possibleAncestor) {
+            return true;
+        }
+    }
+    return false;
+}
+
+struct ActivePanelGuard {
+    explicit ActivePanelGuard(const Panel* panel)
+        : panel(panel), activePanels(GetActivePanels())
+    {
+        if (std::find(activePanels->begin(), activePanels->end(), panel) != activePanels->end()) {
+            alreadyActive = true;
+        } else {
+            activePanels->push_back(panel);
+        }
+    }
+
+    ~ActivePanelGuard()
+    {
+        if (!alreadyActive) {
+            activePanels->pop_back();
+        }
+    }
+
+    bool IsReentrant() const noexcept { return alreadyActive; }
+    bool IsActive(const Panel* childPanel) const noexcept
+    {
+        return std::find(activePanels->begin(), activePanels->end(), childPanel) != activePanels->end();
+    }
+
+private:
+    static std::vector<const Panel*>* GetActivePanels()
+    {
+        static thread_local std::vector<const Panel*> active;
+        return &active;
+    }
+
+    const Panel* panel;
+    std::vector<const Panel*>* activePanels;
+    bool alreadyActive = false;
+};
+
+struct ActiveVisualGuard {
+    explicit ActiveVisualGuard(const Visual* visual)
+        : visual(visual), activeVisuals(GetActiveVisuals())
+    {
+        if (std::find(activeVisuals->begin(), activeVisuals->end(), visual) != activeVisuals->end()) {
+            alreadyActive = true;
+        } else {
+            activeVisuals->push_back(visual);
+        }
+    }
+
+    ~ActiveVisualGuard()
+    {
+        if (!alreadyActive) {
+            activeVisuals->pop_back();
+        }
+    }
+
+    bool IsReentrant() const noexcept { return alreadyActive; }
+    bool IsActive(const Visual* child) const noexcept
+    {
+        return std::find(activeVisuals->begin(), activeVisuals->end(), child) != activeVisuals->end();
+    }
+
+private:
+    static std::vector<const Visual*>* GetActiveVisuals()
+    {
+        static thread_local std::vector<const Visual*> active;
+        return &active;
+    }
+
+    const Visual* visual;
+    std::vector<const Visual*>* activeVisuals;
+    bool alreadyActive = false;
+};
 }
 
 void Panel::Measure(int availableWidth, int availableHeight)
 {
+    ActivePanelGuard guard(this);
+    if (guard.IsReentrant()) {
+        SetDesiredSize(0, 0);
+        return;
+    }
+
     int maxW = 0;
     int maxH = 0;
     for (auto child : GetVisualChildren()) {
+        if (child == this || IsAncestorInParentChain(this, child)) {
+            continue;
+        }
+
         if (auto uiChild = dynamic_cast<UIElement*>(child)) {
             if (!uiChild->IsVisible()) {
                 continue;
@@ -31,6 +124,11 @@ void Panel::Measure(int availableWidth, int availableHeight)
         }
 
         if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
+            if (auto childPanel = dynamic_cast<Panel*>(fe)) {
+                if (guard.IsActive(childPanel)) {
+                    continue;
+                }
+            }
             fe->Measure(availableWidth, availableHeight);
             const int resolvedW = fe->ResolveWidth(availableWidth, fe->GetDesiredWidth());
             const int resolvedH = fe->ResolveHeight(availableHeight, fe->GetDesiredHeight());
@@ -54,7 +152,16 @@ void Panel::Arrange(int finalWidth, int finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
+    ActivePanelGuard guard(this);
+    if (guard.IsReentrant()) {
+        return;
+    }
+
     for (auto child : GetVisualChildren()) {
+        if (child == this || IsAncestorInParentChain(this, child)) {
+            continue;
+        }
+
         if (auto uiChild = dynamic_cast<UIElement*>(child)) {
             if (!uiChild->IsVisible()) {
                 continue;
@@ -62,6 +169,11 @@ void Panel::Arrange(int finalWidth, int finalHeight)
         }
 
         if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
+            if (auto childPanel = dynamic_cast<Panel*>(fe)) {
+                if (guard.IsActive(childPanel)) {
+                    continue;
+                }
+            }
             const int resolvedW = fe->ResolveWidth(finalWidth, fe->GetDesiredWidth());
             const int resolvedH = fe->ResolveHeight(finalHeight, fe->GetDesiredHeight());
 
@@ -93,6 +205,11 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         return;
     }
 
+    ActiveVisualGuard renderGuard(this);
+    if (renderGuard.IsReentrant()) {
+        return;
+    }
+
     int absX = 0;
     int absY = 0;
     GetAbsolutePosition(absX, absY);
@@ -109,6 +226,10 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     for (auto child : GetVisualChildrenInZOrder()) {
         if (!child) {
+            continue;
+        }
+
+        if (renderGuard.IsActive(child)) {
             continue;
         }
 

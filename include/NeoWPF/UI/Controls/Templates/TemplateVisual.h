@@ -18,6 +18,7 @@ public:
     void SetBorderThickness(int thickness) noexcept;
     void SetOpacity(float opacity) noexcept;
     float GetOpacity() const noexcept;
+    void SetClipRect(const NeoWPF::Rendering::ClipRect& clip) noexcept;
 
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
@@ -31,6 +32,7 @@ private:
     std::uint32_t m_borderColor = 0x00000000u;
     int m_borderThickness = 0;
     float m_opacity = 1.0f;
+    NeoWPF::Rendering::ClipRect m_clip{};
 };
 
 } // namespace NeoWPF::UI::Templates

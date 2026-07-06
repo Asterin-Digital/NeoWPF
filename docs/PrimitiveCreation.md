@@ -28,7 +28,7 @@ For a ControlTemplate, you can begin by defining required and non required parts
 For default styles simply specify the default colors of the UI element as the minimum.
 
 After you have created all these files and you are sure that NeoWPF builds, proceed to do this after:
--Commit the change using Git using this template "Feat: Added base implementation for UI primitive {name}
+-Commit the change using Git using this template "Feat: Added base implementation for {name}
 
 After that, proceed by adding the UI primitive to UI.h, then go inside NeoWPF.h and add it there. You should also
 try and document that UI primitive, by following the rules inside CommentingRules.md (very important) and the actual

@@ -2,10 +2,19 @@
 #include <NeoWPF/Rendering/Clipping.h>
 #include <d3d11.h>
 #include <wrl.h>
+#include <algorithm>
 #include <vector>
 #include <cstdint>
 #include <cstring>
 #include <Windows.h>
+
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
 
 using Microsoft::WRL::ComPtr;
 using namespace NeoWPF::Rendering;
@@ -60,6 +69,8 @@ void ExecuteRendererDraw(const CommandList& cmd)
     }
 
     struct Vertex { float x, y; float r, g, b, a; };
+    constexpr size_t kVertexBufferCapacity = 1 << 20;
+    constexpr size_t kMaxRectVertices = kVertexBufferCapacity / sizeof(Vertex);
     std::vector<Vertex> rectVerts;
     rectVerts.reserve(cmd.rects.size() * 6);
 
@@ -101,12 +112,6 @@ void ExecuteRendererDraw(const CommandList& cmd)
             g_context->Unmap(g_constantBuffer.Get(), 0);
         }
 
-        D3D11_MAPPED_SUBRESOURCE vmap = {};
-        if (SUCCEEDED(g_context->Map(g_vertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &vmap))) {
-            memcpy(vmap.pData, rectVerts.data(), rectVerts.size() * sizeof(Vertex));
-            g_context->Unmap(g_vertexBuffer.Get(), 0);
-        }
-
         const float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         g_context->OMSetBlendState(blendState.Get(), blendFactor, 0xffffffff);
 
@@ -118,21 +123,38 @@ void ExecuteRendererDraw(const CommandList& cmd)
         g_context->VSSetShader(g_vs.Get(), nullptr, 0);
         g_context->PSSetShader(g_ps.Get(), nullptr, 0);
         g_context->VSSetConstantBuffers(0, 1, g_constantBuffer.GetAddressOf());
-        g_context->Draw(static_cast<UINT>(rectVerts.size()), 0);
+
+        size_t remainingVertices = rectVerts.size();
+        size_t vertexOffset = 0;
+        while (remainingVertices > 0) {
+            size_t chunkVertices = std::min(remainingVertices, kMaxRectVertices);
+            D3D11_MAPPED_SUBRESOURCE vmap = {};
+            if (SUCCEEDED(g_context->Map(g_vertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &vmap))) {
+                memcpy(vmap.pData, rectVerts.data() + vertexOffset, chunkVertices * sizeof(Vertex));
+                g_context->Unmap(g_vertexBuffer.Get(), 0);
+            }
+            g_context->Draw(static_cast<UINT>(chunkVertices), 0);
+            remainingVertices -= chunkVertices;
+            vertexOffset += chunkVertices;
+        }
         g_context->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
     }
 
     struct TextVertex { float x, y; float u, v; float r, g, b, a; };
+    constexpr size_t kMaxTextVertices = kVertexBufferCapacity / sizeof(TextVertex);
     std::vector<TextVertex> textVerts;
-    textVerts.reserve(cmd.texturedQuads.size() * 6);
+    textVerts.reserve(std::min<size_t>(cmd.texturedQuads.size() * 6, kMaxTextVertices));
+    std::vector<uint32_t> textQuadTextureIds;
+    textQuadTextureIds.reserve(cmd.texturedQuads.size());
 
-    auto pushTextQuad = [&](float x, float y, float w, float h, float u0, float v0, float u1, float v1, float opacity) {
+    auto pushTextQuad = [&](float x, float y, float w, float h, float u0, float v0, float u1, float v1, float opacity, uint32_t textureId) {
         textVerts.push_back({x, y, u0, v0, 1.0f, 1.0f, 1.0f, opacity});
         textVerts.push_back({x + w, y, u1, v0, 1.0f, 1.0f, 1.0f, opacity});
         textVerts.push_back({x + w, y + h, u1, v1, 1.0f, 1.0f, 1.0f, opacity});
         textVerts.push_back({x + w, y + h, u1, v1, 1.0f, 1.0f, 1.0f, opacity});
         textVerts.push_back({x, y + h, u0, v1, 1.0f, 1.0f, 1.0f, opacity});
         textVerts.push_back({x, y, u0, v0, 1.0f, 1.0f, 1.0f, opacity});
+        textQuadTextureIds.push_back(textureId);
     };
 
     for (const auto& q : cmd.texturedQuads) {
@@ -143,10 +165,18 @@ void ExecuteRendererDraw(const CommandList& cmd)
         const bool clipped = ClipRectToBounds(q.x, q.y, q.w, q.h, q.clip, clippedX, clippedY, clippedW, clippedH);
         if (clipped) {
             if (clippedW > 0.0f && clippedH > 0.0f) {
-                pushTextQuad(clippedX, clippedY, clippedW, clippedH, q.u0, q.v0, q.u1, q.v1, q.opacity);
+                const float uSpan = q.u1 - q.u0;
+                const float vSpan = q.v1 - q.v0;
+                const float xDelta = clippedX - q.x;
+                const float yDelta = clippedY - q.y;
+                const float newU0 = q.u0 + (xDelta / q.w) * uSpan;
+                const float newV0 = q.v0 + (yDelta / q.h) * vSpan;
+                const float newU1 = newU0 + (clippedW / q.w) * uSpan;
+                const float newV1 = newV0 + (clippedH / q.h) * vSpan;
+                pushTextQuad(clippedX, clippedY, clippedW, clippedH, newU0, newV0, newU1, newV1, q.opacity, q.textureId);
             }
         } else {
-            pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.opacity);
+            pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.opacity, q.textureId);
         }
     }
 
@@ -161,12 +191,6 @@ void ExecuteRendererDraw(const CommandList& cmd)
             g_context->Unmap(g_constantBuffer.Get(), 0);
         }
 
-        D3D11_MAPPED_SUBRESOURCE vmap = {};
-        if (SUCCEEDED(g_context->Map(g_vertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &vmap))) {
-            memcpy(vmap.pData, textVerts.data(), textVerts.size() * sizeof(TextVertex));
-            g_context->Unmap(g_vertexBuffer.Get(), 0);
-        }
-
         UINT stride = sizeof(TextVertex);
         UINT offset = 0;
         g_context->IASetInputLayout(g_inputLayoutText.Get());
@@ -177,22 +201,38 @@ void ExecuteRendererDraw(const CommandList& cmd)
         g_context->VSSetConstantBuffers(0, 1, g_constantBuffer.GetAddressOf());
         g_context->PSSetSamplers(0, 1, g_samplerState.GetAddressOf());
 
-        UINT vertexStart = 0;
-        for (size_t qi = 0; qi < cmd.texturedQuads.size();) {
-            uint32_t texId = cmd.texturedQuads[qi].textureId;
-            size_t batchCount = 1;
-            while (qi + batchCount < cmd.texturedQuads.size() && cmd.texturedQuads[qi + batchCount].textureId == texId) {
-                ++batchCount;
+        size_t remainingVertices = textVerts.size();
+        size_t vertexOffset = 0;
+        while (remainingVertices > 0) {
+            size_t chunkVertices = std::min(remainingVertices, kMaxTextVertices);
+            D3D11_MAPPED_SUBRESOURCE vmap = {};
+            if (SUCCEEDED(g_context->Map(g_vertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &vmap))) {
+                memcpy(vmap.pData, textVerts.data() + vertexOffset, chunkVertices * sizeof(TextVertex));
+                g_context->Unmap(g_vertexBuffer.Get(), 0);
             }
 
-            ComPtr<ID3D11ShaderResourceView> srv = GetTextureShaderResourceView(texId);
-            if (srv) {
-                g_context->PSSetShaderResources(0, 1, srv.GetAddressOf());
-                g_context->Draw(static_cast<UINT>(batchCount * 6), vertexStart);
+            size_t chunkQuads = chunkVertices / 6;
+            size_t quadOffset = vertexOffset / 6;
+            size_t quadsDrawn = 0;
+            while (quadsDrawn < chunkQuads) {
+                size_t qi = quadOffset + quadsDrawn;
+                uint32_t texId = textQuadTextureIds[qi];
+                size_t batchCount = 1;
+                while (qi + batchCount < textQuadTextureIds.size() && batchCount < chunkQuads - quadsDrawn && textQuadTextureIds[qi + batchCount] == texId) {
+                    ++batchCount;
+                }
+
+                ComPtr<ID3D11ShaderResourceView> srv = GetTextureShaderResourceView(texId);
+                if (srv) {
+                    g_context->PSSetShaderResources(0, 1, srv.GetAddressOf());
+                    g_context->Draw(static_cast<UINT>(batchCount * 6), static_cast<UINT>((quadsDrawn * 6)));
+                }
+
+                quadsDrawn += batchCount;
             }
 
-            vertexStart += static_cast<UINT>(batchCount * 6);
-            qi += batchCount;
+            remainingVertices -= chunkVertices;
+            vertexOffset += chunkVertices;
         }
 
         g_context->OMSetBlendState(nullptr, blendFactor, 0xffffffff);

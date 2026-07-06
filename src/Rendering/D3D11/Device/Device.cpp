@@ -216,7 +216,7 @@ void CompileShaders()
     }
 
     D3D11_SAMPLER_DESC sampDesc = {};
-    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
     sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
     sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -233,7 +233,7 @@ void EnsureBuffers()
 
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DYNAMIC;
-    bd.ByteWidth = sizeof(float) * 6 * 6 * 1024;
+    bd.ByteWidth = 1 << 20; // 1 MiB for the shared UI vertex buffer
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     HRESULT hr = g_device->CreateBuffer(&bd, nullptr, &g_vertexBuffer);

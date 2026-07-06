@@ -61,6 +61,7 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     int absX, absY;
     GetAbsolutePosition(absX, absY);
 
+    const auto clip = GetClipRect();
     commands.DrawTexturedQuad(
         static_cast<float>(absX),
         static_cast<float>(absY),
@@ -69,7 +70,8 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         0.0f, 0.0f,
         1.0f, 1.0f,
         m_textureId,
-        GetOpacity());
+        GetOpacity(),
+        clip);
 }
 
 void TextBlock::EnsureTextTexture()
