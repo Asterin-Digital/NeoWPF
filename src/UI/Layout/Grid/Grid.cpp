@@ -2,6 +2,7 @@
 #include <NeoWPF/UI/Layout/Grid/GridLayout.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Layout/Alignment/Alignment.h>
+#include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 
@@ -11,6 +12,16 @@
 #ifdef min
 #undef min
 #endif
+
+namespace {
+void QueueGridDeveloperMessage(const std::wstring& code, const std::wstring& summary, const std::wstring& detail)
+{
+    NeoWPF::Diagnostics::QueueDeveloperWarning(
+        code + L": " + summary,
+        detail,
+        NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
+}
+}
 
 namespace NeoWPF::UI {
 
@@ -75,6 +86,20 @@ void Grid::AddChild(Visual* child, int row, int column, int rowSpan, int columnS
 {
     if (!child) return;
 
+    if (row < 0 || column < 0) {
+        QueueGridDeveloperMessage(
+            NeoWPF::Diagnostics::DeveloperWarnings::kInvalidGridIndexCode,
+            L"invalid Grid row or column index",
+            L"Grid children must use non-negative row and column indices.");
+    }
+
+    if (rowSpan <= 0 || columnSpan <= 0) {
+        QueueGridDeveloperMessage(
+            NeoWPF::Diagnostics::DeveloperWarnings::kInvalidGridSpanCode,
+            L"invalid Grid span",
+            L"Grid spans must be greater than zero.");
+    }
+
     SetRow(child, row);
     SetColumn(child, column);
     SetRowSpan(child, rowSpan);
@@ -99,6 +124,30 @@ void Grid::Measure(int availableWidth, int availableHeight)
         int c = GetColumn(child);
         int rspan = GetRowSpan(child);
         int cspan = GetColumnSpan(child);
+
+        if (r < 0 || c < 0) {
+            QueueGridDeveloperMessage(
+                NeoWPF::Diagnostics::DeveloperWarnings::kInvalidGridIndexCode,
+                L"invalid Grid row or column index",
+                L"Grid child placement uses a negative row or column index.");
+            continue;
+        }
+
+        if (rspan <= 0 || cspan <= 0) {
+            QueueGridDeveloperMessage(
+                NeoWPF::Diagnostics::DeveloperWarnings::kInvalidGridSpanCode,
+                L"invalid Grid span",
+                L"Grid child spans must be greater than zero.");
+            continue;
+        }
+
+        if (r >= numRows || c >= numCols || r + rspan > numRows || c + cspan > numCols) {
+            QueueGridDeveloperMessage(
+                NeoWPF::Diagnostics::DeveloperWarnings::kInvalidGridIndexCode,
+                L"Grid child is outside the defined rows or columns",
+                L"The requested row, column, or span exceeds the current Grid definitions.");
+            continue;
+        }
 
         bool measureWidth = (cspan == 1 && c < numCols && m_colDefs[c].mode == SizeMode::Auto);
         bool measureHeight = (rspan == 1 && r < numRows && m_rowDefs[r].mode == SizeMode::Auto);

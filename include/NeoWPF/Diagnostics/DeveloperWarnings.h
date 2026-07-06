@@ -10,6 +10,8 @@ struct DeveloperWarnings {
     static constexpr const wchar_t* kDanglingChildReferenceCode = L"NEO-UI101";
     static constexpr const wchar_t* kInvalidViewportBindingCode = L"NEO-UI204";
     static constexpr const wchar_t* kLayoutOverflowDetectedCode = L"NEO-UI013";
+    static constexpr const wchar_t* kInvalidGridIndexCode = L"NEO-UI201";
+    static constexpr const wchar_t* kInvalidGridSpanCode = L"NEO-UI202";
 };
 
 enum class DeveloperWarningSeverity {
