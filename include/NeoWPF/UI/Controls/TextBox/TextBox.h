@@ -67,6 +67,42 @@ private:
     int m_dragStartScrollOffset = 0;
 };
 
+class TextLayout {
+public:
+    struct LineRenderData {
+        std::wstring text;
+        uint32_t textureId = 0;
+        int width = 0;
+        int height = 0;
+        int lineHeight = 0;
+    };
+
+    TextLayout() = default;
+    ~TextLayout();
+
+    void Refresh(const std::wstring& text, int fontSize, bool createTextures = true);
+    void Clear();
+
+    const std::vector<LineRenderData>& GetLines() const noexcept { return m_lines; }
+    std::size_t GetLineCount() const noexcept { return m_lines.size(); }
+    int GetContentWidth() const noexcept { return m_contentWidth; }
+    int GetContentHeight() const noexcept { return m_contentHeight; }
+
+    int GetLineHeight(std::size_t lineIndex) const;
+    int GetLineVisualOffset(std::size_t lineIndex) const;
+    std::pair<std::size_t, std::size_t> GetCaretLineColumn(std::size_t caretPosition) const;
+    int GetCaretY(std::size_t caretPosition) const;
+    int GetCaretHeight(std::size_t caretPosition) const;
+    static int MeasureLineHeight(const std::wstring& text, int fontSize);
+
+private:
+    std::wstring m_text;
+    int m_fontSize = 16;
+    std::vector<LineRenderData> m_lines;
+    int m_contentWidth = 0;
+    int m_contentHeight = 0;
+};
+
 /*
     @summary
     A single-line (or wrapping) text input control.
@@ -324,13 +360,6 @@ public:
     void ApplyVisualState(const std::string& stateName, bool useTransitions = false);
 
 private:
-    struct LineRenderData {
-        uint32_t textureId = 0;
-        int width = 0;
-        int height = 0;
-        int lineHeight = 0;
-    };
-
     std::wstring m_text;
     std::size_t m_caretPosition = 0;
     uint32_t m_textColor = 0xFFEDEDEDu;
@@ -347,7 +376,7 @@ private:
     std::shared_ptr<Styling::VisualStateManager> m_visualStateManager;
     std::string m_currentVisualState;
 
-    std::vector<LineRenderData> m_lineRenderData;
+    TextLayout m_textLayout;
     bool m_textDirty = true;
     bool m_isFocused = false;
     TextBoxScrollBar m_scrollBar;

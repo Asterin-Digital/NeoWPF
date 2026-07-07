@@ -49,13 +49,6 @@ TextBox::TextBox()
 
 TextBox::~TextBox()
 {
-    for (auto& line : m_lineRenderData) {
-        if (line.textureId != 0) {
-            NeoWPF::Rendering::Renderer_DestroyTexture(line.textureId);
-            line.textureId = 0;
-        }
-    }
-    m_lineRenderData.clear();
 }
 
 void TextBox::SetText(const std::wstring& text)
@@ -97,7 +90,7 @@ void TextBox::Arrange(int finalWidth, int finalHeight)
     UpdateScrollMetrics();
     ClampScrollOffsets();
     if (s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] Arrange: final=%dx%d, textDirty=%d, lineCount=%zu", finalWidth, finalHeight, m_textDirty ? 1 : 0, m_lineRenderData.size());
+        NeoWPF::Diagnostics::LogInfo("[TextBox] Arrange: final=%dx%d, textDirty=%d, lineCount=%zu", finalWidth, finalHeight, m_textDirty ? 1 : 0, m_textLayout.GetLineCount());
     }
     if (m_textDirty) {
         EnsureTextTexture();
@@ -177,7 +170,9 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     const auto clip = NeoWPF::Rendering::ClipRect{ static_cast<float>(contentX), static_cast<float>(contentY), static_cast<float>(viewportWidth), static_cast<float>(viewportHeight), true };
 
     int currentY = -m_scrollBar.GetScrollOffsetY();
-    for (const auto& line : m_lineRenderData) {
+    const auto& lines = m_textLayout.GetLines();
+    for (std::size_t lineIndex = 0; lineIndex < lines.size(); ++lineIndex) {
+        const auto& line = lines[lineIndex];
         if (line.textureId == 0 || line.width <= 0 || line.height <= 0) {
             currentY += std::max(1, line.lineHeight);
             continue;
@@ -187,10 +182,10 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const float uvRight = drawWidth > 0 ? static_cast<float>(drawWidth) / static_cast<float>(line.width) : 1.0f;
         const int drawHeight = std::max(1, line.height);
         const float uvBottom = drawHeight > 0 ? static_cast<float>(drawHeight) / static_cast<float>(line.height) : 1.0f;
-        const int lineVerticalOffset = GetLineVisualOffset(static_cast<std::size_t>(&line - &m_lineRenderData[0]));
+        const int lineVerticalOffset = GetLineVisualOffset(lineIndex);
 
         if (s_textBoxDebug) {
-            NeoWPF::Diagnostics::LogInfo("[TextBox] BuildRenderCommands: line=%zu width=%d height=%d drawWidth=%d drawHeight=%d uvRight=%.3f uvBottom=%.3f", m_lineRenderData.size() > 0 ? static_cast<std::size_t>(&line - &m_lineRenderData[0]) : 0, line.width, line.height, drawWidth, drawHeight, uvRight, uvBottom);
+            NeoWPF::Diagnostics::LogInfo("[TextBox] BuildRenderCommands: line=%zu width=%d height=%d drawWidth=%d drawHeight=%d uvRight=%.3f uvBottom=%.3f", lineIndex, line.width, line.height, drawWidth, drawHeight, uvRight, uvBottom);
         }
 
         commands.DrawTexturedQuad(
@@ -255,26 +250,8 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
 void TextBox::UpdateScrollMetrics()
 {
-    int contentWidth = 0;
-    int contentHeight = 0;
-
-    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, 0, 0);
-    std::size_t lineStart = 0;
-    while (lineStart <= m_text.size()) {
-        const std::size_t lineBreak = m_text.find(L'\n', lineStart);
-        const std::size_t lineEnd = lineBreak == std::wstring::npos ? m_text.size() : lineBreak;
-        const std::wstring lineText = m_text.substr(lineStart, lineEnd - lineStart);
-        const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(lineText.empty() ? L"W" : lineText, m_fontSize, 0, 0);
-        const int lineHeight = std::max(baseMetrics.height, std::max(lineMetrics.height, m_fontSize));
-        contentHeight += lineHeight;
-        contentWidth = std::max(contentWidth, lineMetrics.width);
-        if (lineBreak == std::wstring::npos) {
-            break;
-        }
-        lineStart = lineEnd + 1;
-    }
-
-    m_scrollBar.UpdateMetrics(contentWidth, contentHeight, GetFinalWidth(), GetFinalHeight(), m_padding);
+    m_textLayout.Refresh(m_text, m_fontSize, false);
+    m_scrollBar.UpdateMetrics(m_textLayout.GetContentWidth(), m_textLayout.GetContentHeight(), GetFinalWidth(), GetFinalHeight(), m_padding);
     ClampScrollOffsets();
 }
 
@@ -385,13 +362,7 @@ void TextBox::UpdateHorizontalScrollFromPointer(int pointerX)
 
 int TextBox::GetLineVisualOffset(std::size_t lineIndex) const
 {
-    if (lineIndex < m_lineRenderData.size()) {
-        const auto& line = m_lineRenderData[lineIndex];
-        if (line.height > 0 && line.lineHeight > line.height) {
-            return (line.lineHeight - line.height) / 2;
-        }
-    }
-    return 0;
+    return m_textLayout.GetLineVisualOffset(lineIndex);
 }
 
 void TextBox::EnsureTextTexture()
@@ -401,59 +372,10 @@ void TextBox::EnsureTextTexture()
     }
 
     if (s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] EnsureTextTexture: textLength=%zu, lineCount=%zu", m_text.size(), m_lineRenderData.size());
+        NeoWPF::Diagnostics::LogInfo("[TextBox] EnsureTextTexture: textLength=%zu, lineCount=%zu", m_text.size(), m_textLayout.GetLineCount());
     }
 
-    for (auto& line : m_lineRenderData) {
-        if (line.textureId != 0) {
-            NeoWPF::Rendering::Renderer_DestroyTexture(line.textureId);
-            line.textureId = 0;
-        }
-    }
-    m_lineRenderData.clear();
-
-    if (m_text.empty()) {
-        m_textDirty = false;
-        return;
-    }
-
-    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, 0, 0);
-    std::size_t lineStart = 0;
-    while (lineStart <= m_text.size()) {
-        const std::size_t lineEnd = m_text.find(L'\n', lineStart);
-        const std::size_t nextLine = lineEnd == std::wstring::npos ? m_text.size() : lineEnd;
-        const std::wstring lineText = m_text.substr(lineStart, nextLine - lineStart);
-
-        LineRenderData lineData;
-        if (!lineText.empty()) {
-            int width = 0;
-            int height = 0;
-            auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(lineText, m_fontSize, width, height);
-            if (s_textBoxDebug) {
-                NeoWPF::Diagnostics::LogInfo("[TextBox] RenderTextBitmap result: line='%ls' width=%d height=%d bitmapSize=%zu", lineText.c_str(), width, height, bitmap.size());
-            }
-            if (!bitmap.empty() && width > 0 && height > 0) {
-                lineData.textureId = NeoWPF::Rendering::Renderer_CreateTexture(static_cast<unsigned int>(width), static_cast<unsigned int>(height), bitmap.data());
-                lineData.width = width;
-                lineData.height = height;
-            }
-        }
-
-        const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(lineText.empty() ? L"W" : lineText, m_fontSize, 0, 0);
-        if (lineData.height > 0) {
-            lineData.lineHeight = lineData.height;
-        }
-        else {
-            lineData.lineHeight = std::max(baseMetrics.height, std::max(lineMetrics.height, m_fontSize));
-        }
-        m_lineRenderData.push_back(lineData);
-
-        if (lineEnd == std::wstring::npos) {
-            break;
-        }
-        lineStart = lineEnd + 1;
-    }
-
+    m_textLayout.Refresh(m_text, m_fontSize, true);
     m_textDirty = false;
 }
 

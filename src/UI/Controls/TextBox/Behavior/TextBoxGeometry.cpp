@@ -110,71 +110,17 @@ int TextBox::GetCaretX() const
 
 int TextBox::GetCaretY() const
 {
-    const auto [lineIndex, _] = GetCaretLineColumn(m_caretPosition);
-    if (!m_lineRenderData.empty()) {
-        int y = 0;
-        const std::size_t lineCount = std::min<std::size_t>(lineIndex, m_lineRenderData.size());
-        for (std::size_t i = 0; i < lineCount; ++i) {
-            y += std::max(1, m_lineRenderData[i].lineHeight);
-        }
-        return y;
-    }
-
-    std::size_t lineStart = 0;
-    int y = 0;
-    std::size_t currentLine = 0;
-    while (lineStart < m_text.size() && currentLine < lineIndex) {
-        const std::size_t nextNewline = m_text.find(L'\n', lineStart);
-        const std::size_t lineEnd = nextNewline == std::wstring::npos ? m_text.size() : nextNewline;
-        const std::wstring lineText = m_text.substr(lineStart, lineEnd - lineStart);
-        y += GetLineHeight(lineText);
-        lineStart = lineEnd + 1;
-        ++currentLine;
-    }
-    return y;
+    return m_textLayout.GetCaretY(m_caretPosition);
 }
 
 int TextBox::GetCaretHeight() const
 {
-    const auto [lineIndex, _] = GetCaretLineColumn(m_caretPosition);
-    if (!m_lineRenderData.empty() && lineIndex < m_lineRenderData.size()) {
-        return std::max(1, m_lineRenderData[lineIndex].lineHeight);
-    }
-
-    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, 0, 0);
-    const int baselineHeight = std::max(baseMetrics.height, m_fontSize);
-
-    std::size_t lineStart = 0;
-    std::size_t currentLine = 0;
-    while (lineStart < m_text.size()) {
-        const std::size_t nextNewline = m_text.find(L'\n', lineStart);
-        const std::size_t lineEnd = nextNewline == std::wstring::npos ? m_text.size() : nextNewline;
-        if (currentLine == lineIndex) {
-            const std::wstring lineText = m_text.substr(lineStart, lineEnd - lineStart);
-            const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(lineText.empty() ? L"W" : lineText, m_fontSize, 0, 0);
-            return std::max(baselineHeight, std::max(lineMetrics.height, m_fontSize));
-        }
-        lineStart = lineEnd + 1;
-        ++currentLine;
-    }
-
-    return baselineHeight;
+    return m_textLayout.GetCaretHeight(m_caretPosition);
 }
 
 std::pair<std::size_t, std::size_t> TextBox::GetCaretLineColumn(std::size_t caretPosition) const
 {
-    std::size_t lineIndex = 0;
-    std::size_t column = 0;
-    for (std::size_t i = 0; i < m_text.size() && i < caretPosition; ++i) {
-        if (m_text[i] == L'\n') {
-            ++lineIndex;
-            column = 0;
-        }
-        else {
-            ++column;
-        }
-    }
-    return { lineIndex, column };
+    return m_textLayout.GetCaretLineColumn(caretPosition);
 }
 
 void TextBox::MoveCaretToLineColumn(std::size_t lineIndex, std::size_t column)
@@ -198,9 +144,7 @@ void TextBox::MoveCaretToLineColumn(std::size_t lineIndex, std::size_t column)
 
 int TextBox::GetLineHeight(const std::wstring& line) const
 {
-    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, 0, 0);
-    const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(line.empty() ? L"W" : line, m_fontSize, 0, 0);
-    return std::max(baseMetrics.height, std::max(lineMetrics.height, m_fontSize));
+    return TextLayout::MeasureLineHeight(line, m_fontSize);
 }
 
 } // namespace NeoWPF::UI
