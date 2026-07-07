@@ -22,13 +22,74 @@ void TextBox::OnMouseDown(int x, int y, std::uint32_t buttonState)
         return;
     }
 
-    if (true) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] OnMouseDown: x=%d y=%d buttonState=%u", x, y, buttonState);
+    int absX = 0;
+    int absY = 0;
+    GetAbsolutePosition(absX, absY);
+
+    const int viewportX = absX + m_padding;
+    const int viewportY = absY + m_padding;
+    const int viewportWidth = GetViewportWidth();
+    const int viewportHeight = GetViewportHeight();
+    const int scrollbarThickness = 12;
+
+    if (m_scrollBar.HasVerticalScrollbar() && x >= absX + GetFinalWidth() - scrollbarThickness && x <= absX + GetFinalWidth() && y >= viewportY && y <= viewportY + viewportHeight) {
+        const int thumbLength = m_scrollBar.GetVerticalThumbLength();
+        const int thumbPosition = m_scrollBar.GetVerticalThumbPosition();
+        const int thumbTop = viewportY + thumbPosition;
+        const int thumbBottom = thumbTop + thumbLength;
+        if (y >= thumbTop && y <= thumbBottom) {
+            m_isDraggingVerticalScrollbar = true;
+            m_lastDragPointer = y;
+            m_scrollBar.BeginVerticalDrag(y);
+            return;
+        }
+
+        UpdateVerticalScrollFromPointer(y - viewportY);
+        return;
+    }
+
+    if (m_scrollBar.HasHorizontalScrollbar() && y >= absY + GetFinalHeight() - scrollbarThickness && y <= absY + GetFinalHeight() && x >= viewportX && x <= viewportX + viewportWidth) {
+        const int thumbLength = m_scrollBar.GetHorizontalThumbLength();
+        const int thumbPosition = m_scrollBar.GetHorizontalThumbPosition();
+        const int thumbLeft = viewportX + thumbPosition;
+        const int thumbRight = thumbLeft + thumbLength;
+        if (x >= thumbLeft && x <= thumbRight) {
+            m_isDraggingHorizontalScrollbar = true;
+            m_lastDragPointer = x;
+            m_scrollBar.BeginHorizontalDrag(x);
+            return;
+        }
+
+        UpdateHorizontalScrollFromPointer(x - viewportX);
+        return;
     }
 
     UpdateCaretFromMouse(x, y);
     m_isFocused = true;
     InvalidateVisual();
+}
+
+void TextBox::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
+{
+    if (!args || !IsEnabled()) {
+        return;
+    }
+
+    if (m_isDraggingVerticalScrollbar) {
+        const int delta = args->GetY() - m_lastDragPointer;
+        m_lastDragPointer = args->GetY();
+        m_scrollBar.DragVerticalBy(delta);
+        ScrollTo(m_scrollBar.GetScrollOffsetX(), m_scrollBar.GetScrollOffsetY());
+        return;
+    }
+
+    if (m_isDraggingHorizontalScrollbar) {
+        const int delta = args->GetX() - m_lastDragPointer;
+        m_lastDragPointer = args->GetX();
+        m_scrollBar.DragHorizontalBy(delta);
+        ScrollTo(m_scrollBar.GetScrollOffsetX(), m_scrollBar.GetScrollOffsetY());
+        return;
+    }
 }
 
 void TextBox::OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args)

@@ -198,6 +198,7 @@
     <ClCompile Include="src\UI\Controls\ScrollBar\Visual\ScrollBarTemplate.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\TextBox.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxGeometry.cpp" />
+    <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxScrollBar.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxStates.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxStyles.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxTemplate.cpp" />

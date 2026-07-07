@@ -18,6 +18,55 @@ void RegisterTextBoxStyles();
 
 class TextBoxTemplate; 
 
+class TextBoxScrollBar {
+public:
+    void Reset() noexcept;
+    void UpdateMetrics(int contentWidth, int contentHeight, int controlWidth, int controlHeight, int padding) noexcept;
+    void SetScrollOffset(int x, int y) noexcept;
+    void ScrollTo(int x, int y) noexcept;
+    void ClampScrollOffsets() noexcept;
+
+    int GetScrollOffsetX() const noexcept { return m_scrollOffsetX; }
+    int GetScrollOffsetY() const noexcept { return m_scrollOffsetY; }
+    bool HasVerticalScrollbar() const noexcept { return m_showVerticalScrollbar; }
+    bool HasHorizontalScrollbar() const noexcept { return m_showHorizontalScrollbar; }
+    int GetViewportWidth() const noexcept { return m_viewportWidth; }
+    int GetViewportHeight() const noexcept { return m_viewportHeight; }
+    int GetMaxHorizontalScroll() const noexcept { return m_maxHorizontalScroll; }
+    int GetMaxVerticalScroll() const noexcept { return m_maxVerticalScroll; }
+    int GetVerticalThumbLength() const noexcept { return m_verticalThumbLength; }
+    int GetVerticalThumbPosition() const noexcept { return m_verticalThumbPosition; }
+    int GetHorizontalThumbLength() const noexcept { return m_horizontalThumbLength; }
+    int GetHorizontalThumbPosition() const noexcept { return m_horizontalThumbPosition; }
+
+    void UpdateVerticalScrollFromPointer(int pointerY) noexcept;
+    void UpdateHorizontalScrollFromPointer(int pointerX) noexcept;
+    bool IsPointOnVerticalThumb(int pointerX, int pointerY, int barX, int barY, int viewportHeight, int scrollbarThickness) const noexcept;
+    bool IsPointOnHorizontalThumb(int pointerX, int pointerY, int barX, int barY, int viewportWidth, int scrollbarThickness) const noexcept;
+    void BeginVerticalDrag(int pointerY) noexcept;
+    void BeginHorizontalDrag(int pointerX) noexcept;
+    void DragVerticalBy(int delta) noexcept;
+    void DragHorizontalBy(int delta) noexcept;
+
+private:
+    int m_contentWidth = 0;
+    int m_contentHeight = 0;
+    int m_viewportWidth = 0;
+    int m_viewportHeight = 0;
+    int m_scrollOffsetX = 0;
+    int m_scrollOffsetY = 0;
+    int m_maxHorizontalScroll = 0;
+    int m_maxVerticalScroll = 0;
+    int m_verticalThumbLength = 0;
+    int m_verticalThumbPosition = 0;
+    int m_horizontalThumbLength = 0;
+    int m_horizontalThumbPosition = 0;
+    bool m_showVerticalScrollbar = false;
+    bool m_showHorizontalScrollbar = false;
+    int m_dragStartPointer = 0;
+    int m_dragStartScrollOffset = 0;
+};
+
 /*
     @summary
     A single-line (or wrapping) text input control.
@@ -228,6 +277,14 @@ public:
 
     /*
         @summary
+        Handles mouse movement and wheel input for scrolling when the text overflows.
+
+        @internal
+    */
+    void OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args) override;
+
+    /*
+        @summary
         Keyboard input handler (text input and navigation).
 
         @internal
@@ -293,6 +350,10 @@ private:
     std::vector<LineRenderData> m_lineRenderData;
     bool m_textDirty = true;
     bool m_isFocused = false;
+    TextBoxScrollBar m_scrollBar;
+    bool m_isDraggingVerticalScrollbar = false;
+    bool m_isDraggingHorizontalScrollbar = false;
+    int m_lastDragPointer = 0;
     /*
         @summary
         Ensure GPU texture(s) backing the rendered text are present.
@@ -300,6 +361,118 @@ private:
         @internal
     */
     void EnsureTextTexture();
+
+    /*
+        @summary
+        Updates the current content size and scrollbar visibility.
+
+        @internal
+    */
+    void UpdateScrollMetrics();
+
+    /*
+        @summary
+        Keeps the current scroll offsets inside the valid range.
+
+        @internal
+    */
+    void ClampScrollOffsets();
+
+    /*
+        @summary
+        Makes sure the current caret is visible within the viewport.
+
+        @internal
+    */
+    void EnsureCaretVisible();
+
+    /*
+        @summary
+        Scrolls the text viewport to the requested content offsets.
+
+        @internal
+    */
+    void ScrollTo(int x, int y);
+
+    /*
+        @summary
+        Returns the visible width available for text content.
+
+        @internal
+    */
+    int GetViewportWidth() const;
+
+    /*
+        @summary
+        Returns the visible height available for text content.
+
+        @internal
+    */
+    int GetViewportHeight() const;
+
+    /*
+        @summary
+        Returns the maximum horizontal scroll offset.
+
+        @internal
+    */
+    int GetMaxHorizontalScroll() const;
+
+    /*
+        @summary
+        Returns the maximum vertical scroll offset.
+
+        @internal
+    */
+    int GetMaxVerticalScroll() const;
+
+    /*
+        @summary
+        Returns the vertical thumb length in pixels.
+
+        @internal
+    */
+    int GetVerticalThumbLength() const;
+
+    /*
+        @summary
+        Returns the vertical thumb position in pixels.
+
+        @internal
+    */
+    int GetVerticalThumbPosition() const;
+
+    /*
+        @summary
+        Returns the horizontal thumb length in pixels.
+
+        @internal
+    */
+    int GetHorizontalThumbPosition() const;
+
+    /*
+        @summary
+        Returns the horizontal thumb length in pixels.
+
+        @internal
+    */
+    int GetHorizontalThumbLength() const;
+
+    /*
+        @summary
+        Scrolls the viewport based on a pointer position inside the vertical bar track.
+
+        @internal
+    */
+    void UpdateVerticalScrollFromPointer(int pointerY);
+
+    /*
+        @summary
+        Scrolls the viewport based on a pointer position inside the horizontal bar track.
+
+        @internal
+    */
+    void UpdateHorizontalScrollFromPointer(int pointerX);
 
     /*
         @summary
