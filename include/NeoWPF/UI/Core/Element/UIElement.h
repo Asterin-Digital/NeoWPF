@@ -67,8 +67,8 @@ public:
     bool ApplyTemplate();
     void ClearTemplateVisualRoot() noexcept;
 
-    void RegisterTemplateChild(const std::string& name, Visual* child);
-    Visual* FindTemplateChild(const std::string& name) const;
+    void RegisterTemplateChild(const std::string& name, const std::shared_ptr<Visual>& child);
+    std::shared_ptr<Visual> FindTemplateChild(const std::string& name) const;
     bool HasTemplateChild(const std::string& name) const;
     void ClearTemplateChildren() noexcept;
 
@@ -93,9 +93,9 @@ private:
     float m_opacity = 1.0f;
     bool m_hasTemplateApplied = false;
     std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase> m_template;
-    std::unordered_map<std::string, Visual*> m_templateChildren;
+    std::unordered_map<std::string, std::shared_ptr<Visual>> m_templateChildren;
     std::unordered_map<std::string, uint32_t> m_properties;
-    Visual* m_appliedTemplateRoot = nullptr;
+    std::shared_ptr<Visual> m_appliedTemplateRoot;
 };
 
 }

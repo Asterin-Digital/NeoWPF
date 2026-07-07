@@ -16,7 +16,7 @@ namespace {
     bool IsAncestorInParentChain(NeoWPF::UI::Visual* node, NeoWPF::UI::Visual* possibleAncestor)
     {
         std::vector<NeoWPF::UI::Visual*> visited;
-        for (auto* parent = node->GetParent(); parent; parent = parent->GetParent()) {
+        for (auto parent = node->GetParent(); parent; parent = parent->GetParent()) {
             if (parent == possibleAncestor) {
                 return true;
             }

@@ -82,7 +82,7 @@ int Grid::GetColumnSpan(Visual* v)
     return it == s_colSpanMap.end() ? 1 : it->second;
 }
 
-void Grid::AddChild(Visual* child, int row, int column, int rowSpan, int columnSpan)
+void Grid::AddChild(const std::shared_ptr<Visual>& child, int row, int column, int rowSpan, int columnSpan)
 {
     if (!child) return;
 
@@ -100,11 +100,11 @@ void Grid::AddChild(Visual* child, int row, int column, int rowSpan, int columnS
             L"Grid spans must be greater than zero.");
     }
 
-    SetRow(child, row);
-    SetColumn(child, column);
-    SetRowSpan(child, rowSpan);
-    SetColumnSpan(child, columnSpan);
-    Panel::AddChild(child);
+    SetRow(child.get(), row);
+    SetColumn(child.get(), column);
+    SetRowSpan(child.get(), rowSpan);
+    SetColumnSpan(child.get(), columnSpan);
+    AddChild(child);
 }
 
 void Grid::Measure(int availableWidth, int availableHeight)

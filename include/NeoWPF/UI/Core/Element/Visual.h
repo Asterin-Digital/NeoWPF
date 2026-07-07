@@ -12,8 +12,8 @@ public:
     Visual();
     virtual ~Visual();
 
-    Visual* GetParent() const noexcept { return m_parent; }
-    const std::vector<Visual*>& GetVisualChildren() const noexcept { return m_children; }
+    Visual* GetParent() const noexcept { return m_parent.lock().get(); }
+    std::vector<Visual*> GetVisualChildren() const;
     std::vector<Visual*> GetVisualChildrenInZOrder() const;
     int GetZIndex() const noexcept { return m_zIndex; }
     void SetZIndex(int zIndex) noexcept {
@@ -24,12 +24,11 @@ public:
     }
     static const std::vector<Visual*>& GetRegisteredVisuals();
 
-
     static void CaptureRootVisuals();
 
-    void AddVisualChild(Visual* child);
-    void AddChild(Visual* child);
-    void RemoveVisualChild(Visual* child);
+    void AddVisualChild(const std::shared_ptr<Visual>& child);
+    void AddChild(const std::shared_ptr<Visual>& child);
+    void RemoveVisualChild(const std::shared_ptr<Visual>& child);
 
     bool IsTreeDirty() const noexcept { return m_isTreeDirty; }
     void MarkTreeDirty();
@@ -45,8 +44,8 @@ private:
     static std::vector<std::shared_ptr<Visual>>& GetRootVisualReferences();
     void KeepAliveAsRoot();
 
-    Visual* m_parent = nullptr;
-    std::vector<Visual*> m_children;
+    std::weak_ptr<Visual> m_parent;
+    std::vector<std::shared_ptr<Visual>> m_children;
     int m_zIndex = 0;
     bool m_isTreeDirty = false;
 };

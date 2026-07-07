@@ -29,7 +29,7 @@ std::vector<std::wstring> SplitLines(const std::wstring& text) {
     return lines;
 }
 
-} // namespace
+}
 
 TextLayout::~TextLayout() {
     Clear();
@@ -133,4 +133,4 @@ int TextLayout::GetCaretHeight(std::size_t caretPosition) const {
     return std::max(1, MeasureLineHeight(L"W", m_fontSize));
 }
 
-} // namespace NeoWPF::UI
+}

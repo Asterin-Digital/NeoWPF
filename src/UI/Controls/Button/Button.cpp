@@ -87,7 +87,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     int absX, absY;
     GetAbsolutePosition(absX, absY);
 
-    auto* background = dynamic_cast<Templates::TemplateVisual*>(FindTemplateChild("PART_Background"));
+    auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"));
     if (background) {
         background->SetRect(absX, absY, GetFinalWidth(), GetFinalHeight());
         background->SetFillColor(m_backgroundColor);
@@ -133,7 +133,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             GetOpacity());
     }
 
-    auto* contentHost = dynamic_cast<Templates::TemplateVisual*>(FindTemplateChild("PART_ContentHost"));
+    auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
     if (contentHost) {
         const int inset = std::max(0, m_padding);
         contentHost->SetRect(absX + inset, absY + inset, std::max(0, GetFinalWidth() - (inset * 2)), std::max(0, GetFinalHeight() - (inset * 2)));

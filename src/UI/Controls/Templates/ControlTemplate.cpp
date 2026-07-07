@@ -32,9 +32,9 @@ bool ControlTemplate::CanApplyTo(UIElement* element) const
     return ControlTemplateBase::CanApplyTo(element);
 }
 
-Visual* ControlTemplate::GetVisualTreeRoot() const noexcept
+std::shared_ptr<Visual> ControlTemplate::GetVisualTreeRoot() const noexcept
 {
-    return m_visualTree.get();
+    return m_visualTree;
 }
 
 void ControlTemplate::Apply(UIElement* element)
@@ -54,8 +54,8 @@ void ControlTemplate::Apply(UIElement* element)
             continue;
         }
 
-        m_visualTree->AddVisualChild(child.Visual.get());
-        element->RegisterTemplateChild(child.Name, child.Visual.get());
+        m_visualTree->AddVisualChild(child.Visual);
+        element->RegisterTemplateChild(child.Name, child.Visual);
     }
 }
 
@@ -79,7 +79,7 @@ void ControlTemplate::AddVisualChild(std::shared_ptr<Visual> visualChild)
         m_visualTree = std::make_shared<Visual>();
     }
 
-    m_visualTree->AddVisualChild(visualChild.get());
+    m_visualTree->AddVisualChild(visualChild);
 }
 
 void ControlTemplate::AddTemplateChild(const std::string& name, std::shared_ptr<Visual> visualChild)

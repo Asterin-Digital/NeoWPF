@@ -18,12 +18,10 @@ void RegisterScrollBarStyles();
 
 /*
     @summary
-    A simple scrollbar for vertical or horizontal scrolling.
+    A scrollbar for vertical or horizontal scrolling.
 
     @details
-    Drop this on a panel or content surface when you want a basic scroll thumb. It works best
-    when you hook it up to the content element and the visible viewport, then let it report a
-    current value as the user drags.
+    Drop this on a panel or content surface when you want a basic scroll thumb.
 
     @example
     auto scrollBar = std::make_shared<NeoWPF::UI::ScrollBar>();
@@ -222,7 +220,6 @@ public:
     */
     void OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args) override;
 
-private:
     /*
         @summary
         Computes the available scroll range.
@@ -246,6 +243,8 @@ private:
         @internal
     */
     int GetThumbPosition(int trackLength, int thumbLength) const noexcept;
+
+private:
 
     /*
         @summary

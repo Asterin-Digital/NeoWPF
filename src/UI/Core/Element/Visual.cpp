@@ -8,24 +8,18 @@
 namespace NeoWPF::UI {
 namespace {
 
-bool ShouldWarnDanglingChild(Visual* child)
+bool ShouldWarnDanglingChild(const std::shared_ptr<Visual>& child)
 {
     if (!child || NeoWPF::Diagnostics::IsDeveloperWarningSuppressionEnabled()) {
         return false;
     }
 
-    try {
-        auto self = child->shared_from_this();
-        (void)self;
-        return false;
-    } catch (const std::bad_weak_ptr&) {
-        return true;
-    }
+    return false;
 }
 
 }
 
-void Visual::AddVisualChild(Visual* child)
+void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
 {
     if (!child) return;
 
@@ -33,39 +27,57 @@ void Visual::AddVisualChild(Visual* child)
         const std::wstring title = std::wstring(NeoWPF::Diagnostics::DeveloperWarnings::kDanglingChildReferenceCode) + L": dangling child reference detected";
         NeoWPF::Diagnostics::QueueDeveloperWarning(
             title,
-            L"A visual child was attached through a raw pointer without active shared ownership. Keep the child alive with a shared_ptr or store it in a container to avoid dangling references during layout.",
+            L"A visual child was attached without active shared ownership.",
             NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
     }
 
-    child->m_parent = this;
+    child->m_parent = shared_from_this();
     m_children.push_back(child);
-    if (!m_parent) {
+    if (!GetParent()) {
         KeepAliveAsRoot();
     }
     MarkTreeDirty();
 }
 
-void Visual::AddChild(Visual* child)
+void Visual::AddChild(const std::shared_ptr<Visual>& child)
 {
     AddVisualChild(child);
 }
 
-void Visual::RemoveVisualChild(Visual* child)
+void Visual::RemoveVisualChild(const std::shared_ptr<Visual>& child)
 {
     if (!child) return;
     for (auto it = m_children.begin(); it != m_children.end(); ++it) {
-        if (*it == child) {
+        if (it->get() == child.get()) {
             m_children.erase(it);
-            child->m_parent = nullptr;
+            child->m_parent.reset();
             MarkTreeDirty();
             return;
         }
     }
 }
 
+std::vector<Visual*> Visual::GetVisualChildren() const
+{
+    std::vector<Visual*> children;
+    children.reserve(m_children.size());
+    for (const auto& child : m_children) {
+        if (child) {
+            children.push_back(child.get());
+        }
+    }
+    return children;
+}
+
 std::vector<Visual*> Visual::GetVisualChildrenInZOrder() const
 {
-    std::vector<Visual*> orderedChildren = m_children;
+    std::vector<Visual*> orderedChildren;
+    orderedChildren.reserve(m_children.size());
+    for (const auto& child : m_children) {
+        if (child) {
+            orderedChildren.push_back(child.get());
+        }
+    }
     std::stable_sort(orderedChildren.begin(), orderedChildren.end(), [](Visual* left, Visual* right) {
         return left->GetZIndex() < right->GetZIndex();
     });
@@ -78,8 +90,8 @@ void Visual::MarkTreeDirty()
         return;
     }
     m_isTreeDirty = true;
-    if (m_parent) {
-        m_parent->MarkTreeDirty();
+    if (auto parent = m_parent.lock()) {
+        parent->MarkTreeDirty();
     }
 }
 

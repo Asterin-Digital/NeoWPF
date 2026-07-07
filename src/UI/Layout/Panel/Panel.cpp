@@ -21,7 +21,7 @@ int ClampToDesired(int value, int desired)
 
 bool IsAncestorInParentChain(NeoWPF::UI::Visual* node, NeoWPF::UI::Visual* possibleAncestor)
 {
-    for (auto* parent = node->GetParent(); parent; parent = parent->GetParent()) {
+    for (auto parent = node->GetParent(); parent; parent = parent->GetParent()) {
         if (parent == possibleAncestor) {
             return true;
         }

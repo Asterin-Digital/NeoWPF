@@ -59,7 +59,7 @@ namespace UI
         outX = m_offsetX + m_renderOffsetX;
         outY = m_offsetY + m_renderOffsetY;
 
-        Visual* parent = GetParent();
+        auto parent = GetParent();
         while (parent)
         {
             auto fw = dynamic_cast<FrameworkElement*>(parent);
@@ -77,7 +77,7 @@ namespace UI
         outX = m_offsetX;
         outY = m_offsetY;
 
-        Visual* parent = GetParent();
+        auto parent = GetParent();
         while (parent)
         {
             auto fw = dynamic_cast<FrameworkElement*>(parent);
@@ -92,7 +92,7 @@ namespace UI
 
     void FrameworkElement::BeginAnimation(HorizontalAlignment horizontal, VerticalAlignment vertical, float durationSeconds)
     {
-        Visual* parent = GetParent();
+        auto parent = GetParent();
         if (!parent) {
             return;
         }

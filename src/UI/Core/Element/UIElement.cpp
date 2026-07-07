@@ -59,12 +59,12 @@ void UIElement::ClearTemplateVisualRoot() noexcept {
     }
 }
 
-void UIElement::RegisterTemplateChild(const std::string& name, Visual* child) {
+void UIElement::RegisterTemplateChild(const std::string& name, const std::shared_ptr<Visual>& child) {
     if (name.empty() || !child) return;
     m_templateChildren[name] = child;
 }
 
-Visual* UIElement::FindTemplateChild(const std::string& name) const {
+std::shared_ptr<Visual> UIElement::FindTemplateChild(const std::string& name) const {
     if (name.empty()) return nullptr;
     auto it = m_templateChildren.find(name);
     return it != m_templateChildren.end() ? it->second : nullptr;

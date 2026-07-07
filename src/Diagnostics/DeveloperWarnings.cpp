@@ -60,9 +60,9 @@ OverlayBuildResult CreateDeveloperWarningOverlay(const DeveloperWarningMessage& 
     bodyText->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Left);
     bodyText->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Top);
 
-    content->AddChild(titleText.get());
-    content->AddChild(bodyText.get());
-    card->AddChild(content.get());
+    content->AddChild(titleText);
+    content->AddChild(bodyText);
+    card->AddChild(content);
 
     return {card, {card, content, titleText, bodyText}};
 }
@@ -95,14 +95,14 @@ void AttachDeveloperWarningOverlayToRoot(const DeveloperWarningMessage& warning,
         overlayHost->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Right);
         overlayHost->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Top);
         overlayHost->SetZIndex(100000);
-        targetRoot->AddChild(overlayHost.get());
+        targetRoot->AddChild(overlayHost);
         appState.developerWarningOverlayHost = overlayHost;
         appState.developerOverlayVisuals.push_back(overlayHost);
     }
 
     auto overlayHost = std::dynamic_pointer_cast<NeoWPF::UI::StackPanel>(appState.developerWarningOverlayHost);
     if (overlayHost) {
-        overlayHost->AddChild(overlay.panel.get());
+        overlayHost->AddChild(overlay.panel);
     }
 
     for (const auto& visual : overlay.ownedVisuals) {

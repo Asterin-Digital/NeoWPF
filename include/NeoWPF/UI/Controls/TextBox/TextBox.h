@@ -9,6 +9,7 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
+#include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 
 namespace NeoWPF::UI {
@@ -17,55 +18,6 @@ class TextBoxStyle;
 void RegisterTextBoxStyles();
 
 class TextBoxTemplate; 
-
-class TextBoxScrollBar {
-public:
-    void Reset() noexcept;
-    void UpdateMetrics(int contentWidth, int contentHeight, int controlWidth, int controlHeight, int padding) noexcept;
-    void SetScrollOffset(int x, int y) noexcept;
-    void ScrollTo(int x, int y) noexcept;
-    void ClampScrollOffsets() noexcept;
-
-    int GetScrollOffsetX() const noexcept { return m_scrollOffsetX; }
-    int GetScrollOffsetY() const noexcept { return m_scrollOffsetY; }
-    bool HasVerticalScrollbar() const noexcept { return m_showVerticalScrollbar; }
-    bool HasHorizontalScrollbar() const noexcept { return m_showHorizontalScrollbar; }
-    int GetViewportWidth() const noexcept { return m_viewportWidth; }
-    int GetViewportHeight() const noexcept { return m_viewportHeight; }
-    int GetMaxHorizontalScroll() const noexcept { return m_maxHorizontalScroll; }
-    int GetMaxVerticalScroll() const noexcept { return m_maxVerticalScroll; }
-    int GetVerticalThumbLength() const noexcept { return m_verticalThumbLength; }
-    int GetVerticalThumbPosition() const noexcept { return m_verticalThumbPosition; }
-    int GetHorizontalThumbLength() const noexcept { return m_horizontalThumbLength; }
-    int GetHorizontalThumbPosition() const noexcept { return m_horizontalThumbPosition; }
-
-    void UpdateVerticalScrollFromPointer(int pointerY) noexcept;
-    void UpdateHorizontalScrollFromPointer(int pointerX) noexcept;
-    bool IsPointOnVerticalThumb(int pointerX, int pointerY, int barX, int barY, int viewportHeight, int scrollbarThickness) const noexcept;
-    bool IsPointOnHorizontalThumb(int pointerX, int pointerY, int barX, int barY, int viewportWidth, int scrollbarThickness) const noexcept;
-    void BeginVerticalDrag(int pointerY) noexcept;
-    void BeginHorizontalDrag(int pointerX) noexcept;
-    void DragVerticalBy(int delta) noexcept;
-    void DragHorizontalBy(int delta) noexcept;
-
-private:
-    int m_contentWidth = 0;
-    int m_contentHeight = 0;
-    int m_viewportWidth = 0;
-    int m_viewportHeight = 0;
-    int m_scrollOffsetX = 0;
-    int m_scrollOffsetY = 0;
-    int m_maxHorizontalScroll = 0;
-    int m_maxVerticalScroll = 0;
-    int m_verticalThumbLength = 0;
-    int m_verticalThumbPosition = 0;
-    int m_horizontalThumbLength = 0;
-    int m_horizontalThumbPosition = 0;
-    bool m_showVerticalScrollbar = false;
-    bool m_showHorizontalScrollbar = false;
-    int m_dragStartPointer = 0;
-    int m_dragStartScrollOffset = 0;
-};
 
 class TextLayout {
 public:
@@ -379,10 +331,17 @@ private:
     TextLayout m_textLayout;
     bool m_textDirty = true;
     bool m_isFocused = false;
-    TextBoxScrollBar m_scrollBar;
+    std::shared_ptr<ScrollBar> m_verticalScrollBar;
+    std::shared_ptr<ScrollBar> m_horizontalScrollBar;
     bool m_isDraggingVerticalScrollbar = false;
     bool m_isDraggingHorizontalScrollbar = false;
     int m_lastDragPointer = 0;
+    int m_dragStartScrollValueX = 0;
+    int m_dragStartScrollValueY = 0;
+    int m_viewportWidth = 0;
+    int m_viewportHeight = 0;
+    bool m_showVerticalScrollbar = false;
+    bool m_showHorizontalScrollbar = false;
     /*
         @summary
         Ensure GPU texture(s) backing the rendered text are present.

@@ -21,7 +21,7 @@ public:
     virtual ~ControlTemplateBase() = default;
     virtual bool CanApplyTo(UIElement* element) const;
     virtual void Apply(UIElement* element) = 0;
-    virtual Visual* GetVisualTreeRoot() const noexcept { return nullptr; }
+    virtual std::shared_ptr<Visual> GetVisualTreeRoot() const noexcept { return nullptr; }
 
     void AddRequiredPart(const std::string& name, bool required = true);
     bool HasRequiredParts() const noexcept;
@@ -37,7 +37,7 @@ public:
 
     bool CanApplyTo(UIElement* element) const override;
     void Apply(UIElement* element) override;
-    Visual* GetVisualTreeRoot() const noexcept override;
+    std::shared_ptr<Visual> GetVisualTreeRoot() const noexcept override;
 
     void SetVisualTree(std::shared_ptr<Visual> visualTree);
     std::shared_ptr<Visual> GetVisualTree() const noexcept;

@@ -110,7 +110,7 @@ public:
         @param columnSpan
         How many columns the child should cover.
     */
-    void AddChild(Visual* child, int row, int column, int rowSpan = 1, int columnSpan = 1);
+    void AddChild(const std::shared_ptr<Visual>& child, int row, int column, int rowSpan = 1, int columnSpan = 1);
 
     /*
         @summary

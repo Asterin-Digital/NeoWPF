@@ -90,9 +90,6 @@
     <ClCompile Include="src\UI\Controls\TextBox\TextBox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Controls\TextBox\TextBox.States.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxEditing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -120,19 +117,7 @@
     <ClCompile Include="src\UI\Controls\Button\Button.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Controls\Button\Button.States.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\Controls\Button\ButtonTemplate.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\UI\Core\Element\UIElement.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\Controls\Text\TextBlock.Styles.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\Controls\Button\Button.Styles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Layout\Panel\Panel.Styles.cpp">
@@ -189,10 +174,10 @@
     <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBar.Styles.cpp">
+    <ClCompile Include="src\UI\Controls\ScrollBar\Behavior\ScrollBarInteraction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBarTemplate.cpp">
+    <ClCompile Include="src\UI\Controls\ScrollBar\Behavior\ScrollBarLayout.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Rendering\D3D11\Renderer\RendererClipping.cpp">
@@ -214,6 +199,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Controls\ScrollBar\Visual\ScrollBarTemplate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\Button\Visual\ButtonStyles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\Button\Visual\ButtonStates.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\Button\Visual\ButtonTemplate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextLayout.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
