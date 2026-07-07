@@ -73,10 +73,7 @@ public:
 
         @internal
     */
-    void Measure(int availableWidth, int availableHeight) override {
-        m_desiredWidth = availableWidth;
-        m_desiredHeight = availableHeight;
-    }
+    void Measure(int availableWidth, int availableHeight) override;
 
     /*
         @summary
@@ -90,10 +87,7 @@ public:
 
         @internal
     */
-    void Arrange(int finalWidth, int finalHeight) override {
-        m_finalWidth = finalWidth;
-        m_finalHeight = finalHeight;
-    }
+    void Arrange(int finalWidth, int finalHeight) override;
 
     /*
         @summary

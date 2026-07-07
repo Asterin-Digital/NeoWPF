@@ -14,6 +14,7 @@ public:
 
     Visual* GetParent() const noexcept { return m_parent.lock().get(); }
     std::vector<Visual*> GetVisualChildren() const;
+    std::vector<Visual*> GetLogicalChildren() const;
     std::vector<Visual*> GetVisualChildrenInZOrder() const;
     int GetZIndex() const noexcept { return m_zIndex; }
     void SetZIndex(int zIndex) noexcept {
@@ -28,6 +29,7 @@ public:
 
     void AddVisualChild(const std::shared_ptr<Visual>& child);
     void AddChild(const std::shared_ptr<Visual>& child);
+    void AddLogicalChild(const std::shared_ptr<Visual>& child);
     void RemoveVisualChild(const std::shared_ptr<Visual>& child);
 
     bool IsTreeDirty() const noexcept { return m_isTreeDirty; }
@@ -46,6 +48,7 @@ private:
 
     std::weak_ptr<Visual> m_parent;
     std::vector<std::shared_ptr<Visual>> m_children;
+    std::vector<std::shared_ptr<Visual>> m_logicalChildren;
     int m_zIndex = 0;
     bool m_isTreeDirty = false;
 };

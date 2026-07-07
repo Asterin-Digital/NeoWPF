@@ -48,6 +48,11 @@ void TextLayout::Clear() {
 }
 
 void TextLayout::Refresh(const std::wstring& text, int fontSize, bool createTextures) {
+    if (!createTextures && text == m_text && fontSize == m_fontSize && !m_lines.empty()) {
+
+        return;
+    }
+
     m_text = text;
     m_fontSize = fontSize;
     Clear();

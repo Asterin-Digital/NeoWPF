@@ -42,6 +42,7 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
 void Visual::AddChild(const std::shared_ptr<Visual>& child)
 {
     AddVisualChild(child);
+    AddLogicalChild(child);
 }
 
 void Visual::RemoveVisualChild(const std::shared_ptr<Visual>& child)
@@ -82,6 +83,24 @@ std::vector<Visual*> Visual::GetVisualChildrenInZOrder() const
         return left->GetZIndex() < right->GetZIndex();
     });
     return orderedChildren;
+}
+
+std::vector<Visual*> Visual::GetLogicalChildren() const
+{
+    std::vector<Visual*> children;
+    children.reserve(m_logicalChildren.size());
+    for (const auto& child : m_logicalChildren) {
+        if (child) {
+            children.push_back(child.get());
+        }
+    }
+    return children;
+}
+
+void Visual::AddLogicalChild(const std::shared_ptr<Visual>& child)
+{
+    if (!child) return;
+    m_logicalChildren.push_back(child);
 }
 
 void Visual::MarkTreeDirty()

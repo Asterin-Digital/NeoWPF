@@ -13,6 +13,10 @@ public:
     explicit TemplateVisual(const std::string& name = {});
 
     void SetRect(int x, int y, int width, int height) noexcept;
+    int GetX() const noexcept { return m_x; }
+    int GetY() const noexcept { return m_y; }
+    int GetWidth() const noexcept { return m_width; }
+    int GetHeight() const noexcept { return m_height; }
     void SetFillColor(std::uint32_t color) noexcept;
     void SetBorderColor(std::uint32_t color) noexcept;
     void SetBorderThickness(int thickness) noexcept;

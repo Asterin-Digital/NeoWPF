@@ -342,6 +342,8 @@ private:
     int m_dragStartPointerY = 0;
     int m_viewportWidth = 0;
     int m_viewportHeight = 0;
+    int m_contentHostWidth = 0;
+    int m_contentHostHeight = 0;
     bool m_showVerticalScrollbar = false;
     bool m_showHorizontalScrollbar = false;
     /*

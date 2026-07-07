@@ -2,6 +2,8 @@
 #include <NeoWPF/UI/Animation/AnimationController.h>
 #include <NeoWPF/UI/Animation/Core/Timeline.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
+#include <NeoWPF/Diagnostics/Logger.h>
+#include <typeinfo>
 #include <algorithm>
 
 #ifdef max
@@ -131,6 +133,30 @@ namespace UI
         storyboard->AddTimeline(xTimeline);
         storyboard->AddTimeline(yTimeline);
         NeoWPF::UI::AddStoryboard(storyboard);
+    }
+
+    void FrameworkElement::Measure(int availableWidth, int availableHeight)
+    {
+        NeoWPF::Diagnostics::LogInfo(
+            "[FrameworkElement::Measure] Type=%s, Available=(%d x %d)",
+            typeid(*this).name(),
+            availableWidth,
+            availableHeight
+        );
+        m_desiredWidth = availableWidth;
+        m_desiredHeight = availableHeight;
+    }
+
+    void FrameworkElement::Arrange(int finalWidth, int finalHeight)
+    {
+        NeoWPF::Diagnostics::LogInfo(
+            "[FrameworkElement::Arrange] Type=%s, Final=(%d x %d)",
+            typeid(*this).name(),
+            finalWidth,
+            finalHeight
+        );
+        m_finalWidth = finalWidth;
+        m_finalHeight = finalHeight;
     }
 }
 }

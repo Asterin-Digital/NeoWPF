@@ -112,7 +112,7 @@ void Panel::Measure(int availableWidth, int availableHeight)
 
     int maxW = 0;
     int maxH = 0;
-    for (auto child : GetVisualChildren()) {
+    for (auto child : GetLogicalChildren()) {
         if (child == this || IsAncestorInParentChain(this, child)) {
             continue;
         }
@@ -141,7 +141,7 @@ void Panel::Measure(int availableWidth, int availableHeight)
     const int desiredW = ResolveWidth(availableWidth, maxW);
     const int desiredH = ResolveHeight(availableHeight, maxH);
 
-    if (GetVisualChildren().empty()) {
+    if (GetLogicalChildren().empty()) {
         SetDesiredSize(desiredW, desiredH);
     } else {
         SetDesiredSize(desiredW, desiredH);
@@ -157,7 +157,7 @@ void Panel::Arrange(int finalWidth, int finalHeight)
         return;
     }
 
-    for (auto child : GetVisualChildren()) {
+    for (auto child : GetLogicalChildren()) {
         if (child == this || IsAncestorInParentChain(this, child)) {
             continue;
         }

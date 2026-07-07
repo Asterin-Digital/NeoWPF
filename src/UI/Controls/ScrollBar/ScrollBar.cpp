@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <memory>
 
@@ -36,6 +37,9 @@ void ScrollBar::Measure(int availableWidth, int availableHeight)
 void ScrollBar::Arrange(int finalWidth, int finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
+    if (s_scrollBarDebug) {
+        NeoWPF::Diagnostics::LogInfo("[ScrollBar] Arrange: final=%dx%d orientation=%d value=%d content=%d viewport=%d", finalWidth, finalHeight, static_cast<int>(m_orientation), m_value, m_contentSize, m_viewportSize);
+    }
     UpdateScrollState();
 }
 
@@ -61,44 +65,51 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto track = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Track"));
     auto thumb = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Thumb"));
 
+    if (GetScrollRange() <= 0) {
+        return;
+    }
+
     const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
     const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
     const int trackThickness = isVertical ? GetFinalWidth() : GetFinalHeight();
-    const int clampedTrackLength = isVertical ? std::min(trackLength, 72) : std::min(trackLength, 96);
-    const int clampedTrackThickness = std::max(1, std::min(trackThickness, isVertical ? 24 : 24));
-    const int thumbLength = GetThumbLength(clampedTrackLength);
-    const int thumbPosition = GetThumbPosition(clampedTrackLength, thumbLength);
+
+    if (trackLength <= 0 || trackThickness <= 0) {
+        return;
+    }
+
+    const int thumbLength = GetThumbLength(trackLength);
+    const int thumbPosition = GetThumbPosition(trackLength, thumbLength);
 
     if (track) {
         if (isVertical) {
-            track->SetRect(absX, absY, clampedTrackThickness, clampedTrackLength);
+            track->SetRect(absX, absY, trackThickness, trackLength);
         } else {
-            track->SetRect(absX, absY, clampedTrackLength, clampedTrackThickness);
+            track->SetRect(absX, absY, trackLength, trackThickness);
         }
         track->SetFillColor(m_trackColor);
         track->SetOpacity(GetOpacity());
         track->SetClipRect(clip);
         track->BuildRenderCommands(commands);
     } else if (isVertical) {
-        commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(clampedTrackThickness), static_cast<float>(clampedTrackLength), m_trackColor, GetOpacity(), clip);
+        commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(trackThickness), static_cast<float>(trackLength), m_trackColor, GetOpacity(), clip);
     } else {
-        commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(clampedTrackLength), static_cast<float>(clampedTrackThickness), m_trackColor, GetOpacity(), clip);
+        commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(trackLength), static_cast<float>(trackThickness), m_trackColor, GetOpacity(), clip);
     }
 
     if (thumb) {
         if (isVertical) {
-            thumb->SetRect(absX, absY + thumbPosition, clampedTrackThickness, thumbLength);
+            thumb->SetRect(absX, absY + thumbPosition, trackThickness, thumbLength);
         } else {
-            thumb->SetRect(absX + thumbPosition, absY, thumbLength, clampedTrackThickness);
+            thumb->SetRect(absX + thumbPosition, absY, thumbLength, trackThickness);
         }
         thumb->SetFillColor(m_thumbColor);
         thumb->SetOpacity(GetOpacity());
         thumb->SetClipRect(clip);
         thumb->BuildRenderCommands(commands);
     } else if (isVertical) {
-        commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY + thumbPosition), static_cast<float>(clampedTrackThickness), static_cast<float>(thumbLength), m_thumbColor, GetOpacity(), clip);
+        commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY + thumbPosition), static_cast<float>(trackThickness), static_cast<float>(thumbLength), m_thumbColor, GetOpacity(), clip);
     } else {
-        commands.DrawRect(static_cast<float>(absX + thumbPosition), static_cast<float>(absY), static_cast<float>(thumbLength), static_cast<float>(clampedTrackThickness), m_thumbColor, GetOpacity(), clip);
+        commands.DrawRect(static_cast<float>(absX + thumbPosition), static_cast<float>(absY), static_cast<float>(thumbLength), static_cast<float>(trackThickness), m_thumbColor, GetOpacity(), clip);
     }
 }
 

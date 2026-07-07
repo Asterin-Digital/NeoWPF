@@ -61,17 +61,24 @@ int ScrollBar::GetScrollRange() const noexcept
 int ScrollBar::GetThumbLength(int trackLength) const noexcept
 {
     const int clampedTrackLength = std::max(0, trackLength);
-    int thumbLength = 0;
-    if (m_contentSize <= 0 || m_viewportSize <= 0 || m_contentSize <= m_viewportSize) {
-        thumbLength = std::max(8, std::min(m_thumbSize, clampedTrackLength));
+    if (clampedTrackLength <= 0) {
+        return 0;
     }
-    else {
-        thumbLength = std::max(8, (m_viewportSize * clampedTrackLength) / m_contentSize);
-        thumbLength = std::min(thumbLength, clampedTrackLength);
+
+    int thumbLength = clampedTrackLength;
+    if (s_scrollBarDebug) {
+        NeoWPF::Diagnostics::LogInfo("[ScrollBar] GetThumbLength: start track=%d content=%d viewport=%d thumbSize=%d range=%d value=%d", clampedTrackLength, m_contentSize, m_viewportSize, m_thumbSize, GetScrollRange(), m_value);
+    }
+    if (m_contentSize > 0 && m_viewportSize > 0 && m_contentSize > m_viewportSize) {
+        const int denominator = std::max(1, m_contentSize + m_viewportSize);
+        thumbLength = std::max(1, (m_viewportSize * clampedTrackLength) / denominator);
+        if (s_scrollBarDebug) {
+            NeoWPF::Diagnostics::LogInfo("[ScrollBar] GetThumbLength: proportional track=%d content=%d viewport=%d proportionalThumb=%d", clampedTrackLength, m_contentSize, m_viewportSize, thumbLength);
+        }
     }
 
     if (s_scrollBarDebug) {
-        NeoWPF::Diagnostics::LogInfo("[ScrollBar] GetThumbLength: track=%d content=%d viewport=%d thumb=%d range=%d value=%d", clampedTrackLength, m_contentSize, m_viewportSize, thumbLength, GetScrollRange(), m_value);
+        NeoWPF::Diagnostics::LogInfo("[ScrollBar] GetThumbLength: final track=%d content=%d viewport=%d thumb=%d range=%d value=%d", clampedTrackLength, m_contentSize, m_viewportSize, thumbLength, GetScrollRange(), m_value);
     }
     return thumbLength;
 }

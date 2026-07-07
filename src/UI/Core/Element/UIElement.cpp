@@ -47,8 +47,7 @@ bool UIElement::ApplyTemplate() {
     }
 
     m_template->Apply(this);
-    m_appliedTemplateRoot = m_template->GetVisualTreeRoot();
-    m_hasTemplateApplied = true;
+    m_appliedTemplateRoot = m_template->GetVisualTreeRoot(); m_hasTemplateApplied = true;
     return true;
 }
 
