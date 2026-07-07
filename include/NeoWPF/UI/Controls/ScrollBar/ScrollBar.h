@@ -21,14 +21,12 @@ void RegisterScrollBarStyles();
     A scrollbar for vertical or horizontal scrolling.
 
     @details
-    Drop this on a panel or content surface when you want a basic scroll thumb.
-
+    Drop this on a panel or content surface when you want scrolling.
     @example
     auto scrollBar = std::make_shared<NeoWPF::UI::ScrollBar>();
     scrollBar->SetOrientation(ScrollBarOrientation::Vertical);
     scrollBar->SetScrollTarget(contentHost);
     scrollBar->SetViewportElement(viewport);
-    scrollBar->SetValue(120);
 */
 class ScrollBar : public FrameworkElement {
 public:
@@ -245,6 +243,7 @@ public:
     int GetThumbPosition(int trackLength, int thumbLength) const noexcept;
 
 private:
+    static bool s_scrollBarDebug;
 
     /*
         @summary

@@ -28,8 +28,7 @@ namespace {
     }
 }
 
-
-bool NeoWPF::UI::TextBox::s_textBoxDebug = false;
+bool NeoWPF::UI::TextBox::s_textBoxDebug = true;
 
 namespace NeoWPF::UI {
 
@@ -242,9 +241,12 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const int barX = absX + GetFinalWidth() - scrollbarThickness - 2;
         const int barY = absY + contentInset + 4;
         const int barHeight = std::min(72, std::max(24, GetFinalHeight() - contentInset * 2 - 8));
+        const int effectiveContentHeight = std::max(m_textLayout.GetContentHeight(), viewportHeight + 1);
+        const int effectiveViewportHeight = std::max(1, viewportHeight);
+        NeoWPF::Diagnostics::LogInfo("[TextBox] Vertical scrollbar metrics: content=%d viewport=%d track=%d range=%d thumb=%d", effectiveContentHeight, effectiveViewportHeight, barHeight, m_verticalScrollBar->GetScrollRange(), m_verticalScrollBar->GetThumbLength(barHeight));
         m_verticalScrollBar->SetOrientation(ScrollBarOrientation::Vertical);
-        m_verticalScrollBar->SetViewportSize(viewportHeight);
-        m_verticalScrollBar->SetContentSize(m_textLayout.GetContentHeight());
+        m_verticalScrollBar->SetViewportSize(effectiveViewportHeight);
+        m_verticalScrollBar->SetContentSize(effectiveContentHeight);
         m_verticalScrollBar->Arrange(scrollbarThickness, barHeight);
         m_verticalScrollBar->SetLayoutOffset(barX, barY);
         m_verticalScrollBar->BuildRenderCommands(commands);
@@ -254,9 +256,12 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const int barX = absX + contentInset + 4;
         const int barY = absY + GetFinalHeight() - scrollbarThickness - 2;
         const int barWidth = std::min(96, std::max(24, GetFinalWidth() - contentInset * 2 - 8));
+        const int effectiveContentWidth = std::max(m_textLayout.GetContentWidth(), viewportWidth + 1);
+        const int effectiveViewportWidth = std::max(1, viewportWidth);
+        NeoWPF::Diagnostics::LogInfo("[TextBox] Horizontal scrollbar metrics: content=%d viewport=%d track=%d range=%d thumb=%d", effectiveContentWidth, effectiveViewportWidth, barWidth, m_horizontalScrollBar->GetScrollRange(), m_horizontalScrollBar->GetThumbLength(barWidth));
         m_horizontalScrollBar->SetOrientation(ScrollBarOrientation::Horizontal);
-        m_horizontalScrollBar->SetViewportSize(viewportWidth);
-        m_horizontalScrollBar->SetContentSize(m_textLayout.GetContentWidth());
+        m_horizontalScrollBar->SetViewportSize(effectiveViewportWidth);
+        m_horizontalScrollBar->SetContentSize(effectiveContentWidth);
         m_horizontalScrollBar->Arrange(barWidth, scrollbarThickness);
         m_horizontalScrollBar->SetLayoutOffset(barX, barY);
         m_horizontalScrollBar->BuildRenderCommands(commands);
@@ -269,13 +274,31 @@ void TextBox::UpdateScrollMetrics()
 
     const int contentWidth = m_textLayout.GetContentWidth();
     const int contentHeight = m_textLayout.GetContentHeight();
-    const int viewportWidth = std::max(0, GetFinalWidth() - (m_padding * 2));
-    const int viewportHeight = std::max(0, GetFinalHeight() - (m_padding * 2));
-    const bool hasVerticalOverflow = contentHeight > viewportHeight;
-    const bool hasHorizontalOverflow = contentWidth > viewportWidth;
+    const int baseViewportWidth = std::max(0, GetFinalWidth() - (m_padding * 2));
+    const int baseViewportHeight = std::max(0, GetFinalHeight() - (m_padding * 2));
+    const int scrollbarThickness = 8;
 
-    m_viewportWidth = std::max(0, viewportWidth - (hasVerticalOverflow ? 8 : 0));
-    m_viewportHeight = std::max(0, viewportHeight - (hasHorizontalOverflow ? 8 : 0));
+    int viewportWidth = baseViewportWidth;
+    int viewportHeight = baseViewportHeight;
+    bool hasHorizontalOverflow = false;
+    bool hasVerticalOverflow = false;
+
+    for (int pass = 0; pass < 2; ++pass) {
+        hasHorizontalOverflow = contentWidth > viewportWidth;
+        hasVerticalOverflow = contentHeight > viewportHeight;
+
+        const int nextViewportWidth = std::max(0, baseViewportWidth - (hasVerticalOverflow ? scrollbarThickness : 0));
+        const int nextViewportHeight = std::max(0, baseViewportHeight - (hasHorizontalOverflow ? scrollbarThickness : 0));
+        if (nextViewportWidth == viewportWidth && nextViewportHeight == viewportHeight) {
+            break;
+        }
+
+        viewportWidth = nextViewportWidth;
+        viewportHeight = nextViewportHeight;
+    }
+
+    m_viewportWidth = viewportWidth;
+    m_viewportHeight = viewportHeight;
     m_showVerticalScrollbar = hasVerticalOverflow && (contentHeight - m_viewportHeight) > 0;
     m_showHorizontalScrollbar = hasHorizontalOverflow && (contentWidth - m_viewportWidth) > 0;
 
@@ -364,22 +387,44 @@ int TextBox::GetMaxVerticalScroll() const
 
 int TextBox::GetVerticalThumbLength() const
 {
-    return 0;
+    if (!m_verticalScrollBar) {
+        return 0;
+    }
+
+    const int trackLength = std::max(0, m_verticalScrollBar->GetFinalHeight());
+    return m_verticalScrollBar->GetThumbLength(trackLength);
 }
 
 int TextBox::GetVerticalThumbPosition() const
 {
-    return 0;
+    if (!m_verticalScrollBar) {
+        return 0;
+    }
+
+    const int trackLength = std::max(0, m_verticalScrollBar->GetFinalHeight());
+    const int thumbLength = GetVerticalThumbLength();
+    return m_verticalScrollBar->GetThumbPosition(trackLength, thumbLength);
 }
 
 int TextBox::GetHorizontalThumbLength() const
 {
-    return 0;
+    if (!m_horizontalScrollBar) {
+        return 0;
+    }
+
+    const int trackLength = std::max(0, m_horizontalScrollBar->GetFinalWidth());
+    return m_horizontalScrollBar->GetThumbLength(trackLength);
 }
 
 int TextBox::GetHorizontalThumbPosition() const
 {
-    return 0;
+    if (!m_horizontalScrollBar) {
+        return 0;
+    }
+
+    const int trackLength = std::max(0, m_horizontalScrollBar->GetFinalWidth());
+    const int thumbLength = GetHorizontalThumbLength();
+    return m_horizontalScrollBar->GetThumbPosition(trackLength, thumbLength);
 }
 
 void TextBox::UpdateVerticalScrollFromPointer(int pointerY)

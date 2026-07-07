@@ -45,6 +45,7 @@ void TextBox::OnMouseDown(int x, int y, std::uint32_t buttonState)
         if (y >= thumbTop && y < thumbBottom) {
             m_isDraggingVerticalScrollbar = true;
             m_lastDragPointer = y;
+            m_dragStartPointerY = std::clamp(y - verticalBarY, 0, std::max(0, verticalBarHeight - verticalThumbLength));
             m_dragStartScrollValueY = m_verticalScrollBar->GetValue();
             return;
         }
@@ -54,7 +55,8 @@ void TextBox::OnMouseDown(int x, int y, std::uint32_t buttonState)
         if (range <= 0) {
             m_verticalScrollBar->SetValue(0);
         } else {
-            const int newValue = static_cast<int>((static_cast<long long>(pointerY) * range + (verticalBarHeight - verticalThumbLength) / 2) / std::max(1, verticalBarHeight - verticalThumbLength));
+            const int availableTrack = std::max(0, verticalBarHeight - verticalThumbLength);
+            const int newValue = static_cast<int>((static_cast<long long>(pointerY) * range + availableTrack / 2) / std::max(1, availableTrack));
             m_verticalScrollBar->SetValue(std::clamp(newValue, 0, range));
         }
         InvalidateVisual();
@@ -73,6 +75,7 @@ void TextBox::OnMouseDown(int x, int y, std::uint32_t buttonState)
         if (x >= thumbLeft && x < thumbRight) {
             m_isDraggingHorizontalScrollbar = true;
             m_lastDragPointer = x;
+            m_dragStartPointerX = std::clamp(x - horizontalBarX, 0, std::max(0, horizontalBarWidth - horizontalThumbLength));
             m_dragStartScrollValueX = m_horizontalScrollBar->GetValue();
             return;
         }
@@ -82,7 +85,8 @@ void TextBox::OnMouseDown(int x, int y, std::uint32_t buttonState)
         if (range <= 0) {
             m_horizontalScrollBar->SetValue(0);
         } else {
-            const int newValue = static_cast<int>((static_cast<long long>(pointerX) * range + (horizontalBarWidth - horizontalThumbLength) / 2) / std::max(1, horizontalBarWidth - horizontalThumbLength));
+            const int availableTrack = std::max(0, horizontalBarWidth - horizontalThumbLength);
+            const int newValue = static_cast<int>((static_cast<long long>(pointerX) * range + availableTrack / 2) / std::max(1, availableTrack));
             m_horizontalScrollBar->SetValue(std::clamp(newValue, 0, range));
         }
         InvalidateVisual();
@@ -100,38 +104,37 @@ void TextBox::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
         return;
     }
 
-    const int viewportWidth = GetViewportWidth();
-    const int viewportHeight = GetViewportHeight();
+    int absX = 0;
+    int absY = 0;
+    GetAbsolutePosition(absX, absY);
 
     if (m_isDraggingVerticalScrollbar) {
-        const int delta = args->GetY() - m_lastDragPointer;
-        m_lastDragPointer = args->GetY();
-        const int scrollbarThickness = 6;
         const int contentInset = m_padding;
         const int verticalBarHeight = std::min(72, std::max(24, GetFinalHeight() - contentInset * 2 - 8));
         const int thumbLength = m_verticalScrollBar->GetThumbLength(verticalBarHeight);
         const int availableTrack = std::max(0, verticalBarHeight - thumbLength);
         const int range = m_verticalScrollBar->GetScrollRange();
         if (range > 0 && availableTrack > 0) {
-            const int newValue = static_cast<int>(m_dragStartScrollValueY + (static_cast<long long>(delta) * range + availableTrack / 2) / availableTrack);
-            m_verticalScrollBar->SetValue(std::clamp(newValue, 0, range));
+            const int pointerPos = std::clamp(args->GetY() - (absY + contentInset + 4), 0, availableTrack);
+            const int dragDelta = pointerPos - m_dragStartPointerY;
+            const int valueDelta = static_cast<int>((static_cast<long long>(dragDelta) * range + availableTrack / 2) / availableTrack);
+            m_verticalScrollBar->SetValue(std::clamp(m_dragStartScrollValueY + valueDelta, 0, range));
         }
         ScrollTo(m_horizontalScrollBar->GetValue(), m_verticalScrollBar->GetValue());
         return;
     }
 
     if (m_isDraggingHorizontalScrollbar) {
-        const int delta = args->GetX() - m_lastDragPointer;
-        m_lastDragPointer = args->GetX();
-        const int scrollbarThickness = 6;
         const int contentInset = m_padding;
         const int horizontalBarWidth = std::min(96, std::max(24, GetFinalWidth() - contentInset * 2 - 8));
         const int thumbLength = m_horizontalScrollBar->GetThumbLength(horizontalBarWidth);
         const int availableTrack = std::max(0, horizontalBarWidth - thumbLength);
         const int range = m_horizontalScrollBar->GetScrollRange();
         if (range > 0 && availableTrack > 0) {
-            const int newValue = static_cast<int>(m_dragStartScrollValueX + (static_cast<long long>(delta) * range + availableTrack / 2) / availableTrack);
-            m_horizontalScrollBar->SetValue(std::clamp(newValue, 0, range));
+            const int pointerPos = std::clamp(args->GetX() - (absX + contentInset + 4), 0, availableTrack);
+            const int dragDelta = pointerPos - m_dragStartPointerX;
+            const int valueDelta = static_cast<int>((static_cast<long long>(dragDelta) * range + availableTrack / 2) / availableTrack);
+            m_horizontalScrollBar->SetValue(std::clamp(m_dragStartScrollValueX + valueDelta, 0, range));
         }
         ScrollTo(m_horizontalScrollBar->GetValue(), m_verticalScrollBar->GetValue());
         return;

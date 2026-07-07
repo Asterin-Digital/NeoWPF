@@ -1,4 +1,5 @@
 #include <NeoWPF/Core/Events/Event.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/Input/Core/Events.h>
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
@@ -13,6 +14,7 @@ void ScrollBar::SetValue(int value) noexcept
         return;
     }
     m_value = newValue;
+    NeoWPF::Diagnostics::LogInfo("[ScrollBar] SetValue: value=%d range=%d content=%d viewport=%d", m_value, GetScrollRange(), m_contentSize, m_viewportSize);
     InvalidateVisual();
     ValueChanged.Invoke(m_value);
     UpdateScrollTarget();
@@ -39,6 +41,7 @@ void ScrollBar::UpdateValueFromPosition(int x, int y) noexcept
     }
 
     const int newValue = static_cast<int>((static_cast<long long>(pointerPos) * range + availableTrack / 2) / availableTrack);
+    NeoWPF::Diagnostics::LogInfo("[ScrollBar] UpdateValueFromPosition: pointerPos=%d track=%d thumb=%d range=%d newValue=%d", pointerPos, trackLength, thumbLength, range, newValue);
     SetValue(newValue);
 }
 

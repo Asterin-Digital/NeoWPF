@@ -338,6 +338,8 @@ private:
     int m_lastDragPointer = 0;
     int m_dragStartScrollValueX = 0;
     int m_dragStartScrollValueY = 0;
+    int m_dragStartPointerX = 0;
+    int m_dragStartPointerY = 0;
     int m_viewportWidth = 0;
     int m_viewportHeight = 0;
     bool m_showVerticalScrollbar = false;

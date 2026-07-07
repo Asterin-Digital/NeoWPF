@@ -61,35 +61,44 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto track = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Track"));
     auto thumb = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Thumb"));
 
+    const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
+    const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
+    const int trackThickness = isVertical ? GetFinalWidth() : GetFinalHeight();
+    const int clampedTrackLength = isVertical ? std::min(trackLength, 72) : std::min(trackLength, 96);
+    const int clampedTrackThickness = std::max(1, std::min(trackThickness, isVertical ? 24 : 24));
+    const int thumbLength = GetThumbLength(clampedTrackLength);
+    const int thumbPosition = GetThumbPosition(clampedTrackLength, thumbLength);
+
     if (track) {
-        track->SetRect(absX, absY, GetFinalWidth(), GetFinalHeight());
+        if (isVertical) {
+            track->SetRect(absX, absY, clampedTrackThickness, clampedTrackLength);
+        } else {
+            track->SetRect(absX, absY, clampedTrackLength, clampedTrackThickness);
+        }
         track->SetFillColor(m_trackColor);
         track->SetOpacity(GetOpacity());
         track->SetClipRect(clip);
         track->BuildRenderCommands(commands);
+    } else if (isVertical) {
+        commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(clampedTrackThickness), static_cast<float>(clampedTrackLength), m_trackColor, GetOpacity(), clip);
     } else {
-        commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(GetFinalWidth()), static_cast<float>(GetFinalHeight()), m_trackColor, GetOpacity(), clip);
+        commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(clampedTrackLength), static_cast<float>(clampedTrackThickness), m_trackColor, GetOpacity(), clip);
     }
-
-    const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
-    const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
-    const int thumbLength = GetThumbLength(trackLength);
-    const int thumbPosition = GetThumbPosition(trackLength, thumbLength);
 
     if (thumb) {
         if (isVertical) {
-            thumb->SetRect(absX, absY + thumbPosition, GetFinalWidth(), thumbLength);
+            thumb->SetRect(absX, absY + thumbPosition, clampedTrackThickness, thumbLength);
         } else {
-            thumb->SetRect(absX + thumbPosition, absY, thumbLength, GetFinalHeight());
+            thumb->SetRect(absX + thumbPosition, absY, thumbLength, clampedTrackThickness);
         }
         thumb->SetFillColor(m_thumbColor);
         thumb->SetOpacity(GetOpacity());
         thumb->SetClipRect(clip);
         thumb->BuildRenderCommands(commands);
     } else if (isVertical) {
-        commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY + thumbPosition), static_cast<float>(GetFinalWidth()), static_cast<float>(thumbLength), m_thumbColor, GetOpacity(), clip);
+        commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY + thumbPosition), static_cast<float>(clampedTrackThickness), static_cast<float>(thumbLength), m_thumbColor, GetOpacity(), clip);
     } else {
-        commands.DrawRect(static_cast<float>(absX + thumbPosition), static_cast<float>(absY), static_cast<float>(thumbLength), static_cast<float>(GetFinalHeight()), m_thumbColor, GetOpacity(), clip);
+        commands.DrawRect(static_cast<float>(absX + thumbPosition), static_cast<float>(absY), static_cast<float>(thumbLength), static_cast<float>(clampedTrackThickness), m_thumbColor, GetOpacity(), clip);
     }
 }
 
