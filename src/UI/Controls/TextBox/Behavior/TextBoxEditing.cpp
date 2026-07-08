@@ -98,9 +98,31 @@ void TextBox::OnMouseDown(int x, int y, std::uint32_t buttonState)
     InvalidateVisual();
 }
 
+void TextBox::OnMouseUp(int x, int y, std::uint32_t buttonState)
+{
+    if (!IsEnabled()) {
+        return;
+    }
+
+    const bool hadDrag = m_isDraggingVerticalScrollbar || m_isDraggingHorizontalScrollbar;
+    m_isDraggingVerticalScrollbar = false;
+    m_isDraggingHorizontalScrollbar = false;
+    m_lastDragPointer = 0;
+
+    if (hadDrag) {
+        InvalidateVisual();
+    }
+}
+
 void TextBox::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
 {
     if (!args || !IsEnabled()) {
+        return;
+    }
+
+    if (!args->IsLeftButtonDown()) {
+        m_isDraggingVerticalScrollbar = false;
+        m_isDraggingHorizontalScrollbar = false;
         return;
     }
 

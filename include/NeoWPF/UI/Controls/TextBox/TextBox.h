@@ -265,6 +265,14 @@ public:
 
     /*
         @summary
+        Ends any active scrollbar drag interaction when is released
+
+        @internal
+    */
+    void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
+
+    /*
+        @summary
         Handles mouse movement and wheel input for scrolling when the text overflows.
 
         @internal
