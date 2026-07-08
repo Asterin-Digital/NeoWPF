@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 #include <NeoWPF/Core/Events/Event.h>
+#include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
@@ -72,7 +73,7 @@ private:
     // register a handler function: avoid inlined block comments inside the example
     tb->TextChanged += OnTextChanged;
 */
-class TextBox : public FrameworkElement {
+class TextBox : public NeoWPF::UI::Content::ContentControl {
 public:
     static bool s_textBoxDebug;
 

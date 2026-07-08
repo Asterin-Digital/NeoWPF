@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
+#include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Styling/Style/Style.h>
 #include <NeoWPF/UI/Styling/Style/StyleManager.h>
@@ -34,11 +35,15 @@ bool NeoWPF::UI::TextBox::s_textBoxDebug = true;
 namespace NeoWPF::UI {
 
 TextBox::TextBox()
-    : FrameworkElement()
+    : Content::ContentControl()
 {
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
     SetClipToBounds(true);
+
+    auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
+    presenter->SetPadding(m_padding);
+    SetPresenter(presenter);
 
     m_verticalScrollBar = std::make_shared<ScrollBar>();
     m_verticalScrollBar->SetOrientation(ScrollBarOrientation::Vertical);
@@ -91,7 +96,11 @@ void TextBox::Measure(int availableWidth, int availableHeight)
         NeoWPF::Diagnostics::LogInfo("[TextBox] Measure: available=%dx%d, desired=%dx%d, textLength=%zu", availableWidth, availableHeight, desiredWidth, desiredHeight, m_text.size());
     }
 
-    SetDesiredSize(desiredWidth, desiredHeight);
+    if (auto presenter = GetPresenter()) {
+        presenter->Measure(availableWidth, availableHeight);
+    }
+
+    SetDesiredSize(std::max(desiredWidth, GetDesiredWidth()), std::max(desiredHeight, GetDesiredHeight()));
 }
 
 void TextBox::Arrange(int finalWidth, int finalHeight)
@@ -108,7 +117,7 @@ void TextBox::Arrange(int finalWidth, int finalHeight)
         }
     });
 
-    FrameworkElement::Arrange(finalWidth, finalHeight);
+    Content::ContentControl::Arrange(finalWidth, finalHeight);
     m_contentHostWidth = std::max(0, finalWidth - (m_padding * 2));
     m_contentHostHeight = std::max(0, finalHeight - (m_padding * 2));
     UpdateScrollMetrics();
@@ -306,6 +315,8 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         m_horizontalScrollBar->SetLayoutOffset(relativeBarX, relativeBarY);
         m_horizontalScrollBar->BuildRenderCommands(commands);
     }
+
+    Content::ContentControl::BuildRenderCommands(commands);
 }
 
 void TextBox::EnsureTextTexture()
