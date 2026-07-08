@@ -361,11 +361,23 @@ public:
 
         @internal
     */
+    /*
+        @summary
+        Returns the element's position in absolute coordinates.
+
+        @param outX
+        Receives the absolute X position.
+
+        @param outY
+        Receives the absolute Y position.
+
+        @internal
+    */
     void GetAbsolutePosition(int& outX, int& outY) const noexcept;
 
     /*
         @summary
-        Returns the element's absolute layout position, excluding render offset.
+        Returns the element's layout position in absolute coordinates.
 
         @param outX
         Receives the absolute X position.
@@ -377,6 +389,10 @@ public:
     */
     void GetAbsoluteLayoutPosition(int& outX, int& outY) const noexcept;
 
+protected:
+    void ApplyRenderTransform(float& x, float& y, float width, float height) const noexcept;
+
+public:
     static bool s_frameworkElementLogging;
 
 private:

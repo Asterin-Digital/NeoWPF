@@ -168,6 +168,7 @@
     <ClInclude Include="include\NeoWPF\UI\Core\Element\IContentAware.h" />
     <ClInclude Include="include\NeoWPF\UI\Core\Element\UIElement.h" />
     <ClInclude Include="include\NeoWPF\UI\Core\Element\Visual.h" />
+    <ClInclude Include="include\NeoWPF\UI\Core\Transform\Transform.h" />
     <ClInclude Include="include\NeoWPF\UI\Layout\Panel\Panel.h" />
     <ClInclude Include="include\NeoWPF\UI\Layout\Panel\StackPanel.h" />
     <ClInclude Include="include\NeoWPF\UI\Layout\Grid\Grid.h" />
@@ -212,6 +213,7 @@
     <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxStyles.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxTemplate.cpp" />
     <ClCompile Include="src\UI\Controls\Text\Visual\TextBlockStyles.cpp" />
+    <ClCompile Include="src\UI\Core\Transform\Transform.cpp" />
     <ClCompile Include="src\UI\Layout\Alignment\Alignment.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\Panel.Styles.cpp" />
     <ClCompile Include="src\UI\Layout\Border\Visual\BorderStyles.cpp" />

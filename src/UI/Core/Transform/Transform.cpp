@@ -1,7 +1,12 @@
 #include <NeoWPF/UI/Core/Transform/Transform.h>
+#include <NeoWPF/UI/Animation/AnimationController.h>
+#include <NeoWPF/UI/Animation/Core/Timeline.h>
+#include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
 #include <cmath>
 
-namespace NeoWPF::UI::Core {
+namespace NeoWPF::UI {
+
+namespace Core {
 
 Matrix4::Matrix4() {
     m[0][0] = 1; m[0][1] = 0; m[0][2] = 0; m[0][3] = 0;
@@ -74,6 +79,22 @@ Matrix4 ScaleTransform::GetMatrix() const {
 
 std::shared_ptr<Transform> ScaleTransform::Clone() const {
     return std::make_shared<ScaleTransform>(m_scaleX, m_scaleY, m_centerX, m_centerY);
+}
+
+void ScaleTransform::AnimateTo(float scaleValue, float durationSeconds) {
+    using namespace NeoWPF::UI::Animation;
+
+    auto storyboard = std::make_shared<Storyboard>();
+    auto scaleXTimeline = std::make_shared<Timeline>(m_scaleX, scaleValue, durationSeconds, [this](float value) {
+        SetScaleX(value);
+    });
+    auto scaleYTimeline = std::make_shared<Timeline>(m_scaleY, scaleValue, durationSeconds, [this](float value) {
+        SetScaleY(value);
+    });
+
+    storyboard->AddTimeline(scaleXTimeline);
+    storyboard->AddTimeline(scaleYTimeline);
+    NeoWPF::UI::AddStoryboard(storyboard);
 }
 
 TranslateTransform::TranslateTransform(float x, float y)
@@ -172,4 +193,6 @@ std::shared_ptr<Transform> TransformGroup::Clone() const {
     return cloned;
 }
 
-}
+} // namespace Core
+
+} // namespace NeoWPF::UI

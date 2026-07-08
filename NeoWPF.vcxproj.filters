@@ -225,6 +225,15 @@
     <ClCompile Include="src\Diagnostics\CallStackTracer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\UI\Layout\Border\Visual\BorderStyles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Layout\Border\Border.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Core\Transform\Transform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\NeoWPF\Animation\Animation.h">
@@ -411,6 +420,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\Diagnostics\CallStackTracer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Layout\Border\Border.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Core\Transform\Transform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

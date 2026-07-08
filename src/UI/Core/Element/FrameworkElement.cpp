@@ -2,6 +2,7 @@
 #include <NeoWPF/UI/Animation/AnimationController.h>
 #include <NeoWPF/UI/Animation/Core/Timeline.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
+#include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <NeoWPF/Diagnostics/CallStackTracer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <typeinfo>
@@ -95,6 +96,29 @@ namespace UI
             }
             parent = parent->GetParent();
         }
+    }
+
+    void FrameworkElement::ApplyRenderTransform(float& x, float& y, float width, float height) const noexcept
+    {
+        auto transform = GetRenderTransform();
+        if (!transform) {
+            return;
+        }
+
+        auto origin = GetRenderTransformOrigin();
+        float originX = width * origin.X;
+        float originY = height * origin.Y;
+
+        float localX = x - x + originX;
+        float localY = y - y + originY;
+
+        NeoWPF::UI::Core::Matrix4 matrix = transform->GetMatrix();
+
+        float transformed_x = matrix.m[3][0] + (localX * matrix.m[0][0] + localY * matrix.m[1][0]);
+        float transformed_y = matrix.m[3][1] + (localX * matrix.m[0][1] + localY * matrix.m[1][1]);
+
+        x = x + (transformed_x - originX);
+        y = y + (transformed_y - originY);
     }
 
 
