@@ -10,6 +10,8 @@ namespace NeoWPF::Input::Core
 
 namespace NeoWPF::UI {
 
+static bool s_panelLogging;
+
 void RegisterPanelStyles();
 
 class Panel : public FrameworkElement {

@@ -127,6 +127,7 @@
     <ClInclude Include="include\NeoWPF\Core\Core.h" />
     <ClInclude Include="include\NeoWPF\Core\Events\Event.h" />
     <ClInclude Include="include\NeoWPF\Core\Root\RootVisuals.h" />
+    <ClInclude Include="include\NeoWPF\Diagnostics\CallStackTracer.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\DeveloperWarnings.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Diagnostics.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Logger.h" />
@@ -178,12 +179,15 @@
     <ClInclude Include="include\NeoWPF\UI\Styling\State\VisualStateManager.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Templates\ControlTemplate.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Templates\TemplateParts.h" />
+    <ClInclude Include="include\NeoWPF\UI\Content\ContentControl.h" />
+    <ClInclude Include="include\NeoWPF\UI\Content\ContentPresenter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Core\Application\Application.cpp" />
     <ClCompile Include="src\Core\Application\ApplicationRuntime.cpp" />
     <ClCompile Include="src\Core\Application\ApplicationWindows.cpp" />
     <ClCompile Include="src\Core\Application\ApplicationStartup.cpp" />
+    <ClCompile Include="src\Diagnostics\CallStackTracer.cpp" />
     <ClCompile Include="src\Diagnostics\DeveloperWarnings.cpp" />
     <ClCompile Include="src\Core\Root\RootVisuals.cpp" />
     <ClCompile Include="src\UI\Animation\AnimationController.cpp" />
@@ -244,6 +248,8 @@
     <ClCompile Include="src\UI\Styling\State\VisualStateManager.cpp" />
     <ClCompile Include="src\UI\Controls\Templates\ControlTemplate.cpp" />
     <ClCompile Include="src\UI\Controls\Templates\TemplateVisual.cpp" />
+    <ClCompile Include="src\UI\Content\ContentControl.cpp" />
+    <ClCompile Include="src\UI\Content\ContentPresenter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="docs\CommentFormatting.md" />

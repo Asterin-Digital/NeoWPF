@@ -377,6 +377,8 @@ public:
     */
     void GetAbsoluteLayoutPosition(int& outX, int& outY) const noexcept;
 
+    static bool s_frameworkElementLogging;
+
 private:
     int m_desiredWidth = 0;
     int m_desiredHeight = 0;

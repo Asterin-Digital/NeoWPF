@@ -2,6 +2,7 @@
 #include <NeoWPF/UI/Animation/AnimationController.h>
 #include <NeoWPF/UI/Animation/Core/Timeline.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
+#include <NeoWPF/Diagnostics/CallStackTracer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <typeinfo>
 #include <algorithm>
@@ -13,6 +14,10 @@
 namespace NeoWPF {
 namespace UI
 {
+
+    bool FrameworkElement::s_frameworkElementLogging = false;
+
+
     int FrameworkElement::ResolveWidth(int availableWidth, int desiredWidth) const
     {
         if (m_widthMode == LayoutSizeMode::Stretch) {
@@ -92,6 +97,7 @@ namespace UI
         }
     }
 
+
     void FrameworkElement::BeginAnimation(HorizontalAlignment horizontal, VerticalAlignment vertical, float durationSeconds)
     {
         auto parent = GetParent();
@@ -137,24 +143,39 @@ namespace UI
 
     void FrameworkElement::Measure(int availableWidth, int availableHeight)
     {
-        NeoWPF::Diagnostics::LogInfo(
-            "[FrameworkElement::Measure] Type=%s, Available=(%d x %d)",
-            typeid(*this).name(),
-            availableWidth,
-            availableHeight
-        );
+        if (s_frameworkElementLogging) {
+            NeoWPF::Diagnostics::LogInfo(
+                "[FrameworkElement::Measure] Type=%s, Available=(%d x %d)",
+                typeid(*this).name(),
+                availableWidth,
+                availableHeight
+            );
+        }
         m_desiredWidth = availableWidth;
         m_desiredHeight = availableHeight;
     }
 
     void FrameworkElement::Arrange(int finalWidth, int finalHeight)
     {
-        NeoWPF::Diagnostics::LogInfo(
-            "[FrameworkElement::Arrange] Type=%s, Final=(%d x %d)",
-            typeid(*this).name(),
-            finalWidth,
-            finalHeight
-        );
+        if (s_frameworkElementLogging) {
+            NeoWPF::Diagnostics::LogInfo(
+                "[FrameworkElement::Arrange] Type=%s, Final=(%d x %d)",
+                typeid(*this).name(),
+                finalWidth,
+                finalHeight
+            );
+
+            NeoWPF::Diagnostics::CallStackEntry stack[4];
+            int count = NeoWPF::Diagnostics::CaptureCallStack(stack, 4, 1);
+            for (int i = 0; i < count; ++i) {
+                if (stack[i].symbol[0] != '\0') {
+                    NeoWPF::Diagnostics::LogInfo("  caller[%d] %s @ %p", i, stack[i].symbol, stack[i].address);
+                } else {
+                    NeoWPF::Diagnostics::LogInfo("  caller[%d] <unknown> @ %p", i, stack[i].address);
+                }
+            }
+        }
+
         m_finalWidth = finalWidth;
         m_finalHeight = finalHeight;
     }

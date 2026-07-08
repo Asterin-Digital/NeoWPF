@@ -2,10 +2,12 @@
 
 #include <memory>
 #include <string>
-#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Content/ContentControl.h>
+#include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/Core/Events/Event.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
+#include <NeoWPF/UI/Controls/Text/TextBlock.h>
 
 namespace NeoWPF::Input::Core {
     class MouseEventArgs;
@@ -28,7 +30,7 @@ void RegisterButtonStyles();
     This is the basic clickable thing you use for actions. It can show text, change colors,
     and raise `Click` when the user presses it.
 */
-class Button : public FrameworkElement {
+class Button : public NeoWPF::UI::Content::ContentControl {
 public:
     Button();
 
@@ -65,7 +67,7 @@ public:
         @param color
         ARGB color value.
     */
-    void SetTextColor(uint32_t color) noexcept { m_textColor = color; InvalidateVisual(); }
+    void SetTextColor(uint32_t color) noexcept { m_textColor = color; if (m_textContent) { m_textContent->SetTextColor(color); } InvalidateVisual(); }
 
     /*
         @summary
@@ -80,7 +82,7 @@ public:
         @param fontSize
         Size in pixels.
     */
-    void SetFontSize(int fontSize) noexcept { m_fontSize = fontSize; InvalidateVisual(); }
+    void SetFontSize(int fontSize) noexcept { m_fontSize = fontSize; if (m_textContent) { m_textContent->SetFontSize(fontSize); } InvalidateVisual(); }
 
     /*
         @summary
@@ -95,7 +97,7 @@ public:
         @param padding
         Padding in pixels.
     */
-    void SetPadding(int padding) noexcept { m_padding = padding; InvalidateVisual(); }
+    void SetPadding(int padding) noexcept { m_padding = padding; if (auto presenter = GetPresenter()) { presenter->SetPadding(padding); } InvalidateVisual(); }
 
     /*
         @summary
@@ -201,20 +203,10 @@ private:
 
 private:
     int m_padding = 8;
-    uint32_t m_textureId = 0;
-    int m_textWidth = 0;
-    int m_textHeight = 0;
-    bool m_textDirty = true;
     std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> m_visualStateManager;
     std::string m_currentVisualState;
+    std::shared_ptr<NeoWPF::UI::TextBlock> m_textContent;
 
-    /*
-        @summary
-        Makes sure the text texture exists before drawing.
-
-        @internal
-    */
-    void EnsureTextTexture();
     void InitializeVisualStates();
     void ApplyVisualState(const std::string& stateName, bool useTransitions = false);
 

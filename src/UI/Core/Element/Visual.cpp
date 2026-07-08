@@ -1,4 +1,6 @@
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <algorithm>
@@ -22,6 +24,19 @@ bool ShouldWarnDanglingChild(const std::shared_ptr<Visual>& child)
 void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
 {
     if (!child) return;
+    
+    if (auto* presenter = dynamic_cast<Content::ContentPresenter*>(child.get())) {
+        if (auto* parent = dynamic_cast<FrameworkElement*>(this)) {
+            if (!GetParent() && parent->GetFinalWidth() == 0 && parent->GetFinalHeight() == 0) {
+                const std::wstring title = L"EarlyPresenterAttachment: ContentPresenter added during initialization";
+                NeoWPF::Diagnostics::QueueDeveloperWarning(
+                    title,
+                    L"ContentPresenter was added to ContentControl during initialization (constructor). Defer attachment until after layout begins.",
+                    NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
+                return;
+            }
+        }
+    }
 
     if (ShouldWarnDanglingChild(child)) {
         const std::wstring title = std::wstring(NeoWPF::Diagnostics::DeveloperWarnings::kDanglingChildReferenceCode) + L": dangling child reference detected";

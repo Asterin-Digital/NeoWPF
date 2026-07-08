@@ -216,6 +216,15 @@
     <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxScroll.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\UI\Content\ContentControl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Content\ContentPresenter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Diagnostics\CallStackTracer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\NeoWPF\Animation\Animation.h">
@@ -393,6 +402,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Controls\Templates\TemplateVisual.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Content\ContentControl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Content\ContentPresenter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\Diagnostics\CallStackTracer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

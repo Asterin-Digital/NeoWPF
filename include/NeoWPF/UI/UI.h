@@ -17,4 +17,6 @@
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateParts.h>
+#include <NeoWPF/UI/Content/ContentControl.h>
+#include <NeoWPF/UI/Content/ContentPresenter.h>
 
