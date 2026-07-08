@@ -1,8 +1,10 @@
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
+#include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <memory>
+#include <algorithm>
 
 #ifdef min
 #undef min
@@ -15,12 +17,17 @@
 namespace NeoWPF::UI {
 
 ScrollBar::ScrollBar()
-    : FrameworkElement()
+    : Content::ContentControl()
 {
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
     SetTemplate(std::make_shared<ScrollBarTemplate>());
     ApplyTemplate();
+
+    auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
+    presenter->SetPadding(0);
+    SetPresenter(presenter);
+
     SetWidth(16);
     SetHeight(120);
     SetClipToBounds(true);
@@ -31,12 +38,28 @@ ScrollBar::~ScrollBar() = default;
 void ScrollBar::Measure(int availableWidth, int availableHeight)
 {
     const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
-    SetDesiredSize(isVertical ? 16 : 120, isVertical ? 120 : 16);
+    const int thickness = 16;
+    const int minLength = 24;
+    const int primaryAvailable = isVertical ? availableHeight : availableWidth;
+    const int length = std::max(minLength, std::max(0, primaryAvailable));
+
+    if (isVertical) {
+        SetDesiredSize(thickness, length);
+    } else {
+        SetDesiredSize(length, thickness);
+    }
+
+    if (auto presenter = GetPresenter()) {
+        presenter->Measure(availableWidth, availableHeight);
+    }
 }
 
 void ScrollBar::Arrange(int finalWidth, int finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
+    if (auto presenter = GetPresenter()) {
+        presenter->Arrange(finalWidth, finalHeight);
+    }
     if (s_scrollBarDebug) {
         NeoWPF::Diagnostics::LogInfo("[ScrollBar] Arrange: final=%dx%d orientation=%d value=%d content=%d viewport=%d", finalWidth, finalHeight, static_cast<int>(m_orientation), m_value, m_contentSize, m_viewportSize);
     }
@@ -110,6 +133,10 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY + thumbPosition), static_cast<float>(trackThickness), static_cast<float>(thumbLength), m_thumbColor, GetOpacity(), clip);
     } else {
         commands.DrawRect(static_cast<float>(absX + thumbPosition), static_cast<float>(absY), static_cast<float>(thumbLength), static_cast<float>(trackThickness), m_thumbColor, GetOpacity(), clip);
+    }
+
+    if (auto presenter = GetPresenter()) {
+        presenter->BuildRenderCommands(commands);
     }
 }
 

@@ -2,9 +2,10 @@
 
 #include <NeoWPF/Core/Events/Event.h>
 #include <NeoWPF/Input/Core/Events.h>
-#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <cstdint>
+#include <memory>
 
 namespace NeoWPF::UI {
 
@@ -28,7 +29,7 @@ void RegisterScrollBarStyles();
     scrollBar->SetScrollTarget(contentHost);
     scrollBar->SetViewportElement(viewport);
 */
-class ScrollBar : public FrameworkElement {
+class ScrollBar : public NeoWPF::UI::Content::ContentControl {
 public:
     ScrollBar();
 
@@ -129,7 +130,7 @@ public:
         @example
         scrollBar->SetScrollTarget(contentHost);
     */
-    void SetScrollTarget(FrameworkElement* target) noexcept { m_scrollTarget = target; UpdateScrollState(); }
+    void SetScrollTarget(const std::shared_ptr<FrameworkElement>& target) noexcept { m_scrollTarget = target; UpdateScrollState(); }
 
     /*
         @summary
@@ -141,7 +142,7 @@ public:
         @example
         scrollBar->SetViewportElement(viewport);
     */
-    void SetViewportElement(FrameworkElement* viewportElement) noexcept { m_viewportElement = viewportElement; UpdateScrollState(); }
+    void SetViewportElement(const std::shared_ptr<FrameworkElement>& viewportElement) noexcept { m_viewportElement = viewportElement; UpdateScrollState(); }
 
     /*
         @summary
@@ -279,8 +280,8 @@ private:
     bool m_isDragging = false;
     int m_dragStartValue = 0;
     int m_dragStartPointer = 0;
-    FrameworkElement* m_scrollTarget = nullptr;
-    FrameworkElement* m_viewportElement = nullptr;
+    std::shared_ptr<FrameworkElement> m_scrollTarget;
+    std::shared_ptr<FrameworkElement> m_viewportElement;
 };
 
 class ScrollBarTemplate : public Templates::ControlTemplate {
