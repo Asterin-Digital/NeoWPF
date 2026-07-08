@@ -78,7 +78,8 @@ void TextLayout::Refresh(const std::wstring& text, int fontSize, bool createText
             }
         }
 
-        line.lineHeight = line.height > 0 ? line.height : lineHeight;
+        const int renderedHeight = std::max(1, line.height > 0 ? line.height : lineHeight);
+        line.lineHeight = std::max(lineHeight, renderedHeight);
         m_lines.push_back(line);
     }
 }
@@ -91,9 +92,9 @@ int TextLayout::MeasureLineHeight(const std::wstring& text, int fontSize) {
 
 int TextLayout::GetLineHeight(std::size_t lineIndex) const {
     if (lineIndex < m_lines.size()) {
-        return m_lines[lineIndex].lineHeight;
+        return std::max(1, m_lines[lineIndex].lineHeight);
     }
-    return MeasureLineHeight(L"W", m_fontSize);
+    return std::max(1, MeasureLineHeight(L"W", m_fontSize));
 }
 
 int TextLayout::GetLineVisualOffset(std::size_t lineIndex) const {

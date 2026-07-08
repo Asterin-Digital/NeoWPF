@@ -216,4 +216,4 @@ void TextBox::UpdateHorizontalScrollFromPointer(int pointerX)
     m_horizontalScrollBar->SetValue(value);
 }
 
-} // namespace NeoWPF::UI
+}

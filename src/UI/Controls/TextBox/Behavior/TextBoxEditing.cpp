@@ -238,6 +238,7 @@ void TextBox::OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args)
             NeoWPF::Diagnostics::LogInfo("[TextBox] OnKeyboardInput: keyCode=%d charCode=%u caret=%zu textLength=%zu", keyCode, static_cast<unsigned int>(charCode), m_caretPosition, m_text.size());
         }
         args->SetHandled(true);
+        m_textDirty = true;
         InvalidateVisual();
     }
 }
@@ -249,6 +250,7 @@ void TextBox::InsertCharacter(wchar_t character)
     ++m_caretPosition;
     m_textDirty = true;
     InvalidateVisual();
+    EnsureCaretVisible();
     TextChanged.Invoke(m_text);
 }
 
@@ -276,6 +278,7 @@ void TextBox::RemoveCharacter(bool backspace)
     m_caretPosition = std::min(m_caretPosition, m_text.size());
     m_textDirty = true;
     InvalidateVisual();
+    EnsureCaretVisible();
     TextChanged.Invoke(m_text);
 }
 

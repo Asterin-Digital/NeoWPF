@@ -213,6 +213,9 @@
     <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextLayout.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxScroll.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\NeoWPF\Animation\Animation.h">
@@ -387,6 +390,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Controls\TextBox\TextBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Controls\Templates\TemplateVisual.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

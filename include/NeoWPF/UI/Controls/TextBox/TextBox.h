@@ -452,6 +452,14 @@ private:
 
     /*
         @summary
+        Returns the visual Y offset for the given rendered line.
+
+        @internal
+    */
+    int GetLineVisualOffset(std::size_t lineIndex) const;
+
+    /*
+        @summary
         Scrolls the viewport based on a pointer position inside the vertical bar track.
 
         @internal
@@ -465,14 +473,6 @@ private:
         @internal
     */
     void UpdateHorizontalScrollFromPointer(int pointerX);
-
-    /*
-        @summary
-        Returns the visual X offset for the given rendered line.
-
-        @internal
-    */
-    int GetLineVisualOffset(std::size_t lineIndex) const;
 
     /*
         @summary

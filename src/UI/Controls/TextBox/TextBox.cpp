@@ -119,7 +119,9 @@ void TextBox::Arrange(int finalWidth, int finalHeight)
     if (m_textDirty) {
         EnsureTextTexture();
     }
-    EnsureCaretVisible();
+    if (m_isFocused && m_textDirty) {
+        EnsureCaretVisible();
+    }
 }
 
 void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
@@ -206,15 +208,16 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     const auto& lines = m_textLayout.GetLines();
     for (std::size_t lineIndex = 0; lineIndex < lines.size(); ++lineIndex) {
         const auto& line = lines[lineIndex];
+        const int lineHeight = std::max(1, line.lineHeight);
         if (line.textureId == 0 || line.width <= 0 || line.height <= 0) {
-            currentY += std::max(1, line.lineHeight);
+            currentY += lineHeight;
             continue;
         }
 
         const int drawWidth = std::min(line.width, viewportWidth);
         const float uvRight = drawWidth > 0 ? static_cast<float>(drawWidth) / static_cast<float>(line.width) : 1.0f;
-        const int drawHeight = std::max(1, line.height);
-        const float uvBottom = drawHeight > 0 ? static_cast<float>(drawHeight) / static_cast<float>(line.height) : 1.0f;
+        const int drawHeight = std::max(1, std::min(line.height > 0 ? line.height : lineHeight, lineHeight));
+        const float uvBottom = drawHeight > 0 ? static_cast<float>(drawHeight) / static_cast<float>(std::max(1, line.height > 0 ? line.height : lineHeight)) : 1.0f;
         const int lineVerticalOffset = GetLineVisualOffset(lineIndex);
 
         if (s_textBoxDebug) {
@@ -232,7 +235,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             GetOpacity(),
             clip);
 
-        currentY += std::max(1, line.lineHeight);
+        currentY += lineHeight;
     }
 
     if (m_isFocused) {
@@ -303,6 +306,22 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         m_horizontalScrollBar->SetLayoutOffset(relativeBarX, relativeBarY);
         m_horizontalScrollBar->BuildRenderCommands(commands);
     }
+}
+
+void TextBox::EnsureTextTexture()
+{
+    if (!m_textDirty) {
+        return;
+    }
+
+    m_textLayout.Refresh(m_text, m_fontSize, true);
+    m_textDirty = false;
+    InvalidateVisual();
+}
+
+int TextBox::GetLineVisualOffset(std::size_t lineIndex) const
+{
+    return m_textLayout.GetLineVisualOffset(lineIndex);
 }
 
 }
