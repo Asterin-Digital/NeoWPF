@@ -11,6 +11,15 @@ namespace NeoWPF::Input::Core
     class KeyboardEventArgs;
 }
 
+namespace NeoWPF::UI::Core {
+    class Transform;
+    struct Point {
+        float X;
+        float Y;
+        Point(float x = 0.0f, float y = 0.0f) : X(x), Y(y) {}
+    };
+}
+
 namespace NeoWPF::UI {
 class UIElement;
 }
@@ -50,6 +59,12 @@ public:
     void InvalidateVisual();
     bool IsDirty() const noexcept { return m_isDirty; }
     void ClearDirty() noexcept;
+
+    std::shared_ptr<NeoWPF::UI::Core::Transform> GetRenderTransform() const noexcept;
+    void SetRenderTransform(std::shared_ptr<NeoWPF::UI::Core::Transform> transform) noexcept;
+
+    NeoWPF::UI::Core::Point GetRenderTransformOrigin() const noexcept;
+    void SetRenderTransformOrigin(NeoWPF::UI::Core::Point origin) noexcept;
 
     void BeginAnimation(float from, float to, float durationSeconds);
 
@@ -96,6 +111,8 @@ private:
     std::unordered_map<std::string, std::shared_ptr<Visual>> m_templateChildren;
     std::unordered_map<std::string, uint32_t> m_properties;
     std::shared_ptr<Visual> m_appliedTemplateRoot;
+    std::shared_ptr<NeoWPF::UI::Core::Transform> m_renderTransform;
+    NeoWPF::UI::Core::Point m_renderTransformOrigin;
 };
 
 }

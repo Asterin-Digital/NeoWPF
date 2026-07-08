@@ -44,6 +44,10 @@ void Button::OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args)
 {
     if (IsEnabled()) {
         ApplyVisualState("MouseOver", false);
+
+        const int fromWidth = GetFinalWidth() > 0 ? GetFinalWidth() : 120;
+        const int fromHeight = GetFinalHeight() > 0 ? GetFinalHeight() : 40;
+        BeginAnimation(fromWidth, fromWidth + 24, fromHeight, fromHeight + 10, 0.2f);
     }
 }
 
@@ -51,6 +55,10 @@ void Button::OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args)
 {
     if (IsEnabled()) {
         ApplyVisualState("Normal", false);
+
+        const int fromWidth = GetFinalWidth() > 0 ? GetFinalWidth() : 144;
+        const int fromHeight = GetFinalHeight() > 0 ? GetFinalHeight() : 50;
+        BeginAnimation(fromWidth, 120, fromHeight, 40, 0.2f);
     }
 }
 
@@ -72,4 +80,4 @@ void Button::OnMouseUp(int x, int y, std::uint32_t buttonState)
     }
 }
 
-} // namespace NeoWPF::UI
+}

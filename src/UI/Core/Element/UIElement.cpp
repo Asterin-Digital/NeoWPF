@@ -26,6 +26,24 @@ void UIElement::BeginAnimation(float from, float to, float durationSeconds) {
     NeoWPF::UI::AddStoryboard(storyboard);
 }
 
+std::shared_ptr<NeoWPF::UI::Core::Transform> UIElement::GetRenderTransform() const noexcept {
+    return m_renderTransform;
+}
+
+void UIElement::SetRenderTransform(std::shared_ptr<NeoWPF::UI::Core::Transform> transform) noexcept {
+    m_renderTransform = transform;
+    InvalidateVisual();
+}
+
+NeoWPF::UI::Core::Point UIElement::GetRenderTransformOrigin() const noexcept {
+    return m_renderTransformOrigin;
+}
+
+void UIElement::SetRenderTransformOrigin(NeoWPF::UI::Core::Point origin) noexcept {
+    m_renderTransformOrigin = origin;
+    InvalidateVisual();
+}
+
 void UIElement::SetTemplate(const std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase>& templatePtr) {
     if (m_appliedTemplateRoot) {
         RemoveVisualChild(m_appliedTemplateRoot);
