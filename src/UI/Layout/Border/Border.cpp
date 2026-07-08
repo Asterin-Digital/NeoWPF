@@ -15,6 +15,13 @@ Border::Border()
 void Border::Measure(int availableWidth, int availableHeight)
 {
     if (auto presenter = GetPresenter()) {
+        if (!presenter->GetParent()) {
+            try {
+                AddChild(presenter);
+            } catch (const std::bad_weak_ptr&) {
+            }
+        }
+
         presenter->SetPadding(m_padding);
 
         const int innerWidth = std::max(0, availableWidth - (2 * m_borderThickness) - (2 * m_padding));
@@ -22,8 +29,10 @@ void Border::Measure(int availableWidth, int availableHeight)
 
         presenter->Measure(innerWidth, innerHeight);
 
-        const int desiredW = std::max(0, presenter->GetDesiredWidth() + (2 * m_borderThickness) + (2 * m_padding));
-        const int desiredH = std::max(0, presenter->GetDesiredHeight() + (2 * m_borderThickness) + (2 * m_padding));
+        const int contentW = presenter->GetDesiredWidth();
+        const int contentH = presenter->GetDesiredHeight();
+        const int desiredW = std::max(0, contentW + (2 * m_borderThickness) + (2 * m_padding));
+        const int desiredH = std::max(0, contentH + (2 * m_borderThickness) + (2 * m_padding));
 
         SetDesiredSize(desiredW, desiredH);
         return;
@@ -37,11 +46,19 @@ void Border::Arrange(int finalWidth, int finalHeight)
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
     if (auto presenter = GetPresenter()) {
+        const int innerX = m_borderThickness + m_padding;
+        const int innerY = m_borderThickness + m_padding;
         const int innerWidth = std::max(0, finalWidth - (2 * m_borderThickness) - (2 * m_padding));
         const int innerHeight = std::max(0, finalHeight - (2 * m_borderThickness) - (2 * m_padding));
 
         presenter->Arrange(innerWidth, innerHeight);
-        presenter->SetLayoutOffset(m_borderThickness + m_padding, m_borderThickness + m_padding);
+        presenter->SetLayoutOffset(innerX, innerY);
+        if (!presenter->GetParent()) {
+            try {
+                AddChild(presenter);
+            } catch (const std::bad_weak_ptr&) {
+            }
+        }
     }
 }
 
