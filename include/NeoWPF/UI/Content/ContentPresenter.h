@@ -28,6 +28,7 @@ public:
     void Arrange(int finalWidth, int finalHeight) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
+    bool IsHitTestVisible() const noexcept override { return false; }
     ContentBounds GetContentBounds() const noexcept override;
 
 private:

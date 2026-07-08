@@ -15,7 +15,7 @@ namespace NeoWPF {
 namespace UI
 {
 
-    bool FrameworkElement::s_frameworkElementLogging = true;
+    bool FrameworkElement::s_frameworkElementLogging = false;
 
 
     int FrameworkElement::ResolveWidth(int availableWidth, int desiredWidth) const
@@ -106,11 +106,11 @@ namespace UI
         }
 
         auto parentFE = dynamic_cast<FrameworkElement*>(parent);
-        int parentWidth = parentFE ? parentFE->GetFinalWidth() : 0;
-        int parentHeight = parentFE ? parentFE->GetFinalHeight() : 0;
+        int parentWidth = parentFE ? (std::max)(parentFE->GetFinalWidth(), parentFE->GetDesiredWidth()) : 0;
+        int parentHeight = parentFE ? (std::max)(parentFE->GetFinalHeight(), parentFE->GetDesiredHeight()) : 0;
 
-        int childWidth = GetFinalWidth() > 0 ? GetFinalWidth() : GetDesiredWidth();
-        int childHeight = GetFinalHeight() > 0 ? GetFinalHeight() : GetDesiredHeight();
+        int childWidth = (std::max)(GetFinalWidth(), GetDesiredWidth());
+        int childHeight = (std::max)(GetFinalHeight(), GetDesiredHeight());
 
         int targetX = 0;
         switch (horizontal) {

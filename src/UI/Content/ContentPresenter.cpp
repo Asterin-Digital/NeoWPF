@@ -88,14 +88,7 @@ void ContentPresenter::BuildRenderCommands(NeoWPF::Rendering::CommandList& comma
 
 ContentBounds ContentPresenter::GetContentBounds() const noexcept
 {
-    ContentBounds bounds{};
-    if (auto* contentAware = dynamic_cast<IContentAware*>(m_content.get())) {
-        bounds = contentAware->GetContentBounds();
-    } else if (auto* frameworkContent = dynamic_cast<FrameworkElement*>(m_content.get())) {
-        bounds.width = frameworkContent->GetDesiredWidth();
-        bounds.height = frameworkContent->GetDesiredHeight();
-    }
-    return bounds;
+    return ContentBounds{GetFinalWidth(), GetFinalHeight()};
 }
 
 }

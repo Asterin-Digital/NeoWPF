@@ -70,7 +70,7 @@ void ContentControl::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
 ContentBounds ContentControl::GetContentBounds() const noexcept
 {
     if (m_presenter) {
-        return m_presenter->GetContentBounds();
+        return ContentBounds{m_presenter->GetFinalWidth(), m_presenter->GetFinalHeight()};
     }
 
     return ContentBounds{};
