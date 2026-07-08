@@ -167,16 +167,6 @@
     },
     {
       "kind": "method",
-      "name": "EnsureTextTexture",
-      "source": "Button",
-      "summary": "Makes sure the text texture exists before drawing.",
-      "details": "",
-      "example": "",
-      "params": [],
-      "isInternal": true
-    },
-    {
-      "kind": "method",
       "name": "GetBackgroundColor",
       "source": "Button",
       "summary": "Returns the current background color.",
@@ -1001,8 +991,8 @@
       "name": "Grid",
       "source": "Grid",
       "summary": "Lays out children in a grid of rows and columns.",
-      "details": "Rows and columns must be added before children can be placed. Row and column indices are zero-based.",
-      "example": "auto grid = std::make_shared<NeoWPF::UI::Grid>();\ngrid->AddRow(NeoWPF::UI::SizeMode::Auto, 0);\ngrid->AddColumn(NeoWPF::UI::SizeMode::Star, 1);\ngrid->AddChild(button.get(), 0, 0);",
+      "details": "Rows and columns must be added before children can be placed. Row and column indices are zero-based",
+      "example": "auto grid = std::make_shared<NeoWPF::UI::Grid>();\nauto button = std::make_shared<NeoWPF::Button>(L\"OK\");\ngrid->AddRow(NeoWPF::UI::SizeMode::Auto, 0);\ngrid->AddColumn(NeoWPF::UI::SizeMode::Star, 1);\ngrid->AddChild(button, 0, 0);",
       "params": [],
       "isInternal": false
     },
@@ -1255,9 +1245,9 @@
       "kind": "class",
       "name": "ScrollBar",
       "source": "ScrollBar",
-      "summary": "A simple scrollbar for vertical or horizontal scrolling.",
-      "details": "Drop this on a panel or content surface when you want a basic scroll thumb. It works best\nwhen you hook it up to the content element and the visible viewport, then let it report a\ncurrent value as the user drags.",
-      "example": "auto scrollBar = std::make_shared<NeoWPF::UI::ScrollBar>();\nscrollBar->SetOrientation(ScrollBarOrientation::Vertical);\nscrollBar->SetScrollTarget(contentHost);\nscrollBar->SetViewportElement(viewport);\nscrollBar->SetValue(120);",
+      "summary": "A scrollbar for vertical or horizontal scrolling.",
+      "details": "Drop this on a panel or content surface when you want scrolling.",
+      "example": "auto scrollBar = std::make_shared<NeoWPF::UI::ScrollBar>();\nscrollBar->SetOrientation(ScrollBarOrientation::Vertical);\nscrollBar->SetScrollTarget(contentHost);\nscrollBar->SetViewportElement(viewport);",
       "params": [],
       "isInternal": false
     },
@@ -1458,6 +1448,26 @@
     },
     {
       "kind": "method",
+      "name": "ClampScrollOffsets",
+      "source": "TextBox",
+      "summary": "Keeps the current scroll offsets inside the valid range.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "EnsureCaretVisible",
+      "source": "TextBox",
+      "summary": "Makes sure the current caret is visible within the viewport.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
       "name": "EnsureTextTexture",
       "source": "TextBox",
       "summary": "Ensure GPU texture(s) backing the rendered text are present.",
@@ -1508,6 +1518,26 @@
     },
     {
       "kind": "method",
+      "name": "GetHorizontalThumbLength",
+      "source": "TextBox",
+      "summary": "Returns the horizontal thumb length in pixels.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetHorizontalThumbPosition",
+      "source": "TextBox",
+      "summary": "Returns the horizontal thumb length in pixels.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
       "name": "GetLineHeight",
       "source": "TextBox",
       "summary": "Returns the measured height for a given line string.",
@@ -1520,7 +1550,27 @@
       "kind": "method",
       "name": "GetLineVisualOffset",
       "source": "TextBox",
-      "summary": "Returns the visual X offset for the given rendered line.",
+      "summary": "Returns the visual Y offset for the given rendered line.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetMaxHorizontalScroll",
+      "source": "TextBox",
+      "summary": "Returns the maximum horizontal scroll offset.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetMaxVerticalScroll",
+      "source": "TextBox",
+      "summary": "Returns the maximum vertical scroll offset.",
       "details": "",
       "example": "",
       "params": [],
@@ -1535,6 +1585,46 @@
       "example": "",
       "params": [],
       "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetVerticalThumbLength",
+      "source": "TextBox",
+      "summary": "Returns the vertical thumb length in pixels.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetVerticalThumbPosition",
+      "source": "TextBox",
+      "summary": "Returns the vertical thumb position in pixels.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetViewportHeight",
+      "source": "TextBox",
+      "summary": "Returns the visible height available for text content.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetViewportWidth",
+      "source": "TextBox",
+      "summary": "Returns the visible width available for text content.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
     },
     {
       "kind": "method",
@@ -1628,9 +1718,39 @@
     },
     {
       "kind": "method",
+      "name": "OnMouseInput",
+      "source": "TextBox",
+      "summary": "Handles mouse movement and wheel input for scrolling when the text overflows.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "OnMouseUp",
+      "source": "TextBox",
+      "summary": "Ends any active scrollbar drag interaction when is released",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
       "name": "RemoveCharacter",
       "source": "TextBox",
       "summary": "Removes a character (backspace/delete behavior).",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "ScrollTo",
+      "source": "TextBox",
+      "summary": "Scrolls the text viewport to the requested content offsets.",
       "details": "",
       "example": "",
       "params": [],
@@ -1836,6 +1956,36 @@
       "name": "UpdateCaretFromMouse",
       "source": "TextBox",
       "summary": "Updates caret position based on mouse coordinates.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "UpdateHorizontalScrollFromPointer",
+      "source": "TextBox",
+      "summary": "Scrolls the viewport based on a pointer position inside the horizontal bar track.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "UpdateScrollMetrics",
+      "source": "TextBox",
+      "summary": "Updates the current content size and scrollbar visibility.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "UpdateVerticalScrollFromPointer",
+      "source": "TextBox",
+      "summary": "Scrolls the viewport based on a pointer position inside the vertical bar track.",
       "details": "",
       "example": "",
       "params": [],

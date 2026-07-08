@@ -18,6 +18,8 @@ namespace NeoWPF {
 
     using UI::Grid;
 
+    using UI::Border;
+
     using UI::TextBlock;
 
     using UI::TextBox;

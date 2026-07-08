@@ -15,7 +15,7 @@ namespace NeoWPF {
 namespace UI
 {
 
-    bool FrameworkElement::s_frameworkElementLogging = false;
+    bool FrameworkElement::s_frameworkElementLogging = true;
 
 
     int FrameworkElement::ResolveWidth(int availableWidth, int desiredWidth) const

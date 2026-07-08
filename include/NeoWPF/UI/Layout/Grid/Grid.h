@@ -26,13 +26,14 @@ enum class SizeMode {
     Lays out children in a grid of rows and columns.
 
     @details
-    Rows and columns must be added before children can be placed. Row and column indices are zero-based.
+    Rows and columns must be added before children can be placed. Row and column indices are zero-based
 
     @example
     auto grid = std::make_shared<NeoWPF::UI::Grid>();
+    auto button = std::make_shared<NeoWPF::Button>(L"OK");
     grid->AddRow(NeoWPF::UI::SizeMode::Auto, 0);
     grid->AddColumn(NeoWPF::UI::SizeMode::Star, 1);
-    grid->AddChild(button.get(), 0, 0);
+    grid->AddChild(button, 0, 0);
 */
 class Grid : public Panel {
 public:
