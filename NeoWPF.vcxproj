@@ -214,6 +214,7 @@
     <ClCompile Include="src\UI\Controls\Text\Visual\TextBlockStyles.cpp" />
     <ClCompile Include="src\UI\Layout\Alignment\Alignment.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\Panel.Styles.cpp" />
+    <ClCompile Include="src\UI\Layout\Border\Visual\BorderStyles.cpp" />
     <ClCompile Include="src\UI\Styling\Style\StyleManager.cpp" />
     <ClCompile Include="src\Diagnostics\Logger.cpp" />
     <ClCompile Include="src\Diagnostics\VisualTreeDumper.cpp" />
