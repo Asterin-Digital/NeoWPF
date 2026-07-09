@@ -97,11 +97,13 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     float fAbsX = static_cast<float>(absX);
     float fAbsY = static_cast<float>(absY);
-    ApplyRenderTransform(fAbsX, fAbsY, static_cast<float>(GetFinalWidth()), static_cast<float>(GetFinalHeight()));
+    float drawWidth = static_cast<float>(GetFinalWidth());
+    float drawHeight = static_cast<float>(GetFinalHeight());
+    ApplyRenderTransform(fAbsX, fAbsY, drawWidth, drawHeight);
 
     auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"));
     if (background) {
-        background->SetRect(static_cast<int>(fAbsX), static_cast<int>(fAbsY), GetFinalWidth(), GetFinalHeight());
+        background->SetRect(static_cast<int>(fAbsX), static_cast<int>(fAbsY), static_cast<int>(drawWidth), static_cast<int>(drawHeight));
         background->SetFillColor(m_backgroundColor);
         background->SetOpacity(GetOpacity());
         background->BuildRenderCommands(commands);
@@ -110,22 +112,22 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         commands.DrawRect(
             fAbsX,
             fAbsY,
-            static_cast<float>(GetFinalWidth()),
-            static_cast<float>(GetFinalHeight()),
+            drawWidth,
+            drawHeight,
             m_backgroundColor,
             GetOpacity());
 
         commands.DrawRect(
             fAbsX,
             fAbsY,
-            static_cast<float>(GetFinalWidth()),
+            drawWidth,
             1.0f,
             0xFF333333u,
             GetOpacity());
         commands.DrawRect(
             fAbsX,
-            fAbsY + GetFinalHeight() - 1,
-            static_cast<float>(GetFinalWidth()),
+            fAbsY + drawHeight - 1,
+            drawWidth,
             1.0f,
             0xFF333333u,
             GetOpacity());
@@ -133,14 +135,14 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             fAbsX,
             fAbsY,
             1.0f,
-            static_cast<float>(GetFinalHeight()),
+            drawHeight,
             0xFF333333u,
             GetOpacity());
         commands.DrawRect(
-            fAbsX + GetFinalWidth() - 1,
+            fAbsX + drawWidth - 1,
             fAbsY,
             1.0f,
-            static_cast<float>(GetFinalHeight()),
+            drawHeight,
             0xFF333333u,
             GetOpacity());
     }
@@ -148,7 +150,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
     if (contentHost) {
         const int inset = std::max(0, m_padding);
-        contentHost->SetRect(static_cast<int>(fAbsX) + inset, static_cast<int>(fAbsY) + inset, std::max(0, GetFinalWidth() - (inset * 2)), std::max(0, GetFinalHeight() - (inset * 2)));
+        contentHost->SetRect(static_cast<int>(fAbsX) + inset, static_cast<int>(fAbsY) + inset, std::max(0, static_cast<int>(drawWidth) - (inset * 2)), std::max(0, static_cast<int>(drawHeight) - (inset * 2)));
         contentHost->SetFillColor(0x00000000u);
         contentHost->SetBorderColor(0x00000000u);
         contentHost->SetBorderThickness(0);

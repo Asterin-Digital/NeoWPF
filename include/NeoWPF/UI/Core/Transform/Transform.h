@@ -2,8 +2,11 @@
 
 #include <memory>
 #include <vector>
+#include <functional>
 
 namespace NeoWPF::UI {
+class UIElement;
+
 namespace Core {
 
 struct Matrix4 {
@@ -57,6 +60,8 @@ private:
     float m_scaleY;
     float m_centerX;
     float m_centerY;
+    std::function<void()> m_invalidateCallback;
+    friend class NeoWPF::UI::UIElement;
 };
 
 class TranslateTransform : public Transform {

@@ -8,7 +8,7 @@
 
 namespace NeoWPF::Input
 {
-    bool InputManager::s_hitTestLogging = true; // dont turn this on unless ur debugging something
+    bool InputManager::s_hitTestLogging = false; // dont turn this on unless ur debugging something
 
     InputManager& InputManager::GetInstance()
     {

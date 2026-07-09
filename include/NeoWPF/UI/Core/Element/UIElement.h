@@ -1,9 +1,12 @@
 #pragma once
 
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/Core/Events/Event.h>
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <any>
+#include <vector>
 
 namespace NeoWPF::Input::Core
 {
@@ -26,6 +29,11 @@ class UIElement;
 
 namespace NeoWPF::UI::Templates {
 class ControlTemplateBase;
+}
+
+namespace NeoWPF::UI::Properties {
+    struct PropertyInfo;
+    class PropertyRegistry;
 }
 
 namespace NeoWPF::UI {
@@ -89,6 +97,12 @@ public:
 
     void SetProperty(const std::string& name, uint32_t value);
     bool TryGetProperty(const std::string& name, uint32_t& outValue) const;
+
+    bool SetPropertyValue(const std::string& name, const std::any& value);
+    std::any GetPropertyValue(const std::string& name) const;
+    std::vector<Properties::PropertyInfo> GetPropertyInfo() const;
+
+    NeoWPF::Core::Event<std::string, std::any> PropertyChanged;
 
     virtual void OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args) {}
     virtual void OnMouseDown(int x, int y, std::uint32_t buttonState) {}

@@ -390,7 +390,7 @@ public:
     void GetAbsoluteLayoutPosition(int& outX, int& outY) const noexcept;
 
 protected:
-    void ApplyRenderTransform(float& x, float& y, float width, float height) const noexcept;
+    void ApplyRenderTransform(float& x, float& y, float& width, float& height) const noexcept;
 
 public:
     static bool s_frameworkElementLogging;

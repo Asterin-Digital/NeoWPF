@@ -3,6 +3,7 @@
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Styling/Style/DefaultStyles.h>
+#include <NeoWPF/UI/Properties/Registration/PropertyRegistration.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 
@@ -16,6 +17,7 @@ void Application::Initialize()
     if (!s_current) {
         s_current = new Application();
     }
+    NeoWPF::UI::Properties::RegisterCoreControlProperties();
     NeoWPF::UI::Styling::RegisterDefaultStyles();
     NeoWPF::UI::Visual::CaptureRootVisuals();
 }

@@ -87,9 +87,15 @@ void ScaleTransform::AnimateTo(float scaleValue, float durationSeconds) {
     auto storyboard = std::make_shared<Storyboard>();
     auto scaleXTimeline = std::make_shared<Timeline>(m_scaleX, scaleValue, durationSeconds, [this](float value) {
         SetScaleX(value);
+        if (m_invalidateCallback) {
+            m_invalidateCallback();
+        }
     });
     auto scaleYTimeline = std::make_shared<Timeline>(m_scaleY, scaleValue, durationSeconds, [this](float value) {
         SetScaleY(value);
+        if (m_invalidateCallback) {
+            m_invalidateCallback();
+        }
     });
 
     storyboard->AddTimeline(scaleXTimeline);
@@ -193,6 +199,6 @@ std::shared_ptr<Transform> TransformGroup::Clone() const {
     return cloned;
 }
 
-} // namespace Core
+}
 
-} // namespace NeoWPF::UI
+}
