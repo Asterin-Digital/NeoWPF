@@ -9,10 +9,8 @@ class TextBlockStyle : public Style {
 public:
     void Apply(UIElement* element) override
     {
-        if (auto textBlock = dynamic_cast<UI::TextBlock*>(element)) {
-            textBlock->SetTextColor(0xFFEDEDEDu);
-            textBlock->SetFontSize(12);
-        }
+        element->SetPropertyValue("TextColor", uint32_t(0xFFEDEDEDu));
+        element->SetPropertyValue("FontSize", 12);
     }
 };
 

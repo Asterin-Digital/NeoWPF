@@ -9,12 +9,10 @@ class BorderStyle : public Style {
 public:
     void Apply(UIElement* element) override
     {
-        if (auto border = dynamic_cast<UI::Border*>(element)) {
-            border->SetPadding(0);
-            border->SetBorderThickness(1);
-            border->SetBorderColor(0xFF333333u);
-            border->SetBackgroundColor(0xFF1E1E1Eu);
-        }
+        element->SetPropertyValue("Padding", 0);
+        element->SetPropertyValue("BorderThickness", 1);
+        element->SetPropertyValue("BorderColor", uint32_t(0xFF333333u));
+        element->SetPropertyValue("BackgroundColor", uint32_t(0xFF1E1E1Eu));
     }
 };
 

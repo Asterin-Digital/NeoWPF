@@ -9,21 +9,19 @@ class TextBoxStyle : public Style {
 public:
     void Apply(UIElement* element) override
     {
-        if (auto textBox = dynamic_cast<UI::TextBox*>(element)) {
-            textBox->SetTextColor(0xFFEDEDEDu);
-            textBox->SetBackgroundColor(0xFF2F2F2Fu);
-            textBox->SetBorderColor(0xFF666666u);
-            textBox->SetCaretColor(0xFFFFFFFFu);
-            textBox->SetFontSize(14);
-            textBox->SetPadding(4);
+        element->SetPropertyValue("TextColor", uint32_t(0xFFEDEDEDu));
+        element->SetPropertyValue("BackgroundColor", uint32_t(0xFF2F2F2Fu));
+        element->SetPropertyValue("BorderColor", uint32_t(0xFF666666u));
+        element->SetPropertyValue("CaretColor", uint32_t(0xFFFFFFFFu));
+        element->SetPropertyValue("FontSize", 14);
+        element->SetPropertyValue("Padding", 4);
 
-            textBox->SetProperty("VisualState.Normal.Background", 0xFF2F2F2Fu);
-            textBox->SetProperty("VisualState.Normal.Border", 0xFF666666u);
-            textBox->SetProperty("VisualState.Focused.Background", 0xFF1F1F1Fu);
-            textBox->SetProperty("VisualState.Focused.Border", 0xFF0078D4u);
-            textBox->SetProperty("VisualState.Disabled.Background", 0xFF202020u);
-            textBox->SetProperty("VisualState.Disabled.Border", 0xFF404040u);
-        }
+        element->SetProperty("VisualState.Normal.Background", 0xFF2F2F2Fu);
+        element->SetProperty("VisualState.Normal.Border", 0xFF666666u);
+        element->SetProperty("VisualState.Focused.Background", 0xFF1F1F1Fu);
+        element->SetProperty("VisualState.Focused.Border", 0xFF0078D4u);
+        element->SetProperty("VisualState.Disabled.Background", 0xFF202020u);
+        element->SetProperty("VisualState.Disabled.Border", 0xFF404040u);
     }
 };
 

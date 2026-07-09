@@ -9,9 +9,7 @@ class PanelStyle : public Style {
 public:
     void Apply(UIElement* element) override
     {
-        if (auto panel = dynamic_cast<UI::Panel*>(element)) {
-            panel->SetBackgroundColor(0xFF1E1E1Eu);
-        }
+        element->SetPropertyValue("BackgroundColor", uint32_t(0xFF1E1E1Eu));
     }
 };
 

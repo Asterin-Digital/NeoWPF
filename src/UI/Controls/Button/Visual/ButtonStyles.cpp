@@ -9,17 +9,15 @@ class ButtonStyle : public Style {
 public:
     void Apply(UIElement* element) override
     {
-        if (auto button = dynamic_cast<UI::Button*>(element)) {
-            button->SetTextColor(0xFFEDEDEDu);
-            button->SetFontSize(14);
-            button->SetPadding(10);
-            button->SetBackgroundColor(0xFF3A3A3Au);
+        element->SetPropertyValue("TextColor", uint32_t(0xFFEDEDEDu));
+        element->SetPropertyValue("FontSize", 14);
+        element->SetPropertyValue("Padding", 10);
+        element->SetPropertyValue("BackgroundColor", uint32_t(0xFF3A3A3Au));
 
-            button->SetProperty("VisualState.Normal.Background", 0xFF3A3A3Au);
-            button->SetProperty("VisualState.MouseOver.Background", 0xFF5A7A9Au);
-            button->SetProperty("VisualState.Pressed.Background", 0xFF1A1A1Au);
-            button->SetProperty("VisualState.Disabled.Background", 0xFF2A2A2Au);
-        }
+        element->SetProperty("VisualState.Normal.Background", 0xFF3A3A3Au);
+        element->SetProperty("VisualState.MouseOver.Background", 0xFF5A7A9Au);
+        element->SetProperty("VisualState.Pressed.Background", 0xFF1A1A1Au);
+        element->SetProperty("VisualState.Disabled.Background", 0xFF2A2A2Au);
     }
 };
 
