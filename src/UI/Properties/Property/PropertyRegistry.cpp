@@ -1,5 +1,5 @@
 #include <NeoWPF/UI/Properties/Property/PropertyRegistry.h>
-#include <NeoWPF/UI/Core/UIElement.h>
+#include <NeoWPF/UI/Core/Element/UIElement.h>
 
 namespace NeoWPF::UI::Properties {
     std::unordered_map<std::type_index, std::unique_ptr<PropertyRegistry>> PropertyRegistry::s_registries;
@@ -13,7 +13,10 @@ namespace NeoWPF::UI::Properties {
     }
 
     void PropertyRegistry::RegisterProperty(const std::string& name, const PropertyInfo& info) {
-        m_properties[name] = info;
+        auto result = m_properties.emplace(name, info);
+        if (!result.second) {
+            result.first->second = info;
+        }
     }
 
     bool PropertyRegistry::SetPropertyValue(UIElement* element, const std::string& name, const std::any& value) {

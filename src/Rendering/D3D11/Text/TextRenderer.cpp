@@ -5,7 +5,7 @@ namespace NeoWPF::Rendering::Text {
 bool s_textRendererDebug = true;
 
 TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight);
-std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int& outWidth, int& outHeight);
+std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, int& outWidth, int& outHeight);
 
 TextMetrics MeasureText(const std::wstring& text, int fontSize, int maxWidth, int maxHeight)
 {
@@ -14,7 +14,12 @@ TextMetrics MeasureText(const std::wstring& text, int fontSize, int maxWidth, in
 
 std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int& outWidth, int& outHeight)
 {
-    return TextRenderTextBitmapInternal(text, fontSize, outWidth, outHeight);
+    return TextRenderTextBitmapInternal(text, fontSize, 0, 0, outWidth, outHeight);
+}
+
+std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, int& outWidth, int& outHeight)
+{
+    return TextRenderTextBitmapInternal(text, fontSize, maxWidth, maxHeight, outWidth, outHeight);
 }
 
 }

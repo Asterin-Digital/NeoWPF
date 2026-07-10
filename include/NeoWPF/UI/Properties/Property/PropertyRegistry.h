@@ -26,10 +26,10 @@ namespace NeoWPF::UI::Properties {
         std::vector<PropertyInfo> GetProperties() const;
         
         bool HasProperty(const std::string& name) const;
-        
-    private:
+
         PropertyRegistry() = default;
         
+    private:
         std::unordered_map<std::string, PropertyInfo> m_properties;
         
         static std::unordered_map<std::type_index, std::unique_ptr<PropertyRegistry>> s_registries;

@@ -325,7 +325,7 @@ void TextBox::EnsureTextTexture()
         return;
     }
 
-    m_textLayout.Refresh(m_text, m_fontSize, true);
+    m_textLayout.Refresh(m_text, m_fontSize, m_contentHostWidth, m_contentHostHeight, true);
     m_textDirty = false;
     InvalidateVisual();
 }

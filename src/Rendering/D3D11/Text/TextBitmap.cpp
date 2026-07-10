@@ -204,7 +204,7 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
 
 TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight);
 
-std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int& outWidth, int& outHeight)
+std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, int& outWidth, int& outHeight)
 {
     outWidth = 0;
     outHeight = 0;
@@ -213,7 +213,9 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
         return {};
     }
 
-    TextMetrics metrics = TextMeasureTextInternal(text, fontSize, 0, 0);
+    const int effectiveMaxWidth = std::max(1, maxWidth);
+    const int effectiveMaxHeight = std::max(1, maxHeight);
+    TextMetrics metrics = TextMeasureTextInternal(text, fontSize, effectiveMaxWidth, effectiveMaxHeight);
     if (metrics.width <= 0 || metrics.height <= 0) {
         ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: zero bitmap size, cannot render");
         return {};
@@ -248,15 +250,37 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
         return {};
     }
 
+    textFormat->SetWordWrapping(effectiveMaxWidth > 0 ? DWRITE_WORD_WRAPPING_WRAP : DWRITE_WORD_WRAPPING_NO_WRAP);
+    textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+    textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+
     ComPtr<IDWriteTextLayout> textLayout;
     hr = factory->CreateTextLayout(
         text.c_str(), static_cast<UINT32>(text.length()),
         textFormat.Get(),
-        static_cast<FLOAT>(outWidth), static_cast<FLOAT>(outHeight),
+        static_cast<FLOAT>(effectiveMaxWidth > 0 ? effectiveMaxWidth : outWidth),
+        static_cast<FLOAT>(effectiveMaxHeight > 0 ? effectiveMaxHeight : outHeight),
         &textLayout);
     if (FAILED(hr)) {
         ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: CreateTextLayout failed 0x%08X", static_cast<unsigned int>(hr));
         return {};
+    }
+
+    DWRITE_TEXT_METRICS layoutMetrics = {};
+    hr = textLayout->GetMetrics(&layoutMetrics);
+    if (FAILED(hr)) {
+        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: GetMetrics failed 0x%08X", static_cast<unsigned int>(hr));
+        return {};
+    }
+
+    outWidth = static_cast<int>(std::ceil(layoutMetrics.widthIncludingTrailingWhitespace));
+    outHeight = static_cast<int>(std::ceil(layoutMetrics.height));
+    if (outWidth <= 0 || outHeight <= 0) {
+        outWidth = metrics.width;
+        outHeight = metrics.height;
+    }
+    if (outWidth > 0 && outHeight > 0 && static_cast<size_t>(outWidth) * static_cast<size_t>(outHeight) != bitmap.size() / 4) {
+        bitmap.assign(static_cast<size_t>(outWidth) * static_cast<size_t>(outHeight) * 4, 0);
     }
 
     DWRITE_OVERHANG_METRICS overhang = {};

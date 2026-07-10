@@ -56,8 +56,10 @@ private:
     int m_textHeight = 0;
     bool m_textDirty = true;
     bool m_isHitTestVisible = true;
+    int m_lastArrangeWidth = 0;
+    int m_lastArrangeHeight = 0;
 
-    void EnsureTextTexture();
+    void EnsureTextTexture(int availableWidth, int availableHeight);
 };
 
 }

@@ -38,7 +38,7 @@ ComPtr<IDWriteFactory> GetDWriteFactory()
     return factory;
 }
 
-ComPtr<IDWriteTextFormat> CreateTextFormat(int fontSize)
+ComPtr<IDWriteTextFormat> CreateTextFormat(int fontSize, int maxWidth)
 {
     ComPtr<IDWriteFactory> factory = GetDWriteFactory();
     ComPtr<IDWriteTextFormat> textFormat;
@@ -57,6 +57,7 @@ ComPtr<IDWriteTextFormat> CreateTextFormat(int fontSize)
 
     textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
     textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+    textFormat->SetWordWrapping(maxWidth > 0 ? DWRITE_WORD_WRAPPING_WRAP : DWRITE_WORD_WRAPPING_NO_WRAP);
     return textFormat;
 }
 
@@ -69,10 +70,13 @@ TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, int 
     }
 
     ComPtr<IDWriteFactory> factory = GetDWriteFactory();
-    ComPtr<IDWriteTextFormat> textFormat = CreateTextFormat(fontSize);
+    ComPtr<IDWriteTextFormat> textFormat = CreateTextFormat(fontSize, maxWidth);
 
-    float layoutWidth = maxWidth > 0 ? static_cast<float>(maxWidth) : static_cast<float>(text.size() * fontSize);
-    float layoutHeight = maxHeight > 0 ? static_cast<float>(maxHeight) : static_cast<float>(fontSize * 2);
+    const int effectiveMaxWidth = std::max(1, maxWidth);
+    const int effectiveMaxHeight = std::max(1, maxHeight);
+    const int estimatedWidth = static_cast<int>(std::max<std::size_t>(1, text.size() * static_cast<std::size_t>(fontSize)));
+    float layoutWidth = maxWidth > 0 ? static_cast<float>(effectiveMaxWidth) : static_cast<float>(estimatedWidth);
+    float layoutHeight = maxHeight > 0 ? static_cast<float>(effectiveMaxHeight) : static_cast<float>(std::max(1, fontSize * 2));
 
     ComPtr<IDWriteTextLayout> textLayout;
     HRESULT hr = factory->CreateTextLayout(text.c_str(), static_cast<UINT32>(text.length()), textFormat.Get(), layoutWidth, layoutHeight, &textLayout);

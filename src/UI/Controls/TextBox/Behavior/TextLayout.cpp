@@ -47,14 +47,15 @@ void TextLayout::Clear() {
     m_contentHeight = 0;
 }
 
-void TextLayout::Refresh(const std::wstring& text, int fontSize, bool createTextures) {
-    if (!createTextures && text == m_text && fontSize == m_fontSize && !m_lines.empty()) {
-
+void TextLayout::Refresh(const std::wstring& text, int fontSize, int availableWidth, int availableHeight, bool createTextures) {
+    if (!createTextures && text == m_text && fontSize == m_fontSize && availableWidth == m_availableWidth && availableHeight == m_availableHeight && !m_lines.empty()) {
         return;
     }
 
     m_text = text;
     m_fontSize = fontSize;
+    m_availableWidth = availableWidth;
+    m_availableHeight = availableHeight;
     Clear();
 
     const auto lines = SplitLines(text);
@@ -62,7 +63,9 @@ void TextLayout::Refresh(const std::wstring& text, int fontSize, bool createText
         LineRenderData line;
         line.text = lineText;
 
-        const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(lineText.empty() ? L"W" : lineText, m_fontSize, 0, 0);
+        const int lineWidthConstraint = std::max(1, m_availableWidth);
+        const int lineHeightConstraint = std::max(1, m_availableHeight);
+        const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(lineText.empty() ? L"W" : lineText, m_fontSize, lineWidthConstraint, lineHeightConstraint);
         const int lineHeight = MeasureLineHeight(lineText, m_fontSize);
         m_contentHeight += lineHeight;
         m_contentWidth = std::max(m_contentWidth, lineMetrics.width);
@@ -70,7 +73,7 @@ void TextLayout::Refresh(const std::wstring& text, int fontSize, bool createText
         if (createTextures && !lineText.empty()) {
             int width = 0;
             int height = 0;
-            auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(lineText, m_fontSize, width, height);
+            auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(lineText, m_fontSize, lineWidthConstraint, lineHeightConstraint, width, height);
             if (!bitmap.empty() && width > 0 && height > 0) {
                 line.textureId = NeoWPF::Rendering::Renderer_CreateTexture(static_cast<unsigned int>(width), static_cast<unsigned int>(height), bitmap.data());
                 line.width = width;

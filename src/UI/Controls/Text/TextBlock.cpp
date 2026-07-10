@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <algorithm>
 
 namespace NeoWPF::UI {
 
@@ -40,15 +41,19 @@ void TextBlock::Measure(int availableWidth, int availableHeight)
         return;
     }
 
-    auto metrics = NeoWPF::Rendering::Text::MeasureText(m_text, m_fontSize, 0, 0);
+    const int widthConstraint = availableWidth > 0 ? availableWidth : 0;
+    const int heightConstraint = availableHeight > 0 ? availableHeight : 0;
+    auto metrics = NeoWPF::Rendering::Text::MeasureText(m_text, m_fontSize, widthConstraint, heightConstraint);
     SetDesiredSize(metrics.width, metrics.height);
 }
 
 void TextBlock::Arrange(int finalWidth, int finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
-    if (m_textDirty) {
-        EnsureTextTexture();
+    if (m_textDirty || finalWidth != m_lastArrangeWidth || finalHeight != m_lastArrangeHeight) {
+        EnsureTextTexture(finalWidth, finalHeight);
+        m_lastArrangeWidth = finalWidth;
+        m_lastArrangeHeight = finalHeight;
     }
 }
 
@@ -74,9 +79,9 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         clip);
 }
 
-void TextBlock::EnsureTextTexture()
+void TextBlock::EnsureTextTexture(int availableWidth, int availableHeight)
 {
-    if (!m_textDirty) {
+    if (!m_textDirty && availableWidth == m_lastArrangeWidth && availableHeight == m_lastArrangeHeight) {
         return;
     }
 
@@ -94,7 +99,9 @@ void TextBlock::EnsureTextTexture()
 
     int width = 0;
     int height = 0;
-    auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(m_text, m_fontSize, width, height);
+    const int widthConstraint = std::max(1, availableWidth);
+    const int heightConstraint = std::max(1, availableHeight);
+    auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(m_text, m_fontSize, widthConstraint, heightConstraint, width, height);
     if (bitmap.empty() || width == 0 || height == 0) {
         NeoWPF::Diagnostics::LogError("TextBlock: failed to render text bitmap");
         m_textWidth = 0;

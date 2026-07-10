@@ -33,7 +33,7 @@ public:
     TextLayout() = default;
     ~TextLayout();
 
-    void Refresh(const std::wstring& text, int fontSize, bool createTextures = true);
+    void Refresh(const std::wstring& text, int fontSize, int availableWidth, int availableHeight, bool createTextures = true);
     void Clear();
 
     const std::vector<LineRenderData>& GetLines() const noexcept { return m_lines; }
@@ -54,6 +54,8 @@ private:
     std::vector<LineRenderData> m_lines;
     int m_contentWidth = 0;
     int m_contentHeight = 0;
+    int m_availableWidth = 0;
+    int m_availableHeight = 0;
 };
 
 /*
