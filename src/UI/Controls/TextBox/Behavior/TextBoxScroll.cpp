@@ -9,7 +9,7 @@ namespace NeoWPF::UI {
 void TextBox::UpdateScrollMetrics()
 {
     const bool createTextures = m_textDirty;
-    m_textLayout.Refresh(m_text, m_fontSize, createTextures);
+    m_textLayout.Refresh(m_text, m_fontSize, m_contentHostWidth, m_contentHostHeight, createTextures);
     if (createTextures) {
         m_textDirty = false;
     }

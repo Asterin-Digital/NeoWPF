@@ -67,8 +67,6 @@ void TextLayout::Refresh(const std::wstring& text, int fontSize, int availableWi
         const int lineHeightConstraint = std::max(1, m_availableHeight);
         const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(lineText.empty() ? L"W" : lineText, m_fontSize, lineWidthConstraint, lineHeightConstraint);
         const int lineHeight = MeasureLineHeight(lineText, m_fontSize);
-        m_contentHeight += lineHeight;
-        m_contentWidth = std::max(m_contentWidth, lineMetrics.width);
 
         if (createTextures && !lineText.empty()) {
             int width = 0;
@@ -82,7 +80,9 @@ void TextLayout::Refresh(const std::wstring& text, int fontSize, int availableWi
         }
 
         const int renderedHeight = std::max(1, line.height > 0 ? line.height : lineHeight);
-        line.lineHeight = std::max(lineHeight, renderedHeight);
+        line.lineHeight = renderedHeight;
+        m_contentHeight += renderedHeight;
+        m_contentWidth = std::max(m_contentWidth, line.width > 0 ? line.width : lineMetrics.width);
         m_lines.push_back(line);
     }
 }
