@@ -89,8 +89,17 @@ void TextBox::Measure(int availableWidth, int availableHeight)
     const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, 0, 0);
     const int minWidth = 120;
     const int minHeight = std::max(baseMetrics.height, m_fontSize) + (m_padding * 2);
-    const int desiredWidth = std::max(minWidth, availableWidth > 0 ? std::min(minWidth, availableWidth) : minWidth);
-    const int desiredHeight = std::max(minHeight, availableHeight > 0 ? std::min(minHeight, availableHeight) : minHeight);
+    int desiredWidth = std::max(minWidth, availableWidth > 0 ? std::min(minWidth, availableWidth) : minWidth);
+    int desiredHeight = std::max(minHeight, availableHeight > 0 ? std::min(minHeight, availableHeight) : minHeight);
+
+    if (m_textWrapping != TextWrapping::NoWrap) {
+        TextLayout measureLayout;
+        const int contentHostWidth = std::max(0, availableWidth > 0 ? availableWidth - (m_padding * 2) : 0);
+        const int contentHostHeight = std::max(0, availableHeight > 0 ? availableHeight - (m_padding * 2) : 0);
+        measureLayout.Refresh(m_text, m_fontSize, contentHostWidth, contentHostHeight, m_textWrapping, false);
+        desiredHeight = std::max(minHeight, measureLayout.GetContentHeight() + (m_padding * 2));
+        desiredWidth = std::max(desiredWidth, measureLayout.GetContentWidth() + (m_padding * 2));
+    }
 
     if (s_textBoxDebug) {
         NeoWPF::Diagnostics::LogInfo("[TextBox] Measure: available=%dx%d, desired=%dx%d, textLength=%zu", availableWidth, availableHeight, desiredWidth, desiredHeight, m_text.size());
@@ -225,7 +234,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
         const int drawWidth = std::min(line.width, viewportWidth);
         const float uvRight = drawWidth > 0 ? static_cast<float>(drawWidth) / static_cast<float>(line.width) : 1.0f;
-        const int drawHeight = std::max(1, std::min(line.height > 0 ? line.height : lineHeight, lineHeight));
+        const int drawHeight = std::max(1, line.height > 0 ? line.height : lineHeight);
         const float uvBottom = drawHeight > 0 ? static_cast<float>(drawHeight) / static_cast<float>(std::max(1, line.height > 0 ? line.height : lineHeight)) : 1.0f;
         const int lineVerticalOffset = GetLineVisualOffset(lineIndex);
 
@@ -325,7 +334,7 @@ void TextBox::EnsureTextTexture()
         return;
     }
 
-    m_textLayout.Refresh(m_text, m_fontSize, m_contentHostWidth, m_contentHostHeight, true);
+    m_textLayout.Refresh(m_text, m_fontSize, m_contentHostWidth, m_contentHostHeight, m_textWrapping, true);
     m_textDirty = false;
     InvalidateVisual();
 }

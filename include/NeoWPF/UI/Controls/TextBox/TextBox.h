@@ -15,6 +15,12 @@
 
 namespace NeoWPF::UI {
 
+enum class TextWrapping {
+    NoWrap,
+    Wrap,
+    WrapWithOverflow
+};
+
 class TextBoxStyle;  
 void RegisterTextBoxStyles();
 
@@ -33,7 +39,7 @@ public:
     TextLayout() = default;
     ~TextLayout();
 
-    void Refresh(const std::wstring& text, int fontSize, int availableWidth, int availableHeight, bool createTextures = true);
+    void Refresh(const std::wstring& text, int fontSize, int availableWidth, int availableHeight, TextWrapping textWrapping, bool createTextures = true);
     void Clear();
 
     const std::vector<LineRenderData>& GetLines() const noexcept { return m_lines; }
@@ -56,6 +62,7 @@ private:
     int m_contentHeight = 0;
     int m_availableWidth = 0;
     int m_availableHeight = 0;
+    TextWrapping m_textWrapping = TextWrapping::NoWrap;
 };
 
 /*
@@ -191,8 +198,10 @@ public:
         @param value
         `true` to wrap long lines, `false` to keep a single line.
     */
-    void SetTextWrapping(bool value) noexcept { m_textWrapping = value; m_textDirty = true; InvalidateVisual(); }
-    bool GetTextWrapping() const noexcept { return m_textWrapping; }
+    void SetTextWrapping(TextWrapping value) noexcept { m_textWrapping = value; m_textDirty = true; InvalidateVisual(); }
+    TextWrapping GetTextWrappingMode() const noexcept { return m_textWrapping; }
+    void SetTextWrapping(bool value) noexcept { SetTextWrapping(value ? TextWrapping::Wrap : TextWrapping::NoWrap); }
+    bool GetTextWrapping() const noexcept { return GetTextWrappingMode() != TextWrapping::NoWrap; }
 
     /*
         @summary
@@ -333,7 +342,7 @@ private:
     int m_padding = 4;
     bool m_isReadOnly = false;
     bool m_acceptsReturn = false;
-    bool m_textWrapping = false;
+    TextWrapping m_textWrapping = TextWrapping::NoWrap;
     bool m_isHitTestVisible = true;
 
     std::shared_ptr<Styling::VisualStateManager> m_visualStateManager;

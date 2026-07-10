@@ -9,7 +9,7 @@ namespace NeoWPF::UI {
 void TextBox::UpdateScrollMetrics()
 {
     const bool createTextures = m_textDirty;
-    m_textLayout.Refresh(m_text, m_fontSize, m_contentHostWidth, m_contentHostHeight, createTextures);
+    m_textLayout.Refresh(m_text, m_fontSize, m_contentHostWidth, m_contentHostHeight, m_textWrapping, createTextures);
     if (createTextures) {
         m_textDirty = false;
     }
@@ -19,8 +19,8 @@ void TextBox::UpdateScrollMetrics()
     const int baseViewportWidth = std::max(0, m_contentHostWidth);
     const int baseViewportHeight = std::max(0, m_contentHostHeight);
     const int scrollbarThickness = 6;
-    const bool supportsVerticalScroll = m_acceptsReturn || m_textWrapping;
-    const bool supportsHorizontalScroll = !m_textWrapping;
+    const bool supportsVerticalScroll = m_acceptsReturn || m_textWrapping != TextWrapping::NoWrap;
+    const bool supportsHorizontalScroll = m_textWrapping == TextWrapping::NoWrap;
 
     int viewportWidth = baseViewportWidth;
     int viewportHeight = baseViewportHeight;

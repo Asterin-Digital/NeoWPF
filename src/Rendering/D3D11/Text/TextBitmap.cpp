@@ -213,14 +213,16 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
         return {};
     }
 
-    const int effectiveMaxWidth = std::max(1, maxWidth);
-    const int effectiveMaxHeight = std::max(1, maxHeight);
+    const int effectiveMaxWidth = maxWidth > 0 ? std::max(1, maxWidth) : 0;
+    const int effectiveMaxHeight = maxHeight > 0 ? std::max(1, maxHeight) : 0;
     TextMetrics metrics = TextMeasureTextInternal(text, fontSize, effectiveMaxWidth, effectiveMaxHeight);
     if (metrics.width <= 0 || metrics.height <= 0) {
         ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: zero bitmap size, cannot render");
         return {};
     }
 
+    int layoutWidth = effectiveMaxWidth > 0 ? effectiveMaxWidth : metrics.width;
+    int layoutHeight = effectiveMaxHeight > 0 ? effectiveMaxHeight : metrics.height;
     outWidth = metrics.width;
     outHeight = metrics.height;
     std::vector<uint8_t> bitmap(static_cast<size_t>(outWidth) * static_cast<size_t>(outHeight) * 4, 0);
