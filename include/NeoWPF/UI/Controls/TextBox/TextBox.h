@@ -34,6 +34,8 @@ public:
         int width = 0;
         int height = 0;
         int lineHeight = 0;
+        std::size_t charStart = 0;
+        std::size_t charEnd = 0;
     };
 
     TextLayout() = default;

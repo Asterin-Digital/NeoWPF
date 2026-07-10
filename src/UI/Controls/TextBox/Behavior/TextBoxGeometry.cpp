@@ -68,8 +68,9 @@ void TextBox::UpdateCaretFromMouse(int x, int y)
     int bestDistance = std::numeric_limits<int>::max();
     for (std::size_t i = lineStart; i <= lineEnd; ++i) {
         const std::wstring prefix = m_text.substr(lineStart, i - lineStart);
-        const auto metrics = NeoWPF::Rendering::Text::MeasureText(prefix, m_fontSize, 0, 0);
-        const int distance = std::abs(localX - metrics.width);
+        int width = 0, height = 0;
+        NeoWPF::Rendering::Text::RenderTextBitmap(prefix, m_fontSize, 0, 0, width, height);
+        const int distance = std::abs(localX - width);
         if (distance < bestDistance) {
             bestDistance = distance;
             bestPosition = i;
@@ -85,27 +86,16 @@ void TextBox::UpdateCaretFromMouse(int x, int y)
 int TextBox::GetCaretX() const
 {
     const auto [lineIndex, column] = GetCaretLineColumn(m_caretPosition);
-    (void)lineIndex;
-    const std::size_t lineStart = [&]() -> std::size_t {
-        std::size_t start = 0;
-        std::size_t currentLine = 0;
-        while (start < m_text.size()) {
-            const std::size_t nextNewline = m_text.find(L'\n', start);
-            const std::size_t lineEnd = nextNewline == std::wstring::npos ? m_text.size() : nextNewline;
-            if (currentLine == lineIndex) {
-                return start;
-            }
-            start = lineEnd + 1;
-            ++currentLine;
-        }
-        return m_text.size();
-    }();
-    const std::wstring prefix = m_text.substr(lineStart, column);
-    const auto metrics = NeoWPF::Rendering::Text::MeasureText(prefix, m_fontSize, 0, 0);
-    if (s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] GetCaretX: caretPosition=%zu x=%d", m_caretPosition, metrics.width);
-    }
-    return metrics.width;
+    const auto& lines = m_textLayout.GetLines();
+    const std::wstring lineText = lineIndex < lines.size() ? lines[lineIndex].text : std::wstring();
+    const std::size_t safeColumn = std::min<std::size_t>(column, lineText.size());
+    const std::wstring prefix = lineText.substr(0, safeColumn);
+    if (prefix.empty()) return 0;
+
+    int width = 0, height = 0;
+
+    NeoWPF::Rendering::Text::RenderTextBitmap(prefix, m_fontSize, 0, 0, width, height);
+    return width;
 }
 
 int TextBox::GetCaretY() const
@@ -147,4 +137,4 @@ int TextBox::GetLineHeight(const std::wstring& line) const
     return TextLayout::MeasureLineHeight(line, m_fontSize);
 }
 
-} // namespace NeoWPF::UI
+}

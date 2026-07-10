@@ -123,7 +123,9 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
         int textureWidth = textureBounds.right - textureBounds.left;
         int textureHeight = textureBounds.bottom - textureBounds.top;
         if (textureWidth <= 0 || textureHeight <= 0) {
-            ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: zero texture size %dx%d", textureWidth, textureHeight);
+            if (s_textRendererDebug) {
+                ::NeoWPF::Diagnostics::LogInfo("DrawGlyphRun: zero texture size %dx%d", textureWidth, textureHeight);
+            }
             return S_OK;
         }
 

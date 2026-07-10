@@ -20,8 +20,6 @@ namespace NeoWPF::Rendering::Text {
 
 namespace {
 
-static bool s_textRendererDebug = false;
-
 ComPtr<IDWriteFactory> GetDWriteFactory()
 {
     static std::once_flag factoryOnce;
