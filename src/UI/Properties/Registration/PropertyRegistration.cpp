@@ -2,6 +2,8 @@
 
 namespace NeoWPF::UI::Properties {
     void RegisterCoreControlProperties() {
+        RegisterUIElementProperties();
+        RegisterFrameworkElementProperties();
         RegisterButtonProperties();
         RegisterTextBlockProperties();
         RegisterTextBoxProperties();

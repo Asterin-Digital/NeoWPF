@@ -275,7 +275,22 @@ public:
         @param width
         The width to use.
     */
+    int GetWidth() const noexcept { return m_width; }
+
+    /*
+        @summary
+        Sets a preferred width for the element.
+
+        @param width
+        The width to use.
+    */
     void SetWidth(int width) noexcept { m_width = width < 0 ? 0 : width; InvalidateVisual(); }
+
+    /*
+        @summary
+        Returns the element's preferred height.
+    */
+    int GetHeight() const noexcept { return m_height; }
 
     /*
         @summary
