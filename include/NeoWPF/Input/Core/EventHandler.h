@@ -3,13 +3,17 @@
 #include <functional>
 #include <memory>
 
+namespace NeoWPF::UI
+{
+    class UIElement;
+}
+
 namespace NeoWPF::Input::Core
 {
     class RoutedEventArgs;
-    class UIElement;
 
     template<typename TArgs>
-    using EventHandler = std::function<void(UIElement*, TArgs*)>;
+    using EventHandler = std::function<void(::NeoWPF::UI::UIElement*, TArgs*)>;
 
     using MouseEventHandler = EventHandler<class MouseEventArgs>;
     using KeyboardEventHandler = EventHandler<class KeyboardEventArgs>;

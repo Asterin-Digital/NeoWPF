@@ -15,6 +15,14 @@
 
 namespace NeoWPF::UI {
 
+/*
+    @summary
+    Controls how text wraps inside the available width
+
+    @details
+    `NoWrap` keeps the text on a single line, `Wrap` breaks lines when space runs out, and
+    `WrapWithOverflow` wraps while still allowing the content to extend past the bounds.
+*/
 enum class TextWrapping {
     NoWrap,
     Wrap,

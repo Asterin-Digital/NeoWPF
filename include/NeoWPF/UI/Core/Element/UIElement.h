@@ -2,6 +2,7 @@
 
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/Core/Events/Event.h>
+#include <NeoWPF/Input/Core/EventHandler.h>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -12,6 +13,8 @@ namespace NeoWPF::Input::Core
 {
     class MouseEventArgs;
     class KeyboardEventArgs;
+    class RoutedEventArgs;
+    struct RoutedEvent;
 }
 
 namespace NeoWPF::UI::Core {
@@ -104,6 +107,10 @@ public:
 
     NeoWPF::Core::Event<std::string, std::any> PropertyChanged;
 
+    void AddHandler(const NeoWPF::Input::Core::RoutedEvent& routedEvent,
+                    const NeoWPF::Input::Core::RoutedEventHandler& handler);
+    void RaiseEvent(NeoWPF::Input::Core::RoutedEventArgs* args);
+
     virtual void OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args) {}
     virtual void OnMouseDown(int x, int y, std::uint32_t buttonState) {}
     virtual void OnMouseUp(int x, int y, std::uint32_t buttonState) {}
@@ -125,6 +132,7 @@ private:
     std::unordered_map<std::string, std::shared_ptr<Visual>> m_templateChildren;
     std::unordered_map<std::string, uint32_t> m_properties;
     std::shared_ptr<Visual> m_appliedTemplateRoot;
+    std::unordered_map<std::size_t, NeoWPF::Core::Event<UIElement*, NeoWPF::Input::Core::RoutedEventArgs*>> m_routedEventHandlers;
     std::shared_ptr<NeoWPF::UI::Core::Transform> m_renderTransform;
     NeoWPF::UI::Core::Point m_renderTransformOrigin;
 };

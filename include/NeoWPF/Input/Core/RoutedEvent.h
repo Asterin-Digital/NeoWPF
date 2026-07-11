@@ -2,6 +2,7 @@
 
 #include <string>
 #include <memory>
+#include <NeoWPF/Input/Core/Events.h>
 
 namespace NeoWPF::UI
 {
@@ -34,10 +35,14 @@ namespace NeoWPF::Input::Core
         bool IsHandled() const { return m_handled; }
         void SetHandled(bool handled) { m_handled = handled; }
 
+        const RoutedEvent* GetRoutedEvent() const { return m_routedEvent; }
+        void SetRoutedEvent(const RoutedEvent* routedEvent) { m_routedEvent = routedEvent; }
+
     protected:
         RoutingStrategy m_routingStrategy;
         NeoWPF::UI::UIElement* m_source = nullptr;
         NeoWPF::UI::UIElement* m_originalSource = nullptr;
+        const RoutedEvent* m_routedEvent = nullptr;
         bool m_handled = false;
     };
 
@@ -57,4 +62,33 @@ namespace NeoWPF::Input::Core
             return EventTypeId == other.EventTypeId;
         }
     };
+
+    class RoutedMouseEventArgs : public MouseEventArgs, public RoutedEventArgs
+    {
+    public:
+        RoutedMouseEventArgs(const RoutedEvent& routedEvent, int x, int y, std::uint32_t buttonState, int wheelDelta = 0)
+            : MouseEventArgs(x, y, buttonState, wheelDelta), RoutedEventArgs(routedEvent.Strategy)
+        {
+            SetRoutedEvent(&routedEvent);
+        }
+    };
+
+    class RoutedKeyboardEventArgs : public KeyboardEventArgs, public RoutedEventArgs
+    {
+    public:
+        RoutedKeyboardEventArgs(const RoutedEvent& routedEvent, int keyCode, bool isKeyDown, wchar_t charCode = 0, int repeatCount = 1)
+            : KeyboardEventArgs(keyCode, isKeyDown, charCode, repeatCount), RoutedEventArgs(routedEvent.Strategy)
+        {
+            SetRoutedEvent(&routedEvent);
+        }
+    };
+
+    const RoutedEvent& MouseDownEvent();
+    const RoutedEvent& MouseUpEvent();
+    const RoutedEvent& MouseMoveEvent();
+    const RoutedEvent& MouseEnterEvent();
+    const RoutedEvent& MouseLeaveEvent();
+    const RoutedEvent& KeyDownEvent();
+    const RoutedEvent& KeyUpEvent();
 }
+

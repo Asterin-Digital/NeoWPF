@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
 #include <NeoWPF/UI/Animation/Core/Timeline.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
@@ -145,6 +146,78 @@ std::any UIElement::GetPropertyValue(const std::string& name) const {
 std::vector<Properties::PropertyInfo> UIElement::GetPropertyInfo() const {
     auto& registry = Properties::PropertyRegistry::Get(typeid(*this));
     return registry.GetProperties();
+}
+
+void UIElement::AddHandler(const NeoWPF::Input::Core::RoutedEvent& routedEvent,
+                           const NeoWPF::Input::Core::RoutedEventHandler& handler)
+{
+    m_routedEventHandlers[routedEvent.EventTypeId] += [handler](UIElement* sender, NeoWPF::Input::Core::RoutedEventArgs* args) {
+        handler(sender, args);
+    };
+}
+
+void UIElement::RaiseEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
+{
+    if (!args || !args->GetRoutedEvent()) {
+        return;
+    }
+
+    if (!args->GetOriginalSource()) {
+        args->SetOriginalSource(this);
+    }
+
+    if (!args->GetSource()) {
+        args->SetSource(this);
+    }
+
+    const auto routingStrategy = args->GetRoutingStrategy();
+    const auto eventTypeId = args->GetRoutedEvent()->EventTypeId;
+
+    auto invokeOnElement = [&](UIElement* element) {
+        if (!element) {
+            return;
+        }
+        args->SetSource(element);
+        auto it = element->m_routedEventHandlers.find(eventTypeId);
+        if (it != element->m_routedEventHandlers.end())
+        {
+            it->second.Invoke(element, args);
+        }
+    };
+
+    if (routingStrategy == NeoWPF::Input::Core::RoutingStrategy::Direct)
+    {
+        invokeOnElement(this);
+        return;
+    }
+
+    if (routingStrategy == NeoWPF::Input::Core::RoutingStrategy::Tunnel)
+    {
+        std::vector<UIElement*> route;
+        auto* current = this;
+        while (current)
+        {
+            route.push_back(current);
+            auto* parentVisual = current->GetParent();
+            current = dynamic_cast<UIElement*>(parentVisual);
+        }
+        for (auto it = route.rbegin(); it != route.rend() && !args->IsHandled(); ++it)
+        {
+            invokeOnElement(*it);
+        }
+        return;
+    }
+
+    if (routingStrategy == NeoWPF::Input::Core::RoutingStrategy::Bubble)
+    {
+        auto* current = this;
+        while (current && !args->IsHandled())
+        {
+            invokeOnElement(current);
+            auto* parentVisual = current->GetParent();
+            current = dynamic_cast<UIElement*>(parentVisual);
+        }
+    }
 }
 
 }

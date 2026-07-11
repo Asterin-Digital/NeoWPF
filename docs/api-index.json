@@ -114,6 +114,199 @@
     {
       "kind": "method",
       "name": "Arrange",
+      "source": "Border",
+      "summary": "Positions the border and its content inside the assigned bounds.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "finalWidth",
+          "text": "The width assigned to the border."
+        },
+        {
+          "name": "finalHeight",
+          "text": "The height assigned to the border."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "Border",
+      "source": "Border",
+      "summary": "Creates a border with default empty content and styling.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "ClearChild",
+      "source": "Border",
+      "summary": "Removes the child currently hosted by the border.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetBackgroundColor",
+      "source": "Border",
+      "summary": "Gets the background color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetBorderColor",
+      "source": "Border",
+      "summary": "Gets the border color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetBorderThickness",
+      "source": "Border",
+      "summary": "Gets the current border thickness.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetChild",
+      "source": "Border",
+      "summary": "Gets the child currently hosted by the border.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetPadding",
+      "source": "Border",
+      "summary": "Gets the current padding.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Measure",
+      "source": "Border",
+      "summary": "Measures the border and its content using the available space.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "availableWidth",
+          "text": "The width available to the border."
+        },
+        {
+          "name": "availableHeight",
+          "text": "The height available to the border."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "RegisterBorderStyles",
+      "source": "Border",
+      "summary": "Hosts a single child with optional padding, border, and background.",
+      "details": "The border reserves interior space for its content so the child stays inside the visible border area.",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetBackgroundColor",
+      "source": "Border",
+      "summary": "Sets the background color drawn inside the border.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "color",
+          "text": "The background color in ARGB format."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetBorderColor",
+      "source": "Border",
+      "summary": "Sets the color used to draw the border.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "color",
+          "text": "The border color in ARGB format."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetBorderThickness",
+      "source": "Border",
+      "summary": "Sets the border thickness.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "thickness",
+          "text": "The border width in pixels."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetChild",
+      "source": "Border",
+      "summary": "Sets the single child hosted by the border.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "child",
+          "text": "The content to place inside the border."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetPadding",
+      "source": "Border",
+      "summary": "Sets the space between the border and its content.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "padding",
+          "text": "The inset size in pixels."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Arrange",
       "source": "Button",
       "summary": "Positions the button inside its box",
       "details": "",
@@ -439,7 +632,7 @@
       "kind": "method",
       "name": "GetAbsoluteLayoutPosition",
       "source": "FrameworkElement",
-      "summary": "Returns the element's absolute layout position, excluding render offset.",
+      "summary": "Returns the element's layout position in absolute coordinates.",
       "details": "",
       "example": "",
       "params": [
@@ -1947,6 +2140,16 @@
       "source": "TextBox",
       "summary": "Destroys the TextBox and frees any backing render resources.",
       "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "enum",
+      "name": "TextWrapping",
+      "source": "TextBox",
+      "summary": "Controls how text wraps inside the available width",
+      "details": "`NoWrap` keeps the text on a single line, `Wrap` breaks lines when space runs out, and\n`WrapWithOverflow` wraps while still allowing the content to extend past the bounds.",
       "example": "",
       "params": [],
       "isInternal": false

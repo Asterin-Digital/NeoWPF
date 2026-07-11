@@ -105,7 +105,7 @@
     <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxTemplate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Input\Core\Events.cpp">
+    <ClCompile Include="src\Input\Events.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Input\InputManager.cpp">
@@ -256,6 +256,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Properties\Registration\PropertyRegistration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Input\InputHitTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Input\InputRouting.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Input\InputFocus.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -459,6 +468,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Properties\Property\PropertyInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\Rendering\Clipping.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

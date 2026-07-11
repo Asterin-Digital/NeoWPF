@@ -141,6 +141,7 @@
     <ClInclude Include="include\NeoWPF\NeoWPF.h" />
     <ClInclude Include="include\NeoWPF\Platform\Platform.h" />
     <ClInclude Include="include\NeoWPF\Platform\Window.h" />
+    <ClInclude Include="include\NeoWPF\Rendering\Clipping.h" />
     <ClInclude Include="include\NeoWPF\Rendering\Renderer.h" />
     <ClInclude Include="include\NeoWPF\Rendering\ShaderSources.h" />
     <ClInclude Include="include\NeoWPF\Rendering\TextRenderer.h" />
@@ -232,8 +233,11 @@
     <ClCompile Include="src\Diagnostics\Logger.cpp" />
     <ClCompile Include="src\Diagnostics\VisualTreeDumper.cpp" />
     <ClCompile Include="src\Platform\Window.cpp" />
-    <ClCompile Include="src\Input\Core\Events.cpp" />
+    <ClCompile Include="src\Input\Events.cpp" />
     <ClCompile Include="src\Input\InputManager.cpp" />
+    <ClCompile Include="src\Input\InputHitTest.cpp" />
+    <ClCompile Include="src\Input\InputRouting.cpp" />
+    <ClCompile Include="src\Input\InputFocus.cpp" />
     <ClCompile Include="src\UI\Core\Element\FrameworkElement.cpp" />
     <ClCompile Include="src\UI\Core\Element\UIElement.cpp" />
     <ClCompile Include="src\Rendering\Core\Renderer.cpp" />
