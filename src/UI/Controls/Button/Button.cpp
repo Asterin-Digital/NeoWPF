@@ -105,44 +105,35 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     if (background) {
         background->SetRect(static_cast<int>(fAbsX), static_cast<int>(fAbsY), static_cast<int>(drawWidth), static_cast<int>(drawHeight));
         background->SetFillColor(m_backgroundColor);
+        background->SetBorderColor(0xFF333333u);
+        background->SetBorderThickness(1);
+        background->SetCornerRadius(GetCornerRadius());
         background->SetOpacity(GetOpacity());
         background->BuildRenderCommands(commands);
     }
     else {
-        commands.DrawRect(
+        const auto cornerRadius = GetCornerRadius();
+        commands.DrawRoundedRect(
             fAbsX,
             fAbsY,
             drawWidth,
             drawHeight,
+            cornerRadius.TopLeft,
+            cornerRadius.TopRight,
+            cornerRadius.BottomRight,
+            cornerRadius.BottomLeft,
             m_backgroundColor,
             GetOpacity());
 
-        commands.DrawRect(
+        commands.DrawRoundedRect(
             fAbsX,
             fAbsY,
             drawWidth,
-            1.0f,
-            0xFF333333u,
-            GetOpacity());
-        commands.DrawRect(
-            fAbsX,
-            fAbsY + drawHeight - 1,
-            drawWidth,
-            1.0f,
-            0xFF333333u,
-            GetOpacity());
-        commands.DrawRect(
-            fAbsX,
-            fAbsY,
-            1.0f,
             drawHeight,
-            0xFF333333u,
-            GetOpacity());
-        commands.DrawRect(
-            fAbsX + drawWidth - 1,
-            fAbsY,
-            1.0f,
-            drawHeight,
+            cornerRadius.TopLeft,
+            cornerRadius.TopRight,
+            cornerRadius.BottomRight,
+            cornerRadius.BottomLeft,
             0xFF333333u,
             GetOpacity());
     }

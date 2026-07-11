@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstdint>
 #include <cstring>
+#include <cmath>
 #include <Windows.h>
 
 #ifdef min
@@ -83,6 +84,58 @@ void ExecuteRendererDraw(const CommandList& cmd)
         rectVerts.push_back({x, y, r, g, b, a});
     };
 
+    auto pushRoundedRect = [&](float x, float y, float w, float h,
+        float topLeft, float topRight, float bottomRight, float bottomLeft,
+        float r, float g, float b, float a) {
+        if (w <= 0.0f || h <= 0.0f) {
+            return;
+        }
+
+        const auto clampRadius = [](float radius, float maxExtent) {
+            return std::max(0.0f, std::min(radius, maxExtent));
+        };
+
+        const float tl = clampRadius(topLeft, std::min(w * 0.5f, h * 0.5f));
+        const float tr = clampRadius(topRight, std::min(w * 0.5f, h * 0.5f));
+        const float br = clampRadius(bottomRight, std::min(w * 0.5f, h * 0.5f));
+        const float bl = clampRadius(bottomLeft, std::min(w * 0.5f, h * 0.5f));
+
+        struct Point2 { float x; float y; };
+        std::vector<Point2> points;
+        points.reserve(64);
+
+        const auto addArc = [&](float centerX, float centerY, float startAngle, float endAngle, float radius, int segments) {
+            if (radius <= 0.0f) {
+                return;
+            }
+            for (int i = 0; i <= segments; ++i) {
+                const float t = static_cast<float>(i) / static_cast<float>(segments);
+                const float angle = startAngle + (endAngle - startAngle) * t;
+                points.push_back({centerX + radius * std::cos(angle), centerY + radius * std::sin(angle)});
+            }
+        };
+
+        points.push_back({x + tl, y});
+        points.push_back({x + w - tr, y});
+        addArc(x + w - tr, y + tr, -static_cast<float>(3.14159265358979323846) / 2.0f, 0.0f, tr, 8);
+        points.push_back({x + w, y + h - br});
+        addArc(x + w - br, y + h - br, 0.0f, static_cast<float>(3.14159265358979323846) / 2.0f, br, 8);
+        points.push_back({x + bl, y + h});
+        addArc(x + bl, y + h - bl, static_cast<float>(3.14159265358979323846) / 2.0f, static_cast<float>(3.14159265358979323846), bl, 8);
+        points.push_back({x, y + tl});
+        addArc(x + tl, y + tl, static_cast<float>(3.14159265358979323846), 3.0f * static_cast<float>(3.14159265358979323846) / 2.0f, tl, 8);
+
+        if (points.size() < 3) {
+            return;
+        }
+
+        for (size_t i = 1; i + 1 < points.size(); ++i) {
+            rectVerts.push_back({points[0].x, points[0].y, r, g, b, a});
+            rectVerts.push_back({points[i].x, points[i].y, r, g, b, a});
+            rectVerts.push_back({points[i + 1].x, points[i + 1].y, r, g, b, a});
+        }
+    };
+
     for (const auto& r : cmd.rects) {
         const float baseAlpha = ((r.color >> 24) & 0xFF) / 255.0f;
         const float red = ((r.color >> 16) & 0xFF) / 255.0f;
@@ -101,6 +154,27 @@ void ExecuteRendererDraw(const CommandList& cmd)
             }
         } else {
             pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha);
+        }
+    }
+
+    for (const auto& r : cmd.roundedRects) {
+        const float baseAlpha = ((r.color >> 24) & 0xFF) / 255.0f;
+        const float red = ((r.color >> 16) & 0xFF) / 255.0f;
+        const float green = ((r.color >> 8) & 0xFF) / 255.0f;
+        const float blue = (r.color & 0xFF) / 255.0f;
+        const float alpha = baseAlpha * r.opacity;
+
+        float clippedX = 0.0f;
+        float clippedY = 0.0f;
+        float clippedW = 0.0f;
+        float clippedH = 0.0f;
+        const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
+        if (clipped) {
+            if (clippedW > 0.0f && clippedH > 0.0f) {
+                pushRoundedRect(clippedX, clippedY, clippedW, clippedH, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha);
+            }
+        } else {
+            pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha);
         }
     }
 

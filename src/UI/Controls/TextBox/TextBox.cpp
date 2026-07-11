@@ -150,46 +150,42 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto border = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Border"));
     if (border) {
         border->SetRect(absX, absY, GetFinalWidth(), GetFinalHeight());
+        border->SetFillColor(m_backgroundColor);
+        border->SetBorderColor(m_borderColor);
+        border->SetBorderThickness(1);
+        border->SetCornerRadius(GetCornerRadius());
         border->SetOpacity(GetOpacity());
         border->BuildRenderCommands(commands);
     }
     else {
-        commands.DrawRect(
-            static_cast<float>(absX),
-            static_cast<float>(absY),
-            static_cast<float>(GetFinalWidth()),
-            static_cast<float>(GetFinalHeight()),
-            m_backgroundColor,
-            GetOpacity());
+        const auto cornerRadius = GetCornerRadius();
+        if (m_borderColor != 0x00000000u) {
+            commands.DrawRoundedRect(
+                static_cast<float>(absX),
+                static_cast<float>(absY),
+                static_cast<float>(GetFinalWidth()),
+                static_cast<float>(GetFinalHeight()),
+                cornerRadius.TopLeft,
+                cornerRadius.TopRight,
+                cornerRadius.BottomRight,
+                cornerRadius.BottomLeft,
+                m_borderColor,
+                GetOpacity());
+        }
 
-        commands.DrawRect(
-            static_cast<float>(absX),
-            static_cast<float>(absY),
-            static_cast<float>(GetFinalWidth()),
-            1.0f,
-            m_borderColor,
-            GetOpacity());
-        commands.DrawRect(
-            static_cast<float>(absX),
-            static_cast<float>(absY + GetFinalHeight() - 1),
-            static_cast<float>(GetFinalWidth()),
-            1.0f,
-            m_borderColor,
-            GetOpacity());
-        commands.DrawRect(
-            static_cast<float>(absX),
-            static_cast<float>(absY),
-            1.0f,
-            static_cast<float>(GetFinalHeight()),
-            m_borderColor,
-            GetOpacity());
-        commands.DrawRect(
-            static_cast<float>(absX + GetFinalWidth() - 1),
-            static_cast<float>(absY),
-            1.0f,
-            static_cast<float>(GetFinalHeight()),
-            m_borderColor,
-            GetOpacity());
+        if (m_backgroundColor != 0x00000000u) {
+            commands.DrawRoundedRect(
+                static_cast<float>(absX + 1),
+                static_cast<float>(absY + 1),
+                static_cast<float>(std::max(0, GetFinalWidth() - 2)),
+                static_cast<float>(std::max(0, GetFinalHeight() - 2)),
+                std::max(0.0f, cornerRadius.TopLeft - 1.0f),
+                std::max(0.0f, cornerRadius.TopRight - 1.0f),
+                std::max(0.0f, cornerRadius.BottomRight - 1.0f),
+                std::max(0.0f, cornerRadius.BottomLeft - 1.0f),
+                m_backgroundColor,
+                GetOpacity());
+        }
     }
 
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));

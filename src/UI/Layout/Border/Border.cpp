@@ -78,44 +78,34 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     int absY = 0;
     GetAbsolutePosition(absX, absY);
 
-    if (m_backgroundColor != 0x00000000u) {
-        commands.DrawRect(
+    const auto cornerRadius = GetCornerRadius();
+
+    if (m_borderThickness > 0 && m_borderColor != 0x00000000u) {
+        commands.DrawRoundedRect(
             static_cast<float>(absX),
             static_cast<float>(absY),
             static_cast<float>(GetFinalWidth()),
             static_cast<float>(GetFinalHeight()),
-            m_backgroundColor,
+            cornerRadius.TopLeft,
+            cornerRadius.TopRight,
+            cornerRadius.BottomRight,
+            cornerRadius.BottomLeft,
+            m_borderColor,
             GetOpacity());
     }
 
-    if (m_borderThickness > 0 && m_borderColor != 0x00000000u) {
-        commands.DrawRect(
-            static_cast<float>(absX),
-            static_cast<float>(absY),
-            static_cast<float>(GetFinalWidth()),
-            static_cast<float>(m_borderThickness),
-            m_borderColor,
-            GetOpacity());
-        commands.DrawRect(
-            static_cast<float>(absX),
-            static_cast<float>(absY + GetFinalHeight() - m_borderThickness),
-            static_cast<float>(GetFinalWidth()),
-            static_cast<float>(m_borderThickness),
-            m_borderColor,
-            GetOpacity());
-        commands.DrawRect(
-            static_cast<float>(absX),
-            static_cast<float>(absY),
-            static_cast<float>(m_borderThickness),
-            static_cast<float>(GetFinalHeight()),
-            m_borderColor,
-            GetOpacity());
-        commands.DrawRect(
-            static_cast<float>(absX + GetFinalWidth() - m_borderThickness),
-            static_cast<float>(absY),
-            static_cast<float>(m_borderThickness),
-            static_cast<float>(GetFinalHeight()),
-            m_borderColor,
+    if (m_backgroundColor != 0x00000000u) {
+        const float inset = static_cast<float>(m_borderThickness);
+        commands.DrawRoundedRect(
+            static_cast<float>(absX + inset),
+            static_cast<float>(absY + inset),
+            static_cast<float>(std::max(0, GetFinalWidth() - (2 * m_borderThickness))),
+            static_cast<float>(std::max(0, GetFinalHeight() - (2 * m_borderThickness))),
+            std::max(0.0f, cornerRadius.TopLeft - inset),
+            std::max(0.0f, cornerRadius.TopRight - inset),
+            std::max(0.0f, cornerRadius.BottomRight - inset),
+            std::max(0.0f, cornerRadius.BottomLeft - inset),
+            m_backgroundColor,
             GetOpacity());
     }
 

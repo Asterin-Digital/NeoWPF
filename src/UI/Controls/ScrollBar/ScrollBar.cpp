@@ -103,6 +103,8 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     const int thumbLength = GetThumbLength(trackLength);
     const int thumbPosition = GetThumbPosition(trackLength, thumbLength);
 
+    const auto cornerRadius = GetCornerRadius();
+
     if (track) {
         if (isVertical) {
             track->SetRect(absX, absY, trackThickness, trackLength);
@@ -110,13 +112,16 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             track->SetRect(absX, absY, trackLength, trackThickness);
         }
         track->SetFillColor(m_trackColor);
+        track->SetBorderColor(0x00000000u);
+        track->SetBorderThickness(0);
+        track->SetCornerRadius(cornerRadius);
         track->SetOpacity(GetOpacity());
         track->SetClipRect(clip);
         track->BuildRenderCommands(commands);
     } else if (isVertical) {
-        commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(trackThickness), static_cast<float>(trackLength), m_trackColor, GetOpacity(), clip);
+        commands.DrawRoundedRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(trackThickness), static_cast<float>(trackLength), cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_trackColor, GetOpacity(), clip);
     } else {
-        commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(trackLength), static_cast<float>(trackThickness), m_trackColor, GetOpacity(), clip);
+        commands.DrawRoundedRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(trackLength), static_cast<float>(trackThickness), cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_trackColor, GetOpacity(), clip);
     }
 
     if (thumb) {
@@ -126,13 +131,16 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             thumb->SetRect(absX + thumbPosition, absY, thumbLength, trackThickness);
         }
         thumb->SetFillColor(m_thumbColor);
+        thumb->SetBorderColor(0x00000000u);
+        thumb->SetBorderThickness(0);
+        thumb->SetCornerRadius(cornerRadius);
         thumb->SetOpacity(GetOpacity());
         thumb->SetClipRect(clip);
         thumb->BuildRenderCommands(commands);
     } else if (isVertical) {
-        commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY + thumbPosition), static_cast<float>(trackThickness), static_cast<float>(thumbLength), m_thumbColor, GetOpacity(), clip);
+        commands.DrawRoundedRect(static_cast<float>(absX), static_cast<float>(absY + thumbPosition), static_cast<float>(trackThickness), static_cast<float>(thumbLength), cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_thumbColor, GetOpacity(), clip);
     } else {
-        commands.DrawRect(static_cast<float>(absX + thumbPosition), static_cast<float>(absY), static_cast<float>(thumbLength), static_cast<float>(trackThickness), m_thumbColor, GetOpacity(), clip);
+        commands.DrawRoundedRect(static_cast<float>(absX + thumbPosition), static_cast<float>(absY), static_cast<float>(thumbLength), static_cast<float>(trackThickness), cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_thumbColor, GetOpacity(), clip);
     }
 
     if (auto presenter = GetPresenter()) {

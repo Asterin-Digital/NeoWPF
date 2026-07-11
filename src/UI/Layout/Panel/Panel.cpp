@@ -215,11 +215,16 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     GetAbsolutePosition(absX, absY);
 
     if (m_backgroundColor != 0x00000000u) {
-        commands.DrawRect(
+        const auto cornerRadius = GetCornerRadius();
+        commands.DrawRoundedRect(
             static_cast<float>(absX),
             static_cast<float>(absY),
             static_cast<float>(GetFinalWidth()),
             static_cast<float>(GetFinalHeight()),
+            cornerRadius.TopLeft,
+            cornerRadius.TopRight,
+            cornerRadius.BottomRight,
+            cornerRadius.BottomLeft,
             m_backgroundColor,
             GetOpacity());
     }

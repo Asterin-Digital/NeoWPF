@@ -1,4 +1,13 @@
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <algorithm>
+
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
 
 namespace NeoWPF::UI::Templates {
 
@@ -34,6 +43,17 @@ void TemplateVisual::SetBorderThickness(int thickness) noexcept
     MarkTreeDirty();
 }
 
+void TemplateVisual::SetCornerRadius(NeoWPF::UI::Core::CornerRadius cornerRadius) noexcept
+{
+    m_cornerRadius = cornerRadius;
+    MarkTreeDirty();
+}
+
+NeoWPF::UI::Core::CornerRadius TemplateVisual::GetCornerRadius() const noexcept
+{
+    return m_cornerRadius;
+}
+
 void TemplateVisual::SetOpacity(float opacity) noexcept
 {
     if (opacity < 0.0f) {
@@ -62,52 +82,45 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
         return;
     }
 
-    commands.DrawRect(
-        static_cast<float>(m_x),
-        static_cast<float>(m_y),
-        static_cast<float>(m_width),
-        static_cast<float>(m_height),
-        m_fillColor,
-        m_opacity,
-        m_clip);
+    const float x = static_cast<float>(m_x);
+    const float y = static_cast<float>(m_y);
+    const float width = static_cast<float>(m_width);
+    const float height = static_cast<float>(m_height);
 
-    if (m_borderThickness <= 0) {
-        return;
+    if (m_borderThickness > 0 && m_borderColor != 0x00000000u) {
+        commands.DrawRoundedRect(
+            x,
+            y,
+            width,
+            height,
+            m_cornerRadius.TopLeft,
+            m_cornerRadius.TopRight,
+            m_cornerRadius.BottomRight,
+            m_cornerRadius.BottomLeft,
+            m_borderColor,
+            m_opacity,
+            m_clip);
     }
 
-    const int thickness = m_borderThickness < 1 ? 1 : m_borderThickness;
-    commands.DrawRect(
-        static_cast<float>(m_x),
-        static_cast<float>(m_y),
-        static_cast<float>(m_width),
-        static_cast<float>(thickness),
-        m_borderColor,
-        m_opacity,
-        m_clip);
-    commands.DrawRect(
-        static_cast<float>(m_x),
-        static_cast<float>(m_y + m_height - thickness),
-        static_cast<float>(m_width),
-        static_cast<float>(thickness),
-        m_borderColor,
-        m_opacity,
-        m_clip);
-    commands.DrawRect(
-        static_cast<float>(m_x),
-        static_cast<float>(m_y),
-        static_cast<float>(thickness),
-        static_cast<float>(m_height),
-        m_borderColor,
-        m_opacity,
-        m_clip);
-    commands.DrawRect(
-        static_cast<float>(m_x + m_width - thickness),
-        static_cast<float>(m_y),
-        static_cast<float>(thickness),
-        static_cast<float>(m_height),
-        m_borderColor,
-        m_opacity,
-        m_clip);
+    if (m_fillColor != 0x00000000u) {
+        const float inset = static_cast<float>(std::max(0, m_borderThickness));
+        const float innerWidth = std::max(0.0f, width - (2.0f * inset));
+        const float innerHeight = std::max(0.0f, height - (2.0f * inset));
+        if (innerWidth > 0.0f && innerHeight > 0.0f) {
+            commands.DrawRoundedRect(
+                x + inset,
+                y + inset,
+                innerWidth,
+                innerHeight,
+                std::max(0.0f, m_cornerRadius.TopLeft - inset),
+                std::max(0.0f, m_cornerRadius.TopRight - inset),
+                std::max(0.0f, m_cornerRadius.BottomRight - inset),
+                std::max(0.0f, m_cornerRadius.BottomLeft - inset),
+                m_fillColor,
+                m_opacity,
+                m_clip);
+        }
+    }
 }
 
 } // namespace NeoWPF::UI::Templates
