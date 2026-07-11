@@ -15,7 +15,7 @@
 namespace NeoWPF::UI {
 
 Button::Button()
-    : Content::ContentControl()
+    : ButtonBase()
 {
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
@@ -35,13 +35,10 @@ Button::Button()
     if (auto style = Styling::StyleManager::GetDefault(typeid(Button))) {
         style->Apply(this);
     }
-
-    InitializeVisualStates();
-    ApplyVisualState("Normal", false);
 }
 
 Button::Button(const std::wstring& text)
-    : Content::ContentControl()
+    : ButtonBase()
 {
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
@@ -62,8 +59,6 @@ Button::Button(const std::wstring& text)
         style->Apply(this);
     }
 
-    InitializeVisualStates();
-    ApplyVisualState("Normal", false);
     SetText(text);
 }
 
@@ -152,9 +147,17 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     Content::ContentControl::BuildRenderCommands(commands);
 }
 
-void Button::RaiseClick()
+void Button::OnVisualStateApplied(const std::string& stateName)
 {
-    Click.Invoke();
+    uint32_t resolvedColor = 0xFF3A3A3Au;
+    std::string propertyName = "VisualState." + stateName + ".Background";
+    if (!TryGetProperty(propertyName, resolvedColor)) {
+        if (stateName == "Normal") {
+            resolvedColor = 0xFF3A3A3Au;
+        }
+    }
+
+    SetBackgroundColor(resolvedColor);
 }
 
 }

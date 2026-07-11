@@ -114,6 +114,12 @@
     <ClCompile Include="src\UI\Core\Element\FrameworkElement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\UI\Controls\Base\ButtonBase\ButtonBase.cpp">
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\Base\ButtonBase\Behavior\ButtonBaseInteraction.cpp">
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\Base\ButtonBase\Visual\ButtonBaseStates.cpp">
+    </ClCompile>
     <ClCompile Include="src\UI\Controls\Button\Button.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -397,6 +403,8 @@
     </ClInclude>
     <ClInclude Include="include\NeoWPF\Rendering\ShaderSources.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Controls\Base\ButtonBase\ButtonBase.h">
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Controls\Button\Button.h">
       <Filter>Header Files</Filter>

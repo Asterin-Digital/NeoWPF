@@ -2,11 +2,9 @@
 
 #include <memory>
 #include <string>
-#include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
+#include <NeoWPF/UI/Controls/Base/ButtonBase/ButtonBase.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
-#include <NeoWPF/Core/Events/Event.h>
-#include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
 
@@ -31,7 +29,7 @@ void RegisterButtonStyles();
     This is the basic clickable thing you use for actions. It can show text, change colors,
     and raise `Click` when the user presses it.
 */
-class Button : public NeoWPF::UI::Content::ContentControl {
+class Button : public NeoWPF::UI::ButtonBase {
 public:
     Button();
 
@@ -157,18 +155,6 @@ public:
     */
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
-    /*
-        @summary
-        Controls whether the button can be hit by mouse input.
-    */
-    bool IsHitTestVisible() const noexcept override { return true; }
-
-    /*
-        @summary
-        Returns whether the button is currently interactable.
-    */
-    bool IsInteractable() const noexcept override { return IsEnabled(); }
-
     void OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args) override;
     void OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args) override;
     void OnMouseDown(int x, int y, std::uint32_t buttonState) override;
@@ -190,11 +176,10 @@ public:
     */
     void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
 
-    /*
-        @summary
-        Raised when the button is clicked.
-    */
-    NeoWPF::Core::Event<> Click;
+protected:
+    using ButtonBase::InitializeVisualStates;
+    using ButtonBase::ApplyVisualState;
+    using ButtonBase::RaiseClick;
 
 private:
     std::wstring m_text;
@@ -204,20 +189,9 @@ private:
 
 private:
     int m_padding = 8;
-    std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> m_visualStateManager;
-    std::string m_currentVisualState;
     std::shared_ptr<NeoWPF::UI::TextBlock> m_textContent;
 
-    void InitializeVisualStates();
-    void ApplyVisualState(const std::string& stateName, bool useTransitions = false);
-
-    /*
-        @summary
-        Raises the Click event.
-
-        @internal
-    */
-    void RaiseClick();
+    void OnVisualStateApplied(const std::string& stateName) override;
 };
 
 class ButtonTemplate : public Templates::ControlTemplate {

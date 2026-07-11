@@ -200,6 +200,9 @@
     <ClCompile Include="src\UI\Animation\Storyboards\Storyboard.cpp" />
     <ClCompile Include="src\UI\Animation\Core\Clock.cpp" />
     <ClCompile Include="src\UI\Animation\Core\Timeline.cpp" />
+    <ClCompile Include="src\UI\Controls\Base\ButtonBase\ButtonBase.cpp" />
+    <ClCompile Include="src\UI\Controls\Base\ButtonBase\Behavior\ButtonBaseInteraction.cpp" />
+    <ClCompile Include="src\UI\Controls\Base\ButtonBase\Visual\ButtonBaseStates.cpp" />
     <ClCompile Include="src\UI\Controls\Button\Button.cpp" />
     <ClCompile Include="src\UI\Controls\Button\ButtonProperties.cpp" />
     <ClCompile Include="src\UI\Controls\Button\Visual\ButtonStyles.cpp" />
