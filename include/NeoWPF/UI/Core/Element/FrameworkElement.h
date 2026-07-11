@@ -1,6 +1,7 @@
 #pragma once
 
 #include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/UI/Core/Media/CornerRadius.h>
 #include <NeoWPF/UI/Layout/Alignment/Alignment.h>
 #include <algorithm>
 
@@ -287,6 +288,26 @@ public:
 
     /*
         @summary
+        Returns the element's corner radius.
+    */
+    NeoWPF::UI::Core::CornerRadius GetCornerRadius() const noexcept { return m_cornerRadius; }
+
+    /*
+        @summary
+        Sets the element's corner radius.
+
+        @param cornerRadius
+        The new corner radius values.
+    */
+    void SetCornerRadius(NeoWPF::UI::Core::CornerRadius cornerRadius) noexcept {
+        if (m_cornerRadius != cornerRadius) {
+            m_cornerRadius = cornerRadius;
+            InvalidateVisual();
+        }
+    }
+
+    /*
+        @summary
         Resolves the final width for the current sizing mode.
 
         @param availableWidth
@@ -408,6 +429,7 @@ private:
     int m_renderOffsetY = 0;
     LayoutSizeMode m_heightMode = LayoutSizeMode::Auto;
     int m_height = 0;
+    NeoWPF::UI::Core::CornerRadius m_cornerRadius;
     bool m_clipToBounds = false;
 
 protected:

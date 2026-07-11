@@ -1,8 +1,13 @@
 #pragma once
 
+// pls dont add implementations in this header file
+// keep it only as an umbrella header file without a source implementation
+// DO NOT USE THIS IN FRAMEWORK INTERNALS, ONLY FOR NeoWPF.h FILE!! bcs its for public API
+
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Media/CornerRadius.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
 #include <NeoWPF/UI/Animation/Core/Timeline.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
