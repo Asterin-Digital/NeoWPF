@@ -243,6 +243,8 @@
     <ClCompile Include="src\Input\InputFocus.cpp" />
     <ClCompile Include="src\UI\Core\Element\FrameworkElement.cpp" />
     <ClCompile Include="src\UI\Core\Element\UIElement.cpp" />
+    <ClCompile Include="src\UI\Core\Element\UIElementProperties.cpp" />
+    <ClCompile Include="src\UI\Core\Element\FrameworkElementProperties.cpp" />
     <ClCompile Include="src\Rendering\Core\Renderer.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Text\TextRenderer.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Text\TextDWrite.cpp" />

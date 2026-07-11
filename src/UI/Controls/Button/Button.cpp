@@ -35,6 +35,7 @@ Button::Button()
     if (auto style = Styling::StyleManager::GetDefault(typeid(Button))) {
         style->Apply(this);
     }
+    ApplyVisualState("Normal", false);
 }
 
 Button::Button(const std::wstring& text)
@@ -58,6 +59,8 @@ Button::Button(const std::wstring& text)
     if (auto style = Styling::StyleManager::GetDefault(typeid(Button))) {
         style->Apply(this);
     }
+
+    ApplyVisualState("Normal", false);
 
     SetText(text);
 }
@@ -149,6 +152,11 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
 void Button::OnVisualStateApplied(const std::string& stateName)
 {
+    // If developer explicitly set a local BackgroundColor, do not override it with visual states.
+    if (IsPropertyLocal("BackgroundColor")) {
+        return;
+    }
+
     uint32_t resolvedColor = 0xFF3A3A3Au;
     std::string propertyName = "VisualState." + stateName + ".Background";
     if (!TryGetProperty(propertyName, resolvedColor)) {

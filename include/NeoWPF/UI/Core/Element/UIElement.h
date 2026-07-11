@@ -3,6 +3,7 @@
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/Core/Events/Event.h>
 #include <NeoWPF/Input/Core/EventHandler.h>
+#include <NeoWPF/UI/Properties/Property/PropertyValue.h>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -100,6 +101,8 @@ public:
 
     void SetProperty(const std::string& name, uint32_t value);
     bool TryGetProperty(const std::string& name, uint32_t& outValue) const;
+    void SetStyleProperty(const std::string& name, uint32_t value);
+    bool SetStylePropertyValue(const std::string& name, const std::any& value);
 
     bool SetPropertyValue(const std::string& name, const std::any& value);
     std::any GetPropertyValue(const std::string& name) const;
@@ -122,8 +125,11 @@ public:
 
 protected:
     bool m_isEnabled = true;
+    bool IsPropertyLocal(const std::string& name) const;
+    void SetPropertySource(const std::string& name, Properties::PropertySource source);
 
 private:
+    friend class Properties::PropertyRegistry;
     bool m_isVisible = true;
     bool m_isDirty = true;
     float m_opacity = 1.0f;
@@ -131,6 +137,7 @@ private:
     std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase> m_template;
     std::unordered_map<std::string, std::shared_ptr<Visual>> m_templateChildren;
     std::unordered_map<std::string, uint32_t> m_properties;
+    std::unordered_map<std::string, NeoWPF::UI::Properties::PropertySource> m_propertySources;
     std::shared_ptr<Visual> m_appliedTemplateRoot;
     std::unordered_map<std::size_t, NeoWPF::Core::Event<UIElement*, NeoWPF::Input::Core::RoutedEventArgs*>> m_routedEventHandlers;
     std::shared_ptr<NeoWPF::UI::Core::Transform> m_renderTransform;

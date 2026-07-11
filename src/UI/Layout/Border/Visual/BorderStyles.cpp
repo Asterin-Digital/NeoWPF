@@ -9,10 +9,10 @@ class BorderStyle : public Style {
 public:
     void Apply(UIElement* element) override
     {
-        element->SetPropertyValue("Padding", 0);
-        element->SetPropertyValue("BorderThickness", 1);
-        element->SetPropertyValue("BorderColor", uint32_t(0xFF333333u));
-        element->SetPropertyValue("BackgroundColor", uint32_t(0xFF1E1E1Eu));
+        element->SetStylePropertyValue("Padding", 0);
+        element->SetStylePropertyValue("BorderThickness", 1);
+        element->SetStylePropertyValue("BorderColor", uint32_t(0xFF333333u));
+        element->SetStylePropertyValue("BackgroundColor", uint32_t(0xFF1E1E1Eu));
     }
 };
 

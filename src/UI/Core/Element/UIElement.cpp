@@ -115,6 +115,7 @@ void UIElement::SetProperty(const std::string& name, uint32_t value) {
         return;
     }
     m_properties[name] = value;
+    SetPropertySource(name, Properties::PropertySource::Local);
 }
 
 bool UIElement::TryGetProperty(const std::string& name, uint32_t& outValue) const {
@@ -129,9 +130,49 @@ bool UIElement::TryGetProperty(const std::string& name, uint32_t& outValue) cons
     return true;
 }
 
+bool UIElement::IsPropertyLocal(const std::string& name) const
+{
+    auto it = m_propertySources.find(name);
+    return it != m_propertySources.end() && it->second == Properties::PropertySource::Local;
+}
+
+void UIElement::SetPropertySource(const std::string& name, Properties::PropertySource source)
+{
+    if (name.empty()) {
+        return;
+    }
+    if (source == Properties::PropertySource::Style && IsPropertyLocal(name)) {
+        return;
+    }
+    m_propertySources[name] = source;
+}
+
+void UIElement::SetStyleProperty(const std::string& name, uint32_t value)
+{
+    if (name.empty()) {
+        return;
+    }
+    auto itSource = m_propertySources.find(name);
+    if (itSource != m_propertySources.end() && itSource->second == Properties::PropertySource::Local) {
+        return;
+    }
+    m_properties[name] = value;
+    SetPropertySource(name, Properties::PropertySource::Style);
+}
+
+bool UIElement::SetStylePropertyValue(const std::string& name, const std::any& value)
+{
+    if (name.empty()) {
+        return false;
+    }
+
+    auto& registry = Properties::PropertyRegistry::Get(typeid(*this));
+    return registry.SetPropertyValue(this, name, value, Properties::PropertySource::Style);
+}
+
 bool UIElement::SetPropertyValue(const std::string& name, const std::any& value) {
     auto& registry = Properties::PropertyRegistry::Get(typeid(*this));
-    if (!registry.SetPropertyValue(this, name, value)) {
+    if (!registry.SetPropertyValue(this, name, value, Properties::PropertySource::Local)) {
         return false;
     }
     PropertyChanged.Invoke(name, value);

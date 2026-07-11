@@ -7,6 +7,7 @@
 #include <any>
 #include <memory>
 #include "PropertyInfo.h"
+#include "PropertyValue.h"
 
 namespace NeoWPF::UI {
     class UIElement;
@@ -19,7 +20,7 @@ namespace NeoWPF::UI::Properties {
         
         void RegisterProperty(const std::string& name, const PropertyInfo& info);
         
-        bool SetPropertyValue(UIElement* element, const std::string& name, const std::any& value);
+        bool SetPropertyValue(UIElement* element, const std::string& name, const std::any& value, PropertySource source = PropertySource::Local);
         
         std::any GetPropertyValue(UIElement* element, const std::string& name) const;
         

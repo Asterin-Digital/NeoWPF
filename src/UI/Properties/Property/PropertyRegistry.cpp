@@ -19,18 +19,19 @@ namespace NeoWPF::UI::Properties {
         }
     }
 
-    bool PropertyRegistry::SetPropertyValue(UIElement* element, const std::string& name, const std::any& value) {
+    bool PropertyRegistry::SetPropertyValue(UIElement* element, const std::string& name, const std::any& value, PropertySource source) {
         auto it = m_properties.find(name);
         if (it == m_properties.end()) {
             return false;
         }
-        
-        try {
-            it->second.Setter(element, value);
+
+        if (source == PropertySource::Style && element->IsPropertyLocal(name)) {
             return true;
-        } catch (...) {
-            return false;
         }
+
+        it->second.Setter(element, value);
+        element->SetPropertySource(name, source);
+        return true;
     }
 
     std::any PropertyRegistry::GetPropertyValue(UIElement* element, const std::string& name) const {
@@ -38,7 +39,7 @@ namespace NeoWPF::UI::Properties {
         if (it == m_properties.end()) {
             return std::any();
         }
-        
+
         try {
             return it->second.Getter(element);
         } catch (...) {

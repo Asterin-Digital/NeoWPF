@@ -9,8 +9,8 @@ class TextBlockStyle : public Style {
 public:
     void Apply(UIElement* element) override
     {
-        element->SetPropertyValue("TextColor", uint32_t(0xFFEDEDEDu));
-        element->SetPropertyValue("FontSize", 12);
+        element->SetStylePropertyValue("TextColor", uint32_t(0xFFEDEDEDu));
+        element->SetStylePropertyValue("FontSize", 12);
     }
 };
 

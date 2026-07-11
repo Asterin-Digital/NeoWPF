@@ -9,15 +9,15 @@ class ButtonStyle : public Style {
 public:
     void Apply(UIElement* element) override
     {
-        element->SetPropertyValue("TextColor", uint32_t(0xFFEDEDEDu));
-        element->SetPropertyValue("FontSize", 14);
-        element->SetPropertyValue("Padding", 10);
-        element->SetPropertyValue("BackgroundColor", uint32_t(0xFF3A3A3Au));
+        element->SetStylePropertyValue("TextColor", uint32_t(0xFFEDEDEDu));
+        element->SetStylePropertyValue("FontSize", 14);
+        element->SetStylePropertyValue("Padding", 10);
+        element->SetStylePropertyValue("BackgroundColor", uint32_t(0xFF3A3A3Au));
 
-        element->SetProperty("VisualState.Normal.Background", 0xFF3A3A3Au);
-        element->SetProperty("VisualState.MouseOver.Background", 0xFF5A7A9Au);
-        element->SetProperty("VisualState.Pressed.Background", 0xFF1A1A1Au);
-        element->SetProperty("VisualState.Disabled.Background", 0xFF2A2A2Au);
+        element->SetStyleProperty("VisualState.Normal.Background", 0xFF3A3A3Au);
+        element->SetStyleProperty("VisualState.MouseOver.Background", 0xFF5A7A9Au);
+        element->SetStyleProperty("VisualState.Pressed.Background", 0xFF1A1A1Au);
+        element->SetStyleProperty("VisualState.Disabled.Background", 0xFF2A2A2Au);
     }
 };
 

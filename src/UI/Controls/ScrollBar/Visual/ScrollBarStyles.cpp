@@ -9,9 +9,9 @@ class ScrollBarStyle : public Style {
 public:
     void Apply(UIElement* element) override
     {
-        element->SetPropertyValue("TrackColor", uint32_t(0xFF2A2A2Au));
-        element->SetPropertyValue("ThumbColor", uint32_t(0xFF5A5A5Au));
-        element->SetPropertyValue("ThumbSize", 24);
+        element->SetStylePropertyValue("TrackColor", uint32_t(0xFF2A2A2Au));
+        element->SetStylePropertyValue("ThumbColor", uint32_t(0xFF5A5A5Au));
+        element->SetStylePropertyValue("ThumbSize", 24);
     }
 };
 

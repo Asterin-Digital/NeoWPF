@@ -126,6 +126,12 @@
     <ClCompile Include="src\UI\Core\Element\UIElement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\UI\Core\Element\UIElementProperties.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Core\Element\FrameworkElementProperties.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\UI\Layout\Panel\Panel.Styles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
