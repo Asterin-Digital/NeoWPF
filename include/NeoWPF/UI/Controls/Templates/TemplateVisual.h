@@ -21,8 +21,8 @@ public:
     void SetFillColor(std::uint32_t color) noexcept;
     void SetBorderColor(std::uint32_t color) noexcept;
     void SetBorderThickness(int thickness) noexcept;
-    void SetCornerRadius(NeoWPF::UI::Core::CornerRadius cornerRadius) noexcept;
-    NeoWPF::UI::Core::CornerRadius GetCornerRadius() const noexcept;
+    void SetCornerRadius(NeoWPF::UI::CornerRadius cornerRadius) noexcept;
+    NeoWPF::UI::CornerRadius GetCornerRadius() const noexcept;
     void SetOpacity(float opacity) noexcept;
     float GetOpacity() const noexcept;
     void SetClipRect(const NeoWPF::Rendering::ClipRect& clip) noexcept;
@@ -38,7 +38,7 @@ private:
     std::uint32_t m_fillColor = 0x00000000u;
     std::uint32_t m_borderColor = 0x00000000u;
     int m_borderThickness = 0;
-    NeoWPF::UI::Core::CornerRadius m_cornerRadius;
+    NeoWPF::UI::CornerRadius m_cornerRadius;
     float m_opacity = 1.0f;
     NeoWPF::Rendering::ClipRect m_clip{};
 };

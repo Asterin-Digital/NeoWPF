@@ -155,8 +155,9 @@ public:
         @param color
         ARGB color value.
     */
-    void SetTextColor(uint32_t color) noexcept { m_textColor = color; InvalidateVisual(); }
-    uint32_t GetTextColor() const noexcept { return m_textColor; }
+    void SetTextColor(NeoWPF::UI::Color color) noexcept { m_textColor = color; InvalidateVisual(); }
+    void SetTextColor(std::uint32_t color) noexcept { SetTextColor(NeoWPF::UI::Color::FromArgb(color)); }
+    NeoWPF::UI::Color GetTextColor() const noexcept { return m_textColor; }
 
     /*
         @summary
@@ -165,8 +166,9 @@ public:
         @param color
         ARGB color value.
     */
-    void SetBackgroundColor(uint32_t color) noexcept { m_backgroundColor = color; InvalidateVisual(); }
-    uint32_t GetBackgroundColor() const noexcept { return m_backgroundColor; }
+    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept { m_backgroundColor = color; InvalidateVisual(); }
+    void SetBackgroundColor(std::uint32_t color) noexcept { SetBackgroundColor(NeoWPF::UI::Color::FromArgb(color)); }
+    NeoWPF::UI::Color GetBackgroundColor() const noexcept { return m_backgroundColor; }
 
     /*
         @summary
@@ -220,8 +222,9 @@ public:
         @param color
         ARGB color value.
     */
-    void SetBorderColor(uint32_t color) noexcept { m_borderColor = color; InvalidateVisual(); }
-    uint32_t GetBorderColor() const noexcept { return m_borderColor; }
+    void SetBorderColor(NeoWPF::UI::Color color) noexcept { m_borderColor = color; InvalidateVisual(); }
+    void SetBorderColor(std::uint32_t color) noexcept { SetBorderColor(NeoWPF::UI::Color::FromArgb(color)); }
+    NeoWPF::UI::Color GetBorderColor() const noexcept { return m_borderColor; }
 
     /*
         @summary
@@ -230,8 +233,9 @@ public:
         @param color
         ARGB color value.
     */
-    void SetCaretColor(uint32_t color) noexcept { m_caretColor = color; InvalidateVisual(); }
-    uint32_t GetCaretColor() const noexcept { return m_caretColor; }
+    void SetCaretColor(NeoWPF::UI::Color color) noexcept { m_caretColor = color; InvalidateVisual(); }
+    void SetCaretColor(std::uint32_t color) noexcept { SetCaretColor(NeoWPF::UI::Color::FromArgb(color)); }
+    NeoWPF::UI::Color GetCaretColor() const noexcept { return m_caretColor; }
 
     /*
         @summary
@@ -344,10 +348,10 @@ public:
 private:
     std::wstring m_text;
     std::size_t m_caretPosition = 0;
-    uint32_t m_textColor = 0xFFEDEDEDu;
-    uint32_t m_backgroundColor = 0xFF2F2F2Fu;
-    uint32_t m_borderColor = 0xFF666666u;
-    uint32_t m_caretColor = 0xFFFFFFFFu;
+    NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu);
+    NeoWPF::UI::Color m_backgroundColor = NeoWPF::UI::Color::FromArgb(0xFF2F2F2Fu);
+    NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0xFF666666u);
+    NeoWPF::UI::Color m_caretColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
     int m_fontSize = 16;
     int m_padding = 4;
     bool m_isReadOnly = false;

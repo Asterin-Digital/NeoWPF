@@ -8,6 +8,7 @@
 #include <NeoWPF/Core/Events/Event.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/UI/Core/Media/Color.h>
 
 namespace NeoWPF::Input::Core {
     class MouseEventArgs;
@@ -67,13 +68,13 @@ public:
         @param color
         ARGB color value.
     */
-    void SetTextColor(uint32_t color) noexcept { m_textColor = color; if (m_textContent) { m_textContent->SetTextColor(color); } InvalidateVisual(); }
+    void SetTextColor(NeoWPF::UI::Color color) noexcept { m_textColor = color; if (m_textContent) { m_textContent->SetTextColor(color.ToArgb()); } InvalidateVisual(); }
 
     /*
         @summary
         Returns the current text color.
     */
-    uint32_t GetTextColor() const noexcept { return m_textColor; }
+    NeoWPF::UI::Color GetTextColor() const noexcept { return m_textColor; }
 
     /*
         @summary
@@ -112,13 +113,13 @@ public:
         @param color
         ARGB color value.
     */
-    void SetBackgroundColor(uint32_t color) noexcept { m_backgroundColor = color; InvalidateVisual(); }
+    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept { m_backgroundColor = color; InvalidateVisual(); }
 
     /*
         @summary
         Returns the current background color.
     */
-    uint32_t GetBackgroundColor() const noexcept { return m_backgroundColor; }
+    NeoWPF::UI::Color GetBackgroundColor() const noexcept { return m_backgroundColor; }
 
     /*
         @summary
@@ -197,8 +198,8 @@ public:
 
 private:
     std::wstring m_text;
-    uint32_t m_textColor = 0xFF000000u;
-    uint32_t m_backgroundColor = 0xFF2F2F2Fu;
+    NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFF000000u);
+    NeoWPF::UI::Color m_backgroundColor = NeoWPF::UI::Color::FromArgb(0xFF2F2F2Fu);
     int m_fontSize = 16;
 
 private:

@@ -4,6 +4,7 @@
 #include <NeoWPF/Input/Core/Events.h>
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
+#include <NeoWPF/UI/Core/Media/Color.h>
 #include <cstdint>
 #include <memory>
 
@@ -60,13 +61,14 @@ public:
         @param color
         ARGB color value.
     */
-    void SetTrackColor(uint32_t color) noexcept { m_trackColor = color; InvalidateVisual(); }
+    void SetTrackColor(NeoWPF::UI::Color color) noexcept { m_trackColor = color; InvalidateVisual(); }
+    void SetTrackColor(std::uint32_t color) noexcept { SetTrackColor(NeoWPF::UI::Color::FromArgb(color)); }
 
     /*
         @summary
         Returns the current track color.
     */
-    uint32_t GetTrackColor() const noexcept { return m_trackColor; }
+    NeoWPF::UI::Color GetTrackColor() const noexcept { return m_trackColor; }
 
     /*
         @summary
@@ -75,13 +77,14 @@ public:
         @param color
         ARGB color value.
     */
-    void SetThumbColor(uint32_t color) noexcept { m_thumbColor = color; InvalidateVisual(); }
+    void SetThumbColor(NeoWPF::UI::Color color) noexcept { m_thumbColor = color; InvalidateVisual(); }
+    void SetThumbColor(std::uint32_t color) noexcept { SetThumbColor(NeoWPF::UI::Color::FromArgb(color)); }
 
     /*
         @summary
         Returns the current thumb color.
     */
-    uint32_t GetThumbColor() const noexcept { return m_thumbColor; }
+    NeoWPF::UI::Color GetThumbColor() const noexcept { return m_thumbColor; }
 
     /*
         @summary
@@ -271,8 +274,8 @@ private:
     void UpdateScrollState() noexcept;
 
     ScrollBarOrientation m_orientation = ScrollBarOrientation::Vertical;
-    uint32_t m_trackColor = 0xFF2A2A2Au;
-    uint32_t m_thumbColor = 0xFF5A5A5Au;
+    NeoWPF::UI::Color m_trackColor = NeoWPF::UI::Color::FromArgb(0xFF2A2A2Au);
+    NeoWPF::UI::Color m_thumbColor = NeoWPF::UI::Color::FromArgb(0xFF5A5A5Au);
     int m_thumbSize = 24;
     int m_contentSize = 0;
     int m_viewportSize = 0;

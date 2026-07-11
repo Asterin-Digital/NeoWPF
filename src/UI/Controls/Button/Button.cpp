@@ -28,7 +28,7 @@ Button::Button()
 
     m_textContent = std::make_shared<NeoWPF::UI::TextBlock>();
     m_textContent->SetText(L"");
-    m_textContent->SetTextColor(m_textColor);
+    m_textContent->SetTextColor(m_textColor.ToArgb());
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
 
@@ -54,7 +54,7 @@ Button::Button(const std::wstring& text)
 
     m_textContent = std::make_shared<NeoWPF::UI::TextBlock>();
     m_textContent->SetText(L"");
-    m_textContent->SetTextColor(m_textColor);
+    m_textContent->SetTextColor(m_textColor.ToArgb());
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
 
@@ -104,7 +104,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"));
     if (background) {
         background->SetRect(static_cast<int>(fAbsX), static_cast<int>(fAbsY), static_cast<int>(drawWidth), static_cast<int>(drawHeight));
-        background->SetFillColor(m_backgroundColor);
+        background->SetFillColor(m_backgroundColor.ToArgb());
         background->SetBorderColor(0xFF333333u);
         background->SetBorderThickness(1);
         background->SetCornerRadius(GetCornerRadius());
@@ -122,7 +122,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             cornerRadius.TopRight,
             cornerRadius.BottomRight,
             cornerRadius.BottomLeft,
-            m_backgroundColor,
+            m_backgroundColor.ToArgb(),
             GetOpacity());
 
         commands.DrawRoundedRect(

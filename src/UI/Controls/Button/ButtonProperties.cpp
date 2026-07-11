@@ -8,10 +8,10 @@ namespace NeoWPF::UI::Properties {
             &UI::Button::GetText,
             &UI::Button::SetText);
 
-        RegisterProperty<UI::Button, uint32_t>(
+        RegisterProperty<UI::Button, NeoWPF::UI::Color>(
             "TextColor",
             &UI::Button::GetTextColor,
-            &UI::Button::SetTextColor);
+            static_cast<void (UI::Button::*)(NeoWPF::UI::Color)>(&UI::Button::SetTextColor));
 
         RegisterProperty<UI::Button, int>(
             "FontSize",
@@ -23,9 +23,9 @@ namespace NeoWPF::UI::Properties {
             &UI::Button::GetPadding,
             &UI::Button::SetPadding);
 
-        RegisterProperty<UI::Button, uint32_t>(
+        RegisterProperty<UI::Button, NeoWPF::UI::Color>(
             "BackgroundColor",
             &UI::Button::GetBackgroundColor,
-            &UI::Button::SetBackgroundColor);
+            static_cast<void (UI::Button::*)(NeoWPF::UI::Color)>(&UI::Button::SetBackgroundColor));
     }
 }

@@ -290,7 +290,7 @@ public:
         @summary
         Returns the element's corner radius.
     */
-    NeoWPF::UI::Core::CornerRadius GetCornerRadius() const noexcept { return m_cornerRadius; }
+    NeoWPF::UI::CornerRadius GetCornerRadius() const noexcept { return m_cornerRadius; }
 
     /*
         @summary
@@ -299,7 +299,7 @@ public:
         @param cornerRadius
         The new corner radius values.
     */
-    void SetCornerRadius(NeoWPF::UI::Core::CornerRadius cornerRadius) noexcept {
+    void SetCornerRadius(NeoWPF::UI::CornerRadius cornerRadius) noexcept {
         if (m_cornerRadius != cornerRadius) {
             m_cornerRadius = cornerRadius;
             InvalidateVisual();
@@ -429,7 +429,7 @@ private:
     int m_renderOffsetY = 0;
     LayoutSizeMode m_heightMode = LayoutSizeMode::Auto;
     int m_height = 0;
-    NeoWPF::UI::Core::CornerRadius m_cornerRadius;
+    NeoWPF::UI::CornerRadius m_cornerRadius;
     bool m_clipToBounds = false;
 
 protected:

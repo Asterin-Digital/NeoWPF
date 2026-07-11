@@ -8,25 +8,25 @@ namespace NeoWPF::UI::Properties {
             &UI::TextBox::GetText,
             &UI::TextBox::SetText);
 
-        RegisterProperty<UI::TextBox, uint32_t>(
+        RegisterProperty<UI::TextBox, NeoWPF::UI::Color>(
             "TextColor",
             &UI::TextBox::GetTextColor,
-            &UI::TextBox::SetTextColor);
+            static_cast<void (UI::TextBox::*)(NeoWPF::UI::Color)>(&UI::TextBox::SetTextColor));
 
-        RegisterProperty<UI::TextBox, uint32_t>(
+        RegisterProperty<UI::TextBox, NeoWPF::UI::Color>(
             "BackgroundColor",
             &UI::TextBox::GetBackgroundColor,
-            &UI::TextBox::SetBackgroundColor);
+            static_cast<void (UI::TextBox::*)(NeoWPF::UI::Color)>(&UI::TextBox::SetBackgroundColor));
 
-        RegisterProperty<UI::TextBox, uint32_t>(
+        RegisterProperty<UI::TextBox, NeoWPF::UI::Color>(
             "BorderColor",
             &UI::TextBox::GetBorderColor,
-            &UI::TextBox::SetBorderColor);
+            static_cast<void (UI::TextBox::*)(NeoWPF::UI::Color)>(&UI::TextBox::SetBorderColor));
 
-        RegisterProperty<UI::TextBox, uint32_t>(
+        RegisterProperty<UI::TextBox, NeoWPF::UI::Color>(
             "CaretColor",
             &UI::TextBox::GetCaretColor,
-            &UI::TextBox::SetCaretColor);
+            static_cast<void (UI::TextBox::*)(NeoWPF::UI::Color)>(&UI::TextBox::SetCaretColor));
 
         RegisterProperty<UI::TextBox, int>(
             "FontSize",

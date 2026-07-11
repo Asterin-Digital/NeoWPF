@@ -8,10 +8,10 @@ namespace NeoWPF::UI::Properties {
             &UI::TextBlock::GetText,
             &UI::TextBlock::SetText);
 
-        RegisterProperty<UI::TextBlock, uint32_t>(
+        RegisterProperty<UI::TextBlock, NeoWPF::UI::Color>(
             "TextColor",
             &UI::TextBlock::GetTextColor,
-            &UI::TextBlock::SetTextColor);
+            static_cast<void (UI::TextBlock::*)(NeoWPF::UI::Color)>(&UI::TextBlock::SetTextColor));
 
         RegisterProperty<UI::TextBlock, int>(
             "FontSize",

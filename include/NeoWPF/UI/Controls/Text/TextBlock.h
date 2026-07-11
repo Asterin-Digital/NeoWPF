@@ -1,8 +1,10 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Core/Element/IContentAware.h>
+#include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/Rendering/Renderer.h>
 
 namespace NeoWPF::Input::Core
@@ -29,8 +31,9 @@ public:
     void SetText(const std::wstring& text);
     const std::wstring& GetText() const noexcept { return m_text; }
 
-    void SetTextColor(uint32_t color) noexcept { m_textColor = color; InvalidateVisual(); }
-    uint32_t GetTextColor() const noexcept { return m_textColor; }
+    void SetTextColor(NeoWPF::UI::Color color) noexcept { m_textColor = color; InvalidateVisual(); }
+    void SetTextColor(std::uint32_t color) noexcept { SetTextColor(NeoWPF::UI::Color::FromArgb(color)); }
+    NeoWPF::UI::Color GetTextColor() const noexcept { return m_textColor; }
 
     void SetFontSize(int fontSize) noexcept { m_fontSize = fontSize; InvalidateVisual(); }
     int GetFontSize() const noexcept { return m_fontSize; }
@@ -49,7 +52,7 @@ public:
 
 private:
     std::wstring m_text;
-    uint32_t m_textColor = 0xFF000000u;
+    NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFF000000u);
     int m_fontSize = 16;
     uint32_t m_textureId = 0;
     int m_textWidth = 0;

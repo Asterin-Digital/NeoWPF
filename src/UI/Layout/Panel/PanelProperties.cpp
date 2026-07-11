@@ -3,9 +3,9 @@
 
 namespace NeoWPF::UI::Properties {
     void RegisterPanelProperties() {
-        RegisterProperty<UI::Panel, uint32_t>(
+        RegisterProperty<UI::Panel, NeoWPF::UI::Color>(
             "BackgroundColor",
             &UI::Panel::GetBackgroundColor,
-            &UI::Panel::SetBackgroundColor);
+            static_cast<void (UI::Panel::*)(NeoWPF::UI::Color)>(&UI::Panel::SetBackgroundColor));
     }
 }

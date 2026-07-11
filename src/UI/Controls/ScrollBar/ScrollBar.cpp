@@ -111,7 +111,7 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         } else {
             track->SetRect(absX, absY, trackLength, trackThickness);
         }
-        track->SetFillColor(m_trackColor);
+        track->SetFillColor(m_trackColor.ToArgb());
         track->SetBorderColor(0x00000000u);
         track->SetBorderThickness(0);
         track->SetCornerRadius(cornerRadius);
@@ -119,9 +119,9 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         track->SetClipRect(clip);
         track->BuildRenderCommands(commands);
     } else if (isVertical) {
-        commands.DrawRoundedRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(trackThickness), static_cast<float>(trackLength), cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_trackColor, GetOpacity(), clip);
+        commands.DrawRoundedRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(trackThickness), static_cast<float>(trackLength), cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_trackColor.ToArgb(), GetOpacity(), clip);
     } else {
-        commands.DrawRoundedRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(trackLength), static_cast<float>(trackThickness), cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_trackColor, GetOpacity(), clip);
+        commands.DrawRoundedRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(trackLength), static_cast<float>(trackThickness), cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_trackColor.ToArgb(), GetOpacity(), clip);
     }
 
     if (thumb) {
@@ -130,7 +130,7 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         } else {
             thumb->SetRect(absX + thumbPosition, absY, thumbLength, trackThickness);
         }
-        thumb->SetFillColor(m_thumbColor);
+        thumb->SetFillColor(m_thumbColor.ToArgb());
         thumb->SetBorderColor(0x00000000u);
         thumb->SetBorderThickness(0);
         thumb->SetCornerRadius(cornerRadius);
@@ -138,9 +138,9 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         thumb->SetClipRect(clip);
         thumb->BuildRenderCommands(commands);
     } else if (isVertical) {
-        commands.DrawRoundedRect(static_cast<float>(absX), static_cast<float>(absY + thumbPosition), static_cast<float>(trackThickness), static_cast<float>(thumbLength), cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_thumbColor, GetOpacity(), clip);
+        commands.DrawRoundedRect(static_cast<float>(absX), static_cast<float>(absY + thumbPosition), static_cast<float>(trackThickness), static_cast<float>(thumbLength), cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_thumbColor.ToArgb(), GetOpacity(), clip);
     } else {
-        commands.DrawRoundedRect(static_cast<float>(absX + thumbPosition), static_cast<float>(absY), static_cast<float>(thumbLength), static_cast<float>(trackThickness), cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_thumbColor, GetOpacity(), clip);
+        commands.DrawRoundedRect(static_cast<float>(absX + thumbPosition), static_cast<float>(absY), static_cast<float>(thumbLength), static_cast<float>(trackThickness), cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_thumbColor.ToArgb(), GetOpacity(), clip);
     }
 
     if (auto presenter = GetPresenter()) {

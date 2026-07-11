@@ -7,6 +7,7 @@
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
 #include <NeoWPF/UI/Animation/Core/Timeline.h>

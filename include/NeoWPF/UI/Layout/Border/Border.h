@@ -1,6 +1,7 @@
 #pragma once
 
 #include <NeoWPF/UI/Content/ContentControl.h>
+#include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Styling/Style/Style.h>
 #include <memory>
 
@@ -85,13 +86,14 @@ public:
         @param color
         The border color in ARGB format.
     */
-    void SetBorderColor(uint32_t color) noexcept { m_borderColor = color; InvalidateVisual(); }
+    void SetBorderColor(NeoWPF::UI::Color color) noexcept { m_borderColor = color; InvalidateVisual(); }
+    void SetBorderColor(std::uint32_t color) noexcept { SetBorderColor(NeoWPF::UI::Color::FromArgb(color)); }
 
     /*
         @summary
         Gets the border color.
     */
-    uint32_t GetBorderColor() const noexcept { return m_borderColor; }
+    NeoWPF::UI::Color GetBorderColor() const noexcept { return m_borderColor; }
 
     /*
         @summary
@@ -100,13 +102,14 @@ public:
         @param color
         The background color in ARGB format.
     */
-    void SetBackgroundColor(uint32_t color) noexcept { m_backgroundColor = color; InvalidateVisual(); }
+    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept { m_backgroundColor = color; InvalidateVisual(); }
+    void SetBackgroundColor(std::uint32_t color) noexcept { SetBackgroundColor(NeoWPF::UI::Color::FromArgb(color)); }
 
     /*
         @summary
         Gets the background color.
     */
-    uint32_t GetBackgroundColor() const noexcept { return m_backgroundColor; }
+    NeoWPF::UI::Color GetBackgroundColor() const noexcept { return m_backgroundColor; }
 
     /*
         @summary
@@ -141,8 +144,8 @@ public:
 private:
     int m_padding = 0;
     int m_borderThickness = 0;
-    uint32_t m_borderColor = 0xFF000000u;
-    uint32_t m_backgroundColor = 0x00000000u;
+    NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0xFF000000u);
+    NeoWPF::UI::Color m_backgroundColor = NeoWPF::UI::Color::FromArgb(0x00000000u);
 };
 
 }

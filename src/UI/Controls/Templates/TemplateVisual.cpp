@@ -43,13 +43,13 @@ void TemplateVisual::SetBorderThickness(int thickness) noexcept
     MarkTreeDirty();
 }
 
-void TemplateVisual::SetCornerRadius(NeoWPF::UI::Core::CornerRadius cornerRadius) noexcept
+void TemplateVisual::SetCornerRadius(NeoWPF::UI::CornerRadius cornerRadius) noexcept
 {
     m_cornerRadius = cornerRadius;
     MarkTreeDirty();
 }
 
-NeoWPF::UI::Core::CornerRadius TemplateVisual::GetCornerRadius() const noexcept
+NeoWPF::UI::CornerRadius TemplateVisual::GetCornerRadius() const noexcept
 {
     return m_cornerRadius;
 }

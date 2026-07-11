@@ -1,6 +1,6 @@
 #pragma once
 
-namespace NeoWPF::UI::Core {
+namespace NeoWPF::UI {
 
 struct CornerRadius {
     float TopLeft = 0.0f;

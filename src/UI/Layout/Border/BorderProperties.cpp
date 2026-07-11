@@ -13,14 +13,14 @@ namespace NeoWPF::UI::Properties {
             &UI::Border::GetBorderThickness,
             &UI::Border::SetBorderThickness);
 
-        RegisterProperty<UI::Border, uint32_t>(
+        RegisterProperty<UI::Border, NeoWPF::UI::Color>(
             "BorderColor",
             &UI::Border::GetBorderColor,
-            &UI::Border::SetBorderColor);
+            static_cast<void (UI::Border::*)(NeoWPF::UI::Color)>(&UI::Border::SetBorderColor));
 
-        RegisterProperty<UI::Border, uint32_t>(
+        RegisterProperty<UI::Border, NeoWPF::UI::Color>(
             "BackgroundColor",
             &UI::Border::GetBackgroundColor,
-            &UI::Border::SetBackgroundColor);
+            static_cast<void (UI::Border::*)(NeoWPF::UI::Color)>(&UI::Border::SetBackgroundColor));
     }
 }

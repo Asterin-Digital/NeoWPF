@@ -1,6 +1,7 @@
 #pragma once
 
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/Rendering/Renderer.h>
 
 namespace NeoWPF::Input::Core
@@ -23,11 +24,12 @@ public:
     virtual void OnMouseDown(int x, int y, std::uint32_t buttonState) override {}
     virtual void OnMouseUp(int x, int y, std::uint32_t buttonState) override {}
 
-    void SetBackgroundColor(uint32_t color) noexcept { m_backgroundColor = color; InvalidateVisual(); }
-    uint32_t GetBackgroundColor() const noexcept { return m_backgroundColor; }
+    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept { m_backgroundColor = color; InvalidateVisual(); }
+    void SetBackgroundColor(std::uint32_t color) noexcept { SetBackgroundColor(NeoWPF::UI::Color::FromArgb(color)); }
+    NeoWPF::UI::Color GetBackgroundColor() const noexcept { return m_backgroundColor; }
 
 private:
-    uint32_t m_backgroundColor = 0x00000000u;
+    NeoWPF::UI::Color m_backgroundColor = NeoWPF::UI::Color::FromArgb(0x00000000u);
 };
 
 }

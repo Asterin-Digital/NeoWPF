@@ -150,8 +150,8 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto border = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Border"));
     if (border) {
         border->SetRect(absX, absY, GetFinalWidth(), GetFinalHeight());
-        border->SetFillColor(m_backgroundColor);
-        border->SetBorderColor(m_borderColor);
+        border->SetFillColor(m_backgroundColor.ToArgb());
+        border->SetBorderColor(m_borderColor.ToArgb());
         border->SetBorderThickness(1);
         border->SetCornerRadius(GetCornerRadius());
         border->SetOpacity(GetOpacity());
@@ -159,7 +159,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
     else {
         const auto cornerRadius = GetCornerRadius();
-        if (m_borderColor != 0x00000000u) {
+        if (m_borderColor.ToArgb() != 0x00000000u) {
             commands.DrawRoundedRect(
                 static_cast<float>(absX),
                 static_cast<float>(absY),
@@ -169,11 +169,11 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 cornerRadius.TopRight,
                 cornerRadius.BottomRight,
                 cornerRadius.BottomLeft,
-                m_borderColor,
+                m_borderColor.ToArgb(),
                 GetOpacity());
         }
 
-        if (m_backgroundColor != 0x00000000u) {
+        if (m_backgroundColor.ToArgb() != 0x00000000u) {
             commands.DrawRoundedRect(
                 static_cast<float>(absX + 1),
                 static_cast<float>(absY + 1),
@@ -183,7 +183,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 std::max(0.0f, cornerRadius.TopRight - 1.0f),
                 std::max(0.0f, cornerRadius.BottomRight - 1.0f),
                 std::max(0.0f, cornerRadius.BottomLeft - 1.0f),
-                m_backgroundColor,
+                m_backgroundColor.ToArgb(),
                 GetOpacity());
         }
     }

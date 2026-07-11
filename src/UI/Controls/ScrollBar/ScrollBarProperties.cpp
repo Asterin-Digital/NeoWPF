@@ -3,15 +3,15 @@
 
 namespace NeoWPF::UI::Properties {
     void RegisterScrollBarProperties() {
-        RegisterProperty<UI::ScrollBar, uint32_t>(
+        RegisterProperty<UI::ScrollBar, NeoWPF::UI::Color>(
             "TrackColor",
             &UI::ScrollBar::GetTrackColor,
-            &UI::ScrollBar::SetTrackColor);
+            static_cast<void (UI::ScrollBar::*)(NeoWPF::UI::Color)>(&UI::ScrollBar::SetTrackColor));
 
-        RegisterProperty<UI::ScrollBar, uint32_t>(
+        RegisterProperty<UI::ScrollBar, NeoWPF::UI::Color>(
             "ThumbColor",
             &UI::ScrollBar::GetThumbColor,
-            &UI::ScrollBar::SetThumbColor);
+            static_cast<void (UI::ScrollBar::*)(NeoWPF::UI::Color)>(&UI::ScrollBar::SetThumbColor));
 
         RegisterProperty<UI::ScrollBar, int>(
             "ThumbSize",
