@@ -75,18 +75,52 @@ void ExecuteRendererDraw(const CommandList& cmd)
     std::vector<Vertex> rectVerts;
     rectVerts.reserve(cmd.rects.size() * 6);
 
-    auto pushRect = [&](float x, float y, float w, float h, float r, float g, float b, float a) {
-        rectVerts.push_back({x, y, r, g, b, a});
-        rectVerts.push_back({x + w, y, r, g, b, a});
-        rectVerts.push_back({x + w, y + h, r, g, b, a});
-        rectVerts.push_back({x + w, y + h, r, g, b, a});
-        rectVerts.push_back({x, y + h, r, g, b, a});
-        rectVerts.push_back({x, y, r, g, b, a});
+    struct Point2 { float x; float y; };
+    const auto rotatePoint = [](float x, float y, float centerX, float centerY, float angleRadians) {
+        const float cosA = std::cos(angleRadians);
+        const float sinA = std::sin(angleRadians);
+        const float dx = x - centerX;
+        const float dy = y - centerY;
+        return Point2{centerX + dx * cosA - dy * sinA, centerY + dx * sinA + dy * cosA};
+    };
+
+    auto pushRect = [&](float x, float y, float w, float h, float r, float g, float b, float a, float rotationRadians) {
+        if (w <= 0.0f || h <= 0.0f) {
+            return;
+        }
+
+        const float centerX = x + w * 0.5f;
+        const float centerY = y + h * 0.5f;
+        const auto emitVertex = [&](float px, float py) {
+            rectVerts.push_back({px, py, r, g, b, a});
+        };
+
+        if (std::fabs(rotationRadians) < 1e-6f) {
+            emitVertex(x, y);
+            emitVertex(x + w, y);
+            emitVertex(x + w, y + h);
+            emitVertex(x + w, y + h);
+            emitVertex(x, y + h);
+            emitVertex(x, y);
+            return;
+        }
+
+        const Point2 p1 = rotatePoint(x, y, centerX, centerY, rotationRadians);
+        const Point2 p2 = rotatePoint(x + w, y, centerX, centerY, rotationRadians);
+        const Point2 p3 = rotatePoint(x + w, y + h, centerX, centerY, rotationRadians);
+        const Point2 p4 = rotatePoint(x, y + h, centerX, centerY, rotationRadians);
+
+        emitVertex(p1.x, p1.y);
+        emitVertex(p2.x, p2.y);
+        emitVertex(p3.x, p3.y);
+        emitVertex(p3.x, p3.y);
+        emitVertex(p4.x, p4.y);
+        emitVertex(p1.x, p1.y);
     };
 
     auto pushRoundedRect = [&](float x, float y, float w, float h,
         float topLeft, float topRight, float bottomRight, float bottomLeft,
-        float r, float g, float b, float a) {
+        float r, float g, float b, float a, float rotationRadians) {
         if (w <= 0.0f || h <= 0.0f) {
             return;
         }
@@ -100,7 +134,6 @@ void ExecuteRendererDraw(const CommandList& cmd)
         const float br = clampRadius(bottomRight, std::min(w * 0.5f, h * 0.5f));
         const float bl = clampRadius(bottomLeft, std::min(w * 0.5f, h * 0.5f));
 
-        struct Point2 { float x; float y; };
         std::vector<Point2> points;
         points.reserve(64);
 
@@ -129,10 +162,23 @@ void ExecuteRendererDraw(const CommandList& cmd)
             return;
         }
 
-        for (size_t i = 1; i + 1 < points.size(); ++i) {
-            rectVerts.push_back({points[0].x, points[0].y, r, g, b, a});
-            rectVerts.push_back({points[i].x, points[i].y, r, g, b, a});
-            rectVerts.push_back({points[i + 1].x, points[i + 1].y, r, g, b, a});
+        const float centerX = x + w * 0.5f;
+        const float centerY = y + h * 0.5f;
+        std::vector<Point2> transformedPoints;
+        transformedPoints.reserve(points.size());
+
+        if (std::fabs(rotationRadians) < 1e-6f) {
+            transformedPoints = points;
+        } else {
+            for (const auto& point : points) {
+                transformedPoints.push_back(rotatePoint(point.x, point.y, centerX, centerY, rotationRadians));
+            }
+        }
+
+        for (size_t i = 1; i + 1 < transformedPoints.size(); ++i) {
+            rectVerts.push_back({transformedPoints[0].x, transformedPoints[0].y, r, g, b, a});
+            rectVerts.push_back({transformedPoints[i].x, transformedPoints[i].y, r, g, b, a});
+            rectVerts.push_back({transformedPoints[i + 1].x, transformedPoints[i + 1].y, r, g, b, a});
         }
     };
 
@@ -143,17 +189,21 @@ void ExecuteRendererDraw(const CommandList& cmd)
         const float blue = (r.color & 0xFF) / 255.0f;
         const float alpha = baseAlpha * r.opacity;
 
-        float clippedX = 0.0f;
-        float clippedY = 0.0f;
-        float clippedW = 0.0f;
-        float clippedH = 0.0f;
-        const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
-        if (clipped) {
-            if (clippedW > 0.0f && clippedH > 0.0f) {
-                pushRect(clippedX, clippedY, clippedW, clippedH, red, green, blue, alpha);
+        if (std::fabs(r.rotationRadians) < 1e-6f) {
+            float clippedX = 0.0f;
+            float clippedY = 0.0f;
+            float clippedW = 0.0f;
+            float clippedH = 0.0f;
+            const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
+            if (clipped) {
+                if (clippedW > 0.0f && clippedH > 0.0f) {
+                    pushRect(clippedX, clippedY, clippedW, clippedH, red, green, blue, alpha, r.rotationRadians);
+                }
+            } else {
+                pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha, r.rotationRadians);
             }
         } else {
-            pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha);
+            pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha, r.rotationRadians);
         }
     }
 
@@ -164,17 +214,21 @@ void ExecuteRendererDraw(const CommandList& cmd)
         const float blue = (r.color & 0xFF) / 255.0f;
         const float alpha = baseAlpha * r.opacity;
 
-        float clippedX = 0.0f;
-        float clippedY = 0.0f;
-        float clippedW = 0.0f;
-        float clippedH = 0.0f;
-        const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
-        if (clipped) {
-            if (clippedW > 0.0f && clippedH > 0.0f) {
-                pushRoundedRect(clippedX, clippedY, clippedW, clippedH, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha);
+        if (std::fabs(r.rotationRadians) < 1e-6f) {
+            float clippedX = 0.0f;
+            float clippedY = 0.0f;
+            float clippedW = 0.0f;
+            float clippedH = 0.0f;
+            const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
+            if (clipped) {
+                if (clippedW > 0.0f && clippedH > 0.0f) {
+                    pushRoundedRect(clippedX, clippedY, clippedW, clippedH, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians);
+                }
+            } else {
+                pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians);
             }
         } else {
-            pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha);
+            pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians);
         }
     }
 

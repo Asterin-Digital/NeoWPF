@@ -3,6 +3,9 @@
 
 namespace NeoWPF::UI {
 
+// please dont reimplement this anywhere else for controls that need
+// button and toggle like behavior!! id like to keep it organized and tidy :>
+
 ToggleBase::ToggleBase()
     : Content::ContentControl()
 {

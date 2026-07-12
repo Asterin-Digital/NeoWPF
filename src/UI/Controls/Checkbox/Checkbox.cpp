@@ -104,11 +104,25 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         commands.DrawRoundedRect(fAbsX, fAbsY + 1.0f, 18.0f, 18.0f, 0.0f, 0.0f, 0.0f, 0.0f, m_borderColor.ToArgb(), GetOpacity());
     }
 
-    if (IsChecked()) {
-        const auto checkColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
-        commands.DrawRect(fAbsX + 4.0f, fAbsY + 8.0f, 3.0f, 6.0f, checkColor.ToArgb(), GetOpacity());
-        commands.DrawRect(fAbsX + 7.0f, fAbsY + 5.0f, 8.0f, 3.0f, checkColor.ToArgb(), GetOpacity());
-    }
+if (IsChecked()) {
+    const auto checkColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
+    const float checkCenterX = fAbsX + 9.0f;
+    const float checkCenterY = fAbsY + 10.0f;
+    constexpr float kCheckAngle = 0.68f;
+
+    auto drawCheckStroke = [&](float width, float height, float rotationRadians, float offsetX, float offsetY) {
+        const float x = checkCenterX + offsetX - width * 0.5f;
+        const float y = checkCenterY + offsetY - height * 0.5f;
+        commands.DrawRoundedRect(x, y, width, height, 0.0f, 0.0f, 0.0f, 0.0f,
+                                checkColor.ToArgb(), GetOpacity(),
+                                NeoWPF::Rendering::ClipRect{}, rotationRadians);
+    };
+
+
+    drawCheckStroke(2.0f, 5.0f, -kCheckAngle, -2.5f, 1.0f);
+
+    drawCheckStroke(8.0f, 1.5f, -kCheckAngle,  1.8f, -1.0f);
+}
 
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
     if (contentHost) {
