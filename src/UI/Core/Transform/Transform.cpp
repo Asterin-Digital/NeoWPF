@@ -48,11 +48,11 @@ Matrix4 Matrix4::Scale(float sx, float sy) {
 
 Matrix4 Matrix4::Rotation(float angleRadians) {
     Matrix4 m;
-    float cos_a = std::cos(angleRadians);
-    float sin_a = std::sin(angleRadians);
+    const float cos_a = std::cos(angleRadians);
+    const float sin_a = std::sin(angleRadians);
     m.m[0][0] = cos_a;
-    m.m[0][1] = sin_a;
-    m.m[1][0] = -sin_a;
+    m.m[0][1] = -sin_a;
+    m.m[1][0] = sin_a;
     m.m[1][1] = cos_a;
     return m;
 }

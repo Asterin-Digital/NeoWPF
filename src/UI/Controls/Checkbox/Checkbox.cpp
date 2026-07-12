@@ -118,9 +118,9 @@ if (IsChecked()) {
                                 NeoWPF::Rendering::ClipRect{}, rotationRadians);
     };
 
-
+    // left shape
     drawCheckStroke(2.0f, 5.0f, -kCheckAngle, -2.5f, 1.0f);
-
+    // right shape
     drawCheckStroke(8.0f, 1.5f, -kCheckAngle,  1.8f, -1.0f);
 }
 

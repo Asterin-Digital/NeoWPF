@@ -117,35 +117,26 @@ namespace UI
         const float originX = width * origin.X;
         const float originY = height * origin.Y;
 
-        if (auto scaleTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::ScaleTransform>(transform)) {
-            const float scaleX = scaleTransform->GetScaleX();
-            const float scaleY = scaleTransform->GetScaleY();
-            const float offsetX = (scaleX - 1.0f) * originX;
-            const float offsetY = (scaleY - 1.0f) * originY;
-
-            x -= offsetX;
-            y -= offsetY;
-            width *= scaleX;
-            height *= scaleY;
-            return;
-        }
-
-        if (auto translateTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::TranslateTransform>(transform)) {
-            x += translateTransform->GetX();
-            y += translateTransform->GetY();
-            return;
-        }
-
         const NeoWPF::UI::Core::Matrix4 matrix = transform->GetMatrix();
-        const float scaleX = matrix.m[0][0];
-        const float scaleY = matrix.m[1][1];
         const float translateX = matrix.m[3][0];
         const float translateY = matrix.m[3][1];
 
-        x += translateX;
-        y += translateY;
-        width *= scaleX;
-        height *= scaleY;
+        const float absoluteOriginX = x + originX;
+        const float absoluteOriginY = y + originY;
+
+        const auto applyPoint = [&](float px, float py, float& outX, float& outY) {
+            const float dx = px - absoluteOriginX;
+            const float dy = py - absoluteOriginY;
+            outX = matrix.m[0][0] * dx + matrix.m[0][1] * dy + absoluteOriginX + translateX;
+            outY = matrix.m[1][0] * dx + matrix.m[1][1] * dy + absoluteOriginY + translateY;
+        };
+
+        float transformedOriginX = absoluteOriginX;
+        float transformedOriginY = absoluteOriginY;
+        applyPoint(absoluteOriginX, absoluteOriginY, transformedOriginX, transformedOriginY);
+
+        x = transformedOriginX - originX;
+        y = transformedOriginY - originY;
     }
 
 

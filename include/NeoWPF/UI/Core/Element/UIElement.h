@@ -147,7 +147,7 @@ private:
     std::shared_ptr<Visual> m_appliedTemplateRoot;
     std::unordered_map<std::size_t, NeoWPF::Core::Event<UIElement*, NeoWPF::Input::Core::RoutedEventArgs*>> m_routedEventHandlers;
     std::shared_ptr<NeoWPF::UI::Core::Transform> m_renderTransform;
-    NeoWPF::UI::Core::Point m_renderTransformOrigin;
+    NeoWPF::UI::Core::Point m_renderTransformOrigin{0.5f, 0.5f};
 };
 
 }
