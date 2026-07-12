@@ -3,13 +3,6 @@
 
 namespace NeoWPF::UI {
 
-// yes i know this doesnt have Behavior and Visual folder like ButtonBase 
-// (even though that one should not have it as well lol, they're js stubs for future stuff)
-// but i decided not to add it since its so short :<
-
-//also please dont reimplement this anywhere else for controls that need
-// button and toggle like behavior!! id like to keep it organized and tidy :>
-
 ToggleBase::ToggleBase()
     : Content::ContentControl()
 {

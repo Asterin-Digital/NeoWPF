@@ -19,7 +19,6 @@ Checkbox::Checkbox()
     ApplyTemplate();
 
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
-    presenter->SetPadding(8);
     SetPresenter(presenter);
 
     m_textContent = std::make_shared<NeoWPF::UI::TextBlock>();
@@ -50,16 +49,38 @@ void Checkbox::SetText(const std::wstring& text)
 
 void Checkbox::Measure(int availableWidth, int availableHeight)
 {
-    Content::ContentControl::Measure(availableWidth, availableHeight);
+    const int contentAvailableWidth = availableWidth > 0 ? std::max(0, availableWidth - m_padding) : 0;
+    Content::ContentControl::Measure(contentAvailableWidth, 0);
+
+    int contentWidth = 0;
+    int contentHeight = 0;
+    if (auto presenter = GetPresenter()) {
+        contentWidth = presenter->GetDesiredWidth();
+        contentHeight = presenter->GetDesiredHeight();
+    }
+
+    const int boxSize = std::max(18, contentHeight);
+    int desiredWidth = boxSize + m_padding + contentWidth;
+    int desiredHeight = std::max(boxSize, contentHeight);
+
+    SetDesiredSize(desiredWidth, desiredHeight);
 }
 
 void Checkbox::Arrange(int finalWidth, int finalHeight)
 {
+    const int contentHeight = std::max(0, finalHeight);
     Content::ContentControl::Arrange(finalWidth, finalHeight);
+
+    if (auto presenter = GetPresenter()) {
+        presenter->SetLayoutOffset(18 + m_padding, 0);
+        presenter->Arrange(std::max(0, finalWidth - (18 + m_padding)), contentHeight);
+    }
 }
 
 void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
+    const int boxSize = 18;
+
     int absX, absY;
     GetAbsolutePosition(absX, absY);
 
@@ -71,16 +92,16 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     auto box = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Box"));
     if (box) {
-        box->SetRect(static_cast<int>(fAbsX), static_cast<int>(fAbsY), 18, 18);
-        box->SetFillColor(m_boxColor.ToArgb());
+        box->SetRect(static_cast<int>(fAbsX), static_cast<int>(fAbsY + 1), boxSize, boxSize);
+        box->SetFillColor(m_bgColor.ToArgb());
         box->SetBorderColor(m_borderColor.ToArgb());
         box->SetBorderThickness(1);
         box->SetOpacity(GetOpacity());
         box->BuildRenderCommands(commands);
     }
     else {
-        commands.DrawRoundedRect(fAbsX, fAbsY, 18.0f, 18.0f, 0.0f, 0.0f, 0.0f, 0.0f, m_boxColor.ToArgb(), GetOpacity());
-        commands.DrawRoundedRect(fAbsX, fAbsY, 18.0f, 18.0f, 0.0f, 0.0f, 0.0f, 0.0f, m_borderColor.ToArgb(), GetOpacity());
+        commands.DrawRoundedRect(fAbsX, fAbsY + 1.0f, 18.0f, 18.0f, 0.0f, 0.0f, 0.0f, 0.0f, m_bgColor.ToArgb(), GetOpacity());
+        commands.DrawRoundedRect(fAbsX, fAbsY + 1.0f, 18.0f, 18.0f, 0.0f, 0.0f, 0.0f, 0.0f, m_borderColor.ToArgb(), GetOpacity());
     }
 
     if (IsChecked()) {
@@ -91,9 +112,7 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
     if (contentHost) {
-        contentHost->SetRect(static_cast<int>(fAbsX) + 24, static_cast<int>(fAbsY), std::max(0, static_cast<int>(drawWidth) - 24), static_cast<int>(drawHeight));
-        contentHost->SetBorderThickness(0);
-        contentHost->SetOpacity(GetOpacity());
+        contentHost->SetRect(static_cast<int>(fAbsX) + boxSize + m_padding, static_cast<int>(fAbsY), std::max(0, static_cast<int>(drawWidth) - (boxSize + m_padding)), std::max(1, static_cast<int>(drawHeight)));
         contentHost->BuildRenderCommands(commands);
     }
 
