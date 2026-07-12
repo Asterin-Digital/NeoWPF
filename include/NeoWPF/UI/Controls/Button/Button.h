@@ -111,7 +111,7 @@ public:
         @param color
         ARGB color value.
     */
-    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept { m_backgroundColor = color; InvalidateVisual(); }
+    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept;
 
     /*
         @summary
@@ -185,6 +185,7 @@ private:
     std::wstring m_text;
     NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFF000000u);
     NeoWPF::UI::Color m_backgroundColor = NeoWPF::UI::Color::FromArgb(0xFF2F2F2Fu);
+    NeoWPF::UI::Color m_baseBackgroundColor = NeoWPF::UI::Color::FromArgb(0xFF2F2F2Fu);
     int m_fontSize = 16;
 
 private:

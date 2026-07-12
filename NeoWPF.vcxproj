@@ -177,6 +177,7 @@
     <ClInclude Include="include\NeoWPF\UI\Layout\Grid\GridLayout.h" />
     <ClInclude Include="include\NeoWPF\UI\Properties\Property\PropertyInfo.h" />
     <ClInclude Include="include\NeoWPF\UI\Properties\Property\PropertyRegistry.h" />
+    <ClInclude Include="include\NeoWPF\UI\Properties\Property\PropertyValue.h" />
     <ClInclude Include="include\NeoWPF\UI\Properties\Registration\PropertyRegistration.h" />
     <ClInclude Include="include\NeoWPF\UI\Styling\DefaultStyles.h" />
     <ClInclude Include="include\NeoWPF\UI\UI.h" />

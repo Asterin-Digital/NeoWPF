@@ -410,8 +410,6 @@
     <ClInclude Include="include\NeoWPF\Rendering\ShaderSources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Controls\Base\ButtonBase\ButtonBase.h">
-    </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Controls\Button\Button.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -485,6 +483,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\Rendering\Clipping.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Properties\Property\PropertyValue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

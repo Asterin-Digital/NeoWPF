@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Properties/Property/PropertyRegistry.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/UI/Core/Media/Color.h>
 
 namespace NeoWPF::UI::Properties {
     std::unordered_map<std::type_index, std::unique_ptr<PropertyRegistry>> PropertyRegistry::s_registries;

@@ -78,6 +78,15 @@ void Button::SetText(const std::wstring& text)
     InvalidateVisual();
 }
 
+void Button::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
+{
+    m_baseBackgroundColor = color;
+    if (m_currentVisualState == "Normal") {
+        m_backgroundColor = color;
+    }
+    InvalidateVisual();
+}
+
 void Button::Measure(int availableWidth, int availableHeight)
 {
     Content::ContentControl::Measure(availableWidth, availableHeight);
@@ -152,20 +161,19 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
 void Button::OnVisualStateApplied(const std::string& stateName)
 {
-    // If developer explicitly set a local BackgroundColor, do not override it with visual states.
-    if (IsPropertyLocal("BackgroundColor")) {
-        return;
+    if (stateName == "Normal") {
+        m_backgroundColor = m_baseBackgroundColor;
     }
-
-    uint32_t resolvedColor = 0xFF3A3A3Au;
-    std::string propertyName = "VisualState." + stateName + ".Background";
-    if (!TryGetProperty(propertyName, resolvedColor)) {
-        if (stateName == "Normal") {
-            resolvedColor = 0xFF3A3A3Au;
+    else {
+        uint32_t resolvedColor = m_baseBackgroundColor.ToArgb();
+        std::string propertyName = "VisualState." + stateName + ".Background";
+        if (!TryGetProperty(propertyName, resolvedColor)) {
+            resolvedColor = m_baseBackgroundColor.ToArgb();
         }
+        m_backgroundColor = NeoWPF::UI::Color::FromArgb(resolvedColor);
     }
 
-    SetBackgroundColor(resolvedColor);
+    InvalidateVisual();
 }
 
 }
