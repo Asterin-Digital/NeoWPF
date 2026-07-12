@@ -22,7 +22,9 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
 #include <NeoWPF/UI/Controls/Base/ButtonBase/ButtonBase.h>
+#include <NeoWPF/UI/Controls/Base/ToggleBase/ToggleBase.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
+#include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
 #include <NeoWPF/UI/Styling/Style/Style.h>
 #include <NeoWPF/UI/Styling/Style/StyleManager.h>

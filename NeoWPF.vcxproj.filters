@@ -115,7 +115,24 @@
     </ClCompile>
     <ClCompile Include="src\UI\Controls\Base\ButtonBase\Behavior\ButtonBaseInteraction.cpp">
     </ClCompile>
+    <ClCompile Include="src\UI\Controls\Base\ToggleBase\ToggleBase.cpp">
+    </ClCompile>
     <ClCompile Include="src\UI\Controls\Button\Button.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\Checkbox\Checkbox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\Checkbox\CheckboxStates.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\Checkbox\Behavior\CheckboxBehavior.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\Checkbox\Visual\CheckboxStyles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\Checkbox\Visual\CheckboxTemplate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Core\Element\UIElement.cpp">
@@ -322,6 +339,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Controls\Templates\TemplateParts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Controls\Base\ToggleBase\ToggleBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Controls\Checkbox\Checkbox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\Core\Application\Application.h">

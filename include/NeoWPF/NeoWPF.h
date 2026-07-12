@@ -26,6 +26,8 @@ namespace NeoWPF {
 
     using UI::Button;
 
+    using UI::Checkbox;
+
     using UI::Content::ContentControl;
 
     using UI::Content::ContentPresenter;

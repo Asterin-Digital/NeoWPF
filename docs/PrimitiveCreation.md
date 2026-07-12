@@ -9,9 +9,18 @@ First of all, a ui primitive typically consists of 4 files (depending on what ui
 
 for example, you have the button UI primitive, which consists of:
 -Button.cpp
--Button.States.cpp
--Button.Styles.cpp
+-ButtonStates.cpp
+-ButtonStyles.cpp
 -ButtonTemplate.cpp
+-ButtonProperties.cpp
+
+Folder structure would be:
+Button/Button.cpp
+Button/Properties.cpp
+Button/Visuals/ButtonStyles.cpp
+Button/Visuals/ButtonTemplate.cpp
+Button/Visuals/ButtonStates.cpp
+Button/Behavior (but button doesnt need this since it uses ButtonBase)
 
 Make sure that the namespace for the .Styles will be exactly as "NeoWPF::UI::Styling"
 and for Template and the main file itself under "NeoWPF::UI"
@@ -24,7 +33,8 @@ Styles and Template files must be added under the primitive's own folder, like t
 NeoWPF\src\UI\Controls\Button
 You put in there Button.cpp, Button.Styles.cpp and ButtonTemplate.cpp using the ControlTemplate implementation
 and default styles implementation.
-You must also mirror the folder structure inside include/NeoWPF/ that you created inside src for consistency.
+
+Also, use ContentControl (Content) and Presenter for UI controls!!
 
 For a ControlTemplate, you can begin by defining required and non required parts for the template to be valid.
 For default styles simply specify the default colors of the UI element as the minimum.
