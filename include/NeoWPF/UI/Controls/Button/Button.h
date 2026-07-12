@@ -8,10 +8,6 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
 
-namespace NeoWPF::Input::Core {
-    class MouseEventArgs;
-}
-
 namespace NeoWPF::UI::Styling {
     class Style;  
 }
@@ -155,27 +151,6 @@ public:
     */
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
-    void OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args) override;
-    void OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args) override;
-    void OnMouseDown(int x, int y, std::uint32_t buttonState) override;
-
-    /*
-        @summary
-        Handles mouse-up input.
-
-        @param x
-        The x position of the mouse.
-
-        @param y
-        The y position of the mouse.
-
-        @param buttonState
-        The mouse button state.
-
-        @internal
-    */
-    void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
-
 protected:
     using ButtonBase::InitializeVisualStates;
     using ButtonBase::ApplyVisualState;
@@ -191,8 +166,6 @@ private:
 private:
     int m_padding = 8;
     std::shared_ptr<NeoWPF::UI::TextBlock> m_textContent;
-
-    void OnVisualStateApplied(const std::string& stateName) override;
 };
 
 class ButtonTemplate : public Templates::ControlTemplate {

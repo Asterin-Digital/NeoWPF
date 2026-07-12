@@ -37,6 +37,18 @@ bool VisualState::HasStoryboard() const noexcept {
     return static_cast<bool>(m_storyboard);
 }
 
+void VisualState::AddSetter(const std::string& targetName, const std::function<void(UIElement*, Visual*)>& setter) {
+    if (targetName.empty() || !setter) {
+        return;
+    }
+
+    m_setters.push_back({targetName, setter});
+}
+
+const std::vector<VisualState::Setter>& VisualState::GetSetters() const noexcept {
+    return m_setters;
+}
+
 VisualStateGroup::VisualStateGroup(std::string name)
     : m_name(std::move(name))
 {

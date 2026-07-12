@@ -81,9 +81,12 @@ void Button::SetText(const std::wstring& text)
 void Button::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
 {
     m_baseBackgroundColor = color;
-    if (m_currentVisualState == "Normal") {
-        m_backgroundColor = color;
+    m_backgroundColor = color;
+
+    if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
+        background->SetFillColor(color.ToArgb());
     }
+
     InvalidateVisual();
 }
 
@@ -111,8 +114,6 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"));
     if (background) {
         background->SetRect(static_cast<int>(fAbsX), static_cast<int>(fAbsY), static_cast<int>(drawWidth), static_cast<int>(drawHeight));
-        background->SetFillColor(m_backgroundColor.ToArgb());
-        background->SetBorderColor(0xFF333333u);
         background->SetBorderThickness(1);
         background->SetCornerRadius(GetCornerRadius());
         background->SetOpacity(GetOpacity());
@@ -149,31 +150,12 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     if (contentHost) {
         const int inset = std::max(0, m_padding);
         contentHost->SetRect(static_cast<int>(fAbsX) + inset, static_cast<int>(fAbsY) + inset, std::max(0, static_cast<int>(drawWidth) - (inset * 2)), std::max(0, static_cast<int>(drawHeight) - (inset * 2)));
-        contentHost->SetFillColor(0x00000000u);
-        contentHost->SetBorderColor(0x00000000u);
         contentHost->SetBorderThickness(0);
         contentHost->SetOpacity(GetOpacity());
         contentHost->BuildRenderCommands(commands);
     }
 
     Content::ContentControl::BuildRenderCommands(commands);
-}
-
-void Button::OnVisualStateApplied(const std::string& stateName)
-{
-    if (stateName == "Normal") {
-        m_backgroundColor = m_baseBackgroundColor;
-    }
-    else {
-        uint32_t resolvedColor = m_baseBackgroundColor.ToArgb();
-        std::string propertyName = "VisualState." + stateName + ".Background";
-        if (!TryGetProperty(propertyName, resolvedColor)) {
-            resolvedColor = m_baseBackgroundColor.ToArgb();
-        }
-        m_backgroundColor = NeoWPF::UI::Color::FromArgb(resolvedColor);
-    }
-
-    InvalidateVisual();
 }
 
 }

@@ -37,6 +37,45 @@ std::shared_ptr<Visual> ControlTemplate::GetVisualTreeRoot() const noexcept
     return m_visualTree;
 }
 
+std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> ControlTemplate::GetVisualStateManager() const noexcept
+{
+    return m_visualStateManager;
+}
+
+void ControlTemplate::SetVisualStateManager(const std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager>& visualStateManager)
+{
+    m_visualStateManager = visualStateManager;
+}
+
+void ControlTemplate::AddVisualStateGroup(const std::shared_ptr<NeoWPF::UI::Styling::VisualStateGroup>& group)
+{
+    if (!m_visualStateManager) {
+        m_visualStateManager = std::make_shared<NeoWPF::UI::Styling::VisualStateManager>();
+    }
+
+    m_visualStateManager->AddGroup(group);
+}
+
+void ControlTemplate::AddVisualState(const std::shared_ptr<NeoWPF::UI::Styling::VisualState>& state, const std::string& groupName)
+{
+    if (!state) {
+        return;
+    }
+
+    if (!m_visualStateManager) {
+        m_visualStateManager = std::make_shared<NeoWPF::UI::Styling::VisualStateManager>();
+    }
+
+    if (auto group = m_visualStateManager->FindGroup(groupName)) {
+        group->AddState(state);
+        return;
+    }
+
+    auto group = std::make_shared<NeoWPF::UI::Styling::VisualStateGroup>(groupName);
+    group->AddState(state);
+    m_visualStateManager->AddGroup(group);
+}
+
 void ControlTemplate::Apply(UIElement* element)
 {
     if (!element) {

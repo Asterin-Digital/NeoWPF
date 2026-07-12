@@ -1,12 +1,14 @@
 #pragma once
 
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace NeoWPF::UI {
 class UIElement;
+class Visual;
 }
 
 namespace NeoWPF::UI::Styling {
@@ -41,6 +43,11 @@ bool ApplyVisualStateTransition(UIElement* element, const std::shared_ptr<Visual
 */
 class VisualState {
 public:
+    struct Setter {
+        std::string TargetName;
+        std::function<void(UIElement*, Visual*)> Callback;
+    };
+
     explicit VisualState(std::string name = {});
 
     /*
@@ -106,10 +113,32 @@ public:
     */
     bool HasStoryboard() const noexcept;
 
+    /*
+        @summary
+        Adds a setter that targets a named template part.
+
+        @param targetName
+        The template child name to target.
+
+        @param setter
+        The callback used to apply the visual change.
+    */
+    void AddSetter(const std::string& targetName, const std::function<void(UIElement*, Visual*)>& setter);
+
+    /*
+        @summary
+        Returns the setters registered for the state.
+
+        @returns
+        The collection of template-part setters.
+    */
+    const std::vector<Setter>& GetSetters() const noexcept;
+
 private:
     std::string m_name;
     std::string m_targetName;
     std::shared_ptr<NeoWPF::UI::Animation::Storyboard> m_storyboard;
+    std::vector<Setter> m_setters;
 };
 
 /*
@@ -242,6 +271,18 @@ public:
         The matching visual state, or nullptr if not found.
     */
     std::shared_ptr<VisualState> FindState(const std::string& groupName, const std::string& stateName) const;
+
+    /*
+        @summary
+        Finds a state across all groups.
+
+        @param stateName
+        The state identifier.
+
+        @returns
+        The matching visual state, or nullptr if not found.
+    */
+    std::shared_ptr<VisualState> FindState(const std::string& stateName) const;
 
     /*
         @summary

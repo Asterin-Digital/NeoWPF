@@ -6,6 +6,7 @@
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <NeoWPF/UI/Properties/Property/PropertyRegistry.h>
+#include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <NeoWPF/UI/Properties/Property/PropertyInfo.h>
 
 namespace NeoWPF::UI {
@@ -87,6 +88,14 @@ void UIElement::ClearTemplateVisualRoot() noexcept {
         RemoveVisualChild(m_appliedTemplateRoot);
         m_appliedTemplateRoot = nullptr;
     }
+}
+
+std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> UIElement::GetTemplateVisualStateManager() const {
+    if (!m_template) {
+        return nullptr;
+    }
+
+    return m_template->GetVisualStateManager();
 }
 
 void UIElement::RegisterTemplateChild(const std::string& name, const std::shared_ptr<Visual>& child) {

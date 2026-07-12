@@ -96,9 +96,6 @@
     <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxGeometry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxStates.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxStyles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -117,8 +114,6 @@
     <ClCompile Include="src\UI\Controls\Base\ButtonBase\ButtonBase.cpp">
     </ClCompile>
     <ClCompile Include="src\UI\Controls\Base\ButtonBase\Behavior\ButtonBaseInteraction.cpp">
-    </ClCompile>
-    <ClCompile Include="src\UI\Controls\Base\ButtonBase\Visual\ButtonBaseStates.cpp">
     </ClCompile>
     <ClCompile Include="src\UI\Controls\Button\Button.cpp">
       <Filter>Source Files</Filter>
@@ -195,9 +190,6 @@
     <ClCompile Include="src\Rendering\D3D11\Renderer\RendererClipping.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxStates.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxStyles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -214,9 +206,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Controls\Button\Visual\ButtonStyles.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\Controls\Button\Visual\ButtonStates.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Controls\Button\Visual\ButtonTemplate.cpp">

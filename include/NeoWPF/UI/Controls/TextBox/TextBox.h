@@ -315,22 +315,6 @@ public:
 
     /*
         @summary
-        Called when the control receives focus.
-
-        @internal
-    */
-    void OnGotFocus() override;
-
-    /*
-        @summary
-        Called when the control loses focus.
-
-        @internal
-    */
-    void OnLostFocus() override;
-
-    /*
-        @summary
         Initialize visual state groups for the TextBox.
 
         @internal

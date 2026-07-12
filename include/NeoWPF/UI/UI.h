@@ -4,6 +4,7 @@
 // keep it only as an umbrella header file without a source implementation
 // DO NOT USE THIS IN FRAMEWORK INTERNALS, ONLY FOR NeoWPF.h FILE!! bcs its for public API
 
+#include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>

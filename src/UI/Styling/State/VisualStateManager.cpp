@@ -47,12 +47,37 @@ std::shared_ptr<VisualState> VisualStateManager::FindState(const std::string& gr
     return nullptr;
 }
 
+std::shared_ptr<VisualState> VisualStateManager::FindState(const std::string& stateName) const {
+    if (stateName.empty()) {
+        return nullptr;
+    }
+
+    for (const auto& group : m_groups) {
+        if (!group) {
+            continue;
+        }
+
+        if (auto state = group->FindState(stateName)) {
+            return state;
+        }
+    }
+
+    return nullptr;
+}
+
 bool VisualStateManager::GoToState(UIElement* element, const std::string& groupName, const std::string& stateName, bool useTransitions) {
     if (!element || groupName.empty() || stateName.empty()) {
         return false;
     }
 
-    if (auto group = FindGroup(groupName)) {
+    auto* effectiveManager = this;
+    if (auto templateManager = element->GetTemplateVisualStateManager()) {
+        if (templateManager->FindState(groupName, stateName)) {
+            effectiveManager = templateManager.get();
+        }
+    }
+
+    if (auto group = effectiveManager->FindGroup(groupName)) {
         if (auto target = group->FindState(stateName)) {
             if (target == group->GetCurrentState()) {
                 return true;
@@ -71,7 +96,14 @@ bool VisualStateManager::GoToState(UIElement* element, const std::string& stateN
         return false;
     }
 
-    for (const auto& group : m_groups) {
+    auto* effectiveManager = this;
+    if (auto templateManager = element->GetTemplateVisualStateManager()) {
+        if (templateManager->FindState(stateName)) {
+            effectiveManager = templateManager.get();
+        }
+    }
+
+    for (const auto& group : effectiveManager->GetGroups()) {
         if (!group) {
             continue;
         }

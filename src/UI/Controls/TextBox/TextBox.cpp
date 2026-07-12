@@ -65,6 +65,27 @@ TextBox::~TextBox()
 {
 }
 
+void TextBox::InitializeVisualStates()
+{
+    m_visualStateManager = std::make_shared<Styling::VisualStateManager>();
+}
+
+void TextBox::ApplyVisualState(const std::string& stateName, bool useTransitions)
+{
+    if (stateName.empty()) {
+        return;
+    }
+
+    m_currentVisualState = stateName;
+
+    if (auto templateManager = GetTemplateVisualStateManager()) {
+        templateManager->GoToState(this, stateName, useTransitions);
+    }
+    else if (m_visualStateManager) {
+        m_visualStateManager->GoToState(this, stateName, useTransitions);
+    }
+}
+
 void TextBox::SetText(const std::wstring& text)
 {
     if (m_text == text) {
@@ -150,8 +171,6 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto border = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Border"));
     if (border) {
         border->SetRect(absX, absY, GetFinalWidth(), GetFinalHeight());
-        border->SetFillColor(m_backgroundColor.ToArgb());
-        border->SetBorderColor(m_borderColor.ToArgb());
         border->SetBorderThickness(1);
         border->SetCornerRadius(GetCornerRadius());
         border->SetOpacity(GetOpacity());
@@ -198,8 +217,6 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         contentHostWidth = std::max(0, GetFinalWidth() - (inset * 2));
         contentHostHeight = std::max(0, GetFinalHeight() - (inset * 2));
         contentHost->SetRect(absX + inset, absY + inset, contentHostWidth, contentHostHeight);
-        contentHost->SetFillColor(0x00000000u);
-        contentHost->SetBorderColor(0x00000000u);
         contentHost->SetBorderThickness(0);
         contentHost->SetOpacity(GetOpacity());
         contentHostX = contentHost->GetX();

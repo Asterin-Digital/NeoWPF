@@ -1,5 +1,6 @@
 #pragma once
 
+#include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -22,6 +23,7 @@ public:
     virtual bool CanApplyTo(UIElement* element) const;
     virtual void Apply(UIElement* element) = 0;
     virtual std::shared_ptr<Visual> GetVisualTreeRoot() const noexcept { return nullptr; }
+    virtual std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> GetVisualStateManager() const noexcept { return nullptr; }
 
     void AddRequiredPart(const std::string& name, bool required = true);
     bool HasRequiredParts() const noexcept;
@@ -38,6 +40,11 @@ public:
     bool CanApplyTo(UIElement* element) const override;
     void Apply(UIElement* element) override;
     std::shared_ptr<Visual> GetVisualTreeRoot() const noexcept override;
+    std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> GetVisualStateManager() const noexcept override;
+
+    void SetVisualStateManager(const std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager>& visualStateManager);
+    void AddVisualStateGroup(const std::shared_ptr<NeoWPF::UI::Styling::VisualStateGroup>& group);
+    void AddVisualState(const std::shared_ptr<NeoWPF::UI::Styling::VisualState>& state, const std::string& groupName = "CommonStates");
 
     void SetVisualTree(std::shared_ptr<Visual> visualTree);
     std::shared_ptr<Visual> GetVisualTree() const noexcept;
@@ -53,6 +60,7 @@ private:
 
     std::shared_ptr<Visual> m_visualTree;
     std::vector<TemplateChild> m_templateChildren;
+    std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> m_visualStateManager;
 };
 
 } // namespace NeoWPF::UI::Templates

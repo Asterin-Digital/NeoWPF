@@ -35,6 +35,10 @@ namespace NeoWPF::UI::Templates {
 class ControlTemplateBase;
 }
 
+namespace NeoWPF::UI::Styling {
+class VisualStateManager;
+}
+
 namespace NeoWPF::UI::Properties {
     struct PropertyInfo;
     class PropertyRegistry;
@@ -93,6 +97,8 @@ public:
 
     bool ApplyTemplate();
     void ClearTemplateVisualRoot() noexcept;
+
+    std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> GetTemplateVisualStateManager() const;
 
     void RegisterTemplateChild(const std::string& name, const std::shared_ptr<Visual>& child);
     std::shared_ptr<Visual> FindTemplateChild(const std::string& name) const;

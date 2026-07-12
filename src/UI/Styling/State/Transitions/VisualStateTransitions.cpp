@@ -15,6 +15,16 @@ bool ApplyVisualStateTransition(UIElement* element, const std::shared_ptr<Visual
         AddStoryboard(state->GetStoryboard());
     }
 
+    for (const auto& setter : state->GetSetters()) {
+        if (setter.TargetName.empty()) {
+            continue;
+        }
+
+        if (auto target = element->FindTemplateChild(setter.TargetName)) {
+            setter.Callback(element, target.get());
+        }
+    }
+
     return true;
 }
 

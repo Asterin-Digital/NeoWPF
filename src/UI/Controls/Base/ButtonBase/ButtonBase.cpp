@@ -16,28 +16,23 @@ ButtonBase::ButtonBase()
 void ButtonBase::InitializeVisualStates()
 {
     m_visualStateManager = std::make_shared<Styling::VisualStateManager>();
-
-    auto group = std::make_shared<Styling::VisualStateGroup>("CommonStates");
-    group->AddState(std::make_shared<Styling::VisualState>("Normal"));
-    group->AddState(std::make_shared<Styling::VisualState>("MouseOver"));
-    group->AddState(std::make_shared<Styling::VisualState>("Pressed"));
-    group->AddState(std::make_shared<Styling::VisualState>("Disabled"));
-
-    m_visualStateManager->AddGroup(group);
 }
 
 void ButtonBase::ApplyVisualState(const std::string& stateName, bool useTransitions)
 {
-    if (!m_visualStateManager) {
-        InitializeVisualStates();
-    }
-
     if (stateName.empty()) {
         return;
     }
 
     m_currentVisualState = stateName;
-    m_visualStateManager->GoToState(this, stateName, useTransitions);
+
+    if (auto templateManager = GetTemplateVisualStateManager()) {
+        templateManager->GoToState(this, stateName, useTransitions);
+    }
+    else if (m_visualStateManager) {
+        m_visualStateManager->GoToState(this, stateName, useTransitions);
+    }
+
     OnVisualStateApplied(stateName);
 }
 
