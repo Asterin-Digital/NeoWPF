@@ -1,9 +1,54 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
+#include <NeoWPF/UI/Core/Transform/Transform.h>
 
 namespace NeoWPF::UI {
+
+namespace {
+
+float GetAbsoluteRenderTransformRotation(const UIElement* element)
+{
+    using namespace NeoWPF::UI::Core;
+    Matrix4 matrix = Matrix4::Identity();
+    const UIElement* current = element;
+    while (current) {
+        if (auto fe = dynamic_cast<const FrameworkElement*>(current)) {
+            matrix = matrix * Matrix4::Translation(
+                static_cast<float>(fe->GetLayoutOffsetX() + fe->GetRenderOffsetX()),
+                static_cast<float>(fe->GetLayoutOffsetY() + fe->GetRenderOffsetY()));
+        }
+
+        if (auto transform = current->GetRenderTransform()) {
+            float width = 0.0f;
+            float height = 0.0f;
+            if (auto fe = dynamic_cast<const FrameworkElement*>(current)) {
+                width = static_cast<float>((std::max)(fe->GetFinalWidth(), fe->GetDesiredWidth()));
+                height = static_cast<float>((std::max)(fe->GetFinalHeight(), fe->GetDesiredHeight()));
+            }
+
+            const auto origin = current->GetRenderTransformOrigin();
+            const float originX = width * origin.X;
+            const float originY = height * origin.Y;
+
+            if (originX != 0.0f || originY != 0.0f) {
+                matrix = matrix * Matrix4::Translation(originX, originY);
+                matrix = matrix * transform->GetMatrix();
+                matrix = matrix * Matrix4::Translation(-originX, -originY);
+            } else {
+                matrix = matrix * transform->GetMatrix();
+            }
+        }
+
+        current = dynamic_cast<const UIElement*>(current->GetParent());
+    }
+
+    return std::atan2(matrix.m[1][0], matrix.m[0][0]);
+}
+
+}
 
 TextBlock::TextBlock()
 {
@@ -63,20 +108,29 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         return;
     }
 
-    int absX, absY;
+    const auto clip = GetClipRect();
+    int absX = 0;
+    int absY = 0;
     GetAbsolutePosition(absX, absY);
 
-    const auto clip = GetClipRect();
+    float drawX = static_cast<float>(absX);
+    float drawY = static_cast<float>(absY);
+    float drawWidth = static_cast<float>(m_textWidth);
+    float drawHeight = static_cast<float>(m_textHeight);
+    ApplyRenderTransform(drawX, drawY, drawWidth, drawHeight);
+    float rotationRadians = GetAbsoluteRenderTransformRotation(this);
+
     commands.DrawTexturedQuad(
-        static_cast<float>(absX),
-        static_cast<float>(absY),
-        static_cast<float>(m_textWidth),
-        static_cast<float>(m_textHeight),
+        drawX,
+        drawY,
+        drawWidth,
+        drawHeight,
         0.0f, 0.0f,
         1.0f, 1.0f,
         m_textureId,
         GetOpacity(),
-        clip);
+        clip,
+        rotationRadians);
 }
 
 void TextBlock::EnsureTextTexture(int availableWidth, int availableHeight)

@@ -13,6 +13,9 @@
 #undef max
 #endif
 
+// Base rule: Visual.cpp/h is not allowed to reach into UIElement.cpp/h. Same goes for 
+// UIElement.cpp/h not being allowed to reach into FrameworkElement.cpp/h
+
 namespace NeoWPF {
 namespace UI
 {

@@ -101,6 +101,8 @@ private:
     float m_angle;
     float m_centerX;
     float m_centerY;
+    std::function<void()> m_invalidateCallback;
+    friend class NeoWPF::UI::UIElement;
 };
 
 class MatrixTransform : public Transform {

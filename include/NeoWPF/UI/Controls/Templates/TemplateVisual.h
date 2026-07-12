@@ -26,6 +26,8 @@ public:
     void SetOpacity(float opacity) noexcept;
     float GetOpacity() const noexcept;
     void SetClipRect(const NeoWPF::Rendering::ClipRect& clip) noexcept;
+    void SetRotation(float rotationRadians) noexcept;
+    float GetRotation() const noexcept;
 
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
@@ -41,6 +43,7 @@ private:
     NeoWPF::UI::CornerRadius m_cornerRadius;
     float m_opacity = 1.0f;
     NeoWPF::Rendering::ClipRect m_clip{};
+    float m_rotation = 0.0f;
 };
 
 } // namespace NeoWPF::UI::Templates

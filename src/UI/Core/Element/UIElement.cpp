@@ -11,6 +11,9 @@
 
 namespace NeoWPF::UI {
 
+// Base rule: Visual.cpp/h is not allowed to reach into UIElement.cpp/h. Same goes for 
+// UIElement.cpp/h not being allowed to reach into FrameworkElement.cpp/h
+
 void UIElement::InvalidateVisual() {
     m_isDirty = true;
     MarkTreeDirty();
@@ -39,10 +42,18 @@ void UIElement::SetRenderTransform(std::shared_ptr<NeoWPF::UI::Core::Transform> 
     if (auto oldScaleTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::ScaleTransform>(m_renderTransform)) {
         oldScaleTransform->m_invalidateCallback = nullptr;
     }
+    if (auto oldRotateTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::RotateTransform>(m_renderTransform)) {
+        oldRotateTransform->m_invalidateCallback = nullptr;
+    }
 
     m_renderTransform = transform;
     if (auto scaleTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::ScaleTransform>(transform)) {
         scaleTransform->m_invalidateCallback = [this]() {
+            this->InvalidateVisual();
+        };
+    }
+    if (auto rotateTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::RotateTransform>(transform)) {
+        rotateTransform->m_invalidateCallback = [this]() {
             this->InvalidateVisual();
         };
     }

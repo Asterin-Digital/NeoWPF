@@ -1,18 +1,64 @@
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Styling/Style/Style.h>
 #include <NeoWPF/UI/Styling/Style/StyleManager.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
+#include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <algorithm>
 #include <memory>
+#include <cmath>
 
 #ifdef max
 #undef max
 #endif
 
 namespace NeoWPF::UI {
+
+namespace {
+
+float GetAbsoluteRenderTransformRotation(const UIElement* element)
+{
+    using namespace NeoWPF::UI::Core;
+    Matrix4 matrix = Matrix4::Identity();
+    const UIElement* current = element;
+    while (current) {
+        if (auto fe = dynamic_cast<const FrameworkElement*>(current)) {
+            matrix = matrix * Matrix4::Translation(
+                static_cast<float>(fe->GetLayoutOffsetX() + fe->GetRenderOffsetX()),
+                static_cast<float>(fe->GetLayoutOffsetY() + fe->GetRenderOffsetY()));
+        }
+
+        if (auto transform = current->GetRenderTransform()) {
+            float width = 0.0f;
+            float height = 0.0f;
+            if (auto fe = dynamic_cast<const FrameworkElement*>(current)) {
+                width = static_cast<float>((std::max)(fe->GetFinalWidth(), fe->GetDesiredWidth()));
+                height = static_cast<float>((std::max)(fe->GetFinalHeight(), fe->GetDesiredHeight()));
+            }
+
+            const auto origin = current->GetRenderTransformOrigin();
+            const float originX = width * origin.X;
+            const float originY = height * origin.Y;
+
+            if (originX != 0.0f || originY != 0.0f) {
+                matrix = matrix * Matrix4::Translation(originX, originY);
+                matrix = matrix * transform->GetMatrix();
+                matrix = matrix * Matrix4::Translation(-originX, -originY);
+            } else {
+                matrix = matrix * transform->GetMatrix();
+            }
+        }
+
+        current = dynamic_cast<const UIElement*>(current->GetParent());
+    }
+
+    return std::atan2(matrix.m[1][0], matrix.m[0][0]);
+}
+
+}
 
 Button::Button()
     : ButtonBase()
@@ -102,28 +148,31 @@ void Button::Arrange(int finalWidth, int finalHeight)
 
 void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
-    int absX, absY;
+    int absX = 0;
+    int absY = 0;
     GetAbsolutePosition(absX, absY);
 
-    float fAbsX = static_cast<float>(absX);
-    float fAbsY = static_cast<float>(absY);
+    float drawX = static_cast<float>(absX);
+    float drawY = static_cast<float>(absY);
     float drawWidth = static_cast<float>(GetFinalWidth());
     float drawHeight = static_cast<float>(GetFinalHeight());
-    ApplyRenderTransform(fAbsX, fAbsY, drawWidth, drawHeight);
+    ApplyRenderTransform(drawX, drawY, drawWidth, drawHeight);
+    float rotationRadians = GetAbsoluteRenderTransformRotation(this);
 
     auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"));
     if (background) {
-        background->SetRect(static_cast<int>(fAbsX), static_cast<int>(fAbsY), static_cast<int>(drawWidth), static_cast<int>(drawHeight));
+        background->SetRect(static_cast<int>(std::lround(drawX)), static_cast<int>(std::lround(drawY)), static_cast<int>(drawWidth), static_cast<int>(drawHeight));
         background->SetBorderThickness(1);
         background->SetCornerRadius(GetCornerRadius());
         background->SetOpacity(GetOpacity());
+        background->SetRotation(rotationRadians);
         background->BuildRenderCommands(commands);
     }
     else {
         const auto cornerRadius = GetCornerRadius();
         commands.DrawRoundedRect(
-            fAbsX,
-            fAbsY,
+            drawX,
+            drawY,
             drawWidth,
             drawHeight,
             cornerRadius.TopLeft,
@@ -131,11 +180,13 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             cornerRadius.BottomRight,
             cornerRadius.BottomLeft,
             m_backgroundColor.ToArgb(),
-            GetOpacity());
+            GetOpacity(),
+            NeoWPF::Rendering::ClipRect{},
+            rotationRadians);
 
         commands.DrawRoundedRect(
-            fAbsX,
-            fAbsY,
+            drawX,
+            drawY,
             drawWidth,
             drawHeight,
             cornerRadius.TopLeft,
@@ -143,15 +194,18 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             cornerRadius.BottomRight,
             cornerRadius.BottomLeft,
             0xFF333333u,
-            GetOpacity());
+            GetOpacity(),
+            NeoWPF::Rendering::ClipRect{},
+            rotationRadians);
     }
 
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
     if (contentHost) {
         const int inset = std::max(0, m_padding);
-        contentHost->SetRect(static_cast<int>(fAbsX) + inset, static_cast<int>(fAbsY) + inset, std::max(0, static_cast<int>(drawWidth) - (inset * 2)), std::max(0, static_cast<int>(drawHeight) - (inset * 2)));
+        contentHost->SetRect(static_cast<int>(std::lround(drawX)) + inset, static_cast<int>(std::lround(drawY)) + inset, std::max(0, static_cast<int>(drawWidth) - (inset * 2)), std::max(0, static_cast<int>(drawHeight) - (inset * 2)));
         contentHost->SetBorderThickness(0);
         contentHost->SetOpacity(GetOpacity());
+        contentHost->SetRotation(rotationRadians);
         contentHost->BuildRenderCommands(commands);
     }
 

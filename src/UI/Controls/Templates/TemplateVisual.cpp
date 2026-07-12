@@ -76,6 +76,17 @@ void TemplateVisual::SetClipRect(const NeoWPF::Rendering::ClipRect& clip) noexce
     MarkTreeDirty();
 }
 
+void TemplateVisual::SetRotation(float rotationRadians) noexcept
+{
+    m_rotation = rotationRadians;
+    MarkTreeDirty();
+}
+
+float TemplateVisual::GetRotation() const noexcept
+{
+    return m_rotation;
+}
+
 void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
     if (m_width <= 0 || m_height <= 0) {
@@ -99,7 +110,8 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
             m_cornerRadius.BottomLeft,
             m_borderColor,
             m_opacity,
-            m_clip);
+            m_clip,
+            m_rotation);
     }
 
     if (m_fillColor != 0x00000000u) {
@@ -118,7 +130,8 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
                 std::max(0.0f, m_cornerRadius.BottomLeft - inset),
                 m_fillColor,
                 m_opacity,
-                m_clip);
+                m_clip,
+                m_rotation);
         }
     }
 }

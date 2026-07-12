@@ -127,9 +127,9 @@ float RotateTransform::GetAngle() const { return m_angle; }
 float RotateTransform::GetCenterX() const { return m_centerX; }
 float RotateTransform::GetCenterY() const { return m_centerY; }
 
-void RotateTransform::SetAngle(float value) { m_angle = value; }
-void RotateTransform::SetCenterX(float value) { m_centerX = value; }
-void RotateTransform::SetCenterY(float value) { m_centerY = value; }
+void RotateTransform::SetAngle(float value) { m_angle = value; if (m_invalidateCallback) { m_invalidateCallback(); } }
+void RotateTransform::SetCenterX(float value) { m_centerX = value; if (m_invalidateCallback) { m_invalidateCallback(); } }
+void RotateTransform::SetCenterY(float value) { m_centerY = value; if (m_invalidateCallback) { m_invalidateCallback(); } }
 
 Matrix4 RotateTransform::GetMatrix() const {
     Matrix4 toCenter = Matrix4::Translation(-m_centerX, -m_centerY);

@@ -449,6 +449,8 @@ private:
 
 protected:
     void SetRenderOffset(int x, int y) noexcept { m_renderOffsetX = x; m_renderOffsetY = y; InvalidateVisual(); }
+
+public:
     int GetRenderOffsetX() const noexcept { return m_renderOffsetX; }
     int GetRenderOffsetY() const noexcept { return m_renderOffsetY; }
 

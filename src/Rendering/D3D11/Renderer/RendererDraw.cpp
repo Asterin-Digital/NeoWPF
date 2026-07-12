@@ -275,13 +275,42 @@ void ExecuteRendererDraw(const CommandList& cmd)
     std::vector<uint32_t> textQuadTextureIds;
     textQuadTextureIds.reserve(cmd.texturedQuads.size());
 
-    auto pushTextQuad = [&](float x, float y, float w, float h, float u0, float v0, float u1, float v1, float opacity, uint32_t textureId) {
-        textVerts.push_back({x, y, u0, v0, 1.0f, 1.0f, 1.0f, opacity});
-        textVerts.push_back({x + w, y, u1, v0, 1.0f, 1.0f, 1.0f, opacity});
-        textVerts.push_back({x + w, y + h, u1, v1, 1.0f, 1.0f, 1.0f, opacity});
-        textVerts.push_back({x + w, y + h, u1, v1, 1.0f, 1.0f, 1.0f, opacity});
-        textVerts.push_back({x, y + h, u0, v1, 1.0f, 1.0f, 1.0f, opacity});
-        textVerts.push_back({x, y, u0, v0, 1.0f, 1.0f, 1.0f, opacity});
+    auto pushTextQuad = [&](float x, float y, float w, float h, float u0, float v0, float u1, float v1, float opacity, uint32_t textureId, float rotationRadians = 0.0f) {
+        if (rotationRadians == 0.0f) {
+            textVerts.push_back({x, y, u0, v0, 1.0f, 1.0f, 1.0f, opacity});
+            textVerts.push_back({x + w, y, u1, v0, 1.0f, 1.0f, 1.0f, opacity});
+            textVerts.push_back({x + w, y + h, u1, v1, 1.0f, 1.0f, 1.0f, opacity});
+            textVerts.push_back({x + w, y + h, u1, v1, 1.0f, 1.0f, 1.0f, opacity});
+            textVerts.push_back({x, y + h, u0, v1, 1.0f, 1.0f, 1.0f, opacity});
+            textVerts.push_back({x, y, u0, v0, 1.0f, 1.0f, 1.0f, opacity});
+            textQuadTextureIds.push_back(textureId);
+            return;
+        }
+
+        const float cx = x + w * 0.5f;
+        const float cy = y + h * 0.5f;
+        const float cos_a = std::cos(rotationRadians);
+        const float sin_a = std::sin(rotationRadians);
+
+        auto rotPoint = [&](float px, float py) {
+            const float dx = px - cx;
+            const float dy = py - cy;
+            const float rx = dx * cos_a - dy * sin_a + cx;
+            const float ry = dx * sin_a + dy * cos_a + cy;
+            return std::pair<float, float>(rx, ry);
+        };
+
+        auto p0 = rotPoint(x, y);
+        auto p1 = rotPoint(x + w, y);
+        auto p2 = rotPoint(x + w, y + h);
+        auto p3 = rotPoint(x, y + h);
+
+        textVerts.push_back({p0.first, p0.second, u0, v0, 1.0f, 1.0f, 1.0f, opacity});
+        textVerts.push_back({p1.first, p1.second, u1, v0, 1.0f, 1.0f, 1.0f, opacity});
+        textVerts.push_back({p2.first, p2.second, u1, v1, 1.0f, 1.0f, 1.0f, opacity});
+        textVerts.push_back({p2.first, p2.second, u1, v1, 1.0f, 1.0f, 1.0f, opacity});
+        textVerts.push_back({p3.first, p3.second, u0, v1, 1.0f, 1.0f, 1.0f, opacity});
+        textVerts.push_back({p0.first, p0.second, u0, v0, 1.0f, 1.0f, 1.0f, opacity});
         textQuadTextureIds.push_back(textureId);
     };
 
@@ -290,21 +319,25 @@ void ExecuteRendererDraw(const CommandList& cmd)
         float clippedY = 0.0f;
         float clippedW = 0.0f;
         float clippedH = 0.0f;
-        const bool clipped = ClipRectToBounds(q.x, q.y, q.w, q.h, q.clip, clippedX, clippedY, clippedW, clippedH);
-        if (clipped) {
-            if (clippedW > 0.0f && clippedH > 0.0f) {
-                const float uSpan = q.u1 - q.u0;
-                const float vSpan = q.v1 - q.v0;
-                const float xDelta = clippedX - q.x;
-                const float yDelta = clippedY - q.y;
-                const float newU0 = q.u0 + (xDelta / q.w) * uSpan;
-                const float newV0 = q.v0 + (yDelta / q.h) * vSpan;
-                const float newU1 = newU0 + (clippedW / q.w) * uSpan;
-                const float newV1 = newV0 + (clippedH / q.h) * vSpan;
-                pushTextQuad(clippedX, clippedY, clippedW, clippedH, newU0, newV0, newU1, newV1, q.opacity, q.textureId);
+        if (q.rotationRadians == 0.0f) {
+            const bool clipped = ClipRectToBounds(q.x, q.y, q.w, q.h, q.clip, clippedX, clippedY, clippedW, clippedH);
+            if (clipped) {
+                if (clippedW > 0.0f && clippedH > 0.0f) {
+                    const float uSpan = q.u1 - q.u0;
+                    const float vSpan = q.v1 - q.v0;
+                    const float xDelta = clippedX - q.x;
+                    const float yDelta = clippedY - q.y;
+                    const float newU0 = q.u0 + (xDelta / q.w) * uSpan;
+                    const float newV0 = q.v0 + (yDelta / q.h) * vSpan;
+                    const float newU1 = newU0 + (clippedW / q.w) * uSpan;
+                    const float newV1 = newV0 + (clippedH / q.h) * vSpan;
+                    pushTextQuad(clippedX, clippedY, clippedW, clippedH, newU0, newV0, newU1, newV1, q.opacity, q.textureId);
+                }
+            } else {
+                pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.opacity, q.textureId);
             }
         } else {
-            pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.opacity, q.textureId);
+            pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.opacity, q.textureId, q.rotationRadians);
         }
     }
 
