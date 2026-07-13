@@ -68,21 +68,23 @@ namespace NeoWPF::Input
             return nullptr;
         }
 
+        int elementWidth = 0;
+        int elementHeight = 0;
         auto fw = dynamic_cast<NeoWPF::UI::FrameworkElement*>(element);
         if (fw)
         {
             int absX, absY;
             fw->GetAbsolutePosition(absX, absY);
-            int width = fw->GetFinalWidth();
-            int height = fw->GetFinalHeight();
+            elementWidth = fw->GetFinalWidth();
+            elementHeight = fw->GetFinalHeight();
 
             if (s_hitTestLogging)
             {
                 NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Bounds: (%d, %d) size (%d x %d), Test point: (%d, %d)",
-                    indent, absX, absY, width, height, x, y);
+                    indent, absX, absY, elementWidth, elementHeight, x, y);
             }
 
-            if (x < absX || x >= absX + width || y < absY || y >= absY + height)
+            if (x < absX || x >= absX + elementWidth || y < absY || y >= absY + elementHeight)
             {
                 if (s_hitTestLogging)
                 {
@@ -109,6 +111,13 @@ namespace NeoWPF::Input
         }
 
         NeoWPF::UI::UIElement* deepestHit = isHitTestVisible ? element : nullptr;
+        if (!isHitTestVisible)
+        {
+            if (s_hitTestLogging)
+            {
+                NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Result: PASS (element is not hit-testable, testing children)", indent);
+            }
+        }
 
         if (deepestHit)
         {
@@ -117,32 +126,25 @@ namespace NeoWPF::Input
             {
                 NeoWPF::UI::ContentBounds contentBounds = contentAware->GetContentBounds();
 
-                if (contentBounds.width > 0 && contentBounds.height > 0)
+                if (contentBounds.width > 0 && contentBounds.height > 0 && fw)
                 {
-                    if (!fw)
+                    int absX, absY;
+                    fw->GetAbsolutePosition(absX, absY);
+
+                    const int hitWidth = std::max(elementWidth, contentBounds.width);
+                    const int hitHeight = std::max(elementHeight, contentBounds.height);
+
+                    if (x < absX || x >= absX + hitWidth || y < absY || y >= absY + hitHeight)
                     {
                         if (s_hitTestLogging)
                         {
-                            NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Content-aware element is not a FrameworkElement", indent);
+                            NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - OUTSIDE", indent, absX, absY, hitWidth, hitHeight);
                         }
+                        deepestHit = nullptr;
                     }
-                    else
+                    else if (s_hitTestLogging)
                     {
-                        int absX, absY;
-                        fw->GetAbsolutePosition(absX, absY);
-
-                        if (x < absX || x >= absX + contentBounds.width || y < absY || y >= absY + contentBounds.height)
-                        {
-                            if (s_hitTestLogging)
-                            {
-                                NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - OUTSIDE", indent, absX, absY, contentBounds.width, contentBounds.height);
-                            }
-                            deepestHit = nullptr;
-                        }
-                        else if (s_hitTestLogging)
-                        {
-                            NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - INSIDE", indent, absX, absY, contentBounds.width, contentBounds.height);
-                        }
+                        NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - INSIDE", indent, absX, absY, hitWidth, hitHeight);
                     }
                 }
             }

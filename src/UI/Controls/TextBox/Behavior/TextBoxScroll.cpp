@@ -21,21 +21,23 @@ void TextBox::UpdateScrollMetrics()
     const int scrollbarThickness = 6;
     const bool supportsVerticalScroll = m_acceptsReturn || m_textWrapping != TextWrapping::NoWrap;
     const bool supportsHorizontalScroll = m_textWrapping == TextWrapping::NoWrap;
+    const int viewportInset = std::max(0, m_padding * 2);
 
     int viewportWidth = baseViewportWidth;
     int viewportHeight = baseViewportHeight;
     bool showHorizontalScrollbar = false;
     bool showVerticalScrollbar = false;
 
+    const int overflowTolerance = 4;
     for (int pass = 0; pass < 2; ++pass) {
-        showHorizontalScrollbar = supportsHorizontalScroll && contentWidth > viewportWidth;
-        showVerticalScrollbar = supportsVerticalScroll && contentHeight > viewportHeight && m_textLayout.GetLineCount() > 1;
+        showHorizontalScrollbar = supportsHorizontalScroll && contentWidth > viewportWidth - overflowTolerance;
+        showVerticalScrollbar = supportsVerticalScroll && contentHeight > viewportHeight - overflowTolerance && m_textLayout.GetLineCount() > 1;
         if (s_textBoxDebug) {
             NeoWPF::Diagnostics::LogInfo("[TextBox] UpdateScrollMetrics: pass=%d content=(%d,%d) viewport=(%d,%d) showH=%d showV=%d", pass, contentWidth, contentHeight, viewportWidth, viewportHeight, showHorizontalScrollbar ? 1 : 0, showVerticalScrollbar ? 1 : 0);
         }
 
-        const int nextViewportWidth = std::max(0, baseViewportWidth - (showVerticalScrollbar ? scrollbarThickness : 0));
-        const int nextViewportHeight = std::max(0, baseViewportHeight - (showHorizontalScrollbar ? scrollbarThickness : 0));
+        const int nextViewportWidth = std::max(0, baseViewportWidth - viewportInset - (showVerticalScrollbar ? scrollbarThickness : 0));
+        const int nextViewportHeight = std::max(0, baseViewportHeight - viewportInset - (showHorizontalScrollbar ? scrollbarThickness : 0));
         if (s_textBoxDebug) {
             NeoWPF::Diagnostics::LogInfo("[TextBox] UpdateScrollMetrics: pass=%d nextViewport=(%d,%d)", pass, nextViewportWidth, nextViewportHeight);
         }

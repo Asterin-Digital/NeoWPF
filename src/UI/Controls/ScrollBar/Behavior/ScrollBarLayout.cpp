@@ -71,7 +71,8 @@ int ScrollBar::GetThumbLength(int trackLength) const noexcept
     }
     if (m_contentSize > 0 && m_viewportSize > 0 && m_contentSize > m_viewportSize) {
         const int denominator = std::max(1, m_contentSize + m_viewportSize);
-        thumbLength = std::max(1, (m_viewportSize * clampedTrackLength) / denominator);
+        const int proportionalThumb = std::max(1, (m_viewportSize * clampedTrackLength) / denominator);
+        thumbLength = std::clamp(proportionalThumb, std::min(m_thumbSize, clampedTrackLength), clampedTrackLength);
         if (s_scrollBarDebug) {
             NeoWPF::Diagnostics::LogInfo("[ScrollBar] GetThumbLength: proportional track=%d content=%d viewport=%d proportionalThumb=%d", clampedTrackLength, m_contentSize, m_viewportSize, thumbLength);
         }

@@ -188,6 +188,7 @@
     <ClInclude Include="include\NeoWPF\UI\Controls\Templates\TemplateParts.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Base\ToggleBase\ToggleBase.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Checkbox\Checkbox.h" />
+    <ClInclude Include="include\NeoWPF\UI\Controls\ItemsControl\ItemsControl.h" />
     <ClInclude Include="include\NeoWPF\UI\Content\ContentControl.h" />
     <ClInclude Include="include\NeoWPF\UI\Content\ContentPresenter.h" />
   </ItemGroup>
@@ -210,6 +211,8 @@
     <ClCompile Include="src\UI\Controls\Button\ButtonProperties.cpp" />
     <ClCompile Include="src\UI\Controls\Checkbox\Checkbox.cpp" />
     <ClCompile Include="src\UI\Controls\Checkbox\CheckboxStates.cpp" />
+    <ClCompile Include="src\UI\Controls\ItemsControl\ItemsControl.cpp" />
+    <ClCompile Include="src\UI\Controls\ItemsControl\ItemsControlProperties.cpp" />
     <ClCompile Include="src\UI\Controls\Checkbox\Visual\CheckboxStyles.cpp" />
     <ClCompile Include="src\UI\Controls\Checkbox\Visual\CheckboxTemplate.cpp" />
     <ClCompile Include="src\UI\Controls\Button\Visual\ButtonStyles.cpp" />

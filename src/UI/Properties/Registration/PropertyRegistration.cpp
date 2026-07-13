@@ -5,6 +5,7 @@
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
+#include <NeoWPF/UI/Controls/ItemsControl/ItemsControl.h>
 #include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
@@ -104,6 +105,7 @@ namespace NeoWPF::UI::Properties {
         RegisterButtonProperties();
         RegisterTextBlockProperties();
         RegisterTextBoxProperties();
+        RegisterItemsControlProperties();
         RegisterBorderProperties();
         RegisterPanelProperties();
         RegisterScrollBarProperties();
@@ -194,6 +196,16 @@ namespace NeoWPF::UI::Properties {
         const std::string&,
         int (UI::TextBox::*)() const,
         void (UI::TextBox::*)(int));
+
+    template void RegisterProperty<UI::ItemsControl, int>(
+        const std::string&,
+        int (UI::ItemsControl::*)() const,
+        void (UI::ItemsControl::*)(int));
+
+    template void RegisterProperty<UI::ItemsControl, UI::Color>(
+        const std::string&,
+        UI::Color (UI::ItemsControl::*)() const,
+        void (UI::ItemsControl::*)(UI::Color));
 
     template void RegisterProperty<UI::Border, int>(
         const std::string&,

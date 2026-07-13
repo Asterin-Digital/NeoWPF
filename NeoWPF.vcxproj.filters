@@ -126,9 +126,6 @@
     <ClCompile Include="src\UI\Controls\Checkbox\CheckboxStates.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Controls\Checkbox\Behavior\CheckboxBehavior.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\UI\Controls\Checkbox\Visual\CheckboxStyles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -283,6 +280,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Input\InputFocus.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\ItemsControl\ItemsControl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\ItemsControl\ItemsControlProperties.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -498,6 +501,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Properties\Property\PropertyValue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Controls\ItemsControl\ItemsControl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

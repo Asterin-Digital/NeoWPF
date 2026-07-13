@@ -130,7 +130,9 @@ void TextBox::Measure(int availableWidth, int availableHeight)
         presenter->Measure(availableWidth, availableHeight);
     }
 
-    SetDesiredSize(std::max(desiredWidth, GetDesiredWidth()), std::max(desiredHeight, GetDesiredHeight()));
+    const int resolvedWidth = ResolveWidth(availableWidth, desiredWidth);
+    const int resolvedHeight = ResolveHeight(availableHeight, desiredHeight);
+    SetDesiredSize(resolvedWidth, resolvedHeight);
 }
 
 void TextBox::Arrange(int finalWidth, int finalHeight)
@@ -221,8 +223,6 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         contentHost->SetOpacity(GetOpacity());
         contentHostX = contentHost->GetX();
         contentHostY = contentHost->GetY();
-        contentHostWidth = std::max(0, contentHost->GetWidth());
-        contentHostHeight = std::max(0, contentHost->GetHeight());
         contentHost->BuildRenderCommands(commands);
     }
     m_contentHostWidth = contentHostWidth;
@@ -313,6 +313,8 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         m_verticalScrollBar->SetOrientation(ScrollBarOrientation::Vertical);
         m_verticalScrollBar->SetViewportSize(effectiveViewportHeight);
         m_verticalScrollBar->SetContentSize(effectiveContentHeight);
+        m_verticalScrollBar->SetWidth(scrollbarThickness);
+        m_verticalScrollBar->SetHeight(barHeight);
         m_verticalScrollBar->Arrange(scrollbarThickness, barHeight);
         m_verticalScrollBar->SetLayoutOffset(relativeBarX, relativeBarY);
         m_verticalScrollBar->BuildRenderCommands(commands);
@@ -333,6 +335,8 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         m_horizontalScrollBar->SetOrientation(ScrollBarOrientation::Horizontal);
         m_horizontalScrollBar->SetViewportSize(effectiveViewportWidth);
         m_horizontalScrollBar->SetContentSize(effectiveContentWidth);
+        m_horizontalScrollBar->SetWidth(barWidth);
+        m_horizontalScrollBar->SetHeight(scrollbarThickness);
         m_horizontalScrollBar->Arrange(barWidth, scrollbarThickness);
         m_horizontalScrollBar->SetLayoutOffset(relativeBarX, relativeBarY);
         m_horizontalScrollBar->BuildRenderCommands(commands);

@@ -10,6 +10,7 @@
 
 namespace NeoWPF::UI {
     class UIElement;
+    class ItemsControl;
 }
 
 namespace NeoWPF::UI::Properties {
@@ -39,6 +40,7 @@ namespace NeoWPF::UI::Properties {
     void RegisterUIElementProperties();
     void RegisterFrameworkElementProperties();
     void RegisterButtonProperties();
+    void RegisterItemsControlProperties();
     void RegisterTextBlockProperties();
     void RegisterTextBoxProperties();
     void RegisterBorderProperties();

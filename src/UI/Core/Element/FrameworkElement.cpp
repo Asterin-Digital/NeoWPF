@@ -221,8 +221,8 @@ namespace UI
             }
         }
 
-        m_finalWidth = finalWidth;
-        m_finalHeight = finalHeight;
+        m_finalWidth = ResolveWidth(finalWidth, m_desiredWidth);
+        m_finalHeight = ResolveHeight(finalHeight, m_desiredHeight);
     }
 }
 }
