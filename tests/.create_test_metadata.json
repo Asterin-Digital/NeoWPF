@@ -1,0 +1,11 @@
+{
+  "StressTest/VirtualizedPanel.cpp": {
+    "Test Name": "VirtualizedPanel",
+    "Description": "Tests if the UI lags with lots of items even with virtualization",
+    "Created": "2026-07-13 09:22:33",
+    "Result": "Passed (did not lag)",
+    "Notes": "Even though there was no lag, it did take some time to load up the app.",
+    "Path": "StressTest/VirtualizedPanel.cpp",
+    "Last Updated": "2026-07-13 09:23:31"
+  }
+}

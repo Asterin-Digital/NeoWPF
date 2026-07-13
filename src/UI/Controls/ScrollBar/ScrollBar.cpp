@@ -19,8 +19,8 @@ namespace NeoWPF::UI {
 ScrollBar::ScrollBar()
     : Content::ContentControl()
 {
-    SetHorizontalAlignment(HorizontalAlignment::Left);
-    SetVerticalAlignment(VerticalAlignment::Top);
+    SetHorizontalAlignment(HorizontalAlignment::Stretch); // this might need to be top and left, correct if bad later
+    SetVerticalAlignment(VerticalAlignment::Stretch);
     SetTemplate(std::make_shared<ScrollBarTemplate>());
     ApplyTemplate();
 
@@ -28,8 +28,6 @@ ScrollBar::ScrollBar()
     presenter->SetPadding(0);
     SetPresenter(presenter);
 
-    SetWidth(16);
-    SetHeight(120);
     SetClipToBounds(true);
 }
 
@@ -40,8 +38,8 @@ void ScrollBar::Measure(int availableWidth, int availableHeight)
     const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
     const int thickness = 16;
     const int minLength = 24;
-    const int primaryAvailable = isVertical ? availableHeight : availableWidth;
-    const int length = std::max(minLength, std::max(0, primaryAvailable));
+    const int primaryAvailable = std::max(0, isVertical ? availableHeight : availableWidth);
+    const int length = std::max(minLength, primaryAvailable);
 
     if (isVertical) {
         SetDesiredSize(thickness, length);

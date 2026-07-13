@@ -410,26 +410,6 @@
     },
     {
       "kind": "method",
-      "name": "IsHitTestVisible",
-      "source": "Button",
-      "summary": "Controls whether the button can be hit by mouse input.",
-      "details": "",
-      "example": "",
-      "params": [],
-      "isInternal": false
-    },
-    {
-      "kind": "method",
-      "name": "IsInteractable",
-      "source": "Button",
-      "summary": "Returns whether the button is currently interactable.",
-      "details": "",
-      "example": "",
-      "params": [],
-      "isInternal": false
-    },
-    {
-      "kind": "method",
       "name": "Measure",
       "source": "Button",
       "summary": "Measures the button and decides how much space it needs.",
@@ -445,39 +425,6 @@
           "text": "Height available for layout."
         }
       ],
-      "isInternal": true
-    },
-    {
-      "kind": "method",
-      "name": "OnMouseUp",
-      "source": "Button",
-      "summary": "Handles mouse-up input.",
-      "details": "",
-      "example": "",
-      "params": [
-        {
-          "name": "x",
-          "text": "The x position of the mouse."
-        },
-        {
-          "name": "y",
-          "text": "The y position of the mouse."
-        },
-        {
-          "name": "buttonState",
-          "text": "The mouse button state."
-        }
-      ],
-      "isInternal": true
-    },
-    {
-      "kind": "method",
-      "name": "RaiseClick",
-      "source": "Button",
-      "summary": "Raises the Click event.",
-      "details": "",
-      "example": "",
-      "params": [],
       "isInternal": true
     },
     {
@@ -553,6 +500,428 @@
           "text": "ARGB color value."
         }
       ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Arrange",
+      "source": "Checkbox",
+      "summary": "Positions the checkbox in its final layout bounds.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "BuildRenderCommands",
+      "source": "Checkbox",
+      "summary": "Builds the render commands for the checkbox.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "class",
+      "name": "Checkbox",
+      "source": "Checkbox",
+      "summary": "A toggle control for on/off selection.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetBackgroundColor",
+      "source": "Checkbox",
+      "summary": "Returns the background color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetBorderColor",
+      "source": "Checkbox",
+      "summary": "Returns the border color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetPadding",
+      "source": "Checkbox",
+      "summary": "Returns the current padding.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetText",
+      "source": "Checkbox",
+      "summary": "Returns the checkbox label text.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetTextColor",
+      "source": "Checkbox",
+      "summary": "Returns the text color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Measure",
+      "source": "Checkbox",
+      "summary": "Measures the checkbox for layout.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "OnVisualStateApplied",
+      "source": "Checkbox",
+      "summary": "Applies the named visual state.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetBackgroundColor",
+      "source": "Checkbox",
+      "summary": "Sets the background color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetBorderColor",
+      "source": "Checkbox",
+      "summary": "Sets the border color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetPadding",
+      "source": "Checkbox",
+      "summary": "Sets the padding around the checkbox content.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetText",
+      "source": "Checkbox",
+      "summary": "Sets the checkbox label text.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "text",
+          "text": "The text to show next to the checkbox."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetTextColor",
+      "source": "Checkbox",
+      "summary": "Sets the text color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "AddRequiredPart",
+      "source": "ControlTemplate",
+      "summary": "Adds a required template part.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "name",
+          "text": "The part name."
+        },
+        {
+          "name": "required",
+          "text": "Whether the part must be present."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "AddTemplateChild",
+      "source": "ControlTemplate",
+      "summary": "Adds a named template child.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "name",
+          "text": "The template part name."
+        },
+        {
+          "name": "visualChild",
+          "text": "The child visual to register."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "AddVisualChild",
+      "source": "ControlTemplate",
+      "summary": "Adds a visual child to the template.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "visualChild",
+          "text": "The child visual to add."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "AddVisualState",
+      "source": "ControlTemplate",
+      "summary": "Adds a visual state to a group.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "state",
+          "text": "The state to register."
+        },
+        {
+          "name": "groupName",
+          "text": "The target group name."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "AddVisualStateGroup",
+      "source": "ControlTemplate",
+      "summary": "Adds a visual state group to the template.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "group",
+          "text": "The group to register."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Apply",
+      "source": "ControlTemplate",
+      "summary": "Applies the template to an element.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "element",
+          "text": "The element that receives the template."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "Apply",
+      "source": "ControlTemplate",
+      "summary": "Applies the template to an element.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "element",
+          "text": "The element that receives the template."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "CanApplyTo",
+      "source": "ControlTemplate",
+      "summary": "Checks whether the template can be applied to an element.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "element",
+          "text": "The element that will receive the template."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "CanApplyTo",
+      "source": "ControlTemplate",
+      "summary": "Checks whether the template can be applied to an element.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "element",
+          "text": "The element that will receive the template."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "ControlTemplate",
+      "source": "ControlTemplate",
+      "summary": "Creates a new control template.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetRequiredParts",
+      "source": "ControlTemplate",
+      "summary": "Returns the required parts for the template.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetVisualStateManager",
+      "source": "ControlTemplate",
+      "summary": "Returns the visual state manager for the template.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetVisualStateManager",
+      "source": "ControlTemplate",
+      "summary": "Returns the visual state manager for the template.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetVisualTree",
+      "source": "ControlTemplate",
+      "summary": "Returns the template root visual.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetVisualTreeRoot",
+      "source": "ControlTemplate",
+      "summary": "Returns the template root visual.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetVisualTreeRoot",
+      "source": "ControlTemplate",
+      "summary": "Returns the template root visual.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "HasRequiredParts",
+      "source": "ControlTemplate",
+      "summary": "Checks whether the template has required parts.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetVisualStateManager",
+      "source": "ControlTemplate",
+      "summary": "Sets the visual state manager for the template.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "visualStateManager",
+          "text": "The state manager to use."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetVisualTree",
+      "source": "ControlTemplate",
+      "summary": "Sets the root visual for the template.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "visualTree",
+          "text": "The visual to use as the root."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "struct",
+      "name": "TemplatePart",
+      "source": "ControlTemplate",
+      "summary": "Describes a named template part.",
+      "details": "",
+      "example": "",
+      "params": [],
       "isInternal": false
     },
     {
@@ -678,6 +1047,16 @@
     },
     {
       "kind": "method",
+      "name": "GetCornerRadius",
+      "source": "FrameworkElement",
+      "summary": "Returns the element's corner radius.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "GetDesiredHeight",
       "source": "FrameworkElement",
       "summary": "Returns the size the element wants during measurement.",
@@ -715,6 +1094,16 @@
       "example": "",
       "params": [],
       "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetHeight",
+      "source": "FrameworkElement",
+      "summary": "Returns the element's preferred height.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -764,6 +1153,21 @@
       "details": "",
       "example": "",
       "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetWidth",
+      "source": "FrameworkElement",
+      "summary": "Sets a preferred width for the element.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "width",
+          "text": "The width to use."
+        }
+      ],
       "isInternal": false
     },
     {
@@ -861,6 +1265,21 @@
       "details": "",
       "example": "",
       "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetCornerRadius",
+      "source": "FrameworkElement",
+      "summary": "Sets the element's corner radius.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "cornerRadius",
+          "text": "The new corner radius values."
+        }
+      ],
       "isInternal": false
     },
     {
@@ -1296,6 +1715,503 @@
     },
     {
       "kind": "method",
+      "name": "AddItem",
+      "source": "ItemsControl",
+      "summary": "Appends a single item to the collection.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "item",
+          "text": "The item to add."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Arrange",
+      "source": "ItemsControl",
+      "summary": "Positions the control and its items within the allocated area.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "finalWidth",
+          "text": "The width assigned to the control."
+        },
+        {
+          "name": "finalHeight",
+          "text": "The height assigned to the control."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "BuildRenderCommands",
+      "source": "ItemsControl",
+      "summary": "Builds the render commands used to draw the control.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "commands",
+          "text": "The command list that receives the rendering instructions."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "ClearItems",
+      "source": "ItemsControl",
+      "summary": "Removes all items from the collection.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetItemSpacing",
+      "source": "ItemsControl",
+      "summary": "Returns the spacing between items.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetItems",
+      "source": "ItemsControl",
+      "summary": "Returns the current collection of items.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetPadding",
+      "source": "ItemsControl",
+      "summary": "Returns the padding around the item area.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "IsHitTestVisible",
+      "source": "ItemsControl",
+      "summary": "Returns whether the control participates in hit testing.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "class",
+      "name": "ItemsControl",
+      "source": "ItemsControl",
+      "summary": "A control for presenting a collection of items.",
+      "details": "This control stores a set of child elements and renders them in a\nvertical layout.",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Measure",
+      "source": "ItemsControl",
+      "summary": "Measures the control and determines the space it needs.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "availableWidth",
+          "text": "Width available for layout."
+        },
+        {
+          "name": "availableHeight",
+          "text": "Height available for layout."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetItemSpacing",
+      "source": "ItemsControl",
+      "summary": "Sets the spacing between items.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "spacing",
+          "text": "The spacing in pixels."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetItems",
+      "source": "ItemsControl",
+      "summary": "Replaces the current item collection.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "items",
+          "text": "The items to display."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetPadding",
+      "source": "ItemsControl",
+      "summary": "Sets the padding around the item area.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "padding",
+          "text": "The padding in pixels."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Clear",
+      "source": "Renderer",
+      "summary": "Clears out all queued drawing commands.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "struct",
+      "name": "CommandList",
+      "source": "Renderer",
+      "summary": "Holds the drawing commands for a single frame.",
+      "details": "This is the renderer's internal command list.\nIt keeps track of rectangles, rounded rectangles, and textured quads that get\nexecuted when the frame is presented.",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "struct",
+      "name": "DrawRect",
+      "source": "Renderer",
+      "summary": "Describes a filled rectangle draw command.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "DrawRect",
+      "source": "Renderer",
+      "summary": "Adds a filled rectangle to the draw queue.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "x",
+          "text": "The left position of the rectangle."
+        },
+        {
+          "name": "y",
+          "text": "The top position of the rectangle."
+        },
+        {
+          "name": "w",
+          "text": "The rectangle width."
+        },
+        {
+          "name": "h",
+          "text": "The rectangle height."
+        },
+        {
+          "name": "color",
+          "text": "The fill color, encoded as an ARGB value."
+        },
+        {
+          "name": "opacity",
+          "text": "The opacity applied to the draw."
+        },
+        {
+          "name": "clip",
+          "text": "The clipping rectangle to constrain the draw."
+        },
+        {
+          "name": "rotationRadians",
+          "text": "The optional rotation applied to the rectangle."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "struct",
+      "name": "DrawRoundedRect",
+      "source": "Renderer",
+      "summary": "Describes a filled rounded-rectangle draw command.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "DrawRoundedRect",
+      "source": "Renderer",
+      "summary": "Adds a filled rounded rectangle to the draw queue.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "x",
+          "text": "The left position of the rectangle."
+        },
+        {
+          "name": "y",
+          "text": "The top position of the rectangle."
+        },
+        {
+          "name": "w",
+          "text": "The rectangle width."
+        },
+        {
+          "name": "h",
+          "text": "The rectangle height."
+        },
+        {
+          "name": "topLeft",
+          "text": "The radius of the top-left corner."
+        },
+        {
+          "name": "topRight",
+          "text": "The radius of the top-right corner."
+        },
+        {
+          "name": "bottomRight",
+          "text": "The radius of the bottom-right corner."
+        },
+        {
+          "name": "bottomLeft",
+          "text": "The radius of the bottom-left corner."
+        },
+        {
+          "name": "color",
+          "text": "The fill color, encoded as an ARGB value."
+        },
+        {
+          "name": "opacity",
+          "text": "The opacity applied to the draw."
+        },
+        {
+          "name": "clip",
+          "text": "The clipping rectangle to constrain the draw."
+        },
+        {
+          "name": "rotationRadians",
+          "text": "The optional rotation applied to the rectangle."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "struct",
+      "name": "DrawTexturedQuad",
+      "source": "Renderer",
+      "summary": "Describes a textured quad draw command.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "DrawTexturedQuad",
+      "source": "Renderer",
+      "summary": "Adds a textured quad to the draw queue.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "x",
+          "text": "The left position of the quad."
+        },
+        {
+          "name": "y",
+          "text": "The top position of the quad."
+        },
+        {
+          "name": "w",
+          "text": "The quad width."
+        },
+        {
+          "name": "h",
+          "text": "The quad height."
+        },
+        {
+          "name": "u0",
+          "text": "The normalized U coordinate for the top-left corner."
+        },
+        {
+          "name": "v0",
+          "text": "The normalized V coordinate for the top-left corner."
+        },
+        {
+          "name": "u1",
+          "text": "The normalized U coordinate for the bottom-right corner."
+        },
+        {
+          "name": "v1",
+          "text": "The normalized V coordinate for the bottom-right corner."
+        },
+        {
+          "name": "tex",
+          "text": "The texture identifier."
+        },
+        {
+          "name": "opacity",
+          "text": "The opacity applied to the draw."
+        },
+        {
+          "name": "clip",
+          "text": "The clipping rectangle to constrain the draw."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "Renderer_BeginFrame",
+      "source": "Renderer",
+      "summary": "Starts a new frame for the renderer.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "Renderer_CreateTexture",
+      "source": "Renderer",
+      "summary": "Creates a texture from raw RGBA data.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "w",
+          "text": "The texture width in pixels."
+        },
+        {
+          "name": "h",
+          "text": "The texture height in pixels."
+        },
+        {
+          "name": "rgbaData",
+          "text": "The source pixel data, in RGBA byte order."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "Renderer_DestroyTexture",
+      "source": "Renderer",
+      "summary": "Releases a renderer-owned texture.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "id",
+          "text": "The texture identifier to destroy."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "Renderer_Execute",
+      "source": "Renderer",
+      "summary": "Runs the queued draw commands.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "cmd",
+          "text": "The command list containing the draw operations to execute."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "Renderer_Initialize",
+      "source": "Renderer",
+      "summary": "Sets up the renderer for the target window.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "hwnd",
+          "text": "The window handle that owns the rendering surface."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "Renderer_Present",
+      "source": "Renderer",
+      "summary": "Pushes the current frame to the display.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "Renderer_Resize",
+      "source": "Renderer",
+      "summary": "Resizes the renderer's output surface.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "w",
+          "text": "The new width of the render target."
+        },
+        {
+          "name": "h",
+          "text": "The new height of the render target."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "Renderer_Shutdown",
+      "source": "Renderer",
+      "summary": "Releases the renderer's resources.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
       "name": "Arrange",
       "source": "ScrollBar",
       "summary": "Arranges the scrollbar into its final bounds.",
@@ -1610,6 +2526,248 @@
       "isInternal": true
     },
     {
+      "kind": "struct",
+      "name": "TemplateParts",
+      "source": "TemplateParts",
+      "summary": "Holds common template part names.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "BuildRenderCommands",
+      "source": "TemplateVisual",
+      "summary": "Builds the render commands for the visual.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "commands",
+          "text": "The command list to fill."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetCornerRadius",
+      "source": "TemplateVisual",
+      "summary": "Returns the corner radius.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetHeight",
+      "source": "TemplateVisual",
+      "summary": "Returns the visual height.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetOpacity",
+      "source": "TemplateVisual",
+      "summary": "Returns the opacity.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetRotation",
+      "source": "TemplateVisual",
+      "summary": "Returns the rotation.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetWidth",
+      "source": "TemplateVisual",
+      "summary": "Returns the visual width.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetX",
+      "source": "TemplateVisual",
+      "summary": "Returns the visual x position.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetY",
+      "source": "TemplateVisual",
+      "summary": "Returns the visual y position.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetBorderColor",
+      "source": "TemplateVisual",
+      "summary": "Sets the border color.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "color",
+          "text": "The border color as an ARGB value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetBorderThickness",
+      "source": "TemplateVisual",
+      "summary": "Sets the border thickness.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "thickness",
+          "text": "The border thickness in pixels."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetClipRect",
+      "source": "TemplateVisual",
+      "summary": "Sets the clip rectangle.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "clip",
+          "text": "The clip rectangle to apply."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetCornerRadius",
+      "source": "TemplateVisual",
+      "summary": "Sets the corner radius.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "cornerRadius",
+          "text": "The corner radius values."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetFillColor",
+      "source": "TemplateVisual",
+      "summary": "Sets the fill color.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "color",
+          "text": "The fill color as an ARGB value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetOpacity",
+      "source": "TemplateVisual",
+      "summary": "Sets the opacity.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "opacity",
+          "text": "The opacity value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetRect",
+      "source": "TemplateVisual",
+      "summary": "Sets the visual rectangle.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "x",
+          "text": "The x position."
+        },
+        {
+          "name": "y",
+          "text": "The y position."
+        },
+        {
+          "name": "width",
+          "text": "The visual width."
+        },
+        {
+          "name": "height",
+          "text": "The visual height."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetRotation",
+      "source": "TemplateVisual",
+      "summary": "Sets the rotation.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "rotationRadians",
+          "text": "The rotation in radians."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "TemplateVisual",
+      "source": "TemplateVisual",
+      "summary": "Creates a new template visual.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "name",
+          "text": "The visual name."
+        }
+      ],
+      "isInternal": false
+    },
+    {
       "kind": "method",
       "name": "ApplyVisualState",
       "source": "TextBox",
@@ -1871,29 +3029,9 @@
     },
     {
       "kind": "method",
-      "name": "OnGotFocus",
-      "source": "TextBox",
-      "summary": "Called when the control receives focus.",
-      "details": "",
-      "example": "",
-      "params": [],
-      "isInternal": true
-    },
-    {
-      "kind": "method",
       "name": "OnKeyboardInput",
       "source": "TextBox",
       "summary": "Keyboard input handler (text input and navigation).",
-      "details": "",
-      "example": "",
-      "params": [],
-      "isInternal": true
-    },
-    {
-      "kind": "method",
-      "name": "OnLostFocus",
-      "source": "TextBox",
-      "summary": "Called when the control loses focus.",
       "details": "",
       "example": "",
       "params": [],
@@ -2196,6 +3334,216 @@
     },
     {
       "kind": "method",
+      "name": "AddChild",
+      "source": "Visual",
+      "summary": "Adds a child visual.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "AddLogicalChild",
+      "source": "Visual",
+      "summary": "Adds a logical child.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "AddVisualChild",
+      "source": "Visual",
+      "summary": "Adds a visual child.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "BuildRenderCommands",
+      "source": "Visual",
+      "summary": "Builds render commands for this visual.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "CaptureRootVisuals",
+      "source": "Visual",
+      "summary": "Captures the current root visuals.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "ClearTreeDirty",
+      "source": "Visual",
+      "summary": "Clears the dirty flag.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "DumpVisualTree",
+      "source": "Visual",
+      "summary": "Dumps the visual tree for debugging.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetLogicalChildren",
+      "source": "Visual",
+      "summary": "Returns the logical children attached to this node.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetParent",
+      "source": "Visual",
+      "summary": "Returns the parent of this visual.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetRegisteredVisuals",
+      "source": "Visual",
+      "summary": "Returns all registered visuals.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetRegistry",
+      "source": "Visual",
+      "summary": "Returns the internal visual registry.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetRootVisualReferences",
+      "source": "Visual",
+      "summary": "Returns the root visual references.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetVisualChildren",
+      "source": "Visual",
+      "summary": "Returns the visual children attached to this node.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetVisualChildrenInZOrder",
+      "source": "Visual",
+      "summary": "Returns the visual children in drawing order.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetZIndex",
+      "source": "Visual",
+      "summary": "Returns the current z-index.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "IsTreeDirty",
+      "source": "Visual",
+      "summary": "Returns whether the visual tree is dirty.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "KeepAliveAsRoot",
+      "source": "Visual",
+      "summary": "Keeps this visual alive as a root visual.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "MarkTreeDirty",
+      "source": "Visual",
+      "summary": "Marks the visual tree as dirty.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "RemoveVisualChild",
+      "source": "Visual",
+      "summary": "Removes a visual child.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetZIndex",
+      "source": "Visual",
+      "summary": "Sets the current z-index.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "class",
+      "name": "Visual",
+      "source": "Visual",
+      "summary": "Base class for all visual objects in the UI tree.",
+      "details": "Visual represents a node that can participate in layout, rendering, and tree traversal.",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "AddGroup",
       "source": "VisualStateManager",
       "summary": "Adds a visual state group.",
@@ -2205,6 +3553,25 @@
         {
           "name": "group",
           "text": "The group to add."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "AddSetter",
+      "source": "VisualStateManager",
+      "summary": "Adds a setter that targets a named template part.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "targetName",
+          "text": "The template child name to target."
+        },
+        {
+          "name": "setter",
+          "text": "The callback used to apply the visual change."
         }
       ],
       "isInternal": false
@@ -2298,6 +3665,21 @@
     },
     {
       "kind": "method",
+      "name": "FindState",
+      "source": "VisualStateManager",
+      "summary": "Finds a state across all groups.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "stateName",
+          "text": "The state identifier."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "GetCurrentState",
       "source": "VisualStateManager",
       "summary": "Returns the currently active state for the group.",
@@ -2331,6 +3713,16 @@
       "name": "GetName",
       "source": "VisualStateManager",
       "summary": "Returns the group name.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetSetters",
+      "source": "VisualStateManager",
+      "summary": "Returns the setters registered for the state.",
       "details": "",
       "example": "",
       "params": [],

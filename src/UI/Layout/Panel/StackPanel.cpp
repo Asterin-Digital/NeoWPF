@@ -63,7 +63,7 @@ namespace {
 
 namespace NeoWPF::UI {
 
-bool StackPanel::stackPanelDebugLogging = true; // dont turn this on unless ur debugging something
+bool StackPanel::stackPanelDebugLogging = false; // dont turn this on unless ur debugging something
 
 void StackPanel::Measure(int availableWidth, int availableHeight)
 {
