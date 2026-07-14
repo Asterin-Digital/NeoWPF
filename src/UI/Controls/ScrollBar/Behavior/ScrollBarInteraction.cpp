@@ -28,8 +28,11 @@ void ScrollBar::UpdateValueFromPosition(int x, int y) noexcept
 
     const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
     const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
-    const int thumbLength = GetThumbLength(trackLength);
-    const int availableTrack = std::max(0, trackLength - thumbLength);
+    const int effectiveTrackLength = m_viewportSize > 0
+        ? std::max(0, std::min(trackLength, m_viewportSize))
+        : trackLength;
+    const int thumbLength = GetThumbLength(effectiveTrackLength);
+    const int availableTrack = std::max(0, effectiveTrackLength - thumbLength);
 
     int pointerPos = isVertical ? y - absY : x - absX;
     pointerPos = std::clamp(pointerPos - thumbLength / 2, 0, availableTrack);
@@ -58,8 +61,11 @@ void ScrollBar::OnMouseDown(int x, int y, std::uint32_t buttonState)
     const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
     const int localPos = isVertical ? y - absY : x - absX;
     const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
-    const int thumbLength = GetThumbLength(trackLength);
-    const int thumbPosition = GetThumbPosition(trackLength, thumbLength);
+    const int effectiveTrackLength = m_viewportSize > 0
+        ? std::max(0, std::min(trackLength, m_viewportSize))
+        : trackLength;
+    const int thumbLength = GetThumbLength(effectiveTrackLength);
+    const int thumbPosition = GetThumbPosition(effectiveTrackLength, thumbLength);
 
     if (localPos >= thumbPosition && localPos < thumbPosition + thumbLength) {
         m_isDragging = true;
@@ -101,8 +107,11 @@ void ScrollBar::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
     const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
     const int pointerPos = isVertical ? args->GetY() - absY : args->GetX() - absX;
     const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
-    const int thumbLength = GetThumbLength(trackLength);
-    const int availableTrack = std::max(0, trackLength - thumbLength);
+    const int effectiveTrackLength = m_viewportSize > 0
+        ? std::max(0, std::min(trackLength, m_viewportSize))
+        : trackLength;
+    const int thumbLength = GetThumbLength(effectiveTrackLength);
+    const int availableTrack = std::max(0, effectiveTrackLength - thumbLength);
 
     const int dragDelta = pointerPos - m_dragStartPointer;
     const int range = GetScrollRange();

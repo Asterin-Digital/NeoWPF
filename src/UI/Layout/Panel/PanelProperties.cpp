@@ -1,5 +1,5 @@
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
-#include <NeoWPF/UI/Properties/Registration/PropertyRegistration.h>
+#include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 namespace NeoWPF::UI::Properties {
     void RegisterPanelProperties() {

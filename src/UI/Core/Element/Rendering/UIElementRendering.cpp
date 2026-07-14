@@ -5,24 +5,12 @@
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
-#include <NeoWPF/UI/Properties/Property/PropertyRegistry.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
-#include <NeoWPF/UI/Properties/Property/PropertyInfo.h>
+#include <NeoWPF/UI/Properties/DependencyObject.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <vector>
 
 namespace NeoWPF::UI {
-
-// Base rule: Visual.cpp/h is not allowed to reach into UIElement.cpp/h. Same goes for 
-// UIElement.cpp/h not being allowed to reach into FrameworkElement.cpp/h
-
-void UIElement::InvalidateVisual() {
-    m_isDirty = true;
-    MarkTreeDirty();
-}
-
-void UIElement::ClearDirty() noexcept {
-    m_isDirty = false;
-    ClearTreeDirty();
-}
 
 void UIElement::BeginAnimation(float from, float to, float durationSeconds) {
     using namespace NeoWPF::UI::Animation;
@@ -130,54 +118,19 @@ void UIElement::ClearTemplateChildren() noexcept {
     m_hasTemplateApplied = false;
 }
 
-void UIElement::SetProperty(const std::string& name, uint32_t value) {
+bool UIElement::SetStyleProperty(const std::string& name, uint32_t value)
+{
     if (name.empty()) {
-        return;
+        return false;
     }
-    m_properties[name] = value;
-    SetPropertySource(name, Properties::PropertySource::Local);
-}
 
-bool UIElement::TryGetProperty(const std::string& name, uint32_t& outValue) const {
-    if (name.empty()) {
+    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, typeid(*this));
+    if (!property) {
         return false;
     }
-    auto it = m_properties.find(name);
-    if (it == m_properties.end()) {
-        return false;
-    }
-    outValue = it->second;
+
+    SetValueInternal(*property, std::any(value), Properties::PropertyValueSource::Style);
     return true;
-}
-
-bool UIElement::IsPropertyLocal(const std::string& name) const
-{
-    auto it = m_propertySources.find(name);
-    return it != m_propertySources.end() && it->second == Properties::PropertySource::Local;
-}
-
-void UIElement::SetPropertySource(const std::string& name, Properties::PropertySource source)
-{
-    if (name.empty()) {
-        return;
-    }
-    if (source == Properties::PropertySource::Style && IsPropertyLocal(name)) {
-        return;
-    }
-    m_propertySources[name] = source;
-}
-
-void UIElement::SetStyleProperty(const std::string& name, uint32_t value)
-{
-    if (name.empty()) {
-        return;
-    }
-    auto itSource = m_propertySources.find(name);
-    if (itSource != m_propertySources.end() && itSource->second == Properties::PropertySource::Local) {
-        return;
-    }
-    m_properties[name] = value;
-    SetPropertySource(name, Properties::PropertySource::Style);
 }
 
 bool UIElement::SetStylePropertyValue(const std::string& name, const std::any& value)
@@ -186,28 +139,45 @@ bool UIElement::SetStylePropertyValue(const std::string& name, const std::any& v
         return false;
     }
 
-    auto& registry = Properties::PropertyRegistry::Get(typeid(*this));
-    return registry.SetPropertyValue(this, name, value, Properties::PropertySource::Style);
-}
-
-bool UIElement::SetPropertyValue(const std::string& name, const std::any& value) {
-    auto& registry = Properties::PropertyRegistry::Get(typeid(*this));
-    if (!registry.SetPropertyValue(this, name, value, Properties::PropertySource::Local)) {
+    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, typeid(*this));
+    if (!property) {
         return false;
     }
+
+    SetValueInternal(*property, value, Properties::PropertyValueSource::Style);
+    return true;
+}
+
+bool UIElement::SetPropertyValue(const std::string& name, const std::any& value)
+{
+    if (name.empty()) {
+        return false;
+    }
+
+    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, typeid(*this));
+    if (!property) {
+        return false;
+    }
+
+    SetValueInternal(*property, value, Properties::PropertyValueSource::Local);
     PropertyChanged.Invoke(name, value);
     return true;
 }
 
-std::any UIElement::GetPropertyValue(const std::string& name) const {
-    auto& registry = Properties::PropertyRegistry::Get(typeid(*this));
-    return registry.GetPropertyValue(const_cast<UIElement*>(this), name);
+std::any UIElement::GetPropertyValue(const std::string& name) const
+{
+    if (name.empty()) {
+        return {};
+    }
+
+    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, typeid(*this));
+    if (!property) {
+        return {};
+    }
+
+    return GetRawValue(*property);
 }
 
-std::vector<Properties::PropertyInfo> UIElement::GetPropertyInfo() const {
-    auto& registry = Properties::PropertyRegistry::Get(typeid(*this));
-    return registry.GetProperties();
-}
 
 void UIElement::AddHandler(const NeoWPF::Input::Core::RoutedEvent& routedEvent,
                            const NeoWPF::Input::Core::RoutedEventHandler& handler)

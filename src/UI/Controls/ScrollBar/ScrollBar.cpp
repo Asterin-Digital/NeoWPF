@@ -19,8 +19,8 @@ namespace NeoWPF::UI {
 ScrollBar::ScrollBar()
     : Content::ContentControl()
 {
-    SetHorizontalAlignment(HorizontalAlignment::Stretch); // this might need to be top and left, correct if bad later
-    SetVerticalAlignment(VerticalAlignment::Stretch);
+    SetHorizontalAlignment(HorizontalAlignment::Left);
+    SetVerticalAlignment(VerticalAlignment::Top);
     SetTemplate(std::make_shared<ScrollBarTemplate>());
     ApplyTemplate();
 
@@ -38,7 +38,12 @@ void ScrollBar::Measure(int availableWidth, int availableHeight)
     const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
     const int thickness = 16;
     const int minLength = 24;
-    const int primaryAvailable = std::max(0, isVertical ? availableHeight : availableWidth);
+    int primaryAvailable = std::max(0, isVertical ? availableHeight : availableWidth);
+
+    if (m_viewportSize > 0) {
+        primaryAvailable = std::min(primaryAvailable, m_viewportSize);
+    }
+
     const int length = std::max(minLength, primaryAvailable);
 
     if (isVertical) {
@@ -54,9 +59,25 @@ void ScrollBar::Measure(int availableWidth, int availableHeight)
 
 void ScrollBar::Arrange(int finalWidth, int finalHeight)
 {
-    FrameworkElement::Arrange(finalWidth, finalHeight);
+    const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
+    int effectiveWidth = finalWidth;
+    int effectiveHeight = finalHeight;
+
+    if (isVertical) {
+        const int viewportHeight = m_viewportElement ? std::max(0, m_viewportElement->GetDesiredHeight()) : 0;
+        if (viewportHeight > 0) {
+            effectiveHeight = std::min(finalHeight, viewportHeight);
+        }
+    } else {
+        const int viewportWidth = m_viewportElement ? std::max(0, m_viewportElement->GetDesiredWidth()) : 0;
+        if (viewportWidth > 0) {
+            effectiveWidth = std::min(finalWidth, viewportWidth);
+        }
+    }
+
+    FrameworkElement::Arrange(effectiveWidth, effectiveHeight);
     if (auto presenter = GetPresenter()) {
-        presenter->Arrange(finalWidth, finalHeight);
+        presenter->Arrange(effectiveWidth, effectiveHeight);
     }
     if (s_scrollBarDebug) {
         NeoWPF::Diagnostics::LogInfo("[ScrollBar] Arrange: final=%dx%d orientation=%d value=%d content=%d viewport=%d", finalWidth, finalHeight, static_cast<int>(m_orientation), m_value, m_contentSize, m_viewportSize);
@@ -93,13 +114,16 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
     const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
     const int trackThickness = isVertical ? GetFinalWidth() : GetFinalHeight();
+    const int effectiveTrackLength = m_viewportSize > 0
+        ? std::max(0, std::min(trackLength, m_viewportSize))
+        : trackLength;
 
-    if (trackLength <= 0 || trackThickness <= 0) {
+    if (effectiveTrackLength <= 0 || trackThickness <= 0) {
         return;
     }
 
-    const int thumbLength = GetThumbLength(trackLength);
-    const int thumbPosition = GetThumbPosition(trackLength, thumbLength);
+    const int thumbLength = GetThumbLength(effectiveTrackLength);
+    const int thumbPosition = GetThumbPosition(effectiveTrackLength, thumbLength);
 
     const auto cornerRadius = GetCornerRadius();
 

@@ -3,12 +3,11 @@
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/Core/Events/Event.h>
 #include <NeoWPF/Input/Core/EventHandler.h>
-#include <NeoWPF/UI/Properties/Property/PropertyValue.h>
+#include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <any>
-#include <vector>
 
 namespace NeoWPF::Input::Core
 {
@@ -40,13 +39,14 @@ class VisualStateManager;
 }
 
 namespace NeoWPF::UI::Properties {
-    struct PropertyInfo;
-    class PropertyRegistry;
+    class DependencyProperty;
+    class DependencyPropertyRegistry;
+    struct PropertyMetadata;
 }
 
 namespace NeoWPF::UI {
 
-class UIElement : public Visual {
+class UIElement : public Visual, public Properties::DependencyObject {
 public:
     bool IsVisible() const noexcept { return m_isVisible; }
     void SetVisibility(bool visible) noexcept {
@@ -73,6 +73,8 @@ public:
     }
 
     void InvalidateVisual();
+    virtual void InvalidateMeasure();
+    virtual void InvalidateArrange();
     bool IsDirty() const noexcept { return m_isDirty; }
     void ClearDirty() noexcept;
 
@@ -104,21 +106,22 @@ public:
     std::shared_ptr<Visual> FindTemplateChild(const std::string& name) const;
     bool HasTemplateChild(const std::string& name) const;
     void ClearTemplateChildren() noexcept;
-
-    void SetProperty(const std::string& name, uint32_t value);
-    bool TryGetProperty(const std::string& name, uint32_t& outValue) const;
-    void SetStyleProperty(const std::string& name, uint32_t value);
+    bool SetStyleProperty(const std::string& name, uint32_t value);
     bool SetStylePropertyValue(const std::string& name, const std::any& value);
-
     bool SetPropertyValue(const std::string& name, const std::any& value);
     std::any GetPropertyValue(const std::string& name) const;
-    std::vector<Properties::PropertyInfo> GetPropertyInfo() const;
 
     NeoWPF::Core::Event<std::string, std::any> PropertyChanged;
 
     void AddHandler(const NeoWPF::Input::Core::RoutedEvent& routedEvent,
                     const NeoWPF::Input::Core::RoutedEventHandler& handler);
     void RaiseEvent(NeoWPF::Input::Core::RoutedEventArgs* args);
+
+    virtual void OnDependencyPropertyChanged(const Properties::DependencyProperty& property,
+                                             const Properties::PropertyMetadata& metadata,
+                                             const std::any& oldValue,
+                                             const std::any& newValue,
+                                             Properties::PropertyValueSource source);
 
     virtual void OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args) {}
     virtual void OnMouseDown(int x, int y, std::uint32_t buttonState) {}
@@ -131,19 +134,14 @@ public:
 
 protected:
     bool m_isEnabled = true;
-    bool IsPropertyLocal(const std::string& name) const;
-    void SetPropertySource(const std::string& name, Properties::PropertySource source);
 
 private:
-    friend class Properties::PropertyRegistry;
     bool m_isVisible = true;
     bool m_isDirty = true;
     float m_opacity = 1.0f;
     bool m_hasTemplateApplied = false;
     std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase> m_template;
     std::unordered_map<std::string, std::shared_ptr<Visual>> m_templateChildren;
-    std::unordered_map<std::string, uint32_t> m_properties;
-    std::unordered_map<std::string, NeoWPF::UI::Properties::PropertySource> m_propertySources;
     std::shared_ptr<Visual> m_appliedTemplateRoot;
     std::unordered_map<std::size_t, NeoWPF::Core::Event<UIElement*, NeoWPF::Input::Core::RoutedEventArgs*>> m_routedEventHandlers;
     std::shared_ptr<NeoWPF::UI::Core::Transform> m_renderTransform;

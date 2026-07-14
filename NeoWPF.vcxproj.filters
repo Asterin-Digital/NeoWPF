@@ -132,7 +132,10 @@
     <ClCompile Include="src\UI\Controls\Checkbox\Visual\CheckboxTemplate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Core\Element\UIElement.cpp">
+    <ClCompile Include="src\UI\Core\Element\Layout\UIElementLayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Core\Element\Rendering\UIElementRendering.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Core\Element\UIElementProperties.cpp">
@@ -267,12 +270,6 @@
     <ClCompile Include="src\UI\Layout\Panel\PanelProperties.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Properties\Property\PropertyRegistry.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\Properties\Registration\PropertyRegistration.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Input\InputHitTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -286,6 +283,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Controls\ItemsControl\ItemsControlProperties.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Properties\Registration\DependencyPropertyRegistration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Properties\DependencyObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Core\Element\Properties\FrameworkElementProperties.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Core\Element\Properties\UIElementProperties.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -488,22 +497,22 @@
     <ClInclude Include="include\NeoWPF\UI\Core\Transform\Transform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Properties\Registration\PropertyRegistration.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Properties\Property\PropertyRegistry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Properties\Property\PropertyInfo.h">
+    <ClInclude Include="include\NeoWPF\UI\Properties\Registration\DependencyPropertyRegistration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\Rendering\Clipping.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Properties\Property\PropertyValue.h">
+    <ClInclude Include="include\NeoWPF\UI\Controls\ItemsControl\ItemsControl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Controls\ItemsControl\ItemsControl.h">
+    <ClInclude Include="include\NeoWPF\UI\Properties\DependencyProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Properties\DependencyObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Layout\Alignment\Alignment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
