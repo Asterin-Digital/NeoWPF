@@ -110,18 +110,13 @@ public:
         @summary
         Returns whether the element clips its rendered content to its own bounds.
     */
-    bool IsClipToBounds() const noexcept { return m_clipToBounds; }
+    bool IsClipToBounds() const noexcept;
 
     /*
         @summary
         Enables or disables clipping of the element's rendered content to its own bounds.
     */
-    void SetClipToBounds(bool clipToBounds) noexcept {
-        if (m_clipToBounds != clipToBounds) {
-            m_clipToBounds = clipToBounds;
-            InvalidateVisual();
-        }
-    }
+    void SetClipToBounds(bool clipToBounds) noexcept;
 
     /*
         @summary
@@ -129,42 +124,7 @@ public:
 
         @internal 
     */
-    NeoWPF::Rendering::ClipRect GetClipRect() const noexcept {
-        NeoWPF::Rendering::ClipRect clip{};
-        if (m_clipToBounds && m_finalWidth > 0 && m_finalHeight > 0) {
-            int absX = 0;
-            int absY = 0;
-            GetAbsolutePosition(absX, absY);
-
-            clip.x = static_cast<float>(absX);
-            clip.y = static_cast<float>(absY);
-            clip.w = static_cast<float>(m_finalWidth);
-            clip.h = static_cast<float>(m_finalHeight);
-            clip.active = true;
-        }
-
-        auto parent = dynamic_cast<FrameworkElement*>(GetParent());
-        if (parent) {
-            const auto parentClip = parent->GetClipRect();
-            if (parentClip.active) {
-                if (!clip.active) {
-                    return parentClip;
-                }
-
-                const float left = std::max(clip.x, parentClip.x);
-                const float top = std::max(clip.y, parentClip.y);
-                const float right = std::min(clip.x + clip.w, parentClip.x + parentClip.w);
-                const float bottom = std::min(clip.y + clip.h, parentClip.y + parentClip.h);
-                if (right <= left || bottom <= top) {
-                    return NeoWPF::Rendering::ClipRect{};
-                }
-
-                return NeoWPF::Rendering::ClipRect{left, top, right - left, bottom - top, true};
-            }
-        }
-
-        return clip;
-    }
+    NeoWPF::Rendering::ClipRect GetClipRect() const noexcept;
 
     /*
         @summary
@@ -236,7 +196,7 @@ public:
         @summary
         Returns the width sizing mode.
     */
-    LayoutSizeMode GetWidthMode() const noexcept { return m_widthMode; }
+    LayoutSizeMode GetWidthMode() const noexcept;
 
     /*
         @summary
@@ -248,13 +208,13 @@ public:
         @example
         element->SetWidthMode(NeoWPF::UI::LayoutSizeMode::Stretch);
     */
-    void SetWidthMode(LayoutSizeMode mode) noexcept { m_widthMode = mode; InvalidateVisual(); }
+    void SetWidthMode(LayoutSizeMode mode) noexcept;
 
     /*
         @summary
         Returns the height sizing mode.
     */
-    LayoutSizeMode GetHeightMode() const noexcept { return m_heightMode; }
+    LayoutSizeMode GetHeightMode() const noexcept;
 
     /*
         @summary
@@ -266,7 +226,7 @@ public:
         @example
         element->SetHeightMode(NeoWPF::UI::LayoutSizeMode::Auto);
     */
-    void SetHeightMode(LayoutSizeMode mode) noexcept { m_heightMode = mode; InvalidateVisual(); }
+    void SetHeightMode(LayoutSizeMode mode) noexcept;
 
     /*
         @summary
@@ -275,7 +235,7 @@ public:
         @param width
         The width to use.
     */
-    int GetWidth() const noexcept { return m_width; }
+    int GetWidth() const noexcept;
 
     /*
         @summary
@@ -284,13 +244,13 @@ public:
         @param width
         The width to use.
     */
-    void SetWidth(int width) noexcept { m_width = width < 0 ? 0 : width; InvalidateVisual(); }
+    void SetWidth(int width) noexcept;
 
     /*
         @summary
         Returns the element's preferred height.
     */
-    int GetHeight() const noexcept { return m_height; }
+    int GetHeight() const noexcept;
 
     /*
         @summary
@@ -299,13 +259,13 @@ public:
         @param height
         The height to use.
     */
-    void SetHeight(int height) noexcept { m_height = height < 0 ? 0 : height; InvalidateVisual(); }
+    void SetHeight(int height) noexcept;
 
     /*
         @summary
         Returns the element's corner radius.
     */
-    NeoWPF::UI::CornerRadius GetCornerRadius() const noexcept { return m_cornerRadius; }
+    NeoWPF::UI::CornerRadius GetCornerRadius() const noexcept;
 
     /*
         @summary
@@ -314,12 +274,7 @@ public:
         @param cornerRadius
         The new corner radius values.
     */
-    void SetCornerRadius(NeoWPF::UI::CornerRadius cornerRadius) noexcept {
-        if (m_cornerRadius != cornerRadius) {
-            m_cornerRadius = cornerRadius;
-            InvalidateVisual();
-        }
-    }
+    void SetCornerRadius(NeoWPF::UI::CornerRadius cornerRadius) noexcept;
 
     /*
         @summary
@@ -353,7 +308,7 @@ public:
         @summary
         Returns the horizontal alignment used when the element is placed in a parent.
     */
-    HorizontalAlignment GetHorizontalAlignment() const noexcept { return m_horizontalAlignment; }
+    HorizontalAlignment GetHorizontalAlignment() const noexcept;
 
     /*
         @summary
@@ -365,13 +320,13 @@ public:
         @example
         element->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Center);
     */
-    void SetHorizontalAlignment(HorizontalAlignment align) noexcept { m_horizontalAlignment = align; }
+    void SetHorizontalAlignment(HorizontalAlignment align) noexcept;
 
     /*
         @summary
         Returns the vertical alignment used when the element is placed in a parent.
     */
-    VerticalAlignment GetVerticalAlignment() const noexcept { return m_verticalAlignment; }
+    VerticalAlignment GetVerticalAlignment() const noexcept;
 
     /*
         @summary
@@ -383,7 +338,7 @@ public:
         @example
         element->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Center);
     */
-    void SetVerticalAlignment(VerticalAlignment align) noexcept { m_verticalAlignment = align; }
+    void SetVerticalAlignment(VerticalAlignment align) noexcept;
 
     /*
         @summary

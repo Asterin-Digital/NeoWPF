@@ -108,7 +108,7 @@
     <ClCompile Include="src\Input\InputManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Core\Element\FrameworkElement.cpp">
+    <ClCompile Include="src\UI\Core\Element\Layout\FrameworkElementLayout.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Controls\Base\ButtonBase\ButtonBase.cpp">
@@ -133,6 +133,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Core\Element\Layout\UIElementLayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Core\Element\Rendering\FrameworkElementRendering.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Core\Element\Rendering\UIElementRendering.cpp">

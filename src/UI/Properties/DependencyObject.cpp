@@ -1,3 +1,4 @@
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <stdexcept>
@@ -86,10 +87,13 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
     const auto& metadata = property.GetMetadata();
     const std::any newValue = GetRawValue(property);
 
+    const bool previousApplying = m_isApplyingPropertyValue;
+    m_isApplyingPropertyValue = true;
     if (metadata.PropertyChangedCallback) {
         DependencyPropertyChangedEventArgs args{&property, std::move(oldValue), newValue, source};
         metadata.PropertyChangedCallback(this, args);
     }
+    m_isApplyingPropertyValue = previousApplying;
 
     OnDependencyPropertyChanged(property, metadata, oldValue, newValue, source);
 }
@@ -172,11 +176,19 @@ template int DependencyObject::GetValue<int>(const DependencyProperty&) const;
 template float DependencyObject::GetValue<float>(const DependencyProperty&) const;
 template std::wstring DependencyObject::GetValue<std::wstring>(const DependencyProperty&) const;
 template std::any DependencyObject::GetValue<std::any>(const DependencyProperty&) const;
+template LayoutSizeMode DependencyObject::GetValue<LayoutSizeMode>(const DependencyProperty&) const;
+template CornerRadius DependencyObject::GetValue<CornerRadius>(const DependencyProperty&) const;
+template HorizontalAlignment DependencyObject::GetValue<HorizontalAlignment>(const DependencyProperty&) const;
+template VerticalAlignment DependencyObject::GetValue<VerticalAlignment>(const DependencyProperty&) const;
 
 template void DependencyObject::SetValue<bool>(const DependencyProperty&, const bool&);
 template void DependencyObject::SetValue<int>(const DependencyProperty&, const int&);
 template void DependencyObject::SetValue<float>(const DependencyProperty&, const float&);
 template void DependencyObject::SetValue<std::wstring>(const DependencyProperty&, const std::wstring&);
 template void DependencyObject::SetValue<std::any>(const DependencyProperty&, const std::any&);
+template void DependencyObject::SetValue<LayoutSizeMode>(const DependencyProperty&, const LayoutSizeMode&);
+template void DependencyObject::SetValue<CornerRadius>(const DependencyProperty&, const CornerRadius&);
+template void DependencyObject::SetValue<HorizontalAlignment>(const DependencyProperty&, const HorizontalAlignment&);
+template void DependencyObject::SetValue<VerticalAlignment>(const DependencyProperty&, const VerticalAlignment&);
 
 }

@@ -5,7 +5,7 @@
   - [x] default value
   - [x] property changed callback
   - [x] coercion callback
-  - [ ] metadata flags
+  - [x] metadata flags
 - [x] Define `DependencyPropertyChangedEventArgs` and callback delegate types.
 - [x] Implement `DependencyObject` with:
   - [x] `SetValue`
@@ -26,9 +26,9 @@
 ## Phase 2 — UI framework integration
 
 - [x] Add `DependencyObject` support to `UIElement` and `FrameworkElement`.
-- [ ] Replace direct property fields and legacy getter/setter storage with DP-backed accessors for framework properties.
-- [ ] Hook property change notifications into invalidation and layout logic.
-- [ ] Add metadata flags for:
+- [x] Replace direct property fields and legacy getter/setter storage with DP-backed accessors for the FrameworkElement properties integrated so far.
+- [x] Hook property change notifications into invalidation and layout logic.
+- [x] Add metadata flags for:
   - `AffectsMeasure`
   - `AffectsArrange`
   - `AffectsRender`
@@ -37,11 +37,13 @@
   - [x] `Visibility`
   - [x] `Opacity`
   - [x] `IsEnabled`
-  - [ ] `Width`
-  - [ ] `Height`
-  - [ ] `HorizontalAlignment`
-  - [ ] `VerticalAlignment`
-  - [ ] `CornerRadius`
+  - [x] `Width`
+  - [x] `Height`
+  - [x] `HorizontalAlignment`
+  - [x] `VerticalAlignment`
+  - [x] `CornerRadius`
+  - [x] `WidthMode`
+  - [x] `HeightMode`
   - [ ] other layout/render related properties
 
 ## Phase 3 — Control registration and public APIs
@@ -51,7 +53,7 @@
   - wrapper accessors `GetFoo()` / `SetFoo(...)`
 - [x] Register each property using a fully type-safe API, for example:
   - `DependencyProperty::Register<OwnerType, PropertyType>("Foo", metadata)`
-- [ ] Implement typed property changed callbacks that call instance methods like:
+- [x] Implement typed property changed callbacks that call instance methods like:
   - `OnTextChanged`
   - `OnBackgroundColorChanged`
   - `OnPaddingChanged`
@@ -67,16 +69,16 @@
 ## Phase 4 — Style and property precedence
 
 - [ ] Implement style property support through dependency-property precedence instead of legacy style methods.
-- [ ] Replace styling code paths that use string property names and raw `std::any` values.
-- [ ] Use dependency-property lookups and strongly typed setters/getters.
+- [x] Replace styling code paths that use string property names and raw `std::any` values.
+- [x] Use dependency-property lookups and strongly typed setters/getters.
 - [x] Support style values as a secondary value source behind local values.
 - [ ] Add `PropertyMetadata::Inherits` for inheritable property behavior if needed.
 - [x] Defer attached property support to a later phase.
 
-## Phase 5 — Cleanup, stabilization, and docs
+## Phase 5 — Cleanup, stabilization
 
-- [ ] Remove stale legacy property APIs and old registry code paths entirely.
-- [ ] Document the new dependency-property architecture and usage patterns.
+- [x] Remove stale legacy property APIs and old registry code paths entirely.
+- [x] Document the new dependency-property architecture and usage patterns.
 - [ ] Add unit tests for:
   - property registration
   - local value resolution
