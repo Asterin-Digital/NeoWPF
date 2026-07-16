@@ -28,7 +28,9 @@ void Border::Measure(int availableWidth, int availableHeight)
             }
         }
 
-        presenter->SetPadding(m_padding);
+        if (presenter->GetPadding() != m_padding) {
+            presenter->SetPadding(m_padding);
+        }
 
         const int explicitW = GetWidth();
         const int explicitH = GetHeight();

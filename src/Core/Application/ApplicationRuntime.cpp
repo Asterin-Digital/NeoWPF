@@ -238,11 +238,12 @@ int RunApplicationMessageLoop()
             }
         }
 
-        bool needsUpdate = !s_appState.commandListInitialized;
+        bool needsUpdate = false;
         const auto& visuals = NeoWPF::UI::Visual::GetRegisteredVisuals();
+        bool anyTopLevelDirty = false;
         for (auto visual : visuals) {
             if (!visual->GetParent() && visual->IsTreeDirty()) {
-                needsUpdate = true;
+                anyTopLevelDirty = true;
                 break;
             }
         }
@@ -251,11 +252,36 @@ int RunApplicationMessageLoop()
         GetClientRect(primaryWindow, &rc);
         unsigned int currentClientWidth = rc.right - rc.left;
         unsigned int currentClientHeight = rc.bottom - rc.top;
-        if (currentClientWidth != lastLayoutWidth || currentClientHeight != lastLayoutHeight) {
-            needsUpdate = true;
+        const bool sizeChanged = currentClientWidth != lastLayoutWidth || currentClientHeight != lastLayoutHeight;
+        if (sizeChanged) {
             lastLayoutWidth = currentClientWidth;
             lastLayoutHeight = currentClientHeight;
         }
+
+        {
+            std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
+            for (auto& windowState : s_appState.windows) {
+                if (!IsWindow(windowState.hwnd)) {
+                    continue;
+                }
+
+                RECT windowRect;
+                GetClientRect(windowState.hwnd, &windowRect);
+                unsigned int windowWidth = windowRect.right - windowRect.left;
+                unsigned int windowHeight = windowRect.bottom - windowRect.top;
+                if (windowWidth == 0 || windowHeight == 0) {
+                    windowWidth = currentClientWidth;
+                    windowHeight = currentClientHeight;
+                }
+
+                if (!windowState.commandListInitialized || windowState.width != windowWidth || windowState.height != windowHeight) {
+                    needsUpdate = true;
+                    break;
+                }
+            }
+        }
+
+        needsUpdate = needsUpdate || anyTopLevelDirty || sizeChanged;
 
         if (needsUpdate) {
             NeoWPF::Diagnostics::ProcessPendingDeveloperWarnings();

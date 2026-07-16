@@ -138,7 +138,13 @@ public:
 
         @internal
     */
-    void SetLayoutOffset(int x, int y) noexcept { m_offsetX = x; m_offsetY = y; InvalidateVisual(); }
+    void SetLayoutOffset(int x, int y) noexcept {
+        if (m_offsetX != x || m_offsetY != y) {
+            m_offsetX = x;
+            m_offsetY = y;
+            InvalidateVisual();
+        }
+    }
 
     /*
         @summary

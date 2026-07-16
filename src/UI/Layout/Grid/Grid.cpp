@@ -284,12 +284,19 @@ void Grid::Arrange(int finalWidth, int finalHeight)
 
 
         fe->Arrange(alignedW, alignedH);
-        fe->SetLayoutOffset(x + alignedX, y + alignedY);
+
+        const int targetX = x + alignedX;
+        const int targetY = y + alignedY;
+        const int currentX = fe->GetLayoutOffsetX();
+        const int currentY = fe->GetLayoutOffsetY();
+        if (currentX != targetX || currentY != targetY) {
+            fe->SetLayoutOffset(targetX, targetY);
+        }
 
         if (GridLayout::s_gridLogging) {
             NeoWPF::Diagnostics::LogInfo(
-                "[Grid::Arrange] Child[%zu] at (%d,%d): pos(%d,%d) size(%dx%d) [cell %dx%d] desired=%dx%d",
-                i, r, c, x + alignedX, y + alignedY, alignedW, alignedH, w, h,
+                "[Grid::Arrange] Child[%zu] at (%d,%d): pos(%d,%d -> %d,%d) size(%dx%d) [cell %dx%d] desired=%dx%d",
+                i, r, c, currentX, currentY, targetX, targetY, alignedW, alignedH, w, h,
                 desiredW, desiredH);
         }
     }

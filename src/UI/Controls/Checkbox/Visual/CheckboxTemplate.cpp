@@ -28,60 +28,50 @@ CheckboxTemplate::CheckboxTemplate()
 
     auto normalState = std::make_shared<Styling::VisualState>("Normal");
     normalState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) {
+        (void)element;
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
             templateVisual->SetFillColor(0xFF3A3A3Au);
             templateVisual->SetBorderColor(0xFF666666u);
-        }
-        if (element) {
-            element->InvalidateVisual();
         }
     });
     commonStates->AddState(normalState);
 
     auto checkedState = std::make_shared<Styling::VisualState>("Checked");
     checkedState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) {
+        (void)element;
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
             templateVisual->SetFillColor(0xFF5A7A9Au);
             templateVisual->SetBorderColor(0xFF4A6A8Au);
-        }
-        if (element) {
-            element->InvalidateVisual();
         }
     });
     commonStates->AddState(checkedState);
 
     auto mouseOverState = std::make_shared<Styling::VisualState>("MouseOver");
     mouseOverState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) {
+        (void)element;
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
             templateVisual->SetFillColor(0xFF4A4A4Au);
             templateVisual->SetBorderColor(0xFF8A8A8Au);
-        }
-        if (element) {
-            element->InvalidateVisual();
         }
     });
     commonStates->AddState(mouseOverState);
 
     auto pressedState = std::make_shared<Styling::VisualState>("Pressed");
     pressedState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) {
+        (void)element;
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
             templateVisual->SetFillColor(0xFF2A2A2Au);
             templateVisual->SetBorderColor(0xFF555555u);
-        }
-        if (element) {
-            element->InvalidateVisual();
         }
     });
     commonStates->AddState(pressedState);
 
     auto disabledState = std::make_shared<Styling::VisualState>("Disabled");
     disabledState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) {
+        (void)element;
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
             templateVisual->SetFillColor(0xFF2A2A2Au);
             templateVisual->SetBorderColor(0xFF404040u);
-        }
-        if (element) {
-            element->InvalidateVisual();
         }
     });
     commonStates->AddState(disabledState);

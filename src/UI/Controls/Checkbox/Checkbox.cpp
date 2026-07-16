@@ -72,7 +72,10 @@ void Checkbox::Arrange(int finalWidth, int finalHeight)
     Content::ContentControl::Arrange(finalWidth, finalHeight);
 
     if (auto presenter = GetPresenter()) {
-        presenter->SetLayoutOffset(18 + m_padding, 0);
+        const int desiredOffsetX = 18 + m_padding;
+        if (presenter->GetLayoutOffsetX() != desiredOffsetX || presenter->GetLayoutOffsetY() != 0) {
+            presenter->SetLayoutOffset(desiredOffsetX, 0);
+        }
         presenter->Arrange(std::max(0, finalWidth - (18 + m_padding)), contentHeight);
     }
 }

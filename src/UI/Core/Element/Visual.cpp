@@ -1,6 +1,8 @@
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
+#include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Diagnostics/CallStackTracer.h>
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -12,6 +14,9 @@
 // have a reasonable and good motivation to do so, modifying it will trigger a full recompile 
 
 namespace NeoWPF::UI {
+
+bool Visual::s_visualDebugging = false;
+
 namespace {
 
 bool ShouldWarnDanglingChild(const std::shared_ptr<Visual>& child)
@@ -111,9 +116,23 @@ void Visual::AddLogicalChild(const std::shared_ptr<Visual>& child)
 
 void Visual::MarkTreeDirty()
 {
+    if (s_visualDebugging) {
+        NeoWPF::Diagnostics::CallStackEntry stack[12];
+        const int count = NeoWPF::Diagnostics::CaptureCallStack(stack, 12, 1);
+        NeoWPF::Diagnostics::LogInfo("[Visual] MarkTreeDirty from %p (%s) [alreadyDirty=%s]", this, typeid(*this).name(), m_isTreeDirty ? "true" : "false");
+        for (int i = 0; i < count; ++i) {
+            if (stack[i].symbol[0] != '\0') {
+                NeoWPF::Diagnostics::LogInfo("  caller[%d] %s @ %p", i, stack[i].symbol, stack[i].address);
+            } else {
+                NeoWPF::Diagnostics::LogInfo("  caller[%d] <unknown> @ %p", i, stack[i].address);
+            }
+        }
+    }
+
     if (m_isTreeDirty) {
         return;
     }
+
     m_isTreeDirty = true;
     if (auto parent = m_parent.lock()) {
         parent->MarkTreeDirty();

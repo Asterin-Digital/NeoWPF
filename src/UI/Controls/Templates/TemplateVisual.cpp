@@ -22,31 +22,26 @@ void TemplateVisual::SetRect(int x, int y, int width, int height) noexcept
     m_y = y;
     m_width = width;
     m_height = height;
-    MarkTreeDirty();
 }
 
 void TemplateVisual::SetFillColor(std::uint32_t color) noexcept
 {
     m_fillColor = color;
-    MarkTreeDirty();
 }
 
 void TemplateVisual::SetBorderColor(std::uint32_t color) noexcept
 {
     m_borderColor = color;
-    MarkTreeDirty();
 }
 
 void TemplateVisual::SetBorderThickness(int thickness) noexcept
 {
     m_borderThickness = thickness < 0 ? 0 : thickness;
-    MarkTreeDirty();
 }
 
 void TemplateVisual::SetCornerRadius(NeoWPF::UI::CornerRadius cornerRadius) noexcept
 {
     m_cornerRadius = cornerRadius;
-    MarkTreeDirty();
 }
 
 NeoWPF::UI::CornerRadius TemplateVisual::GetCornerRadius() const noexcept
@@ -62,7 +57,6 @@ void TemplateVisual::SetOpacity(float opacity) noexcept
         opacity = 1.0f;
     }
     m_opacity = opacity;
-    MarkTreeDirty();
 }
 
 float TemplateVisual::GetOpacity() const noexcept
@@ -73,13 +67,11 @@ float TemplateVisual::GetOpacity() const noexcept
 void TemplateVisual::SetClipRect(const NeoWPF::Rendering::ClipRect& clip) noexcept
 {
     m_clip = clip;
-    MarkTreeDirty();
 }
 
 void TemplateVisual::SetRotation(float rotationRadians) noexcept
 {
     m_rotation = rotationRadians;
-    MarkTreeDirty();
 }
 
 float TemplateVisual::GetRotation() const noexcept
