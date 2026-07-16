@@ -1,9 +1,3 @@
-################################################
-## This is AI-Generated content
-## Not made by a human!
-## NeoWPF — A C++ UI Framework similar to WPF :3
-################################################
-
 import os
 import re
 import time

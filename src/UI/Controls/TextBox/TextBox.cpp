@@ -92,6 +92,23 @@ void TextBox::SetText(const std::wstring& text)
         return;
     }
 
+    if (IsApplyingPropertyValue()) {
+        m_text = text;
+        m_caretPosition = std::min(m_caretPosition, m_text.size());
+        m_verticalScrollBar->SetValue(0);
+        m_horizontalScrollBar->SetValue(0);
+        m_textDirty = true;
+        InvalidateVisual();
+        TextChanged.Invoke(m_text);
+        return;
+    }
+
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Text", typeid(*this));
+    if (property) {
+        SetValue(*property, text);
+        return;
+    }
+
     if (s_textBoxDebug) {
         NeoWPF::Diagnostics::LogInfo("[TextBox] SetText: oldLength=%zu, newLength=%zu", m_text.size(), text.size());
     }
@@ -103,6 +120,128 @@ void TextBox::SetText(const std::wstring& text)
     m_textDirty = true;
     InvalidateVisual();
     TextChanged.Invoke(m_text);
+}
+
+void TextBox::SetTextColor(NeoWPF::UI::Color color) noexcept
+{
+    if (IsApplyingPropertyValue()) { m_textColor = color; InvalidateVisual(); return; }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("TextColor", typeid(*this));
+    if (property) { SetValue(*property, color); return; }
+    m_textColor = color; InvalidateVisual();
+}
+
+void TextBox::SetTextColor(std::uint32_t color) noexcept
+{
+    SetTextColor(NeoWPF::UI::Color::FromArgb(color));
+}
+
+NeoWPF::UI::Color TextBox::GetTextColor() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("TextColor", typeid(*this));
+    if (property) {
+        try { return GetValue<NeoWPF::UI::Color>(*property); } catch (const std::bad_any_cast&) { return m_textColor; }
+    }
+    return m_textColor;
+}
+
+void TextBox::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
+{
+    if (IsApplyingPropertyValue()) { m_backgroundColor = color; InvalidateVisual(); return; }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", typeid(*this));
+    if (property) { SetValue(*property, color); return; }
+    m_backgroundColor = color; InvalidateVisual();
+}
+
+void TextBox::SetBackgroundColor(std::uint32_t color) noexcept
+{
+    SetBackgroundColor(NeoWPF::UI::Color::FromArgb(color));
+}
+
+NeoWPF::UI::Color TextBox::GetBackgroundColor() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", typeid(*this));
+    if (property) {
+        try { return GetValue<NeoWPF::UI::Color>(*property); } catch (const std::bad_any_cast&) { return m_backgroundColor; }
+    }
+    return m_backgroundColor;
+}
+
+void TextBox::SetFontSize(int fontSize) noexcept
+{
+    if (IsApplyingPropertyValue()) { m_fontSize = fontSize; InvalidateVisual(); return; }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("FontSize", typeid(*this));
+    if (property) { SetValue(*property, fontSize); return; }
+    m_fontSize = fontSize; InvalidateVisual();
+}
+
+int TextBox::GetFontSize() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("FontSize", typeid(*this));
+    if (property) {
+        try { return GetValue<int>(*property); } catch (const std::bad_any_cast&) { return m_fontSize; }
+    }
+    return m_fontSize;
+}
+
+void TextBox::SetPadding(int padding) noexcept
+{
+    if (IsApplyingPropertyValue()) { m_padding = padding; InvalidateVisual(); return; }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", typeid(*this));
+    if (property) { SetValue(*property, padding); return; }
+    m_padding = padding; InvalidateVisual();
+}
+
+int TextBox::GetPadding() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", typeid(*this));
+    if (property) {
+        try { return GetValue<int>(*property); } catch (const std::bad_any_cast&) { return m_padding; }
+    }
+    return m_padding;
+}
+
+void TextBox::SetBorderColor(NeoWPF::UI::Color color) noexcept
+{
+    if (IsApplyingPropertyValue()) { m_borderColor = color; InvalidateVisual(); return; }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", typeid(*this));
+    if (property) { SetValue(*property, color); return; }
+    m_borderColor = color; InvalidateVisual();
+}
+
+void TextBox::SetBorderColor(std::uint32_t color) noexcept
+{
+    SetBorderColor(NeoWPF::UI::Color::FromArgb(color));
+}
+
+NeoWPF::UI::Color TextBox::GetBorderColor() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", typeid(*this));
+    if (property) {
+        try { return GetValue<NeoWPF::UI::Color>(*property); } catch (const std::bad_any_cast&) { return m_borderColor; }
+    }
+    return m_borderColor;
+}
+
+void TextBox::SetCaretColor(NeoWPF::UI::Color color) noexcept
+{
+    if (IsApplyingPropertyValue()) { m_caretColor = color; InvalidateVisual(); return; }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("CaretColor", typeid(*this));
+    if (property) { SetValue(*property, color); return; }
+    m_caretColor = color; InvalidateVisual();
+}
+
+void TextBox::SetCaretColor(std::uint32_t color) noexcept
+{
+    SetCaretColor(NeoWPF::UI::Color::FromArgb(color));
+}
+
+NeoWPF::UI::Color TextBox::GetCaretColor() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("CaretColor", typeid(*this));
+    if (property) {
+        try { return GetValue<NeoWPF::UI::Color>(*property); } catch (const std::bad_any_cast&) { return m_caretColor; }
+    }
+    return m_caretColor;
 }
 
 void TextBox::Measure(int availableWidth, int availableHeight)

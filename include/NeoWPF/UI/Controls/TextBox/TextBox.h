@@ -8,6 +8,7 @@
 #include <NeoWPF/Core/Events/Event.h>
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
@@ -155,9 +156,9 @@ public:
         @param color
         ARGB color value.
     */
-    void SetTextColor(NeoWPF::UI::Color color) noexcept { m_textColor = color; InvalidateVisual(); }
-    void SetTextColor(std::uint32_t color) noexcept { SetTextColor(NeoWPF::UI::Color::FromArgb(color)); }
-    NeoWPF::UI::Color GetTextColor() const noexcept { return m_textColor; }
+    void SetTextColor(NeoWPF::UI::Color color) noexcept;
+    void SetTextColor(std::uint32_t color) noexcept;
+    NeoWPF::UI::Color GetTextColor() const noexcept;
 
     /*
         @summary
@@ -166,9 +167,9 @@ public:
         @param color
         ARGB color value.
     */
-    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept { m_backgroundColor = color; InvalidateVisual(); }
-    void SetBackgroundColor(std::uint32_t color) noexcept { SetBackgroundColor(NeoWPF::UI::Color::FromArgb(color)); }
-    NeoWPF::UI::Color GetBackgroundColor() const noexcept { return m_backgroundColor; }
+    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept;
+    void SetBackgroundColor(std::uint32_t color) noexcept;
+    NeoWPF::UI::Color GetBackgroundColor() const noexcept;
 
     /*
         @summary
@@ -177,8 +178,8 @@ public:
         @param fontSize
         Size in pixels.
     */
-    void SetFontSize(int fontSize) noexcept { m_fontSize = fontSize; InvalidateVisual(); }
-    int GetFontSize() const noexcept { return m_fontSize; }
+    void SetFontSize(int fontSize) noexcept;
+    int GetFontSize() const noexcept;
 
     /*
         @summary
@@ -187,8 +188,8 @@ public:
         @param padding
         Pixels of padding on all sides.
     */
-    void SetPadding(int padding) noexcept { m_padding = padding; InvalidateVisual(); }
-    int GetPadding() const noexcept { return m_padding; }
+    void SetPadding(int padding) noexcept;
+    int GetPadding() const noexcept;
 
     /*
         @summary
@@ -222,9 +223,9 @@ public:
         @param color
         ARGB color value.
     */
-    void SetBorderColor(NeoWPF::UI::Color color) noexcept { m_borderColor = color; InvalidateVisual(); }
-    void SetBorderColor(std::uint32_t color) noexcept { SetBorderColor(NeoWPF::UI::Color::FromArgb(color)); }
-    NeoWPF::UI::Color GetBorderColor() const noexcept { return m_borderColor; }
+    void SetBorderColor(NeoWPF::UI::Color color) noexcept;
+    void SetBorderColor(std::uint32_t color) noexcept;
+    NeoWPF::UI::Color GetBorderColor() const noexcept;
 
     /*
         @summary
@@ -233,9 +234,9 @@ public:
         @param color
         ARGB color value.
     */
-    void SetCaretColor(NeoWPF::UI::Color color) noexcept { m_caretColor = color; InvalidateVisual(); }
-    void SetCaretColor(std::uint32_t color) noexcept { SetCaretColor(NeoWPF::UI::Color::FromArgb(color)); }
-    NeoWPF::UI::Color GetCaretColor() const noexcept { return m_caretColor; }
+    void SetCaretColor(NeoWPF::UI::Color color) noexcept;
+    void SetCaretColor(std::uint32_t color) noexcept;
+    NeoWPF::UI::Color GetCaretColor() const noexcept;
 
     /*
         @summary
