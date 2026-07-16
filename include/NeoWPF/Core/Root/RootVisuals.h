@@ -22,5 +22,6 @@ bool AnyTopLevelVisualDirty(const std::vector<NeoWPF::UI::Visual*>& visuals);
 void LayoutAndBuildVisualTree(NeoWPF::UI::Visual* rootVisual, unsigned int width, unsigned int height, NeoWPF::Rendering::CommandList& buildCommandList);
 void LayoutAndBuildAllTopLevelVisuals(const std::vector<NeoWPF::UI::Visual*>& visuals, unsigned int width, unsigned int height, NeoWPF::Rendering::CommandList& buildCommandList);
 void ClearTopLevelVisualsDirty(const std::vector<NeoWPF::UI::Visual*>& visuals);
+void ClearVisualTreeDirtyForRoot(NeoWPF::UI::Visual* rootVisual);
 
 }

@@ -24,7 +24,7 @@ Checkbox::Checkbox()
     m_textContent = std::make_shared<NeoWPF::UI::TextBlock>();
     m_textContent->SetText(L"");
     m_textContent->SetTextColor(m_textColor.ToArgb());
-    m_textContent->SetFontSize(14);
+    m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
 
     if (auto style = Styling::StyleManager::GetDefault(typeid(Checkbox))) {

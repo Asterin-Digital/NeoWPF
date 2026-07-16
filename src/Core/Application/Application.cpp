@@ -10,9 +10,13 @@
 namespace NeoWPF::Core {
 
 Application* Application::s_current = nullptr;
+bool Application::s_applicationDebugging = true;
 
 void Application::Initialize()
 {
+    if (s_applicationDebugging) {
+        NeoWPF::Diagnostics::LogInfo("Application::Initialize begin");
+    }
     GetAppState().hInst = GetModuleHandleW(nullptr);
     if (!s_current) {
         s_current = new Application();
@@ -20,11 +24,26 @@ void Application::Initialize()
     NeoWPF::UI::Properties::RegisterCoreControlProperties();
     NeoWPF::UI::Styling::RegisterDefaultStyles();
     NeoWPF::UI::Visual::CaptureRootVisuals();
+
+    if (s_applicationDebugging) {
+        NeoWPF::Diagnostics::LogInfo("Application::Initialize complete");
+    }
 }
 
-HWND Application::CreateWindow(const wchar_t* title, int width, int height)
+NeoWPF::Platform::Window Application::CreateWindow(const wchar_t* title, int width, int height)
 {
-    return CreateApplicationWindow(title, width, height);
+    if (s_applicationDebugging) {
+        NeoWPF::Diagnostics::LogInfo("Application::CreateWindow title=%ls", title);
+    }
+    return NeoWPF::Platform::Window(CreateApplicationWindow(title, width, height));
+}
+
+bool Application::CloseWindow(const NeoWPF::Platform::Window& window)
+{
+    if (s_applicationDebugging) {
+        NeoWPF::Diagnostics::LogInfo("Application::CloseWindow");
+    }
+    return CloseApplicationWindow(window.Handle());
 }
 
 int Application::Run()

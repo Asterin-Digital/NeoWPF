@@ -30,15 +30,23 @@ void Border::Measure(int availableWidth, int availableHeight)
 
         presenter->SetPadding(m_padding);
 
-        const int innerWidth = std::max(0, availableWidth - (2 * m_borderThickness) - (2 * m_padding));
-        const int innerHeight = std::max(0, availableHeight - (2 * m_borderThickness) - (2 * m_padding));
+        const int explicitW = GetWidth();
+        const int explicitH = GetHeight();
+        const int availableContentWidth = std::max(0, explicitW > 0 ? explicitW : availableWidth);
+        const int availableContentHeight = std::max(0, explicitH > 0 ? explicitH : availableHeight);
+
+        const int innerWidth = std::max(0, availableContentWidth - (2 * m_borderThickness) - (2 * m_padding));
+        const int innerHeight = std::max(0, availableContentHeight - (2 * m_borderThickness) - (2 * m_padding));
 
         presenter->Measure(innerWidth, innerHeight);
 
         const int contentW = presenter->GetDesiredWidth();
         const int contentH = presenter->GetDesiredHeight();
-        const int desiredW = std::max(0, contentW + (2 * m_borderThickness) + (2 * m_padding));
-        const int desiredH = std::max(0, contentH + (2 * m_borderThickness) + (2 * m_padding));
+        const int contentDesiredW = std::max(0, contentW + (2 * m_borderThickness) + (2 * m_padding));
+        const int contentDesiredH = std::max(0, contentH + (2 * m_borderThickness) + (2 * m_padding));
+
+        const int desiredW = std::max(contentDesiredW, explicitW > 0 ? explicitW : 0);
+        const int desiredH = std::max(contentDesiredH, explicitH > 0 ? explicitH : 0);
 
         SetDesiredSize(desiredW, desiredH);
         return;

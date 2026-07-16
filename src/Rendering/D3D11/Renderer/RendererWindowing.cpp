@@ -52,6 +52,20 @@ void SetCurrentWindow(HWND hwnd)
     g_currentWindow = hwnd;
 }
 
+void RemoveContext(HWND hwnd)
+{
+    std::lock_guard<std::mutex> lock(g_windowContextsMutex);
+    auto it = g_windowContexts.find(hwnd);
+    if (it != g_windowContexts.end()) {
+        it->second->rtv.Reset();
+        it->second->swapChain.Reset();
+        g_windowContexts.erase(it);
+    }
+    if (g_currentWindow == hwnd) {
+        g_currentWindow = nullptr;
+    }
+}
+
 }
 
 namespace NeoWPF::Rendering::D3D11 {
@@ -165,6 +179,7 @@ void ResizeRendererWindowing(unsigned int w, unsigned int h)
 
     if (g_context) {
         g_context->OMSetRenderTargets(0, nullptr, nullptr);
+        g_context->Flush();
     }
     ctx->rtv.Reset();
 
@@ -191,6 +206,10 @@ void ResizeRendererWindowing(unsigned int w, unsigned int h)
             return;
         }
 
+        if (g_context) {
+            g_context->OMSetRenderTargets(0, nullptr, nullptr);
+            g_context->Flush();
+        }
         ctx->rtv.Reset();
         ctx->swapChain = rebuiltSwapChain;
         ctx->rtv = rebuiltRTV;
@@ -223,6 +242,10 @@ void ResizeRendererWindowing(unsigned int w, unsigned int h)
             return;
         }
 
+        if (g_context) {
+            g_context->OMSetRenderTargets(0, nullptr, nullptr);
+            g_context->Flush();
+        }
         ctx->rtv.Reset();
         ctx->swapChain = rebuiltSwapChain;
         ctx->rtv = rebuiltRTV;
@@ -254,6 +277,10 @@ void ResizeRendererWindowing(unsigned int w, unsigned int h)
             return;
         }
 
+        if (g_context) {
+            g_context->OMSetRenderTargets(0, nullptr, nullptr);
+            g_context->Flush();
+        }
         ctx->rtv.Reset();
         ctx->swapChain = rebuiltSwapChain;
         ctx->rtv = rebuiltRTV;
@@ -292,6 +319,10 @@ bool PresentRendererWindowing()
             return false;
         }
 
+        if (g_context) {
+            g_context->OMSetRenderTargets(0, nullptr, nullptr);
+            g_context->Flush();
+        }
         ctx->rtv.Reset();
         ctx->swapChain = rebuiltSwapChain;
         ctx->rtv = rebuiltRTV;

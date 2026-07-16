@@ -5,6 +5,7 @@
 #include <vector>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
+#include <NeoWPF/Platform/Window.h>
 
 
 #undef CreateWindow
@@ -75,7 +76,19 @@ public:
         @returns
         The native HWND for the created window.
     */
-    HWND CreateWindow(const wchar_t* title = L"NeoWPF", int width = 800, int height = 600);
+    NeoWPF::Platform::Window CreateWindow(const wchar_t* title = L"NeoWPF", int width = 800, int height = 600);
+
+    /*
+        @summary
+        Closes a previously created window.
+
+        @param hwnd
+        The native handle of the window to close.
+
+        @returns
+        True if the window was closed successfully, otherwise false.
+    */
+    bool CloseWindow(const NeoWPF::Platform::Window& window);
 
     /*
         @summary
@@ -112,6 +125,9 @@ public:
         @internal
     */
     static void ClearDeveloperMessages();
+
+public:
+    static bool s_applicationDebugging;
 
 private:
     Application() = default;

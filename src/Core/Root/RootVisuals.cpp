@@ -6,6 +6,11 @@ namespace NeoWPF::Core {
 
 namespace {
 
+bool IsSyntheticWindowHost(NeoWPF::UI::Visual* visual)
+{
+    return dynamic_cast<NeoWPF::UI::Window*>(visual) != nullptr;
+}
+
 void BuildVisualTreeCommands(NeoWPF::UI::Visual* visual, NeoWPF::Rendering::CommandList& commands)
 {
     if (!visual) {
@@ -32,28 +37,39 @@ void ClearVisualTreeDirty(NeoWPF::UI::Visual* visual)
 
 }
 
+void ClearVisualTreeDirtyForRoot(NeoWPF::UI::Visual* rootVisual)
+{
+    ClearVisualTreeDirty(rootVisual);
+}
+
 RootVisualInfo FindRootVisual(const std::vector<NeoWPF::UI::Visual*>& visuals)
 {
     RootVisualInfo info;
     for (auto visual : visuals) {
-        if (!visual->GetParent()) {
-            if (auto window = dynamic_cast<NeoWPF::UI::Window*>(visual)) {
-                info.rootWindow = window;
-                info.rootVisual = window;
-                return info;
-            }
-            if (!info.rootVisual) {
-                info.rootVisual = visual;
-            }
+        if (!visual->GetParent() && !IsSyntheticWindowHost(visual)) {
+            info.rootVisual = visual;
+            return info;
+        }
+        if (!visual->GetParent() && IsSyntheticWindowHost(visual)) {
+            info.rootWindow = dynamic_cast<NeoWPF::UI::Window*>(visual);
         }
     }
+
+    for (auto visual : visuals) {
+        if (!visual->GetParent()) {
+            info.rootVisual = visual;
+            info.rootWindow = dynamic_cast<NeoWPF::UI::Window*>(visual);
+            return info;
+        }
+    }
+
     return info;
 }
 
 bool AnyTopLevelVisualDirty(const std::vector<NeoWPF::UI::Visual*>& visuals)
 {
     for (auto visual : visuals) {
-        if (!visual->GetParent() && visual->IsTreeDirty()) {
+        if (!visual->GetParent() && !IsSyntheticWindowHost(visual) && visual->IsTreeDirty()) {
             return true;
         }
     }
@@ -76,7 +92,7 @@ void LayoutAndBuildVisualTree(NeoWPF::UI::Visual* rootVisual, unsigned int width
 void LayoutAndBuildAllTopLevelVisuals(const std::vector<NeoWPF::UI::Visual*>& visuals, unsigned int width, unsigned int height, NeoWPF::Rendering::CommandList& buildCommandList)
 {
     for (auto visual : visuals) {
-        if (!visual->GetParent()) {
+        if (!visual->GetParent() && !IsSyntheticWindowHost(visual)) {
             if (auto fe = dynamic_cast<NeoWPF::UI::FrameworkElement*>(visual)) {
                 fe->Measure(static_cast<int>(width), static_cast<int>(height));
                 fe->Arrange(static_cast<int>(width), static_cast<int>(height));
@@ -89,7 +105,7 @@ void LayoutAndBuildAllTopLevelVisuals(const std::vector<NeoWPF::UI::Visual*>& vi
 void ClearTopLevelVisualsDirty(const std::vector<NeoWPF::UI::Visual*>& visuals)
 {
     for (auto visual : visuals) {
-        if (!visual->GetParent()) {
+        if (!visual->GetParent() && !IsSyntheticWindowHost(visual)) {
             ClearVisualTreeDirty(visual);
         }
     }

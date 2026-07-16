@@ -10,6 +10,7 @@
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Core/Application/Application.h>
+#include <NeoWPF/UI/Controls/Window.h>
 
 namespace NeoWPF::Diagnostics {
 struct VisualTreeDumpOptions;
@@ -26,6 +27,12 @@ struct WindowState {
     unsigned int width = 0;
     unsigned int height = 0;
     bool needsLayout = true;
+    bool isPrimaryWindow = false;
+    std::shared_ptr<NeoWPF::UI::Window> windowHost;
+    NeoWPF::UI::Visual* contentRoot = nullptr;
+    NeoWPF::Rendering::CommandList buildCommandList;
+    NeoWPF::Rendering::CommandList renderCommandList;
+    bool commandListInitialized = false;
 };
 
 struct AppState {
@@ -53,8 +60,10 @@ struct AppState {
 AppState& GetAppState();
 void StartRenderThread();
 HWND CreateApplicationWindow(const wchar_t* title, int width, int height);
+bool CloseApplicationWindow(HWND hwnd);
 int RunApplicationMessageLoop();
 void ShutdownApplication();
 void DumpVisualTreeImpl(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options);
+void SetInputRootForWindow(HWND hwnd);
 
 }

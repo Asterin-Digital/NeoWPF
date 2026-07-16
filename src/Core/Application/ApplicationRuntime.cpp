@@ -24,9 +24,46 @@ AppState s_appState;
 }
 
 AppState& GetAppState() { return s_appState; }
+ 
+void SetInputRootForWindow(HWND hwnd)
+{
+    if (!hwnd) {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
+    for (auto& windowState : s_appState.windows) {
+        if (windowState.hwnd == hwnd && windowState.isPrimaryWindow) {
+            const auto& visuals = NeoWPF::UI::Visual::GetRegisteredVisuals();
+            const auto& rootInfos = FindRootVisual(visuals);
+            auto rootVisual = rootInfos.rootVisual;
+            NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual));
+            return;
+        }
+    }
+}
+
+void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigned int height)
+{
+    windowState.buildCommandList.Clear();
+
+    if (!windowState.isPrimaryWindow) {
+        windowState.renderCommandList = windowState.buildCommandList;
+        windowState.commandListInitialized = true;
+        return;
+    }
+
+    const auto& visuals = NeoWPF::UI::Visual::GetRegisteredVisuals();
+    LayoutAndBuildAllTopLevelVisuals(visuals, width, height, windowState.buildCommandList);
+    windowState.renderCommandList = windowState.buildCommandList;
+    windowState.commandListInitialized = true;
+}
 
 void StartRenderThread()
 {
+    if (NeoWPF::Core::Application::s_applicationDebugging) {
+        NeoWPF::Diagnostics::LogInfo("StartRenderThread");
+    }
     s_appState.running = true;
     s_appState.renderThreadInitialized = false;
     s_appState.renderThreadInitFailed = false;
@@ -72,7 +109,11 @@ void StartRenderThread()
                 windowsSnapshot = s_appState.windows;
             }
 
-            for (const auto& windowState : windowsSnapshot) {
+            for (auto& windowState : windowsSnapshot) {
+                if (!IsWindow(windowState.hwnd)) {
+                    continue;
+                }
+
                 RECT rc;
                 GetClientRect(windowState.hwnd, &rc);
                 unsigned int w = rc.right - rc.left;
@@ -80,13 +121,20 @@ void StartRenderThread()
 
                 if (w > 0 && h > 0) {
                     try {
+                        if (!windowState.commandListInitialized || windowState.width != w || windowState.height != h) {
+                            BuildWindowVisualTree(windowState, w, h);
+                            windowState.width = w;
+                            windowState.height = h;
+                        }
+
+                        NeoWPF::Rendering::Renderer_Initialize(windowState.hwnd);
                         NeoWPF::Rendering::Renderer_Resize(w, h);
                         NeoWPF::Rendering::Renderer_BeginFrame();
 
                         NeoWPF::Rendering::CommandList toRender;
                         {
                             std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
-                            toRender = s_appState.renderCommandList;
+                            toRender = windowState.renderCommandList;
                         }
 
                         NeoWPF::Rendering::Renderer_Execute(toRender);
@@ -140,19 +188,30 @@ int RunApplicationMessageLoop()
 
     const auto& visuals = NeoWPF::UI::Visual::GetRegisteredVisuals();
     {
-        std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
-        s_appState.buildCommandList.Clear();
-        LayoutAndBuildAllTopLevelVisuals(visuals, clientWidth, clientHeight, s_appState.buildCommandList);
-        std::swap(s_appState.buildCommandList, s_appState.renderCommandList);
-        s_appState.commandListInitialized = true;
+        std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
+        for (auto& windowState : s_appState.windows) {
+            if (!IsWindow(windowState.hwnd)) {
+                continue;
+            }
+
+            RECT windowRect;
+            GetClientRect(windowState.hwnd, &windowRect);
+            unsigned int windowWidth = windowRect.right - windowRect.left;
+            unsigned int windowHeight = windowRect.bottom - windowRect.top;
+            if (windowWidth == 0 || windowHeight == 0) {
+                windowWidth = clientWidth;
+                windowHeight = clientHeight;
+            }
+            BuildWindowVisualTree(windowState, windowWidth, windowHeight);
+            windowState.width = windowWidth;
+            windowState.height = windowHeight;
+        }
     }
-    ClearTopLevelVisualsDirty(visuals);
 
     const auto& rootInfos = FindRootVisual(visuals);
     auto rootVisual = rootInfos.rootVisual;
     NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual));
 
-    ::ShowWindow(primaryWindow, SW_SHOW);
     ::UpdateWindow(primaryWindow);
     ::RedrawWindow(primaryWindow, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 
@@ -200,15 +259,31 @@ int RunApplicationMessageLoop()
 
         if (needsUpdate) {
             NeoWPF::Diagnostics::ProcessPendingDeveloperWarnings();
-            std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
-            s_appState.buildCommandList.Clear();
-            LayoutAndBuildAllTopLevelVisuals(visuals, currentClientWidth, currentClientHeight, s_appState.buildCommandList);
-            std::swap(s_appState.buildCommandList, s_appState.renderCommandList);
-            s_appState.commandListInitialized = true;
+            std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
+            for (auto& windowState : s_appState.windows) {
+                if (!IsWindow(windowState.hwnd)) {
+                    continue;
+                }
+
+                RECT windowRect;
+                GetClientRect(windowState.hwnd, &windowRect);
+                unsigned int windowWidth = windowRect.right - windowRect.left;
+                unsigned int windowHeight = windowRect.bottom - windowRect.top;
+                if (windowWidth == 0 || windowHeight == 0) {
+                    windowWidth = currentClientWidth;
+                    windowHeight = currentClientHeight;
+                }
+                BuildWindowVisualTree(windowState, windowWidth, windowHeight);
+                windowState.width = windowWidth;
+                windowState.height = windowHeight;
+            }
             ClearTopLevelVisualsDirty(visuals);
         }
     }
 
+    if (NeoWPF::Core::Application::s_applicationDebugging) {
+        NeoWPF::Diagnostics::LogInfo("Application message loop exiting");
+    }
     s_appState.exitCode = static_cast<int>(msg.wParam);
     s_appState.running = false;
     if (s_appState.renderThread.joinable()) {
