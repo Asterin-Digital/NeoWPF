@@ -58,7 +58,10 @@ static void Output(const char* prefix, const char* fmt, va_list ap)
         remaining   -= chunk_size;
     }
 
+    fputs(buffer, stdout);
+    fflush(stdout);
     fputs(buffer, stderr);
+    fflush(stderr);
 
     delete[] buffer;
 }

@@ -1,0 +1,278 @@
+#include <NeoWPF/Diagnostics/PerformanceMetrics.h>
+#include <NeoWPF/Diagnostics/Logger.h>
+#include <Windows.h>
+#undef min
+#undef max
+#include <psapi.h>
+#include <chrono>
+#include <cstdint>
+#include <atomic>
+#include <algorithm>
+
+namespace NeoWPF::Diagnostics::PerformanceMetrics {
+namespace {
+
+struct Counters {
+    std::atomic<bool> enabled{true};
+    std::atomic<uint64_t> frameCount{0};
+    std::atomic<uint64_t> layoutPassCount{0};
+    std::atomic<uint64_t> renderPassCount{0};
+    std::atomic<uint64_t> messageLoopTickCount{0};
+    std::atomic<uint64_t> windowCreates{0};
+    std::atomic<uint64_t> windowCloses{0};
+    std::atomic<double> frameTimeAccumulator{0.0};
+    std::atomic<double> layoutTimeAccumulator{0.0};
+    std::atomic<double> renderTimeAccumulator{0.0};
+    std::atomic<double> messageLoopTimeAccumulator{0.0};
+    std::atomic<double> maxFrameTimeSeconds{0.0};
+    std::atomic<double> maxLayoutTimeSeconds{0.0};
+    std::atomic<double> maxRenderTimeSeconds{0.0};
+    std::atomic<double> maxMessageLoopTimeSeconds{0.0};
+    std::atomic<uint64_t> currentMemoryBytes{0};
+    std::atomic<uint64_t> peakMemoryBytes{0};
+    std::atomic<double> currentCpuUsage{0.0};
+    std::atomic<double> peakCpuUsage{0.0};
+    std::atomic<bool> initialized{false};
+};
+
+Counters& GetCounters()
+{
+    static Counters counters;
+    return counters;
+}
+
+std::chrono::steady_clock::time_point& GetLastSummaryTime()
+{
+    static std::chrono::steady_clock::time_point last = std::chrono::steady_clock::now();
+    return last;
+}
+
+void UpdateMax(std::atomic<double>& target, double value)
+{
+    double current = target.load(std::memory_order_relaxed);
+    while (value > current && !target.compare_exchange_weak(current, value, std::memory_order_relaxed)) {
+    }
+}
+
+template <typename T>
+void AddAtomic(std::atomic<T>& target, T value)
+{
+    T current = target.load(std::memory_order_relaxed);
+    while (!target.compare_exchange_weak(current, current + value, std::memory_order_relaxed)) {
+    }
+}
+
+void EmitSummary(const char* label)
+{
+    auto& counters = GetCounters();
+    const uint64_t frames = counters.frameCount.load(std::memory_order_relaxed);
+    const uint64_t layouts = counters.layoutPassCount.load(std::memory_order_relaxed);
+    const uint64_t renders = counters.renderPassCount.load(std::memory_order_relaxed);
+    const uint64_t ticks = counters.messageLoopTickCount.load(std::memory_order_relaxed);
+    const double frameAvg = frames > 0 ? counters.frameTimeAccumulator.load(std::memory_order_relaxed) / static_cast<double>(frames) : 0.0;
+    const double layoutAvg = layouts > 0 ? counters.layoutTimeAccumulator.load(std::memory_order_relaxed) / static_cast<double>(layouts) : 0.0;
+    const double renderAvg = renders > 0 ? counters.renderTimeAccumulator.load(std::memory_order_relaxed) / static_cast<double>(renders) : 0.0;
+    const double tickAvg = ticks > 0 ? counters.messageLoopTimeAccumulator.load(std::memory_order_relaxed) / static_cast<double>(ticks) : 0.0;
+    const uint64_t memMB = counters.currentMemoryBytes.load(std::memory_order_relaxed) / (1024 * 1024);
+    const uint64_t peakMemMB = counters.peakMemoryBytes.load(std::memory_order_relaxed) / (1024 * 1024);
+    const double cpuUsage = counters.currentCpuUsage.load(std::memory_order_relaxed);
+    const double peakCpu = counters.peakCpuUsage.load(std::memory_order_relaxed);
+
+    NeoWPF::Diagnostics::LogInfo("[Perf] %s frames=%llu layouts=%llu renders=%llu ticks=%llu creates=%llu closes=%llu avgFrame=%.4f avgLayout=%.4f avgRender=%.4f avgTick=%.4f maxFrame=%.4f maxLayout=%.4f maxRender=%.4f maxTick=%.4f mem=%lluMB peakMem=%lluMB cpu=%.1f%% peakCpu=%.1f%%",
+        label,
+        static_cast<unsigned long long>(frames),
+        static_cast<unsigned long long>(layouts),
+        static_cast<unsigned long long>(renders),
+        static_cast<unsigned long long>(ticks),
+        static_cast<unsigned long long>(counters.windowCreates.load(std::memory_order_relaxed)),
+        static_cast<unsigned long long>(counters.windowCloses.load(std::memory_order_relaxed)),
+        frameAvg,
+        layoutAvg,
+        renderAvg,
+        tickAvg,
+        counters.maxFrameTimeSeconds.load(std::memory_order_relaxed),
+        counters.maxLayoutTimeSeconds.load(std::memory_order_relaxed),
+        counters.maxRenderTimeSeconds.load(std::memory_order_relaxed),
+        counters.maxMessageLoopTimeSeconds.load(std::memory_order_relaxed),
+        static_cast<unsigned long long>(memMB),
+        static_cast<unsigned long long>(peakMemMB),
+        cpuUsage,
+        peakCpu);
+}
+
+}
+
+void Initialize()
+{
+    auto& counters = GetCounters();
+    if (counters.initialized.exchange(true, std::memory_order_acq_rel)) {
+        return;
+    }
+    GetLastSummaryTime() = std::chrono::steady_clock::now();
+    RecordStartup();
+    EmitSummary("startup");
+}
+
+void Shutdown()
+{
+    ForceSummary();
+}
+
+void SetEnabled(bool enabled)
+{
+    GetCounters().enabled.store(enabled, std::memory_order_relaxed);
+}
+
+bool IsEnabled()
+{
+    return GetCounters().enabled.load(std::memory_order_relaxed);
+}
+
+void RecordStartup()
+{
+    auto& counters = GetCounters();
+    counters.frameCount.fetch_add(0, std::memory_order_relaxed);
+}
+
+void RecordFrameSample(double elapsedSeconds)
+{
+    auto& counters = GetCounters();
+    if (!counters.enabled.load(std::memory_order_relaxed) || !counters.initialized.load(std::memory_order_relaxed)) {
+        return;
+    }
+    counters.frameCount.fetch_add(1, std::memory_order_relaxed);
+    AddAtomic(counters.frameTimeAccumulator, elapsedSeconds);
+    UpdateMax(counters.maxFrameTimeSeconds, elapsedSeconds);
+}
+
+void RecordLayoutPass(double elapsedSeconds)
+{
+    auto& counters = GetCounters();
+    if (!counters.enabled.load(std::memory_order_relaxed) || !counters.initialized.load(std::memory_order_relaxed)) {
+        return;
+    }
+    counters.layoutPassCount.fetch_add(1, std::memory_order_relaxed);
+    AddAtomic(counters.layoutTimeAccumulator, elapsedSeconds);
+    UpdateMax(counters.maxLayoutTimeSeconds, elapsedSeconds);
+}
+
+void RecordRenderPass(double elapsedSeconds)
+{
+    auto& counters = GetCounters();
+    if (!counters.enabled.load(std::memory_order_relaxed) || !counters.initialized.load(std::memory_order_relaxed)) {
+        return;
+    }
+    counters.renderPassCount.fetch_add(1, std::memory_order_relaxed);
+    AddAtomic(counters.renderTimeAccumulator, elapsedSeconds);
+    UpdateMax(counters.maxRenderTimeSeconds, elapsedSeconds);
+}
+
+void RecordMessageLoopTick(double elapsedSeconds)
+{
+    auto& counters = GetCounters();
+    if (!counters.enabled.load(std::memory_order_relaxed) || !counters.initialized.load(std::memory_order_relaxed)) {
+        return;
+    }
+    counters.messageLoopTickCount.fetch_add(1, std::memory_order_relaxed);
+    AddAtomic(counters.messageLoopTimeAccumulator, elapsedSeconds);
+    UpdateMax(counters.maxMessageLoopTimeSeconds, elapsedSeconds);
+}
+
+void RecordWindowCreate()
+{
+    auto& counters = GetCounters();
+    if (!counters.enabled.load(std::memory_order_relaxed) || !counters.initialized.load(std::memory_order_relaxed)) {
+        return;
+    }
+    counters.windowCreates.fetch_add(1, std::memory_order_relaxed);
+}
+
+void RecordWindowClose()
+{
+    auto& counters = GetCounters();
+    if (!counters.enabled.load(std::memory_order_relaxed) || !counters.initialized.load(std::memory_order_relaxed)) {
+        return;
+    }
+    counters.windowCloses.fetch_add(1, std::memory_order_relaxed);
+}
+
+void EmitPeriodicSummary()
+{
+    auto& counters = GetCounters();
+    if (!counters.enabled.load(std::memory_order_relaxed) || !counters.initialized.load(std::memory_order_relaxed)) {
+        return;
+    }
+
+    const auto now = std::chrono::steady_clock::now();
+    const auto elapsed = std::chrono::duration<double>(now - GetLastSummaryTime()).count();
+    if (elapsed < 1.0) {
+        return;
+    }
+
+    GetLastSummaryTime() = now;
+    SampleSystemMetrics();
+    EmitSummary("periodic");
+}
+
+void ForceSummary()
+{
+    SampleSystemMetrics();
+    EmitSummary("shutdown");
+}
+
+void SampleSystemMetrics()
+{
+    auto& counters = GetCounters();
+    if (!counters.enabled.load(std::memory_order_relaxed) || !counters.initialized.load(std::memory_order_relaxed)) {
+        return;
+    }
+
+
+    HANDLE hProcess = GetCurrentProcess();
+    PROCESS_MEMORY_COUNTERS pmc = {};
+    if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
+        counters.currentMemoryBytes.store(pmc.WorkingSetSize, std::memory_order_relaxed);
+        uint64_t current = pmc.WorkingSetSize;
+        uint64_t peak = counters.peakMemoryBytes.load(std::memory_order_relaxed);
+        if (current > peak) {
+            counters.peakMemoryBytes.store(current, std::memory_order_relaxed);
+        }
+    }
+
+
+    static FILETIME lastKernel = {0};
+    static FILETIME lastUser = {0};
+    static std::chrono::steady_clock::time_point lastSample = std::chrono::steady_clock::now();
+
+    FILETIME creation, exit, kernel, user;
+    if (GetProcessTimes(hProcess, &creation, &exit, &kernel, &user)) {
+        auto now = std::chrono::steady_clock::now();
+        auto timeDelta = std::chrono::duration<double>(now - lastSample).count();
+
+        if (timeDelta > 0.0 && (lastKernel.dwHighDateTime || lastKernel.dwLowDateTime)) {
+            uint64_t kernelTicks = (static_cast<uint64_t>(kernel.dwHighDateTime) << 32) | kernel.dwLowDateTime;
+            uint64_t userTicks = (static_cast<uint64_t>(user.dwHighDateTime) << 32) | user.dwLowDateTime;
+            uint64_t lastKernelTicks = (static_cast<uint64_t>(lastKernel.dwHighDateTime) << 32) | lastKernel.dwLowDateTime;
+            uint64_t lastUserTicks = (static_cast<uint64_t>(lastUser.dwHighDateTime) << 32) | lastUser.dwLowDateTime;
+
+            uint64_t kernelDelta = kernelTicks - lastKernelTicks;
+            uint64_t userDelta = userTicks - lastUserTicks;
+            uint64_t totalDelta = kernelDelta + userDelta;
+
+            double cpuUsage = (totalDelta / 10000.0) / (timeDelta * 1000.0) * 100.0;
+            cpuUsage = std::min(cpuUsage, 100.0);
+
+            counters.currentCpuUsage.store(cpuUsage, std::memory_order_relaxed);
+            double peak = counters.peakCpuUsage.load(std::memory_order_relaxed);
+            if (cpuUsage > peak) {
+                counters.peakCpuUsage.store(cpuUsage, std::memory_order_relaxed);
+            }
+        }
+
+        lastKernel = kernel;
+        lastUser = user;
+        lastSample = now;
+    }
+}
+
+}

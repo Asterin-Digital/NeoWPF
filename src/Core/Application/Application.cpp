@@ -5,6 +5,7 @@
 #include <NeoWPF/UI/Styling/Style/DefaultStyles.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 
 namespace NeoWPF::Core {
@@ -14,6 +15,7 @@ bool Application::s_applicationDebugging = true;
 
 void Application::Initialize()
 {
+    NeoWPF::Diagnostics::PerformanceMetrics::Initialize();
     if (s_applicationDebugging) {
         NeoWPF::Diagnostics::LogInfo("Application::Initialize begin");
     }
@@ -32,18 +34,13 @@ void Application::Initialize()
 
 NeoWPF::Platform::Window Application::CreateWindow(const wchar_t* title, int width, int height)
 {
-    if (s_applicationDebugging) {
-        NeoWPF::Diagnostics::LogInfo("Application::CreateWindow title=%ls", title);
+    if (!title) {
+        return NeoWPF::Platform::Window();
     }
-    return NeoWPF::Platform::Window(CreateApplicationWindow(title, width, height));
-}
 
-bool Application::CloseWindow(const NeoWPF::Platform::Window& window)
-{
-    if (s_applicationDebugging) {
-        NeoWPF::Diagnostics::LogInfo("Application::CloseWindow");
-    }
-    return CloseApplicationWindow(window.Handle());
+    NeoWPF::Diagnostics::PerformanceMetrics::RecordWindowCreate();
+    const HWND hwnd = CreateApplicationWindow(title, width, height);
+    return NeoWPF::Platform::Window(hwnd);
 }
 
 int Application::Run()
@@ -82,6 +79,7 @@ int Application::Run()
 
 void Application::Shutdown()
 {
+    NeoWPF::Diagnostics::PerformanceMetrics::Shutdown();
     ShutdownApplication();
 }
 

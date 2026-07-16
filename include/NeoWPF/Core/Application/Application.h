@@ -62,7 +62,7 @@ public:
 
     /*
         @summary
-        Creates the main application window.
+        Creates a new application window.
 
         @param title
         The window title.
@@ -74,21 +74,9 @@ public:
         The initial window height.
 
         @returns
-        The native HWND for the created window.
+        The created window.
     */
-    NeoWPF::Platform::Window CreateWindow(const wchar_t* title = L"NeoWPF", int width = 800, int height = 600);
-
-    /*
-        @summary
-        Closes a previously created window.
-
-        @param hwnd
-        The native handle of the window to close.
-
-        @returns
-        True if the window was closed successfully, otherwise false.
-    */
-    bool CloseWindow(const NeoWPF::Platform::Window& window);
+    NeoWPF::Platform::Window CreateWindow(const wchar_t* title, int width, int height);
 
     /*
         @summary

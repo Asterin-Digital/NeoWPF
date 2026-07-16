@@ -2,6 +2,7 @@
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Core/Root/RootVisuals.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Platform/Window.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
@@ -45,6 +46,7 @@ void SetInputRootForWindow(HWND hwnd)
 
 void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigned int height)
 {
+    const auto layoutStart = std::chrono::steady_clock::now();
     windowState.buildCommandList.Clear();
 
     if (!windowState.isPrimaryWindow) {
@@ -55,6 +57,8 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
 
     const auto& visuals = NeoWPF::UI::Visual::GetRegisteredVisuals();
     LayoutAndBuildAllTopLevelVisuals(visuals, width, height, windowState.buildCommandList);
+    const auto layoutElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - layoutStart).count();
+    NeoWPF::Diagnostics::PerformanceMetrics::RecordLayoutPass(layoutElapsed);
     windowState.renderCommandList = windowState.buildCommandList;
     windowState.commandListInitialized = true;
 }
@@ -129,6 +133,7 @@ void StartRenderThread()
 
                         NeoWPF::Rendering::Renderer_Initialize(windowState.hwnd);
                         NeoWPF::Rendering::Renderer_Resize(w, h);
+                        const auto renderStart = std::chrono::steady_clock::now();
                         NeoWPF::Rendering::Renderer_BeginFrame();
 
                         NeoWPF::Rendering::CommandList toRender;
@@ -139,6 +144,8 @@ void StartRenderThread()
 
                         NeoWPF::Rendering::Renderer_Execute(toRender);
                         NeoWPF::Rendering::Renderer_Present();
+                        const auto renderElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - renderStart).count();
+                        NeoWPF::Diagnostics::PerformanceMetrics::RecordRenderPass(renderElapsed);
                     } catch (const std::exception& ex) {
                         NeoWPF::Diagnostics::LogError("Render frame failed: %s", ex.what());
                     } catch (...) {
@@ -222,7 +229,12 @@ int RunApplicationMessageLoop()
         TranslateMessage(&msg);
         DispatchMessage(&msg);
 
+        const auto tickStart = std::chrono::steady_clock::now();
         NeoWPF::UI::Tick();
+        const auto tickElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - tickStart).count();
+        NeoWPF::Diagnostics::PerformanceMetrics::RecordMessageLoopTick(tickElapsed);
+        NeoWPF::Diagnostics::PerformanceMetrics::RecordFrameSample(tickElapsed);
+        NeoWPF::Diagnostics::PerformanceMetrics::EmitPeriodicSummary();
 
         {
             std::lock_guard<std::mutex> lock(s_appState.windowsMutex);

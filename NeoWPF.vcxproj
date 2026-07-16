@@ -199,6 +199,7 @@
     <ClCompile Include="src\Core\Application\ApplicationStartup.cpp" />
     <ClCompile Include="src\Diagnostics\CallStackTracer.cpp" />
     <ClCompile Include="src\Diagnostics\DeveloperWarnings.cpp" />
+    <ClCompile Include="src\Diagnostics\PerformanceMetrics.cpp" />
     <ClCompile Include="src\Core\Root\RootVisuals.cpp" />
     <ClCompile Include="src\UI\Animation\AnimationController.cpp" />
     <ClCompile Include="src\UI\Animation\Storyboards\Storyboard.cpp" />

@@ -186,6 +186,9 @@
     <ClCompile Include="src\Diagnostics\DeveloperWarnings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Diagnostics\PerformanceMetrics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\UI\Animation\AnimationController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

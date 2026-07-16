@@ -21,6 +21,7 @@ Love from Envy!! :3
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/UI.h>
 #include <NeoWPF/Input/Input.h>
+#include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 
 namespace NeoWPF {
 
