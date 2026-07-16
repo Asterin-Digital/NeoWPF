@@ -27,5 +27,10 @@ namespace NeoWPF::UI::Properties {
             "BackgroundColor",
             &UI::Button::GetBackgroundColor,
             static_cast<void (UI::Button::*)(NeoWPF::UI::Color)>(&UI::Button::SetBackgroundColor));
+
+        RegisterProperty<UI::Button, NeoWPF::UI::Color>(
+            "BorderColor",
+            &UI::Button::GetBorderColor,
+            static_cast<void (UI::Button::*)(NeoWPF::UI::Color)>(&UI::Button::SetBorderColor));
     }
 }

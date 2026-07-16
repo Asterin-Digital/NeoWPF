@@ -7,6 +7,7 @@
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <algorithm>
 #include <memory>
 #include <cmath>
@@ -126,6 +127,17 @@ void Button::SetText(const std::wstring& text)
 
 void Button::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
 {
+    if (IsApplyingPropertyValue()) { 
+        m_baseBackgroundColor = color; 
+        m_backgroundColor = color;
+        if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
+            background->SetFillColor(color.ToArgb());
+        }
+        InvalidateVisual(); 
+        return; 
+    }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", typeid(*this));
+    if (property) { SetValue(*property, color); return; }
     m_baseBackgroundColor = color;
     m_backgroundColor = color;
 
@@ -134,6 +146,32 @@ void Button::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
     }
 
     InvalidateVisual();
+}
+
+void Button::SetBorderColor(NeoWPF::UI::Color color) noexcept
+{
+    if (IsApplyingPropertyValue()) { 
+        m_borderColor = color;
+        if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
+            background->SetBorderColor(color.ToArgb());
+        }
+        InvalidateVisual(); 
+        return; 
+    }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", typeid(*this));
+    if (property) { SetValue(*property, color); return; }
+    m_borderColor = color;
+
+    if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
+        background->SetBorderColor(color.ToArgb());
+    }
+
+    InvalidateVisual();
+}
+
+NeoWPF::UI::Color Button::GetBorderColor() const noexcept
+{
+    return m_borderColor;
 }
 
 void Button::Measure(int availableWidth, int availableHeight)

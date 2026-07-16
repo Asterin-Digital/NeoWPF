@@ -117,6 +117,21 @@ public:
 
     /*
         @summary
+        Sets the border color.
+
+        @param color
+        ARGB color value.
+    */
+    void SetBorderColor(NeoWPF::UI::Color color) noexcept;
+
+    /*
+        @summary
+        Returns the current border color.
+    */
+    NeoWPF::UI::Color GetBorderColor() const noexcept;
+
+    /*
+        @summary
         Measures the button and decides how much space it needs.
 
         @param availableWidth
@@ -161,6 +176,7 @@ private:
     NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFF000000u);
     NeoWPF::UI::Color m_backgroundColor = NeoWPF::UI::Color::FromArgb(0xFF2F2F2Fu);
     NeoWPF::UI::Color m_baseBackgroundColor = NeoWPF::UI::Color::FromArgb(0xFF2F2F2Fu);
+    NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0xFF333333u);
     int m_fontSize = 16;
 
 private:

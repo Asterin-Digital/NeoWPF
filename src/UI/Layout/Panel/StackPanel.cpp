@@ -63,7 +63,7 @@ namespace {
 
 namespace NeoWPF::UI {
 
-bool StackPanel::stackPanelDebugLogging = false; // dont turn this on unless ur debugging something
+bool StackPanel::stackPanelDebugLogging = false;
 
 void StackPanel::Measure(int availableWidth, int availableHeight)
 {
@@ -141,6 +141,7 @@ void StackPanel::Arrange(int finalWidth, int finalHeight)
         return;
     }
 
+
     int y = 0;
     std::vector<Visual*> seenChildren;
     for (auto child : GetVisualChildren()) {
@@ -148,6 +149,7 @@ void StackPanel::Arrange(int finalWidth, int finalHeight)
             continue;
         }
         if (std::find(seenChildren.begin(), seenChildren.end(), child) != seenChildren.end()) {
+
             if (stackPanelDebugLogging) {
                 NeoWPF::Diagnostics::LogInfo("[StackPanel::Arrange] skipping duplicate child=%p", child);
             }

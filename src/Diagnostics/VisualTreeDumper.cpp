@@ -34,24 +34,24 @@ void VisualTreeDumper::DumpTreeRecursive(
     }
 
     std::string elementInfo = FormatElementInfo(element, options);
-    
+
     if (currentDepth == 0) {
-        // Root element - no prefix
+
         LogInfo("%s", elementInfo.c_str());
     } else {
-        // Child element - add tree connector with indentation
+
         std::string connector = isLast ? "`-- " : "|-- ";
         LogInfo("%s%s%s", prefix.c_str(), connector.c_str(), elementInfo.c_str());
     }
 
     const auto& children = element->GetVisualChildren();
     if (!children.empty()) {
-        // Build prefix for children
+
         std::string newPrefix = prefix;
         if (currentDepth > 0) {
             newPrefix += (isLast ? "    " : "|   ");
         } else {
-            // First level - start indentation
+
             newPrefix = "";
         }
 

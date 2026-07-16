@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <memory>
 
 namespace NeoWPF::UI {
@@ -29,8 +30,24 @@ ButtonTemplate::ButtonTemplate()
     auto normalState = std::make_shared<Styling::VisualState>("Normal");
     normalState->AddSetter("PART_Background", [](UIElement* element, Visual* visual) {
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFF3A3A3Au);
-            templateVisual->SetBorderColor(0xFF333333u);
+            if (auto button = dynamic_cast<Button*>(element)) {
+                auto backgroundColorProp = NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", typeid(Button));
+                if (backgroundColorProp && button->GetValueSource(*backgroundColorProp) == NeoWPF::UI::Properties::PropertyValueSource::Local) {
+                    templateVisual->SetFillColor(button->GetBackgroundColor().ToArgb());
+                } else {
+                    templateVisual->SetFillColor(0xFF3A3A3Au);
+                }
+
+                auto borderColorProp = NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", typeid(Button));
+                if (borderColorProp && button->GetValueSource(*borderColorProp) == NeoWPF::UI::Properties::PropertyValueSource::Local) {
+                    templateVisual->SetBorderColor(button->GetBorderColor().ToArgb());
+                } else {
+                    templateVisual->SetBorderColor(0xFF333333u);
+                }
+            } else {
+                templateVisual->SetFillColor(0xFF3A3A3Au);
+                templateVisual->SetBorderColor(0xFF333333u);
+            }
         }
         if (element) {
             element->InvalidateVisual();
