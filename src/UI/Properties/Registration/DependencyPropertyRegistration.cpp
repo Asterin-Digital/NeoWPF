@@ -6,6 +6,7 @@ void RegisterCoreControlProperties() {
     RegisterUIElementProperties();
     RegisterFrameworkElementProperties();
     RegisterButtonProperties();
+    RegisterCheckboxProperties();
     RegisterItemsControlProperties();
     RegisterScrollBarProperties();
     RegisterTextBlockProperties();

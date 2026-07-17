@@ -48,7 +48,6 @@
 
 ## Phase 3 — Control registration and public APIs
 
-- [ ] Use a WPF-style registration pattern:
   - each control exposes `static DependencyProperty FooProperty`
   - wrapper accessors `GetFoo()` / `SetFoo(...)`
 - [x] Register each property using a fully type-safe API, for example:
@@ -76,9 +75,6 @@
 - [x] Defer attached property support to a later phase.
 
 ## Phase 5 — Cleanup, stabilization
-
-- [x] Remove stale legacy property APIs and old registry code paths entirely.
-- [x] Document the new dependency-property architecture and usage patterns.
 - [ ] Add unit tests for:
   - property registration
   - local value resolution
@@ -86,18 +82,3 @@
   - callback dispatch
   - coercion behavior
   - invalidation behavior
-- [ ] Add sample usage docs showing dependency-property usage such as:
-  - `Button.Text`
-  - `TextBox.Padding`
-  - `Border.BackgroundColor`
-
-## Relevant files
-
-- `include/NeoWPF/UI/Properties/DependencyProperty.h`
-- `include/NeoWPF/UI/Properties/DependencyObject.h`
-- `src/UI/Properties/DependencyObject.cpp`
-- `include/NeoWPF/UI/Core/Element/UIElement.h`
-- `src/UI/Core/Element/UIElement.cpp`
-- `include/NeoWPF/UI/Core/Element/FrameworkElement.h`
-- `src/UI/Core/Element/FrameworkElement.cpp`
-- `src/UI/Controls/*/*Properties.cpp`
