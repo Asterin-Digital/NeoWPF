@@ -4,6 +4,7 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Styling/Style/Style.h>
 #include <NeoWPF/UI/Styling/Style/StyleManager.h>
+#include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <algorithm>
 #include <memory>
@@ -40,9 +41,63 @@ Checkbox::~Checkbox()
 
 void Checkbox::SetText(const std::wstring& text)
 {
+    if (IsApplyingPropertyValue()) { m_text = text; if (m_textContent) { m_textContent->SetText(text); } InvalidateVisual(); return; }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Text", typeid(*this));
+    if (property) { SetValue(*property, text); return; }
     m_text = text;
     if (m_textContent) {
         m_textContent->SetText(text);
+    }
+    InvalidateVisual();
+}
+
+void Checkbox::SetTextColor(NeoWPF::UI::Color color) noexcept
+{
+    if (IsApplyingPropertyValue()) { m_textColor = color; if (m_textContent) { m_textContent->SetTextColor(color.ToArgb()); } InvalidateVisual(); return; }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("TextColor", typeid(*this));
+    if (property) { SetValue(*property, color); return; }
+    m_textColor = color;
+    if (m_textContent) {
+        m_textContent->SetTextColor(color.ToArgb());
+    }
+    InvalidateVisual();
+}
+
+void Checkbox::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
+{
+    if (IsApplyingPropertyValue()) { m_bgColor = color; InvalidateVisual(); return; }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", typeid(*this));
+    if (property) { SetValue(*property, color); return; }
+    m_bgColor = color;
+    InvalidateVisual();
+}
+
+void Checkbox::SetBorderColor(NeoWPF::UI::Color color) noexcept
+{
+    if (IsApplyingPropertyValue()) { m_borderColor = color; InvalidateVisual(); return; }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", typeid(*this));
+    if (property) { SetValue(*property, color); return; }
+    m_borderColor = color;
+    InvalidateVisual();
+}
+
+void Checkbox::SetPadding(int padding) noexcept
+{
+    if (IsApplyingPropertyValue()) { m_padding = padding; InvalidateVisual(); return; }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", typeid(*this));
+    if (property) { SetValue(*property, padding); return; }
+    m_padding = padding;
+    InvalidateVisual();
+}
+
+void Checkbox::SetFontSize(int fontSize) noexcept
+{
+    if (IsApplyingPropertyValue()) { m_fontSize = fontSize; if (m_textContent) { m_textContent->SetFontSize(fontSize); } InvalidateVisual(); return; }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("FontSize", typeid(*this));
+    if (property) { SetValue(*property, fontSize); return; }
+    m_fontSize = fontSize;
+    if (m_textContent) {
+        m_textContent->SetFontSize(fontSize);
     }
     InvalidateVisual();
 }
