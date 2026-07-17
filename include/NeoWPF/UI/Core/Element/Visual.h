@@ -174,7 +174,7 @@ private:
 
         @internal
     */
-    static std::vector<std::shared_ptr<Visual>>& GetRootVisualReferences();
+    static std::vector<std::weak_ptr<Visual>>& GetRootVisualReferences();
 
     /*
         @summary

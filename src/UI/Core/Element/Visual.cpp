@@ -150,12 +150,17 @@ void Visual::KeepAliveAsRoot()
     if (!GetParent()) {
         try {
             auto self = shared_from_this();
-            for (auto& existing : rootRefs) {
-                if (existing.get() == this) {
-                    return;
+            for (auto it = rootRefs.begin(); it != rootRefs.end(); ) {
+                if (auto existing = it->lock()) {
+                    if (existing.get() == this) {
+                        return;
+                    }
+                    ++it;
+                } else {
+                    it = rootRefs.erase(it);
                 }
             }
-            rootRefs.push_back(self);
+            rootRefs.emplace_back(self);
         } catch (const std::bad_weak_ptr&) {
         }
     }
@@ -178,9 +183,9 @@ std::vector<Visual*>& Visual::GetRegistry()
     return registry;
 }
 
-std::vector<std::shared_ptr<Visual>>& Visual::GetRootVisualReferences()
+std::vector<std::weak_ptr<Visual>>& Visual::GetRootVisualReferences()
 {
-    static std::vector<std::shared_ptr<Visual>> rootReferences;
+    static std::vector<std::weak_ptr<Visual>> rootReferences;
     return rootReferences;
 }
 
@@ -197,7 +202,7 @@ void Visual::CaptureRootVisuals()
     for (Visual* visual : GetRegistry()) {
         if (!visual->GetParent()) {
             try {
-                rootRefs.push_back(visual->shared_from_this());
+                rootRefs.emplace_back(visual->shared_from_this());
             } catch (const std::bad_weak_ptr&) {
             }
         }

@@ -4,13 +4,10 @@
 			"path": "."
 		},
 		{
-			"path": "../NeoApp"
-		},
-		{
-			"path": "E:/PrismUI"
-		},
-		{
 			"path": "E:/NeoWPF.doc"
+		},
+		{
+			"path": "../Saphire"
 		}
 	],
 	"settings": {
