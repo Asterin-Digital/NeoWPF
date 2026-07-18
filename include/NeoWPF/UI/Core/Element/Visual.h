@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include <mutex>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 
@@ -28,7 +29,10 @@ public:
 
         @internal
     */
-    Visual* GetParent() const noexcept { return m_parent.lock().get(); }
+    Visual* GetParent() const noexcept {
+        std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
+        return m_parent.lock().get();
+    }
 
     /*
         @summary
@@ -184,6 +188,7 @@ private:
     */
     void KeepAliveAsRoot();
 
+    mutable std::recursive_mutex m_visualTreeMutex;
     std::weak_ptr<Visual> m_parent;
     std::vector<std::shared_ptr<Visual>> m_children;
     std::vector<std::shared_ptr<Visual>> m_logicalChildren;

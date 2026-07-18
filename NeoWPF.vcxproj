@@ -212,6 +212,7 @@
     <ClCompile Include="src\UI\Controls\Button\ButtonProperties.cpp" />
     <ClCompile Include="src\UI\Controls\Checkbox\Checkbox.cpp" />
     <ClCompile Include="src\UI\Controls\Checkbox\CheckboxStates.cpp" />
+    <ClCompile Include="src\UI\Controls\Checkbox\CheckboxProperties.cpp" />
     <ClCompile Include="src\UI\Controls\ItemsControl\ItemsControl.cpp" />
     <ClCompile Include="src\UI\Controls\ItemsControl\ItemsControlProperties.cpp" />
     <ClCompile Include="src\UI\Controls\Checkbox\Visual\CheckboxStyles.cpp" />

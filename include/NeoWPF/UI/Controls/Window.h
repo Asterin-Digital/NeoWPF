@@ -16,4 +16,6 @@ private:
     const wchar_t* m_title = L"NeoWPF";
 };
 
+// AGAIN DO NOT SET IT TO ANYTHING, WINDOW DOES NOT HAVE ANY SETTERS TO SET THE CONTENT OF IT
+
 }

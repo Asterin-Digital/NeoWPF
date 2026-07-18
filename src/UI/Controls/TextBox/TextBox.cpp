@@ -30,7 +30,7 @@ namespace {
     }
 }
 
-bool NeoWPF::UI::TextBox::s_textBoxDebug = true;
+bool NeoWPF::UI::TextBox::s_textBoxDebug = false;
 
 namespace NeoWPF::UI {
 
@@ -276,23 +276,31 @@ void TextBox::Measure(int availableWidth, int availableHeight)
 
 void TextBox::Arrange(int finalWidth, int finalHeight)
 {
-    static std::once_flag scrollbarsAdded;
-    std::call_once(scrollbarsAdded, [this]() {
-        if (auto self = std::dynamic_pointer_cast<Visual>(shared_from_this())) {
-            if (m_verticalScrollBar) {
-                self->AddVisualChild(m_verticalScrollBar);
-            }
-            if (m_horizontalScrollBar) {
-                self->AddVisualChild(m_horizontalScrollBar);
-            }
-        }
-    });
-
     Content::ContentControl::Arrange(finalWidth, finalHeight);
     m_contentHostWidth = std::max(0, finalWidth - (m_padding * 2));
     m_contentHostHeight = std::max(0, finalHeight - (m_padding * 2));
     UpdateScrollMetrics();
     ClampScrollOffsets();
+
+    if (m_verticalScrollBar) {
+        m_verticalScrollBar->SetHorizontalAlignment(HorizontalAlignment::Left);
+        m_verticalScrollBar->SetVerticalAlignment(VerticalAlignment::Top);
+        m_verticalScrollBar->SetWidthMode(LayoutSizeMode::Auto);
+        m_verticalScrollBar->SetHeightMode(LayoutSizeMode::Auto);
+        if (!m_verticalScrollBar->GetParent()) {
+                AddChild(m_verticalScrollBar);
+        }
+    }
+    if (m_horizontalScrollBar) {
+        m_horizontalScrollBar->SetHorizontalAlignment(HorizontalAlignment::Left);
+        m_horizontalScrollBar->SetVerticalAlignment(VerticalAlignment::Top);
+        m_horizontalScrollBar->SetWidthMode(LayoutSizeMode::Auto);
+        m_horizontalScrollBar->SetHeightMode(LayoutSizeMode::Auto);
+        if (!m_horizontalScrollBar->GetParent()) {
+                AddChild(m_horizontalScrollBar);
+        }
+    }
+
     if (s_textBoxDebug) {
         NeoWPF::Diagnostics::LogInfo("[TextBox] Arrange: final=%dx%d, textDirty=%d, lineCount=%zu", finalWidth, finalHeight, m_textDirty ? 1 : 0, m_textLayout.GetLineCount());
     }

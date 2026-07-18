@@ -44,7 +44,6 @@
   - [x] `CornerRadius`
   - [x] `WidthMode`
   - [x] `HeightMode`
-  - [ ] other layout/render related properties
 
 ## Phase 3 — Control registration and public APIs
 
@@ -56,7 +55,7 @@
   - `OnTextChanged`
   - `OnBackgroundColorChanged`
   - `OnPaddingChanged`
-- [ ] Convert common control properties first:
+- ] Convert common control properties first:
   - `Text`
   - `TextColor`
   - `FontSize`

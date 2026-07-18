@@ -69,12 +69,12 @@ void Border::Arrange(int finalWidth, int finalHeight)
 
         presenter->Arrange(innerWidth, innerHeight);
         presenter->SetLayoutOffset(innerX, innerY);
-        if (!presenter->GetParent()) {
+        /* if (!presenter->GetParent()) {
             try {
                 AddChild(presenter);
             } catch (const std::bad_weak_ptr&) {
             }
-        }
+        } */ // possible crash point
     }
 }
 

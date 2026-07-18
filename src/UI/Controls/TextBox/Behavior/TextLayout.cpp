@@ -127,6 +127,7 @@ void TextLayout::Refresh(const std::wstring& text, int fontSize, int availableWi
     Clear();
 
     const auto lines = SplitLines(text);
+    m_lines.reserve(std::max(lines.size() * 2, static_cast<std::size_t>(1)));
     if (TextBox::s_textBoxDebug) {
         NeoWPF::Diagnostics::LogInfo("[TextBox] TextLayout::Refresh: textLength=%zu fontSize=%d available=(%d,%d) wrapping=%d logicalLines=%zu createTextures=%d",
             text.size(), fontSize, availableWidth, availableHeight, static_cast<int>(textWrapping), lines.size(), createTextures ? 1 : 0);
@@ -142,35 +143,30 @@ void TextLayout::Refresh(const std::wstring& text, int fontSize, int availableWi
                 NeoWPF::Diagnostics::LogInfo("[TextBox] TextLayout::Refresh: logicalLine=%zu startOffset=%zu wrappedSegment=(%zu,%zu) text='%ls'",
                     logicalLineIndex, logicalLine.startOffset, wrappedLine.startOffset, wrappedLine.endOffset, wrappedLine.text.c_str());
             }
-            LineRenderData line;
-            line.text = wrappedLine.text;
-            line.charStart = wrappedLine.startOffset;
-            line.charEnd = wrappedLine.endOffset;
-
-            const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(wrappedLine.text.empty() ? L"W" : wrappedLine.text, m_fontSize, lineWidthConstraint, lineHeightConstraint);
-            const int lineHeight = MeasureLineHeight(wrappedLine.text, m_fontSize);
-
+            uint32_t textureId = 0;
+            int width = 0;
+            int height = 0;
+            
             if (createTextures && !wrappedLine.text.empty()) {
-                int width = 0;
-                int height = 0;
                 auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(wrappedLine.text, m_fontSize, lineWidthConstraint, lineHeightConstraint, width, height);
                 if (!bitmap.empty() && width > 0 && height > 0) {
-                    line.textureId = NeoWPF::Rendering::Renderer_CreateTexture(static_cast<unsigned int>(width), static_cast<unsigned int>(height), bitmap.data());
-                    line.width = width;
-                    line.height = height;
+                    textureId = NeoWPF::Rendering::Renderer_CreateTexture(static_cast<unsigned int>(width), static_cast<unsigned int>(height), bitmap.data());
                 }
             }
 
-            const int renderedHeight = std::max(1, line.height > 0 ? line.height : lineHeight);
-            line.lineHeight = renderedHeight;
+            const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(wrappedLine.text.empty() ? L"W" : wrappedLine.text, m_fontSize, lineWidthConstraint, lineHeightConstraint);
+            const int lineHeight = MeasureLineHeight(wrappedLine.text, m_fontSize);
+            const int renderedHeight = std::max(1, height > 0 ? height : lineHeight);
+            
             m_contentHeight += renderedHeight;
             if (textWrapping == TextWrapping::NoWrap) {
-                m_contentWidth = std::max(m_contentWidth, std::max(line.width > 0 ? line.width : lineMetrics.width, 1));
+                m_contentWidth = std::max(m_contentWidth, std::max(width > 0 ? width : lineMetrics.width, 1));
             }
             else {
-                m_contentWidth = std::max(m_contentWidth, line.width > 0 ? line.width : lineMetrics.width);
+                m_contentWidth = std::max(m_contentWidth, width > 0 ? width : lineMetrics.width);
             }
-            m_lines.push_back(line);
+            
+            m_lines.push_back({wrappedLine.text, textureId, width, height, renderedHeight, wrappedLine.startOffset, wrappedLine.endOffset});
         }
     }
 }

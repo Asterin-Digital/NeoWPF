@@ -3,6 +3,6 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="../NeoApp/NeoApp.vcxproj" Id="4ad43def-50e5-4817-81fc-099e368a1ee3" />
+  <Project Path="../Saphire/Saphire.vcxproj" Id="1f26fac2-9e48-4050-81e0-3413c74ea6f0" />
   <Project Path="NeoWPF.vcxproj" Id="e190a903-89ce-4c20-8c94-af50bbc72985" />
 </Solution>

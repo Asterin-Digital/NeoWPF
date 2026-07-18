@@ -1,0 +1,27 @@
+ 	[Exception thrown at 0x00007FF6F1980183 in Saphire.exe: 0xC0000005: Access violation reading location 0xFFFFFFFFFFFFFFFF.]	
+>	Saphire.exe!std::_Container_base12::_Swap_proxy_and_iterators_unlocked(std::_Container_base12 & _Right) Line 1423	C++
+ 	Saphire.exe!std::_Container_base12::_Swap_proxy_and_iterators_locked(std::_Container_base12 & _Right) Line 1260	C++
+ 	Saphire.exe!std::_Container_base12::_Swap_proxy_and_iterators(std::_Container_base12 & _Right) Line 1439	C++
+ 	Saphire.exe!std::wstring::_Swap_proxy_and_iterators(std::wstring & _Right) Line 3228	C++
+ 	Saphire.exe!std::wstring::_Take_contents(std::wstring & _Right) Line 1326	C++
+ 	Saphire.exe!std::wstring::basic_string<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t>>(std::wstring && _Right) Line 1080	C++
+ 	Saphire.exe!NeoWPF::UI::TextLayout::LineRenderData::LineRenderData(NeoWPF::UI::TextLayout::LineRenderData && __that)	C++
+ 	Saphire.exe!std::construct_at<NeoWPF::UI::TextLayout::LineRenderData,NeoWPF::UI::TextLayout::LineRenderData>(NeoWPF::UI::TextLayout::LineRenderData * const _Location, NeoWPF::UI::TextLayout::LineRenderData && <_Args_0>) Line 649	C++
+ 	Saphire.exe!std::_Default_allocator_traits<std::allocator<NeoWPF::UI::TextLayout::LineRenderData>>::construct<NeoWPF::UI::TextLayout::LineRenderData,NeoWPF::UI::TextLayout::LineRenderData>(std::allocator<NeoWPF::UI::TextLayout::LineRenderData> & __formal, NeoWPF::UI::TextLayout::LineRenderData * const _Ptr, NeoWPF::UI::TextLayout::LineRenderData && <_Args_0>) Line 730	C++
+ 	Saphire.exe!std::_Uninitialized_backout_al<std::allocator<NeoWPF::UI::TextLayout::LineRenderData>>::_Emplace_back<NeoWPF::UI::TextLayout::LineRenderData>(NeoWPF::UI::TextLayout::LineRenderData && <_Vals_0>) Line 1868	C++
+ 	Saphire.exe!std::_Uninitialized_move<NeoWPF::UI::TextLayout::LineRenderData *,std::allocator<NeoWPF::UI::TextLayout::LineRenderData>>(NeoWPF::UI::TextLayout::LineRenderData * const _First, NeoWPF::UI::TextLayout::LineRenderData * const _Last, NeoWPF::UI::TextLayout::LineRenderData * _Dest, std::allocator<NeoWPF::UI::TextLayout::LineRenderData> & _Al) Line 2023	C++
+ 	Saphire.exe!std::vector<NeoWPF::UI::TextLayout::LineRenderData,std::allocator<NeoWPF::UI::TextLayout::LineRenderData>>::_Emplace_reallocate<NeoWPF::UI::TextLayout::LineRenderData const &>(NeoWPF::UI::TextLayout::LineRenderData * const _Whereptr, const NeoWPF::UI::TextLayout::LineRenderData & <_Val_0>) Line 907	C++
+ 	Saphire.exe!std::vector<NeoWPF::UI::TextLayout::LineRenderData,std::allocator<NeoWPF::UI::TextLayout::LineRenderData>>::_Emplace_one_at_back<NeoWPF::UI::TextLayout::LineRenderData const &>(const NeoWPF::UI::TextLayout::LineRenderData & <_Val_0>) Line 851	C++
+ 	Saphire.exe!std::vector<NeoWPF::UI::TextLayout::LineRenderData,std::allocator<NeoWPF::UI::TextLayout::LineRenderData>>::push_back(const NeoWPF::UI::TextLayout::LineRenderData & _Val) Line 936	C++
+ 	Saphire.exe!NeoWPF::UI::TextLayout::Refresh(const std::wstring & text, int fontSize, int availableWidth, int availableHeight, NeoWPF::UI::TextWrapping textWrapping, bool createTextures) Line 173	C++
+ 	Saphire.exe!NeoWPF::UI::TextBox::UpdateScrollMetrics() Line 12	C++
+ 	Saphire.exe!NeoWPF::UI::TextBox::Arrange(int finalWidth, int finalHeight) Line 294	C++
+ 	Saphire.exe!NeoWPF::UI::Content::ContentPresenter::Arrange(int finalWidth, int finalHeight) Line 74	C++
+ 	Saphire.exe!NeoWPF::UI::Border::Arrange(int finalWidth, int finalHeight) Line 70	C++
+ 	Saphire.exe!NeoWPF::UI::Grid::Arrange(int finalWidth, int finalHeight) Line 286	C++
+ 	Saphire.exe!NeoWPF::Core::LayoutAndBuildAllTopLevelVisuals(const std::vector<NeoWPF::UI::Visual *,std::allocator<NeoWPF::UI::Visual *>> & visuals, unsigned int width, unsigned int height, NeoWPF::Rendering::CommandList & buildCommandList) Line 98	C++
+ 	Saphire.exe!NeoWPF::Core::BuildWindowVisualTree(NeoWPF::Core::WindowState & windowState, unsigned int width, unsigned int height) Line 59	C++
+ 	Saphire.exe!NeoWPF::Core::StartRenderThread::__l2::<lambda_1>::operator()() Line 129	C++
+ 	[External Code]
+
+-- Solved

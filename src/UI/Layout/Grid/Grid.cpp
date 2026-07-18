@@ -237,7 +237,6 @@ void Grid::Arrange(int finalWidth, int finalHeight)
         int desiredW = fe->GetDesiredWidth();
         int desiredH = fe->GetDesiredHeight();
 
-
         int alignedX = 0, alignedY = 0;
         int alignedW = desiredW;
         int alignedH = desiredH;
