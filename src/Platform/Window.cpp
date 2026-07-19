@@ -137,6 +137,56 @@ void EnsureNeoWPFWindowClass(HINSTANCE hInst)
 
 namespace NeoWPF::Platform {
 
+void Window::SetContent(std::shared_ptr<NeoWPF::UI::Visual> content) noexcept
+{
+    if (m_hwnd) {
+        SetWindowContent(m_hwnd, std::move(content));
+        return;
+    }
+
+    m_content = std::move(content);
+}
+
+std::shared_ptr<NeoWPF::UI::Visual> Window::GetContent() const noexcept
+{
+    if (m_hwnd) {
+        return GetWindowContent(m_hwnd);
+    }
+
+    return m_content;
+}
+
+void Window::SetWindowContent(HWND hwnd, std::shared_ptr<NeoWPF::UI::Visual> content)
+{
+    if (!hwnd) {
+        return;
+    }
+
+    auto& windows = NeoWPF::Core::GetAppState().windows;
+    for (auto& windowState : windows) {
+        if (windowState.hwnd == hwnd) {
+            windowState.contentRoot = content.get();
+            windowState.windowHost->SetContent(content);
+            return;
+        }
+    }
+}
+
+std::shared_ptr<NeoWPF::UI::Visual> Window::GetWindowContent(HWND hwnd)
+{
+    if (!hwnd) {
+        return nullptr;
+    }
+
+    const auto& windows = NeoWPF::Core::GetAppState().windows;
+    for (const auto& windowState : windows) {
+        if (windowState.hwnd == hwnd) {
+            return windowState.windowHost->GetContent();
+        }
+    }
+    return nullptr;
+}
+
 HWND Window::CreateWindow(HINSTANCE hInst, const wchar_t* title, int w, int h)
 {
     EnsureNeoWPFWindowClass(hInst);

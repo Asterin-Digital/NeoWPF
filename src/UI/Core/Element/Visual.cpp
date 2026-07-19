@@ -15,7 +15,7 @@
 // UIElement.cpp/h not being allowed to reach into FrameworkElement.cpp/h
 
 // Please keep Visual.h file stable and don't modify it in any way unless you
-// have a reasonable and good motivation to do so, modifying it will trigger a full recompile 
+// have a logical reason and good motivation to do so, modifying it will trigger a long rebuild
 
 namespace NeoWPF::UI {
 
@@ -87,10 +87,6 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
         NeoWPF::Diagnostics::LogInfo("[Visual::AddVisualChild] After push_back");
     }
 
-    if (!GetParent()) {
-        KeepAliveAsRoot();
-    }
-
     MarkTreeDirty();
 }
 
@@ -122,19 +118,12 @@ void Visual::AddChild(const std::shared_ptr<Visual>& child)
     {
         if (existing.get() == child.get())
         {
-            if (!GetParent()) {
-                KeepAliveAsRoot();
-            }
             MarkTreeDirty();
             return;
         }
     }
 
     m_logicalChildren.push_back(child);
-
-    if (!GetParent()) {
-        KeepAliveAsRoot();
-    }
 
     MarkTreeDirty();
 }
@@ -224,28 +213,6 @@ Visual::Visual()
     GetRegistry().push_back(this);
 }
 
-void Visual::KeepAliveAsRoot()
-{
-    auto& rootRefs = GetRootVisualReferences();
-    if (!GetParent()) {
-        try {
-            auto self = shared_from_this();
-            for (auto it = rootRefs.begin(); it != rootRefs.end(); ) {
-                if (auto existing = it->lock()) {
-                    if (existing.get() == this) {
-                        return;
-                    }
-                    ++it;
-                } else {
-                    it = rootRefs.erase(it);
-                }
-            }
-            rootRefs.emplace_back(self);
-        } catch (const std::bad_weak_ptr&) {
-        }
-    }
-}
-
 Visual::~Visual()
 {
     auto& registry = GetRegistry();
@@ -263,30 +230,9 @@ std::vector<Visual*>& Visual::GetRegistry()
     return registry;
 }
 
-std::vector<std::weak_ptr<Visual>>& Visual::GetRootVisualReferences()
-{
-    static std::vector<std::weak_ptr<Visual>> rootReferences;
-    return rootReferences;
-}
-
 const std::vector<Visual*>& Visual::GetRegisteredVisuals()
 {
     return GetRegistry();
-}
-
-void Visual::CaptureRootVisuals()
-{
-    auto& rootRefs = GetRootVisualReferences();
-    rootRefs.clear();
-
-    for (Visual* visual : GetRegistry()) {
-        if (!visual->GetParent()) {
-            try {
-                rootRefs.emplace_back(visual->shared_from_this());
-            } catch (const std::bad_weak_ptr&) {
-            }
-        }
-    }
 }
 
 void Visual::DumpVisualTree(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options) const

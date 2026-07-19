@@ -1,12 +1,19 @@
 {
 	"folders": [
 		{
+			"name": "NeoWPF",
 			"path": "."
 		},
 		{
+			"name": "NeoWPF.Gallery",
+			"path": "../NeoWPF.Gallery"
+		},
+		{
+			"name": "NeoWPF.doc",
 			"path": "E:/NeoWPF.doc"
 		},
 		{
+			"name": "Saphire",
 			"path": "../Saphire"
 		}
 	],

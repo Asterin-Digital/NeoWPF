@@ -1,6 +1,5 @@
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Core/Application/Application.h>
-#include <NeoWPF/Core/Root/RootVisuals.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Platform/Window.h>
@@ -35,13 +34,44 @@ void SetInputRootForWindow(HWND hwnd)
     std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
     for (auto& windowState : s_appState.windows) {
         if (windowState.hwnd == hwnd && windowState.isPrimaryWindow) {
-            const auto& visuals = NeoWPF::UI::Visual::GetRegisteredVisuals();
-            const auto& rootInfos = FindRootVisual(visuals);
-            auto rootVisual = rootInfos.rootVisual;
-            NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual));
+            auto rootVisual = windowState.windowHost->GetContent();
+            NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual.get()));
             return;
         }
     }
+}
+
+namespace {
+
+void ClearVisualTreeDirtyForRoot(NeoWPF::UI::Visual* rootVisual)
+{
+    if (!rootVisual) {
+        return;
+    }
+
+    rootVisual->ClearTreeDirty();
+    if (auto uiElement = dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual)) {
+        uiElement->ClearDirty();
+    }
+
+    for (NeoWPF::UI::Visual* child : rootVisual->GetVisualChildren()) {
+        ClearVisualTreeDirtyForRoot(child);
+    }
+}
+
+void LayoutAndBuildVisualTree(NeoWPF::UI::Visual* rootVisual, unsigned int width, unsigned int height, NeoWPF::Rendering::CommandList& buildCommandList)
+{
+    if (!rootVisual) {
+        return;
+    }
+
+    if (auto fe = dynamic_cast<NeoWPF::UI::FrameworkElement*>(rootVisual)) {
+        fe->Measure(static_cast<int>(width), static_cast<int>(height));
+        fe->Arrange(static_cast<int>(width), static_cast<int>(height));
+    }
+    rootVisual->BuildRenderCommands(buildCommandList);
+}
+
 }
 
 void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigned int height)
@@ -55,8 +85,8 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
         return;
     }
 
-    const auto& visuals = NeoWPF::UI::Visual::GetRegisteredVisuals();
-    LayoutAndBuildAllTopLevelVisuals(visuals, width, height, windowState.buildCommandList);
+    auto rootVisual = windowState.windowHost->GetContent();
+    LayoutAndBuildVisualTree(rootVisual.get(), width, height, windowState.buildCommandList);
     const auto layoutElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - layoutStart).count();
     NeoWPF::Diagnostics::PerformanceMetrics::RecordLayoutPass(layoutElapsed);
     windowState.renderCommandList = windowState.buildCommandList;
@@ -215,9 +245,10 @@ int RunApplicationMessageLoop()
         }
     }
 
-    const auto& rootInfos = FindRootVisual(visuals);
-    auto rootVisual = rootInfos.rootVisual;
-    NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual));
+    if (!s_appState.windows.empty()) {
+        auto rootVisual = s_appState.windows[0].windowHost->GetContent();
+        NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual.get()));
+    }
 
     ::UpdateWindow(primaryWindow);
     ::RedrawWindow(primaryWindow, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
@@ -251,10 +282,9 @@ int RunApplicationMessageLoop()
         }
 
         bool needsUpdate = false;
-        const auto& visuals = NeoWPF::UI::Visual::GetRegisteredVisuals();
         bool anyTopLevelDirty = false;
-        for (auto visual : visuals) {
-            if (!visual->GetParent() && visual->IsTreeDirty()) {
+        for (const auto& windowState : s_appState.windows) {
+            if (windowState.windowHost && windowState.windowHost->GetContent() && windowState.windowHost->GetContent()->IsTreeDirty()) {
                 anyTopLevelDirty = true;
                 break;
             }
@@ -315,7 +345,11 @@ int RunApplicationMessageLoop()
                 windowState.width = windowWidth;
                 windowState.height = windowHeight;
             }
-            ClearTopLevelVisualsDirty(visuals);
+            for (auto& windowState : s_appState.windows) {
+                if (windowState.windowHost && windowState.windowHost->GetContent()) {
+                    ClearVisualTreeDirtyForRoot(windowState.windowHost->GetContent().get());
+                }
+            }
         }
     }
 

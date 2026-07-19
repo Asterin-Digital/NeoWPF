@@ -85,14 +85,6 @@ public:
 
     /*
         @summary
-        Captures the current root visuals.
-
-        @internal
-    */
-    static void CaptureRootVisuals();
-
-    /*
-        @summary
         Adds a visual child.
 
         @internal
@@ -171,22 +163,6 @@ private:
         @internal
     */
     static std::vector<Visual*>& GetRegistry();
-
-    /*
-        @summary
-        Returns the root visual references.
-
-        @internal
-    */
-    static std::vector<std::weak_ptr<Visual>>& GetRootVisualReferences();
-
-    /*
-        @summary
-        Keeps this visual alive as a root visual.
-
-        @internal
-    */
-    void KeepAliveAsRoot();
 
     mutable std::recursive_mutex m_visualTreeMutex;
     std::weak_ptr<Visual> m_parent;

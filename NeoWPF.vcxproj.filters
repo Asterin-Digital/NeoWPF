@@ -54,9 +54,6 @@
     <ClCompile Include="src\UI\Layout\Panel\StackPanel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Core\Root\RootVisuals.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\UI\Core\Element\Visual.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -402,9 +399,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\Rendering\Shaders\ShaderSources.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\NeoWPF\Core\Root\RootVisuals.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Controls\Panel.h">

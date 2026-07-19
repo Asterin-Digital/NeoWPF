@@ -93,8 +93,8 @@ int main() {{
     NeoWPF::Core::Application::Initialize();
 
     auto content = CreateMainContent();
-
-    NeoWPF::Core::Application::Current()->CreateWindow(L"{window_title}", 900, 680);
+    auto window = NeoWPF::Core::Application::Current()->CreateWindow(L"{window_title}", 900, 680);
+    window.SetContent(content);
 
     return NeoWPF::Core::Application::Run();
 }}

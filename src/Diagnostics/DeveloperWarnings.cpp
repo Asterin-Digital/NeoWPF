@@ -70,11 +70,11 @@ OverlayBuildResult CreateDeveloperWarningOverlay(const DeveloperWarningMessage& 
 void AttachDeveloperWarningOverlayToRoot(const DeveloperWarningMessage& warning, int overlayIndex)
 {
     auto& appState = NeoWPF::Core::GetAppState();
-    const auto visuals = NeoWPF::UI::Visual::GetRegisteredVisuals();
     NeoWPF::UI::Visual* targetRoot = nullptr;
-    for (auto* visual : visuals) {
-        if (!visual->GetParent()) {
-            targetRoot = visual;
+
+    for (const auto& windowState : appState.windows) {
+        if (windowState.windowHost && windowState.windowHost->GetContent()) {
+            targetRoot = windowState.windowHost->GetContent().get();
             break;
         }
     }

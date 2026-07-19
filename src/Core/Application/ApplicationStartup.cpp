@@ -9,15 +9,15 @@ namespace NeoWPF::Core {
 
 void DumpVisualTreeImpl(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options)
 {
-    const auto& registeredVisuals = NeoWPF::UI::Visual::GetRegisteredVisuals();
-    if (registeredVisuals.empty()) {
-        NeoWPF::Diagnostics::LogWarn("No visual tree to dump - no registered root visuals");
+    auto& appState = GetAppState();
+    if (appState.windows.empty()) {
+        NeoWPF::Diagnostics::LogWarn("No visual tree to dump, no windows have content attached");
         return;
     }
 
-    for (auto rootVisual : registeredVisuals) {
-        if (!rootVisual->GetParent()) {
-            NeoWPF::Diagnostics::VisualTreeDumper::DumpTree(rootVisual, options);
+    for (const auto& windowState : appState.windows) {
+        if (windowState.windowHost && windowState.windowHost->GetContent()) {
+            NeoWPF::Diagnostics::VisualTreeDumper::DumpTree(windowState.windowHost->GetContent().get(), options);
         }
     }
 }

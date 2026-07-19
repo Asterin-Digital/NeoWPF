@@ -3,6 +3,11 @@
 #include <Windows.h>
 #undef CreateWindow
 #include <functional>
+#include <memory>
+
+namespace NeoWPF::UI {
+class Visual;
+}
 
 namespace NeoWPF::Platform {
 
@@ -25,11 +30,17 @@ public:
     }
     void SetResizeCallback(ResizeCallback cb) { m_onResize = std::move(cb); }
 
+    void SetContent(std::shared_ptr<NeoWPF::UI::Visual> content) noexcept;
+    std::shared_ptr<NeoWPF::UI::Visual> GetContent() const noexcept;
+    static void SetWindowContent(HWND hwnd, std::shared_ptr<NeoWPF::UI::Visual> content);
+    static std::shared_ptr<NeoWPF::UI::Visual> GetWindowContent(HWND hwnd);
+
     static HWND CreateWindow(HINSTANCE hInst, const wchar_t* title, int w, int h);
 
 private:
     HWND m_hwnd = nullptr;
     ResizeCallback m_onResize;
+    std::shared_ptr<NeoWPF::UI::Visual> m_content;
 };
 
 }

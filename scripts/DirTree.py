@@ -38,7 +38,7 @@ def count_lines_in_directory(root_dir):
 
             code_extensions = {'.py', '.cs', '.java', '.cpp', '.c', '.h', '.hpp',
                              '.js', '.ts', '.html', '.css', '.txt', '.md', '.json',
-                             '.xml', '.yaml', '.yml', '.sh', '.bat', '.ps1'}
+                             '.xml', '.yaml', '.yml', '.sh', '.bat', '.ps1', ".dat"}
 
             if any(filename.endswith(ext) for ext in code_extensions):
                 filepath = os.path.join(dirpath, filename)

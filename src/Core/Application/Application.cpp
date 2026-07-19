@@ -25,7 +25,6 @@ void Application::Initialize()
     }
     NeoWPF::UI::Properties::RegisterCoreControlProperties();
     NeoWPF::UI::Styling::RegisterDefaultStyles();
-    NeoWPF::UI::Visual::CaptureRootVisuals();
 
     if (s_applicationDebugging) {
         NeoWPF::Diagnostics::LogInfo("Application::Initialize complete");
