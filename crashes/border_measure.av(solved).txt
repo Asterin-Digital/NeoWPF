@@ -19,4 +19,4 @@
  	Saphire.exe!main() Line 59	C++
  	[External Code]	
 
--- Solved!
+-- Solved! Was occuring because concurrent layout passes corrupted the visual child collection during std::vector reallocation
