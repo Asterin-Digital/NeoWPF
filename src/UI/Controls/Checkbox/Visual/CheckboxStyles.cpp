@@ -9,9 +9,9 @@ class CheckboxStyle : public Style {
 public:
     void Apply(UIElement* element) override
     {
-        element->SetStylePropertyValue("TextColor", NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu));
-        element->SetStylePropertyValue("BoxColor", NeoWPF::UI::Color::FromArgb(0xFF3A3A3Au));
-        element->SetStylePropertyValue("BorderColor", NeoWPF::UI::Color::FromArgb(0xFF666666u));
+        element->SetStylePropertyValue("TextColor", element->GetResourceValue("Checkbox.TextColor", NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu)));
+        element->SetStylePropertyValue("BoxColor", element->GetResourceValue("Checkbox.BoxColor", NeoWPF::UI::Color::FromArgb(0xFF3A3A3Au)));
+        element->SetStylePropertyValue("BorderColor", element->GetResourceValue("Checkbox.BorderColor", NeoWPF::UI::Color::FromArgb(0xFF666666u)));
     }
 };
 

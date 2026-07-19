@@ -34,4 +34,5 @@
 #include <NeoWPF/UI/Controls/Templates/TemplateParts.h>
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
+#include <NeoWPF/Core/Application/ApplicationResources.h>
 

@@ -1,7 +1,7 @@
 #include <NeoWPF/Core/Application/ApplicationResources.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 
-namespace NeoWPF::Core::Application {
+namespace NeoWPF::Core::ApplicationResources {
 
 ResourceDictionary Resources::s_applicationResources;
 

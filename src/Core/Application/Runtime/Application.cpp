@@ -15,6 +15,7 @@ bool Application::s_applicationDebugging = true;
 
 void Application::Initialize()
 {
+    NeoWPF::Core::ApplicationResources::Resources::Initialize();
     NeoWPF::Diagnostics::PerformanceMetrics::Initialize();
     if (s_applicationDebugging) {
         NeoWPF::Diagnostics::LogInfo("Application::Initialize begin");
@@ -78,8 +79,29 @@ int Application::Run()
 
 void Application::Shutdown()
 {
+    NeoWPF::Core::ApplicationResources::Resources::Shutdown();
     NeoWPF::Diagnostics::PerformanceMetrics::Shutdown();
     ShutdownApplication();
+}
+
+void Application::SetResource(const std::string& key, std::any value)
+{
+    NeoWPF::Core::ApplicationResources::Resources::SetResource(key, std::move(value));
+}
+
+bool Application::TryFindResource(const std::string& key, std::any& outValue)
+{
+    return NeoWPF::Core::ApplicationResources::Resources::TryFindResource(key, outValue);
+}
+
+std::any Application::FindResource(const std::string& key)
+{
+    return NeoWPF::Core::ApplicationResources::Resources::FindResource(key);
+}
+
+bool Application::TryGetResource(const std::string& key, std::any& outValue)
+{
+    return NeoWPF::Core::ApplicationResources::Resources::TryGetResource(key, outValue);
 }
 
 Application* Application::Current()

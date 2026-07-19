@@ -4,6 +4,7 @@
 #include <NeoWPF/Core/Events/Event.h>
 #include <NeoWPF/Input/Core/EventHandler.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
+#include <NeoWPF/Core/Application/ApplicationResources.h>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -111,6 +112,21 @@ public:
     bool SetPropertyValue(const std::string& name, const std::any& value);
     std::any GetPropertyValue(const std::string& name) const;
 
+    bool SetResource(const std::string& key, const std::any& value);
+    bool TryFindResource(const std::string& key, std::any& outValue) const;
+    std::any FindResource(const std::string& key) const;
+
+    template<typename T>
+    T GetResourceValue(const std::string& key, const T& fallbackValue) const {
+        std::any value;
+        if (TryFindResource(key, value)) {
+            if (const auto* typedValue = std::any_cast<T>(&value)) {
+                return *typedValue;
+            }
+        }
+        return fallbackValue;
+    }
+
     NeoWPF::Core::Event<std::string, std::any> PropertyChanged;
 
     void AddHandler(const NeoWPF::Input::Core::RoutedEvent& routedEvent,
@@ -146,6 +162,7 @@ private:
     std::unordered_map<std::size_t, NeoWPF::Core::Event<UIElement*, NeoWPF::Input::Core::RoutedEventArgs*>> m_routedEventHandlers;
     std::shared_ptr<NeoWPF::UI::Core::Transform> m_renderTransform;
     NeoWPF::UI::Core::Point m_renderTransformOrigin{0.5f, 0.5f};
+    std::unordered_map<std::string, std::any> m_resources;
 };
 
 }

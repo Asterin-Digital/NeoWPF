@@ -9,7 +9,7 @@ class PanelStyle : public Style {
 public:
     void Apply(UIElement* element) override
     {
-        element->SetStylePropertyValue("BackgroundColor", uint32_t(0xFF1E1E1Eu));
+        element->SetStylePropertyValue("BackgroundColor", element->GetResourceValue("Panel.BackgroundColor", uint32_t(0xFF1E1E1Eu)));
     }
 };
 

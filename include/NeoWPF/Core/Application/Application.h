@@ -3,6 +3,12 @@
 #include <Windows.h>
 #include <string>
 #include <vector>
+#include <any>
+#include <NeoWPF/Core/Application/ApplicationResources.h>
+
+#undef FindResource
+#undef FindResourceA
+#undef FindResourceW
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <NeoWPF/Platform/Window.h>
@@ -59,6 +65,60 @@ public:
         The active Application singleton, or nullptr if none is initialized.
     */
     static Application* Current();
+
+    /*
+        @summary
+        Stores a resource value in the application resource dictionary.
+
+        @param key
+        The resource key.
+
+        @param value
+        The resource value to store.
+    */
+    static void SetResource(const std::string& key, std::any value);
+
+    /*
+        @summary
+        Attempts to find a resource value by key.
+
+        @param key
+        The resource key.
+
+        @param outValue
+        The output value if the resource exists.
+
+        @returns
+        True if the resource was found, otherwise false.
+    */
+    static bool TryFindResource(const std::string& key, std::any& outValue);
+
+    /*
+        @summary
+        Finds a resource value by key.
+
+        @param key
+        The resource key.
+
+        @returns
+        The resource value if found, otherwise an empty std::any.
+    */
+    static std::any FindResource(const std::string& key);
+
+    /*
+        @summary
+        Attempts to retrieve a resource value by key.
+
+        @param key
+        The resource key.
+
+        @param outValue
+        The output value if the resource exists.
+
+        @returns
+        True if the resource was found, otherwise false.
+    */
+    static bool TryGetResource(const std::string& key, std::any& outValue);
 
     /*
         @summary

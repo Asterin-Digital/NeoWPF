@@ -1,4 +1,6 @@
 #include <NeoWPF/UI/Styling/Style/StyleManager.h>
+#include <NeoWPF/UI/Styling/Style/Style.h>
+#include <NeoWPF/UI/Core/Element/UIElement.h>
 
 namespace NeoWPF::UI::Styling {
 
@@ -14,6 +16,17 @@ StylePtr StyleManager::GetDefault(const std::type_index& type)
 {
     auto it = s_defaults.find(type);
     return it != s_defaults.end() ? it->second : nullptr;
+}
+
+void ReapplyDefaultStyleForElement(UIElement* element)
+{
+    if (!element) {
+        return;
+    }
+
+    if (auto style = StyleManager::GetDefault(typeid(*element))) {
+        style->Apply(element);
+    }
 }
 
 }

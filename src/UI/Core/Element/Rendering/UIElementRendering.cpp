@@ -164,6 +164,47 @@ bool UIElement::SetPropertyValue(const std::string& name, const std::any& value)
     return true;
 }
 
+bool UIElement::SetResource(const std::string& key, const std::any& value)
+{
+    if (key.empty()) {
+        return false;
+    }
+
+    m_resources[key] = value;
+    return true;
+}
+
+bool UIElement::TryFindResource(const std::string& key, std::any& outValue) const
+{
+    if (key.empty()) {
+        return false;
+    }
+
+    const UIElement* current = this;
+    while (current)
+    {
+        const auto it = current->m_resources.find(key);
+        if (it != current->m_resources.end()) {
+            outValue = it->second;
+            return true;
+        }
+
+        const auto* parentVisual = current->GetParent();
+        current = dynamic_cast<const UIElement*>(parentVisual);
+    }
+
+    return NeoWPF::Core::ApplicationResources::Resources::TryFindResource(key, outValue);
+}
+
+std::any UIElement::FindResource(const std::string& key) const
+{
+    std::any value;
+    if (TryFindResource(key, value)) {
+        return value;
+    }
+    return {};
+}
+
 std::any UIElement::GetPropertyValue(const std::string& name) const
 {
     if (name.empty()) {

@@ -9,10 +9,10 @@ class ButtonStyle : public Style {
 public:
     void Apply(UIElement* element) override
     {
-        element->SetStylePropertyValue("TextColor", uint32_t(0xFFEDEDEDu));
-        element->SetStylePropertyValue("FontSize", 14);
-        element->SetStylePropertyValue("Padding", 10);
-        element->SetStylePropertyValue("BackgroundColor", uint32_t(0xFF3A3A3Au));
+        element->SetStylePropertyValue("TextColor", element->GetResourceValue("Button.TextColor", uint32_t(0xFFEDEDEDu)));
+        element->SetStylePropertyValue("FontSize", element->GetResourceValue("Button.FontSize", 14));
+        element->SetStylePropertyValue("Padding", element->GetResourceValue("Button.Padding", 10));
+        element->SetStylePropertyValue("BackgroundColor", element->GetResourceValue("Button.BackgroundColor", uint32_t(0xFF3A3A3Au)));
 
         element->SetStyleProperty("VisualState.Normal.Background", 0xFF3A3A3Au);
         element->SetStyleProperty("VisualState.MouseOver.Background", 0xFF5A7A9Au);

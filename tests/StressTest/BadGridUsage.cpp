@@ -1,53 +1,67 @@
-#include <memory>
-#include <string>
 #include <NeoWPF/NeoWPF.h>
-#include <iostream>
+
+using namespace NeoWPF;
 
 int main()
 {
-    NeoWPF::Core::Application::Initialize();
-    NeoWPF::Core::Application::Current()->CreateWindow(L"NeoApp", 900, 680);
+    Core::Application::Initialize();
 
-    using namespace NeoWPF;
-    using namespace NeoWPF::UI;
+    auto window = Core::Application::Current()->CreateWindow(L"Grid Validation Test", 900, 600);
 
-    auto root = std::make_shared<Grid>();
-    root->SetBackgroundColor(0xFF0B1220u);
-    root->AddRow(SizeMode::Star, 1);
-    root->AddColumn(SizeMode::Star, 1);
+    auto grid = std::make_shared<Grid>();
 
-    auto card = std::make_shared<Border>();
-    card->SetWidth(520);
-    card->SetHeight(160);
-    card->SetPadding(16);
-    card->SetCornerRadius(CornerRadius(14.0f));
-    card->SetBorderThickness(1);
-    card->SetBackgroundColor(0xFF0F172Au);
-    card->SetBorderColor(0xFF334155u);
-    card->SetHorizontalAlignment(HorizontalAlignment::Center);
-    card->SetVerticalAlignment(VerticalAlignment::Center);
+    grid->AddRow(UI::SizeMode::Auto);
+    grid->AddColumn(UI::SizeMode::Auto);
 
-    auto button = std::make_shared<Button>(L"Open Window");
-    button->SetPadding(12);
-    button->SetFontSize(16);
-    button->SetTextColor(0xFFEDF2F7u);
-    button->SetCornerRadius(CornerRadius(14.0f));
-    button->SetBackgroundColor(0xFF1E293Bu);
-    button->SetBorderColor(0xFF475569u);
-    button->SetHorizontalAlignment(HorizontalAlignment::Center);
-    button->SetVerticalAlignment(VerticalAlignment::Center);
+    window.SetContent(grid);
 
-    auto content = std::make_shared<Grid>();
-    content->AddRow(SizeMode::Star, 1);
-    content->AddColumn(SizeMode::Star, 1);
-    content->AddChild(button, 0, 0);
+    auto button = std::make_shared<Button>(L"Test");
 
-    button->Click += []() {
-        std::cout << "hi lol";
-    };
+    // Negative row
+    grid->AddChild(button, -1, 0);
 
-    card->SetChild(content);
-    root->AddChild(card, 0, 0);
+    // Negative column
+    grid->AddChild(button, 0, -1);
 
-    return NeoWPF::Core::Application::Run();
+    // Row out of range
+    grid->AddChild(button, 100, 0);
+
+    // Column out of range
+    grid->AddChild(button, 0, 100);
+
+    // Zero row span
+    grid->AddChild(button, 0, 0, 0, 1);
+
+    // Zero column span
+    grid->AddChild(button, 0, 0, 1, 0);
+
+    // Negative row span
+    grid->AddChild(button, 0, 0, -1, 1);
+
+    // Negative column span
+    grid->AddChild(button, 0, 0, 1, -1);
+
+    // Huge row span
+    grid->AddChild(button, 0, 0, 100, 1);
+
+    // Huge column span
+    grid->AddChild(button, 0, 0, 1, 100);
+
+    // Attached property tests
+    Grid::SetRow(button.get(), -1);
+    Grid::SetColumn(button.get(), -1);
+
+    Grid::SetRow(button.get(), 100);
+    Grid::SetColumn(button.get(), 100);
+
+    Grid::SetRowSpan(button.get(), 0);
+    Grid::SetColumnSpan(button.get(), 0);
+
+    Grid::SetRowSpan(button.get(), -5);
+    Grid::SetColumnSpan(button.get(), -5);
+
+    Grid::SetRowSpan(button.get(), 100);
+    Grid::SetColumnSpan(button.get(), 100);
+
+    return Core::Application::Run();
 }
