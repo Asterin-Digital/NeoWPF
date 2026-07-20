@@ -49,32 +49,32 @@ void ButtonBase::RaiseClick()
 void ButtonBase::OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args)
 {
     if (IsEnabled()) {
-        ApplyVisualState("MouseOver", false);
+        ApplyVisualState("MouseOver", true);
     }
 }
 
 void ButtonBase::OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args)
 {
     if (IsEnabled()) {
-        ApplyVisualState("Normal", false);
+        ApplyVisualState("Normal", true);
     }
 }
 
 void ButtonBase::OnMouseDown(int x, int y, std::uint32_t buttonState)
 {
     if (IsEnabled()) {
-        ApplyVisualState("Pressed", false);
+        ApplyVisualState("Pressed", true);
     }
 }
 
 void ButtonBase::OnMouseUp(int x, int y, std::uint32_t buttonState)
 {
     if (IsEnabled()) {
-        ApplyVisualState("MouseOver", false);
+        ApplyVisualState("MouseOver", true);
         RaiseClick();
     }
     else {
-        ApplyVisualState("Disabled", false);
+        ApplyVisualState("Disabled", true);
     }
 }
 

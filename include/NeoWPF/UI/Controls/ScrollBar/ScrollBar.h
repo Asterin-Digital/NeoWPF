@@ -101,6 +101,16 @@ public:
     */
     int GetThumbSize() const noexcept { return m_thumbSize; }
 
+    void SetPadding(int padding) noexcept;
+    int GetPadding() const noexcept;
+
+    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept;
+    void SetBorderColor(NeoWPF::UI::Color color) noexcept;
+    NeoWPF::UI::Color GetBorderColor() const noexcept;
+
+    void SetBorderThickness(int thickness) noexcept;
+    int GetBorderThickness() const noexcept;
+
     /*
         @summary
         Updates the total scrollable content size.
@@ -264,6 +274,11 @@ private:
         @internal
     */
     void UpdateScrollTarget() noexcept;
+
+    void OnPaddingChanged(int padding) override;
+    void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
+    void OnBorderColorChanged(NeoWPF::UI::Color color) override;
+    void OnBorderThicknessChanged(int thickness) override;
 
     /*
         @summary

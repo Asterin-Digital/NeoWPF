@@ -188,6 +188,7 @@
     <ClInclude Include="include\NeoWPF\UI\Controls\ItemsControl\ItemsControl.h" />
     <ClInclude Include="include\NeoWPF\UI\Content\ContentControl.h" />
     <ClInclude Include="include\NeoWPF\UI\Content\ContentPresenter.h" />
+    <ClInclude Include="include\NeoWPF\UI\Core\Element\Control.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Core\Application\Resources\ApplicationResources.cpp" />
@@ -231,6 +232,8 @@
     <ClCompile Include="src\UI\Controls\TextBox\Visual\TextBoxTemplate.cpp" />
     <ClCompile Include="src\UI\Controls\Text\TextBlockProperties.cpp" />
     <ClCompile Include="src\UI\Controls\Text\Visual\TextBlockStyles.cpp" />
+    <ClCompile Include="src\UI\Core\Element\Control.cpp" />
+    <ClCompile Include="src\UI\Core\Element\Properties\ControlProperties.cpp" />
     <ClCompile Include="src\UI\Core\Element\Properties\FrameworkElementProperties.cpp" />
     <ClCompile Include="src\UI\Core\Element\Properties\UIElementProperties.cpp" />
     <ClCompile Include="src\UI\Core\Transform\Transform.cpp" />

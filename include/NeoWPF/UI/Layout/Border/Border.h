@@ -51,67 +51,21 @@ public:
     */
     void ClearChild() { ClearContent(); }
 
-    /*
-        @summary
-        Sets the space between the border and its content.
+    void SetPadding(int padding) noexcept;
+    int GetPadding() const noexcept;
 
-        @param padding
-        The inset size in pixels.
-    */
-    void SetPadding(int padding) noexcept { m_padding = padding; InvalidateVisual(); }
+    void SetBorderThickness(int thickness) noexcept;
+    int GetBorderThickness() const noexcept;
 
-    /*
-        @summary
-        Gets the current padding.
-    */
-    int GetPadding() const noexcept { return m_padding; }
-
-    /*
-        @summary
-        Sets the border thickness.
-
-        @param thickness
-        The border width in pixels.
-    */
-    void SetBorderThickness(int thickness) noexcept { m_borderThickness = thickness; InvalidateVisual(); }
-
-    /*
-        @summary
-        Gets the current border thickness.
-    */
-    int GetBorderThickness() const noexcept { return m_borderThickness; }
-
-    /*
-        @summary
-        Sets the color used to draw the border.
-
-        @param color
-        The border color in ARGB format.
-    */
-    void SetBorderColor(NeoWPF::UI::Color color) noexcept { m_borderColor = color; InvalidateVisual(); }
+    void SetBorderColor(NeoWPF::UI::Color color) noexcept;
     void SetBorderColor(std::uint32_t color) noexcept { SetBorderColor(NeoWPF::UI::Color::FromArgb(color)); }
 
-    /*
-        @summary
-        Gets the border color.
-    */
-    NeoWPF::UI::Color GetBorderColor() const noexcept { return m_borderColor; }
+    NeoWPF::UI::Color GetBorderColor() const noexcept;
 
-    /*
-        @summary
-        Sets the background color drawn inside the border.
-
-        @param color
-        The background color in ARGB format.
-    */
-    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept { m_backgroundColor = color; InvalidateVisual(); }
+    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept;
     void SetBackgroundColor(std::uint32_t color) noexcept { SetBackgroundColor(NeoWPF::UI::Color::FromArgb(color)); }
 
-    /*
-        @summary
-        Gets the background color.
-    */
-    NeoWPF::UI::Color GetBackgroundColor() const noexcept { return m_backgroundColor; }
+    NeoWPF::UI::Color GetBackgroundColor() const noexcept;
 
     /*
         @summary
@@ -143,11 +97,11 @@ public:
 
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
-private:
-    int m_padding = 0;
-    int m_borderThickness = 0;
-    NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0xFF000000u);
-    NeoWPF::UI::Color m_backgroundColor = NeoWPF::UI::Color::FromArgb(0x00000000u);
+protected:
+    void OnPaddingChanged(int padding) override;
+    void OnBorderThicknessChanged(int thickness) override;
+    void OnBorderColorChanged(NeoWPF::UI::Color color) override;
+    void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
 };
 
 }

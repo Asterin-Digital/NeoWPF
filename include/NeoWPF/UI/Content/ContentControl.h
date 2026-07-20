@@ -1,6 +1,6 @@
 #pragma once
 
-#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Element/Control.h>
 #include <NeoWPF/UI/Core/Element/IContentAware.h>
 #include <memory>
 
@@ -12,7 +12,7 @@ namespace NeoWPF::UI::Content {
 
 class ContentPresenter;
 
-class ContentControl : public NeoWPF::UI::FrameworkElement, public NeoWPF::UI::IContentAware {
+class ContentControl : public NeoWPF::UI::Control, public NeoWPF::UI::IContentAware {
 public:
     ContentControl() = default;
 

@@ -8,7 +8,7 @@ namespace NeoWPF::UI {
 Border::Border()
 {
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
-    presenter->SetPadding(m_padding);
+    presenter->SetPadding(GetPadding());
     SetPresenter(presenter);
 
     ApplyBorderThemeStyle(this);
@@ -24,8 +24,8 @@ void Border::Measure(int availableWidth, int availableHeight)
             }
         }
 
-        if (presenter->GetPadding() != m_padding) {
-            presenter->SetPadding(m_padding);
+        if (presenter->GetPadding() != GetPadding()) {
+            presenter->SetPadding(GetPadding());
         }
 
         const int explicitW = GetWidth();
@@ -33,15 +33,15 @@ void Border::Measure(int availableWidth, int availableHeight)
         const int availableContentWidth = std::max(0, explicitW > 0 ? explicitW : availableWidth);
         const int availableContentHeight = std::max(0, explicitH > 0 ? explicitH : availableHeight);
 
-        const int innerWidth = std::max(0, availableContentWidth - (2 * m_borderThickness) - (2 * m_padding));
-        const int innerHeight = std::max(0, availableContentHeight - (2 * m_borderThickness) - (2 * m_padding));
+        const int innerWidth = std::max(0, availableContentWidth - (2 * GetBorderThickness()) - (2 * GetPadding()));
+        const int innerHeight = std::max(0, availableContentHeight - (2 * GetBorderThickness()) - (2 * GetPadding()));
 
         presenter->Measure(innerWidth, innerHeight);
 
         const int contentW = presenter->GetDesiredWidth();
         const int contentH = presenter->GetDesiredHeight();
-        const int contentDesiredW = std::max(0, contentW + (2 * m_borderThickness) + (2 * m_padding));
-        const int contentDesiredH = std::max(0, contentH + (2 * m_borderThickness) + (2 * m_padding));
+        const int contentDesiredW = std::max(0, contentW + (2 * GetBorderThickness()) + (2 * GetPadding()));
+        const int contentDesiredH = std::max(0, contentH + (2 * GetBorderThickness()) + (2 * GetPadding()));
 
         const int desiredW = std::max(contentDesiredW, explicitW > 0 ? explicitW : 0);
         const int desiredH = std::max(contentDesiredH, explicitH > 0 ? explicitH : 0);
@@ -58,10 +58,10 @@ void Border::Arrange(int finalWidth, int finalHeight)
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
     if (auto presenter = GetPresenter()) {
-        const int innerX = m_borderThickness + m_padding;
-        const int innerY = m_borderThickness + m_padding;
-        const int innerWidth = std::max(0, finalWidth - (2 * m_borderThickness) - (2 * m_padding));
-        const int innerHeight = std::max(0, finalHeight - (2 * m_borderThickness) - (2 * m_padding));
+        const int innerX = GetBorderThickness() + GetPadding();
+        const int innerY = GetBorderThickness() + GetPadding();
+        const int innerWidth = std::max(0, finalWidth - (2 * GetBorderThickness()) - (2 * GetPadding()));
+        const int innerHeight = std::max(0, finalHeight - (2 * GetBorderThickness()) - (2 * GetPadding()));
 
         presenter->Arrange(innerWidth, innerHeight);
         presenter->SetLayoutOffset(innerX, innerY);
@@ -86,7 +86,7 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     const auto cornerRadius = GetCornerRadius();
 
-    if (m_borderThickness > 0 && m_borderColor.ToArgb() != 0x00000000u) {
+    if (GetBorderThickness() > 0 && GetBorderColor().ToArgb() != 0x00000000u) {
         commands.DrawRoundedRect(
             static_cast<float>(absX),
             static_cast<float>(absY),
@@ -96,26 +96,90 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             cornerRadius.TopRight,
             cornerRadius.BottomRight,
             cornerRadius.BottomLeft,
-            m_borderColor.ToArgb(),
+            GetBorderColor().ToArgb(),
             GetOpacity());
     }
 
-    if (m_backgroundColor.ToArgb() != 0x00000000u) {
-        const float inset = static_cast<float>(m_borderThickness);
+    if (GetBackgroundColor().ToArgb() != 0x00000000u) {
+        const float inset = static_cast<float>(GetBorderThickness());
         commands.DrawRoundedRect(
             static_cast<float>(absX + inset),
             static_cast<float>(absY + inset),
-            static_cast<float>(std::max(0, GetFinalWidth() - (2 * m_borderThickness))),
-            static_cast<float>(std::max(0, GetFinalHeight() - (2 * m_borderThickness))),
+            static_cast<float>(std::max(0, GetFinalWidth() - (2 * GetBorderThickness()))),
+            static_cast<float>(std::max(0, GetFinalHeight() - (2 * GetBorderThickness()))),
             std::max(0.0f, cornerRadius.TopLeft - inset),
             std::max(0.0f, cornerRadius.TopRight - inset),
             std::max(0.0f, cornerRadius.BottomRight - inset),
             std::max(0.0f, cornerRadius.BottomLeft - inset),
-            m_backgroundColor.ToArgb(),
+            GetBackgroundColor().ToArgb(),
             GetOpacity());
     }
 
     ContentControl::BuildRenderCommands(commands);
+}
+
+void Border::SetPadding(int padding) noexcept
+{
+    Control::SetPadding(padding);
+    InvalidateVisual();
+}
+
+int Border::GetPadding() const noexcept
+{
+    return Control::GetPadding();
+}
+
+void Border::SetBorderThickness(int thickness) noexcept
+{
+    Control::SetBorderThickness(thickness);
+    InvalidateVisual();
+}
+
+int Border::GetBorderThickness() const noexcept
+{
+    return Control::GetBorderThickness();
+}
+
+void Border::SetBorderColor(NeoWPF::UI::Color color) noexcept
+{
+    Control::SetBorderColor(color);
+    InvalidateVisual();
+}
+
+NeoWPF::UI::Color Border::GetBorderColor() const noexcept
+{
+    return Control::GetBorderColor();
+}
+
+void Border::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
+{
+    Control::SetBackgroundColor(color);
+    InvalidateVisual();
+}
+
+NeoWPF::UI::Color Border::GetBackgroundColor() const noexcept
+{
+    return Control::GetBackgroundColor();
+}
+
+void Border::OnPaddingChanged(int)
+{
+    InvalidateVisual();
+}
+
+void Border::OnBorderThicknessChanged(int)
+{
+    InvalidateVisual();
+}
+
+void Border::OnBorderColorChanged(NeoWPF::UI::Color)
+{
+    InvalidateVisual();
+}
+
+void Border::OnBackgroundColorChanged(NeoWPF::UI::Color)
+{
+    InvalidateVisual();
 }
 
 }

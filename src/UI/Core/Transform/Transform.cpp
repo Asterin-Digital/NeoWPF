@@ -65,8 +65,8 @@ float ScaleTransform::GetScaleY() const { return m_scaleY; }
 float ScaleTransform::GetCenterX() const { return m_centerX; }
 float ScaleTransform::GetCenterY() const { return m_centerY; }
 
-void ScaleTransform::SetScaleX(float value) { m_scaleX = value; }
-void ScaleTransform::SetScaleY(float value) { m_scaleY = value; }
+void ScaleTransform::SetScaleX(float value) { m_scaleX = value; if (m_invalidateCallback) { m_invalidateCallback(); } }
+void ScaleTransform::SetScaleY(float value) { m_scaleY = value; if (m_invalidateCallback) { m_invalidateCallback(); } }
 void ScaleTransform::SetCenterX(float value) { m_centerX = value; }
 void ScaleTransform::SetCenterY(float value) { m_centerY = value; }
 

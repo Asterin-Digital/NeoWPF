@@ -257,6 +257,12 @@ public:
     */
     void Arrange(int finalWidth, int finalHeight) override;
 
+protected:
+    void OnPaddingChanged(int padding) override;
+    void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
+    void OnBorderColorChanged(NeoWPF::UI::Color color) override;
+    void OnBorderThicknessChanged(int thickness) override;
+
     /*
         @summary
         Produces rendering commands for the frame.
@@ -337,11 +343,8 @@ private:
     std::wstring m_text;
     std::size_t m_caretPosition = 0;
     NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu);
-    NeoWPF::UI::Color m_backgroundColor = NeoWPF::UI::Color::FromArgb(0xFF2F2F2Fu);
-    NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0xFF666666u);
     NeoWPF::UI::Color m_caretColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
     int m_fontSize = 16;
-    int m_padding = 4;
     bool m_isReadOnly = false;
     bool m_acceptsReturn = false;
     TextWrapping m_textWrapping = TextWrapping::NoWrap;

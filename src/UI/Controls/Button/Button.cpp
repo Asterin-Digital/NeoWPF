@@ -79,6 +79,10 @@ Button::Button()
 
     ApplyButtonThemeStyle(this);
     ApplyVisualState("Normal", false);
+
+    SetPadding(8);
+    SetBackgroundColor(m_backgroundColor);
+    SetBorderColor(m_borderColor);
 }
 
 Button::Button(const std::wstring& text)
@@ -103,6 +107,9 @@ Button::Button(const std::wstring& text)
 
     ApplyVisualState("Normal", false);
 
+    SetPadding(8);
+    SetBackgroundColor(m_backgroundColor);
+    SetBorderColor(m_borderColor);
     SetText(text);
 }
 
@@ -119,19 +126,44 @@ void Button::SetText(const std::wstring& text)
     InvalidateVisual();
 }
 
+void Button::SetPadding(int padding) noexcept
+{
+    Control::SetPadding(padding);
+    InvalidateVisual();
+}
+
+int Button::GetPadding() const noexcept
+{
+    return Control::GetPadding();
+}
+
 void Button::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
 {
-    if (IsApplyingPropertyValue()) { 
-        m_baseBackgroundColor = color; 
-        m_backgroundColor = color;
-        if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
-            background->SetFillColor(color.ToArgb());
-        }
-        InvalidateVisual(); 
-        return; 
+    Control::SetBackgroundColor(color);
+    InvalidateVisual();
+}
+
+void Button::SetBorderColor(NeoWPF::UI::Color color) noexcept
+{
+    Control::SetBorderColor(color);
+    InvalidateVisual();
+}
+
+NeoWPF::UI::Color Button::GetBorderColor() const noexcept
+{
+    return m_borderColor;
+}
+
+void Button::OnPaddingChanged(int padding)
+{
+    if (auto presenter = GetPresenter()) {
+        presenter->SetPadding(padding);
     }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", typeid(*this));
-    if (property) { SetValue(*property, color); return; }
+    InvalidateVisual();
+}
+
+void Button::OnBackgroundColorChanged(NeoWPF::UI::Color color)
+{
     m_baseBackgroundColor = color;
     m_backgroundColor = color;
 
@@ -142,18 +174,8 @@ void Button::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
     InvalidateVisual();
 }
 
-void Button::SetBorderColor(NeoWPF::UI::Color color) noexcept
+void Button::OnBorderColorChanged(NeoWPF::UI::Color color)
 {
-    if (IsApplyingPropertyValue()) { 
-        m_borderColor = color;
-        if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
-            background->SetBorderColor(color.ToArgb());
-        }
-        InvalidateVisual(); 
-        return; 
-    }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", typeid(*this));
-    if (property) { SetValue(*property, color); return; }
     m_borderColor = color;
 
     if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
@@ -163,9 +185,9 @@ void Button::SetBorderColor(NeoWPF::UI::Color color) noexcept
     InvalidateVisual();
 }
 
-NeoWPF::UI::Color Button::GetBorderColor() const noexcept
+void Button::OnBorderThicknessChanged(int)
 {
-    return m_borderColor;
+    InvalidateVisual();
 }
 
 void Button::Measure(int availableWidth, int availableHeight)
@@ -233,7 +255,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
     if (contentHost) {
-        const int inset = std::max(0, m_padding);
+        const int inset = std::max(0, GetPadding());
         contentHost->SetRect(static_cast<int>(std::lround(drawX)) + inset, static_cast<int>(std::lround(drawY)) + inset, std::max(0, static_cast<int>(drawWidth) - (inset * 2)), std::max(0, static_cast<int>(drawHeight) - (inset * 2)));
         contentHost->SetBorderThickness(0);
         contentHost->SetOpacity(GetOpacity());

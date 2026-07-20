@@ -97,6 +97,20 @@ void FrameworkElement::ApplyRenderTransform(float& x, float& y, float& width, fl
     const float originX = width * origin.X;
     const float originY = height * origin.Y;
 
+    if (auto scaleTransform = std::dynamic_pointer_cast<const NeoWPF::UI::Core::ScaleTransform>(transform)) {
+        const float scaleX = scaleTransform->GetScaleX();
+        const float scaleY = scaleTransform->GetScaleY();
+
+        const float pivotX = x + originX;
+        const float pivotY = y + originY;
+
+        x = pivotX + (x - pivotX) * scaleX;
+        y = pivotY + (y - pivotY) * scaleY;
+        width *= scaleX;
+        height *= scaleY;
+        return;
+    }
+
     const NeoWPF::UI::Core::Matrix4 matrix = transform->GetMatrix();
     const float translateX = matrix.m[3][0];
     const float translateY = matrix.m[3][1];

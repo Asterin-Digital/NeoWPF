@@ -94,13 +94,13 @@ public:
         @param padding
         Padding in pixels.
     */
-    void SetPadding(int padding) noexcept { m_padding = padding; if (auto presenter = GetPresenter()) { presenter->SetPadding(padding); } InvalidateVisual(); }
+    void SetPadding(int padding) noexcept;
 
     /*
         @summary
         Returns the current padding.
     */
-    int GetPadding() const noexcept { return m_padding; }
+    int GetPadding() const noexcept;
 
     /*
         @summary
@@ -169,6 +169,12 @@ public:
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
 protected:
+    void OnPaddingChanged(int padding) override;
+    void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
+    void OnBorderColorChanged(NeoWPF::UI::Color color) override;
+    void OnBorderThicknessChanged(int thickness) override;
+
+private:
     using ButtonBase::InitializeVisualStates;
     using ButtonBase::ApplyVisualState;
     using ButtonBase::RaiseClick;

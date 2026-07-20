@@ -142,10 +142,40 @@ NeoWPF::UI::Color TextBox::GetTextColor() const noexcept
 
 void TextBox::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
 {
-    if (IsApplyingPropertyValue()) { m_backgroundColor = color; InvalidateVisual(); return; }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", typeid(*this));
-    if (property) { SetValue(*property, color); return; }
-    m_backgroundColor = color; InvalidateVisual();
+    Control::SetBackgroundColor(color);
+    InvalidateVisual();
+}
+
+void TextBox::OnPaddingChanged(int padding)
+{
+    if (auto presenter = GetPresenter()) {
+        presenter->SetPadding(padding);
+    }
+    InvalidateVisual();
+}
+
+void TextBox::OnBackgroundColorChanged(NeoWPF::UI::Color color)
+{
+    if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
+        background->SetFillColor(color.ToArgb());
+    }
+    InvalidateVisual();
+}
+
+void TextBox::OnBorderColorChanged(NeoWPF::UI::Color color)
+{
+    if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
+        background->SetBorderColor(color.ToArgb());
+    }
+    InvalidateVisual();
+}
+
+void TextBox::OnBorderThicknessChanged(int thickness)
+{
+    if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
+        background->SetBorderThickness(thickness);
+    }
+    InvalidateVisual();
 }
 
 void TextBox::SetBackgroundColor(std::uint32_t color) noexcept
@@ -155,11 +185,7 @@ void TextBox::SetBackgroundColor(std::uint32_t color) noexcept
 
 NeoWPF::UI::Color TextBox::GetBackgroundColor() const noexcept
 {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", typeid(*this));
-    if (property) {
-        try { return GetValue<NeoWPF::UI::Color>(*property); } catch (const std::bad_any_cast&) { return m_backgroundColor; }
-    }
-    return m_backgroundColor;
+    return Control::GetBackgroundColor();
 }
 
 void TextBox::SetFontSize(int fontSize) noexcept
@@ -181,27 +207,19 @@ int TextBox::GetFontSize() const noexcept
 
 void TextBox::SetPadding(int padding) noexcept
 {
-    if (IsApplyingPropertyValue()) { m_padding = padding; InvalidateVisual(); return; }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", typeid(*this));
-    if (property) { SetValue(*property, padding); return; }
-    m_padding = padding; InvalidateVisual();
+    Control::SetPadding(padding);
+    InvalidateVisual();
 }
 
 int TextBox::GetPadding() const noexcept
 {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", typeid(*this));
-    if (property) {
-        try { return GetValue<int>(*property); } catch (const std::bad_any_cast&) { return m_padding; }
-    }
-    return m_padding;
+    return Control::GetPadding();
 }
 
 void TextBox::SetBorderColor(NeoWPF::UI::Color color) noexcept
 {
-    if (IsApplyingPropertyValue()) { m_borderColor = color; InvalidateVisual(); return; }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", typeid(*this));
-    if (property) { SetValue(*property, color); return; }
-    m_borderColor = color; InvalidateVisual();
+    Control::SetBorderColor(color);
+    InvalidateVisual();
 }
 
 void TextBox::SetBorderColor(std::uint32_t color) noexcept
@@ -211,11 +229,7 @@ void TextBox::SetBorderColor(std::uint32_t color) noexcept
 
 NeoWPF::UI::Color TextBox::GetBorderColor() const noexcept
 {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", typeid(*this));
-    if (property) {
-        try { return GetValue<NeoWPF::UI::Color>(*property); } catch (const std::bad_any_cast&) { return m_borderColor; }
-    }
-    return m_borderColor;
+    return Control::GetBorderColor();
 }
 
 void TextBox::SetCaretColor(NeoWPF::UI::Color color) noexcept
@@ -244,17 +258,17 @@ void TextBox::Measure(int availableWidth, int availableHeight)
 {
     const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, 0, 0);
     const int minWidth = 120;
-    const int minHeight = std::max(baseMetrics.height, m_fontSize) + (m_padding * 2);
+    const int minHeight = std::max(baseMetrics.height, m_fontSize) + (GetPadding() * 2);
     int desiredWidth = std::max(minWidth, availableWidth > 0 ? std::min(minWidth, availableWidth) : minWidth);
     int desiredHeight = std::max(minHeight, availableHeight > 0 ? std::min(minHeight, availableHeight) : minHeight);
 
     if (m_textWrapping != TextWrapping::NoWrap) {
         TextLayout measureLayout;
-        const int contentHostWidth = std::max(0, availableWidth > 0 ? availableWidth - (m_padding * 2) : 0);
-        const int contentHostHeight = std::max(0, availableHeight > 0 ? availableHeight - (m_padding * 2) : 0);
+        const int contentHostWidth = std::max(0, availableWidth > 0 ? availableWidth - (GetPadding() * 2) : 0);
+        const int contentHostHeight = std::max(0, availableHeight > 0 ? availableHeight - (GetPadding() * 2) : 0);
         measureLayout.Refresh(m_text, m_fontSize, contentHostWidth, contentHostHeight, m_textWrapping, false);
-        desiredHeight = std::max(minHeight, measureLayout.GetContentHeight() + (m_padding * 2));
-        desiredWidth = std::max(desiredWidth, measureLayout.GetContentWidth() + (m_padding * 2));
+        desiredHeight = std::max(minHeight, measureLayout.GetContentHeight() + (GetPadding() * 2));
+        desiredWidth = std::max(desiredWidth, measureLayout.GetContentWidth() + (GetPadding() * 2));
     }
 
     if (s_textBoxDebug) {
@@ -273,8 +287,8 @@ void TextBox::Measure(int availableWidth, int availableHeight)
 void TextBox::Arrange(int finalWidth, int finalHeight)
 {
     Content::ContentControl::Arrange(finalWidth, finalHeight);
-    m_contentHostWidth = std::max(0, finalWidth - (m_padding * 2));
-    m_contentHostHeight = std::max(0, finalHeight - (m_padding * 2));
+    m_contentHostWidth = std::max(0, finalWidth - (GetPadding() * 2));
+    m_contentHostHeight = std::max(0, finalHeight - (GetPadding() * 2));
     UpdateScrollMetrics();
     ClampScrollOffsets();
 
@@ -323,7 +337,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
     else {
         const auto cornerRadius = GetCornerRadius();
-        if (m_borderColor.ToArgb() != 0x00000000u) {
+        if (GetBorderColor().ToArgb() != 0x00000000u) {
             commands.DrawRoundedRect(
                 static_cast<float>(absX),
                 static_cast<float>(absY),
@@ -337,7 +351,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 GetOpacity());
         }
 
-        if (m_backgroundColor.ToArgb() != 0x00000000u) {
+        if (GetBackgroundColor().ToArgb() != 0x00000000u) {
             commands.DrawRoundedRect(
                 static_cast<float>(absX + 1),
                 static_cast<float>(absY + 1),
@@ -353,12 +367,12 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
 
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
-    int contentHostX = absX + m_padding;
-    int contentHostY = absY + m_padding;
-    int contentHostWidth = std::max(0, GetFinalWidth() - (m_padding * 2));
-    int contentHostHeight = std::max(0, GetFinalHeight() - (m_padding * 2));
+    int contentHostX = absX + GetPadding();
+    int contentHostY = absY + GetPadding();
+    int contentHostWidth = std::max(0, GetFinalWidth() - (GetPadding() * 2));
+    int contentHostHeight = std::max(0, GetFinalHeight() - (GetPadding() * 2));
     if (contentHost) {
-        const int inset = std::max(0, m_padding);
+        const int inset = std::max(0, GetPadding());
         contentHostWidth = std::max(0, GetFinalWidth() - (inset * 2));
         contentHostHeight = std::max(0, GetFinalHeight() - (inset * 2));
         contentHost->SetRect(absX + inset, absY + inset, contentHostWidth, contentHostHeight);

@@ -214,7 +214,7 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     int absY = 0;
     GetAbsolutePosition(absX, absY);
 
-    if (m_backgroundColor.ToArgb() != 0x00000000u) {
+    if (GetBackgroundColor().ToArgb() != 0x00000000u) {
         const auto cornerRadius = GetCornerRadius();
         commands.DrawRoundedRect(
             static_cast<float>(absX),
@@ -225,7 +225,7 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             cornerRadius.TopRight,
             cornerRadius.BottomRight,
             cornerRadius.BottomLeft,
-            m_backgroundColor.ToArgb(),
+            GetBackgroundColor().ToArgb(),
             GetOpacity());
     }
 
@@ -246,6 +246,22 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
         child->BuildRenderCommands(commands);
     }
+}
+
+void Panel::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
+{
+    Control::SetBackgroundColor(color);
+    InvalidateVisual();
+}
+
+NeoWPF::UI::Color Panel::GetBackgroundColor() const noexcept
+{
+    return Control::GetBackgroundColor();
+}
+
+void Panel::OnBackgroundColorChanged(NeoWPF::UI::Color)
+{
+    InvalidateVisual();
 }
 
 }

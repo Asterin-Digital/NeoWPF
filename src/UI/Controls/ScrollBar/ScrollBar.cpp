@@ -28,6 +28,11 @@ ScrollBar::ScrollBar()
     presenter->SetPadding(0);
     SetPresenter(presenter);
 
+    SetPadding(0);
+    SetBackgroundColor(NeoWPF::UI::Color::FromArgb(0x00000000u));
+    SetBorderColor(NeoWPF::UI::Color::FromArgb(0x00000000u));
+    SetBorderThickness(0);
+
     SetClipToBounds(true);
 }
 
@@ -83,6 +88,68 @@ void ScrollBar::Arrange(int finalWidth, int finalHeight)
         NeoWPF::Diagnostics::LogInfo("[ScrollBar] Arrange: final=%dx%d orientation=%d value=%d content=%d viewport=%d", finalWidth, finalHeight, static_cast<int>(m_orientation), m_value, m_contentSize, m_viewportSize);
     }
     UpdateScrollState();
+}
+
+void ScrollBar::SetPadding(int padding) noexcept
+{
+    Control::SetPadding(padding);
+    InvalidateVisual();
+}
+
+int ScrollBar::GetPadding() const noexcept
+{
+    return Control::GetPadding();
+}
+
+void ScrollBar::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
+{
+    Control::SetBackgroundColor(color);
+    InvalidateVisual();
+}
+
+void ScrollBar::SetBorderColor(NeoWPF::UI::Color color) noexcept
+{
+    Control::SetBorderColor(color);
+    InvalidateVisual();
+}
+
+NeoWPF::UI::Color ScrollBar::GetBorderColor() const noexcept
+{
+    return Control::GetBorderColor();
+}
+
+void ScrollBar::SetBorderThickness(int thickness) noexcept
+{
+    Control::SetBorderThickness(thickness);
+    InvalidateVisual();
+}
+
+int ScrollBar::GetBorderThickness() const noexcept
+{
+    return Control::GetBorderThickness();
+}
+
+void ScrollBar::OnPaddingChanged(int padding)
+{
+    if (auto presenter = GetPresenter()) {
+        presenter->SetPadding(padding);
+    }
+    InvalidateVisual();
+}
+
+void ScrollBar::OnBackgroundColorChanged(NeoWPF::UI::Color)
+{
+    InvalidateVisual();
+}
+
+void ScrollBar::OnBorderColorChanged(NeoWPF::UI::Color)
+{
+    InvalidateVisual();
+}
+
+void ScrollBar::OnBorderThicknessChanged(int)
+{
+    InvalidateVisual();
 }
 
 void ScrollBar::UpdateScrollTarget() noexcept
