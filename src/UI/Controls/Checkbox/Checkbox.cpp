@@ -2,8 +2,6 @@
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
-#include <NeoWPF/UI/Styling/Style/Style.h>
-#include <NeoWPF/UI/Styling/Style/StyleManager.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <algorithm>
@@ -28,9 +26,7 @@ Checkbox::Checkbox()
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
 
-    if (auto style = Styling::StyleManager::GetDefault(typeid(Checkbox))) {
-        style->Apply(this);
-    }
+    ApplyCheckboxThemeStyle(this);
 
     ApplyVisualState("Normal", false);
 }

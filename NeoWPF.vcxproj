@@ -180,8 +180,6 @@
     <ClInclude Include="include\NeoWPF\UI\Properties\Registration\DependencyPropertyRegistration.h" />
     <ClInclude Include="include\NeoWPF\UI\Styling\DefaultStyles.h" />
     <ClInclude Include="include\NeoWPF\UI\UI.h" />
-    <ClInclude Include="include\NeoWPF\UI\Styling\Style.h" />
-    <ClInclude Include="include\NeoWPF\UI\Styling\StyleManager.h" />
     <ClInclude Include="include\NeoWPF\UI\Styling\State\VisualStateManager.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Templates\ControlTemplate.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Templates\TemplateParts.h" />
@@ -243,7 +241,6 @@
     <ClCompile Include="src\UI\Layout\Panel\PanelProperties.cpp" />
     <ClCompile Include="src\UI\Properties\Registration\DependencyPropertyRegistration.cpp" />
     <ClCompile Include="src\UI\Properties\DependencyObject.cpp" />
-    <ClCompile Include="src\UI\Styling\Style\StyleManager.cpp" />
     <ClCompile Include="src\Diagnostics\Logger.cpp" />
     <ClCompile Include="src\Diagnostics\VisualTreeDumper.cpp" />
     <ClCompile Include="src\Platform\Window.cpp" />
@@ -278,7 +275,6 @@
     <ClCompile Include="src\UI\Layout\Grid\Grid.cpp" />
     <ClCompile Include="src\UI\Layout\Border\Border.cpp" />
     <ClCompile Include="src\UI\Layout\Grid\GridLayout.cpp" />
-    <ClCompile Include="src\UI\Styling\Style\DefaultStyles.cpp" />
     <ClCompile Include="src\UI\Styling\State\Core\VisualStateCore.cpp" />
     <ClCompile Include="src\UI\Styling\State\Transitions\VisualStateTransitions.cpp" />
     <ClCompile Include="src\UI\Styling\State\VisualStateManager.cpp" />

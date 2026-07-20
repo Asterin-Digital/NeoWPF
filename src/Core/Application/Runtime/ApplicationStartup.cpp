@@ -3,7 +3,6 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
-#include <NeoWPF/UI/Styling/Style/DefaultStyles.h>
 
 namespace NeoWPF::Core {
 

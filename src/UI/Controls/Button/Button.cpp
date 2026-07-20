@@ -2,8 +2,6 @@
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
-#include <NeoWPF/UI/Styling/Style/Style.h>
-#include <NeoWPF/UI/Styling/Style/StyleManager.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
@@ -79,9 +77,7 @@ Button::Button()
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
 
-    if (auto style = Styling::StyleManager::GetDefault(typeid(Button))) {
-        style->Apply(this);
-    }
+    ApplyButtonThemeStyle(this);
     ApplyVisualState("Normal", false);
 }
 
@@ -103,9 +99,7 @@ Button::Button(const std::wstring& text)
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
 
-    if (auto style = Styling::StyleManager::GetDefault(typeid(Button))) {
-        style->Apply(this);
-    }
+    ApplyButtonThemeStyle(this);
 
     ApplyVisualState("Normal", false);
 

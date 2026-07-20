@@ -1,8 +1,6 @@
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
-#include <NeoWPF/UI/Styling/Style/Style.h>
-#include <NeoWPF/UI/Styling/Style/StyleManager.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
@@ -53,9 +51,7 @@ TextBox::TextBox()
     m_horizontalScrollBar->SetOrientation(ScrollBarOrientation::Horizontal);
     m_horizontalScrollBar->SetThumbSize(24);
 
-    if (auto style = Styling::StyleManager::GetDefault(typeid(TextBox))) {
-        style->Apply(this);
-    }
+    ApplyTextBoxThemeStyle(this);
 
     InitializeVisualStates();
     ApplyVisualState("Normal", false);

@@ -16,6 +16,9 @@
 
 namespace NeoWPF::UI {
 
+class UIElement;
+void ApplyTextBoxThemeStyle(UIElement* element);
+
 /*
     @summary
     Controls how text wraps inside the available width

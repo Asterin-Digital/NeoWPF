@@ -1,8 +1,6 @@
 #include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
-#include <NeoWPF/UI/Styling/Style/Style.h>
-#include <NeoWPF/UI/Styling/Style/StyleManager.h>
 #include <algorithm>
 
 namespace NeoWPF::UI {
@@ -13,9 +11,7 @@ Border::Border()
     presenter->SetPadding(m_padding);
     SetPresenter(presenter);
 
-    if (auto style = Styling::StyleManager::GetDefault(typeid(Border))) {
-        style->Apply(this);
-    }
+    ApplyBorderThemeStyle(this);
 }
 
 void Border::Measure(int availableWidth, int availableHeight)

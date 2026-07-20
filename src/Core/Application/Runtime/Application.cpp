@@ -2,7 +2,6 @@
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
-#include <NeoWPF/UI/Styling/Style/DefaultStyles.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
@@ -25,7 +24,6 @@ void Application::Initialize()
         s_current = new Application();
     }
     NeoWPF::UI::Properties::RegisterCoreControlProperties();
-    NeoWPF::UI::Styling::RegisterDefaultStyles();
 
     if (s_applicationDebugging) {
         NeoWPF::Diagnostics::LogInfo("Application::Initialize complete");

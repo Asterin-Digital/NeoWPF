@@ -1,27 +1,17 @@
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
-#include <NeoWPF/UI/Styling/Style/StyleManager.h>
-#include <NeoWPF/UI/Styling/Style/Style.h>
-#include <typeindex>
-
-namespace NeoWPF::UI::Styling {
-
-class CheckboxStyle : public Style {
-public:
-    void Apply(UIElement* element) override
-    {
-        element->SetStylePropertyValue("TextColor", element->GetResourceValue("Checkbox.TextColor", NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu)));
-        element->SetStylePropertyValue("BoxColor", element->GetResourceValue("Checkbox.BoxColor", NeoWPF::UI::Color::FromArgb(0xFF3A3A3Au)));
-        element->SetStylePropertyValue("BorderColor", element->GetResourceValue("Checkbox.BorderColor", NeoWPF::UI::Color::FromArgb(0xFF666666u)));
-    }
-};
-
-}
+#include <NeoWPF/UI/Core/Element/UIElement.h>
 
 namespace NeoWPF::UI {
 
-void RegisterCheckboxStyles()
+void ApplyCheckboxThemeStyle(UIElement* element)
 {
-    Styling::StyleManager::RegisterDefault(typeid(Checkbox), std::make_shared<Styling::CheckboxStyle>());
+    if (!element) {
+        return;
+    }
+
+    element->SetStylePropertyValue("TextColor", element->GetResourceValue("Checkbox.TextColor", NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu)));
+    element->SetStylePropertyValue("BoxColor", element->GetResourceValue("Checkbox.BoxColor", NeoWPF::UI::Color::FromArgb(0xFF3A3A3Au)));
+    element->SetStylePropertyValue("BorderColor", element->GetResourceValue("Checkbox.BorderColor", NeoWPF::UI::Color::FromArgb(0xFF666666u)));
 }
 
 }

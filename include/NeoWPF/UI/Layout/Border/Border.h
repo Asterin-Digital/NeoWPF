@@ -2,10 +2,12 @@
 
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
-#include <NeoWPF/UI/Styling/Style/Style.h>
 #include <memory>
 
 namespace NeoWPF::UI {
+
+class UIElement;
+void ApplyBorderThemeStyle(UIElement* element);
 
 /*
     @summary
