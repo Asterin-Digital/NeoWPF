@@ -17,6 +17,10 @@ LRESULT CALLBACK NeoWPFWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
     case WM_DESTROY:
         return 0;
 
+    case WM_CLOSE:
+        NeoWPF::Core::CloseApplicationWindow(hwnd);
+        return 0;
+
     case WM_ERASEBKGND:
         return TRUE;
 
