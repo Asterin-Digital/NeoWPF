@@ -72,7 +72,11 @@ bool CloseApplicationWindow(HWND hwnd)
         NeoWPF::Diagnostics::LogInfo("CloseApplicationWindow");
     }
 
-    return ::DestroyWindow(hwnd) != FALSE;
+    if (IsWindow(hwnd)) {
+        return ::DestroyWindow(hwnd) != FALSE;
+    }
+
+    return true;
 }
 
 }

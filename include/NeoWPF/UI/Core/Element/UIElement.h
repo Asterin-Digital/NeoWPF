@@ -4,11 +4,20 @@
 #include <NeoWPF/Core/Events/Event.h>
 #include <NeoWPF/Input/Core/EventHandler.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/UI/Animation/AnimationController.h>
+#include <NeoWPF/UI/Animation/Core/Timeline.h>
+#include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
+#include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Core/Media/CornerRadius.h>
 #include <NeoWPF/Core/Application/ApplicationResources.h>
+#include <algorithm>
+#include <cmath>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <any>
+#include <type_traits>
 
 namespace NeoWPF::Input::Core
 {
@@ -87,6 +96,63 @@ public:
 
     void BeginAnimation(float from, float to, float durationSeconds);
 
+    template<typename T>
+    void BeginAnimation(const Properties::DependencyProperty& property,
+                        const T& fromValue,
+                        const T& toValue,
+                        float durationSeconds) {
+        if (durationSeconds <= 0.0f) {
+            SetValue(property, std::any(toValue));
+            return;
+        }
+
+        using namespace NeoWPF::UI::Animation;
+        auto storyboard = std::make_shared<Storyboard>();
+        auto timeline = std::make_shared<Timeline>(0.0f, 1.0f, durationSeconds, [this, property, fromValue, toValue](float progress) {
+            this->ApplyAnimatedValue(property, fromValue, toValue, progress);
+        });
+        storyboard->AddTimeline(timeline);
+        NeoWPF::UI::AddStoryboard(storyboard);
+    }
+
+    template<typename T>
+    void BeginAnimation(const Properties::DependencyProperty& property,
+                        const T& toValue,
+                        float durationSeconds) {
+        if (durationSeconds <= 0.0f) {
+            SetValue(property, std::any(toValue));
+            return;
+        }
+
+        if (property.GetPropertyType() == typeid(T)) {
+            const auto currentValue = GetValue<T>(property);
+            BeginAnimation(property, currentValue, toValue, durationSeconds);
+        }
+    }
+
+    template<typename T>
+    void BeginAnimation(const std::string& propertyName,
+                        const T& fromValue,
+                        const T& toValue,
+                        float durationSeconds) {
+        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty(propertyName, typeid(*this));
+        if (!property) {
+            return;
+        }
+        BeginAnimation(*property, fromValue, toValue, durationSeconds);
+    }
+
+    template<typename T>
+    void BeginAnimation(const std::string& propertyName,
+                        const T& toValue,
+                        float durationSeconds) {
+        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty(propertyName, typeid(*this));
+        if (!property) {
+            return;
+        }
+        BeginAnimation(*property, toValue, durationSeconds);
+    }
+
     virtual void Measure(int availableWidth, int availableHeight) {}
     virtual void Arrange(int finalWidth, int finalHeight) {}
 
@@ -149,6 +215,41 @@ public:
     virtual void OnLostFocus() {}
 
 protected:
+    template<typename T>
+    void ApplyAnimatedValue(const Properties::DependencyProperty& property,
+                            const T& fromValue,
+                            const T& toValue,
+                            float progress) {
+        if constexpr (std::is_same_v<T, NeoWPF::UI::Color>) {
+            const auto fromArgb = static_cast<float>(fromValue.ToArgb());
+            const auto toArgb = static_cast<float>(toValue.ToArgb());
+            const auto currentArgb = std::lround(fromArgb + (toArgb - fromArgb) * progress);
+            SetValue(property, std::any(NeoWPF::UI::Color::FromArgb(static_cast<std::uint32_t>(currentArgb))));
+        } else if constexpr (std::is_same_v<T, NeoWPF::UI::CornerRadius>) {
+            const auto fromTopLeft = fromValue.TopLeft + (toValue.TopLeft - fromValue.TopLeft) * progress;
+            const auto fromTopRight = fromValue.TopRight + (toValue.TopRight - fromValue.TopRight) * progress;
+            const auto fromBottomRight = fromValue.BottomRight + (toValue.BottomRight - fromValue.BottomRight) * progress;
+            const auto fromBottomLeft = fromValue.BottomLeft + (toValue.BottomLeft - fromValue.BottomLeft) * progress;
+            SetValue(property, std::any(NeoWPF::UI::CornerRadius(fromTopLeft, fromTopRight, fromBottomRight, fromBottomLeft)));
+        } else if constexpr (std::is_integral_v<T> && !std::is_same_v<T, bool>) {
+            const auto fromInt = static_cast<double>(fromValue);
+            const auto toInt = static_cast<double>(toValue);
+            const auto currentInt = std::lround(fromInt + (toInt - fromInt) * progress);
+            SetValue(property, std::any(static_cast<T>(currentInt)));
+        } else if constexpr (std::is_floating_point_v<T>) {
+            const auto currentFloat = fromValue + (toValue - fromValue) * progress;
+            SetValue(property, std::any(currentFloat));
+        } else if constexpr (std::is_enum_v<T>) {
+            using Underlying = std::underlying_type_t<T>;
+            const auto fromEnum = static_cast<double>(static_cast<Underlying>(fromValue));
+            const auto toEnum = static_cast<double>(static_cast<Underlying>(toValue));
+            const auto currentEnum = std::lround(fromEnum + (toEnum - fromEnum) * progress);
+            SetValue(property, std::any(static_cast<T>(static_cast<Underlying>(currentEnum))));
+        } else {
+            SetValue(property, std::any(toValue));
+        }
+    }
+
     bool m_isEnabled = true;
 
 private:

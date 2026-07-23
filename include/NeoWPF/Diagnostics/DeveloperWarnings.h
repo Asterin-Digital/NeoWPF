@@ -12,6 +12,10 @@ struct DeveloperWarnings {
     static constexpr const wchar_t* kLayoutOverflowDetectedCode = L"NEO-UI013";
     static constexpr const wchar_t* kInvalidGridIndexCode = L"NEO-UI201";
     static constexpr const wchar_t* kInvalidGridSpanCode = L"NEO-UI202";
+    static constexpr const wchar_t* kInvalidGridDefinitionCode = L"NEO-UI203";
+    static constexpr const wchar_t* kNullGridChildCode = L"NEO-UI205";
+    static constexpr const wchar_t* kGridSelfParentingCode = L"NEO-UI206";
+    static constexpr const wchar_t* kGridChildTypeMismatchCode = L"NEO-UI207";
 };
 
 enum class DeveloperWarningSeverity {

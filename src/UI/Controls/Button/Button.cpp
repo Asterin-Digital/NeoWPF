@@ -213,17 +213,18 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     ApplyRenderTransform(drawX, drawY, drawWidth, drawHeight);
     float rotationRadians = GetAbsoluteRenderTransformRotation(this);
 
+    const auto cornerRadius = GetCornerRadius();
+
     auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"));
     if (background) {
         background->SetRect(static_cast<int>(std::lround(drawX)), static_cast<int>(std::lround(drawY)), static_cast<int>(drawWidth), static_cast<int>(drawHeight));
         background->SetBorderThickness(1);
-        background->SetCornerRadius(GetCornerRadius());
+        background->SetCornerRadius(cornerRadius);
         background->SetOpacity(GetOpacity());
         background->SetRotation(rotationRadians);
         background->BuildRenderCommands(commands);
     }
     else {
-        const auto cornerRadius = GetCornerRadius();
         commands.DrawRoundedRect(
             drawX,
             drawY,

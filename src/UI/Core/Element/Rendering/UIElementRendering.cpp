@@ -13,13 +13,11 @@
 namespace NeoWPF::UI {
 
 void UIElement::BeginAnimation(float from, float to, float durationSeconds) {
-    using namespace NeoWPF::UI::Animation;
-    auto storyboard = std::make_shared<Storyboard>();
-    auto timeline = std::make_shared<Timeline>(from, to, durationSeconds, [this](float value) {
-        this->SetOpacity(value);
-    });
-    storyboard->AddTimeline(timeline);
-    NeoWPF::UI::AddStoryboard(storyboard);
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Opacity", typeid(*this));
+    if (!property) {
+        return;
+    }
+    BeginAnimation(*property, from, to, durationSeconds);
 }
 
 std::shared_ptr<NeoWPF::UI::Core::Transform> UIElement::GetRenderTransform() const noexcept {

@@ -16,6 +16,11 @@ void Application::Initialize()
 {
     NeoWPF::Core::ApplicationResources::Resources::Initialize();
     NeoWPF::Diagnostics::PerformanceMetrics::Initialize();
+#if defined(_DEBUG)
+    ShowConsole(true);
+#else
+    ShowConsole(false);
+#endif
     if (s_applicationDebugging) {
         NeoWPF::Diagnostics::LogInfo("Application::Initialize begin");
     }
@@ -39,6 +44,31 @@ NeoWPF::Platform::Window Application::CreateWindow(const wchar_t* title, int wid
     NeoWPF::Diagnostics::PerformanceMetrics::RecordWindowCreate();
     const HWND hwnd = CreateApplicationWindow(title, width, height);
     return NeoWPF::Platform::Window(hwnd);
+}
+
+void Application::ShowConsole(bool visible)
+{
+    auto& appState = GetAppState();
+    if (appState.consoleVisible.load() == visible) {
+        return;
+    }
+
+    appState.consoleVisible.store(visible);
+
+    if (visible) {
+        if (AllocConsole()) {
+            FILE* dummy = nullptr;
+            freopen_s(&dummy, "CONOUT$", "w", stdout);
+            freopen_s(&dummy, "CONOUT$", "w", stderr);
+        }
+    } else {
+        FreeConsole();
+    }
+}
+
+bool Application::IsConsoleVisible()
+{
+    return GetAppState().consoleVisible.load();
 }
 
 int Application::Run()

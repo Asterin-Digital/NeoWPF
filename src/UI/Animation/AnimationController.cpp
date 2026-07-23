@@ -3,6 +3,7 @@
 #include <NeoWPF/UI/Animation/Core/Timeline.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 
 #include <algorithm>
 #include <memory>
@@ -37,9 +38,8 @@ void AddStoryboard(std::shared_ptr<::NeoWPF::UI::Animation::Storyboard> storyboa
     animation.storyboard = std::move(storyboard);
     animation.active = true;
     GetAnimations().push_back(std::move(animation));
+    NeoWPF::Diagnostics::LogInfo("[Animation] queued storyboard count=%zu", GetAnimations().size());
 }
-
-// Element-level BeginAnimation functions are implemented as member methods on the element types.
 
 void Tick() {
     auto& animations = GetAnimations();
@@ -49,7 +49,11 @@ void Tick() {
         }
 
         const float elapsed = animation.clock.Tick();
-        animation.active = !animation.storyboard->Update(elapsed);
+        const bool completed = animation.storyboard->Update(elapsed);
+        animation.active = !completed;
+        if (completed) {
+            NeoWPF::Diagnostics::LogInfo("[Animation] storyboard completed");
+        }
     }
 
     RemoveCompletedAnimations();

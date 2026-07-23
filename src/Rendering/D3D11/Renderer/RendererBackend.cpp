@@ -62,7 +62,7 @@ void Resize(unsigned int w, unsigned int h)
 }
 
 void BeginFrame()
-{
+{ // leave it
 }
 
 void Execute(const CommandList& cmd)

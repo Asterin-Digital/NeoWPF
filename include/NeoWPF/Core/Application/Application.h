@@ -53,6 +53,24 @@ public:
 
     /*
         @summary
+        Sets whether the application console should be visible.
+
+        @param visible
+        True to show the console, false to hide it.
+    */
+    static void ShowConsole(bool visible);
+
+    /*
+        @summary
+        Returns whether the application console is currently visible.
+
+        @returns
+        True if the console is visible, otherwise false.
+    */
+    static bool IsConsoleVisible();
+
+    /*
+        @summary
         Shuts down the application and cleans up runtime resources.
     */
     static void Shutdown();

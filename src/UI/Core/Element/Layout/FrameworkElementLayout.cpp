@@ -189,11 +189,13 @@ void FrameworkElement::SetCornerRadius(NeoWPF::UI::CornerRadius cornerRadius) no
 {
     if (IsApplyingPropertyValue()) {
         m_cornerRadius = cornerRadius;
+        NeoWPF::Diagnostics::LogInfo("[FrameworkElement] SetCornerRadius applying=%f,%f,%f,%f", cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft);
         return;
     }
 
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("CornerRadius", typeid(*this));
     if (property) {
+        NeoWPF::Diagnostics::LogInfo("[FrameworkElement] SetCornerRadius via property value=%f,%f,%f,%f", cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft);
         SetValue(*property, cornerRadius);
         return;
     }
@@ -294,60 +296,14 @@ int FrameworkElement::ResolveHeight(int availableHeight, int desiredHeight) cons
 
 void FrameworkElement::BeginAnimation(int fromWidth, int toWidth, int fromHeight, int toHeight, float durationSeconds)
 {
-    using namespace NeoWPF::UI::Animation;
-    auto storyboard = std::make_shared<Storyboard>();
-    auto widthTimeline = std::make_shared<Timeline>(static_cast<float>(fromWidth), static_cast<float>(toWidth), durationSeconds, [this](float value) {
-        this->SetWidth(static_cast<int>(value));
-    });
-    auto heightTimeline = std::make_shared<Timeline>(static_cast<float>(fromHeight), static_cast<float>(toHeight), durationSeconds, [this](float value) {
-        this->SetHeight(static_cast<int>(value));
-    });
-    storyboard->AddTimeline(widthTimeline);
-    storyboard->AddTimeline(heightTimeline);
-    NeoWPF::UI::AddStoryboard(storyboard);
+    this->BeginAnimation("Width", fromWidth, toWidth, durationSeconds);
+    this->BeginAnimation("Height", fromHeight, toHeight, durationSeconds);
 }
 
 void FrameworkElement::BeginAnimation(HorizontalAlignment horizontal, VerticalAlignment vertical, float durationSeconds)
 {
-    auto parent = GetParent();
-    if (!parent) {
-        return;
-    }
-
-    auto parentFE = dynamic_cast<FrameworkElement*>(parent);
-    int parentWidth = parentFE ? (std::max)(parentFE->GetFinalWidth(), parentFE->GetDesiredWidth()) : 0;
-    int parentHeight = parentFE ? (std::max)(parentFE->GetFinalHeight(), parentFE->GetDesiredHeight()) : 0;
-
-    int childWidth = (std::max)(GetFinalWidth(), GetDesiredWidth());
-    int childHeight = (std::max)(GetFinalHeight(), GetDesiredHeight());
-
-    int targetX = 0;
-    switch (horizontal) {
-        case HorizontalAlignment::Left: targetX = 0; break;
-        case HorizontalAlignment::Center: targetX = (parentWidth - childWidth) / 2; break;
-        case HorizontalAlignment::Right: targetX = parentWidth - childWidth; break;
-        case HorizontalAlignment::Stretch: targetX = 0; break;
-    }
-
-    int targetY = 0;
-    switch (vertical) {
-        case VerticalAlignment::Top: targetY = 0; break;
-        case VerticalAlignment::Center: targetY = (parentHeight - childHeight) / 2; break;
-        case VerticalAlignment::Bottom: targetY = parentHeight - childHeight; break;
-        case VerticalAlignment::Stretch: targetY = 0; break;
-    }
-
-    using namespace NeoWPF::UI::Animation;
-    auto storyboard = std::make_shared<Storyboard>();
-    auto xTimeline = std::make_shared<Timeline>(static_cast<float>(GetRenderOffsetX()), static_cast<float>(targetX - GetLayoutOffsetX()), durationSeconds, [this](float value) {
-        this->SetRenderOffset(static_cast<int>(value), this->GetRenderOffsetY());
-    });
-    auto yTimeline = std::make_shared<Timeline>(static_cast<float>(GetRenderOffsetY()), static_cast<float>(targetY - GetLayoutOffsetY()), durationSeconds, [this](float value) {
-        this->SetRenderOffset(this->GetRenderOffsetX(), static_cast<int>(value));
-    });
-    storyboard->AddTimeline(xTimeline);
-    storyboard->AddTimeline(yTimeline);
-    NeoWPF::UI::AddStoryboard(storyboard);
+    this->BeginAnimation("HorizontalAlignment", GetHorizontalAlignment(), horizontal, durationSeconds);
+    this->BeginAnimation("VerticalAlignment", GetVerticalAlignment(), vertical, durationSeconds);
 }
 
 void FrameworkElement::Measure(int availableWidth, int availableHeight)

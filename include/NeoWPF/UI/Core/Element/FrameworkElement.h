@@ -29,6 +29,7 @@ enum class LayoutSizeMode {
 class FrameworkElement : public UIElement {
     friend class ScrollBar;
 public:
+    using UIElement::BeginAnimation;
     /*
         @summary
         Returns the size the element wants during measurement.

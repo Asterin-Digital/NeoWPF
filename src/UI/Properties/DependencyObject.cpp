@@ -171,6 +171,11 @@ void DependencyObject::SetValue(const DependencyProperty& property, const T& val
     SetValueInternal(property, std::any(value), PropertyValueSource::Local);
 }
 
+void DependencyObject::SetValue(const DependencyProperty& property, const std::any& value)
+{
+    SetValueInternal(property, value, PropertyValueSource::Local);
+}
+
 
 template bool DependencyObject::GetValue<bool>(const DependencyProperty&) const;
 template int DependencyObject::GetValue<int>(const DependencyProperty&) const;

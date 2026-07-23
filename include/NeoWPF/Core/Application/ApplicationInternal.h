@@ -39,6 +39,7 @@ struct AppState {
     HINSTANCE hInst = nullptr;
     std::vector<WindowState> windows;
     std::atomic<bool> running{false};
+    std::atomic<bool> consoleVisible{false};
     std::shared_ptr<NeoWPF::UI::Visual> developerWarningOverlayHost;
     std::atomic<bool> renderThreadInitialized{false};
     std::atomic<bool> renderThreadInitFailed{false};
