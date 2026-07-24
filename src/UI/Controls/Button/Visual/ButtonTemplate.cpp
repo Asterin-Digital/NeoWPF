@@ -12,8 +12,8 @@ ButtonTemplate::ButtonTemplate()
     SetVisualTree(root);
 
     auto background = std::make_shared<Templates::TemplateVisual>("PART_Background");
-    background->SetFillColor(0xFF2F2F2Fu);
-    background->SetBorderColor(0xFF333333u);
+    background->SetFillColor(0xFFEEEEEEu);
+    background->SetBorderColor(0xFF707070u);
     background->SetBorderThickness(1);
 
     auto contentHost = std::make_shared<Templates::TemplateVisual>("PART_ContentHost");
@@ -34,8 +34,8 @@ ButtonTemplate::ButtonTemplate()
                 templateVisual->SetFillColor(button->GetBackgroundColor().ToArgb());
                 templateVisual->SetBorderColor(button->GetBorderColor().ToArgb());
             } else {
-                templateVisual->SetFillColor(0xFF3A3A3Au);
-                templateVisual->SetBorderColor(0xFF333333u);
+                templateVisual->SetFillColor(0xFFEEEEEEu);
+                templateVisual->SetBorderColor(0xFF707070u);
             }
         }
         if (element) {
@@ -47,8 +47,8 @@ ButtonTemplate::ButtonTemplate()
     auto mouseOverState = std::make_shared<Styling::VisualState>("MouseOver");
     mouseOverState->AddSetter("PART_Background", [](UIElement* element, Visual* visual) {
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFF5A7A9Au);
-            templateVisual->SetBorderColor(0xFF4A6A8Au);
+            templateVisual->SetFillColor(0xFFBEE6FDu);
+            templateVisual->SetBorderColor(0xFF3C7FB1u);
         }
         if (element) {
             element->InvalidateVisual();
@@ -59,8 +59,8 @@ ButtonTemplate::ButtonTemplate()
     auto pressedState = std::make_shared<Styling::VisualState>("Pressed");
     pressedState->AddSetter("PART_Background", [](UIElement* element, Visual* visual) {
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFF1A1A1Au);
-            templateVisual->SetBorderColor(0xFF222222u);
+            templateVisual->SetFillColor(0xFFC4E5F6u);
+            templateVisual->SetBorderColor(0xFF3C7FB1u);
         }
         if (element) {
             element->InvalidateVisual();
@@ -71,8 +71,8 @@ ButtonTemplate::ButtonTemplate()
     auto disabledState = std::make_shared<Styling::VisualState>("Disabled");
     disabledState->AddSetter("PART_Background", [](UIElement* element, Visual* visual) {
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFF2A2A2Au);
-            templateVisual->SetBorderColor(0xFF404040u);
+            templateVisual->SetFillColor(0xFFF4F4F4u);
+            templateVisual->SetBorderColor(0xFF707070u);
         }
         if (element) {
             element->InvalidateVisual();

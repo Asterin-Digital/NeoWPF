@@ -275,14 +275,20 @@ void ExecuteRendererDraw(const CommandList& cmd)
     std::vector<uint32_t> textQuadTextureIds;
     textQuadTextureIds.reserve(cmd.texturedQuads.size());
 
-    auto pushTextQuad = [&](float x, float y, float w, float h, float u0, float v0, float u1, float v1, float opacity, uint32_t textureId, float rotationRadians = 0.0f) {
+    auto pushTextQuad = [&](float x, float y, float w, float h, float u0, float v0, float u1, float v1, uint32_t tintColor, float opacity, uint32_t textureId, float rotationRadians = 0.0f) {
+        const float baseAlpha = ((tintColor >> 24) & 0xFF) / 255.0f;
+        const float red = ((tintColor >> 16) & 0xFF) / 255.0f;
+        const float green = ((tintColor >> 8) & 0xFF) / 255.0f;
+        const float blue = (tintColor & 0xFF) / 255.0f;
+        const float finalAlpha = baseAlpha * opacity;
+
         if (rotationRadians == 0.0f) {
-            textVerts.push_back({x, y, u0, v0, 1.0f, 1.0f, 1.0f, opacity});
-            textVerts.push_back({x + w, y, u1, v0, 1.0f, 1.0f, 1.0f, opacity});
-            textVerts.push_back({x + w, y + h, u1, v1, 1.0f, 1.0f, 1.0f, opacity});
-            textVerts.push_back({x + w, y + h, u1, v1, 1.0f, 1.0f, 1.0f, opacity});
-            textVerts.push_back({x, y + h, u0, v1, 1.0f, 1.0f, 1.0f, opacity});
-            textVerts.push_back({x, y, u0, v0, 1.0f, 1.0f, 1.0f, opacity});
+            textVerts.push_back({x, y, u0, v0, red, green, blue, finalAlpha});
+            textVerts.push_back({x + w, y, u1, v0, red, green, blue, finalAlpha});
+            textVerts.push_back({x + w, y + h, u1, v1, red, green, blue, finalAlpha});
+            textVerts.push_back({x + w, y + h, u1, v1, red, green, blue, finalAlpha});
+            textVerts.push_back({x, y + h, u0, v1, red, green, blue, finalAlpha});
+            textVerts.push_back({x, y, u0, v0, red, green, blue, finalAlpha});
             textQuadTextureIds.push_back(textureId);
             return;
         }
@@ -305,12 +311,12 @@ void ExecuteRendererDraw(const CommandList& cmd)
         auto p2 = rotPoint(x + w, y + h);
         auto p3 = rotPoint(x, y + h);
 
-        textVerts.push_back({p0.first, p0.second, u0, v0, 1.0f, 1.0f, 1.0f, opacity});
-        textVerts.push_back({p1.first, p1.second, u1, v0, 1.0f, 1.0f, 1.0f, opacity});
-        textVerts.push_back({p2.first, p2.second, u1, v1, 1.0f, 1.0f, 1.0f, opacity});
-        textVerts.push_back({p2.first, p2.second, u1, v1, 1.0f, 1.0f, 1.0f, opacity});
-        textVerts.push_back({p3.first, p3.second, u0, v1, 1.0f, 1.0f, 1.0f, opacity});
-        textVerts.push_back({p0.first, p0.second, u0, v0, 1.0f, 1.0f, 1.0f, opacity});
+        textVerts.push_back({p0.first, p0.second, u0, v0, red, green, blue, finalAlpha});
+        textVerts.push_back({p1.first, p1.second, u1, v0, red, green, blue, finalAlpha});
+        textVerts.push_back({p2.first, p2.second, u1, v1, red, green, blue, finalAlpha});
+        textVerts.push_back({p2.first, p2.second, u1, v1, red, green, blue, finalAlpha});
+        textVerts.push_back({p3.first, p3.second, u0, v1, red, green, blue, finalAlpha});
+        textVerts.push_back({p0.first, p0.second, u0, v0, red, green, blue, finalAlpha});
         textQuadTextureIds.push_back(textureId);
     };
 
@@ -331,13 +337,13 @@ void ExecuteRendererDraw(const CommandList& cmd)
                     const float newV0 = q.v0 + (yDelta / q.h) * vSpan;
                     const float newU1 = newU0 + (clippedW / q.w) * uSpan;
                     const float newV1 = newV0 + (clippedH / q.h) * vSpan;
-                    pushTextQuad(clippedX, clippedY, clippedW, clippedH, newU0, newV0, newU1, newV1, q.opacity, q.textureId);
+                    pushTextQuad(clippedX, clippedY, clippedW, clippedH, newU0, newV0, newU1, newV1, q.tintColor, q.opacity, q.textureId);
                 }
             } else {
-                pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.opacity, q.textureId);
+                pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId);
             }
         } else {
-            pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.opacity, q.textureId, q.rotationRadians);
+            pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId, q.rotationRadians);
         }
     }
 

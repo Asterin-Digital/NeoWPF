@@ -5,15 +5,11 @@
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Layout/Placement/Orientation.h>
 #include <cstdint>
 #include <memory>
 
 namespace NeoWPF::UI {
-
-enum class ScrollBarOrientation {
-    Vertical,
-    Horizontal
-};
 
 class ScrollBarStyle;
 void RegisterScrollBarStyles();
@@ -26,7 +22,7 @@ void RegisterScrollBarStyles();
     Drop this on a panel or content surface when you want scrolling.
     @example
     auto scrollBar = std::make_shared<NeoWPF::UI::ScrollBar>();
-    scrollBar->SetOrientation(ScrollBarOrientation::Vertical);
+    scrollBar->SetOrientation(Orientation::Vertical);
     scrollBar->SetScrollTarget(contentHost);
     scrollBar->SetViewportElement(viewport);
 */
@@ -44,15 +40,15 @@ public:
         The direction the thumb should travel.
 
         @example
-        scrollBar->SetOrientation(ScrollBarOrientation::Horizontal);
+        scrollBar->SetOrientation(Orientation::Horizontal);
     */
-    void SetOrientation(ScrollBarOrientation orientation) noexcept { m_orientation = orientation; InvalidateVisual(); }
+    void SetOrientation(Orientation orientation) noexcept { m_orientation = orientation; InvalidateVisual(); }
 
     /*
         @summary
         Returns the current scrollbar direction.
     */
-    ScrollBarOrientation GetOrientation() const noexcept { return m_orientation; }
+    Orientation GetOrientation() const noexcept { return m_orientation; }
 
     /*
         @summary
@@ -288,7 +284,7 @@ private:
     */
     void UpdateScrollState() noexcept;
 
-    ScrollBarOrientation m_orientation = ScrollBarOrientation::Vertical;
+    Orientation m_orientation = Orientation::Vertical;
     NeoWPF::UI::Color m_trackColor = NeoWPF::UI::Color::FromArgb(0xFF2A2A2Au);
     NeoWPF::UI::Color m_thumbColor = NeoWPF::UI::Color::FromArgb(0xFF5A5A5Au);
     int m_thumbSize = 24;

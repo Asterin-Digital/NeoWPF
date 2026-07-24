@@ -2,7 +2,7 @@
 
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
-#include <NeoWPF/UI/Layout/Alignment/Alignment.h>
+#include <NeoWPF/UI/Layout/Placement/Alignment.h>
 #include <algorithm>
 
 #ifdef min

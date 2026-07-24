@@ -128,6 +128,7 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         0.0f, 0.0f,
         1.0f, 1.0f,
         m_textureId,
+        m_textColor.ToArgb(),
         GetOpacity(),
         clip,
         rotationRadians);

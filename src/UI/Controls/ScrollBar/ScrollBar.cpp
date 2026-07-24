@@ -40,7 +40,7 @@ ScrollBar::~ScrollBar() = default;
 
 void ScrollBar::Measure(int availableWidth, int availableHeight)
 {
-    const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
+    const bool isVertical = m_orientation == Orientation::Vertical;
     const int thickness = 16;
     const int minLength = 24;
     int primaryAvailable = std::max(0, isVertical ? availableHeight : availableWidth);
@@ -64,7 +64,7 @@ void ScrollBar::Measure(int availableWidth, int availableHeight)
 
 void ScrollBar::Arrange(int finalWidth, int finalHeight)
 {
-    const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
+    const bool isVertical = m_orientation == Orientation::Vertical;
     int effectiveWidth = finalWidth;
     int effectiveHeight = finalHeight;
 
@@ -158,7 +158,7 @@ void ScrollBar::UpdateScrollTarget() noexcept
         return;
     }
 
-    if (m_orientation == ScrollBarOrientation::Vertical) {
+    if (m_orientation == Orientation::Vertical) {
         m_scrollTarget->SetRenderOffset(0, -m_value);
     } else {
         m_scrollTarget->SetRenderOffset(-m_value, 0);
@@ -178,7 +178,7 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         return;
     }
 
-    const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
+    const bool isVertical = m_orientation == Orientation::Vertical;
     const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
     const int trackThickness = isVertical ? GetFinalWidth() : GetFinalHeight();
     const int effectiveTrackLength = m_viewportSize > 0

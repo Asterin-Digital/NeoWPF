@@ -18,23 +18,33 @@ void ThemeManager::RegisterBuiltInThemes()
     light.Name = "Light";
     light.Resources["Window.BackgroundColor"] = uint32_t(0xFFF3F3F3u);
     light.Resources["Window.ForegroundColor"] = uint32_t(0xFF1E1E1Eu);
-    light.Resources["Button.BackgroundColor"] = uint32_t(0xFFE6E6E6u);
-    light.Resources["Button.ForegroundColor"] = uint32_t(0xFF1E1E1Eu);
-    light.Resources["Checkbox.BorderColor"] = uint32_t(0xFF666666u);
-    light.Resources["Checkbox.BoxColor"] = uint32_t(0xFFFAFAFAu);
+    light.Resources["Button.BackgroundColor"] = uint32_t(0xFFEEEEEEu);
+    light.Resources["Button.BorderColor"] = uint32_t(0xFF707070u);
+    light.Resources["Button.ForegroundColor"] = uint32_t(0xFF000000u);
+    light.Resources["Checkbox.BorderColor"] = uint32_t(0xFF202020u);
+    light.Resources["Checkbox.BoxColor"] = uint32_t(0xFFFFFFFFu);
+    light.Resources["Checkbox.TextColor"] = uint32_t(0xFF000000u);
     light.Resources["TextBox.BackgroundColor"] = uint32_t(0xFFFFFFFFu);
-    light.Resources["TextBox.ForegroundColor"] = uint32_t(0xFF1E1E1Eu);
+    light.Resources["TextBox.BorderColor"] = uint32_t(0xFFABADB3u);
+    light.Resources["TextBox.ForegroundColor"] = uint32_t(0xFF000000u);
+    light.Resources["ScrollBar.TrackColor"] = uint32_t(0xFFEAEAEAu);
+    light.Resources["ScrollBar.ThumbColor"] = uint32_t(0xFFCDCDCDu);
 
     ThemeDefinition dark;
     dark.Name = "Dark";
     dark.Resources["Window.BackgroundColor"] = uint32_t(0xFF1E1E1Eu);
     dark.Resources["Window.ForegroundColor"] = uint32_t(0xFFEDEDEDu);
     dark.Resources["Button.BackgroundColor"] = uint32_t(0xFF3A3A3Au);
+    dark.Resources["Button.BorderColor"] = uint32_t(0xFF707070u);
     dark.Resources["Button.ForegroundColor"] = uint32_t(0xFFEDEDEDu);
     dark.Resources["Checkbox.BorderColor"] = uint32_t(0xFF9E9E9Eu);
     dark.Resources["Checkbox.BoxColor"] = uint32_t(0xFF2A2A2Au);
+    dark.Resources["Checkbox.TextColor"] = uint32_t(0xFFEDEDEDu);
     dark.Resources["TextBox.BackgroundColor"] = uint32_t(0xFF2F2F2Fu);
+    dark.Resources["TextBox.BorderColor"] = uint32_t(0xFF666666u);
     dark.Resources["TextBox.ForegroundColor"] = uint32_t(0xFFEDEDEDu);
+    dark.Resources["ScrollBar.TrackColor"] = uint32_t(0xFFEAEAEAu);
+    dark.Resources["ScrollBar.ThumbColor"] = uint32_t(0xFFCDCDCDu);
 
     RegisterTheme(light);
     RegisterTheme(dark);

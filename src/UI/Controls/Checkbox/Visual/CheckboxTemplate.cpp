@@ -11,8 +11,8 @@ CheckboxTemplate::CheckboxTemplate()
     SetVisualTree(root);
 
     auto box = std::make_shared<Templates::TemplateVisual>("PART_Box");
-    box->SetFillColor(0xFF3A3A3Au);
-    box->SetBorderColor(0xFF666666u);
+    box->SetFillColor(0xFFFFFFFFu);
+    box->SetBorderColor(0xFF202020u);
     box->SetBorderThickness(1);
 
     auto contentHost = std::make_shared<Templates::TemplateVisual>("PART_ContentHost");
@@ -30,8 +30,8 @@ CheckboxTemplate::CheckboxTemplate()
     normalState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) {
         (void)element;
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFF3A3A3Au);
-            templateVisual->SetBorderColor(0xFF666666u);
+            templateVisual->SetFillColor(0xFFFFFFFFu);
+            templateVisual->SetBorderColor(0xFF202020u);
         }
     });
     commonStates->AddState(normalState);
@@ -40,8 +40,8 @@ CheckboxTemplate::CheckboxTemplate()
     checkedState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) {
         (void)element;
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFF5A7A9Au);
-            templateVisual->SetBorderColor(0xFF4A6A8Au);
+            templateVisual->SetFillColor(0xFFFFFFFFu);
+            templateVisual->SetBorderColor(0xFF202020u);
         }
     });
     commonStates->AddState(checkedState);
@@ -50,8 +50,8 @@ CheckboxTemplate::CheckboxTemplate()
     mouseOverState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) {
         (void)element;
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFF4A4A4Au);
-            templateVisual->SetBorderColor(0xFF8A8A8Au);
+            templateVisual->SetFillColor(0xFFF2F9FFu);
+            templateVisual->SetBorderColor(0xFF202020u);
         }
     });
     commonStates->AddState(mouseOverState);
@@ -60,8 +60,8 @@ CheckboxTemplate::CheckboxTemplate()
     pressedState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) {
         (void)element;
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFF2A2A2Au);
-            templateVisual->SetBorderColor(0xFF555555u);
+            templateVisual->SetFillColor(0xFFF2F9FFu);
+            templateVisual->SetBorderColor(0xFF202020u);
         }
     });
     commonStates->AddState(pressedState);

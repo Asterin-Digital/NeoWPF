@@ -43,6 +43,8 @@ namespace NeoWPF {
 
     using UI::Button;
 
+    //using UI::Orientation;
+
     using UI::Checkbox;
 
     using UI::ItemsControl;

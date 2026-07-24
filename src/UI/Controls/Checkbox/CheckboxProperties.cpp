@@ -13,7 +13,7 @@ namespace NeoWPF::UI::Properties {
             textMetadata);
 
         PropertyMetadata textColorMetadata;
-        textColorMetadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu));
+        textColorMetadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFF000000u));
         textColorMetadata.Flags = PropertyFlags::AffectsRender;
         RegisterProperty<UI::Checkbox, NeoWPF::UI::Color>(
             "TextColor",
@@ -22,7 +22,7 @@ namespace NeoWPF::UI::Properties {
             textColorMetadata);
 
         PropertyMetadata backgroundMetadata;
-        backgroundMetadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFF3A3A3Au));
+        backgroundMetadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu));
         backgroundMetadata.Flags = PropertyFlags::AffectsRender;
         RegisterProperty<UI::Checkbox, NeoWPF::UI::Color>(
             "BackgroundColor",
@@ -31,7 +31,7 @@ namespace NeoWPF::UI::Properties {
             backgroundMetadata);
 
         PropertyMetadata borderMetadata;
-        borderMetadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFF666666u));
+        borderMetadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFF202020u));
         borderMetadata.Flags = PropertyFlags::AffectsRender;
         RegisterProperty<UI::Checkbox, NeoWPF::UI::Color>(
             "BorderColor",

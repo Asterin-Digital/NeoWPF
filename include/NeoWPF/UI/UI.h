@@ -19,6 +19,7 @@
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Layout/Border/Border.h>
+#include <NeoWPF/UI/Layout/Placement/Orientation.h>
 #include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>

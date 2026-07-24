@@ -248,7 +248,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             cornerRadius.TopRight,
             cornerRadius.BottomRight,
             cornerRadius.BottomLeft,
-            0xFF333333u,
+            0xFF707070u,
             GetOpacity(),
             NeoWPF::Rendering::ClipRect{},
             rotationRadians);

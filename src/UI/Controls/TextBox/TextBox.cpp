@@ -44,11 +44,11 @@ TextBox::TextBox()
     SetPresenter(presenter);
 
     m_verticalScrollBar = std::make_shared<ScrollBar>();
-    m_verticalScrollBar->SetOrientation(ScrollBarOrientation::Vertical);
+    m_verticalScrollBar->SetOrientation(Orientation::Vertical);
     m_verticalScrollBar->SetThumbSize(24);
 
     m_horizontalScrollBar = std::make_shared<ScrollBar>();
-    m_horizontalScrollBar->SetOrientation(ScrollBarOrientation::Horizontal);
+    m_horizontalScrollBar->SetOrientation(Orientation::Horizontal);
     m_horizontalScrollBar->SetThumbSize(24);
 
     ApplyTextBoxThemeStyle(this);
@@ -420,6 +420,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             0.0f, 0.0f,
             uvRight, uvBottom,
             line.textureId,
+            GetTextColor().ToArgb(),
             GetOpacity(),
             clip);
 
@@ -447,6 +448,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             0.0f, 0.0f,
             1.0f, 1.0f,
             caretTextureId,
+            GetTextColor().ToArgb(),
             GetOpacity(),
             clip);
     }
@@ -467,7 +469,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             NeoWPF::Diagnostics::LogInfo("[TextBox] Vertical scrollbar debug: contentHost=(%d,%d) viewport=(%d,%d) content=(%d,%d) bar=%d", contentHostX, contentHostY, viewportWidth, viewportHeight, m_textLayout.GetContentWidth(), m_textLayout.GetContentHeight(), barHeight);
             NeoWPF::Diagnostics::LogInfo("[TextBox] Vertical scrollbar metrics: content=%d viewport=%d track=%d range=%d (thumbQuery returns %d)", effectiveContentHeight, effectiveViewportHeight, barHeight, m_verticalScrollBar->GetScrollRange(), m_verticalScrollBar->GetThumbLength(barHeight));
         }
-        m_verticalScrollBar->SetOrientation(ScrollBarOrientation::Vertical);
+        m_verticalScrollBar->SetOrientation(Orientation::Vertical);
         m_verticalScrollBar->SetViewportSize(effectiveViewportHeight);
         m_verticalScrollBar->SetContentSize(effectiveContentHeight);
         m_verticalScrollBar->SetWidth(scrollbarThickness);
@@ -489,7 +491,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         if (s_textBoxDebug) {
             NeoWPF::Diagnostics::LogInfo("[TextBox] Horizontal scrollbar metrics: content=%d viewport=%d track=%d range=%d thumb=%d", effectiveContentWidth, effectiveViewportWidth, barWidth, m_horizontalScrollBar->GetScrollRange(), m_horizontalScrollBar->GetThumbLength(barWidth));
         }
-        m_horizontalScrollBar->SetOrientation(ScrollBarOrientation::Horizontal);
+        m_horizontalScrollBar->SetOrientation(Orientation::Horizontal);
         m_horizontalScrollBar->SetViewportSize(effectiveViewportWidth);
         m_horizontalScrollBar->SetContentSize(effectiveContentWidth);
         m_horizontalScrollBar->SetWidth(barWidth);

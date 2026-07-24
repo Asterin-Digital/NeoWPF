@@ -12,12 +12,12 @@ ScrollBarTemplate::ScrollBarTemplate()
     SetVisualTree(root);
 
     auto track = std::make_shared<Templates::TemplateVisual>("PART_Track");
-    track->SetFillColor(0xFF2A2A2Au);
+    track->SetFillColor(0xFFEAEAEAu);
     track->SetBorderColor(0x00000000u);
     track->SetBorderThickness(0);
 
     auto thumb = std::make_shared<Templates::TemplateVisual>("PART_Thumb");
-    thumb->SetFillColor(0xFF5A5A5Au);
+    thumb->SetFillColor(0xFFCDCDCDu);
     thumb->SetBorderColor(0x00000000u);
     thumb->SetBorderThickness(0);
 

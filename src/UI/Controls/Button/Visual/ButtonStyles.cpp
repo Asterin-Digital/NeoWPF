@@ -9,15 +9,16 @@ void ApplyButtonThemeStyle(UIElement* element)
         return;
     }
 
-    element->SetStylePropertyValue("TextColor", element->GetResourceValue("Button.TextColor", uint32_t(0xFFEDEDEDu)));
+    element->SetStylePropertyValue("TextColor", element->GetResourceValue("Button.TextColor", uint32_t(0xFF000000u)));
     element->SetStylePropertyValue("FontSize", element->GetResourceValue("Button.FontSize", 14));
     element->SetStylePropertyValue("Padding", element->GetResourceValue("Button.Padding", 10));
-    element->SetStylePropertyValue("BackgroundColor", element->GetResourceValue("Button.BackgroundColor", uint32_t(0xFF3A3A3Au)));
+    element->SetStylePropertyValue("BackgroundColor", element->GetResourceValue("Button.BackgroundColor", uint32_t(0xFFEEEEEEu)));
+    element->SetStylePropertyValue("BorderColor", element->GetResourceValue("Button.BorderColor", uint32_t(0xFF707070u)));
 
-    element->SetStyleProperty("VisualState.Normal.Background", 0xFF3A3A3Au);
-    element->SetStyleProperty("VisualState.MouseOver.Background", 0xFF5A7A9Au);
-    element->SetStyleProperty("VisualState.Pressed.Background", 0xFF1A1A1Au);
-    element->SetStyleProperty("VisualState.Disabled.Background", 0xFF2A2A2Au);
+    element->SetStyleProperty("VisualState.Normal.Background", 0xFFEEEEEEu);
+    element->SetStyleProperty("VisualState.MouseOver.Background", 0xFFBEE6FDu);
+    element->SetStyleProperty("VisualState.Pressed.Background", 0xFFC4E5F6u);
+    element->SetStyleProperty("VisualState.Disabled.Background", 0xFFF4F4F4u);
 }
 
 }

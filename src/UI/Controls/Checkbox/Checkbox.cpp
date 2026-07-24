@@ -159,7 +159,7 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
 
 if (IsChecked()) {
-    const auto checkColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
+    const auto checkColor = NeoWPF::UI::Color::FromArgb(0xFF212121u);
     const float checkCenterX = fAbsX + 9.0f;
     const float checkCenterY = fAbsY + 10.0f;
     constexpr float kCheckAngle = 0.68f;

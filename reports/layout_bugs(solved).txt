@@ -2,10 +2,6 @@
 
 ## 1. Border desired size is much larger than WPF
 
-### Status
-
-**Root cause almost certainly found.**
-
 ### WPF
 
 ```

@@ -50,7 +50,7 @@ int main()
     layout->AddChild(viewport, 0, 0);
 
     auto scrollBar = std::make_shared<ScrollBar>();
-    scrollBar->SetOrientation(ScrollBarOrientation::Vertical);
+    scrollBar->SetOrientation(Orientation::Vertical);
     scrollBar->SetScrollTarget(contentHost);
     scrollBar->SetViewportElement(viewport);
     scrollBar->SetTrackColor(0xFF1E293Bu);

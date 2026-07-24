@@ -26,7 +26,7 @@ void ScrollBar::UpdateValueFromPosition(int x, int y) noexcept
     int absY = 0;
     GetAbsolutePosition(absX, absY);
 
-    const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
+    const bool isVertical = m_orientation == Orientation::Vertical;
     const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
     const int effectiveTrackLength = m_viewportSize > 0
         ? std::max(0, std::min(trackLength, m_viewportSize))
@@ -58,7 +58,7 @@ void ScrollBar::OnMouseDown(int x, int y, std::uint32_t buttonState)
     int absY = 0;
     GetAbsolutePosition(absX, absY);
 
-    const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
+    const bool isVertical = m_orientation == Orientation::Vertical;
     const int localPos = isVertical ? y - absY : x - absX;
     const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
     const int effectiveTrackLength = m_viewportSize > 0
@@ -104,7 +104,7 @@ void ScrollBar::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
     int absY = 0;
     GetAbsolutePosition(absX, absY);
 
-    const bool isVertical = m_orientation == ScrollBarOrientation::Vertical;
+    const bool isVertical = m_orientation == Orientation::Vertical;
     const int pointerPos = isVertical ? args->GetY() - absY : args->GetX() - absX;
     const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
     const int effectiveTrackLength = m_viewportSize > 0

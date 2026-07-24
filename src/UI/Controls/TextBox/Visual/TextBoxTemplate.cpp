@@ -10,8 +10,8 @@ TextBoxTemplate::TextBoxTemplate()
     SetVisualTree(root);
 
     auto border = std::make_shared<Templates::TemplateVisual>("PART_Border");
-    border->SetFillColor(0xFF2F2F2Fu);
-    border->SetBorderColor(0xFF666666u);
+    border->SetFillColor(0xFFFFFFFFu);
+    border->SetBorderColor(0xFFABADB3u);
     border->SetBorderThickness(1);
 
     auto contentHost = std::make_shared<Templates::TemplateVisual>("PART_ContentHost");
@@ -28,8 +28,8 @@ TextBoxTemplate::TextBoxTemplate()
     auto normalState = std::make_shared<Styling::VisualState>("Normal");
     normalState->AddSetter("PART_Border", [](UIElement* element, Visual* visual) {
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFF2F2F2Fu);
-            templateVisual->SetBorderColor(0xFF666666u);
+            templateVisual->SetFillColor(0xFFFFFFFFu);
+            templateVisual->SetBorderColor(0xFFABADB3u);
         }
         if (element) {
             element->InvalidateVisual();
@@ -40,8 +40,8 @@ TextBoxTemplate::TextBoxTemplate()
     auto focusedState = std::make_shared<Styling::VisualState>("Focused");
     focusedState->AddSetter("PART_Border", [](UIElement* element, Visual* visual) {
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFF1F1F1Fu);
-            templateVisual->SetBorderColor(0xFF0078D4u);
+            templateVisual->SetFillColor(0xFFFFFFFFu);
+            templateVisual->SetBorderColor(0xFF569DE5u);
         }
         if (element) {
             element->InvalidateVisual();
@@ -52,8 +52,8 @@ TextBoxTemplate::TextBoxTemplate()
     auto disabledState = std::make_shared<Styling::VisualState>("Disabled");
     disabledState->AddSetter("PART_Border", [](UIElement* element, Visual* visual) {
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFF202020u);
-            templateVisual->SetBorderColor(0xFF404040u);
+            templateVisual->SetFillColor(0xFFF0F0F0u);
+            templateVisual->SetBorderColor(0xFFABADB3u);
         }
         if (element) {
             element->InvalidateVisual();

@@ -9,7 +9,7 @@ void ApplyPanelThemeStyle(UIElement* element)
         return;
     }
 
-    element->SetStylePropertyValue("BackgroundColor", element->GetResourceValue("Panel.BackgroundColor", uint32_t(0xFF1E1E1Eu)));
+    element->SetStylePropertyValue("BackgroundColor", element->GetResourceValue("Panel.BackgroundColor", uint32_t(0x00000000u)));
 }
 
 }

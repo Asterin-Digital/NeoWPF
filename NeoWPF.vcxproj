@@ -237,7 +237,7 @@
     <ClCompile Include="src\UI\Core\Element\Properties\FrameworkElementProperties.cpp" />
     <ClCompile Include="src\UI\Core\Element\Properties\UIElementProperties.cpp" />
     <ClCompile Include="src\UI\Core\Transform\Transform.cpp" />
-    <ClCompile Include="src\UI\Layout\Alignment\Alignment.cpp" />
+    <ClCompile Include="src\UI\Layout\Placement\Alignment.cpp" />
     <ClCompile Include="src\UI\Layout\Border\BorderProperties.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\Panel.Styles.cpp" />
     <ClCompile Include="src\UI\Layout\Border\Visual\BorderStyles.cpp" />

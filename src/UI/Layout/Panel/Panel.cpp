@@ -1,6 +1,6 @@
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
-#include <NeoWPF/UI/Layout/Alignment/Alignment.h>
+#include <NeoWPF/UI/Layout/Placement/Alignment.h>
 #include <algorithm>
 #include <vector>
 

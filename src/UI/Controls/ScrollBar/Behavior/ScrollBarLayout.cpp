@@ -37,10 +37,10 @@ void ScrollBar::UpdateScrollState() noexcept
 
     if (hasScrollTarget || hasViewportElement || m_contentSize > 0 || m_viewportSize > 0) {
         const int contentSize = hasScrollTarget
-            ? (m_orientation == ScrollBarOrientation::Vertical ? m_scrollTarget->GetDesiredHeight() : m_scrollTarget->GetDesiredWidth())
+            ? (m_orientation == Orientation::Vertical ? m_scrollTarget->GetDesiredHeight() : m_scrollTarget->GetDesiredWidth())
             : m_contentSize;
         const int viewportSize = hasViewportElement
-            ? (m_orientation == ScrollBarOrientation::Vertical ? m_viewportElement->GetFinalHeight() : m_viewportElement->GetFinalWidth())
+            ? (m_orientation == Orientation::Vertical ? m_viewportElement->GetFinalHeight() : m_viewportElement->GetFinalWidth())
             : m_viewportSize;
 
         SetContentSize(contentSize);

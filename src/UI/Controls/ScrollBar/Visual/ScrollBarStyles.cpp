@@ -9,8 +9,8 @@ void ApplyScrollBarThemeStyle(UIElement* element)
         return;
     }
 
-    element->SetStylePropertyValue("TrackColor", element->GetResourceValue("ScrollBar.TrackColor", uint32_t(0xFF2A2A2Au)));
-    element->SetStylePropertyValue("ThumbColor", element->GetResourceValue("ScrollBar.ThumbColor", uint32_t(0xFF5A5A5Au)));
+    element->SetStylePropertyValue("TrackColor", element->GetResourceValue("ScrollBar.TrackColor", uint32_t(0xFFEAEAEAu)));
+    element->SetStylePropertyValue("ThumbColor", element->GetResourceValue("ScrollBar.ThumbColor", uint32_t(0xFFCDCDCDu)));
     element->SetStylePropertyValue("ThumbSize", element->GetResourceValue("ScrollBar.ThumbSize", 24));
 }
 
