@@ -154,9 +154,8 @@ void TextBlock::EnsureTextTexture(int availableWidth, int availableHeight)
 
     int width = 0;
     int height = 0;
-    const int widthConstraint = std::max(1, availableWidth);
-    const int heightConstraint = std::max(1, availableHeight);
-    auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(m_text, m_fontSize, widthConstraint, heightConstraint, width, height);
+    const int INF = 1000000;
+    auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(m_text, m_fontSize, INF, INF, width, height);
     if (bitmap.empty() || width == 0 || height == 0) {
         NeoWPF::Diagnostics::LogError("TextBlock: failed to render text bitmap");
         m_textWidth = 0;

@@ -225,19 +225,8 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         background->BuildRenderCommands(commands);
     }
     else {
-        commands.DrawRoundedRect(
-            drawX,
-            drawY,
-            drawWidth,
-            drawHeight,
-            cornerRadius.TopLeft,
-            cornerRadius.TopRight,
-            cornerRadius.BottomRight,
-            cornerRadius.BottomLeft,
-            m_backgroundColor.ToArgb(),
-            GetOpacity(),
-            NeoWPF::Rendering::ClipRect{},
-            rotationRadians);
+        const float borderThickness = 1.0f; 
+        const uint32_t borderColor = 0xFF707070u; 
 
         commands.DrawRoundedRect(
             drawX,
@@ -248,10 +237,38 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             cornerRadius.TopRight,
             cornerRadius.BottomRight,
             cornerRadius.BottomLeft,
-            0xFF707070u,
+            borderColor,
             GetOpacity(),
             NeoWPF::Rendering::ClipRect{},
             rotationRadians);
+
+        // Draw the background inset by border thickness
+        const float inset = borderThickness;
+        const float innerX = drawX + inset;
+        const float innerY = drawY + inset;
+        const float innerW = drawWidth - 2.0f * inset;
+        const float innerH = drawHeight - 2.0f * inset;
+        if (innerW > 0.0f && innerH > 0.0f) {
+            // Adjust corner radius for the inner rectangle (subtract inset, but not below 0)
+            const float innerTL = std::max(0.0f, cornerRadius.TopLeft - inset);
+            const float innerTR = std::max(0.0f, cornerRadius.TopRight - inset);
+            const float innerBR = std::max(0.0f, cornerRadius.BottomRight - inset);
+            const float innerBL = std::max(0.0f, cornerRadius.BottomLeft - inset);
+
+            commands.DrawRoundedRect(
+                innerX,
+                innerY,
+                innerW,
+                innerH,
+                innerTL,
+                innerTR,
+                innerBR,
+                innerBL,
+                m_backgroundColor.ToArgb(),
+                GetOpacity(),
+                NeoWPF::Rendering::ClipRect{},
+                rotationRadians);
+        }
     }
 
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));

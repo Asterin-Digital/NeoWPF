@@ -221,7 +221,17 @@ namespace NeoWPF::UI {
             int cspan = GetColumnSpan(child);
 
             const auto& layout = metrics.childLayouts[i];
-            fe->Measure(layout.width, layout.height);
+
+            //dont measure a child again if it occupies exactly one auto sized row and one auto‑sized column
+            bool rowAuto = (m_rowDefs.empty() || (r < static_cast<int>(m_rowDefs.size()) && m_rowDefs[r].mode == SizeMode::Auto));
+            bool colAuto = (m_colDefs.empty() || (c < static_cast<int>(m_colDefs.size()) && m_colDefs[c].mode == SizeMode::Auto));
+            bool singleCell = (rspan == 1 && cspan == 1);
+            bool skipMeasure = rowAuto && colAuto && singleCell;
+
+            if (!skipMeasure) {
+                fe->Measure(layout.width, layout.height);
+            }
+
             if (GridLayout::s_gridLogging) {
                 NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Child[%zu] at (%d,%d) span(%d,%d): cell %dx%d, desired %dx%d, horizontal=%d vertical=%d",
                     i, r, c, rspan, cspan, layout.width, layout.height,
