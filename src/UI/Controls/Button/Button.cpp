@@ -62,8 +62,8 @@ float GetAbsoluteRenderTransformRotation(const UIElement* element)
 Button::Button()
     : ButtonBase()
 {
-    SetHorizontalAlignment(HorizontalAlignment::Left);
-    SetVerticalAlignment(VerticalAlignment::Top);
+    SetHorizontalAlignment(HorizontalAlignment::Stretch);
+    SetVerticalAlignment(VerticalAlignment::Stretch);
     SetTemplate(std::make_shared<ButtonTemplate>());
     ApplyTemplate();
 
@@ -88,8 +88,8 @@ Button::Button()
 Button::Button(const std::wstring& text)
     : ButtonBase()
 {
-    SetHorizontalAlignment(HorizontalAlignment::Left);
-    SetVerticalAlignment(VerticalAlignment::Top);
+    SetHorizontalAlignment(HorizontalAlignment::Stretch);
+    SetVerticalAlignment(VerticalAlignment::Stretch);
     SetTemplate(std::make_shared<ButtonTemplate>());
     ApplyTemplate();
 

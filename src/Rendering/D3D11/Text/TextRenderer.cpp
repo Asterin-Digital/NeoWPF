@@ -2,7 +2,7 @@
 
 namespace NeoWPF::Rendering::Text {
 
-bool s_textRendererDebug = false;
+bool s_textRendererDebug = true;
 
 TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight);
 std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, int& outWidth, int& outHeight);

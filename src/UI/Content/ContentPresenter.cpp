@@ -54,7 +54,7 @@ void ContentPresenter::Measure(int availableWidth, int availableHeight)
     int desiredHeight = m_padding * 2;
 
     if (m_content) {
-        m_content->Measure(availableWidth - (m_padding * 2), availableHeight - (m_padding * 2));
+        m_content->Measure(availableWidth, availableHeight);
         if (auto* frameworkContent = dynamic_cast<FrameworkElement*>(m_content.get())) {
             desiredWidth = std::max(desiredWidth, frameworkContent->GetDesiredWidth() + (m_padding * 2));
             desiredHeight = std::max(desiredHeight, frameworkContent->GetDesiredHeight() + (m_padding * 2));
@@ -69,9 +69,51 @@ void ContentPresenter::Arrange(int finalWidth, int finalHeight)
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
     if (m_content) {
-        const int contentWidth = std::max(0, finalWidth - (m_padding * 2));
-        const int contentHeight = std::max(0, finalHeight - (m_padding * 2));
-        m_content->Arrange(contentWidth, contentHeight);
+        const int contentWidth = std::max(0, finalWidth);
+        const int contentHeight = std::max(0, finalHeight);
+
+        if (auto* childFe = dynamic_cast<FrameworkElement*>(m_content.get())) {
+            childFe->Arrange(contentWidth, contentHeight);
+
+            int offsetX = 0;
+            int offsetY = 0;
+            const int actualW = std::max(0, childFe->GetFinalWidth());
+            const int actualH = std::max(0, childFe->GetFinalHeight());
+
+            switch (childFe->GetHorizontalAlignment()) {
+            case HorizontalAlignment::Left:
+                offsetX = 0;
+                break;
+            case HorizontalAlignment::Center:
+                offsetX = (contentWidth - actualW) / 2;
+                break;
+            case HorizontalAlignment::Right:
+                offsetX = contentWidth - actualW;
+                break;
+            case HorizontalAlignment::Stretch:
+                offsetX = (contentWidth - actualW) / 2;
+                break;
+            }
+
+            switch (childFe->GetVerticalAlignment()) {
+            case VerticalAlignment::Top:
+                offsetY = 0;
+                break;
+            case VerticalAlignment::Center:
+                offsetY = (contentHeight - actualH) / 2;
+                break;
+            case VerticalAlignment::Bottom:
+                offsetY = contentHeight - actualH;
+                break;
+            case VerticalAlignment::Stretch:
+                offsetY = (contentHeight - actualH) / 2;
+                break;
+            }
+
+            childFe->SetLayoutOffset(offsetX, offsetY);
+        } else {
+            m_content->Arrange(contentWidth, contentHeight);
+        }
     }
 }
 

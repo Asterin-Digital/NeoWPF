@@ -4,11 +4,16 @@
 #include <cstdarg>
 #include <cstring>
 #include <new>
+#include <atomic>
 
 namespace NeoWPF::Diagnostics {
 
+static std::atomic<uint64_t> s_logCounter{0};
+
 static void Output(const char* prefix, const char* fmt, va_list ap)
 {
+    const uint64_t logId = ++s_logCounter;
+
     va_list ap_copy;
     va_copy(ap_copy, ap);
     int msg_len = _vscprintf(fmt, ap_copy);
@@ -20,8 +25,17 @@ static void Output(const char* prefix, const char* fmt, va_list ap)
         return;
     }
 
+    char idBuffer[32];
+    const int idLen = snprintf(idBuffer, sizeof(idBuffer), "[%llu] ",
+        static_cast<unsigned long long>(logId));
+
     const size_t prefix_len = strlen(prefix);
-    const size_t total_len  = prefix_len + 2 + static_cast<size_t>(msg_len) + 2;
+    const size_t total_len =
+        static_cast<size_t>(idLen) +
+        prefix_len +
+        2 +
+        static_cast<size_t>(msg_len) +
+        2;
 
     char* buffer = new (std::nothrow) char[total_len];
     if (!buffer) {
@@ -31,16 +45,27 @@ static void Output(const char* prefix, const char* fmt, va_list ap)
     }
 
     char* p = buffer;
+
+    memcpy(p, idBuffer, idLen);
+    p += idLen;
+
     memcpy(p, prefix, prefix_len);
     p += prefix_len;
+
     memcpy(p, ": ", 2);
     p += 2;
 
-    int written = _vsnprintf_s(p, static_cast<size_t>(msg_len) + 1,
-                               _TRUNCATE, fmt, ap);
+    int written = _vsnprintf_s(
+        p,
+        static_cast<size_t>(msg_len) + 1,
+        _TRUNCATE,
+        fmt,
+        ap);
+
     p += (written >= 0 ? written : msg_len);
+
     *p++ = '\n';
-    *p   = '\0';
+    *p = '\0';
 
     constexpr size_t kDebugChunk = 4000;
     const char* chunk_start = buffer;
@@ -52,10 +77,11 @@ static void Output(const char* prefix, const char* fmt, va_list ap)
         char chunk_buf[kDebugChunk + 1];
         memcpy(chunk_buf, chunk_start, chunk_size);
         chunk_buf[chunk_size] = '\0';
+
         OutputDebugStringA(chunk_buf);
 
         chunk_start += chunk_size;
-        remaining   -= chunk_size;
+        remaining -= chunk_size;
     }
 
     fputs(buffer, stderr);

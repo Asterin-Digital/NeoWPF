@@ -1,14 +1,16 @@
 #include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 
 namespace NeoWPF::UI {
 
+bool Border::s_borderDebugging = true;
+
 Border::Border()
 {
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
-    presenter->SetPadding(GetPadding());
     SetPresenter(presenter);
 
     ApplyBorderThemeStyle(this);
@@ -16,16 +18,17 @@ Border::Border()
 
 void Border::Measure(int availableWidth, int availableHeight)
 {
+    if (s_borderDebugging) {
+        NeoWPF::Diagnostics::LogInfo("[Border::Measure] available=%dx%d explicit=%dx%d padding=%d border=%d",
+            availableWidth, availableHeight, GetWidth(), GetHeight(), GetPadding(), GetBorderThickness());
+    }
+
     if (auto presenter = GetPresenter()) {
         if (!presenter->GetParent()) {
             try {
                 AddChild(presenter);
             } catch (const std::bad_weak_ptr&) {
             }
-        }
-
-        if (presenter->GetPadding() != GetPadding()) {
-            presenter->SetPadding(GetPadding());
         }
 
         const int explicitW = GetWidth();
@@ -35,6 +38,11 @@ void Border::Measure(int availableWidth, int availableHeight)
 
         const int innerWidth = std::max(0, availableContentWidth - (2 * GetBorderThickness()) - (2 * GetPadding()));
         const int innerHeight = std::max(0, availableContentHeight - (2 * GetBorderThickness()) - (2 * GetPadding()));
+
+        if (s_borderDebugging) {
+            NeoWPF::Diagnostics::LogInfo("[Border::Measure] inner=%dx%d content=%dx%d",
+                innerWidth, innerHeight, availableContentWidth, availableContentHeight);
+        }
 
         presenter->Measure(innerWidth, innerHeight);
 
@@ -46,8 +54,17 @@ void Border::Measure(int availableWidth, int availableHeight)
         const int desiredW = std::max(contentDesiredW, explicitW > 0 ? explicitW : 0);
         const int desiredH = std::max(contentDesiredH, explicitH > 0 ? explicitH : 0);
 
+        if (s_borderDebugging) {
+            NeoWPF::Diagnostics::LogInfo("[Border::Measure] desired=%dx%d content=%dx%d",
+                desiredW, desiredH, contentDesiredW, contentDesiredH);
+        }
+
         SetDesiredSize(desiredW, desiredH);
         return;
+    }
+
+    if (s_borderDebugging) {
+        NeoWPF::Diagnostics::LogInfo("[Border::Measure] No presenter, desired=0x0");
     }
 
     SetDesiredSize(0, 0);
@@ -55,6 +72,11 @@ void Border::Measure(int availableWidth, int availableHeight)
 
 void Border::Arrange(int finalWidth, int finalHeight)
 {
+    if (s_borderDebugging) {
+        NeoWPF::Diagnostics::LogInfo("[Border::Arrange] final=%dx%d padding=%d border=%d",
+            finalWidth, finalHeight, GetPadding(), GetBorderThickness());
+    }
+
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
     if (auto presenter = GetPresenter()) {
@@ -63,6 +85,11 @@ void Border::Arrange(int finalWidth, int finalHeight)
         const int innerWidth = std::max(0, finalWidth - (2 * GetBorderThickness()) - (2 * GetPadding()));
         const int innerHeight = std::max(0, finalHeight - (2 * GetBorderThickness()) - (2 * GetPadding()));
 
+        if (s_borderDebugging) {
+            NeoWPF::Diagnostics::LogInfo("[Border::Arrange] presenter offset=%dx%d inner=%dx%d",
+                innerX, innerY, innerWidth, innerHeight);
+        }
+
         presenter->Arrange(innerWidth, innerHeight);
         presenter->SetLayoutOffset(innerX, innerY);
         /* if (!presenter->GetParent()) {
@@ -70,7 +97,7 @@ void Border::Arrange(int finalWidth, int finalHeight)
                 AddChild(presenter);
             } catch (const std::bad_weak_ptr&) {
             }
-        } */ // possible crash point
+        } */ // possible crash
     }
 }
 

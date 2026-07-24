@@ -97,6 +97,9 @@ public:
 
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
+public:
+    static bool s_borderDebugging;
+
 protected:
     void OnPaddingChanged(int padding) override;
     void OnBorderThicknessChanged(int thickness) override;

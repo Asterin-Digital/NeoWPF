@@ -41,7 +41,7 @@ namespace NeoWPF::UI {
             std::vector<int> autoSizes(count, 0);
 
             for (int index = 0; index < count; ++index) {
-                const bool isAuto = defs.empty() || defs[index].mode == SizeMode::Auto;
+                const bool isAuto = defs.empty() || defs[index].mode == SizeMode::Auto || defs[index].mode == SizeMode::Star;
                 if (!isAuto) {
                     continue;
                 }
@@ -75,7 +75,7 @@ namespace NeoWPF::UI {
         }
     }
 
-    bool GridLayout::s_gridLogging = false; // Please do not turn this on unless ur debugging something
+    bool GridLayout::s_gridLogging = true; // Please do not turn this on unless ur debugging something
 
     GridLayoutResult GridLayout::ComputeLayout(
         const std::vector<Grid::Definition>& rowDefs,

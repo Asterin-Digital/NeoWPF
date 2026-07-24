@@ -232,8 +232,14 @@ namespace NeoWPF::UI {
         }
 
         int totalW = 0, totalH = 0;
-        for (int w : metrics.colWidths) totalW += w;
-        for (int h : metrics.rowHeights) totalH += h;
+        for (size_t c = 0; c < metrics.colWidths.size(); ++c) {
+            const bool isStar = c < m_colDefs.size() && m_colDefs[c].mode == SizeMode::Star;
+            totalW += (isStar && c < metrics.autoColWidths.size()) ? metrics.autoColWidths[c] : metrics.colWidths[c];
+        }
+        for (size_t r = 0; r < metrics.rowHeights.size(); ++r) {
+            const bool isStar = r < m_rowDefs.size() && m_rowDefs[r].mode == SizeMode::Star;
+            totalH += (isStar && r < metrics.autoRowHeights.size()) ? metrics.autoRowHeights[r] : metrics.rowHeights[r];
+        }
         SetDesiredSize(totalW, totalH);
         if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Final desired size: %dx%d", totalW, totalH);
     }
@@ -282,7 +288,6 @@ namespace NeoWPF::UI {
             int alignedW = desiredW;
             int alignedH = desiredH;
 
-
             switch (fe->GetHorizontalAlignment()) {
             case HorizontalAlignment::Left:
                 alignedX = 0;
@@ -301,7 +306,6 @@ namespace NeoWPF::UI {
                 alignedW = w;
                 break;
             }
-
 
             switch (fe->GetVerticalAlignment()) {
             case VerticalAlignment::Top:
@@ -322,8 +326,40 @@ namespace NeoWPF::UI {
                 break;
             }
 
-
             fe->Arrange(alignedW, alignedH);
+
+            const int resolvedW = fe->GetFinalWidth();
+            const int resolvedH = fe->GetFinalHeight();
+
+            switch (fe->GetHorizontalAlignment()) {
+            case HorizontalAlignment::Left:
+                alignedX = 0;
+                break;
+            case HorizontalAlignment::Center:
+                alignedX = (w - resolvedW) / 2;
+                break;
+            case HorizontalAlignment::Right:
+                alignedX = w - resolvedW;
+                break;
+            case HorizontalAlignment::Stretch:
+                alignedX = (w - resolvedW) / 2;
+                break;
+            }
+
+            switch (fe->GetVerticalAlignment()) {
+            case VerticalAlignment::Top:
+                alignedY = 0;
+                break;
+            case VerticalAlignment::Center:
+                alignedY = (h - resolvedH) / 2;
+                break;
+            case VerticalAlignment::Bottom:
+                alignedY = h - resolvedH;
+                break;
+            case VerticalAlignment::Stretch:
+                alignedY = (h - resolvedH) / 2;
+                break;
+            }
 
             const int targetX = x + alignedX;
             const int targetY = y + alignedY;

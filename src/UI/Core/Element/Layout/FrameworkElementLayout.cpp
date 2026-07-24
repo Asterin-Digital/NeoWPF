@@ -341,8 +341,22 @@ void FrameworkElement::Arrange(int finalWidth, int finalHeight)
         }
     }
 
-    m_finalWidth = ResolveWidth(finalWidth, m_desiredWidth);
-    m_finalHeight = ResolveHeight(finalHeight, m_desiredHeight);
+    const bool stretchWidth = GetHorizontalAlignment() == HorizontalAlignment::Stretch;
+    const bool stretchHeight = GetVerticalAlignment() == VerticalAlignment::Stretch;
+    const bool hasExplicitWidth = GetWidth() > 0;
+    const bool hasExplicitHeight = GetHeight() > 0;
+
+    if (stretchWidth && !hasExplicitWidth && finalWidth >= 0) {
+        m_finalWidth = std::max(0, finalWidth);
+    } else {
+        m_finalWidth = ResolveWidth(finalWidth, m_desiredWidth);
+    }
+
+    if (stretchHeight && !hasExplicitHeight && finalHeight >= 0) {
+        m_finalHeight = std::max(0, finalHeight);
+    } else {
+        m_finalHeight = ResolveHeight(finalHeight, m_desiredHeight);
+    }
 }
 
 }

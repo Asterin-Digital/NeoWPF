@@ -11,6 +11,9 @@
 		{
 			"name": "Saphire",
 			"path": "../Saphire"
+		},
+		{
+			"path": "../Saphire.NET"
 		}
 	],
 	"settings": {

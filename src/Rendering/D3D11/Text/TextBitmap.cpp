@@ -277,11 +277,11 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
         return {};
     }
 
-    outWidth = static_cast<int>(std::ceil(layoutMetrics.widthIncludingTrailingWhitespace));
-    outHeight = static_cast<int>(std::ceil(layoutMetrics.height));
+    outWidth = metrics.width;
+    outHeight = metrics.height;
     if (outWidth <= 0 || outHeight <= 0) {
-        outWidth = metrics.width;
-        outHeight = metrics.height;
+        outWidth = static_cast<int>(std::lround(layoutMetrics.widthIncludingTrailingWhitespace));
+        outHeight = static_cast<int>(std::lround(layoutMetrics.height));
     }
     if (outWidth > 0 && outHeight > 0 && static_cast<size_t>(outWidth) * static_cast<size_t>(outHeight) != bitmap.size() / 4) {
         bitmap.assign(static_cast<size_t>(outWidth) * static_cast<size_t>(outHeight) * 4, 0);

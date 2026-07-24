@@ -88,35 +88,12 @@ TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, int 
         return {};
     }
 
-    DWRITE_OVERHANG_METRICS overhang = {};
-    hr = textLayout->GetOverhangMetrics(&overhang);
-    if (FAILED(hr)) {
-        return {};
-    }
-
-    float desiredWidth = metrics.widthIncludingTrailingWhitespace;
-    if (overhang.left < 0.0f) {
-        desiredWidth += -overhang.left;
-    }
-    if (overhang.right > 0.0f) {
-        desiredWidth += overhang.right;
-    }
-
-    float desiredHeight = metrics.height;
-    if (overhang.top < 0.0f) {
-        desiredHeight += -overhang.top;
-    }
-    if (overhang.bottom > 0.0f) {
-        desiredHeight += overhang.bottom;
-    }
-
-    int resultWidth = static_cast<int>(std::ceil(desiredWidth));
-    int resultHeight = static_cast<int>(std::ceil(desiredHeight));
+    const int resultWidth = static_cast<int>(std::lround(metrics.widthIncludingTrailingWhitespace));
+    const int resultHeight = static_cast<int>(std::lround(metrics.height));
     if (s_textRendererDebug) {
-        ::NeoWPF::Diagnostics::LogInfo("[TextRenderer] MeasureText: textLength=%zu fontSize=%d layout=%gx%g metrics.width=%g widthInclTrailing=%g overhang.l=%g overhang.r=%g => %dx%d",
+        ::NeoWPF::Diagnostics::LogInfo("[TextRenderer] MeasureText: textLength=%zu fontSize=%d layout=%gx%g metrics.width=%g widthInclTrailing=%g height=%g => %dx%d",
             text.size(), fontSize, layoutWidth, layoutHeight,
-            metrics.width, metrics.widthIncludingTrailingWhitespace,
-            overhang.left, overhang.right,
+            metrics.width, metrics.widthIncludingTrailingWhitespace, metrics.height,
             resultWidth, resultHeight);
     }
     return {resultWidth, resultHeight};

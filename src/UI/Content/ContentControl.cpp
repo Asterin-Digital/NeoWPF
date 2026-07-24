@@ -44,7 +44,15 @@ void ContentControl::Measure(int availableWidth, int availableHeight)
 
     if (m_presenter) {
         m_presenter->Measure(availableWidth, availableHeight);
-        SetDesiredSize(m_presenter->GetDesiredWidth(), m_presenter->GetDesiredHeight());
+
+        const int presenterWidth = m_presenter->GetDesiredWidth();
+        const int presenterHeight = m_presenter->GetDesiredHeight();
+        const int explicitWidth = GetWidth() > 0 ? GetWidth() : 0;
+        const int explicitHeight = GetHeight() > 0 ? GetHeight() : 0;
+
+        SetDesiredSize(
+            std::max(presenterWidth, explicitWidth),
+            std::max(presenterHeight, explicitHeight));
         return;
     }
 
