@@ -98,6 +98,31 @@ void Checkbox::SetFontSize(int fontSize) noexcept
     InvalidateVisual();
 }
 
+NeoWPF::UI::Color Checkbox::GetTextColor() const noexcept
+{
+    return m_textColor;
+}
+
+NeoWPF::UI::Color Checkbox::GetBackgroundColor() const noexcept
+{
+    return m_bgColor;
+}
+
+NeoWPF::UI::Color Checkbox::GetBorderColor() const noexcept
+{
+    return m_borderColor;
+}
+
+int Checkbox::GetPadding() const noexcept
+{
+    return m_padding;
+}
+
+int Checkbox::GetFontSize() const noexcept
+{
+    return m_fontSize;
+}
+
 void Checkbox::Measure(int availableWidth, int availableHeight)
 {
     const int contentAvailableWidth = availableWidth > 0 ? std::max(0, availableWidth - m_padding) : 0;

@@ -55,14 +55,16 @@ namespace NeoWPF::UI {
                     if (resolveRowHeights) {
                         if (Grid::GetRow(child) == index && Grid::GetRowSpan(child) == 1) {
                             if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
-                                maxSize = std::max(maxSize, fe->GetDesiredHeight());
+                                const auto margin = fe->GetMargin();
+                                maxSize = std::max(maxSize, fe->GetDesiredHeight() + margin.Vertical());
                             }
                         }
                     }
                     else {
                         if (Grid::GetColumn(child) == index && Grid::GetColumnSpan(child) == 1) {
                             if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
-                                maxSize = std::max(maxSize, fe->GetDesiredWidth());
+                                const auto margin = fe->GetMargin();
+                                maxSize = std::max(maxSize, fe->GetDesiredWidth() + margin.Horizontal());
                             }
                         }
                     }

@@ -8,6 +8,8 @@
 #include <cstring>
 #include <cmath>
 #include <Windows.h>
+#include <any>
+#include <NeoWPF/Core/Application/ApplicationResources.h>
 
 #ifdef min
 #undef min
@@ -52,7 +54,23 @@ void ExecuteRendererDraw(const CommandList& cmd)
     D3D11_VIEWPORT vp = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
     g_context->RSSetViewports(1, &vp);
 
-    float clearColor[4] = {0.125f, 0.125f, 0.125f, 1.0f};
+    std::any res;
+    uint32_t bgColor = 0xFFFFFFFFu;
+    if (NeoWPF::Core::ApplicationResources::Resources::TryGetResource("Window.BackgroundColor", res)) {
+        if (res.type() == typeid(uint32_t)) {
+            bgColor = std::any_cast<uint32_t>(res);
+        } else if (res.type() == typeid(unsigned int)) {
+            bgColor = std::any_cast<unsigned int>(res);
+        } else if (res.type() == typeid(int)) {
+            bgColor = static_cast<uint32_t>(std::any_cast<int>(res));
+        }
+    }
+
+    const float a = ((bgColor >> 24) & 0xFF) / 255.0f;
+    const float r = ((bgColor >> 16) & 0xFF) / 255.0f;
+    const float g = ((bgColor >> 8) & 0xFF) / 255.0f;
+    const float b = (bgColor & 0xFF) / 255.0f;
+    float clearColor[4] = { r, g, b, a };
     g_context->ClearRenderTargetView(rtv, clearColor);
 
     static ComPtr<ID3D11BlendState> blendState;

@@ -6,16 +6,16 @@
 #include <algorithm>
 #include <memory>
 #include <string>
-//
+
 #include <thread>
 #include <functional>
 #include <mutex>
 
-// Base rule: Visual.cpp/h is not allowed to reach into UIElement.cpp/h. Same goes for 
-// UIElement.cpp/h not being allowed to reach into FrameworkElement.cpp/h
 
-// Please keep Visual.h file stable and don't modify it in any way unless you
-// have a logical reason and good motivation to do so, modifying it will trigger a long rebuild
+
+
+
+
 
 namespace NeoWPF::UI {
 
@@ -59,6 +59,22 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
             NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
     }
 
+    if (auto currentParent = child->GetParent()) {
+        if (currentParent == this) {
+            if (s_visualDebugging) {
+                NeoWPF::Diagnostics::LogWarn(
+                    "[Visual::AddVisualChild] Duplicate child detected. parent=%p child=%p",
+                    this,
+                    child.get()
+                );
+            }
+            __debugbreak();
+            return;
+        }
+
+        currentParent->RemoveVisualChild(child);
+    }
+
     child->m_parent = shared_from_this();
 
     for (const auto& existing : m_children)
@@ -67,7 +83,7 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
         {
             if (s_visualDebugging) {
                 NeoWPF::Diagnostics::LogWarn(
-                    "[Visual::AddVisualChild] Duplicate child detected. parent=%p child=%p",
+                    "[Visual::AddVisualChild] Duplicate child detected after detach. parent=%p child=%p",
                     this,
                     child.get()
                 );
@@ -96,13 +112,28 @@ void Visual::AddChild(const std::shared_ptr<Visual>& child)
 
     std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
 
+    if (auto currentParent = child->GetParent()) {
+        if (currentParent == this) {
+            if (s_visualDebugging) {
+                NeoWPF::Diagnostics::LogWarn(
+                    "[Visual::AddChild] Duplicate child detected. parent=%p child=%p",
+                    this,
+                    child.get()
+                );
+            }
+            return;
+        }
+
+        currentParent->RemoveVisualChild(child);
+    }
+
     for (const auto& existing : m_children)
     {
         if (existing.get() == child.get())
         {
             if (s_visualDebugging) {
                 NeoWPF::Diagnostics::LogWarn(
-                    "[Visual::AddChild] Duplicate child detected. parent=%p child=%p",
+                    "[Visual::AddChild] Duplicate child detected after detach. parent=%p child=%p",
                     this,
                     child.get()
                 );
@@ -131,15 +162,36 @@ void Visual::AddChild(const std::shared_ptr<Visual>& child)
 void Visual::RemoveVisualChild(const std::shared_ptr<Visual>& child)
 {
     if (!child) return;
+    RemoveVisualChild(child.get());
+}
+
+void Visual::RemoveVisualChild(Visual* child)
+{
+    if (!child) return;
 
     std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
     for (auto it = m_children.begin(); it != m_children.end(); ++it) {
-        if (it->get() == child.get()) {
+        if (it->get() == child) {
             m_children.erase(it);
-            child->m_parent.reset();
-            MarkTreeDirty();
-            return;
+            break;
         }
+    }
+
+    for (auto it = m_logicalChildren.begin(); it != m_logicalChildren.end(); ++it) {
+        if (it->get() == child) {
+            m_logicalChildren.erase(it);
+            break;
+        }
+    }
+
+    child->m_parent.reset();
+    MarkTreeDirty();
+}
+
+void Visual::RemoveFromParent()
+{
+    if (auto parent = m_parent.lock()) {
+        parent->RemoveVisualChild(this);
     }
 }
 

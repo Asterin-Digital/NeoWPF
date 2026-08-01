@@ -12,7 +12,7 @@ namespace NeoWPF::UI::Content {
 
 class ContentPresenter : public FrameworkElement, public IContentAware {
 public:
-    ContentPresenter() = default;
+    ContentPresenter();
 
     void SetContent(const std::shared_ptr<NeoWPF::UI::UIElement>& content);
     const std::shared_ptr<NeoWPF::UI::UIElement>& GetContent() const noexcept { return m_content; }
@@ -32,6 +32,7 @@ public:
     ContentBounds GetContentBounds() const noexcept override;
 
 private:
+    static bool s_contentPresenterDebugging;
     std::shared_ptr<NeoWPF::UI::UIElement> m_content;
     int m_padding = 0;
 };

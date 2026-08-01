@@ -117,6 +117,22 @@ public:
 
     /*
         @summary
+        Removes a visual child by raw pointer.
+
+        @internal
+    */
+    void RemoveVisualChild(Visual* child);
+
+    /*
+        @summary
+        Removes this visual from its current parent.
+
+        @internal
+    */
+    void RemoveFromParent();
+
+    /*
+        @summary
         Returns whether the visual tree is dirty.
 
         @internal

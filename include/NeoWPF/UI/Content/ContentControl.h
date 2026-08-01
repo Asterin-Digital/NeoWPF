@@ -14,7 +14,7 @@ class ContentPresenter;
 
 class ContentControl : public NeoWPF::UI::Control, public NeoWPF::UI::IContentAware {
 public:
-    ContentControl() = default;
+    ContentControl();
 
     void SetContent(const std::shared_ptr<NeoWPF::UI::UIElement>& content);
     const std::shared_ptr<NeoWPF::UI::UIElement>& GetContent() const noexcept { return m_content; }
@@ -30,6 +30,7 @@ public:
     ContentBounds GetContentBounds() const noexcept override;
 
 private:
+    static bool s_contentControlDebugging;
     std::shared_ptr<NeoWPF::UI::UIElement> m_content;
     std::shared_ptr<ContentPresenter> m_presenter;
 };

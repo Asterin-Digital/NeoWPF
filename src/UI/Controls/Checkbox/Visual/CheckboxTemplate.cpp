@@ -30,8 +30,10 @@ CheckboxTemplate::CheckboxTemplate()
     normalState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) {
         (void)element;
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFFFFFFFFu);
-            templateVisual->SetBorderColor(0xFF202020u);
+            const auto fill = element->GetResourceValue("Checkbox.BoxColor", NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu));
+            const auto border = element->GetResourceValue("Checkbox.BorderColor", NeoWPF::UI::Color::FromArgb(0xFF202020u));
+            templateVisual->SetFillColor(fill.ToArgb());
+            templateVisual->SetBorderColor(border.ToArgb());
         }
     });
     commonStates->AddState(normalState);
@@ -40,8 +42,10 @@ CheckboxTemplate::CheckboxTemplate()
     checkedState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) {
         (void)element;
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFFFFFFFFu);
-            templateVisual->SetBorderColor(0xFF202020u);
+            const auto fill = element->GetResourceValue("Checkbox.BoxColor", NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu));
+            const auto border = element->GetResourceValue("Checkbox.BorderColor", NeoWPF::UI::Color::FromArgb(0xFF202020u));
+            templateVisual->SetFillColor(fill.ToArgb());
+            templateVisual->SetBorderColor(border.ToArgb());
         }
     });
     commonStates->AddState(checkedState);
@@ -50,8 +54,10 @@ CheckboxTemplate::CheckboxTemplate()
     mouseOverState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) {
         (void)element;
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFFF2F9FFu);
-            templateVisual->SetBorderColor(0xFF202020u);
+            const auto fill = element->GetResourceValue("Checkbox.VisualState.MouseOver.Background", NeoWPF::UI::Color::FromArgb(0xFFF2F9FFu));
+            const auto border = element->GetResourceValue("Checkbox.VisualState.MouseOver.Border", NeoWPF::UI::Color::FromArgb(0xFF202020u));
+            templateVisual->SetFillColor(fill.ToArgb());
+            templateVisual->SetBorderColor(border.ToArgb());
         }
     });
     commonStates->AddState(mouseOverState);
@@ -60,8 +66,10 @@ CheckboxTemplate::CheckboxTemplate()
     pressedState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) {
         (void)element;
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFFF2F9FFu);
-            templateVisual->SetBorderColor(0xFF202020u);
+            const auto fill = element->GetResourceValue("Checkbox.VisualState.Pressed.Background", NeoWPF::UI::Color::FromArgb(0xFFF2F9FFu));
+            const auto border = element->GetResourceValue("Checkbox.VisualState.Pressed.Border", NeoWPF::UI::Color::FromArgb(0xFF202020u));
+            templateVisual->SetFillColor(fill.ToArgb());
+            templateVisual->SetBorderColor(border.ToArgb());
         }
     });
     commonStates->AddState(pressedState);
@@ -70,8 +78,10 @@ CheckboxTemplate::CheckboxTemplate()
     disabledState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) {
         (void)element;
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFF2A2A2Au);
-            templateVisual->SetBorderColor(0xFF404040u);
+            const auto fill = element->GetResourceValue("Checkbox.VisualState.Disabled.Background", NeoWPF::UI::Color::FromArgb(0xFF2A2A2Au));
+            const auto border = element->GetResourceValue("Checkbox.VisualState.Disabled.Border", NeoWPF::UI::Color::FromArgb(0xFF404040u));
+            templateVisual->SetFillColor(fill.ToArgb());
+            templateVisual->SetBorderColor(border.ToArgb());
         }
     });
     commonStates->AddState(disabledState);

@@ -73,6 +73,20 @@ namespace NeoWPF::UI::Properties {
             &UI::FrameworkElement::SetVerticalAlignment,
             verticalAlignmentMetadata);
 
+        PropertyMetadata marginMetadata;
+        marginMetadata.DefaultValue = std::any(UI::Thickness{});
+        marginMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsArrange | PropertyFlags::AffectsRender;
+
+        RegisterProperty<UI::FrameworkElement, UI::Thickness>(
+            "Margin",
+            &UI::FrameworkElement::GetMargin,
+            [](UI::FrameworkElement* owner, const UI::Thickness& value) {
+                if (owner) {
+                    owner->SetMargin(value);
+                }
+            },
+            marginMetadata);
+
         PropertyMetadata cornerRadiusMetadata;
         cornerRadiusMetadata.DefaultValue = std::any(UI::CornerRadius{});
         cornerRadiusMetadata.Flags = PropertyFlags::AffectsRender;

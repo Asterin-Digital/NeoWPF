@@ -229,7 +229,10 @@ namespace NeoWPF::UI {
             bool skipMeasure = rowAuto && colAuto && singleCell;
 
             if (!skipMeasure) {
-                fe->Measure(layout.width, layout.height);
+                const auto margin = fe->GetMargin();
+                const int childAvailableWidth = std::max(0, layout.width - margin.Horizontal());
+                const int childAvailableHeight = std::max(0, layout.height - margin.Vertical());
+                fe->Measure(childAvailableWidth, childAvailableHeight);
             }
 
             if (GridLayout::s_gridLogging) {
@@ -291,8 +294,11 @@ namespace NeoWPF::UI {
             if (!fe) continue;
 
 
-            int desiredW = fe->GetDesiredWidth();
-            int desiredH = fe->GetDesiredHeight();
+            const auto margin = fe->GetMargin();
+            const int contentW = std::max(0, w - margin.Horizontal());
+            const int contentH = std::max(0, h - margin.Vertical());
+            int desiredW = std::max(0, fe->GetDesiredWidth());
+            int desiredH = std::max(0, fe->GetDesiredHeight());
 
             int alignedX = 0, alignedY = 0;
             int alignedW = desiredW;
@@ -304,16 +310,16 @@ namespace NeoWPF::UI {
                 alignedW = desiredW;
                 break;
             case HorizontalAlignment::Center:
-                alignedX = (w - desiredW) / 2;
+                alignedX = (contentW - desiredW) / 2;
                 alignedW = desiredW;
                 break;
             case HorizontalAlignment::Right:
-                alignedX = w - desiredW;
+                alignedX = contentW - desiredW;
                 alignedW = desiredW;
                 break;
             case HorizontalAlignment::Stretch:
                 alignedX = 0;
-                alignedW = w;
+                alignedW = contentW;
                 break;
             }
 
@@ -323,16 +329,16 @@ namespace NeoWPF::UI {
                 alignedH = desiredH;
                 break;
             case VerticalAlignment::Center:
-                alignedY = (h - desiredH) / 2;
+                alignedY = (contentH - desiredH) / 2;
                 alignedH = desiredH;
                 break;
             case VerticalAlignment::Bottom:
-                alignedY = h - desiredH;
+                alignedY = contentH - desiredH;
                 alignedH = desiredH;
                 break;
             case VerticalAlignment::Stretch:
                 alignedY = 0;
-                alignedH = h;
+                alignedH = contentH;
                 break;
             }
 
@@ -346,13 +352,13 @@ namespace NeoWPF::UI {
                 alignedX = 0;
                 break;
             case HorizontalAlignment::Center:
-                alignedX = (w - resolvedW) / 2;
+                alignedX = (contentW - resolvedW) / 2;
                 break;
             case HorizontalAlignment::Right:
-                alignedX = w - resolvedW;
+                alignedX = contentW - resolvedW;
                 break;
             case HorizontalAlignment::Stretch:
-                alignedX = (w - resolvedW) / 2;
+                alignedX = (contentW - resolvedW) / 2;
                 break;
             }
 
@@ -361,18 +367,18 @@ namespace NeoWPF::UI {
                 alignedY = 0;
                 break;
             case VerticalAlignment::Center:
-                alignedY = (h - resolvedH) / 2;
+                alignedY = (contentH - resolvedH) / 2;
                 break;
             case VerticalAlignment::Bottom:
-                alignedY = h - resolvedH;
+                alignedY = contentH - resolvedH;
                 break;
             case VerticalAlignment::Stretch:
-                alignedY = (h - resolvedH) / 2;
+                alignedY = (contentH - resolvedH) / 2;
                 break;
             }
 
-            const int targetX = x + alignedX;
-            const int targetY = y + alignedY;
+            const int targetX = x + alignedX + margin.Left;
+            const int targetY = y + alignedY + margin.Top;
             const int currentX = fe->GetLayoutOffsetX();
             const int currentY = fe->GetLayoutOffsetY();
             if (currentX != targetX || currentY != targetY) {

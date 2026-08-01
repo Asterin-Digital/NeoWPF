@@ -16,7 +16,7 @@ void ThemeManager::RegisterBuiltInThemes()
 {
     ThemeDefinition light;
     light.Name = "Light";
-    light.Resources["Window.BackgroundColor"] = uint32_t(0xFFF3F3F3u);
+    light.Resources["Window.BackgroundColor"] = uint32_t(0xFFFFFFFFu);
     light.Resources["Window.ForegroundColor"] = uint32_t(0xFF1E1E1Eu);
     light.Resources["Button.BackgroundColor"] = uint32_t(0xFFEEEEEEu);
     light.Resources["Button.BorderColor"] = uint32_t(0xFF707070u);

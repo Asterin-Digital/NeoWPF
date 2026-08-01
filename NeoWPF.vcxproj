@@ -127,6 +127,7 @@
     <ClInclude Include="include\NeoWPF\Core\Core.h" />
     <ClInclude Include="include\NeoWPF\Core\Events\Event.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\CallStackTracer.h" />
+    <ClInclude Include="include\NeoWPF\Diagnostics\CrashHandler.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\DeveloperWarnings.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Diagnostics.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Logger.h" />
@@ -197,6 +198,7 @@
     <ClCompile Include="src\Core\Application\Runtime\ApplicationStartup.cpp" />
     <ClCompile Include="src\Core\Application\Runtime\ApplicationWindows.cpp" />
     <ClCompile Include="src\Diagnostics\CallStackTracer.cpp" />
+    <ClCompile Include="src\Diagnostics\CrashHandler.cpp" />
     <ClCompile Include="src\Diagnostics\DeveloperWarnings.cpp" />
     <ClCompile Include="src\Diagnostics\PerformanceMetrics.cpp" />
     <ClCompile Include="src\UI\Animation\AnimationController.cpp" />

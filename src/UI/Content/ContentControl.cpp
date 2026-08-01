@@ -1,11 +1,24 @@
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 
 namespace NeoWPF::UI::Content {
 
+bool ContentControl::s_contentControlDebugging = true;
+
+ContentControl::ContentControl()
+    : m_content(nullptr)
+    , m_presenter(nullptr)
+{
+}
+
 void ContentControl::SetContent(const std::shared_ptr<NeoWPF::UI::UIElement>& content)
 {
+    if (s_contentControlDebugging) {
+        NeoWPF::Diagnostics::LogInfo("[ContentControl] SetContent: content=%p presenter=%p", content.get(), m_presenter.get());
+    }
+
     m_content = content;
     if (m_presenter) {
         m_presenter->SetContent(content);
@@ -24,8 +37,29 @@ void ContentControl::ClearContent()
 
 void ContentControl::SetPresenter(const std::shared_ptr<ContentPresenter>& presenter)
 {
+    if (s_contentControlDebugging) {
+        NeoWPF::Diagnostics::LogInfo("[ContentControl] SetPresenter: oldPresenter=%p newPresenter=%p content=%p", m_presenter.get(), presenter.get(), m_content.get());
+    }
+
+    if (m_presenter == presenter) {
+        if (s_contentControlDebugging) {
+            NeoWPF::Diagnostics::LogInfo("[ContentControl] SetPresenter: same presenter, skipping");
+        }
+        return;
+    }
+
+    if (m_presenter) {
+        if (s_contentControlDebugging) {
+            NeoWPF::Diagnostics::LogInfo("[ContentControl] SetPresenter: removing old presenter %p", m_presenter.get());
+        }
+        m_presenter->RemoveFromParent();
+    }
+
     m_presenter = presenter;
     if (m_presenter) {
+        if (s_contentControlDebugging) {
+            NeoWPF::Diagnostics::LogInfo("[ContentControl] SetPresenter: using new presenter %p", m_presenter.get());
+        }
         m_presenter->SetContent(m_content);
     }
     InvalidateVisual();

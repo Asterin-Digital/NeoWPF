@@ -12,7 +12,7 @@ void ApplyButtonThemeStyle(UIElement* element)
     element->SetStylePropertyValue("TextColor", element->GetResourceValue("Button.TextColor", uint32_t(0xFF000000u)));
     element->SetStylePropertyValue("FontSize", element->GetResourceValue("Button.FontSize", 14));
     element->SetStylePropertyValue("Padding", element->GetResourceValue("Button.Padding", 10));
-    element->SetStylePropertyValue("BackgroundColor", element->GetResourceValue("Button.BackgroundColor", uint32_t(0xFFEEEEEEu)));
+    element->SetStylePropertyValue("BackgroundColor", element->GetResourceValue("Button.BackgroundColor", NeoWPF::UI::Color::FromArgb(0xFFEEEEEEu)));
     element->SetStylePropertyValue("BorderColor", element->GetResourceValue("Button.BorderColor", uint32_t(0xFF707070u)));
 
     element->SetStyleProperty("VisualState.Normal.Background", 0xFFEEEEEEu);

@@ -2,6 +2,7 @@
 
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
+#include <NeoWPF/UI/Core/Media/Thickness.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
 #include <algorithm>
 
@@ -270,6 +271,37 @@ public:
 
     /*
         @summary
+        Returns the element's layout margin.
+    */
+    Thickness GetMargin() const noexcept;
+
+    /*
+        @summary
+        Sets the element's layout margin.
+    */
+    void SetMargin(Thickness margin) noexcept;
+
+    /*
+        @summary
+        Sets a uniform layout margin for the element.
+    */
+    void SetMargin(int uniform) noexcept { SetMargin(Thickness(uniform)); }
+
+    /*
+        @summary
+        Sets a custom layout margin for the element.
+    */
+    void SetMargin(int left, int top, int right, int bottom) noexcept { SetMargin(Thickness(left, top, right, bottom)); }
+
+    int GetMarginLeft() const noexcept { return m_margin.Left; }
+    int GetMarginTop() const noexcept { return m_margin.Top; }
+    int GetMarginRight() const noexcept { return m_margin.Right; }
+    int GetMarginBottom() const noexcept { return m_margin.Bottom; }
+    int GetMarginHorizontal() const noexcept { return m_margin.Left + m_margin.Right; }
+    int GetMarginVertical() const noexcept { return m_margin.Top + m_margin.Bottom; }
+
+    /*
+        @summary
         Returns the element's corner radius.
     */
     NeoWPF::UI::CornerRadius GetCornerRadius() const noexcept;
@@ -406,6 +438,7 @@ private:
     int m_renderOffsetY = 0;
     LayoutSizeMode m_heightMode = LayoutSizeMode::Auto;
     int m_height = 0;
+    Thickness m_margin;
     NeoWPF::UI::CornerRadius m_cornerRadius;
     bool m_clipToBounds = false;
 

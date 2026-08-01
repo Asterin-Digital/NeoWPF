@@ -129,10 +129,13 @@ void Panel::Measure(int availableWidth, int availableHeight)
                     continue;
                 }
             }
-            fe->Measure(availableWidth, availableHeight);
-            const int resolvedW = fe->ResolveWidth(availableWidth, fe->GetDesiredWidth());
-            const int resolvedH = fe->ResolveHeight(availableHeight, fe->GetDesiredHeight());
-            fe->SetDesiredSize(resolvedW, resolvedH);
+            const auto margin = fe->GetMargin();
+            const int childAvailableWidth = availableWidth > 0 ? std::max(0, availableWidth - margin.Horizontal()) : availableWidth;
+            const int childAvailableHeight = availableHeight > 0 ? std::max(0, availableHeight - margin.Vertical()) : availableHeight;
+            fe->Measure(childAvailableWidth, childAvailableHeight);
+            const int resolvedW = fe->ResolveWidth(childAvailableWidth, fe->GetDesiredWidth()) + margin.Horizontal();
+            const int resolvedH = fe->ResolveHeight(childAvailableHeight, fe->GetDesiredHeight()) + margin.Vertical();
+            fe->SetDesiredSize(std::max(0, fe->ResolveWidth(childAvailableWidth, fe->GetDesiredWidth())), std::max(0, fe->ResolveHeight(childAvailableHeight, fe->GetDesiredHeight())));
             maxW = (std::max)(maxW, resolvedW);
             maxH = (std::max)(maxH, resolvedH);
         }
@@ -174,13 +177,16 @@ void Panel::Arrange(int finalWidth, int finalHeight)
                     continue;
                 }
             }
-            const int resolvedW = fe->ResolveWidth(finalWidth, fe->GetDesiredWidth());
-            const int resolvedH = fe->ResolveHeight(finalHeight, fe->GetDesiredHeight());
+            const auto margin = fe->GetMargin();
+            const int contentWidth = std::max(0, finalWidth - margin.Horizontal());
+            const int contentHeight = std::max(0, finalHeight - margin.Vertical());
+            const int resolvedW = std::max(0, fe->ResolveWidth(contentWidth, fe->GetDesiredWidth()));
+            const int resolvedH = std::max(0, fe->ResolveHeight(contentHeight, fe->GetDesiredHeight()));
 
             int alignedX = 0, alignedY = 0, alignedW = resolvedW, alignedH = resolvedH;
             Alignment::ApplyAlignment(
                 fe,
-                finalWidth, finalHeight,
+                contentWidth, contentHeight,
                 fe->GetHorizontalAlignment(),
                 fe->GetVerticalAlignment(),
                 alignedX, alignedY, alignedW, alignedH
@@ -194,7 +200,7 @@ void Panel::Arrange(int finalWidth, int finalHeight)
             }
 
             fe->Arrange(alignedW, alignedH);
-            fe->SetLayoutOffset(alignedX, alignedY);
+            fe->SetLayoutOffset(alignedX + margin.Left, alignedY + margin.Top);
         }
     }
 }

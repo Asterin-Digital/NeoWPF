@@ -2,21 +2,44 @@
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
+
+namespace NeoWPF::UI::Content {
+
+bool ContentPresenter::s_contentPresenterDebugging = true;
+
+ContentPresenter::ContentPresenter()
+    : m_content(nullptr)
+    , m_padding(0)
+{
+}
 
 #ifdef max
 #undef max
 #endif
 
-namespace NeoWPF::UI::Content {
-
 void ContentPresenter::SetContent(const std::shared_ptr<NeoWPF::UI::UIElement>& content)
 {
+    if (s_contentPresenterDebugging) {
+        NeoWPF::Diagnostics::LogInfo("[ContentPresenter] SetContent: oldContent=%p newContent=%p", m_content.get(), content.get());
+    }
+
     if (m_content && m_content != content) {
         if (auto existingChild = std::dynamic_pointer_cast<Visual>(m_content)) {
-            if (existingChild->GetParent() == this) {
-                RemoveVisualChild(existingChild);
+            if (s_contentPresenterDebugging) {
+                NeoWPF::Diagnostics::LogInfo("[ContentPresenter] SetContent: removing old content %p from parent %p", existingChild.get(), existingChild->GetParent());
             }
+            existingChild->RemoveFromParent();
+        }
+    }
+
+    if (content) {
+        if (auto visualContent = std::dynamic_pointer_cast<Visual>(content)) {
+            if (s_contentPresenterDebugging) {
+                NeoWPF::Diagnostics::LogInfo("[ContentPresenter] SetContent: removing new content %p from existing parent %p", visualContent.get(), visualContent->GetParent());
+            }
+            visualContent->RemoveFromParent();
         }
     }
 
@@ -26,11 +49,13 @@ void ContentPresenter::SetContent(const std::shared_ptr<NeoWPF::UI::UIElement>& 
 
 void ContentPresenter::ClearContent()
 {
+    if (s_contentPresenterDebugging) {
+        NeoWPF::Diagnostics::LogInfo("[ContentPresenter] ClearContent: content=%p", m_content.get());
+    }
+
     if (m_content) {
         if (auto existingChild = std::dynamic_pointer_cast<Visual>(m_content)) {
-            if (existingChild->GetParent() == this) {
-                RemoveVisualChild(existingChild);
-            }
+            existingChild->RemoveFromParent();
         }
         m_content.reset();
     }

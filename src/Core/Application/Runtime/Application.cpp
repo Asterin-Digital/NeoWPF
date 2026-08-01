@@ -3,6 +3,7 @@
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <NeoWPF/Diagnostics/CrashHandler.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
@@ -14,6 +15,7 @@ bool Application::s_applicationDebugging = true;
 
 void Application::Initialize()
 {
+    NeoWPF::Diagnostics::InitializeCrashHandler();
     NeoWPF::Core::ApplicationResources::Resources::Initialize();
     NeoWPF::Diagnostics::PerformanceMetrics::Initialize();
 #if defined(_DEBUG)

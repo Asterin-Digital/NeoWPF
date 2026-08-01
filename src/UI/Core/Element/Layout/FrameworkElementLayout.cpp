@@ -86,6 +86,41 @@ int FrameworkElement::GetHeight() const noexcept
     return m_height;
 }
 
+Thickness FrameworkElement::GetMargin() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Margin", typeid(*this));
+    if (property) {
+        try {
+            return GetValue<Thickness>(*property);
+        } catch (const std::bad_any_cast&) {
+            return m_margin;
+        }
+    }
+
+    return m_margin;
+}
+
+void FrameworkElement::SetMargin(Thickness margin) noexcept
+{
+    if (IsApplyingPropertyValue()) {
+        m_margin = margin;
+        return;
+    }
+
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Margin", typeid(*this));
+    if (property) {
+        if (GetMargin() != margin) {
+            SetValue(*property, margin);
+        }
+        return;
+    }
+
+    if (m_margin != margin) {
+        m_margin = margin;
+        InvalidateMeasure();
+    }
+}
+
 void FrameworkElement::SetHeight(int height) noexcept
 {
     const int clampedHeight = height < 0 ? 0 : height;
