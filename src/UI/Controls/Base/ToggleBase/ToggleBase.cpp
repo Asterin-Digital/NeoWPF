@@ -10,7 +10,12 @@ ToggleBase::ToggleBase()
     : Content::ContentControl()
 {
     InitializeVisualStates();
-    ApplyVisualState("Normal", false);
+}
+
+void ToggleBase::OnInitialize()
+{
+    UIElement::OnInitialize();
+    ApplyVisualState(m_isChecked ? "Checked" : "Normal", false);
 }
 
 void ToggleBase::InitializeVisualStates()

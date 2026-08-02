@@ -15,7 +15,6 @@ Checkbox::Checkbox()
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
     SetTemplate(std::make_shared<CheckboxTemplate>());
-    ApplyTemplate();
 
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
     SetPresenter(presenter);
@@ -27,8 +26,6 @@ Checkbox::Checkbox()
     SetContent(m_textContent);
 
     ApplyCheckboxThemeStyle(this);
-
-    ApplyVisualState("Normal", false);
 }
 
 Checkbox::~Checkbox()

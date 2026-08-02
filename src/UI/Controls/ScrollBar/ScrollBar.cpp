@@ -22,7 +22,6 @@ ScrollBar::ScrollBar()
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
     SetTemplate(std::make_shared<ScrollBarTemplate>());
-    ApplyTemplate();
 
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
     presenter->SetPadding(0);

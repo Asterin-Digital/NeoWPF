@@ -5,7 +5,7 @@
 
 namespace NeoWPF::UI::Content {
 
-bool ContentControl::s_contentControlDebugging = true;
+bool ContentControl::s_contentControlDebugging = false;
 
 ContentControl::ContentControl()
     : m_content(nullptr)

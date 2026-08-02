@@ -93,7 +93,6 @@ void ControlTemplate::Apply(UIElement* element)
             continue;
         }
 
-        m_visualTree->AddVisualChild(child.Visual);
         element->RegisterTemplateChild(child.Name, child.Visual);
     }
 }

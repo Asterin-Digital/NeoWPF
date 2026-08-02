@@ -75,7 +75,12 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
         currentParent->RemoveVisualChild(child);
     }
 
+    child->m_parent.reset();
     child->m_parent = shared_from_this();
+
+    if (IsInitialized() && !child->IsInitialized() && !child->IsInitializing()) {
+        child->Initialize();
+    }
 
     for (const auto& existing : m_children)
     {
@@ -98,6 +103,10 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
     }
 
     m_children.push_back(child);
+
+    if (IsInitialized()) {
+        MarkTreeDirty();
+    }
 
     if (s_visualDebugging) {
         NeoWPF::Diagnostics::LogInfo("[Visual::AddVisualChild] After push_back");
@@ -127,6 +136,8 @@ void Visual::AddChild(const std::shared_ptr<Visual>& child)
         currentParent->RemoveVisualChild(child);
     }
 
+    child->m_parent.reset();
+
     for (const auto& existing : m_children)
     {
         if (existing.get() == child.get())
@@ -144,6 +155,14 @@ void Visual::AddChild(const std::shared_ptr<Visual>& child)
 
     child->m_parent = shared_from_this();
     m_children.push_back(child);
+
+    if (IsInitialized()) {
+        MarkTreeDirty();
+    }
+
+    if (IsInitialized() && !child->IsInitialized() && !child->IsInitializing()) {
+        child->Initialize();
+    }
 
     for (const auto& existing : m_logicalChildren)
     {
@@ -257,6 +276,61 @@ void Visual::MarkTreeDirty()
     m_isTreeDirty = true;
     if (auto parent = m_parent.lock()) {
         parent->MarkTreeDirty();
+    }
+}
+
+void Visual::Initialize()
+{
+    if (m_isInitialized || m_initializationInProgress) {
+        return;
+    }
+
+    m_initializationInProgress = true;
+    NeoWPF::Diagnostics::LogInfo(
+        "[Visual::Initialize] start this=%p parent=%p children=%zu",
+        this,
+        m_parent.lock().get(),
+        m_children.size());
+
+    try {
+        OnInitialize();
+
+        std::vector<std::shared_ptr<Visual>> childrenSnapshot;
+        {
+            std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
+            childrenSnapshot = m_children;
+        }
+
+        for (const auto& child : childrenSnapshot) {
+            if (child) {
+                child->Initialize();
+            }
+        }
+
+        m_isInitialized = true;
+        m_initializationInProgress = false;
+        NeoWPF::Diagnostics::LogInfo(
+            "[Visual::Initialize] complete this=%p parent=%p children=%zu",
+            this,
+            m_parent.lock().get(),
+            m_children.size());
+    } catch (const std::exception& ex) {
+        m_initializationInProgress = false;
+        NeoWPF::Diagnostics::LogError(
+            "[Visual::Initialize] failed this=%p parent=%p children=%zu error=%s",
+            this,
+            m_parent.lock().get(),
+            m_children.size(),
+            ex.what());
+        throw;
+    } catch (...) {
+        m_initializationInProgress = false;
+        NeoWPF::Diagnostics::LogError(
+            "[Visual::Initialize] failed this=%p parent=%p children=%zu error=<unknown>",
+            this,
+            m_parent.lock().get(),
+            m_children.size());
+        throw;
     }
 }
 

@@ -70,6 +70,14 @@ bool VisualStateManager::GoToState(UIElement* element, const std::string& groupN
         return false;
     }
 
+    if (element->GetTemplate() && !element->HasTemplateChild("PART_Background") && !element->HasTemplateChild("PART_ContentHost") && !element->HasTemplateChild("PART_Border") && !element->HasTemplateChild("PART_Box") && !element->HasTemplateChild("PART_Track") && !element->HasTemplateChild("PART_Thumb") && !element->IsInitializing()) {
+        return false;
+    }
+
+    if (!element->IsInitialized() && !element->IsInitializing()) {
+        return false;
+    }
+
     auto* effectiveManager = this;
     if (auto templateManager = element->GetTemplateVisualStateManager()) {
         if (templateManager->FindState(groupName, stateName)) {
@@ -93,6 +101,14 @@ bool VisualStateManager::GoToState(UIElement* element, const std::string& groupN
 
 bool VisualStateManager::GoToState(UIElement* element, const std::string& stateName, bool useTransitions) {
     if (!element || stateName.empty()) {
+        return false;
+    }
+
+    if (element->GetTemplate() && !element->HasTemplateChild("PART_Background") && !element->HasTemplateChild("PART_ContentHost") && !element->HasTemplateChild("PART_Border") && !element->HasTemplateChild("PART_Box") && !element->HasTemplateChild("PART_Track") && !element->HasTemplateChild("PART_Thumb") && !element->IsInitializing()) {
+        return false;
+    }
+
+    if (!element->IsInitialized() && !element->IsInitializing()) {
         return false;
     }
 

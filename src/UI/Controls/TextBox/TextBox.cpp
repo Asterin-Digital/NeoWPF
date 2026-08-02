@@ -54,8 +54,12 @@ TextBox::TextBox()
     ApplyTextBoxThemeStyle(this);
 
     InitializeVisualStates();
-    ApplyVisualState("Normal", false);
+}
 
+void TextBox::OnInitialize()
+{
+    UIElement::OnInitialize();
+    ApplyVisualState("Normal", false);
 }
 TextBox::~TextBox()
 {

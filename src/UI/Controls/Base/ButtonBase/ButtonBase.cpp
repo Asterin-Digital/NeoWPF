@@ -10,6 +10,11 @@ ButtonBase::ButtonBase()
     : Content::ContentControl()
 {
     InitializeVisualStates();
+}
+
+void ButtonBase::OnInitialize()
+{
+    UIElement::OnInitialize();
     ApplyVisualState("Normal", false);
 }
 

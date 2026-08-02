@@ -86,6 +86,9 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
     }
 
     auto rootVisual = windowState.windowHost->GetContent();
+    if (rootVisual) {
+        rootVisual->Initialize();
+    }
     LayoutAndBuildVisualTree(rootVisual.get(), width, height, windowState.buildCommandList);
     const auto layoutElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - layoutStart).count();
     NeoWPF::Diagnostics::PerformanceMetrics::RecordLayoutPass(layoutElapsed);

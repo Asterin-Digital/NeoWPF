@@ -215,6 +215,8 @@ public:
     virtual void OnLostFocus() {}
 
 protected:
+    void OnInitialize() override;
+
     template<typename T>
     void ApplyAnimatedValue(const Properties::DependencyProperty& property,
                             const T& fromValue,

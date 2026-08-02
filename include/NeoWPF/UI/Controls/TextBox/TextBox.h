@@ -258,6 +258,7 @@ public:
     void Arrange(int finalWidth, int finalHeight) override;
 
 protected:
+    void OnInitialize() override;
     void OnPaddingChanged(int padding) override;
     void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
     void OnBorderColorChanged(NeoWPF::UI::Color color) override;

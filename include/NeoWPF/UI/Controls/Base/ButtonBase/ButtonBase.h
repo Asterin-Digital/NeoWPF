@@ -29,6 +29,7 @@ public:
     NeoWPF::Core::Event<> Click;
 
 protected:
+    void OnInitialize() override;
     void InitializeVisualStates();
     void ApplyVisualState(const std::string& stateName, bool useTransitions = false);
     void RaiseClick();

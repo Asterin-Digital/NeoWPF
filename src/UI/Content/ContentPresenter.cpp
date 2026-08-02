@@ -7,7 +7,7 @@
 
 namespace NeoWPF::UI::Content {
 
-bool ContentPresenter::s_contentPresenterDebugging = true;
+bool ContentPresenter::s_contentPresenterDebugging = false;
 
 ContentPresenter::ContentPresenter()
     : m_content(nullptr)

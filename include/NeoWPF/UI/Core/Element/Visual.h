@@ -25,6 +25,30 @@ public:
 
     /*
         @summary
+        Initializes this visual and its visual children.
+
+        @internal
+    */
+    virtual void Initialize();
+
+    /*
+        @summary
+        Returns whether this visual has completed initialization.
+
+        @internal
+    */
+    bool IsInitialized() const noexcept { return m_isInitialized; }
+
+    /*
+        @summary
+        Returns whether initialization is currently in progress.
+
+        @internal
+    */
+    bool IsInitializing() const noexcept { return m_initializationInProgress; }
+
+    /*
+        @summary
         Returns the parent of this visual.
 
         @internal
@@ -171,6 +195,15 @@ public:
     */
     void DumpVisualTree(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options = NeoWPF::Diagnostics::VisualTreeDumpOptions{}) const;
 
+protected:
+    /*
+        @summary
+        Extension point for derived classes to perform initialization work.
+
+        @internal
+    */
+    virtual void OnInitialize() {}
+
 private:
     /*
         @summary
@@ -186,6 +219,8 @@ private:
     std::vector<std::shared_ptr<Visual>> m_logicalChildren;
     int m_zIndex = 0;
     bool m_isTreeDirty = false;
+    bool m_isInitialized = false;
+    bool m_initializationInProgress = false;
 };
 
 }

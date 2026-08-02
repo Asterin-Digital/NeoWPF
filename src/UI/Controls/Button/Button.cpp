@@ -65,7 +65,6 @@ Button::Button()
     SetHorizontalAlignment(HorizontalAlignment::Stretch);
     SetVerticalAlignment(VerticalAlignment::Stretch);
     SetTemplate(std::make_shared<ButtonTemplate>());
-    ApplyTemplate();
 
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
     presenter->SetPadding(8);
@@ -78,7 +77,6 @@ Button::Button()
     SetContent(m_textContent);
 
     ApplyButtonThemeStyle(this);
-    ApplyVisualState("Normal", false);
 
     SetPadding(8);
     SetBackgroundColor(m_backgroundColor);
@@ -91,7 +89,6 @@ Button::Button(const std::wstring& text)
     SetHorizontalAlignment(HorizontalAlignment::Stretch);
     SetVerticalAlignment(VerticalAlignment::Stretch);
     SetTemplate(std::make_shared<ButtonTemplate>());
-    ApplyTemplate();
 
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
     presenter->SetPadding(8);
@@ -104,8 +101,6 @@ Button::Button(const std::wstring& text)
     SetContent(m_textContent);
 
     ApplyButtonThemeStyle(this);
-
-    ApplyVisualState("Normal", false);
 
     SetPadding(8);
     SetBackgroundColor(m_backgroundColor);

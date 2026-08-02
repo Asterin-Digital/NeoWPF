@@ -12,6 +12,17 @@
 
 namespace NeoWPF::UI {
 
+void UIElement::OnInitialize()
+{
+    if (!m_hasTemplateApplied && m_template) {
+        ApplyTemplate();
+    }
+
+    if (m_appliedTemplateRoot) {
+        m_appliedTemplateRoot->Initialize();
+    }
+}
+
 void UIElement::BeginAnimation(float from, float to, float durationSeconds) {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Opacity", typeid(*this));
     if (!property) {
@@ -57,7 +68,6 @@ void UIElement::SetRenderTransformOrigin(NeoWPF::UI::Core::Point origin) noexcep
 
 void UIElement::SetTemplate(const std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase>& templatePtr) {
     if (m_appliedTemplateRoot) {
-        RemoveVisualChild(m_appliedTemplateRoot);
         m_appliedTemplateRoot = nullptr;
     }
 
@@ -70,21 +80,14 @@ bool UIElement::ApplyTemplate() {
         return false;
     }
 
-    if (m_appliedTemplateRoot) {
-        RemoveVisualChild(m_appliedTemplateRoot);
-        m_appliedTemplateRoot = nullptr;
-    }
-
     m_template->Apply(this);
-    m_appliedTemplateRoot = m_template->GetVisualTreeRoot(); m_hasTemplateApplied = true;
+    m_appliedTemplateRoot = m_template->GetVisualTreeRoot();
+    m_hasTemplateApplied = true;
     return true;
 }
 
 void UIElement::ClearTemplateVisualRoot() noexcept {
-    if (m_appliedTemplateRoot) {
-        RemoveVisualChild(m_appliedTemplateRoot);
-        m_appliedTemplateRoot = nullptr;
-    }
+    m_appliedTemplateRoot = nullptr;
 }
 
 std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> UIElement::GetTemplateVisualStateManager() const {
