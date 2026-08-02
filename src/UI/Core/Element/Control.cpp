@@ -14,7 +14,7 @@ int DefaultBorderThickness() noexcept { return 0; }
 }
 
 int Control::GetPadding() const noexcept {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", *this);
     if (property) {
         try { return GetValue<int>(*property); } catch (const std::bad_any_cast&) {}
     }
@@ -28,7 +28,7 @@ void Control::SetPadding(int padding) noexcept {
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", *this);
     if (property) {
         if (GetPadding() != padding) {
             SetValue(*property, padding);
@@ -41,7 +41,7 @@ void Control::SetPadding(int padding) noexcept {
 }
 
 NeoWPF::UI::Color Control::GetBackgroundColor() const noexcept {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", *this);
     if (property) {
         try { return GetValue<NeoWPF::UI::Color>(*property); } catch (const std::bad_any_cast&) {}
     }
@@ -55,7 +55,7 @@ void Control::SetBackgroundColor(NeoWPF::UI::Color color) noexcept {
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", *this);
     if (property) {
         if (GetBackgroundColor() != color) {
             SetValue(*property, color);
@@ -68,7 +68,7 @@ void Control::SetBackgroundColor(NeoWPF::UI::Color color) noexcept {
 }
 
 NeoWPF::UI::Color Control::GetBorderColor() const noexcept {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", *this);
     if (property) {
         try { return GetValue<NeoWPF::UI::Color>(*property); } catch (const std::bad_any_cast&) {}
     }
@@ -82,7 +82,7 @@ void Control::SetBorderColor(NeoWPF::UI::Color color) noexcept {
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", *this);
     if (property) {
         if (GetBorderColor() != color) {
             SetValue(*property, color);
@@ -95,7 +95,7 @@ void Control::SetBorderColor(NeoWPF::UI::Color color) noexcept {
 }
 
 int Control::GetBorderThickness() const noexcept {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderThickness", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderThickness", *this);
     if (property) {
         try { return GetValue<int>(*property); } catch (const std::bad_any_cast&) {}
     }
@@ -109,7 +109,7 @@ void Control::SetBorderThickness(int thickness) noexcept {
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderThickness", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderThickness", *this);
     if (property) {
         if (GetBorderThickness() != thickness) {
             SetValue(*property, thickness);

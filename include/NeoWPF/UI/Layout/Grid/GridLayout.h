@@ -27,6 +27,8 @@ struct GridLayoutMetrics {
 
 class GridLayout {
 public:
+    static std::vector<Grid::Definition> ResolveDefinitions(const std::vector<Grid::Definition>& defs);
+
     static GridLayoutResult ComputeLayout(
         const std::vector<Grid::Definition>& rowDefs,
         const std::vector<Grid::Definition>& colDefs,

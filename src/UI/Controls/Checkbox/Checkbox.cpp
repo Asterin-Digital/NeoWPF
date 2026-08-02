@@ -35,7 +35,7 @@ Checkbox::~Checkbox()
 void Checkbox::SetText(const std::wstring& text)
 {
     if (IsApplyingPropertyValue()) { m_text = text; if (m_textContent) { m_textContent->SetText(text); } InvalidateVisual(); return; }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Text", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Text", *this);
     if (property) { SetValue(*property, text); return; }
     m_text = text;
     if (m_textContent) {
@@ -47,7 +47,7 @@ void Checkbox::SetText(const std::wstring& text)
 void Checkbox::SetTextColor(NeoWPF::UI::Color color) noexcept
 {
     if (IsApplyingPropertyValue()) { m_textColor = color; if (m_textContent) { m_textContent->SetTextColor(color.ToArgb()); } InvalidateVisual(); return; }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("TextColor", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("TextColor", *this);
     if (property) { SetValue(*property, color); return; }
     m_textColor = color;
     if (m_textContent) {
@@ -59,7 +59,7 @@ void Checkbox::SetTextColor(NeoWPF::UI::Color color) noexcept
 void Checkbox::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
 {
     if (IsApplyingPropertyValue()) { m_bgColor = color; InvalidateVisual(); return; }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", *this);
     if (property) { SetValue(*property, color); return; }
     m_bgColor = color;
     InvalidateVisual();
@@ -68,7 +68,7 @@ void Checkbox::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
 void Checkbox::SetBorderColor(NeoWPF::UI::Color color) noexcept
 {
     if (IsApplyingPropertyValue()) { m_borderColor = color; InvalidateVisual(); return; }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", *this);
     if (property) { SetValue(*property, color); return; }
     m_borderColor = color;
     InvalidateVisual();
@@ -77,7 +77,7 @@ void Checkbox::SetBorderColor(NeoWPF::UI::Color color) noexcept
 void Checkbox::SetPadding(int padding) noexcept
 {
     if (IsApplyingPropertyValue()) { m_padding = padding; InvalidateVisual(); return; }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", *this);
     if (property) { SetValue(*property, padding); return; }
     m_padding = padding;
     InvalidateVisual();
@@ -86,7 +86,7 @@ void Checkbox::SetPadding(int padding) noexcept
 void Checkbox::SetFontSize(int fontSize) noexcept
 {
     if (IsApplyingPropertyValue()) { m_fontSize = fontSize; if (m_textContent) { m_textContent->SetFontSize(fontSize); } InvalidateVisual(); return; }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("FontSize", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("FontSize", *this);
     if (property) { SetValue(*property, fontSize); return; }
     m_fontSize = fontSize;
     if (m_textContent) {
@@ -168,7 +168,7 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     auto box = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Box"));
     if (box) {
-        box->SetRect(static_cast<int>(fAbsX), static_cast<int>(fAbsY + 1), boxSize, boxSize);
+        box->SetRect(static_cast<int>(std::lround(fAbsX)), static_cast<int>(std::lround(fAbsY + 1)), boxSize, boxSize);
         box->SetFillColor(m_bgColor.ToArgb());
         box->SetBorderColor(m_borderColor.ToArgb());
         box->SetBorderThickness(1);
@@ -202,7 +202,11 @@ if (IsChecked()) {
 
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
     if (contentHost) {
-        contentHost->SetRect(static_cast<int>(fAbsX) + boxSize + m_padding, static_cast<int>(fAbsY), std::max(0, static_cast<int>(drawWidth) - (boxSize + m_padding)), std::max(1, static_cast<int>(drawHeight)));
+        contentHost->SetRect(
+            static_cast<int>(std::lround(fAbsX)) + boxSize + m_padding,
+            static_cast<int>(std::lround(fAbsY)),
+            std::max(0, static_cast<int>(std::lround(drawWidth)) - (boxSize + m_padding)),
+            std::max(1, static_cast<int>(std::lround(drawHeight))));
         contentHost->BuildRenderCommands(commands);
     }
 

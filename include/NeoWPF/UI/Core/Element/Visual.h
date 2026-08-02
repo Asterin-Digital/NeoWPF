@@ -149,6 +149,14 @@ public:
 
     /*
         @summary
+        Called after a child visual has been removed.
+
+        @internal
+    */
+    virtual void OnRemoveVisualChild(Visual* child) {}
+
+    /*
+        @summary
         Removes this visual from its current parent.
 
         @internal

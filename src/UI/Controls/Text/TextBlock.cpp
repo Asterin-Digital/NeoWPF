@@ -4,6 +4,8 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 namespace NeoWPF::UI {
 
@@ -79,26 +81,61 @@ void TextBlock::SetText(const std::wstring& text)
     InvalidateVisual();
 }
 
-void TextBlock::Measure(int availableWidth, int availableHeight)
-{
-    if (m_text.empty()) {
-        SetDesiredSize(0, 0);
+int TextBlock::GetPadding() const noexcept {
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", *this);
+    if (property) {
+        try { return GetValue<int>(*property); } catch (const std::bad_any_cast&) {}
+    }
+    return m_padding;
+}
+
+void TextBlock::SetPadding(int padding) noexcept {
+    if (IsApplyingPropertyValue()) {
+        m_padding = padding;
+        OnPaddingChanged(padding);
         return;
     }
 
-    const int widthConstraint = availableWidth > 0 ? availableWidth : 0;
-    const int heightConstraint = availableHeight > 0 ? availableHeight : 0;
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", *this);
+    if (property) {
+        if (GetPadding() != padding) {
+            SetValue(*property, padding);
+        }
+        return;
+    }
+
+    m_padding = padding;
+    OnPaddingChanged(padding);
+}
+
+void TextBlock::OnPaddingChanged(int padding) {
+    InvalidateMeasure();
+    InvalidateVisual();
+}
+
+void TextBlock::Measure(int availableWidth, int availableHeight)
+{
+    const int padding = GetPadding();
+    if (m_text.empty()) {
+        SetDesiredSize(padding * 2, padding * 2);
+        return;
+    }
+
+    const int widthConstraint = availableWidth > 0 ? std::max(0, availableWidth - (2 * padding)) : 0;
+    const int heightConstraint = availableHeight > 0 ? std::max(0, availableHeight - (2 * padding)) : 0;
     auto metrics = NeoWPF::Rendering::Text::MeasureText(m_text, m_fontSize, widthConstraint, heightConstraint);
-    SetDesiredSize(metrics.width, metrics.height);
+    SetDesiredSize(metrics.width + (2 * padding), metrics.height + (2 * padding));
 }
 
 void TextBlock::Arrange(int finalWidth, int finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
-    if (m_textDirty || finalWidth != m_lastArrangeWidth || finalHeight != m_lastArrangeHeight) {
-        EnsureTextTexture(finalWidth, finalHeight);
-        m_lastArrangeWidth = finalWidth;
-        m_lastArrangeHeight = finalHeight;
+    const int innerWidth = std::max(0, finalWidth - (2 * GetPadding()));
+    const int innerHeight = std::max(0, finalHeight - (2 * GetPadding()));
+    if (m_textDirty || innerWidth != m_lastArrangeWidth || innerHeight != m_lastArrangeHeight) {
+        EnsureTextTexture(innerWidth, innerHeight);
+        m_lastArrangeWidth = innerWidth;
+        m_lastArrangeHeight = innerHeight;
     }
 }
 
@@ -117,6 +154,9 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     float drawY = static_cast<float>(absY);
     float drawWidth = static_cast<float>(m_textWidth);
     float drawHeight = static_cast<float>(m_textHeight);
+    const int padding = GetPadding();
+    drawX += static_cast<float>(padding);
+    drawY += static_cast<float>(padding);
     ApplyRenderTransform(drawX, drawY, drawWidth, drawHeight);
     float rotationRadians = GetAbsoluteRenderTransformRotation(this);
 
@@ -155,7 +195,9 @@ void TextBlock::EnsureTextTexture(int availableWidth, int availableHeight)
     int width = 0;
     int height = 0;
     const int INF = 1000000;
-    auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(m_text, m_fontSize, INF, INF, width, height);
+    const int widthConstraint = INF;
+    const int heightConstraint = availableHeight > 0 ? availableHeight : INF;
+    auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(m_text, m_fontSize, widthConstraint, heightConstraint, width, height);
     if (bitmap.empty() || width == 0 || height == 0) {
         NeoWPF::Diagnostics::LogError("TextBlock: failed to render text bitmap");
         m_textWidth = 0;

@@ -135,7 +135,7 @@ public:
                         const T& fromValue,
                         const T& toValue,
                         float durationSeconds) {
-        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty(propertyName, typeid(*this));
+        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty(propertyName, *this);
         if (!property) {
             return;
         }
@@ -146,7 +146,7 @@ public:
     void BeginAnimation(const std::string& propertyName,
                         const T& toValue,
                         float durationSeconds) {
-        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty(propertyName, typeid(*this));
+        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty(propertyName, *this);
         if (!property) {
             return;
         }

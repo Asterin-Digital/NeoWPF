@@ -204,6 +204,7 @@ void Visual::RemoveVisualChild(Visual* child)
     }
 
     child->m_parent.reset();
+    OnRemoveVisualChild(child);
     MarkTreeDirty();
 }
 

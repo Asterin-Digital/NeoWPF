@@ -212,7 +212,11 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"));
     if (background) {
-        background->SetRect(static_cast<int>(std::lround(drawX)), static_cast<int>(std::lround(drawY)), static_cast<int>(drawWidth), static_cast<int>(drawHeight));
+        background->SetRect(
+            static_cast<int>(std::lround(drawX)),
+            static_cast<int>(std::lround(drawY)),
+            std::max(0, static_cast<int>(std::lround(drawWidth))),
+            std::max(0, static_cast<int>(std::lround(drawHeight))));
         background->SetBorderThickness(1);
         background->SetCornerRadius(cornerRadius);
         background->SetOpacity(GetOpacity());
@@ -272,7 +276,11 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
     if (contentHost) {
         const int inset = std::max(0, GetPadding());
-        contentHost->SetRect(static_cast<int>(std::lround(drawX)) + inset, static_cast<int>(std::lround(drawY)) + inset, std::max(0, static_cast<int>(drawWidth) - (inset * 2)), std::max(0, static_cast<int>(drawHeight) - (inset * 2)));
+        contentHost->SetRect(
+            static_cast<int>(std::lround(drawX)) + inset,
+            static_cast<int>(std::lround(drawY)) + inset,
+            std::max(0, static_cast<int>(std::lround(drawWidth)) - (inset * 2)),
+            std::max(0, static_cast<int>(std::lround(drawHeight)) - (inset * 2)));
         contentHost->SetBorderThickness(0);
         contentHost->SetOpacity(GetOpacity());
         contentHost->SetRotation(rotationRadians);

@@ -17,10 +17,7 @@ namespace NeoWPF::UI {
             const std::vector<Grid::Definition>& defs,
             const std::vector<int>& autoSizes)
         {
-            std::vector<Grid::Definition> normalized = defs;
-            if (normalized.empty()) {
-                normalized.push_back({ SizeMode::Auto, 0 });
-            }
+            std::vector<Grid::Definition> normalized = GridLayout::ResolveDefinitions(defs);
 
             for (size_t i = 0; i < normalized.size(); ++i) {
                 if (normalized[i].mode == SizeMode::Auto) {
@@ -37,11 +34,12 @@ namespace NeoWPF::UI {
             const std::vector<Visual*>& children,
             bool resolveRowHeights)
         {
-            const int count = std::max(1, static_cast<int>(defs.size()));
+            const auto effectiveDefs = GridLayout::ResolveDefinitions(defs);
+            const int count = std::max(1, static_cast<int>(effectiveDefs.size()));
             std::vector<int> autoSizes(count, 0);
 
             for (int index = 0; index < count; ++index) {
-                const bool isAuto = defs.empty() || defs[index].mode == SizeMode::Auto || defs[index].mode == SizeMode::Star;
+                const bool isAuto = effectiveDefs[index].mode == SizeMode::Auto || effectiveDefs[index].mode == SizeMode::Star;
                 if (!isAuto) {
                     continue;
                 }
@@ -77,7 +75,16 @@ namespace NeoWPF::UI {
         }
     }
 
-    bool GridLayout::s_gridLogging = false; // Please do not turn this on unless ur debugging something
+    bool GridLayout::s_gridLogging = true; // Please do not turn this on unless ur debugging something
+
+    std::vector<Grid::Definition> GridLayout::ResolveDefinitions(const std::vector<Grid::Definition>& defs)
+    {
+        if (defs.empty()) {
+            return { { SizeMode::Star, 1 } };
+        }
+
+        return defs;
+    }
 
     GridLayoutResult GridLayout::ComputeLayout(
         const std::vector<Grid::Definition>& rowDefs,
@@ -86,14 +93,8 @@ namespace NeoWPF::UI {
         int availableHeight,
         const std::vector<Visual*>& children)
     {
-        std::vector<Grid::Definition> effectiveRowDefs = rowDefs;
-        std::vector<Grid::Definition> effectiveColDefs = colDefs;
-        if (effectiveRowDefs.empty()) {
-            effectiveRowDefs.push_back({ SizeMode::Auto, 0 });
-        }
-        if (effectiveColDefs.empty()) {
-            effectiveColDefs.push_back({ SizeMode::Auto, 0 });
-        }
+        auto effectiveRowDefs = GridLayout::ResolveDefinitions(rowDefs);
+        auto effectiveColDefs = GridLayout::ResolveDefinitions(colDefs);
 
         int numRows = std::max(1, static_cast<int>(effectiveRowDefs.size()));
         int numCols = std::max(1, static_cast<int>(effectiveColDefs.size()));
@@ -235,16 +236,25 @@ namespace NeoWPF::UI {
             int w = 0;
             int h = 0;
 
-            for (int j = 0; j < c && j < static_cast<int>(metrics.colWidths.size()); ++j) {
+            int boundedRow = std::max(0, r);
+            int boundedCol = std::max(0, c);
+            int safeRowSpan = std::max(1, rspan);
+            int safeColSpan = std::max(1, cspan);
+            int colCount = static_cast<int>(metrics.colWidths.size());
+            int rowCount = static_cast<int>(metrics.rowHeights.size());
+            int endCol = std::min(colCount, boundedCol + safeColSpan);
+            int endRow = std::min(rowCount, boundedRow + safeRowSpan);
+
+            for (int j = 0; j < boundedCol && j < colCount; ++j) {
                 x += metrics.colWidths[j];
             }
-            for (int j = c; j < c + cspan && j < static_cast<int>(metrics.colWidths.size()); ++j) {
+            for (int j = boundedCol; j < endCol; ++j) {
                 w += metrics.colWidths[j];
             }
-            for (int j = 0; j < r && j < static_cast<int>(metrics.rowHeights.size()); ++j) {
+            for (int j = 0; j < boundedRow && j < rowCount; ++j) {
                 y += metrics.rowHeights[j];
             }
-            for (int j = r; j < r + rspan && j < static_cast<int>(metrics.rowHeights.size()); ++j) {
+            for (int j = boundedRow; j < endRow; ++j) {
                 h += metrics.rowHeights[j];
             }
 

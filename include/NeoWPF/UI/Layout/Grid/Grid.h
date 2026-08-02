@@ -157,6 +157,17 @@ public:
 
     /*
         @summary
+        Clears any Grid attached properties for a child.
+
+        @param child
+        The child whose Grid attached state should be removed.
+
+        @internal
+    */
+    static void ClearAttachedProperties(Visual* child);
+
+    /*
+        @summary
         Sets how many rows the child should span.
 
         @param child
@@ -220,6 +231,9 @@ public:
         The height assigned to the grid.
     */
     void Arrange(int finalWidth, int finalHeight) override;
+
+protected:
+    void OnRemoveVisualChild(Visual* child) override;
 
 private:
     std::vector<Definition> m_rowDefs;

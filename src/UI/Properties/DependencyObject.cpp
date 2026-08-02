@@ -58,7 +58,18 @@ const DependencyProperty& DependencyPropertyRegistry::RegisterProperty(const std
 const DependencyProperty* DependencyPropertyRegistry::FindProperty(const std::string& name,
                                                                    const std::type_index& ownerType) const
 {
-    const DependencyProperty* fallback = nullptr;
+    for (const auto& property : m_properties) {
+        if (property->GetName() == name && property->GetOwnerType() == ownerType) {
+            return property.get();
+        }
+    }
+    return nullptr;
+}
+
+const DependencyProperty* DependencyPropertyRegistry::FindProperty(const std::string& name,
+                                                                   const DependencyObject& ownerInstance) const
+{
+    const std::type_index ownerType(typeid(ownerInstance));
     for (const auto& property : m_properties) {
         if (property->GetName() != name) {
             continue;
@@ -66,11 +77,20 @@ const DependencyProperty* DependencyPropertyRegistry::FindProperty(const std::st
         if (property->GetOwnerType() == ownerType) {
             return property.get();
         }
-        if (!fallback) {
-            fallback = property.get();
+    }
+
+    for (const auto& property : m_properties) {
+        if (property->GetName() != name) {
+            continue;
+        }
+
+        const auto it = m_ownerTypeChecks.find(property->GetOwnerType());
+        if (it != m_ownerTypeChecks.end() && it->second(&ownerInstance)) {
+            return property.get();
         }
     }
-    return fallback;
+
+    return nullptr;
 }
 
 void DependencyObject::SetValueInternal(const DependencyProperty& property,
@@ -82,6 +102,10 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
     if (source == PropertyValueSource::Style) {
         m_styleValues[&property] = std::move(value);
     } else if (source == PropertyValueSource::Local) {
+        m_localValues[&property] = std::move(value);
+    } else if (source == PropertyValueSource::Expression) {
+        m_expressionValues[&property] = std::move(value);
+    } else {
         m_localValues[&property] = std::move(value);
     }
 
@@ -103,6 +127,7 @@ void DependencyObject::ClearValue(const DependencyProperty& property)
 {
     m_localValues.erase(&property);
     m_styleValues.erase(&property);
+    m_expressionValues.erase(&property);
 }
 
 const std::any& DependencyObject::ReadLocalValue(const DependencyProperty& property) const
@@ -131,6 +156,9 @@ std::any DependencyObject::GetRawValue(const DependencyProperty& property) const
     if (auto it = m_localValues.find(&property); it != m_localValues.end()) {
         return it->second;
     }
+    if (auto it = m_expressionValues.find(&property); it != m_expressionValues.end()) {
+        return it->second;
+    }
     if (auto it = m_styleValues.find(&property); it != m_styleValues.end()) {
         return it->second;
     }
@@ -148,6 +176,10 @@ T DependencyObject::GetValue(const DependencyProperty& property) const
     }
 
     if (auto it = m_localValues.find(&property); it != m_localValues.end()) {
+        return std::any_cast<T>(it->second);
+    }
+
+    if (auto it = m_expressionValues.find(&property); it != m_expressionValues.end()) {
         return std::any_cast<T>(it->second);
     }
 

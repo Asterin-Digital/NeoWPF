@@ -29,5 +29,14 @@ namespace NeoWPF::UI::Properties {
             &UI::TextBlock::GetFontSize,
             &UI::TextBlock::SetFontSize,
             fontSizeMetadata);
+
+        PropertyMetadata paddingMetadata;
+        paddingMetadata.DefaultValue = std::any(0);
+        paddingMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsArrange | PropertyFlags::AffectsRender;
+        RegisterProperty<UI::TextBlock, int>(
+            "Padding",
+            &UI::TextBlock::GetPadding,
+            &UI::TextBlock::SetPadding,
+            paddingMetadata);
     }
 }

@@ -1,9 +1,13 @@
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 configuration = "Release" if "--release" in sys.argv else "Debug"
+
+# Hardcoded options
+open_saphire_after_build = False
 
 print(f"Building NeoWPF ({configuration})...")
 
@@ -35,4 +39,23 @@ dest_lib.parent.mkdir(parents=True, exist_ok=True)
 shutil.copy2(source_lib, dest_lib)
 
 print("Library copied.")
+
+if open_saphire_after_build:
+    time.sleep(1.5)
+
+    if configuration == "Debug":
+        saphire_exe = r"C:\Users\Katsu\source\repos\Saphire\x64\Debug\Saphire.exe"
+        saphire_cwd = r"C:\Users\Katsu\source\repos\Saphire\x64\Debug"
+    else:
+        saphire_exe = r"C:\Users\Katsu\source\repos\Saphire\x64\Release\Saphire.exe"
+        saphire_cwd = r"C:\Users\Katsu\source\repos\Saphire\x64\Release"
+
+    print(f"Launching: {saphire_exe}")
+
+    subprocess.run(
+        [saphire_exe],
+        cwd=saphire_cwd,
+        check=True,
+    )
+
 print("\nDone!")

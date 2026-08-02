@@ -14,7 +14,7 @@
       "kind": "method",
       "name": "CreateWindow",
       "source": "Application",
-      "summary": "Creates the main application window.",
+      "summary": "Creates a new application window.",
       "details": "",
       "example": "",
       "params": [
@@ -60,10 +60,35 @@
     },
     {
       "kind": "method",
+      "name": "FindResource",
+      "source": "Application",
+      "summary": "Finds a resource value by key.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "key",
+          "text": "The resource key."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "Initialize",
       "source": "Application",
       "summary": "Initializes the NeoWPF application runtime.",
       "details": "Call this before creating windows or entering the main loop.",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "IsConsoleVisible",
+      "source": "Application",
+      "summary": "Returns whether the application console is currently visible.",
+      "details": "",
       "example": "",
       "params": [],
       "isInternal": false
@@ -76,6 +101,40 @@
       "details": "",
       "example": "",
       "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetResource",
+      "source": "Application",
+      "summary": "Stores a resource value in the application resource dictionary.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "key",
+          "text": "The resource key."
+        },
+        {
+          "name": "value",
+          "text": "The resource value to store."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "ShowConsole",
+      "source": "Application",
+      "summary": "Sets whether the application console should be visible.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "visible",
+          "text": "True to show the console, false to hide it."
+        }
+      ],
       "isInternal": false
     },
     {
@@ -109,6 +168,44 @@
       "details": "",
       "example": "",
       "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "TryFindResource",
+      "source": "Application",
+      "summary": "Attempts to find a resource value by key.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "key",
+          "text": "The resource key."
+        },
+        {
+          "name": "outValue",
+          "text": "The output value if the resource exists."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "TryGetResource",
+      "source": "Application",
+      "summary": "Attempts to retrieve a resource value by key.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "key",
+          "text": "The resource key."
+        },
+        {
+          "name": "outValue",
+          "text": "The output value if the resource exists."
+        }
+      ],
       "isInternal": false
     },
     {
@@ -152,49 +249,9 @@
     },
     {
       "kind": "method",
-      "name": "GetBackgroundColor",
-      "source": "Border",
-      "summary": "Gets the background color.",
-      "details": "",
-      "example": "",
-      "params": [],
-      "isInternal": false
-    },
-    {
-      "kind": "method",
-      "name": "GetBorderColor",
-      "source": "Border",
-      "summary": "Gets the border color.",
-      "details": "",
-      "example": "",
-      "params": [],
-      "isInternal": false
-    },
-    {
-      "kind": "method",
-      "name": "GetBorderThickness",
-      "source": "Border",
-      "summary": "Gets the current border thickness.",
-      "details": "",
-      "example": "",
-      "params": [],
-      "isInternal": false
-    },
-    {
-      "kind": "method",
       "name": "GetChild",
       "source": "Border",
       "summary": "Gets the child currently hosted by the border.",
-      "details": "",
-      "example": "",
-      "params": [],
-      "isInternal": false
-    },
-    {
-      "kind": "method",
-      "name": "GetPadding",
-      "source": "Border",
-      "summary": "Gets the current padding.",
       "details": "",
       "example": "",
       "params": [],
@@ -231,51 +288,6 @@
     },
     {
       "kind": "method",
-      "name": "SetBackgroundColor",
-      "source": "Border",
-      "summary": "Sets the background color drawn inside the border.",
-      "details": "",
-      "example": "",
-      "params": [
-        {
-          "name": "color",
-          "text": "The background color in ARGB format."
-        }
-      ],
-      "isInternal": false
-    },
-    {
-      "kind": "method",
-      "name": "SetBorderColor",
-      "source": "Border",
-      "summary": "Sets the color used to draw the border.",
-      "details": "",
-      "example": "",
-      "params": [
-        {
-          "name": "color",
-          "text": "The border color in ARGB format."
-        }
-      ],
-      "isInternal": false
-    },
-    {
-      "kind": "method",
-      "name": "SetBorderThickness",
-      "source": "Border",
-      "summary": "Sets the border thickness.",
-      "details": "",
-      "example": "",
-      "params": [
-        {
-          "name": "thickness",
-          "text": "The border width in pixels."
-        }
-      ],
-      "isInternal": false
-    },
-    {
-      "kind": "method",
       "name": "SetChild",
       "source": "Border",
       "summary": "Sets the single child hosted by the border.",
@@ -285,21 +297,6 @@
         {
           "name": "child",
           "text": "The content to place inside the border."
-        }
-      ],
-      "isInternal": false
-    },
-    {
-      "kind": "method",
-      "name": "SetPadding",
-      "source": "Border",
-      "summary": "Sets the space between the border and its content.",
-      "details": "",
-      "example": "",
-      "params": [
-        {
-          "name": "padding",
-          "text": "The inset size in pixels."
         }
       ],
       "isInternal": false
@@ -370,6 +367,16 @@
     },
     {
       "kind": "method",
+      "name": "GetBorderColor",
+      "source": "Button",
+      "summary": "Returns the current border color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "GetFontSize",
       "source": "Button",
       "summary": "Returns the current font size.",
@@ -432,6 +439,21 @@
       "name": "SetBackgroundColor",
       "source": "Button",
       "summary": "Sets the background color.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "color",
+          "text": "ARGB color value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetBorderColor",
+      "source": "Button",
+      "summary": "Sets the border color.",
       "details": "",
       "example": "",
       "params": [
@@ -554,6 +576,16 @@
     },
     {
       "kind": "method",
+      "name": "GetFontSize",
+      "source": "Checkbox",
+      "summary": "Returns the current font size of the checkbox label.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "GetPadding",
       "source": "Checkbox",
       "summary": "Returns the current padding.",
@@ -617,6 +649,16 @@
       "name": "SetBorderColor",
       "source": "Checkbox",
       "summary": "Sets the border color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetFontSize",
+      "source": "Checkbox",
+      "summary": "Sets the font size of the checkbox label.",
       "details": "",
       "example": "",
       "params": [],
@@ -1147,6 +1189,16 @@
     },
     {
       "kind": "method",
+      "name": "GetMargin",
+      "source": "FrameworkElement",
+      "summary": "Returns the element's layout margin.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "GetVerticalAlignment",
       "source": "FrameworkElement",
       "summary": "Returns the vertical alignment used when the element is placed in a parent.",
@@ -1367,6 +1419,36 @@
     },
     {
       "kind": "method",
+      "name": "SetMargin",
+      "source": "FrameworkElement",
+      "summary": "Sets the element's layout margin.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetMargin",
+      "source": "FrameworkElement",
+      "summary": "Sets a uniform layout margin for the element.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetMargin",
+      "source": "FrameworkElement",
+      "summary": "Sets a custom layout margin for the element.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "SetVerticalAlignment",
       "source": "FrameworkElement",
       "summary": "Sets the vertical alignment used when the element is placed in a parent.",
@@ -1527,6 +1609,21 @@
         }
       ],
       "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "ClearAttachedProperties",
+      "source": "Grid",
+      "summary": "Clears any Grid attached properties for a child.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "child",
+          "text": "The child whose Grid attached state should be removed."
+        }
+      ],
+      "isInternal": true
     },
     {
       "kind": "struct",
@@ -2356,7 +2453,7 @@
       "source": "ScrollBar",
       "summary": "A scrollbar for vertical or horizontal scrolling.",
       "details": "Drop this on a panel or content surface when you want scrolling.",
-      "example": "auto scrollBar = std::make_shared<NeoWPF::UI::ScrollBar>();\nscrollBar->SetOrientation(ScrollBarOrientation::Vertical);\nscrollBar->SetScrollTarget(contentHost);\nscrollBar->SetViewportElement(viewport);",
+      "example": "auto scrollBar = std::make_shared<NeoWPF::UI::ScrollBar>();\nscrollBar->SetOrientation(Orientation::Vertical);\nscrollBar->SetScrollTarget(contentHost);\nscrollBar->SetViewportElement(viewport);",
       "params": [],
       "isInternal": false
     },
@@ -2381,7 +2478,7 @@
       "source": "ScrollBar",
       "summary": "Chooses whether the scrollbar runs vertically or horizontally.",
       "details": "",
-      "example": "scrollBar->SetOrientation(ScrollBarOrientation::Horizontal);",
+      "example": "scrollBar->SetOrientation(Orientation::Horizontal);",
       "params": [
         {
           "name": "orientation",
@@ -2765,6 +2862,199 @@
           "text": "The visual name."
         }
       ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Arrange",
+      "source": "TextBlock",
+      "summary": "Arranges the text inside the final bounds and prepares rendering resources.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "finalWidth",
+          "text": "The width assigned to the element."
+        },
+        {
+          "name": "finalHeight",
+          "text": "The height assigned to the element."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "BuildRenderCommands",
+      "source": "TextBlock",
+      "summary": "Appends rendering commands to draw the text texture.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "commands",
+          "text": "The command list to populate."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetContentBounds",
+      "source": "TextBlock",
+      "summary": "Returns the content bounds (measured text size, excluding padding).",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetContentHeight",
+      "source": "TextBlock",
+      "summary": "Returns the measured content height (excluding padding).",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetContentWidth",
+      "source": "TextBlock",
+      "summary": "Returns the measured content width (excluding padding).",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetFontSize",
+      "source": "TextBlock",
+      "summary": "Returns the current font size.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetPadding",
+      "source": "TextBlock",
+      "summary": "Gets the padding inside the `TextBlock` bounds.",
+      "details": "Padding is interior spacing applied between the `TextBlock`'s bounds and its rendered text.",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetText",
+      "source": "TextBlock",
+      "summary": "Returns the current text content.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetTextColor",
+      "source": "TextBlock",
+      "summary": "Returns the current text color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Measure",
+      "source": "TextBlock",
+      "summary": "Measures the text and reports the desired size including padding.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "availableWidth",
+          "text": "The width available to the element."
+        },
+        {
+          "name": "availableHeight",
+          "text": "The height available to the element."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetFontSize",
+      "source": "TextBlock",
+      "summary": "Sets the font size used to measure and render text.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "fontSize",
+          "text": "Font size in device pixels."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetPadding",
+      "source": "TextBlock",
+      "summary": "Sets the interior padding in device pixels.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "padding",
+          "text": "Uniform padding applied to all sides."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetText",
+      "source": "TextBlock",
+      "summary": "Sets the text content.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "text",
+          "text": "The text to display."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetTextColor",
+      "source": "TextBlock",
+      "summary": "Sets the text color used when rendering.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "color",
+          "text": "The color to use."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "class",
+      "name": "TextBlock",
+      "source": "TextBlock",
+      "summary": "Displays read-only text inside layouts.",
+      "details": "`TextBlock` is a element for showing text",
+      "example": "auto tb = std::make_shared<NeoWPF::UI::TextBlock>(L\"Hello world\");\ntb->SetFontSize(18);\ntb->SetPadding(8);",
+      "params": [],
       "isInternal": false
     },
     {
@@ -3374,16 +3664,6 @@
     },
     {
       "kind": "method",
-      "name": "CaptureRootVisuals",
-      "source": "Visual",
-      "summary": "Captures the current root visuals.",
-      "details": "",
-      "example": "",
-      "params": [],
-      "isInternal": true
-    },
-    {
-      "kind": "method",
       "name": "ClearTreeDirty",
       "source": "Visual",
       "summary": "Clears the dirty flag.",
@@ -3444,16 +3724,6 @@
     },
     {
       "kind": "method",
-      "name": "GetRootVisualReferences",
-      "source": "Visual",
-      "summary": "Returns the root visual references.",
-      "details": "",
-      "example": "",
-      "params": [],
-      "isInternal": true
-    },
-    {
-      "kind": "method",
       "name": "GetVisualChildren",
       "source": "Visual",
       "summary": "Returns the visual children attached to this node.",
@@ -3484,9 +3754,9 @@
     },
     {
       "kind": "method",
-      "name": "IsTreeDirty",
+      "name": "Initialize",
       "source": "Visual",
-      "summary": "Returns whether the visual tree is dirty.",
+      "summary": "Initializes this visual and its visual children.",
       "details": "",
       "example": "",
       "params": [],
@@ -3494,9 +3764,29 @@
     },
     {
       "kind": "method",
-      "name": "KeepAliveAsRoot",
+      "name": "IsInitialized",
       "source": "Visual",
-      "summary": "Keeps this visual alive as a root visual.",
+      "summary": "Returns whether this visual has completed initialization.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "IsInitializing",
+      "source": "Visual",
+      "summary": "Returns whether initialization is currently in progress.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "IsTreeDirty",
+      "source": "Visual",
+      "summary": "Returns whether the visual tree is dirty.",
       "details": "",
       "example": "",
       "params": [],
@@ -3514,9 +3804,49 @@
     },
     {
       "kind": "method",
+      "name": "OnInitialize",
+      "source": "Visual",
+      "summary": "Extension point for derived classes to perform initialization work.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "OnRemoveVisualChild",
+      "source": "Visual",
+      "summary": "Called after a child visual has been removed.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "RemoveFromParent",
+      "source": "Visual",
+      "summary": "Removes this visual from its current parent.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
       "name": "RemoveVisualChild",
       "source": "Visual",
       "summary": "Removes a visual child.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "RemoveVisualChild",
+      "source": "Visual",
+      "summary": "Removes a visual child by raw pointer.",
       "details": "",
       "example": "",
       "params": [],
@@ -3919,6 +4249,60 @@
       "source": "VisualStateManager",
       "summary": "Manages visual state groups and transitions for a UI element.",
       "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Hide",
+      "source": "Window",
+      "summary": "Hides the window from view.",
+      "details": "If the window handle is valid, the window is hidden without destroying its contents.",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Resize",
+      "source": "Window",
+      "summary": "Resizes the window to the specified dimensions.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "width",
+          "text": "The new width of the window in pixels."
+        },
+        {
+          "name": "height",
+          "text": "The new height of the window in pixels."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetContent",
+      "source": "Window",
+      "summary": "Replaces the window's visual content with a new child element.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "content",
+          "text": "The visual to display inside the window. Passing null clears the current content."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Show",
+      "source": "Window",
+      "summary": "Displays the window using its normal state.",
+      "details": "If the window handle is valid, the window is shown and the client area is updated immediately.",
       "example": "",
       "params": [],
       "isInternal": false

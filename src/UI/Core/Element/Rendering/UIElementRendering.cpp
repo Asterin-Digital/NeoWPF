@@ -24,7 +24,7 @@ void UIElement::OnInitialize()
 }
 
 void UIElement::BeginAnimation(float from, float to, float durationSeconds) {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Opacity", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Opacity", *this);
     if (!property) {
         return;
     }
@@ -125,7 +125,7 @@ bool UIElement::SetStyleProperty(const std::string& name, uint32_t value)
         return false;
     }
 
-    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, typeid(*this));
+    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, *this);
     if (!property) {
         return false;
     }
@@ -140,7 +140,7 @@ bool UIElement::SetStylePropertyValue(const std::string& name, const std::any& v
         return false;
     }
 
-    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, typeid(*this));
+    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, *this);
     if (!property) {
         return false;
     }
@@ -155,7 +155,7 @@ bool UIElement::SetPropertyValue(const std::string& name, const std::any& value)
         return false;
     }
 
-    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, typeid(*this));
+    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, *this);
     if (!property) {
         return false;
     }
@@ -212,7 +212,7 @@ std::any UIElement::GetPropertyValue(const std::string& name) const
         return {};
     }
 
-    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, typeid(*this));
+    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, *this);
     if (!property) {
         return {};
     }

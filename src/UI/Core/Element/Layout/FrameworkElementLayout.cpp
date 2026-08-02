@@ -14,8 +14,8 @@ bool FrameworkElement::s_frameworkElementLogging = false;
 
 LayoutSizeMode FrameworkElement::GetWidthMode() const noexcept
 {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("WidthMode", typeid(*this));
-    if (property) {
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("WidthMode", *this);
+     if (property) {
         try {
             return GetValue<LayoutSizeMode>(*property);
         } catch (const std::bad_any_cast&) {
@@ -28,7 +28,7 @@ LayoutSizeMode FrameworkElement::GetWidthMode() const noexcept
 
 LayoutSizeMode FrameworkElement::GetHeightMode() const noexcept
 {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("HeightMode", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("HeightMode", *this);
     if (property) {
         try {
             return GetValue<LayoutSizeMode>(*property);
@@ -42,7 +42,7 @@ LayoutSizeMode FrameworkElement::GetHeightMode() const noexcept
 
 int FrameworkElement::GetWidth() const noexcept
 {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Width", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Width", *this);
     if (property) {
         try {
             return GetValue<int>(*property);
@@ -62,7 +62,7 @@ void FrameworkElement::SetWidth(int width) noexcept
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Width", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Width", *this);
     if (property) {
         SetValue(*property, clampedWidth);
         return;
@@ -74,7 +74,7 @@ void FrameworkElement::SetWidth(int width) noexcept
 
 int FrameworkElement::GetHeight() const noexcept
 {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Height", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Height", *this);
     if (property) {
         try {
             return GetValue<int>(*property);
@@ -88,7 +88,7 @@ int FrameworkElement::GetHeight() const noexcept
 
 Thickness FrameworkElement::GetMargin() const noexcept
 {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Margin", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Margin", *this);
     if (property) {
         try {
             return GetValue<Thickness>(*property);
@@ -107,7 +107,7 @@ void FrameworkElement::SetMargin(Thickness margin) noexcept
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Margin", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Margin", *this);
     if (property) {
         if (GetMargin() != margin) {
             SetValue(*property, margin);
@@ -129,7 +129,7 @@ void FrameworkElement::SetHeight(int height) noexcept
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Height", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Height", *this);
     if (property) {
         SetValue(*property, clampedHeight);
         return;
@@ -141,7 +141,7 @@ void FrameworkElement::SetHeight(int height) noexcept
 
 bool FrameworkElement::IsClipToBounds() const noexcept
 {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("ClipToBounds", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("ClipToBounds", *this);
     if (property) {
         try {
             return GetValue<bool>(*property);
@@ -160,7 +160,7 @@ void FrameworkElement::SetClipToBounds(bool clipToBounds) noexcept
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("ClipToBounds", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("ClipToBounds", *this);
     if (property) {
         SetValue(*property, clipToBounds);
         return;
@@ -179,7 +179,7 @@ void FrameworkElement::SetWidthMode(LayoutSizeMode mode) noexcept
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("WidthMode", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("WidthMode", *this);
     if (property) {
         SetValue(*property, mode);
         return;
@@ -196,7 +196,7 @@ void FrameworkElement::SetHeightMode(LayoutSizeMode mode) noexcept
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("HeightMode", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("HeightMode", *this);
     if (property) {
         SetValue(*property, mode);
         return;
@@ -208,7 +208,7 @@ void FrameworkElement::SetHeightMode(LayoutSizeMode mode) noexcept
 
 NeoWPF::UI::CornerRadius FrameworkElement::GetCornerRadius() const noexcept
 {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("CornerRadius", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("CornerRadius", *this);
     if (property) {
         try {
             return GetValue<NeoWPF::UI::CornerRadius>(*property);
@@ -228,7 +228,7 @@ void FrameworkElement::SetCornerRadius(NeoWPF::UI::CornerRadius cornerRadius) no
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("CornerRadius", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("CornerRadius", *this);
     if (property) {
         NeoWPF::Diagnostics::LogInfo("[FrameworkElement] SetCornerRadius via property value=%f,%f,%f,%f", cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft);
         SetValue(*property, cornerRadius);
@@ -243,7 +243,7 @@ void FrameworkElement::SetCornerRadius(NeoWPF::UI::CornerRadius cornerRadius) no
 
 HorizontalAlignment FrameworkElement::GetHorizontalAlignment() const noexcept
 {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("HorizontalAlignment", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("HorizontalAlignment", *this);
     if (property) {
         try {
             return GetValue<HorizontalAlignment>(*property);
@@ -262,7 +262,7 @@ void FrameworkElement::SetHorizontalAlignment(HorizontalAlignment align) noexcep
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("HorizontalAlignment", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("HorizontalAlignment", *this);
     if (property) {
         SetValue(*property, align);
         return;
@@ -273,7 +273,7 @@ void FrameworkElement::SetHorizontalAlignment(HorizontalAlignment align) noexcep
 
 VerticalAlignment FrameworkElement::GetVerticalAlignment() const noexcept
 {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("VerticalAlignment", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("VerticalAlignment", *this);
     if (property) {
         try {
             return GetValue<VerticalAlignment>(*property);
@@ -292,7 +292,7 @@ void FrameworkElement::SetVerticalAlignment(VerticalAlignment align) noexcept
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("VerticalAlignment", typeid(*this));
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("VerticalAlignment", *this);
     if (property) {
         SetValue(*property, align);
         return;
