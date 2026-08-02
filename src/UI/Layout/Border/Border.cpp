@@ -114,15 +114,16 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     const auto cornerRadius = GetCornerRadius();
 
     if (GetBorderThickness() > 0 && GetBorderColor().ToArgb() != 0x00000000u) {
+        const float borderInset = static_cast<float>(GetBorderThickness()) * 0.5f;
         commands.DrawRoundedRect(
-            static_cast<float>(absX),
-            static_cast<float>(absY),
-            static_cast<float>(GetFinalWidth()),
-            static_cast<float>(GetFinalHeight()),
-            cornerRadius.TopLeft,
-            cornerRadius.TopRight,
-            cornerRadius.BottomRight,
-            cornerRadius.BottomLeft,
+            static_cast<float>(absX + borderInset),
+            static_cast<float>(absY + borderInset),
+            static_cast<float>(std::max(0, GetFinalWidth() - (2 * static_cast<int>(std::lround(borderInset))))),
+            static_cast<float>(std::max(0, GetFinalHeight() - (2 * static_cast<int>(std::lround(borderInset))))),
+            std::max(0.0f, cornerRadius.TopLeft - borderInset),
+            std::max(0.0f, cornerRadius.TopRight - borderInset),
+            std::max(0.0f, cornerRadius.BottomRight - borderInset),
+            std::max(0.0f, cornerRadius.BottomLeft - borderInset),
             GetBorderColor().ToArgb(),
             GetOpacity());
     }

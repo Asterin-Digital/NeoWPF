@@ -33,7 +33,7 @@ void SetInputRootForWindow(HWND hwnd)
 
     std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
     for (auto& windowState : s_appState.windows) {
-        if (windowState.hwnd == hwnd && windowState.isPrimaryWindow) {
+        if (windowState.hwnd == hwnd) {
             auto rootVisual = windowState.windowHost->GetContent();
             NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual.get()));
             return;
@@ -78,12 +78,6 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
 {
     const auto layoutStart = std::chrono::steady_clock::now();
     windowState.buildCommandList.Clear();
-
-    if (!windowState.isPrimaryWindow) {
-        windowState.renderCommandList = windowState.buildCommandList;
-        windowState.commandListInitialized = true;
-        return;
-    }
 
     auto rootVisual = windowState.windowHost->GetContent();
     if (rootVisual) {

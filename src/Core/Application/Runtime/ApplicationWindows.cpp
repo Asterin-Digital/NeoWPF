@@ -1,6 +1,7 @@
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/Platform/Window.h>
 #include <NeoWPF/UI/Controls/Window.h>
 #include <algorithm>
@@ -57,6 +58,8 @@ bool CloseApplicationWindow(HWND hwnd)
     if (!hwnd) {
         return false;
     }
+
+    NeoWPF::Input::InputManager::GetInstance().SetRootElement(nullptr);
 
     {
         std::lock_guard<std::mutex> lock(App().windowsMutex);

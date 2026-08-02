@@ -91,15 +91,21 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
     const float height = static_cast<float>(m_height);
 
     if (m_borderThickness > 0 && m_borderColor != 0x00000000u) {
+        const float borderInset = static_cast<float>(std::max(0, m_borderThickness)) * 0.5f;
+        const float borderX = x + borderInset;
+        const float borderY = y + borderInset;
+        const float borderWidth = std::max(0.0f, width - (2.0f * borderInset));
+        const float borderHeight = std::max(0.0f, height - (2.0f * borderInset));
+
         commands.DrawRoundedRect(
-            x,
-            y,
-            width,
-            height,
-            m_cornerRadius.TopLeft,
-            m_cornerRadius.TopRight,
-            m_cornerRadius.BottomRight,
-            m_cornerRadius.BottomLeft,
+            borderX,
+            borderY,
+            borderWidth,
+            borderHeight,
+            std::max(0.0f, m_cornerRadius.TopLeft - borderInset),
+            std::max(0.0f, m_cornerRadius.TopRight - borderInset),
+            std::max(0.0f, m_cornerRadius.BottomRight - borderInset),
+            std::max(0.0f, m_cornerRadius.BottomLeft - borderInset),
             m_borderColor,
             m_opacity,
             m_clip,
@@ -108,12 +114,14 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
 
     if (m_fillColor != 0x00000000u) {
         const float inset = static_cast<float>(std::max(0, m_borderThickness));
+        const float innerX = x + inset;
+        const float innerY = y + inset;
         const float innerWidth = std::max(0.0f, width - (2.0f * inset));
         const float innerHeight = std::max(0.0f, height - (2.0f * inset));
         if (innerWidth > 0.0f && innerHeight > 0.0f) {
             commands.DrawRoundedRect(
-                x + inset,
-                y + inset,
+                innerX,
+                innerY,
                 innerWidth,
                 innerHeight,
                 std::max(0.0f, m_cornerRadius.TopLeft - inset),

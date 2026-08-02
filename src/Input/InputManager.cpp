@@ -12,6 +12,24 @@ namespace NeoWPF::Input
         return instance;
     }
 
+    void InputManager::SetRootElement(NeoWPF::UI::UIElement* root)
+    {
+        if (m_rootElement == root)
+        {
+            return;
+        }
+
+        if (m_focusedElement)
+        {
+            m_focusedElement->OnLostFocus();
+            m_focusedElement = nullptr;
+        }
+
+        m_captureElement = nullptr;
+        m_mouseOverElement = nullptr;
+        m_rootElement = root;
+    }
+
     void InputManager::ProcessMouseInput(int x, int y, std::uint32_t buttonState, int wheelDelta)
     {
         m_mouseX = x;

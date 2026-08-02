@@ -28,7 +28,7 @@ namespace NeoWPF::Input
         int GetMouseY() const { return m_mouseY; }
         std::uint32_t GetMouseButtonState() const { return m_mouseButtonState; }
 
-        void SetRootElement(NeoWPF::UI::UIElement* root) { m_rootElement = root; }
+        void SetRootElement(NeoWPF::UI::UIElement* root);
 
     private:
         InputManager() = default;

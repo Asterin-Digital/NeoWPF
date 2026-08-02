@@ -220,31 +220,34 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         background->BuildRenderCommands(commands);
     }
     else {
-        const float borderThickness = 1.0f; 
-        const uint32_t borderColor = 0xFF707070u; 
+        const float borderThickness = 1.0f;
+        const uint32_t borderColor = 0xFF707070u;
+        const float borderInset = borderThickness * 0.5f;
+        const float borderX = drawX + borderInset;
+        const float borderY = drawY + borderInset;
+        const float borderW = std::max(0.0f, drawWidth - borderThickness);
+        const float borderH = std::max(0.0f, drawHeight - borderThickness);
 
         commands.DrawRoundedRect(
-            drawX,
-            drawY,
-            drawWidth,
-            drawHeight,
-            cornerRadius.TopLeft,
-            cornerRadius.TopRight,
-            cornerRadius.BottomRight,
-            cornerRadius.BottomLeft,
+            borderX,
+            borderY,
+            borderW,
+            borderH,
+            std::max(0.0f, cornerRadius.TopLeft - borderInset),
+            std::max(0.0f, cornerRadius.TopRight - borderInset),
+            std::max(0.0f, cornerRadius.BottomRight - borderInset),
+            std::max(0.0f, cornerRadius.BottomLeft - borderInset),
             borderColor,
             GetOpacity(),
             NeoWPF::Rendering::ClipRect{},
             rotationRadians);
 
-        // Draw the background inset by border thickness
         const float inset = borderThickness;
         const float innerX = drawX + inset;
         const float innerY = drawY + inset;
-        const float innerW = drawWidth - 2.0f * inset;
-        const float innerH = drawHeight - 2.0f * inset;
+        const float innerW = std::max(0.0f, drawWidth - 2.0f * inset);
+        const float innerH = std::max(0.0f, drawHeight - 2.0f * inset);
         if (innerW > 0.0f && innerH > 0.0f) {
-            // Adjust corner radius for the inner rectangle (subtract inset, but not below 0)
             const float innerTL = std::max(0.0f, cornerRadius.TopLeft - inset);
             const float innerTR = std::max(0.0f, cornerRadius.TopRight - inset);
             const float innerBR = std::max(0.0f, cornerRadius.BottomRight - inset);
