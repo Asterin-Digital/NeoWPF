@@ -6,16 +6,9 @@
 #include <algorithm>
 #include <memory>
 #include <string>
-
 #include <thread>
 #include <functional>
 #include <mutex>
-
-
-
-
-
-
 
 namespace NeoWPF::UI {
 

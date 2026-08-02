@@ -5,6 +5,7 @@
 #include <NeoWPF/UI/Core/Media/Thickness.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
 #include <algorithm>
+#include <any>
 
 #ifdef min
 #undef min
@@ -381,6 +382,31 @@ public:
 
     /*
         @summary
+        Gets the current data context for the element.
+
+        @returns
+        The current data context.
+    */
+    std::any GetDataContext() const noexcept;
+
+    /*
+        @summary
+        Sets the current data context for the element.
+
+        @param dataContext
+        The new data context value.
+    */
+    void SetDataContext(const std::any& dataContext) noexcept;
+
+    const Properties::DependencyObject* GetInheritanceParent() const noexcept override;
+    void OnDependencyPropertyChanged(const Properties::DependencyProperty& property,
+                                     const Properties::PropertyMetadata& metadata,
+                                     const std::any& oldValue,
+                                     const std::any& newValue,
+                                     Properties::PropertyValueSource source) override;
+
+    /*
+        @summary
         Returns the element's position in absolute coordinates.
 
         @param outX
@@ -440,6 +466,7 @@ private:
     int m_height = 0;
     Thickness m_margin;
     NeoWPF::UI::CornerRadius m_cornerRadius;
+    std::any m_dataContext;
     bool m_clipToBounds = false;
 
 protected:

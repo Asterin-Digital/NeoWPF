@@ -169,6 +169,10 @@
     <ClInclude Include="include\NeoWPF\UI\Core\Element\IContentAware.h" />
     <ClInclude Include="include\NeoWPF\UI\Core\Element\UIElement.h" />
     <ClInclude Include="include\NeoWPF\UI\Core\Element\Visual.h" />
+    <ClInclude Include="include\NeoWPF\UI\Data\BindingBase.h" />
+    <ClInclude Include="include\NeoWPF\UI\Data\Binding.h" />
+    <ClInclude Include="include\NeoWPF\UI\Data\BindingExpression.h" />
+    <ClInclude Include="include\NeoWPF\UI\Data\BindingOperations.h" />
     <ClInclude Include="include\NeoWPF\UI\Core\Transform\Transform.h" />
     <ClInclude Include="include\NeoWPF\UI\Layout\Alignment\Alignment.h" />
     <ClInclude Include="include\NeoWPF\UI\Layout\Panel\Panel.h" />
@@ -246,6 +250,9 @@
     <ClCompile Include="src\UI\Layout\Panel\PanelProperties.cpp" />
     <ClCompile Include="src\UI\Properties\Registration\DependencyPropertyRegistration.cpp" />
     <ClCompile Include="src\UI\Properties\DependencyObject.cpp" />
+    <ClCompile Include="src\UI\Data\Binding.cpp" />
+    <ClCompile Include="src\UI\Data\BindingOperations.cpp" />
+    <ClCompile Include="src\UI\Data\BindingExpression.cpp" />
     <ClCompile Include="src\Diagnostics\Logger.cpp" />
     <ClCompile Include="src\Diagnostics\VisualTreeDumper.cpp" />
     <ClCompile Include="src\Platform\Window.cpp" />

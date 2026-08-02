@@ -96,5 +96,15 @@ namespace NeoWPF::UI::Properties {
             &UI::FrameworkElement::GetCornerRadius,
             &UI::FrameworkElement::SetCornerRadius,
             cornerRadiusMetadata);
+
+        PropertyMetadata dataContextMetadata;
+        dataContextMetadata.DefaultValue = std::any();
+        dataContextMetadata.Flags = PropertyFlags::Inherits;
+
+        RegisterProperty<UI::FrameworkElement, std::any>(
+            "DataContext",
+            &UI::FrameworkElement::GetDataContext,
+            &UI::FrameworkElement::SetDataContext,
+            dataContextMetadata);
     }
 }

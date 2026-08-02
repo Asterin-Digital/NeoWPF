@@ -14,6 +14,10 @@
 
 namespace NeoWPF::UI::Properties {
 
+/*
+    @summary
+    Describes where a dependency property value originated.
+*/
 enum class PropertyValueSource {
     Default,
     Local,
@@ -21,6 +25,10 @@ enum class PropertyValueSource {
     Expression,
 };
 
+/*
+    @summary
+    Flags that describe how a dependency property affects layout and rendering.
+*/
 enum class PropertyFlags : std::uint32_t {
     None = 0,
     AffectsMeasure = 1 << 0,
@@ -29,21 +37,37 @@ enum class PropertyFlags : std::uint32_t {
     Inherits = 1 << 3,
 };
 
+/*
+    @summary
+    Combines two property flags.
+*/
 inline PropertyFlags operator|(PropertyFlags left, PropertyFlags right) noexcept {
     return static_cast<PropertyFlags>(static_cast<std::underlying_type_t<PropertyFlags>>(left) |
                                       static_cast<std::underlying_type_t<PropertyFlags>>(right));
 }
 
+/*
+    @summary
+    Intersects two property flag sets.
+*/
 inline PropertyFlags operator&(PropertyFlags left, PropertyFlags right) noexcept {
     return static_cast<PropertyFlags>(static_cast<std::underlying_type_t<PropertyFlags>>(left) &
                                       static_cast<std::underlying_type_t<PropertyFlags>>(right));
 }
 
+/*
+    @summary
+    Appends one set of flags onto another.
+*/
 inline PropertyFlags& operator|=(PropertyFlags& left, PropertyFlags right) noexcept {
     left = left | right;
     return left;
 }
 
+/*
+    @summary
+    Checks whether a specific property flag is present.
+*/
 inline bool HasFlag(PropertyFlags flags, PropertyFlags test) noexcept {
     return (flags & test) != PropertyFlags::None;
 }
@@ -51,6 +75,10 @@ inline bool HasFlag(PropertyFlags flags, PropertyFlags test) noexcept {
 class DependencyObject;
 class DependencyPropertyRegistry;
 
+/*
+    @summary
+    Carries the old and new values when a dependency property changes.
+*/
 struct DependencyPropertyChangedEventArgs {
     const class DependencyProperty* Property;
     std::any OldValue;
@@ -61,6 +89,10 @@ struct DependencyPropertyChangedEventArgs {
 using PropertyChangedCallback = std::function<void(DependencyObject*, const DependencyPropertyChangedEventArgs&)>;
 using CoerceValueCallback = std::function<std::any(DependencyObject*, const std::any&)>;
 
+/*
+    @summary
+    Stores the default value and callbacks used by a dependency property.
+*/
 struct PropertyMetadata {
     std::any DefaultValue;
     PropertyChangedCallback PropertyChangedCallback;
@@ -68,18 +100,76 @@ struct PropertyMetadata {
     PropertyFlags Flags = PropertyFlags::None;
 };
 
+/*
+    @summary
+    Represents a dependency property definition registered with the property system.
+
+    @details
+    DependencyProperty describes the property name, value type, owner type, and metadata used when values are stored and propagated.
+*/
 class DependencyProperty {
 public:
+    /*
+        @summary
+        Creates a dependency property definition.
+
+        @param name
+        The property name.
+
+        @param propertyType
+        The CLR-like runtime type of the property values.
+
+        @param ownerType
+        The type that owns the property.
+
+        @param metadata
+        The default value and callbacks associated with the property.
+    */
     DependencyProperty(const std::string& name,
                        const std::type_index& propertyType,
                        const std::type_index& ownerType,
                        const PropertyMetadata& metadata);
 
+    /*
+        @summary
+        Returns the runtime type of the property values.
+    */
     const std::type_index& GetPropertyType() const noexcept;
+
+    /*
+        @summary
+        Returns the type that owns the property.
+    */
     const std::type_index& GetOwnerType() const noexcept;
+
+    /*
+        @summary
+        Returns the metadata associated with the property.
+    */
     const PropertyMetadata& GetMetadata() const noexcept;
+
+    /*
+        @summary
+        Returns the property name.
+    */
     const std::string& GetName() const noexcept;
 
+    /*
+        @summary
+        Registers a dependency property for a specific owner type.
+
+        @tparam TOwner
+        The owner of the property.
+
+        @tparam TProperty
+        The property value type.
+
+        @param name
+        The name of the dependency property.
+
+        @param metadata
+        Optional default value and callback metadata.
+    */
     template<typename TOwner, typename TProperty>
     static const DependencyProperty& Register(const std::string& name, const PropertyMetadata& metadata = {});
 
@@ -90,26 +180,93 @@ private:
     PropertyMetadata m_metadata;
 };
 
+/*
+    @summary
+    Maintains the registry of dependency properties for the application.
+*/
 class DependencyPropertyRegistry {
 public:
+    /*
+        @summary
+        Returns the singleton registry instance.
+    */
     static DependencyPropertyRegistry& Get();
 
+    /*
+        @summary
+        Registers a dependency property definition in the registry.
+
+        @param name
+        The property name.
+
+        @param propertyType
+        The runtime value type for the property.
+
+        @param ownerType
+        The owner type for the property.
+
+        @param metadata
+        The metadata to associate with the property.
+    */
     const DependencyProperty& RegisterProperty(const std::string& name,
                                                const std::type_index& propertyType,
                                                const std::type_index& ownerType,
                                                const PropertyMetadata& metadata);
 
+    /*
+        @summary
+        Registers a dependency property for a given owner type.
+
+        @tparam TOwner
+        The owner type.
+
+        @param name
+        The property name.
+
+        @param propertyType
+        The runtime value type for the property.
+
+        @param metadata
+        The metadata to associate with the property.
+    */
     template<typename TOwner>
     const DependencyProperty& RegisterProperty(const std::string& name,
                                                const std::type_index& propertyType,
                                                const PropertyMetadata& metadata);
 
+    /*
+        @summary
+        Registers the owner type so the registry can recognize instances of it.
+
+        @tparam TOwner
+        The owner type to register.
+    */
     template<typename TOwner>
     void RegisterOwnerType();
 
+    /*
+        @summary
+        Finds a property by name for a specific owner type.
+
+        @param name
+        The property name to look up.
+
+        @param ownerType
+        The owner type to match.
+    */
     const DependencyProperty* FindProperty(const std::string& name,
                                            const std::type_index& ownerType) const;
 
+    /*
+        @summary
+        Finds a property by name for a specific object instance.
+
+        @param name
+        The property name to look up.
+
+        @param ownerInstance
+        The object instance that should own the property.
+    */
     const DependencyProperty* FindProperty(const std::string& name,
                                            const DependencyObject& ownerInstance) const;
 

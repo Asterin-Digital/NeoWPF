@@ -1,6 +1,7 @@
 #pragma once
 
 #include <any>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -20,41 +21,186 @@ namespace NeoWPF::UI::Properties {
     enum class PropertyValueSource;
     struct PropertyMetadata;
 
+    /*
+        @summary
+        Base type for objects that participate in NeoWPF's dependency property system.
+
+        @details
+        DependencyObject provides storage for local, style, and binding-based values, along with value precedence and change notification hooks for derived classes.
+    */
     class DependencyObject {
     public:
         virtual ~DependencyObject() = default;
 
+        /*
+            @summary
+            Reads a dependency property value using the requested type.
+
+            @tparam T
+            The expected property value type.
+
+            @param property
+            The dependency property to read.
+
+            @returns
+            The current value converted to the requested type.
+        */
         template<typename T>
         T GetValue(const DependencyProperty& property) const;
 
+        /*
+            @summary
+            Sets a dependency property value using the provided strongly typed value.
+
+            @tparam T
+            The property value type.
+
+            @param property
+            The dependency property to update.
+
+            @param value
+            The new value for the property.
+        */
         template<typename T>
         void SetValue(const DependencyProperty& property, const T& value);
 
+        /*
+            @summary
+            Sets a dependency property value from an std::any container.
+
+            @param property
+            The dependency property to update.
+
+            @param value
+            The value to store for the property.
+        */
         void SetValue(const DependencyProperty& property, const std::any& value);
+
+        /*
+            @summary
+            Associates an expression-based value with a dependency property.
+
+            @param property
+            The dependency property to update.
+
+            @param value
+            The binding expression or expression payload to assign.
+        */
         void SetValueExpression(const DependencyProperty& property, const std::any& value);
 
+        /*
+            @summary
+            Clears the local value for a dependency property.
+
+            @param property
+            The dependency property whose local value should be removed.
+        */
         void ClearValue(const DependencyProperty& property);
 
+        /*
+            @summary
+            Returns the local value for a dependency property when one exists.
+
+            @param property
+            The dependency property to inspect.
+
+            @returns
+            The local value stored for the property, if any.
+        */
         const std::any& ReadLocalValue(const DependencyProperty& property) const;
+
+        /*
+            @summary
+            Indicates where the current value for a property originated.
+
+            @param property
+            The dependency property to inspect.
+
+            @returns
+            The precedence source for the property value.
+        */
         PropertyValueSource GetValueSource(const DependencyProperty& property) const;
+
+        /*
+            @summary
+            Returns the raw value stored for a dependency property.
+
+            @param property
+            The dependency property to inspect.
+
+            @returns
+            The current raw value for the property.
+        */
         std::any GetRawValue(const DependencyProperty& property) const;
 
     protected:
+        /*
+            @summary
+            Returns whether the object is currently applying a property update.
+
+            @returns
+            True while a dependent property update is in progress.
+        */
         bool IsApplyingPropertyValue() const noexcept { return m_isApplyingPropertyValue; }
 
+        /*
+            @summary
+            Returns the object to use as the inheritance parent for inherited property values.
+
+            @returns
+            The dependency object to use for inheritance lookup.
+        */
+        virtual const DependencyObject* GetInheritanceParent() const noexcept { return nullptr; }
+
+        /*
+            @summary
+            Applies a value update to a dependency property.
+
+            @param property
+            The dependency property being updated.
+
+            @param value
+            The new value to apply.
+
+            @param source
+            The precedence source of the update.
+        */
         void SetValueInternal(const DependencyProperty& property,
                               std::any value,
                               PropertyValueSource source);
 
+        /*
+            @summary
+            Invoked when a dependency property changes value.
+
+            @param property
+            The dependency property that changed.
+
+            @param metadata
+            The metadata associated with the property.
+
+            @param oldValue
+            The previous property value.
+
+            @param newValue
+            The new property value.
+
+            @param source
+            The source that produced the new value.
+        */
         virtual void OnDependencyPropertyChanged(const DependencyProperty& property,
                                                  const PropertyMetadata& metadata,
                                                  const std::any& oldValue,
                                                  const std::any& newValue,
                                                  PropertyValueSource source) {}
 
+    public:
+        void RefreshBindingExpressions();
+
     private:
         std::any GetRawValueNoLock(const DependencyProperty& property) const;
         friend class ::NeoWPF::UI::Data::BindingOperations;
+        friend class ::NeoWPF::UI::Data::BindingExpression;
 
         static std::optional<std::any> FindRawValue(const DependencyObject* obj,
                                                     const DependencyProperty& property);
@@ -64,12 +210,18 @@ namespace NeoWPF::UI::Properties {
         std::shared_ptr<::NeoWPF::UI::Data::BindingExpression> GetBindingExpression(const DependencyProperty& property) const;
         void ClearBindingExpression(const DependencyProperty& property);
 
+        std::size_t AddDependencyPropertyChangedHandler(const DependencyProperty& property,
+                                                        std::function<void(const std::any&, const std::any&)> handler);
+        void RemoveDependencyPropertyChangedHandler(const DependencyProperty& property,
+                                                    std::size_t handlerId);
+
         bool m_isApplyingPropertyValue = false;
         std::unordered_map<const DependencyProperty*, std::any> m_expressionValues;
         std::unordered_map<const DependencyProperty*, std::any> m_localValues;
         std::unordered_map<const DependencyProperty*, std::any> m_styleValues;
         std::unordered_map<const DependencyProperty*, std::shared_ptr<::NeoWPF::UI::Data::BindingExpression>> m_bindingExpressions;
-        mutable std::mutex m_propertyMutex;
+    std::unordered_map<const DependencyProperty*, std::unordered_map<std::size_t, std::function<void(const std::any&, const std::any&)>>> m_dependencyPropertyChangedHandlers;
+    std::size_t m_nextDependencyPropertyChangedHandlerId = 1;
     };
 
 }

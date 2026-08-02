@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Data/BindingExpression.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <stdexcept>
@@ -99,6 +100,10 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
 {
     std::any oldValue = GetRawValue(property);
 
+    if (source != PropertyValueSource::Expression) {
+        ClearBindingExpression(property);
+    }
+
     if (source == PropertyValueSource::Style) {
         m_styleValues[&property] = std::move(value);
     } else if (source == PropertyValueSource::Local) {
@@ -118,6 +123,13 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
         DependencyPropertyChangedEventArgs args{&property, std::move(oldValue), newValue, source};
         metadata.PropertyChangedCallback(this, args);
     }
+    if (auto handlers = m_dependencyPropertyChangedHandlers.find(&property); handlers != m_dependencyPropertyChangedHandlers.end()) {
+        for (const auto& [id, handler] : handlers->second) {
+            if (handler) {
+                handler(oldValue, newValue);
+            }
+        }
+    }
     m_isApplyingPropertyValue = previousApplying;
 
     OnDependencyPropertyChanged(property, metadata, oldValue, newValue, source);
@@ -128,6 +140,62 @@ void DependencyObject::ClearValue(const DependencyProperty& property)
     m_localValues.erase(&property);
     m_styleValues.erase(&property);
     m_expressionValues.erase(&property);
+}
+
+void DependencyObject::SetValueExpression(const DependencyProperty& property, const std::any& value)
+{
+    SetValueInternal(property, value, PropertyValueSource::Expression);
+}
+
+void DependencyObject::SetBindingExpression(const DependencyProperty& property,
+                                           std::shared_ptr<::NeoWPF::UI::Data::BindingExpression> expression)
+{
+    if (auto currentExpression = GetBindingExpression(property)) {
+        currentExpression->Detach();
+    }
+    m_bindingExpressions[&property] = std::move(expression);
+}
+
+std::shared_ptr<::NeoWPF::UI::Data::BindingExpression> DependencyObject::GetBindingExpression(const DependencyProperty& property) const
+{
+    if (auto it = m_bindingExpressions.find(&property); it != m_bindingExpressions.end()) {
+        return it->second;
+    }
+    return nullptr;
+}
+
+void DependencyObject::ClearBindingExpression(const DependencyProperty& property)
+{
+    m_bindingExpressions.erase(&property);
+    m_expressionValues.erase(&property);
+}
+
+void DependencyObject::RefreshBindingExpressions()
+{
+    for (auto& [property, expression] : m_bindingExpressions) {
+        if (expression) {
+            expression->Refresh();
+        }
+    }
+}
+
+std::size_t DependencyObject::AddDependencyPropertyChangedHandler(const DependencyProperty& property,
+                                                                std::function<void(const std::any&, const std::any&)> handler)
+{
+    const auto handlerId = m_nextDependencyPropertyChangedHandlerId++;
+    m_dependencyPropertyChangedHandlers[&property].emplace(handlerId, std::move(handler));
+    return handlerId;
+}
+
+void DependencyObject::RemoveDependencyPropertyChangedHandler(const DependencyProperty& property,
+                                                            std::size_t handlerId)
+{
+    if (auto it = m_dependencyPropertyChangedHandlers.find(&property); it != m_dependencyPropertyChangedHandlers.end()) {
+        it->second.erase(handlerId);
+        if (it->second.empty()) {
+            m_dependencyPropertyChangedHandlers.erase(it);
+        }
+    }
 }
 
 const std::any& DependencyObject::ReadLocalValue(const DependencyProperty& property) const
@@ -144,6 +212,9 @@ PropertyValueSource DependencyObject::GetValueSource(const DependencyProperty& p
 {
     if (m_localValues.find(&property) != m_localValues.end()) {
         return PropertyValueSource::Local;
+    }
+    if (m_expressionValues.find(&property) != m_expressionValues.end()) {
+        return PropertyValueSource::Expression;
     }
     if (m_styleValues.find(&property) != m_styleValues.end()) {
         return PropertyValueSource::Style;
@@ -162,6 +233,11 @@ std::any DependencyObject::GetRawValue(const DependencyProperty& property) const
     if (auto it = m_styleValues.find(&property); it != m_styleValues.end()) {
         return it->second;
     }
+    if (HasFlag(property.GetMetadata().Flags, PropertyFlags::Inherits)) {
+        if (auto parent = GetInheritanceParent()) {
+            return parent->GetRawValue(property);
+        }
+    }
     if (property.GetMetadata().DefaultValue.has_value()) {
         return property.GetMetadata().DefaultValue;
     }
@@ -175,20 +251,9 @@ T DependencyObject::GetValue(const DependencyProperty& property) const
         throw std::bad_any_cast();
     }
 
-    if (auto it = m_localValues.find(&property); it != m_localValues.end()) {
-        return std::any_cast<T>(it->second);
-    }
-
-    if (auto it = m_expressionValues.find(&property); it != m_expressionValues.end()) {
-        return std::any_cast<T>(it->second);
-    }
-
-    if (auto it = m_styleValues.find(&property); it != m_styleValues.end()) {
-        return std::any_cast<T>(it->second);
-    }
-
-    if (property.GetMetadata().DefaultValue.has_value()) {
-        return std::any_cast<T>(property.GetMetadata().DefaultValue);
+    const std::any rawValue = GetRawValue(property);
+    if (rawValue.has_value()) {
+        return std::any_cast<T>(rawValue);
     }
 
     return T{};

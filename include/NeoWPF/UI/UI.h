@@ -11,6 +11,8 @@
 #include <NeoWPF/UI/Core/Element/Control.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
+#include <NeoWPF/UI/Data/Binding.h>
+#include <NeoWPF/UI/Data/BindingOperations.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
 #include <NeoWPF/UI/Animation/Core/Timeline.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>

@@ -12,6 +12,34 @@ namespace NeoWPF::UI {
 
 bool FrameworkElement::s_frameworkElementLogging = false;
 
+std::any FrameworkElement::GetDataContext() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("DataContext", *this);
+    if (property) {
+        try {
+            return GetValue<std::any>(*property);
+        } catch (const std::bad_any_cast&) {
+        }
+    }
+    return m_dataContext;
+}
+
+void FrameworkElement::SetDataContext(const std::any& dataContext) noexcept
+{
+    if (IsApplyingPropertyValue()) {
+        m_dataContext = dataContext;
+        return;
+    }
+
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("DataContext", *this);
+    if (property) {
+        SetValue(*property, dataContext);
+        return;
+    }
+
+    m_dataContext = dataContext;
+}
+
 LayoutSizeMode FrameworkElement::GetWidthMode() const noexcept
 {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("WidthMode", *this);
@@ -391,6 +419,42 @@ void FrameworkElement::Arrange(int finalWidth, int finalHeight)
         m_finalHeight = std::max(0, finalHeight);
     } else {
         m_finalHeight = ResolveHeight(finalHeight, m_desiredHeight);
+    }
+}
+
+const Properties::DependencyObject* FrameworkElement::GetInheritanceParent() const noexcept
+{
+    return dynamic_cast<const Properties::DependencyObject*>(GetParent());
+}
+
+namespace {
+
+void RefreshBindingsRecursively(NeoWPF::UI::Visual* node) {
+    if (!node) {
+        return;
+    }
+
+    if (auto depObj = dynamic_cast<NeoWPF::UI::Properties::DependencyObject*>(node)) {
+        depObj->RefreshBindingExpressions();
+    }
+
+    for (auto child : node->GetVisualChildren()) {
+        RefreshBindingsRecursively(child);
+    }
+}
+
+}
+
+void FrameworkElement::OnDependencyPropertyChanged(const Properties::DependencyProperty& property,
+                                             const Properties::PropertyMetadata& metadata,
+                                             const std::any& oldValue,
+                                             const std::any& newValue,
+                                             Properties::PropertyValueSource source)
+{
+    UIElement::OnDependencyPropertyChanged(property, metadata, oldValue, newValue, source);
+
+    if (property.GetName() == "DataContext") {
+        RefreshBindingsRecursively(this);
     }
 }
 
