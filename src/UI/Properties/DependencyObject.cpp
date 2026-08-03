@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Data/BindingExpression.h>
+#include <NeoWPF/UI/Data/BindingOperations.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <stdexcept>
@@ -100,7 +101,9 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
 {
     std::any oldValue = GetRawValue(property);
 
-    if (source != PropertyValueSource::Expression) {
+    if (source == PropertyValueSource::Expression) {
+        m_localValues.erase(&property);
+    } else if (source != PropertyValueSource::Local) {
         ClearBindingExpression(property);
     }
 
@@ -145,6 +148,16 @@ void DependencyObject::ClearValue(const DependencyProperty& property)
 void DependencyObject::SetValueExpression(const DependencyProperty& property, const std::any& value)
 {
     SetValueInternal(property, value, PropertyValueSource::Expression);
+}
+
+void DependencyObject::SetBinding(const DependencyProperty& property, const Data::Binding& binding)
+{
+    Data::BindingOperations::SetBinding(*this, property, binding);
+}
+
+void DependencyObject::ClearBinding(const DependencyProperty& property)
+{
+    Data::BindingOperations::ClearBinding(*this, property);
 }
 
 void DependencyObject::SetBindingExpression(const DependencyProperty& property,

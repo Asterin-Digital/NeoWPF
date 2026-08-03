@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
@@ -29,6 +30,19 @@ namespace {
 }
 
 bool NeoWPF::UI::TextBox::s_textBoxDebug = false;
+
+namespace {
+    const NeoWPF::UI::Properties::DependencyProperty& EnsureTextProperty()
+    {
+        NeoWPF::UI::Properties::RegisterTextBoxProperties();
+        if (const auto* property = NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("Text", typeid(NeoWPF::UI::TextBox))) {
+            return *property;
+        }
+        return NeoWPF::UI::Properties::RegisterProperty<NeoWPF::UI::TextBox, std::wstring>("Text");
+    }
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBox::TextProperty = EnsureTextProperty();
 
 namespace NeoWPF::UI {
 
@@ -92,6 +106,12 @@ void TextBox::SetText(const std::wstring& text)
         return;
     }
 
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Text", *this);
+    if (property && !IsApplyingPropertyValue()) {
+        SetValue(*property, text);
+        return;
+    }
+
     if (IsApplyingPropertyValue()) {
         m_text = text;
         m_caretPosition = std::min(m_caretPosition, m_text.size());
@@ -100,12 +120,6 @@ void TextBox::SetText(const std::wstring& text)
         m_textDirty = true;
         InvalidateVisual();
         TextChanged.Invoke(m_text);
-        return;
-    }
-
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Text", *this);
-    if (property) {
-        SetValue(*property, text);
         return;
     }
 
@@ -120,6 +134,57 @@ void TextBox::SetText(const std::wstring& text)
     m_textDirty = true;
     InvalidateVisual();
     TextChanged.Invoke(m_text);
+}
+
+void TextBox::OnDependencyPropertyChanged(const Properties::DependencyProperty& property,
+                                           const Properties::PropertyMetadata& metadata,
+                                           const std::any& oldValue,
+                                           const std::any& newValue,
+                                           Properties::PropertyValueSource source)
+{
+    (void)metadata;
+    (void)oldValue;
+    (void)source;
+
+    if (property.GetName() == "Text") {
+        if (newValue.has_value()) {
+            try {
+                const auto textValue = std::any_cast<std::wstring>(newValue);
+                SetText(textValue);
+                return;
+            } catch (const std::bad_any_cast&) {
+                try {
+                    const auto textValue = std::any_cast<std::string>(newValue);
+                    SetText(std::wstring(textValue.begin(), textValue.end()));
+                    return;
+                } catch (const std::bad_any_cast&) {
+                    try {
+                        const auto textValue = std::any_cast<const wchar_t*>(newValue);
+                        SetText(textValue ? textValue : L"");
+                        return;
+                    } catch (const std::bad_any_cast&) {
+                        try {
+                            const auto textValue = std::any_cast<const char*>(newValue);
+                            if (textValue) {
+                                std::wstring convertedText;
+                                convertedText.reserve(std::strlen(textValue));
+                                for (const char ch : std::string(textValue)) {
+                                    convertedText.push_back(static_cast<wchar_t>(ch));
+                                }
+                                SetText(convertedText);
+                            } else {
+                                SetText(L"");
+                            }
+                            return;
+                        } catch (const std::bad_any_cast&) {
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Content::ContentControl::OnDependencyPropertyChanged(property, metadata, oldValue, newValue, source);
 }
 
 void TextBox::SetTextColor(NeoWPF::UI::Color color) noexcept

@@ -1,9 +1,101 @@
 #include <NeoWPF/UI/Data/BindingExpression.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/UI/Data/INotifyPropertyChanged.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <typeinfo>
+#include <vector>
 
 namespace NeoWPF::UI::Data {
+namespace {
+
+std::vector<std::string> SplitPropertyPath(const std::string& path)
+{
+    std::vector<std::string> segments;
+    std::string current;
+    for (const char ch : path) {
+        if (ch == '.') {
+            if (!current.empty()) {
+                segments.push_back(current);
+                current.clear();
+            }
+        } else {
+            current.push_back(ch);
+        }
+    }
+    if (!current.empty()) {
+        segments.push_back(current);
+    }
+    return segments;
+}
+
+std::optional<std::any> ResolvePocoValue(const std::shared_ptr<INotifyPropertyChanged>& source,
+                                         const std::string& path)
+{
+    if (!source || path.empty()) {
+        return std::nullopt;
+    }
+
+    std::shared_ptr<INotifyPropertyChanged> currentSource = source;
+    std::optional<std::any> currentValue;
+    const auto segments = SplitPropertyPath(path);
+
+    for (std::size_t index = 0; index < segments.size(); ++index) {
+        if (!currentSource) {
+            return std::nullopt;
+        }
+
+        currentValue = currentSource->GetPropertyValue(segments[index]);
+        if (!currentValue.has_value()) {
+            return std::nullopt;
+        }
+
+        if (index + 1 < segments.size()) {
+            try {
+                currentSource = std::any_cast<std::shared_ptr<INotifyPropertyChanged>>(*currentValue);
+            } catch (const std::bad_any_cast&) {
+                return std::nullopt;
+            }
+        }
+    }
+
+    return currentValue;
+}
+
+bool TrySetPocoValue(const std::shared_ptr<INotifyPropertyChanged>& source,
+                     const std::vector<std::string>& segments,
+                     const std::any& value)
+{
+    if (!source || segments.empty()) {
+        return false;
+    }
+
+    std::shared_ptr<INotifyPropertyChanged> currentSource = source;
+    for (std::size_t index = 0; index + 1 < segments.size(); ++index) {
+        if (!currentSource) {
+            return false;
+        }
+
+        const auto childValue = currentSource->GetPropertyValue(segments[index]);
+        if (!childValue.has_value()) {
+            return false;
+        }
+
+        try {
+            currentSource = std::any_cast<std::shared_ptr<INotifyPropertyChanged>>(*childValue);
+        } catch (const std::bad_any_cast&) {
+            return false;
+        }
+    }
+
+    if (!currentSource) {
+        return false;
+    }
+
+    return currentSource->SetPropertyValue(segments.back(), value);
+}
+
+} // namespace
 
 BindingExpression::BindingExpression(Properties::DependencyObject& target,
                                      const Properties::DependencyProperty& property,
@@ -17,6 +109,108 @@ BindingExpression::BindingExpression(Properties::DependencyObject& target,
 BindingExpression::~BindingExpression()
 {
     Detach();
+}
+
+void BindingExpression::UpdatePocoTargetValue()
+{
+    const auto currentValue = ResolvePocoValue(m_sourcePoco, m_binding.GetPath());
+    if (Binding::s_dataBindingDebugging) {
+        NeoWPF::Diagnostics::LogInfo("[Binding] Updating POCO target for '%s' -> %s", m_binding.GetPath().c_str(), currentValue.has_value() ? currentValue->type().name() : "<empty>");
+    }
+    if (currentValue.has_value()) {
+        const bool previousApplying = m_isApplyingTargetValue;
+        m_isApplyingTargetValue = true;
+        m_target.SetValueExpression(m_targetProperty, *currentValue);
+        m_isApplyingTargetValue = previousApplying;
+    }
+}
+
+void BindingExpression::SubscribePocoPath()
+{
+    if (!m_sourcePoco) {
+        return;
+    }
+
+    UnsubscribePocoHandlers();
+
+    std::shared_ptr<INotifyPropertyChanged> currentSource = m_sourcePoco;
+    const auto segments = SplitPropertyPath(m_binding.GetPath());
+
+    for (std::size_t index = 0; index < segments.size(); ++index) {
+        if (!currentSource) {
+            break;
+        }
+
+        const auto handlerId = currentSource->AddPropertyChangedHandler([this](const std::string& propertyName) {
+            (void)propertyName;
+            if (!m_target.GetBindingExpression(m_targetProperty)) {
+                return;
+            }
+            if (Binding::s_dataBindingDebugging) {
+                NeoWPF::Diagnostics::LogInfo("[Binding] POCO property changed '%s'", propertyName.c_str());
+            }
+            UpdatePocoTargetValue();
+        });
+        m_sourcePocoHandlerIds.emplace_back(currentSource, handlerId);
+
+        if (index + 1 >= segments.size()) {
+            break;
+        }
+
+        const auto childValue = currentSource->GetPropertyValue(segments[index]);
+        if (!childValue.has_value()) {
+            break;
+        }
+
+        try {
+            currentSource = std::any_cast<std::shared_ptr<INotifyPropertyChanged>>(*childValue);
+        } catch (const std::bad_any_cast&) {
+            break;
+        }
+    }
+}
+
+void BindingExpression::UnsubscribePocoHandlers()
+{
+    for (const auto& [source, handlerId] : m_sourcePocoHandlerIds) {
+        if (source && handlerId != 0) {
+            source->RemovePropertyChangedHandler(handlerId);
+        }
+    }
+    m_sourcePocoHandlerIds.clear();
+}
+
+bool BindingExpression::TrySetPocoSourceValue(const std::shared_ptr<INotifyPropertyChanged>& source,
+                                              const std::vector<std::string>& segments,
+                                              const std::any& value)
+{
+    if (!source || segments.empty()) {
+        return false;
+    }
+
+    std::shared_ptr<INotifyPropertyChanged> currentSource = source;
+    for (std::size_t index = 0; index + 1 < segments.size(); ++index) {
+        if (!currentSource) {
+            return false;
+        }
+
+        const auto childValue = currentSource->GetPropertyValue(segments[index]);
+        if (!childValue.has_value()) {
+            return false;
+        }
+
+        try {
+            currentSource = std::any_cast<std::shared_ptr<INotifyPropertyChanged>>(*childValue);
+        } catch (const std::bad_any_cast&) {
+            return false;
+        }
+    }
+
+    if (!currentSource) {
+        return false;
+    }
+
+    return currentSource->SetPropertyValue(segments.back(), value);
 }
 
 void BindingExpression::Attach()
@@ -42,10 +236,25 @@ void BindingExpression::Attach()
         if (dataContextProperty) {
             const auto dataContextValue = m_target.GetRawValue(*dataContextProperty);
             if (dataContextValue.has_value()) {
-                if (auto source = std::any_cast<std::shared_ptr<Properties::DependencyObject>>(dataContextValue)) {
-                    m_source = source;
-                } else if (auto sourcePoco = std::any_cast<std::shared_ptr<INotifyPropertyChanged>>(dataContextValue)) {
-                    m_sourcePoco = sourcePoco;
+                const auto& valueType = dataContextValue.type();
+                if (valueType == typeid(std::shared_ptr<Properties::DependencyObject>)) {
+                    if (auto source = std::any_cast<std::shared_ptr<Properties::DependencyObject>>(dataContextValue)) {
+                        m_source = source;
+                        if (Binding::s_dataBindingDebugging) {
+                            NeoWPF::Diagnostics::LogInfo("[Binding] DataContext resolved as DependencyObject=%p", m_source.get());
+                        }
+                    }
+                } else if (valueType == typeid(std::shared_ptr<INotifyPropertyChanged>)) {
+                    if (auto sourcePoco = std::any_cast<std::shared_ptr<INotifyPropertyChanged>>(dataContextValue)) {
+                        m_sourcePoco = sourcePoco;
+                        if (Binding::s_dataBindingDebugging) {
+                            NeoWPF::Diagnostics::LogInfo("[Binding] DataContext resolved as INotifyPropertyChanged=%p", m_sourcePoco.get());
+                        }
+                    }
+                } else {
+                    if (Binding::s_dataBindingDebugging) {
+                        NeoWPF::Diagnostics::LogInfo("[Binding] DataContext has unsupported type=%s", valueType.name());
+                    }
                 }
             }
         }
@@ -94,28 +303,44 @@ void BindingExpression::Attach()
         if (Binding::s_dataBindingDebugging) {
             NeoWPF::Diagnostics::LogInfo("[Binding] Subscribing to INotifyPropertyChanged source for '%s'", m_binding.GetPath().c_str());
         }
-        m_sourcePocoHandlerId = m_sourcePoco->AddPropertyChangedHandler([this](const std::string& propertyName) {
-            if (propertyName != m_binding.GetPath()) {
-                return;
-            }
-            if (!m_target.GetBindingExpression(m_targetProperty)) {
-                return;
-            }
-            if (Binding::s_dataBindingDebugging) {
-                NeoWPF::Diagnostics::LogInfo("[Binding] POCO property changed '%s'", propertyName.c_str());
-            }
-            const auto currentValue = m_sourcePoco->GetPropertyValue(propertyName);
-            if (currentValue.has_value()) {
-                m_target.SetValueExpression(m_targetProperty, *currentValue);
-            }
-        });
 
-        const auto currentValue = m_sourcePoco->GetPropertyValue(m_binding.GetPath());
+        if (m_binding.GetMode() == BindingMode::TwoWay) {
+            if (m_targetChangeHandlerId == 0) {
+                m_targetChangeHandlerId = m_target.AddDependencyPropertyChangedHandler(m_targetProperty,
+                    [this](const std::any&, const std::any& newValue) {
+                        if (m_isApplyingTargetValue || m_binding.GetMode() != BindingMode::TwoWay || !m_sourcePoco) {
+                            return;
+                        }
+                        if (!m_target.GetBindingExpression(m_targetProperty)) {
+                            return;
+                        }
+                        if (Binding::s_dataBindingDebugging) {
+                            NeoWPF::Diagnostics::LogInfo("[Binding] Updating POCO source for '%s'", m_binding.GetPath().c_str());
+                        }
+                        const auto segments = SplitPropertyPath(m_binding.GetPath());
+                        if (!TrySetPocoSourceValue(m_sourcePoco, segments, newValue)) {
+                            if (Binding::s_dataBindingDebugging) {
+                                NeoWPF::Diagnostics::LogInfo("[Binding] Failed to write POCO source for '%s'", m_binding.GetPath().c_str());
+                            }
+                        }
+                    });
+            }
+        } else if (m_targetChangeHandlerId != 0) {
+            m_target.RemoveDependencyPropertyChangedHandler(m_targetProperty, m_targetChangeHandlerId);
+            m_targetChangeHandlerId = 0;
+        }
+
+        SubscribePocoPath();
+
+        const auto currentValue = ResolvePocoValue(m_sourcePoco, m_binding.GetPath());
         if (Binding::s_dataBindingDebugging) {
             NeoWPF::Diagnostics::LogInfo("[Binding] Initial POCO source value for '%s' is %s", m_binding.GetPath().c_str(), currentValue.has_value() ? currentValue->type().name() : "<empty>");
         }
         if (currentValue.has_value()) {
+            const bool previousApplying = m_isApplyingTargetValue;
+            m_isApplyingTargetValue = true;
             m_target.SetValueExpression(m_targetProperty, *currentValue);
+            m_isApplyingTargetValue = previousApplying;
         }
     }
 }
@@ -129,10 +354,11 @@ void BindingExpression::Detach()
         m_source->RemoveDependencyPropertyChangedHandler(*m_sourceProperty, m_sourceChangeHandlerId);
         m_sourceChangeHandlerId = 0;
     }
-    if (m_sourcePoco && m_sourcePocoHandlerId != 0) {
-        m_sourcePoco->RemovePropertyChangedHandler(m_sourcePocoHandlerId);
-        m_sourcePocoHandlerId = 0;
+    if (m_targetChangeHandlerId != 0) {
+        m_target.RemoveDependencyPropertyChangedHandler(m_targetProperty, m_targetChangeHandlerId);
+        m_targetChangeHandlerId = 0;
     }
+    UnsubscribePocoHandlers();
     m_source.reset();
     m_sourcePoco.reset();
     m_sourceProperty = nullptr;

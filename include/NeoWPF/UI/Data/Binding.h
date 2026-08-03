@@ -5,8 +5,11 @@
 #include <string>
 
 #include <NeoWPF/UI/Data/BindingBase.h>
-#include <NeoWPF/UI/Data/INotifyPropertyChanged.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
+
+namespace NeoWPF::UI::Data {
+class INotifyPropertyChanged;
+}
 
 namespace NeoWPF::UI::Data {
 

@@ -5,7 +5,13 @@
 #include <NeoWPF/UI/Core/Media/Thickness.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
 #include <algorithm>
+
+namespace NeoWPF::UI::Data {
+class INotifyPropertyChanged;
+}
 #include <any>
+#include <memory>
+#include <type_traits>
 
 #ifdef min
 #undef min
@@ -397,6 +403,17 @@ public:
         The new data context value.
     */
     void SetDataContext(const std::any& dataContext) noexcept;
+
+    template<typename T>
+    void SetDataContext(const std::shared_ptr<T>& dataContext) noexcept {
+        if constexpr (std::is_convertible_v<std::shared_ptr<T>, std::shared_ptr<Properties::DependencyObject>>) {
+            SetDataContext(std::any(std::shared_ptr<Properties::DependencyObject>(dataContext)));
+        } else if constexpr (std::is_convertible_v<std::shared_ptr<T>, std::shared_ptr<UI::Data::INotifyPropertyChanged>>) {
+            SetDataContext(std::any(std::shared_ptr<UI::Data::INotifyPropertyChanged>(dataContext)));
+        } else {
+            SetDataContext(std::any(dataContext));
+        }
+    }
 
     const Properties::DependencyObject* GetInheritanceParent() const noexcept override;
     void OnDependencyPropertyChanged(const Properties::DependencyProperty& property,

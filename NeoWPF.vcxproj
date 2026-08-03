@@ -253,6 +253,7 @@
     <ClCompile Include="src\UI\Data\Binding.cpp" />
     <ClCompile Include="src\UI\Data\BindingOperations.cpp" />
     <ClCompile Include="src\UI\Data\BindingExpression.cpp" />
+    <ClCompile Include="src\UI\Data\INotifyPropertyChanged.cpp" />
     <ClCompile Include="src\Diagnostics\Logger.cpp" />
     <ClCompile Include="src\Diagnostics\VisualTreeDumper.cpp" />
     <ClCompile Include="src\Platform\Window.cpp" />

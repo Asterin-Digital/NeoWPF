@@ -99,6 +99,7 @@ private:
 class TextBox : public NeoWPF::UI::Content::ContentControl {
 public:
     static bool s_textBoxDebug;
+    static const Properties::DependencyProperty& TextProperty;
 
     /*
         @summary
@@ -260,6 +261,11 @@ public:
 protected:
     void OnInitialize() override;
     void OnPaddingChanged(int padding) override;
+    void OnDependencyPropertyChanged(const Properties::DependencyProperty& property,
+                                     const Properties::PropertyMetadata& metadata,
+                                     const std::any& oldValue,
+                                     const std::any& newValue,
+                                     Properties::PropertyValueSource source) override;
     void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
     void OnBorderColorChanged(NeoWPF::UI::Color color) override;
     void OnBorderThicknessChanged(int thickness) override;

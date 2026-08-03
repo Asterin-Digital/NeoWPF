@@ -104,7 +104,7 @@ namespace NeoWPF::UI::Properties {
         RegisterProperty<UI::FrameworkElement, std::any>(
             "DataContext",
             &UI::FrameworkElement::GetDataContext,
-            &UI::FrameworkElement::SetDataContext,
+            static_cast<void (UI::FrameworkElement::*)(const std::any&)>(&UI::FrameworkElement::SetDataContext),
             dataContextMetadata);
     }
 }

@@ -11,6 +11,7 @@
 
 namespace NeoWPF::UI {
     namespace Data {
+        class Binding;
         class BindingExpression;
         class BindingOperations;
     }
@@ -87,6 +88,18 @@ namespace NeoWPF::UI::Properties {
             The binding expression or expression payload to assign.
         */
         void SetValueExpression(const DependencyProperty& property, const std::any& value);
+
+        /*
+            @summary
+            Attaches a binding to a dependency property using the common target-side convenience API.
+        */
+        void SetBinding(const DependencyProperty& property, const Data::Binding& binding);
+
+        /*
+            @summary
+            Clears any binding currently attached to a dependency property.
+        */
+        void ClearBinding(const DependencyProperty& property);
 
         /*
             @summary
