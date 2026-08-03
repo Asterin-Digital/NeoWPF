@@ -28,7 +28,7 @@ namespace {
     }
 }
 
-bool NeoWPF::UI::TextBox::s_textBoxDebug = true;
+bool NeoWPF::UI::TextBox::s_textBoxDebug = false;
 
 namespace NeoWPF::UI {
 

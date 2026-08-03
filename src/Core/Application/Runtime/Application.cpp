@@ -11,7 +11,7 @@
 namespace NeoWPF::Core {
 
 Application* Application::s_current = nullptr;
-bool Application::s_applicationDebugging = true;
+bool Application::s_applicationDebugging = false;
 
 void Application::Initialize()
 {

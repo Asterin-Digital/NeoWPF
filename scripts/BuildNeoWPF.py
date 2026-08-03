@@ -6,7 +6,7 @@ from pathlib import Path
 
 configuration = "Release" if "--release" in sys.argv else "Debug"
 
-# Hardcoded options
+
 open_saphire_after_build = False
 
 print(f"Building NeoWPF ({configuration})...")

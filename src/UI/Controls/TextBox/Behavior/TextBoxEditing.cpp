@@ -268,40 +268,38 @@ void TextBox::OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args)
 void TextBox::InsertCharacter(wchar_t character)
 {
     NeoWPF::Diagnostics::LogInfo("[TextBox] InsertCharacter: char=%u caret=%zu", static_cast<unsigned int>(character), m_caretPosition);
-    m_text.insert(m_caretPosition, 1, character);
+    std::wstring newText = m_text;
+    newText.insert(m_caretPosition, 1, character);
+    SetText(newText);
     ++m_caretPosition;
-    m_textDirty = true;
-    InvalidateVisual();
     EnsureCaretVisible();
-    TextChanged.Invoke(m_text);
 }
 
 void TextBox::RemoveCharacter(bool backspace)
 {
     NeoWPF::Diagnostics::LogInfo("[TextBox] RemoveCharacter: backspace=%d caret=%zu textLength=%zu", backspace ? 1 : 0, m_caretPosition, m_text.size());
-    if (backspace) {
-        if (m_caretPosition == 0) {
-            return;
-        }
+    if (m_caretPosition == 0 && backspace) {
+        return;
+    }
 
-        if (m_caretPosition > 0 && m_text[m_caretPosition - 1] == L'\n') {
-            m_text.erase(m_caretPosition - 1, 1);
+    std::wstring newText = m_text;
+    if (backspace) {
+        if (m_caretPosition > 0 && newText[m_caretPosition - 1] == L'\n') {
+            newText.erase(m_caretPosition - 1, 1);
             --m_caretPosition;
         }
         else {
-            m_text.erase(m_caretPosition - 1, 1);
+            newText.erase(m_caretPosition - 1, 1);
             --m_caretPosition;
         }
     }
-    else if (m_caretPosition < m_text.size()) {
-        m_text.erase(m_caretPosition, 1);
+    else if (m_caretPosition < newText.size()) {
+        newText.erase(m_caretPosition, 1);
     }
 
-    m_caretPosition = std::min(m_caretPosition, m_text.size());
-    m_textDirty = true;
-    InvalidateVisual();
+    m_caretPosition = std::min(m_caretPosition, newText.size());
+    SetText(newText);
     EnsureCaretVisible();
-    TextChanged.Invoke(m_text);
 }
 
 }

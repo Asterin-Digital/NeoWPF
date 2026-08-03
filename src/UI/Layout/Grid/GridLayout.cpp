@@ -75,7 +75,7 @@ namespace NeoWPF::UI {
         }
     }
 
-    bool GridLayout::s_gridLogging = true; // Please do not turn this on unless ur debugging something
+    bool GridLayout::s_gridLogging = false; // Please do not turn this on unless ur debugging something
 
     std::vector<Grid::Definition> GridLayout::ResolveDefinitions(const std::vector<Grid::Definition>& defs)
     {

@@ -12,6 +12,8 @@ namespace NeoWPF::UI::Data {
 
 class Binding : public BindingBase {
 public:
+    static bool s_dataBindingDebugging;
+
     Binding(std::string path,
             BindingMode mode = BindingMode::OneWay)
         : BindingBase(mode)

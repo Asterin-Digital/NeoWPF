@@ -4,7 +4,7 @@
 
 namespace NeoWPF::UI {
 
-bool ScrollBar::s_scrollBarDebug = true;
+bool ScrollBar::s_scrollBarDebug = false;
 
 void ScrollBar::SetContentSize(int size) noexcept
 {
