@@ -30,6 +30,15 @@ namespace NeoWPF::UI::Properties {
             &UI::TextBlock::SetFontSize,
             fontSizeMetadata);
 
+        PropertyMetadata fontFamilyMetadata;
+        fontFamilyMetadata.DefaultValue = std::any(std::wstring());
+        fontFamilyMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsRender;
+        RegisterProperty<UI::TextBlock, std::wstring>(
+            "FontFamily",
+            &UI::TextBlock::GetFontFamily,
+            &UI::TextBlock::SetFontFamily,
+            fontFamilyMetadata);
+
         PropertyMetadata paddingMetadata;
         paddingMetadata.DefaultValue = std::any(0);
         paddingMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsArrange | PropertyFlags::AffectsRender;

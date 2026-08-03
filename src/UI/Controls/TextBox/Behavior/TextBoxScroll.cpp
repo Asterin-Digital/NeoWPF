@@ -9,7 +9,7 @@ namespace NeoWPF::UI {
 void TextBox::UpdateScrollMetrics()
 {
     const bool createTextures = m_textDirty;
-    m_textLayout.Refresh(m_text, m_fontSize, m_contentHostWidth, m_contentHostHeight, m_textWrapping, createTextures);
+    m_textLayout.Refresh(m_text, m_fontSize, GetFontFamily(), m_contentHostWidth, m_contentHostHeight, m_textWrapping, createTextures);
     if (createTextures) {
         m_textDirty = false;
     }
@@ -79,14 +79,14 @@ void TextBox::EnsureCaretVisible()
 
     const auto [lineIndex, _] = GetCaretLineColumn(m_caretPosition);
     int caretY = 0;
-    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, 0, 0);
+    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, GetFontFamily(), 0, 0);
     std::size_t lineStart = 0;
     std::size_t currentLine = 0;
     while (lineStart < m_text.size() && currentLine < lineIndex) {
         const std::size_t nextNewline = m_text.find(L'\n', lineStart);
         const std::size_t lineEnd = nextNewline == std::wstring::npos ? m_text.size() : nextNewline;
         const std::wstring lineText = m_text.substr(lineStart, lineEnd - lineStart);
-        const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(lineText.empty() ? L"W" : lineText, m_fontSize, 0, 0);
+        const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(lineText.empty() ? L"W" : lineText, m_fontSize, GetFontFamily(), 0, 0);
         caretY += std::max(baseMetrics.height, std::max(lineMetrics.height, m_fontSize));
         lineStart = lineEnd + 1;
         ++currentLine;

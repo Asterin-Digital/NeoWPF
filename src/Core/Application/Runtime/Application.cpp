@@ -3,6 +3,7 @@
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/Diagnostics/CrashHandler.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
@@ -132,6 +133,23 @@ std::any Application::FindResource(const std::string& key)
 bool Application::TryGetResource(const std::string& key, std::any& outValue)
 {
     return NeoWPF::Core::ApplicationResources::Resources::TryGetResource(key, outValue);
+}
+
+bool Application::LoadFontFromFile(const std::wstring& filePath)
+{
+    if (filePath.empty()) {
+        return false;
+    }
+
+    int result = AddFontResourceExW(filePath.c_str(), FR_PRIVATE, nullptr);
+    if (result <= 0) {
+        const DWORD errorCode = GetLastError();
+        NeoWPF::Diagnostics::LogError("Application::LoadFontFromFile: AddFontResourceExW failed for '%ls' (error %u)", filePath.c_str(), static_cast<unsigned int>(errorCode));
+        return false;
+    }
+
+    SendMessageW(HWND_BROADCAST, WM_FONTCHANGE, 0, 0);
+    return NeoWPF::Rendering::Text::RegisterFontFile(filePath);
 }
 
 Application* Application::Current()

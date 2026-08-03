@@ -280,11 +280,13 @@ void Visual::Initialize()
     }
 
     m_initializationInProgress = true;
-    NeoWPF::Diagnostics::LogInfo(
-        "[Visual::Initialize] start this=%p parent=%p children=%zu",
-        this,
-        m_parent.lock().get(),
-        m_children.size());
+    if (s_visualDebugging) {
+        NeoWPF::Diagnostics::LogInfo(
+            "[Visual::Initialize] start this=%p parent=%p children=%zu",
+            this,
+            m_parent.lock().get(),
+            m_children.size());
+    }
 
     try {
         OnInitialize();
@@ -303,27 +305,33 @@ void Visual::Initialize()
 
         m_isInitialized = true;
         m_initializationInProgress = false;
-        NeoWPF::Diagnostics::LogInfo(
-            "[Visual::Initialize] complete this=%p parent=%p children=%zu",
-            this,
-            m_parent.lock().get(),
-            m_children.size());
+        if (s_visualDebugging) {
+            NeoWPF::Diagnostics::LogInfo(
+                "[Visual::Initialize] complete this=%p parent=%p children=%zu",
+                this,
+                m_parent.lock().get(),
+                m_children.size());
+        }
     } catch (const std::exception& ex) {
         m_initializationInProgress = false;
-        NeoWPF::Diagnostics::LogError(
-            "[Visual::Initialize] failed this=%p parent=%p children=%zu error=%s",
-            this,
-            m_parent.lock().get(),
-            m_children.size(),
-            ex.what());
+        if (s_visualDebugging) {
+            NeoWPF::Diagnostics::LogError(
+                "[Visual::Initialize] failed this=%p parent=%p children=%zu error=%s",
+                this,
+                m_parent.lock().get(),
+                m_children.size(),
+                ex.what());
+        }
         throw;
     } catch (...) {
         m_initializationInProgress = false;
-        NeoWPF::Diagnostics::LogError(
-            "[Visual::Initialize] failed this=%p parent=%p children=%zu error=<unknown>",
-            this,
-            m_parent.lock().get(),
-            m_children.size());
+        if (s_visualDebugging) {
+            NeoWPF::Diagnostics::LogError(
+                "[Visual::Initialize] failed this=%p parent=%p children=%zu error=<unknown>",
+                this,
+                m_parent.lock().get(),
+                m_children.size());
+        }
         throw;
     }
 }

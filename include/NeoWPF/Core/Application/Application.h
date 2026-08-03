@@ -140,6 +140,18 @@ public:
 
     /*
         @summary
+        Loads a font file for use by the text renderer.
+
+        @param filePath
+        The path to a .ttf or .otf font file available to the app.
+
+        @returns
+        True if the font was registered successfully.
+    */
+    static bool LoadFontFromFile(const std::wstring& filePath);
+
+    /*
+        @summary
         Creates a new application window.
 
         @param title

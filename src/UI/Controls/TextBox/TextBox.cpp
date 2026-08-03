@@ -195,6 +195,48 @@ void TextBox::SetTextColor(NeoWPF::UI::Color color) noexcept
     m_textColor = color; InvalidateVisual();
 }
 
+void TextBox::SetFontFamily(const std::wstring& fontFamily) noexcept
+{
+    if (fontFamily.empty()) {
+        return;
+    }
+
+    if (IsApplyingPropertyValue()) {
+        m_fontFamily = fontFamily;
+        m_textDirty = true;
+        InvalidateVisual();
+        return;
+    }
+
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("FontFamily", *this);
+    if (property) {
+        SetValue(*property, fontFamily);
+        return;
+    }
+
+    if (m_fontFamily == fontFamily) {
+        return;
+    }
+
+    m_fontFamily = fontFamily;
+    m_textDirty = true;
+    InvalidateVisual();
+}
+
+std::wstring TextBox::GetFontFamily() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("FontFamily", *this);
+    if (property) {
+        try {
+            const auto value = GetValue<std::wstring>(*property);
+            if (!value.empty()) {
+                return value;
+            }
+        } catch (const std::bad_any_cast&) {}
+    }
+    return m_fontFamily;
+}
+
 void TextBox::SetTextColor(std::uint32_t color) noexcept
 {
     SetTextColor(NeoWPF::UI::Color::FromArgb(color));
@@ -325,7 +367,7 @@ NeoWPF::UI::Color TextBox::GetCaretColor() const noexcept
 
 void TextBox::Measure(int availableWidth, int availableHeight)
 {
-    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, 0, 0);
+    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, GetFontFamily(), 0, 0);
     const int minWidth = 120;
     const int minHeight = std::max(baseMetrics.height, m_fontSize) + (GetPadding() * 2);
     int desiredWidth = std::max(minWidth, availableWidth > 0 ? std::min(minWidth, availableWidth) : minWidth);
@@ -335,7 +377,7 @@ void TextBox::Measure(int availableWidth, int availableHeight)
         TextLayout measureLayout;
         const int contentHostWidth = std::max(0, availableWidth > 0 ? availableWidth - (GetPadding() * 2) : 0);
         const int contentHostHeight = std::max(0, availableHeight > 0 ? availableHeight - (GetPadding() * 2) : 0);
-        measureLayout.Refresh(m_text, m_fontSize, contentHostWidth, contentHostHeight, m_textWrapping, false);
+        measureLayout.Refresh(m_text, m_fontSize, GetFontFamily(), contentHostWidth, contentHostHeight, m_textWrapping, false);
         desiredHeight = std::max(minHeight, measureLayout.GetContentHeight() + (GetPadding() * 2));
         desiredWidth = std::max(desiredWidth, measureLayout.GetContentWidth() + (GetPadding() * 2));
     }
@@ -579,7 +621,7 @@ void TextBox::EnsureTextTexture()
         return;
     }
 
-    m_textLayout.Refresh(m_text, m_fontSize, m_contentHostWidth, m_contentHostHeight, m_textWrapping, true);
+    m_textLayout.Refresh(m_text, m_fontSize, GetFontFamily(), m_contentHostWidth, m_contentHostHeight, m_textWrapping, true);
     m_textDirty = false;
     InvalidateVisual();
 }

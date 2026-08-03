@@ -6,7 +6,7 @@
 
 namespace NeoWPF::UI {
 
-bool Border::s_borderDebugging = true;
+bool Border::s_borderDebugging = false;
 
 Border::Border()
 {

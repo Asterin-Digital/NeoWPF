@@ -269,6 +269,7 @@
     <ClCompile Include="src\Rendering\Core\Renderer.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Text\TextRenderer.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Text\TextDWrite.cpp" />
+    <ClCompile Include="src\Rendering\D3D11\Text\TextFont.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Text\TextBitmap.cpp" />
     <ClCompile Include="src\Rendering\Core\RenderScheduler.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Renderer\RendererBackend.cpp" />

@@ -53,7 +53,7 @@ public:
     TextLayout() = default;
     ~TextLayout();
 
-    void Refresh(const std::wstring& text, int fontSize, int availableWidth, int availableHeight, TextWrapping textWrapping, bool createTextures = true);
+    void Refresh(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int availableWidth, int availableHeight, TextWrapping textWrapping, bool createTextures = true);
     void Clear();
 
     const std::vector<LineRenderData>& GetLines() const noexcept { return m_lines; }
@@ -66,11 +66,12 @@ public:
     std::pair<std::size_t, std::size_t> GetCaretLineColumn(std::size_t caretPosition) const;
     int GetCaretY(std::size_t caretPosition) const;
     int GetCaretHeight(std::size_t caretPosition) const;
-    static int MeasureLineHeight(const std::wstring& text, int fontSize);
+    static int MeasureLineHeight(const std::wstring& text, int fontSize, const std::wstring& fontFamily);
 
 private:
     std::wstring m_text;
     int m_fontSize = 16;
+    std::wstring m_fontFamily = std::wstring(L"Segoe UI");
     std::vector<LineRenderData> m_lines;
     int m_contentWidth = 0;
     int m_contentHeight = 0;
@@ -186,8 +187,21 @@ public:
     int GetFontSize() const noexcept;
 
     /*
+        @summary        Sets the font family used to measure and render text.
+
+        @param fontFamily
+        The font family name, for example `L"Segoe UI"`.
+    */
+    void SetFontFamily(const std::wstring& fontFamily) noexcept;
+
+    /*
         @summary
-        Sets padding applied around the text.
+        Returns the current font family.
+    */
+    std::wstring GetFontFamily() const noexcept;
+
+    /*
+        @summary        Sets padding applied around the text.
 
         @param padding
         Pixels of padding on all sides.
@@ -352,6 +366,7 @@ private:
     NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu);
     NeoWPF::UI::Color m_caretColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
     int m_fontSize = 16;
+    std::wstring m_fontFamily = std::wstring(L"Segoe UI");
     bool m_isReadOnly = false;
     bool m_acceptsReturn = false;
     TextWrapping m_textWrapping = TextWrapping::NoWrap;

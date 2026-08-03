@@ -81,6 +81,43 @@ void TextBlock::SetText(const std::wstring& text)
     InvalidateVisual();
 }
 
+void TextBlock::SetFontFamily(const std::wstring& fontFamily) noexcept
+{
+    if (fontFamily.empty()) {
+        return;
+    }
+
+    if (IsApplyingPropertyValue()) {
+        m_fontFamily = fontFamily;
+        m_textDirty = true;
+        InvalidateVisual();
+        return;
+    }
+
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("FontFamily", *this);
+    if (property) {
+        SetValue(*property, fontFamily);
+        return;
+    }
+
+    if (m_fontFamily == fontFamily) {
+        return;
+    }
+
+    m_fontFamily = fontFamily;
+    m_textDirty = true;
+    InvalidateVisual();
+}
+
+std::wstring TextBlock::GetFontFamily() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("FontFamily", *this);
+    if (property) {
+        try { return GetValue<std::wstring>(*property); } catch (const std::bad_any_cast&) {}
+    }
+    return m_fontFamily;
+}
+
 int TextBlock::GetPadding() const noexcept {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", *this);
     if (property) {
@@ -123,7 +160,7 @@ void TextBlock::Measure(int availableWidth, int availableHeight)
 
     const int widthConstraint = availableWidth > 0 ? std::max(0, availableWidth - (2 * padding)) : 0;
     const int heightConstraint = availableHeight > 0 ? std::max(0, availableHeight - (2 * padding)) : 0;
-    auto metrics = NeoWPF::Rendering::Text::MeasureText(m_text, m_fontSize, widthConstraint, heightConstraint);
+    auto metrics = NeoWPF::Rendering::Text::MeasureText(m_text, m_fontSize, GetFontFamily(), widthConstraint, heightConstraint);
     SetDesiredSize(metrics.width + (2 * padding), metrics.height + (2 * padding));
 }
 
@@ -197,7 +234,7 @@ void TextBlock::EnsureTextTexture(int availableWidth, int availableHeight)
     const int INF = 1000000;
     const int widthConstraint = INF;
     const int heightConstraint = availableHeight > 0 ? availableHeight : INF;
-    auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(m_text, m_fontSize, widthConstraint, heightConstraint, width, height);
+    auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(m_text, m_fontSize, widthConstraint, heightConstraint, GetFontFamily(), width, height);
     if (bitmap.empty() || width == 0 || height == 0) {
         NeoWPF::Diagnostics::LogError("TextBlock: failed to render text bitmap");
         m_textWidth = 0;

@@ -69,7 +69,7 @@ void TextBox::UpdateCaretFromMouse(int x, int y)
     for (std::size_t i = lineStart; i <= lineEnd; ++i) {
         const std::wstring prefix = m_text.substr(lineStart, i - lineStart);
         int width = 0, height = 0;
-        NeoWPF::Rendering::Text::RenderTextBitmap(prefix, m_fontSize, 0, 0, width, height);
+        NeoWPF::Rendering::Text::RenderTextBitmap(prefix, m_fontSize, GetFontFamily(), width, height);
         const int distance = std::abs(localX - width);
         if (distance < bestDistance) {
             bestDistance = distance;
@@ -94,7 +94,7 @@ int TextBox::GetCaretX() const
 
     int width = 0, height = 0;
 
-    NeoWPF::Rendering::Text::RenderTextBitmap(prefix, m_fontSize, 0, 0, width, height);
+    NeoWPF::Rendering::Text::RenderTextBitmap(prefix, m_fontSize, GetFontFamily(), width, height);
     return width;
 }
 
@@ -134,7 +134,7 @@ void TextBox::MoveCaretToLineColumn(std::size_t lineIndex, std::size_t column)
 
 int TextBox::GetLineHeight(const std::wstring& line) const
 {
-    return TextLayout::MeasureLineHeight(line, m_fontSize);
+    return TextLayout::MeasureLineHeight(line, m_fontSize, GetFontFamily());
 }
 
 }

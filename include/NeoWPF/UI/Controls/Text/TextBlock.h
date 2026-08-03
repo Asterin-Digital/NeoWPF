@@ -88,6 +88,21 @@ public:
 
     /*
         @summary
+        Sets the font family used to measure and render text.
+
+        @param fontFamily
+        The font family name, for example `L"Segoe UI"`.
+    */
+    void SetFontFamily(const std::wstring& fontFamily) noexcept;
+
+    /*
+        @summary
+        Returns the current font family.
+    */
+    std::wstring GetFontFamily() const noexcept;
+
+    /*
+        @summary
         Gets the padding inside the `TextBlock` bounds.
 
         @details
@@ -177,6 +192,7 @@ private:
     std::wstring m_text;
     NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFF000000u);
     int m_fontSize = 16;
+    std::wstring m_fontFamily = std::wstring(L"Segoe UI");
     int m_padding = 0;
     uint32_t m_textureId = 0;
     int m_textWidth = 0;

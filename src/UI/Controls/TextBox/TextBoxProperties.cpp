@@ -39,5 +39,14 @@ namespace NeoWPF::UI::Properties {
             &UI::TextBox::SetFontSize,
             fontSizeMetadata);
 
+        PropertyMetadata fontFamilyMetadata;
+        fontFamilyMetadata.DefaultValue = std::any(std::wstring());
+        fontFamilyMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsRender;
+        RegisterProperty<UI::TextBox, std::wstring>(
+            "FontFamily",
+            &UI::TextBox::GetFontFamily,
+            &UI::TextBox::SetFontFamily,
+            fontFamilyMetadata);
+
     }
 }

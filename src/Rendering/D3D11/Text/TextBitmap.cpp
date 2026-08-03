@@ -204,9 +204,93 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
 
 }
 
-TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight);
+TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int maxWidth, int maxHeight);
 
-std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, int& outWidth, int& outHeight)
+namespace {
+
+bool CaseInsensitiveEquals(const std::wstring& lhs, const std::wstring& rhs)
+{
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+    for (std::size_t i = 0; i < lhs.size(); ++i) {
+        if (static_cast<wchar_t>(::towlower(static_cast<wint_t>(lhs[i]))) != static_cast<wchar_t>(::towlower(static_cast<wint_t>(rhs[i])))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool IsRegisteredCustomFontFamily(const std::wstring& familyName)
+{
+    if (familyName.empty()) {
+        return false;
+    }
+
+    for (const auto& filePath : GetRegisteredFontFiles()) {
+        const std::wstring fileName = filePath.substr(filePath.find_last_of(L"\\/") + 1);
+        std::wstring fileNameNoExt = fileName;
+        if (const auto dot = fileNameNoExt.find_last_of(L'.'); dot != std::wstring::npos) {
+            fileNameNoExt.resize(dot);
+        }
+
+        if (CaseInsensitiveEquals(fileNameNoExt, familyName)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool TryCreateCustomFontFace(IDWriteFactory* factory, const std::wstring& familyName, ComPtr<IDWriteFontFace>& outFontFace)
+{
+    outFontFace = nullptr;
+    if (!factory || familyName.empty()) {
+        return false;
+    }
+
+    for (const auto& filePath : GetRegisteredFontFiles()) {
+        const std::wstring fileName = filePath.substr(filePath.find_last_of(L"\\/") + 1);
+        std::wstring fileNameNoExt = fileName;
+        if (const auto dot = fileNameNoExt.find_last_of(L'.'); dot != std::wstring::npos) {
+            fileNameNoExt.resize(dot);
+        }
+
+        const bool match = CaseInsensitiveEquals(fileNameNoExt, familyName) ||
+            CaseInsensitiveEquals(fileNameNoExt, familyName + L".ttf") ||
+            CaseInsensitiveEquals(fileNameNoExt, familyName + L".otf");
+        if (!match) {
+            continue;
+        }
+
+        ComPtr<IDWriteFontFile> fontFile;
+        HRESULT hr = factory->CreateFontFileReference(filePath.c_str(), nullptr, &fontFile);
+        if (FAILED(hr) || !fontFile) {
+            continue;
+        }
+
+        BOOL isSupported = FALSE;
+        DWRITE_FONT_FILE_TYPE fileType = DWRITE_FONT_FILE_TYPE_UNKNOWN;
+        DWRITE_FONT_FACE_TYPE faceType = DWRITE_FONT_FACE_TYPE_UNKNOWN;
+        UINT32 numberOfFaces = 0;
+        hr = fontFile->Analyze(&isSupported, &fileType, &faceType, &numberOfFaces);
+        if (FAILED(hr) || !isSupported || numberOfFaces == 0) {
+            continue;
+        }
+
+        IDWriteFontFile* fontFileArray[1] = { fontFile.Get() };
+        hr = factory->CreateFontFace(faceType, 1, fontFileArray, 0, DWRITE_FONT_SIMULATIONS_NONE, &outFontFace);
+        if (SUCCEEDED(hr) && outFontFace) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+}
+
+std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight)
 {
     outWidth = 0;
     outHeight = 0;
@@ -215,19 +299,11 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
         return {};
     }
 
-    const int effectiveMaxWidth = maxWidth > 0 ? std::max(1, maxWidth) : 0;
-    const int effectiveMaxHeight = maxHeight > 0 ? std::max(1, maxHeight) : 0;
-    TextMetrics metrics = TextMeasureTextInternal(text, fontSize, effectiveMaxWidth, effectiveMaxHeight);
-    if (metrics.width <= 0 || metrics.height <= 0) {
-        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: zero bitmap size, cannot render");
+    const std::wstring effectiveFontFamily = ResolveFontFamily(fontFamily);
+    if (effectiveFontFamily.empty()) {
+        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: no font family provided");
         return {};
     }
-
-    int layoutWidth = effectiveMaxWidth > 0 ? effectiveMaxWidth : metrics.width;
-    int layoutHeight = effectiveMaxHeight > 0 ? effectiveMaxHeight : metrics.height;
-    outWidth = metrics.width;
-    outHeight = metrics.height;
-    std::vector<uint8_t> bitmap(static_cast<size_t>(outWidth) * static_cast<size_t>(outHeight) * 4, 0);
 
     ComPtr<IDWriteFactory> factory;
     HRESULT hr = DWriteCreateFactory(
@@ -239,10 +315,68 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
         return {};
     }
 
+    ComPtr<IDWriteFontFace> customFontFace;
+    const bool useCustomFont = IsRegisteredCustomFontFamily(effectiveFontFamily) &&
+        TryCreateCustomFontFace(factory.Get(), effectiveFontFamily, customFontFace);
+
+    if (useCustomFont && customFontFace) {
+        DWRITE_FONT_METRICS metrics = {};
+        customFontFace->GetMetrics(&metrics);
+        const UINT16 designUnitsPerEm = metrics.designUnitsPerEm != 0 ? metrics.designUnitsPerEm : 1000;
+
+        std::vector<UINT32> codePoints;
+        codePoints.reserve(text.size());
+        for (wchar_t ch : text) {
+            codePoints.push_back(static_cast<UINT32>(ch));
+        }
+
+        std::vector<UINT16> glyphIndices(codePoints.size());
+        if (SUCCEEDED(customFontFace->GetGlyphIndices(codePoints.data(), static_cast<UINT32>(codePoints.size()), glyphIndices.data()))) {
+            std::vector<DWRITE_GLYPH_METRICS> glyphMetrics(codePoints.size());
+            if (SUCCEEDED(customFontFace->GetDesignGlyphMetrics(glyphIndices.data(), static_cast<UINT32>(glyphIndices.size()), glyphMetrics.data(), FALSE))) {
+                int totalAdvance = 0;
+                for (const auto& metric : glyphMetrics) {
+                    totalAdvance += static_cast<int>(std::lround(static_cast<double>(metric.advanceWidth) * static_cast<double>(fontSize) / static_cast<double>(designUnitsPerEm)));
+                }
+
+                outWidth = std::max(1, totalAdvance);
+                outHeight = std::max(1, static_cast<int>(std::lround(static_cast<double>(metrics.ascent + metrics.descent) * static_cast<double>(fontSize) / static_cast<double>(designUnitsPerEm))));
+
+                std::vector<FLOAT> glyphAdvances(glyphIndices.size());
+                std::vector<DWRITE_GLYPH_OFFSET> glyphOffsets(glyphIndices.size());
+                for (std::size_t i = 0; i < glyphIndices.size(); ++i) {
+                    glyphAdvances[i] = static_cast<FLOAT>(std::lround(static_cast<double>(glyphMetrics[i].advanceWidth) * static_cast<double>(fontSize) / static_cast<double>(designUnitsPerEm)));
+                }
+
+                DWRITE_GLYPH_RUN glyphRun = {};
+                glyphRun.fontFace = customFontFace.Get();
+                glyphRun.fontEmSize = static_cast<FLOAT>(fontSize);
+                glyphRun.glyphCount = static_cast<UINT32>(glyphIndices.size());
+                glyphRun.glyphIndices = glyphIndices.data();
+                glyphRun.glyphAdvances = glyphAdvances.data();
+                glyphRun.glyphOffsets = glyphOffsets.data();
+                glyphRun.isSideways = FALSE;
+                glyphRun.bidiLevel = 0;
+
+                std::vector<uint8_t> bitmap(static_cast<size_t>(outWidth) * static_cast<size_t>(outHeight) * 4, 0);
+                BitmapTextRenderer* renderer = new BitmapTextRenderer(factory, &bitmap, outWidth, outHeight);
+                hr = renderer->DrawGlyphRun(nullptr, 0.0f, static_cast<FLOAT>(fontSize), DWRITE_MEASURING_MODE_NATURAL, &glyphRun, nullptr, nullptr);
+                outWidth = renderer->width;
+                outHeight = renderer->height;
+                renderer->Release();
+                if (SUCCEEDED(hr)) {
+                    return bitmap;
+                }
+            }
+        }
+    }
+
+    IDWriteFontCollection* customFontCollection = useCustomFont ? GetCustomFontCollection() : nullptr;
+
     ComPtr<IDWriteTextFormat> textFormat;
     hr = factory->CreateTextFormat(
-        L"Segoe UI",
-        nullptr,
+        effectiveFontFamily.c_str(),
+        customFontCollection,
         DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL,
@@ -254,7 +388,7 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
         return {};
     }
 
-    textFormat->SetWordWrapping(effectiveMaxWidth > 0 ? DWRITE_WORD_WRAPPING_WRAP : DWRITE_WORD_WRAPPING_NO_WRAP);
+    textFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
     textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
     textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
 
@@ -262,8 +396,8 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
     hr = factory->CreateTextLayout(
         text.c_str(), static_cast<UINT32>(text.length()),
         textFormat.Get(),
-        static_cast<FLOAT>(effectiveMaxWidth > 0 ? effectiveMaxWidth : outWidth),
-        static_cast<FLOAT>(effectiveMaxHeight > 0 ? effectiveMaxHeight : outHeight),
+        static_cast<FLOAT>(std::max(1, outWidth)),
+        static_cast<FLOAT>(std::max(1, outHeight)),
         &textLayout);
     if (FAILED(hr)) {
         ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: CreateTextLayout failed 0x%08X", static_cast<unsigned int>(hr));
@@ -277,15 +411,14 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
         return {};
     }
 
-    outWidth = metrics.width;
-    outHeight = metrics.height;
+    outWidth = static_cast<int>(std::lround(layoutMetrics.widthIncludingTrailingWhitespace));
+    outHeight = static_cast<int>(std::lround(layoutMetrics.height));
     if (outWidth <= 0 || outHeight <= 0) {
-        outWidth = static_cast<int>(std::lround(layoutMetrics.widthIncludingTrailingWhitespace));
-        outHeight = static_cast<int>(std::lround(layoutMetrics.height));
+        outWidth = std::max(1, fontSize * static_cast<int>(text.length()));
+        outHeight = std::max(1, fontSize + 4);
     }
-    if (outWidth > 0 && outHeight > 0 && static_cast<size_t>(outWidth) * static_cast<size_t>(outHeight) != bitmap.size() / 4) {
-        bitmap.assign(static_cast<size_t>(outWidth) * static_cast<size_t>(outHeight) * 4, 0);
-    }
+
+    std::vector<uint8_t> bitmap(static_cast<size_t>(outWidth) * static_cast<size_t>(outHeight) * 4, 0);
 
     DWRITE_OVERHANG_METRICS overhang = {};
     hr = textLayout->GetOverhangMetrics(&overhang);
@@ -300,10 +433,6 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
         ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: GetLineMetrics failed preparation 0x%08X count=%u", static_cast<unsigned int>(hr), lineMetricsCount);
         return {};
     }
-    if (lineMetricsCount == 0) {
-        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: GetLineMetrics returned zero line count");
-        return {};
-    }
 
     std::vector<DWRITE_LINE_METRICS> lineMetrics(lineMetricsCount);
     hr = textLayout->GetLineMetrics(lineMetrics.data(), lineMetricsCount, &lineMetricsCount);
@@ -316,7 +445,6 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
     const float baselineOriginY = static_cast<float>(lineMetrics[0].baseline) - std::min(0.0f, overhang.top);
     BitmapTextRenderer* renderer = new BitmapTextRenderer(factory, &bitmap, outWidth, outHeight);
     hr = textLayout->Draw(nullptr, renderer, baselineOriginX, baselineOriginY);
-
     outWidth = renderer->width;
     outHeight = renderer->height;
     renderer->Release();
