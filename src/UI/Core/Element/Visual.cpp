@@ -12,7 +12,7 @@
 
 namespace NeoWPF::UI {
 
-bool Visual::s_visualDebugging = false;
+bool Visual::s_visualDebugging = true;
 
 namespace {
 

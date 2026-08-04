@@ -166,7 +166,7 @@ public:
         return S_OK;
     }
 
-    STDMETHOD(CreateEnumeratorFromKey)(IDWriteFactory* /*factory*/, const void* /*key*/, UINT32 /*keySize*/, IDWriteFontFileEnumerator** fontFileEnumerator) override
+    STDMETHOD(CreateEnumeratorFromKey)(IDWriteFactory* , const void* , UINT32 , IDWriteFontFileEnumerator** fontFileEnumerator) override
     {
         if (!fontFileEnumerator) {
             return E_POINTER;
@@ -198,13 +198,14 @@ ComPtr<IDWriteFontCollectionLoader> GetCustomFontCollectionLoader()
 
 IDWriteFontCollection* GetCustomFontCollection()
 {
-    std::lock_guard<std::mutex> lock(g_customFontMutex);
-    if (g_customFontCollection) {
-        return g_customFontCollection.Get();
-    }
-
-    if (g_registeredFontFiles.empty()) {
-        return nullptr;
+    {
+        std::lock_guard<std::mutex> lock(g_customFontMutex);
+        if (g_customFontCollection) {
+            return g_customFontCollection.Get();
+        }
+        if (g_registeredFontFiles.empty()) {
+            return nullptr;
+        }
     }
 
     ComPtr<IDWriteFactory> factory = GetDWriteFactory();
@@ -219,14 +220,21 @@ IDWriteFontCollection* GetCustomFontCollection()
 
     const UINT32 loaderKeySize = sizeof(UINT32);
     UINT32 loaderKey = 0;
+    ComPtr<IDWriteFontCollection> createdCollection;
     HRESULT hr = factory->CreateCustomFontCollection(
         loader.Get(),
         &loaderKey,
         loaderKeySize,
-        &g_customFontCollection);
+        &createdCollection);
     if (FAILED(hr)) {
-        g_customFontCollection = nullptr;
         return nullptr;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(g_customFontMutex);
+        if (!g_customFontCollection) {
+            g_customFontCollection = createdCollection;
+        }
     }
 
     return g_customFontCollection.Get();
@@ -246,7 +254,9 @@ bool RegisterFontFile(const std::wstring& filePath)
     ComPtr<IDWriteFontFile> fontFile;
     HRESULT hr = factory->CreateFontFileReference(filePath.c_str(), nullptr, &fontFile);
     if (FAILED(hr)) {
-        ::NeoWPF::Diagnostics::LogError("RegisterFontFile: CreateFontFileReference failed for '%ls' 0x%08X", filePath.c_str(), static_cast<unsigned int>(hr));
+        if (NeoWPF::Rendering::Text::s_textRendererDebug) {
+            ::NeoWPF::Diagnostics::LogError("RegisterFontFile: CreateFontFileReference failed for '%ls' 0x%08X", filePath.c_str(), static_cast<unsigned int>(hr));
+        }
         return false;
     }
 
@@ -256,7 +266,9 @@ bool RegisterFontFile(const std::wstring& filePath)
     UINT32 numberOfFaces = 0;
     hr = fontFile->Analyze(&isSupported, &fileType, &faceType, &numberOfFaces);
     if (FAILED(hr) || !isSupported || numberOfFaces == 0) {
-        ::NeoWPF::Diagnostics::LogError("RegisterFontFile: Analyze failed for '%ls' 0x%08X", filePath.c_str(), static_cast<unsigned int>(hr));
+        if (NeoWPF::Rendering::Text::s_textRendererDebug) {
+            ::NeoWPF::Diagnostics::LogError("RegisterFontFile: Analyze failed for '%ls' 0x%08X", filePath.c_str(), static_cast<unsigned int>(hr));
+        }
         return false;
     }
 

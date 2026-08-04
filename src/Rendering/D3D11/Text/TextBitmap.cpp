@@ -371,7 +371,7 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
         }
     }
 
-    IDWriteFontCollection* customFontCollection = useCustomFont ? GetCustomFontCollection() : nullptr;
+    IDWriteFontCollection* customFontCollection = nullptr;
 
     ComPtr<IDWriteTextFormat> textFormat;
     hr = factory->CreateTextFormat(

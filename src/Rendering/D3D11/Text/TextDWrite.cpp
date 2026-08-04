@@ -77,9 +77,6 @@ ComPtr<IDWriteTextFormat> CreateTextFormat(const std::wstring& fontFamily, int f
     }
 
     IDWriteFontCollection* customFontCollection = nullptr;
-    if (IsRegisteredCustomFontFamily(effectiveFontFamily)) {
-        customFontCollection = GetCustomFontCollection();
-    }
 
     ComPtr<IDWriteTextFormat> textFormat;
     HRESULT hr = factory->CreateTextFormat(
