@@ -23,6 +23,7 @@ enum class Category : uint8_t {
 	ContentPresenter,
 	Control,
 	Application,
+	HitTest,
 	TextBox,
 	Count,
 };

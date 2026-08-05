@@ -20,7 +20,10 @@ Checkbox::Checkbox()
     SetPresenter(presenter);
 
     m_textContent = std::make_shared<NeoWPF::UI::TextBlock>();
+    m_textContent->SetHorizontalAlignment(HorizontalAlignment::Stretch);
+    m_textContent->SetVerticalAlignment(VerticalAlignment::Stretch);
     m_textContent->SetText(L"");
+    m_textContent->SetTextHorizontalAlignment(TextHorizontalAlignment::Left);
     m_textContent->SetTextColor(m_textColor.ToArgb());
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);

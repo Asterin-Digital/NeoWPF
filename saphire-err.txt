@@ -1,0 +1,188 @@
+[1] INFO: Resources::Initialize
+[2] INFO: [Perf] startup frames=0 layouts=0 renders=0 ticks=0 creates=0 closes=0 avgFrame=0.0000 avgLayout=0.0000 avgRender=0.0000 avgTick=0.0000 maxFrame=0.0000 maxLayout=0.0000 maxRender=0.0000 maxTick=0.0000 mem=0MB peakMem=0MB cpu=0.0% peakCpu=0.0%
+[3] INFO: Application::Initialize begin
+[4] INFO: Application::Initialize complete
+[5] INFO: CreateApplicationWindow created title=Grid Test
+[6] INFO: [ContentControl] SetPresenter: oldPresenter=0000000000000000 newPresenter=0000024878167F60 content=0000000000000000
+[7] INFO: [ContentPresenter] SetContent: oldContent=0000000000000000 newContent=0000000000000000
+[8] INFO: [ContentControl] SetContent: content=0000024878168440 presenter=0000024878167F60
+[9] INFO: [ContentPresenter] SetContent: oldContent=0000000000000000 newContent=0000024878168440
+[10] DEBUG: [ContentPresenter] SetContent: removing new content 0000024878168440 from existing parent 0000000000000000
+[11] INFO: [ContentControl] SetPresenter: oldPresenter=0000000000000000 newPresenter=0000024878160530 content=0000000000000000
+[12] INFO: [ContentPresenter] SetContent: oldContent=0000000000000000 newContent=0000000000000000
+[13] INFO: [ContentControl] SetPresenter: oldPresenter=0000000000000000 newPresenter=0000024878161290 content=0000000000000000
+[14] INFO: [ContentPresenter] SetContent: oldContent=0000000000000000 newContent=0000000000000000
+[15] INFO: [ContentControl] SetPresenter: oldPresenter=0000000000000000 newPresenter=0000024878162110 content=0000000000000000
+[16] INFO: [ContentPresenter] SetContent: oldContent=0000000000000000 newContent=0000000000000000
+[17] INFO: [ContentControl] SetPresenter: oldPresenter=0000000000000000 newPresenter=00000248781633A0 content=0000000000000000
+[18] INFO: [ContentPresenter] SetContent: oldContent=0000000000000000 newContent=0000000000000000
+[19] INFO: [ContentControl] SetContent: content=0000024878163880 presenter=00000248781633A0
+[20] INFO: [ContentPresenter] SetContent: oldContent=0000000000000000 newContent=0000024878163880
+[21] DEBUG: [ContentPresenter] SetContent: removing new content 0000024878163880 from existing parent 0000000000000000
+[22] INFO: [ContentControl] SetPresenter: oldPresenter=0000000000000000 newPresenter=00000248781648F0 content=0000000000000000
+[23] INFO: [ContentPresenter] SetContent: oldContent=0000000000000000 newContent=0000000000000000
+[24] INFO: [ContentControl] SetContent: content=0000024878164DD0 presenter=00000248781648F0
+[25] INFO: [ContentPresenter] SetContent: oldContent=0000000000000000 newContent=0000024878164DD0
+[26] DEBUG: [ContentPresenter] SetContent: removing new content 0000024878164DD0 from existing parent 0000000000000000
+[27] INFO: [ContentControl] SetPresenter: oldPresenter=0000000000000000 newPresenter=000002487818F3A0 content=0000000000000000
+[28] INFO: [ContentPresenter] SetContent: oldContent=0000000000000000 newContent=0000000000000000
+[29] INFO: [ContentControl] SetContent: content=000002487818F880 presenter=000002487818F3A0
+[30] INFO: [ContentPresenter] SetContent: oldContent=0000000000000000 newContent=000002487818F880
+[31] DEBUG: [ContentPresenter] SetContent: removing new content 000002487818F880 from existing parent 0000000000000000
+[32] INFO: StartRenderThread
+[33] INFO: [Visual::Initialize] start this=0000024878167520 parent=0000000000000000 children=5
+[34] INFO: [Grid::Measure] Available: 584x361
+[35] INFO: [Visual::Initialize] start this=0000024878167A70 parent=0000024878167520 children=0
+[36] INFO: [Border::Measure] available=0x1000000 explicit=0x0 padding=10 border=1
+[37] INFO: [Visual::Initialize] complete this=0000024878167A70 parent=0000024878167520 children=0
+[38] INFO: [Visual::Initialize] start this=0000024878167F60 parent=0000024878167A70 children=0
+[39] INFO: [Visual::Initialize] start this=0000024878168980 parent=0000024878167520 children=0
+[40] INFO: [Visual::Initialize] complete this=0000024878167F60 parent=0000024878167A70 children=0
+[41] INFO: [Visual::Initialize] complete this=0000024878168980 parent=0000024878167520 children=0
+[42] INFO: [Border::Measure] inner=0x999978 content=0x1000000
+[43] INFO: [Visual::Initialize] start this=00000248781625F0 parent=0000024878167520 children=0
+[44] INFO: [Visual::Initialize] start this=0000024878168440 parent=0000024878167F60 children=0
+[45] INFO: [Visual::Initialize] start this=0000024878162B90 parent=0000000000000000 children=0
+[46] INFO: [Visual::Initialize] complete this=0000024878168440 parent=0000024878167F60 children=0
+[47] INFO: [Visual::Initialize] complete this=0000024878162B90 parent=0000000000000000 children=0
+[48] INFO: [Visual::Initialize] complete this=00000248781625F0 parent=0000024878167520 children=0
+[49] INFO: [Visual::Initialize] start this=0000024878163DC0 parent=0000024878167520 children=0
+[50] INFO: [Visual::Initialize] start this=00000248781643D0 parent=0000000000000000 children=0
+[51] INFO: [Visual::Initialize] complete this=00000248781643D0 parent=0000000000000000 children=0
+[52] INFO: [Visual::Initialize] complete this=0000024878163DC0 parent=0000024878167520 children=0
+[53] INFO: [Visual::Initialize] start this=00000248781654B0 parent=0000024878167520 children=0
+[54] INFO: [Visual::Initialize] start this=0000024878162E40 parent=0000000000000000 children=0
+[55] INFO: [Border::Measure] desired=114x54 content=114x54
+[56] INFO: [Visual::Initialize] complete this=0000024878162E40 parent=0000000000000000 children=0
+[57] INFO: [Visual::Initialize] start this=00000248781648F0 parent=0000024878163DC0 children=0
+[58] INFO: [Visual::Initialize] complete this=00000248781654B0 parent=0000024878167520 children=0
+[59] INFO: [Visual::Initialize] complete this=00000248781648F0 parent=0000024878163DC0 children=0
+[60] INFO: [Visual::Initialize] complete this=0000024878167520 parent=0000000000000000 children=5
+[61] INFO: [Visual::Initialize] start this=0000024878164DD0 parent=00000248781648F0 children=0
+[62] INFO: [Grid::Measure] Available: 584x361
+[63] INFO: [Visual::Initialize] complete this=0000024878164DD0 parent=00000248781648F0 children=0
+[64] INFO: [Border::Measure] available=0x1000000 explicit=0x0 padding=10 border=1
+[65] INFO: [Visual::Initialize] start this=000002487818F3A0 parent=00000248781654B0 children=0
+[66] INFO: [Border::Measure] inner=0x999978 content=0x1000000
+[67] INFO: [Visual::Initialize] complete this=000002487818F3A0 parent=00000248781654B0 children=0
+[68] INFO: [Border::Measure] desired=114x54 content=114x54
+[69] INFO: [Visual::Initialize] start this=000002487818F880 parent=000002487818F3A0 children=0
+[70] INFO: [Visual::Initialize] complete this=000002487818F880 parent=000002487818F3A0 children=0
+[71] INFO: [Grid] ComputeLayout: Available 584x361, Grid 3x3, 5 children
+[72] INFO: [Grid] ComputeLayout: Available 584x361, Grid 3x3, 5 children
+[73] INFO: [Grid] Star calculation: rows=1(perUnit=272), cols=1(perUnit=366)
+[74] INFO: [Grid] Star calculation: rows=1(perUnit=272), cols=1(perUnit=366)
+[75] INFO: [Grid] Layout (Auto=0): 584x361
+[76] INFO: [Grid] Layout (Auto=0): 584x361
+[77] INFO: [Border::Measure] available=584x54 explicit=0x0 padding=10 border=1
+[78] INFO: [Border::Measure] available=584x54 explicit=0x0 padding=10 border=1
+[79] INFO: [Border::Measure] inner=562x32 content=584x54
+[80] INFO: [Border::Measure] inner=562x32 content=584x54
+[81] INFO: [Border::Measure] desired=114x54 content=114x54
+[82] INFO: [Border::Measure] desired=114x54 content=114x54
+[83] INFO: [Visual::Initialize] start this=00000248781633A0 parent=00000248781625F0 children=0
+[84] INFO: [Visual::Initialize] start this=0000024878163880 parent=00000248781633A0 children=0
+[85] INFO: [Visual::Initialize] complete this=0000024878163880 parent=00000248781633A0 children=0
+[86] INFO: [Visual::Initialize] complete this=00000248781633A0 parent=00000248781625F0 children=1
+[87] INFO: [Grid::Measure] Final desired size: 218x116
+[88] INFO: [Grid::Arrange] Final size: 584x361
+[89] INFO: [Grid::Measure] Final desired size: 218x116
+[90] INFO: [Grid] ComputeLayout: Available 584x361, Grid 3x3, 5 children
+[91] INFO: [Grid::Arrange] Final size: 584x361
+[92] INFO: [Grid] Star calculation: rows=1(perUnit=272), cols=1(perUnit=366)
+[93] INFO: [Grid] ComputeLayout: Available 584x361, Grid 3x3, 5 children
+[94] INFO: [Grid] Layout (Auto=0): 584x361
+[95] INFO: [Grid] Star calculation: rows=1(perUnit=272), cols=1(perUnit=366)
+[96] INFO: [Border::Arrange] final=584x54 padding=10 border=1
+[97] INFO: [Grid] Layout (Auto=0): 584x361
+[98] INFO: [Border::Arrange] presenter offset=11x11 inner=562x32
+[99] INFO: [Border::Arrange] final=584x54 padding=10 border=1
+[100] DEBUG: [ContentPresenter] Arrange: this=0000024878167F60 final=(562,32) padding=0
+[101] INFO: [Border::Arrange] presenter offset=11x11 inner=562x32
+[102] DEBUG: [ContentPresenter] Arrange: contentArea=(562,32)
+[103] DEBUG: [ContentPresenter] Arrange: this=0000024878167F60 final=(562,32) padding=0
+[104] DEBUG: [ContentPresenter] Arrange: contentArea=(562,32)
+[105] DEBUG: [ContentPresenter] Arrange: child=0000024878168440 actual=(92,32) offset=(235,0) layoutOffset=(235,0)
+[106] DEBUG: [ContentPresenter] Arrange: this=0000024878160530 final=(150,27) padding=4
+[107] DEBUG: [ContentPresenter] Arrange: child=0000024878168440 actual=(92,32) offset=(235,0) layoutOffset=(235,0)
+[108] DEBUG: [ContentPresenter] Arrange: this=0000024878160530 final=(150,27) padding=4
+[109] INFO: [Visual::Initialize] start this=0000024878160A10 parent=0000024878168980 children=0
+[110] INFO: [Visual::Initialize] start this=0000024878159570 parent=0000000000000000 children=0
+[111] INFO: [Visual::Initialize] complete this=0000024878159570 parent=0000000000000000 children=0
+[112] INFO: [Visual::Initialize] complete this=0000024878160A10 parent=0000024878168980 children=0
+[113] INFO: [Visual::Initialize] start this=0000024878161770 parent=0000024878168980 children=0
+[114] DEBUG: [ContentPresenter] Arrange: this=00000248781633A0 final=(366,35) padding=8
+[115] INFO: [Visual::Initialize] start this=0000024878161CD0 parent=0000000000000000 children=0
+[116] DEBUG: [ContentPresenter] Arrange: contentArea=(350,19)
+[117] INFO: [Visual::Initialize] complete this=0000024878161CD0 parent=0000000000000000 children=0
+[118] INFO: [Visual::Initialize] complete this=0000024878161770 parent=0000024878168980 children=0
+[119] DEBUG: [ContentPresenter] Arrange: this=00000248781633A0 final=(366,35) padding=8
+[120] DEBUG: [ContentPresenter] Arrange: child=0000024878163880 actual=(350,19) offset=(0,0) layoutOffset=(8,8)
+[121] DEBUG: [ContentPresenter] Arrange: contentArea=(350,19)
+[122] DEBUG: [ContentPresenter] Arrange: this=00000248781648F0 final=(68,19) padding=0
+[123] DEBUG: [ContentPresenter] Arrange: child=0000024878163880 actual=(350,19) offset=(0,0) layoutOffset=(8,8)
+[124] DEBUG: [ContentPresenter] Arrange: contentArea=(68,19)
+[125] DEBUG: [ContentPresenter] Arrange: this=00000248781648F0 final=(68,19) padding=0
+[126] DEBUG: [ContentPresenter] Arrange: contentArea=(68,19)
+[128] DEBUG: [ContentPresenter] Arrange: child=0000024878164DD0 actual=(68,19) offset=(0,0) layoutOffset=(0,0)
+[127] DEBUG: [ContentPresenter] Arrange: child=0000024878164DD0 actual=(68,19) offset=(0,0) layoutOffset=(0,0)
+[129] DEBUG: [ContentPresenter] Arrange: this=00000248781648F0 final=(42,19) padding=0
+[130] DEBUG: [ContentPresenter] Arrange: this=00000248781648F0 final=(42,19) padding=0
+[131] DEBUG: [ContentPresenter] Arrange: contentArea=(42,19)
+[132] DEBUG: [ContentPresenter] Arrange: contentArea=(42,19)
+[133] DEBUG: [ContentPresenter] Arrange: child=0000024878164DD0 actual=(42,19) offset=(0,0) layoutOffset=(0,0)
+[134] DEBUG: [ContentPresenter] Arrange: child=0000024878164DD0 actual=(42,19) offset=(0,0) layoutOffset=(0,0)
+[135] DEBUG: [ContentPresenter] Arrange: this=000002487818F3A0 final=(100,35) padding=8
+[137] DEBUG: [ContentPresenter] Arrange: contentArea=(84,19)
+[136] DEBUG: [ContentPresenter] Arrange: this=000002487818F3A0 final=(100,35) padding=8
+[138] DEBUG: [ContentPresenter] Arrange: contentArea=(84,19)
+[139] DEBUG: [ContentPresenter] Arrange: child=000002487818F880 actual=(84,19) offset=(0,0) layoutOffset=(8,8)
+[140] DEBUG: [ContentPresenter] Arrange: child=000002487818F880 actual=(84,19) offset=(0,0) layoutOffset=(8,8)
+[141] INFO: [Button] BuildRenderCommands: abs=(293,175) size=(80,30) inset=8 contentHost=(301,183,64,14) contentHostPtr=0000024878162F70
+[142] INFO: [Button] BuildRenderCommands: abs=(484,328) size=(100,30) inset=8 contentHost=(492,336,84,14) contentHostPtr=000002487818F210
+[143] INFO: [Button] BuildRenderCommands: abs=(293,175) size=(80,30) inset=8 contentHost=(301,183,64,14) contentHostPtr=0000024878162F70
+[144] INFO: [Button] BuildRenderCommands: abs=(484,328) size=(100,30) inset=8 contentHost=(492,336,84,14) contentHostPtr=000002487818F210
+[145] INFO: [Grid::Measure] Available: 584x361
+[146] INFO: [Border::Measure] available=0x1000000 explicit=0x0 padding=10 border=1
+[147] INFO: [Border::Measure] inner=0x999978 content=0x1000000
+[148] INFO: [Border::Measure] desired=114x54 content=114x54
+[149] INFO: [Grid] ComputeLayout: Available 584x361, Grid 3x3, 5 children
+[150] INFO: [Grid] Star calculation: rows=1(perUnit=272), cols=1(perUnit=366)
+[151] INFO: [Grid] Layout (Auto=0): 584x361
+[152] INFO: [Border::Measure] available=584x54 explicit=0x0 padding=10 border=1
+[153] INFO: [Border::Measure] inner=562x32 content=584x54
+[154] INFO: [Border::Measure] desired=114x54 content=114x54
+[155] INFO: [Grid::Measure] Final desired size: 298x124
+[156] INFO: [Grid::Arrange] Final size: 584x361
+[157] INFO: [Grid] ComputeLayout: Available 584x361, Grid 3x3, 5 children
+[158] INFO: [Grid] Star calculation: rows=1(perUnit=272), cols=1(perUnit=366)
+[159] INFO: [Grid] Layout (Auto=0): 584x361
+[160] INFO: [Border::Arrange] final=584x54 padding=10 border=1
+[161] INFO: [Border::Arrange] presenter offset=11x11 inner=562x32
+[162] DEBUG: [ContentPresenter] Arrange: this=0000024878167F60 final=(562,32) padding=0
+[163] DEBUG: [ContentPresenter] Arrange: contentArea=(562,32)
+[164] DEBUG: [ContentPresenter] Arrange: child=0000024878168440 actual=(92,32) offset=(235,0) layoutOffset=(235,0)
+[165] DEBUG: [ContentPresenter] Arrange: this=0000024878160530 final=(150,27) padding=4
+[166] DEBUG: [ContentPresenter] Arrange: this=00000248781633A0 final=(366,35) padding=8
+[167] DEBUG: [ContentPresenter] Arrange: contentArea=(350,19)
+[168] DEBUG: [ContentPresenter] Arrange: child=0000024878163880 actual=(350,19) offset=(0,0) layoutOffset=(8,8)
+[169] DEBUG: [ContentPresenter] Arrange: this=00000248781648F0 final=(68,19) padding=0
+[170] DEBUG: [ContentPresenter] Arrange: contentArea=(68,19)
+[171] DEBUG: [ContentPresenter] Arrange: child=0000024878164DD0 actual=(68,19) offset=(0,0) layoutOffset=(0,0)
+[172] DEBUG: [ContentPresenter] Arrange: this=00000248781648F0 final=(42,19) padding=0
+[173] DEBUG: [ContentPresenter] Arrange: contentArea=(42,19)
+[174] DEBUG: [ContentPresenter] Arrange: child=0000024878164DD0 actual=(42,19) offset=(0,0) layoutOffset=(0,0)
+[175] DEBUG: [ContentPresenter] Arrange: this=000002487818F3A0 final=(100,35) padding=8
+[176] DEBUG: [ContentPresenter] Arrange: contentArea=(84,19)
+[177] DEBUG: [ContentPresenter] Arrange: child=000002487818F880 actual=(84,19) offset=(0,0) layoutOffset=(8,8)
+[178] INFO: [Button] BuildRenderCommands: abs=(293,175) size=(80,30) inset=8 contentHost=(301,183,64,14) contentHostPtr=0000024878162F70
+[179] INFO: [Button] BuildRenderCommands: abs=(484,328) size=(100,30) inset=8 contentHost=(492,336,84,14) contentHostPtr=000002487818F210
+[180] INFO: [Perf] periodic frames=20 layouts=3 renders=24 ticks=20 creates=1 closes=0 avgFrame=0.0000 avgLayout=0.0430 avgRender=0.0009 avgTick=0.0000 maxFrame=0.0001 maxLayout=0.0501 maxRender=0.0069 maxTick=0.0001 mem=54MB peakMem=54MB cpu=0.0% peakCpu=0.0%
+[181] INFO: [Perf] periodic frames=28 layouts=3 renders=186 ticks=28 creates=1 closes=0 avgFrame=0.0000 avgLayout=0.0430 avgRender=0.0005 avgTick=0.0000 maxFrame=0.0001 maxLayout=0.0501 maxRender=0.0069 maxTick=0.0001 mem=54MB peakMem=54MB cpu=5.0% peakCpu=5.0%
+[182] INFO: [Perf] periodic frames=32 layouts=3 renders=238 ticks=32 creates=1 closes=0 avgFrame=0.0000 avgLayout=0.0430 avgRender=0.0005 avgTick=0.0000 maxFrame=0.0001 maxLayout=0.0501 maxRender=0.0069 maxTick=0.0001 mem=53MB peakMem=54MB cpu=0.0% peakCpu=5.0%
+[183] INFO: [Perf] periodic frames=41 layouts=3 renders=855 ticks=41 creates=1 closes=0 avgFrame=0.0000 avgLayout=0.0430 avgRender=0.0005 avgTick=0.0000 maxFrame=0.0001 maxLayout=0.0501 maxRender=0.0069 maxTick=0.0001 mem=54MB peakMem=54MB cpu=3.1% peakCpu=5.0%
+[184] INFO: [Perf] periodic frames=62 layouts=3 renders=887 ticks=62 creates=1 closes=0 avgFrame=0.0000 avgLayout=0.0430 avgRender=0.0005 avgTick=0.0000 maxFrame=0.0001 maxLayout=0.0501 maxRender=0.0069 maxTick=0.0001 mem=54MB peakMem=54MB cpu=0.0% peakCpu=5.0%
+[185] INFO: CloseApplicationWindow
+[186] INFO: Application message loop exiting
+[187] INFO: Resources::Shutdown
+[188] INFO: [Perf] shutdown frames=68 layouts=3 renders=897 ticks=68 creates=1 closes=0 avgFrame=0.0000 avgLayout=0.0430 avgRender=0.0005 avgTick=0.0000 maxFrame=0.0001 maxLayout=0.0501 maxRender=0.0069 maxTick=0.0001 mem=53MB peakMem=54MB cpu=0.0% peakCpu=5.0%

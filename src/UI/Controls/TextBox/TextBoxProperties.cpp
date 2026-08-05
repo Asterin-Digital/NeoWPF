@@ -54,7 +54,7 @@ namespace NeoWPF::UI::Properties {
         RegisterProperty<UI::TextBox, TextHorizontalAlignment>(
             "TextHorizontalAlignment",
             &UI::TextBox::GetTextHorizontalAlignment,
-            &UI::TextBox::SetTextHorizontalAlignment,
+            static_cast<void (UI::TextBox::*)(TextHorizontalAlignment)>(&UI::TextBox::SetTextHorizontalAlignment),
             textHorizontalAlignmentMetadata);
 
         PropertyMetadata textVerticalAlignmentMetadata;
@@ -63,7 +63,7 @@ namespace NeoWPF::UI::Properties {
         RegisterProperty<UI::TextBox, TextVerticalAlignment>(
             "TextVerticalAlignment",
             &UI::TextBox::GetTextVerticalAlignment,
-            &UI::TextBox::SetTextVerticalAlignment,
+            static_cast<void (UI::TextBox::*)(TextVerticalAlignment)>(&UI::TextBox::SetTextVerticalAlignment),
             textVerticalAlignmentMetadata);
 
     }

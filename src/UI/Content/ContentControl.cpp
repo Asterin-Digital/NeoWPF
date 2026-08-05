@@ -2,6 +2,7 @@
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <unordered_map>
 
 namespace NeoWPF::UI::Content {
 
@@ -45,14 +46,31 @@ void ContentControl::SetPresenter(const std::shared_ptr<ContentPresenter>& prese
         return;
     }
 
+    static std::unordered_map<const void*, ContentControl*> s_presenterOwners;
+
     if (m_presenter) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
             "[ContentControl] SetPresenter: removing old presenter %p", m_presenter.get());
+        s_presenterOwners.erase(static_cast<const void*>(m_presenter.get()));
         m_presenter->RemoveFromParent();
     }
 
-    m_presenter = presenter;
+    std::shared_ptr<ContentPresenter> toAssign = presenter;
+    if (presenter) {
+        auto existingParent = presenter->GetParent();
+        auto it = s_presenterOwners.find(static_cast<const void*>(presenter.get()));
+        ContentControl* recordedOwner = (it != s_presenterOwners.end()) ? it->second : nullptr;
+
+        if (existingParent || recordedOwner) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Info,
+                "[ContentControl] SetPresenter: presenter %p already has parent=%p recordedOwner=%p; creating fresh presenter", presenter.get(), existingParent, recordedOwner);
+            toAssign = std::make_shared<ContentPresenter>();
+        }
+    }
+
+    m_presenter = toAssign;
     if (m_presenter) {
+        s_presenterOwners[static_cast<const void*>(m_presenter.get())] = this;
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
             "[ContentControl] SetPresenter: using new presenter %p", m_presenter.get());
         m_presenter->SetContent(m_content);
@@ -62,14 +80,17 @@ void ContentControl::SetPresenter(const std::shared_ptr<ContentPresenter>& prese
 
 void ContentControl::Measure(int availableWidth, int availableHeight)
 {
-    if (m_presenter && !m_presenter->GetParent()) {
-        try {
-            AddChild(m_presenter);
-        } catch (const std::bad_weak_ptr&) {
-
-
-        }
+if (m_presenter && !m_presenter->GetParent()) {
+    try {
+        AddChild(m_presenter);
+    } catch (const std::bad_weak_ptr&) {
+        NeoWPF::Diagnostics::Log(
+            NeoWPF::Diagnostics::Category::Control,
+            NeoWPF::Diagnostics::Level::Info,
+            "[ContentControl] Measure: failed to AddChild presenter=%p - bad_weak_ptr (parent may have been destroyed)",
+            m_presenter.get());
     }
+}
 
     if (m_presenter) {
         m_presenter->Measure(availableWidth, availableHeight);
@@ -92,8 +113,14 @@ void ContentControl::Measure(int availableWidth, int availableHeight)
 void ContentControl::Arrange(int finalWidth, int finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
+        "[ContentControl] Arrange: this=%p final=(%d,%d) presenter=%p", this, finalWidth, finalHeight, m_presenter.get());
+    // pass the resolved control size to the presenter (this way it keeps the presenter aligned with the actual btn size)
+    // after frameworkelement::arrange clamps it
     if (m_presenter) {
-        m_presenter->Arrange(finalWidth, finalHeight);
+        m_presenter->Arrange(GetFinalWidth(), GetFinalHeight());
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
+            "[ContentControl] Arrange: presenter arranged=%p final=(%d,%d)", m_presenter.get(), m_presenter->GetFinalWidth(), m_presenter->GetFinalHeight());
     }
 }
 

@@ -6,6 +6,7 @@
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 #include <memory>
 #include <cmath>
@@ -71,7 +72,11 @@ Button::Button()
     SetPresenter(presenter);
 
     m_textContent = std::make_shared<NeoWPF::UI::TextBlock>();
+    m_textContent->SetHorizontalAlignment(HorizontalAlignment::Stretch);
+    m_textContent->SetVerticalAlignment(VerticalAlignment::Stretch);
     m_textContent->SetText(L"");
+    m_textContent->SetTextHorizontalAlignment(TextHorizontalAlignment::Center);
+    m_textContent->SetTextVerticalAlignment(TextVerticalAlignment::Center);
     m_textContent->SetTextColor(m_textColor.ToArgb());
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
@@ -95,7 +100,11 @@ Button::Button(const std::wstring& text)
     SetPresenter(presenter);
 
     m_textContent = std::make_shared<NeoWPF::UI::TextBlock>();
+    m_textContent->SetHorizontalAlignment(HorizontalAlignment::Stretch);
+    m_textContent->SetVerticalAlignment(VerticalAlignment::Stretch);
     m_textContent->SetText(L"");
+    m_textContent->SetTextHorizontalAlignment(TextHorizontalAlignment::Center);
+    m_textContent->SetTextVerticalAlignment(TextVerticalAlignment::Center);
     m_textContent->SetTextColor(m_textColor.ToArgb());
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
@@ -308,15 +317,32 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
     if (contentHost) {
         const int inset = std::max(0, GetPadding());
-        contentHost->SetRect(
-            static_cast<int>(std::lround(drawX)) + inset,
-            static_cast<int>(std::lround(drawY)) + inset,
-            std::max(0, static_cast<int>(std::lround(drawWidth)) - (inset * 2)),
-            std::max(0, static_cast<int>(std::lround(drawHeight)) - (inset * 2)));
+        const int chX = static_cast<int>(std::lround(drawX)) + inset;
+        const int chY = static_cast<int>(std::lround(drawY)) + inset;
+        const int chW = std::max(0, static_cast<int>(std::lround(drawWidth)) - (inset * 2));
+        const int chH = std::max(0, static_cast<int>(std::lround(drawHeight)) - (inset * 2));
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Info,
+            "[Button] BuildRenderCommands: abs=(%d,%d) size=(%d,%d) inset=%d contentHost=(%d,%d,%d,%d) contentHostPtr=%p",
+            absX, absY, GetFinalWidth(), GetFinalHeight(), inset, chX, chY, chW, chH, contentHost.get());
+
+        contentHost->SetRect(chX, chY, chW, chH);
         contentHost->SetBorderThickness(0);
         contentHost->SetOpacity(GetOpacity());
         contentHost->SetRotation(rotationRadians);
         contentHost->BuildRenderCommands(commands);
+
+        auto presenter = GetPresenter();
+        if (presenter) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
+                "[Button] Presenter: ptr=%p final=(%d,%d) layoutOffset=(%d,%d)",
+                presenter.get(), presenter->GetFinalWidth(), presenter->GetFinalHeight(), presenter->GetLayoutOffsetX(), presenter->GetLayoutOffsetY());
+        }
+
+        if (m_textContent) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
+                "[Button] TextContent: ptr=%p final=(%d,%d) layoutOffset=(%d,%d)",
+                m_textContent.get(), m_textContent->GetFinalWidth(), m_textContent->GetFinalHeight(), m_textContent->GetLayoutOffsetX(), m_textContent->GetLayoutOffsetY());
+        }
     }
 
     Content::ContentControl::BuildRenderCommands(commands);

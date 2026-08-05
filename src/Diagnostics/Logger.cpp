@@ -15,6 +15,7 @@ namespace NeoWPF::Diagnostics {
 static std::atomic<uint64_t> s_logCounter{0};
 
 static std::array<std::atomic<uint8_t>, static_cast<size_t>(Category::Count)> s_levels{};
+static std::array<std::atomic<bool>, static_cast<size_t>(Category::Count)> s_levelOverrides{};
 static std::atomic<uint8_t> s_globalLevel{static_cast<uint8_t>(Level::Off)};
 
 static void Output(const char* prefix, const char* fmt, va_list ap)
@@ -97,6 +98,7 @@ static void Output(const char* prefix, const char* fmt, va_list ap)
     delete[] buffer;
 }
 
+[[deprecated("Use the new logger, its better")]]
 void LogInfo(const char* fmt, ...)
 {
     if (static_cast<Level>(s_globalLevel.load(std::memory_order_relaxed)) == Level::Off) return;
@@ -106,6 +108,7 @@ void LogInfo(const char* fmt, ...)
     va_end(ap);
 }
 
+[[deprecated("Use the new logger, its better")]]
 void LogWarn(const char* fmt, ...)
 {
     if (static_cast<Level>(s_globalLevel.load(std::memory_order_relaxed)) == Level::Off) return;
@@ -115,6 +118,7 @@ void LogWarn(const char* fmt, ...)
     va_end(ap);
 }
 
+[[deprecated("Use the new logger, its better")]]
 void LogError(const char* fmt, ...)
 {
     va_list ap;
@@ -124,16 +128,20 @@ void LogError(const char* fmt, ...)
 }
 
 bool IsLevelEnabled(Category cat, Level level) noexcept {
-    const Level catLevel = static_cast<Level>(s_levels[static_cast<size_t>(cat)].load(std::memory_order_relaxed));
-    if (static_cast<uint8_t>(catLevel) >= static_cast<uint8_t>(level)) {
-        return true;
+    const size_t index = static_cast<size_t>(cat);
+    const Level catLevel = static_cast<Level>(s_levels[index].load(std::memory_order_relaxed));
+    const bool hasOverride = s_levelOverrides[index].load(std::memory_order_relaxed);
+    if (hasOverride) {
+        return static_cast<uint8_t>(catLevel) >= static_cast<uint8_t>(level);
     }
     const Level global = static_cast<Level>(s_globalLevel.load(std::memory_order_relaxed));
     return static_cast<uint8_t>(global) >= static_cast<uint8_t>(level);
 }
 
 void SetLevel(Category cat, Level level) noexcept {
-    s_levels[static_cast<size_t>(cat)].store(static_cast<uint8_t>(level), std::memory_order_relaxed);
+    const size_t index = static_cast<size_t>(cat);
+    s_levels[index].store(static_cast<uint8_t>(level), std::memory_order_relaxed);
+    s_levelOverrides[index].store(true, std::memory_order_relaxed);
 }
 
 Level GetLevel(Category cat) noexcept {
@@ -170,6 +178,7 @@ bool SetLevelByName(std::string_view name, Level level) noexcept {
     if (n == "contentpresenter") { SetLevel(Category::ContentPresenter, level); return true; }
     if (n == "control") { SetLevel(Category::Control, level); return true; }
     if (n == "application") { SetLevel(Category::Application, level); return true; }
+    if (n == "hittest") { SetLevel(Category::HitTest, level); return true; }
     if (n == "textbox") { SetLevel(Category::TextBox, level); return true; }
     return false;
 }

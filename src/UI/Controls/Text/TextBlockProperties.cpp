@@ -45,7 +45,7 @@ namespace NeoWPF::UI::Properties {
         RegisterProperty<UI::TextBlock, TextHorizontalAlignment>(
             "TextHorizontalAlignment",
             &UI::TextBlock::GetTextHorizontalAlignment,
-            &UI::TextBlock::SetTextHorizontalAlignment,
+            static_cast<void (UI::TextBlock::*)(TextHorizontalAlignment)>(&UI::TextBlock::SetTextHorizontalAlignment),
             textHorizontalAlignmentMetadata);
 
         PropertyMetadata textVerticalAlignmentMetadata;
@@ -54,7 +54,7 @@ namespace NeoWPF::UI::Properties {
         RegisterProperty<UI::TextBlock, TextVerticalAlignment>(
             "TextVerticalAlignment",
             &UI::TextBlock::GetTextVerticalAlignment,
-            &UI::TextBlock::SetTextVerticalAlignment,
+            static_cast<void (UI::TextBlock::*)(TextVerticalAlignment)>(&UI::TextBlock::SetTextVerticalAlignment),
             textVerticalAlignmentMetadata);
 
         PropertyMetadata paddingMetadata;
