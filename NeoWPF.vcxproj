@@ -129,7 +129,6 @@
     <ClInclude Include="include\NeoWPF\Diagnostics\CallStackTracer.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\CrashHandler.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\DeveloperWarnings.h" />
-    <ClInclude Include="include\NeoWPF\Diagnostics\Diagnostics.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Logger.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\VisualTreeDumper.h" />
     <ClInclude Include="include\NeoWPF\Input\Input.h" />
@@ -244,6 +243,7 @@
     <ClCompile Include="src\UI\Core\Element\Properties\UIElementProperties.cpp" />
     <ClCompile Include="src\UI\Core\Transform\Transform.cpp" />
     <ClCompile Include="src\UI\Layout\Placement\Alignment.cpp" />
+    <ClCompile Include="src\UI\Layout\Placement\TextAlignment.cpp" />
     <ClCompile Include="src\UI\Layout\Border\BorderProperties.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\Panel.Styles.cpp" />
     <ClCompile Include="src\UI\Layout\Border\Visual\BorderStyles.cpp" />

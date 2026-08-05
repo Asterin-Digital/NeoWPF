@@ -17,7 +17,6 @@ namespace NeoWPF::UI {
 */
 class Visual : public std::enable_shared_from_this<Visual> {
 public:
-    static bool s_visualDebugging;
 
     Visual();
 

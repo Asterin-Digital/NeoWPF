@@ -30,7 +30,6 @@ public:
     ContentBounds GetContentBounds() const noexcept override;
 
 private:
-    static bool s_contentControlDebugging;
     std::shared_ptr<NeoWPF::UI::UIElement> m_content;
     std::shared_ptr<ContentPresenter> m_presenter;
 };

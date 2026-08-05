@@ -83,9 +83,7 @@ void ScrollBar::Arrange(int finalWidth, int finalHeight)
     if (auto presenter = GetPresenter()) {
         presenter->Arrange(effectiveWidth, effectiveHeight);
     }
-    if (s_scrollBarDebug) {
-        NeoWPF::Diagnostics::LogInfo("[ScrollBar] Arrange: final=%dx%d orientation=%d value=%d content=%d viewport=%d", finalWidth, finalHeight, static_cast<int>(m_orientation), m_value, m_contentSize, m_viewportSize);
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug, "[ScrollBar] Arrange: final=%dx%d orientation=%d value=%d content=%d viewport=%d", finalWidth, finalHeight, static_cast<int>(m_orientation), m_value, m_contentSize, m_viewportSize);
     UpdateScrollState();
 }
 

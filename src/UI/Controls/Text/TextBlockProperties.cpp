@@ -39,6 +39,24 @@ namespace NeoWPF::UI::Properties {
             &UI::TextBlock::SetFontFamily,
             fontFamilyMetadata);
 
+        PropertyMetadata textHorizontalAlignmentMetadata;
+        textHorizontalAlignmentMetadata.DefaultValue = std::any(TextHorizontalAlignment::Left);
+        textHorizontalAlignmentMetadata.Flags = PropertyFlags::AffectsRender;
+        RegisterProperty<UI::TextBlock, TextHorizontalAlignment>(
+            "TextHorizontalAlignment",
+            &UI::TextBlock::GetTextHorizontalAlignment,
+            &UI::TextBlock::SetTextHorizontalAlignment,
+            textHorizontalAlignmentMetadata);
+
+        PropertyMetadata textVerticalAlignmentMetadata;
+        textVerticalAlignmentMetadata.DefaultValue = std::any(TextVerticalAlignment::Top);
+        textVerticalAlignmentMetadata.Flags = PropertyFlags::AffectsRender;
+        RegisterProperty<UI::TextBlock, TextVerticalAlignment>(
+            "TextVerticalAlignment",
+            &UI::TextBlock::GetTextVerticalAlignment,
+            &UI::TextBlock::SetTextVerticalAlignment,
+            textVerticalAlignmentMetadata);
+
         PropertyMetadata paddingMetadata;
         paddingMetadata.DefaultValue = std::any(0);
         paddingMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsArrange | PropertyFlags::AffectsRender;

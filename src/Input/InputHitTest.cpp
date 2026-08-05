@@ -9,31 +9,22 @@ namespace NeoWPF::Input
 {
     NeoWPF::UI::UIElement* InputManager::HitTest(int x, int y)
     {
-        if (s_hitTestLogging)
-        {
-            NeoWPF::Diagnostics::LogInfo("[HitTest] Starting HitTest at position (%d, %d)", x, y);
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] Starting HitTest at position (%d, %d)", x, y);
 
         if (!m_rootElement)
         {
-            if (s_hitTestLogging)
-            {
-                NeoWPF::Diagnostics::LogWarn("[HitTest] No root element set");
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] No root element set");
             return nullptr;
         }
 
         NeoWPF::UI::UIElement* result = HitTestElement(m_rootElement, x, y, 0);
-        if (s_hitTestLogging)
+        if (result)
         {
-            if (result)
-            {
-                NeoWPF::Diagnostics::LogInfo("[HitTest] HitTest complete: HIT element at (%d, %d)", x, y);
-            }
-            else
-            {
-                NeoWPF::Diagnostics::LogInfo("[HitTest] HitTest complete: NO HIT at (%d, %d)", x, y);
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] HitTest complete: HIT element at (%d, %d)", x, y);
+        }
+        else
+        {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] HitTest complete: NO HIT at (%d, %d)", x, y);
         }
         return result;
     }
@@ -46,25 +37,19 @@ namespace NeoWPF::Input
         }
 
         const char* indent = "";
-        if (s_hitTestLogging)
+        static thread_local char indentBuffer[256] = {};
+        for (int i = 0; i < depth && i < 127; ++i)
         {
-            static thread_local char indentBuffer[256] = {};
-            for (int i = 0; i < depth && i < 127; ++i)
-            {
-                indentBuffer[i] = ' ';
-            }
-            indentBuffer[depth > 127 ? 127 : depth] = '\0';
-            indent = indentBuffer;
-
-            NeoWPF::Diagnostics::LogInfo("[HitTest] %s├─ Testing element at depth %d", indent, depth);
+            indentBuffer[i] = ' ';
         }
+        indentBuffer[depth > 127 ? 127 : depth] = '\0';
+        indent = indentBuffer;
+
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s├─ Testing element at depth %d", indent, depth);
 
         if (!element->IsVisible())
         {
-            if (s_hitTestLogging)
-            {
-                NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Result: PASS (element is not visible)", indent);
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  Result: PASS (element is not visible)", indent);
             return nullptr;
         }
 
@@ -78,45 +63,30 @@ namespace NeoWPF::Input
             elementWidth = fw->GetFinalWidth();
             elementHeight = fw->GetFinalHeight();
 
-            if (s_hitTestLogging)
-            {
-                NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Bounds: (%d, %d) size (%d x %d), Test point: (%d, %d)",
-                    indent, absX, absY, elementWidth, elementHeight, x, y);
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  Bounds: (%d, %d) size (%d x %d), Test point: (%d, %d)",
+                indent, absX, absY, elementWidth, elementHeight, x, y);
 
             if (x < absX || x >= absX + elementWidth || y < absY || y >= absY + elementHeight)
             {
-                if (s_hitTestLogging)
-                {
-                    NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Result: MISS (outside bounds)", indent);
-                }
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  Result: MISS (outside bounds)", indent);
                 return nullptr;
             }
         }
 
         const bool isEnabled = element->IsEnabled();
         const bool isHitTestVisible = element->IsHitTestVisible();
-        if (s_hitTestLogging)
-        {
-            NeoWPF::Diagnostics::LogInfo("[HitTest] %s  IsEnabled: %s, IsHitTestVisible: %s", indent, isEnabled ? "true" : "false", isHitTestVisible ? "true" : "false");
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  IsEnabled: %s, IsHitTestVisible: %s", indent, isEnabled ? "true" : "false", isHitTestVisible ? "true" : "false");
 
         if (!isEnabled)
         {
-            if (s_hitTestLogging)
-            {
-                NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Result: PASS (element is disabled)", indent);
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  Result: PASS (element is disabled)", indent);
             return nullptr;
         }
 
         NeoWPF::UI::UIElement* deepestHit = isHitTestVisible ? element : nullptr;
         if (!isHitTestVisible)
         {
-            if (s_hitTestLogging)
-            {
-                NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Result: PASS (element is not hit-testable, testing children)", indent);
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  Result: PASS (element is not hit-testable, testing children)", indent);
         }
 
         if (deepestHit)
@@ -136,24 +106,21 @@ namespace NeoWPF::Input
 
                     if (x < absX || x >= absX + hitWidth || y < absY || y >= absY + hitHeight)
                     {
-                        if (s_hitTestLogging)
-                        {
-                            NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - OUTSIDE", indent, absX, absY, hitWidth, hitHeight);
-                        }
+                        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - OUTSIDE", indent, absX, absY, hitWidth, hitHeight);
                         deepestHit = nullptr;
                     }
-                    else if (s_hitTestLogging)
+                    else
                     {
-                        NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - INSIDE", indent, absX, absY, hitWidth, hitHeight);
+                        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - INSIDE", indent, absX, absY, hitWidth, hitHeight);
                     }
                 }
             }
         }
 
         auto children = element->GetVisualChildrenInZOrder();
-        if (s_hitTestLogging && !children.empty())
+        if (!children.empty())
         {
-            NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Testing %d children (in reverse order - top-most first)...", indent, (int)children.size());
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  Testing %d children (in reverse order - top-most first)...", indent, (int)children.size());
         }
 
         for (auto it = children.rbegin(); it != children.rend(); ++it)
@@ -161,34 +128,25 @@ namespace NeoWPF::Input
             NeoWPF::UI::UIElement* child = dynamic_cast<NeoWPF::UI::UIElement*>(*it);
             if (!child)
             {
-                if (s_hitTestLogging)
-                {
-                    NeoWPF::Diagnostics::LogInfo("[HitTest] %s    Skipping null child", indent);
-                }
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s    Skipping null child", indent);
                 continue;
             }
 
             NeoWPF::UI::UIElement* hit = HitTestElement(child, x, y, depth + 1);
             if (hit)
             {
-                if (s_hitTestLogging)
-                {
-                    NeoWPF::Diagnostics::LogInfo("[HitTest] %s  → Hit found in child! Returning up the tree.", indent);
-                }
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  → Hit found in child! Returning up the tree.", indent);
                 return hit;
             }
         }
 
-        if (s_hitTestLogging)
+        if (deepestHit)
         {
-            if (deepestHit)
-            {
-                NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Result: HIT (element is hit-testable, no children hit)", indent);
-            }
-            else
-            {
-                NeoWPF::Diagnostics::LogInfo("[HitTest] %s  Result: PASS (element not hit-testable, children miss)", indent);
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  Result: HIT (element is hit-testable, no children hit)", indent);
+        }
+        else
+        {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  Result: PASS (element not hit-testable, children miss)", indent);
         }
 
         return deepestHit;

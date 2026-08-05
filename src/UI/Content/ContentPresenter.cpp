@@ -5,9 +5,13 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 
+#ifdef max
+#undef max
+#endif
+
 namespace NeoWPF::UI::Content {
 
-bool ContentPresenter::s_contentPresenterDebugging = false;
+
 
 ContentPresenter::ContentPresenter()
     : m_content(nullptr)
@@ -15,30 +19,23 @@ ContentPresenter::ContentPresenter()
 {
 }
 
-#ifdef max
-#undef max
-#endif
-
 void ContentPresenter::SetContent(const std::shared_ptr<NeoWPF::UI::UIElement>& content)
 {
-    if (s_contentPresenterDebugging) {
-        NeoWPF::Diagnostics::LogInfo("[ContentPresenter] SetContent: oldContent=%p newContent=%p", m_content.get(), content.get());
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter, NeoWPF::Diagnostics::Level::Info,
+        "[ContentPresenter] SetContent: oldContent=%p newContent=%p", m_content.get(), content.get());
 
     if (m_content && m_content != content) {
         if (auto existingChild = std::dynamic_pointer_cast<Visual>(m_content)) {
-            if (s_contentPresenterDebugging) {
-                NeoWPF::Diagnostics::LogInfo("[ContentPresenter] SetContent: removing old content %p from parent %p", existingChild.get(), existingChild->GetParent());
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter, NeoWPF::Diagnostics::Level::Debug,
+                "[ContentPresenter] SetContent: removing old content %p from parent %p", existingChild.get(), existingChild->GetParent());
             existingChild->RemoveFromParent();
         }
     }
 
     if (content) {
         if (auto visualContent = std::dynamic_pointer_cast<Visual>(content)) {
-            if (s_contentPresenterDebugging) {
-                NeoWPF::Diagnostics::LogInfo("[ContentPresenter] SetContent: removing new content %p from existing parent %p", visualContent.get(), visualContent->GetParent());
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter, NeoWPF::Diagnostics::Level::Debug,
+                "[ContentPresenter] SetContent: removing new content %p from existing parent %p", visualContent.get(), visualContent->GetParent());
             visualContent->RemoveFromParent();
         }
     }
@@ -49,9 +46,8 @@ void ContentPresenter::SetContent(const std::shared_ptr<NeoWPF::UI::UIElement>& 
 
 void ContentPresenter::ClearContent()
 {
-    if (s_contentPresenterDebugging) {
-        NeoWPF::Diagnostics::LogInfo("[ContentPresenter] ClearContent: content=%p", m_content.get());
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter, NeoWPF::Diagnostics::Level::Info,
+        "[ContentPresenter] ClearContent: content=%p", m_content.get());
 
     if (m_content) {
         if (auto existingChild = std::dynamic_pointer_cast<Visual>(m_content)) {

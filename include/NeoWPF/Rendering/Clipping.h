@@ -10,7 +10,7 @@ struct ClipRect {
     bool active = false;
 };
 
-extern bool s_clippingLogging;
+ 
 
 bool ClipRectToBounds(float x, float y, float w, float h, const ClipRect& clip, float& outX, float& outY, float& outW, float& outH) noexcept;
 

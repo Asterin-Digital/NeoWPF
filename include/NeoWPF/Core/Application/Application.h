@@ -205,7 +205,6 @@ public:
     static void ClearDeveloperMessages();
 
 public:
-    static bool s_applicationDebugging;
 
 private:
     Application() = default;

@@ -92,9 +92,7 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
 
 void StartRenderThread()
 {
-    if (NeoWPF::Core::Application::s_applicationDebugging) {
-        NeoWPF::Diagnostics::LogInfo("StartRenderThread");
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "StartRenderThread");
     s_appState.running = true;
     s_appState.renderThreadInitialized = false;
     s_appState.renderThreadInitFailed = false;
@@ -350,9 +348,7 @@ int RunApplicationMessageLoop()
         }
     }
 
-    if (NeoWPF::Core::Application::s_applicationDebugging) {
-        NeoWPF::Diagnostics::LogInfo("Application message loop exiting");
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application message loop exiting");
     s_appState.exitCode = static_cast<int>(msg.wParam);
     s_appState.running = false;
     if (s_appState.renderThread.joinable()) {

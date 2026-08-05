@@ -253,7 +253,7 @@ public:
     int GetThumbPosition(int trackLength, int thumbLength) const noexcept;
 
 private:
-    static bool s_scrollBarDebug;
+    
 
     /*
         @summary

@@ -165,12 +165,10 @@ TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, cons
 
     const int resultWidth = static_cast<int>(std::lround(metrics.widthIncludingTrailingWhitespace));
     const int resultHeight = static_cast<int>(std::lround(metrics.height));
-    if (s_textRendererDebug) {
-        ::NeoWPF::Diagnostics::LogInfo("[TextRenderer] MeasureText: textLength=%zu fontSize=%d layout=%gx%g metrics.width=%g widthInclTrailing=%g height=%g => %dx%d",
-            text.size(), fontSize, layoutWidth, layoutHeight,
-            metrics.width, metrics.widthIncludingTrailingWhitespace, metrics.height,
-            resultWidth, resultHeight);
-    }
+    ::NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Debug, "[TextRenderer] MeasureText: textLength=%zu fontSize=%d layout=%gx%g metrics.width=%g widthInclTrailing=%g height=%g => %dx%d",
+        text.size(), fontSize, layoutWidth, layoutHeight,
+        metrics.width, metrics.widthIncludingTrailingWhitespace, metrics.height,
+        resultWidth, resultHeight);
     return {resultWidth, resultHeight};
 }
 

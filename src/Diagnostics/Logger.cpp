@@ -5,10 +5,17 @@
 #include <cstring>
 #include <new>
 #include <atomic>
+#include <array>
+#include <string>
+#include <algorithm>
+#include <cctype>
 
 namespace NeoWPF::Diagnostics {
 
 static std::atomic<uint64_t> s_logCounter{0};
+
+static std::array<std::atomic<uint8_t>, static_cast<size_t>(Category::Count)> s_levels{};
+static std::atomic<uint8_t> s_globalLevel{static_cast<uint8_t>(Level::Off)};
 
 static void Output(const char* prefix, const char* fmt, va_list ap)
 {
@@ -92,6 +99,7 @@ static void Output(const char* prefix, const char* fmt, va_list ap)
 
 void LogInfo(const char* fmt, ...)
 {
+    if (static_cast<Level>(s_globalLevel.load(std::memory_order_relaxed)) == Level::Off) return;
     va_list ap;
     va_start(ap, fmt);
     Output("INFO", fmt, ap);
@@ -100,6 +108,7 @@ void LogInfo(const char* fmt, ...)
 
 void LogWarn(const char* fmt, ...)
 {
+    if (static_cast<Level>(s_globalLevel.load(std::memory_order_relaxed)) == Level::Off) return;
     va_list ap;
     va_start(ap, fmt);
     Output("WARN", fmt, ap);
@@ -111,6 +120,68 @@ void LogError(const char* fmt, ...)
     va_list ap;
     va_start(ap, fmt);
     Output("ERROR", fmt, ap);
+    va_end(ap);
+}
+
+bool IsLevelEnabled(Category cat, Level level) noexcept {
+    const Level catLevel = static_cast<Level>(s_levels[static_cast<size_t>(cat)].load(std::memory_order_relaxed));
+    if (static_cast<uint8_t>(catLevel) >= static_cast<uint8_t>(level)) {
+        return true;
+    }
+    const Level global = static_cast<Level>(s_globalLevel.load(std::memory_order_relaxed));
+    return static_cast<uint8_t>(global) >= static_cast<uint8_t>(level);
+}
+
+void SetLevel(Category cat, Level level) noexcept {
+    s_levels[static_cast<size_t>(cat)].store(static_cast<uint8_t>(level), std::memory_order_relaxed);
+}
+
+Level GetLevel(Category cat) noexcept {
+    return static_cast<Level>(s_levels[static_cast<size_t>(cat)].load(std::memory_order_relaxed));
+}
+
+void SetGlobalLevel(Level level) noexcept {
+    s_globalLevel.store(static_cast<uint8_t>(level), std::memory_order_relaxed);
+}
+
+Level GetGlobalLevel() noexcept {
+    return static_cast<Level>(s_globalLevel.load(std::memory_order_relaxed));
+}
+
+static std::string ToLower(std::string_view v) {
+    std::string s(v);
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return s;
+}
+
+static bool ParseLevel(std::string_view v, Level& out) noexcept {
+    const auto s = ToLower(v);
+    if (s == "off") { out = Level::Off; return true; }
+    if (s == "info") { out = Level::Info; return true; }
+    if (s == "debug") { out = Level::Debug; return true; }
+    if (s == "trace") { out = Level::Trace; return true; }
+    return false;
+}
+
+bool SetLevelByName(std::string_view name, Level level) noexcept {
+    const auto n = ToLower(name);
+    if (n == "visual") { SetLevel(Category::Visual, level); return true; }
+    if (n == "gridlayout") { SetLevel(Category::GridLayout, level); return true; }
+    if (n == "contentpresenter") { SetLevel(Category::ContentPresenter, level); return true; }
+    if (n == "control") { SetLevel(Category::Control, level); return true; }
+    if (n == "application") { SetLevel(Category::Application, level); return true; }
+    if (n == "textbox") { SetLevel(Category::TextBox, level); return true; }
+    return false;
+}
+
+
+void Log(Category cat, Level level, const char* fmt, ...)
+{
+    if (!IsLevelEnabled(cat, level)) return;
+    va_list ap;
+    va_start(ap, fmt);
+    const char* prefix = (level == Level::Info) ? "INFO" : (level == Level::Debug) ? "DEBUG" : "TRACE";
+    Output(prefix, fmt, ap);
     va_end(ap);
 }
 

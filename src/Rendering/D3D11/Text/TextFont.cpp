@@ -254,9 +254,8 @@ bool RegisterFontFile(const std::wstring& filePath)
     ComPtr<IDWriteFontFile> fontFile;
     HRESULT hr = factory->CreateFontFileReference(filePath.c_str(), nullptr, &fontFile);
     if (FAILED(hr)) {
-        if (NeoWPF::Rendering::Text::s_textRendererDebug) {
-            ::NeoWPF::Diagnostics::LogError("RegisterFontFile: CreateFontFileReference failed for '%ls' 0x%08X", filePath.c_str(), static_cast<unsigned int>(hr));
-        }
+        ::NeoWPF::Diagnostics::LogError("RegisterFontFile: CreateFontFileReference failed for '%ls' 0x%08X", filePath.c_str(), static_cast<unsigned int>(hr));
+    
         return false;
     }
 
@@ -266,9 +265,7 @@ bool RegisterFontFile(const std::wstring& filePath)
     UINT32 numberOfFaces = 0;
     hr = fontFile->Analyze(&isSupported, &fileType, &faceType, &numberOfFaces);
     if (FAILED(hr) || !isSupported || numberOfFaces == 0) {
-        if (NeoWPF::Rendering::Text::s_textRendererDebug) {
-            ::NeoWPF::Diagnostics::LogError("RegisterFontFile: Analyze failed for '%ls' 0x%08X", filePath.c_str(), static_cast<unsigned int>(hr));
-        }
+        ::NeoWPF::Diagnostics::LogError("RegisterFontFile: Analyze failed for '%ls' 0x%08X", filePath.c_str(), static_cast<unsigned int>(hr));
         return false;
     }
 

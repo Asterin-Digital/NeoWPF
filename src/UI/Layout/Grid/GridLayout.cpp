@@ -75,7 +75,6 @@ namespace NeoWPF::UI {
         }
     }
 
-    bool GridLayout::s_gridLogging = false; // Please do not turn this on unless ur debugging something
 
     std::vector<Grid::Definition> GridLayout::ResolveDefinitions(const std::vector<Grid::Definition>& defs)
     {
@@ -99,7 +98,8 @@ namespace NeoWPF::UI {
         int numRows = std::max(1, static_cast<int>(effectiveRowDefs.size()));
         int numCols = std::max(1, static_cast<int>(effectiveColDefs.size()));
 
-        if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] ComputeLayout: Available %dx%d, Grid %dx%d, %zu children",
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
+            "[Grid] ComputeLayout: Available %dx%d, Grid %dx%d, %zu children",
             availableWidth, availableHeight, numCols, numRows, children.size());
 
         GridLayoutResult result;
@@ -117,14 +117,17 @@ namespace NeoWPF::UI {
                 int size = std::max(0, def.value);
                 result.rowHeights[r] = size;
                 totalFixedHeight += size;
-                if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Row %d: Fixed %d", r, size);
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
+                    "[Grid] Row %d: Fixed %d", r, size);
             }
             else if (def.mode == SizeMode::Star) {
                 starRowCount += def.value > 0 ? def.value : 1;
-                if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Row %d: Star(%.0f)", r, (float)def.value);
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
+                    "[Grid] Row %d: Star(%.0f)", r, (float)def.value);
             }
             else {
-                if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Row %d: Auto", r);
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
+                    "[Grid] Row %d: Auto", r);
             }
         }
 
@@ -134,14 +137,17 @@ namespace NeoWPF::UI {
                 int size = std::max(0, def.value);
                 result.colWidths[c] = size;
                 totalFixedWidth += size;
-                if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Col %d: Fixed %d", c, size);
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
+                    "[Grid] Col %d: Fixed %d", c, size);
             }
             else if (def.mode == SizeMode::Star) {
                 starColCount += def.value > 0 ? def.value : 1;
-                if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Col %d: Star(%.0f)", c, (float)def.value);
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
+                    "[Grid] Col %d: Star(%.0f)", c, (float)def.value);
             }
             else {
-                if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Col %d: Auto", c);
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
+                    "[Grid] Col %d: Auto", c);
             }
         }
 
@@ -151,7 +157,8 @@ namespace NeoWPF::UI {
         int starHeightPerUnit = starRowCount > 0 ? remainingHeight / starRowCount : 0;
         int starWidthPerUnit = starColCount > 0 ? remainingWidth / starColCount : 0;
 
-        if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Star calculation: rows=%d(perUnit=%d), cols=%d(perUnit=%d)",
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
+            "[Grid] Star calculation: rows=%d(perUnit=%d), cols=%d(perUnit=%d)",
             starRowCount, starHeightPerUnit, starColCount, starWidthPerUnit);
 
         for (int r = 0; r < numRows; ++r) {
@@ -159,7 +166,8 @@ namespace NeoWPF::UI {
             if (def.mode == SizeMode::Star) {
                 int starCount = def.value > 0 ? def.value : 1;
                 result.rowHeights[r] = starHeightPerUnit * starCount;
-                if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Row %d (Star): %d", r, result.rowHeights[r]);
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
+                    "[Grid] Row %d (Star): %d", r, result.rowHeights[r]);
             }
         }
 
@@ -168,7 +176,8 @@ namespace NeoWPF::UI {
             if (def.mode == SizeMode::Star) {
                 int starCount = def.value > 0 ? def.value : 1;
                 result.colWidths[c] = starWidthPerUnit * starCount;
-                if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Col %d (Star): %d", c, result.colWidths[c]);
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
+                    "[Grid] Col %d (Star): %d", c, result.colWidths[c]);
             }
         }
 
@@ -196,7 +205,8 @@ namespace NeoWPF::UI {
         for (int r = 0; r < numRows; ++r) totalH += result.rowHeights[r];
         for (int c = 0; c < numCols; ++c) totalW += result.colWidths[c];
 
-        if (s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid] Layout (Auto=0): %dx%d", totalW, totalH);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
+            "[Grid] Layout (Auto=0): %dx%d", totalW, totalH);
 
         return result;
     }

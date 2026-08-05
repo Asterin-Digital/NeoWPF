@@ -42,8 +42,6 @@ public:
         int availableWidth,
         int availableHeight,
         const std::vector<Visual*>& children);
-
-    static bool s_gridLogging;
 };
 
 }

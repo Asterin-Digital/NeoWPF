@@ -43,7 +43,7 @@ namespace NeoWPF::Input
         void RouteKeyboardEvent(NeoWPF::UI::UIElement* targetElement, const Core::RoutedEvent& eventDef,
                                int keyCode, bool isKeyDown, wchar_t charCode, int repeatCount);
 
-        static bool s_hitTestLogging;
+        
 
         NeoWPF::UI::UIElement* m_rootElement = nullptr;
         NeoWPF::UI::UIElement* m_focusedElement = nullptr;

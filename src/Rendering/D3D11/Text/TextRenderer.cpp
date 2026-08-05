@@ -44,9 +44,7 @@ std::wstring ResolveRegisteredFontFamily(const std::wstring& requestedFontFamily
                 }
             }
             if (sameFamily) {
-                if (s_textRendererDebug) {
-                    ::NeoWPF::Diagnostics::LogInfo("[TextRenderer] Resolved font family '%ls' to '%ls' from file path '%ls'", requestedFontFamily.c_str(), fileNameNoExt.c_str(), filePath.c_str());
-                }
+                    ::NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Debug, "[TextRenderer] Resolved font family '%ls' to '%ls' from file path '%ls'", requestedFontFamily.c_str(), fileNameNoExt.c_str(), filePath.c_str());
                 return fileNameNoExt;
             }
         }
@@ -89,7 +87,7 @@ std::wstring ResolveFontFamily(const std::wstring& requestedFontFamily)
     return std::wstring(L"Segoe UI");
 }
 
-bool s_textRendererDebug = true;
+ 
 
 TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int maxWidth, int maxHeight);
 std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight);

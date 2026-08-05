@@ -5,6 +5,7 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Core/Element/IContentAware.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
 #include <NeoWPF/Rendering/Renderer.h>
 
 namespace NeoWPF::Input::Core
@@ -94,6 +95,36 @@ public:
         The font family name, for example `L"Segoe UI"`.
     */
     void SetFontFamily(const std::wstring& fontFamily) noexcept;
+
+    /*
+        @summary
+        Sets the horizontal alignment used when placing text inside the TextBlock.
+
+        @param alignment
+        The horizontal text alignment to apply.
+    */
+    void SetTextHorizontalAlignment(TextHorizontalAlignment alignment) noexcept;
+
+    /*
+        @summary
+        Returns the current horizontal alignment used for text inside the TextBlock.
+    */
+    TextHorizontalAlignment GetTextHorizontalAlignment() const noexcept;
+
+    /*
+        @summary
+        Sets the vertical alignment used when placing text inside the TextBlock.
+
+        @param alignment
+        The vertical text alignment to apply.
+    */
+    void SetTextVerticalAlignment(TextVerticalAlignment alignment) noexcept;
+
+    /*
+        @summary
+        Returns the current vertical alignment used for text inside the TextBlock.
+    */
+    TextVerticalAlignment GetTextVerticalAlignment() const noexcept;
 
     /*
         @summary
@@ -197,6 +228,8 @@ private:
     uint32_t m_textureId = 0;
     int m_textWidth = 0;
     int m_textHeight = 0;
+    TextHorizontalAlignment m_textHorizontalAlignment = TextHorizontalAlignment::Left;
+    TextVerticalAlignment m_textVerticalAlignment = TextVerticalAlignment::Top;
     bool m_textDirty = true;
     bool m_isHitTestVisible = true;
     int m_lastArrangeWidth = 0;

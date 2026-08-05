@@ -121,6 +121,38 @@ void Button::SetText(const std::wstring& text)
     InvalidateVisual();
 }
 
+void Button::SetTextHorizontalAlignment(TextHorizontalAlignment alignment) noexcept
+{
+    if (m_textContent) {
+        m_textContent->SetTextHorizontalAlignment(alignment);
+    }
+    InvalidateVisual();
+}
+
+TextHorizontalAlignment Button::GetTextHorizontalAlignment() const noexcept
+{
+    if (m_textContent) {
+        return m_textContent->GetTextHorizontalAlignment();
+    }
+    return TextHorizontalAlignment::Left;
+}
+
+void Button::SetTextVerticalAlignment(TextVerticalAlignment alignment) noexcept
+{
+    if (m_textContent) {
+        m_textContent->SetTextVerticalAlignment(alignment);
+    }
+    InvalidateVisual();
+}
+
+TextVerticalAlignment Button::GetTextVerticalAlignment() const noexcept
+{
+    if (m_textContent) {
+        return m_textContent->GetTextVerticalAlignment();
+    }
+    return TextVerticalAlignment::Top;
+}
+
 void Button::SetPadding(int padding) noexcept
 {
     Control::SetPadding(padding);

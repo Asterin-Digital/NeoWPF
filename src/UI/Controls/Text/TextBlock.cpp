@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
@@ -118,6 +119,34 @@ std::wstring TextBlock::GetFontFamily() const noexcept
     return m_fontFamily;
 }
 
+void TextBlock::SetTextHorizontalAlignment(TextHorizontalAlignment alignment) noexcept
+{
+    if (m_textHorizontalAlignment == alignment) {
+        return;
+    }
+    m_textHorizontalAlignment = alignment;
+    InvalidateVisual();
+}
+
+TextHorizontalAlignment TextBlock::GetTextHorizontalAlignment() const noexcept
+{
+    return m_textHorizontalAlignment;
+}
+
+void TextBlock::SetTextVerticalAlignment(TextVerticalAlignment alignment) noexcept
+{
+    if (m_textVerticalAlignment == alignment) {
+        return;
+    }
+    m_textVerticalAlignment = alignment;
+    InvalidateVisual();
+}
+
+TextVerticalAlignment TextBlock::GetTextVerticalAlignment() const noexcept
+{
+    return m_textVerticalAlignment;
+}
+
 int TextBlock::GetPadding() const noexcept {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", *this);
     if (property) {
@@ -187,13 +216,26 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     int absY = 0;
     GetAbsolutePosition(absX, absY);
 
-    float drawX = static_cast<float>(absX);
-    float drawY = static_cast<float>(absY);
+    const int padding = GetPadding();
+    const int innerWidth = std::max(0, GetFinalWidth() - (2 * padding));
+    const int innerHeight = std::max(0, GetFinalHeight() - (2 * padding));
+
+    int offsetX = 0;
+    int offsetY = 0;
+    TextAlignment::ApplyTextAlignment(
+        m_textWidth,
+        m_textHeight,
+        innerWidth,
+        innerHeight,
+        m_textHorizontalAlignment,
+        m_textVerticalAlignment,
+        offsetX,
+        offsetY);
+
+    float drawX = static_cast<float>(absX + padding + offsetX);
+    float drawY = static_cast<float>(absY + padding + offsetY);
     float drawWidth = static_cast<float>(m_textWidth);
     float drawHeight = static_cast<float>(m_textHeight);
-    const int padding = GetPadding();
-    drawX += static_cast<float>(padding);
-    drawY += static_cast<float>(padding);
     ApplyRenderTransform(drawX, drawY, drawWidth, drawHeight);
     float rotationRadians = GetAbsoluteRenderTransformRotation(this);
 

@@ -12,7 +12,6 @@
 namespace NeoWPF::Core {
 
 Application* Application::s_current = nullptr;
-bool Application::s_applicationDebugging = true;
 
 void Application::Initialize()
 {
@@ -24,18 +23,14 @@ void Application::Initialize()
 #else
     ShowConsole(false);
 #endif
-    if (s_applicationDebugging) {
-        NeoWPF::Diagnostics::LogInfo("Application::Initialize begin");
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application::Initialize begin");
     GetAppState().hInst = GetModuleHandleW(nullptr);
     if (!s_current) {
         s_current = new Application();
     }
     NeoWPF::UI::Properties::RegisterCoreControlProperties();
 
-    if (s_applicationDebugging) {
-        NeoWPF::Diagnostics::LogInfo("Application::Initialize complete");
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application::Initialize complete");
 }
 
 NeoWPF::Platform::Window Application::CreateWindow(const wchar_t* title, int width, int height)
@@ -138,31 +133,23 @@ bool Application::TryGetResource(const std::string& key, std::any& outValue)
 bool Application::LoadFontFromFile(const std::wstring& filePath)
 {
     if (filePath.empty()) {
-        if (s_applicationDebugging) {
-            NeoWPF::Diagnostics::LogError("Application::LoadFontFromFile: empty file path supplied");
-        }
+        NeoWPF::Diagnostics::LogError("Application::LoadFontFromFile: empty file path supplied");
         return false;
     }
 
-    if (s_applicationDebugging) {
-        NeoWPF::Diagnostics::LogInfo("Application::LoadFontFromFile: attempting to load custom font '%ls'", filePath.c_str());
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application::LoadFontFromFile: attempting to load custom font '%ls'", filePath.c_str());
 
     int result = AddFontResourceExW(filePath.c_str(), FR_PRIVATE, nullptr);
     if (result <= 0) {
         const DWORD errorCode = GetLastError();
-        if (s_applicationDebugging) {
-            NeoWPF::Diagnostics::LogError("Application::LoadFontFromFile: AddFontResourceExW failed for '%ls' (error %u)", filePath.c_str(), static_cast<unsigned int>(errorCode));
-        }
+        NeoWPF::Diagnostics::LogError("Application::LoadFontFromFile: AddFontResourceExW failed for '%ls' (error %u)", filePath.c_str(), static_cast<unsigned int>(errorCode));
         return false;
     }
 
-    if (s_applicationDebugging) {
-        NeoWPF::Diagnostics::LogInfo("Application::LoadFontFromFile: AddFontResourceExW succeeded for '%ls'", filePath.c_str());
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application::LoadFontFromFile: AddFontResourceExW succeeded for '%ls'", filePath.c_str());
 
     const bool registered = NeoWPF::Rendering::Text::RegisterFontFile(filePath);
-    if (!registered && s_applicationDebugging) {
+    if (!registered) {
         NeoWPF::Diagnostics::LogError("Application::LoadFontFromFile: RegisterFontFile failed for '%ls'", filePath.c_str());
     }
 

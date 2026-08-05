@@ -6,7 +6,7 @@
 
 namespace NeoWPF::UI {
 
-bool Border::s_borderDebugging = false;
+ 
 
 Border::Border()
 {
@@ -18,10 +18,8 @@ Border::Border()
 
 void Border::Measure(int availableWidth, int availableHeight)
 {
-    if (s_borderDebugging) {
-        NeoWPF::Diagnostics::LogInfo("[Border::Measure] available=%dx%d explicit=%dx%d padding=%d border=%d",
-            availableWidth, availableHeight, GetWidth(), GetHeight(), GetPadding(), GetBorderThickness());
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Measure] available=%dx%d explicit=%dx%d padding=%d border=%d",
+        availableWidth, availableHeight, GetWidth(), GetHeight(), GetPadding(), GetBorderThickness());
 
     if (auto presenter = GetPresenter()) {
         if (!presenter->GetParent()) {
@@ -39,10 +37,8 @@ void Border::Measure(int availableWidth, int availableHeight)
         const int innerWidth = std::max(0, availableContentWidth - (2 * GetBorderThickness()) - (2 * GetPadding()));
         const int innerHeight = std::max(0, availableContentHeight - (2 * GetBorderThickness()) - (2 * GetPadding()));
 
-        if (s_borderDebugging) {
-            NeoWPF::Diagnostics::LogInfo("[Border::Measure] inner=%dx%d content=%dx%d",
-                innerWidth, innerHeight, availableContentWidth, availableContentHeight);
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Measure] inner=%dx%d content=%dx%d",
+            innerWidth, innerHeight, availableContentWidth, availableContentHeight);
 
         presenter->Measure(innerWidth, innerHeight);
 
@@ -54,28 +50,22 @@ void Border::Measure(int availableWidth, int availableHeight)
         const int desiredW = std::max(contentDesiredW, explicitW > 0 ? explicitW : 0);
         const int desiredH = std::max(contentDesiredH, explicitH > 0 ? explicitH : 0);
 
-        if (s_borderDebugging) {
-            NeoWPF::Diagnostics::LogInfo("[Border::Measure] desired=%dx%d content=%dx%d",
-                desiredW, desiredH, contentDesiredW, contentDesiredH);
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Measure] desired=%dx%d content=%dx%d",
+            desiredW, desiredH, contentDesiredW, contentDesiredH);
 
         SetDesiredSize(desiredW, desiredH);
         return;
     }
 
-    if (s_borderDebugging) {
-        NeoWPF::Diagnostics::LogInfo("[Border::Measure] No presenter, desired=0x0");
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Measure] No presenter, desired=0x0");
 
     SetDesiredSize(0, 0);
 }
 
 void Border::Arrange(int finalWidth, int finalHeight)
 {
-    if (s_borderDebugging) {
-        NeoWPF::Diagnostics::LogInfo("[Border::Arrange] final=%dx%d padding=%d border=%d",
-            finalWidth, finalHeight, GetPadding(), GetBorderThickness());
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Arrange] final=%dx%d padding=%d border=%d",
+        finalWidth, finalHeight, GetPadding(), GetBorderThickness());
 
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
@@ -85,10 +75,8 @@ void Border::Arrange(int finalWidth, int finalHeight)
         const int innerWidth = std::max(0, finalWidth - (2 * GetBorderThickness()) - (2 * GetPadding()));
         const int innerHeight = std::max(0, finalHeight - (2 * GetBorderThickness()) - (2 * GetPadding()));
 
-        if (s_borderDebugging) {
-            NeoWPF::Diagnostics::LogInfo("[Border::Arrange] presenter offset=%dx%d inner=%dx%d",
-                innerX, innerY, innerWidth, innerHeight);
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Arrange] presenter offset=%dx%d inner=%dx%d",
+            innerX, innerY, innerWidth, innerHeight);
 
         presenter->Arrange(innerWidth, innerHeight);
         presenter->SetLayoutOffset(innerX, innerY);

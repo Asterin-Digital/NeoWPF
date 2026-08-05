@@ -114,9 +114,7 @@ BindingExpression::~BindingExpression()
 void BindingExpression::UpdatePocoTargetValue()
 {
     const auto currentValue = ResolvePocoValue(m_sourcePoco, m_binding.GetPath());
-    if (Binding::s_dataBindingDebugging) {
-        NeoWPF::Diagnostics::LogInfo("[Binding] Updating POCO target for '%s' -> %s", m_binding.GetPath().c_str(), currentValue.has_value() ? currentValue->type().name() : "<empty>");
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Updating POCO target for '%s' -> %s", m_binding.GetPath().c_str(), currentValue.has_value() ? currentValue->type().name() : "<empty>");
     if (currentValue.has_value()) {
         const bool previousApplying = m_isApplyingTargetValue;
         m_isApplyingTargetValue = true;
@@ -146,9 +144,7 @@ void BindingExpression::SubscribePocoPath()
             if (!m_target.GetBindingExpression(m_targetProperty)) {
                 return;
             }
-            if (Binding::s_dataBindingDebugging) {
-                NeoWPF::Diagnostics::LogInfo("[Binding] POCO property changed '%s'", propertyName.c_str());
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] POCO property changed '%s'", propertyName.c_str());
             UpdatePocoTargetValue();
         });
         m_sourcePocoHandlerIds.emplace_back(currentSource, handlerId);
@@ -215,9 +211,7 @@ bool BindingExpression::TrySetPocoSourceValue(const std::shared_ptr<INotifyPrope
 
 void BindingExpression::Attach()
 {
-    if (Binding::s_dataBindingDebugging) {
-        NeoWPF::Diagnostics::LogInfo("[Binding] Attach target=%p path=%s", &m_target, m_binding.GetPath().c_str());
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Attach target=%p path=%s", &m_target, m_binding.GetPath().c_str());
 
     Detach();
 
@@ -225,9 +219,7 @@ void BindingExpression::Attach()
     if (sourceLock.has_value()) {
         if (auto source = sourceLock->lock()) {
             m_source = source;
-            if (Binding::s_dataBindingDebugging) {
-                NeoWPF::Diagnostics::LogInfo("[Binding] Explicit Source object resolved=%p", source.get());
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Explicit Source object resolved=%p", source.get());
         }
     }
 
@@ -240,69 +232,51 @@ void BindingExpression::Attach()
                 if (valueType == typeid(std::shared_ptr<Properties::DependencyObject>)) {
                     if (auto source = std::any_cast<std::shared_ptr<Properties::DependencyObject>>(dataContextValue)) {
                         m_source = source;
-                        if (Binding::s_dataBindingDebugging) {
-                            NeoWPF::Diagnostics::LogInfo("[Binding] DataContext resolved as DependencyObject=%p", m_source.get());
-                        }
+                        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] DataContext resolved as DependencyObject=%p", m_source.get());
                     }
                 } else if (valueType == typeid(std::shared_ptr<INotifyPropertyChanged>)) {
                     if (auto sourcePoco = std::any_cast<std::shared_ptr<INotifyPropertyChanged>>(dataContextValue)) {
                         m_sourcePoco = sourcePoco;
-                        if (Binding::s_dataBindingDebugging) {
-                            NeoWPF::Diagnostics::LogInfo("[Binding] DataContext resolved as INotifyPropertyChanged=%p", m_sourcePoco.get());
-                        }
+                        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] DataContext resolved as INotifyPropertyChanged=%p", m_sourcePoco.get());
                     }
                 } else {
-                    if (Binding::s_dataBindingDebugging) {
-                        NeoWPF::Diagnostics::LogInfo("[Binding] DataContext has unsupported type=%s", valueType.name());
-                    }
+                    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] DataContext has unsupported type=%s", valueType.name());
                 }
             }
         }
     }
 
     if (!m_source && !m_sourcePoco) {
-        if (Binding::s_dataBindingDebugging) {
-            NeoWPF::Diagnostics::LogInfo("[Binding] No source found for path '%s'", m_binding.GetPath().c_str());
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] No source found for path '%s'", m_binding.GetPath().c_str());
         return;
     }
 
     if (m_source) {
         m_sourceProperty = Properties::DependencyPropertyRegistry::Get().FindProperty(m_binding.GetPath(), *m_source);
         if (!m_sourceProperty) {
-            if (Binding::s_dataBindingDebugging) {
-                NeoWPF::Diagnostics::LogInfo("[Binding] Source property '%s' not found on source %p", m_binding.GetPath().c_str(), m_source.get());
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Source property '%s' not found on source %p", m_binding.GetPath().c_str(), m_source.get());
             return;
         }
 
-        if (Binding::s_dataBindingDebugging) {
-            NeoWPF::Diagnostics::LogInfo("[Binding] Subscribing to source property '%s' on %p", m_binding.GetPath().c_str(), m_source.get());
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Subscribing to source property '%s' on %p", m_binding.GetPath().c_str(), m_source.get());
 
         m_sourceChangeHandlerId = m_source->AddDependencyPropertyChangedHandler(*m_sourceProperty,
             [this](const std::any&, const std::any& newValue) {
                 if (!m_target.GetBindingExpression(m_targetProperty)) {
                     return;
                 }
-                if (Binding::s_dataBindingDebugging) {
-                    NeoWPF::Diagnostics::LogInfo("[Binding] Source property changed '%s' -> %s", m_binding.GetPath().c_str(), newValue.has_value() ? newValue.type().name() : "<empty>");
-                }
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Source property changed '%s' -> %s", m_binding.GetPath().c_str(), newValue.has_value() ? newValue.type().name() : "<empty>");
                 m_target.SetValueExpression(m_targetProperty, newValue);
             });
 
         const auto currentValue = m_source->GetRawValue(*m_sourceProperty);
-        if (Binding::s_dataBindingDebugging) {
-            NeoWPF::Diagnostics::LogInfo("[Binding] Initial source value for '%s' is %s", m_binding.GetPath().c_str(), currentValue.has_value() ? currentValue.type().name() : "<empty>");
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Initial source value for '%s' is %s", m_binding.GetPath().c_str(), currentValue.has_value() ? currentValue.type().name() : "<empty>");
         m_target.SetValueExpression(m_targetProperty, currentValue);
         return;
     }
 
     if (m_sourcePoco) {
-        if (Binding::s_dataBindingDebugging) {
-            NeoWPF::Diagnostics::LogInfo("[Binding] Subscribing to INotifyPropertyChanged source for '%s'", m_binding.GetPath().c_str());
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Subscribing to INotifyPropertyChanged source for '%s'", m_binding.GetPath().c_str());
 
         if (m_binding.GetMode() == BindingMode::TwoWay) {
             if (m_targetChangeHandlerId == 0) {
@@ -314,14 +288,10 @@ void BindingExpression::Attach()
                         if (!m_target.GetBindingExpression(m_targetProperty)) {
                             return;
                         }
-                        if (Binding::s_dataBindingDebugging) {
-                            NeoWPF::Diagnostics::LogInfo("[Binding] Updating POCO source for '%s'", m_binding.GetPath().c_str());
-                        }
+                                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Updating POCO source for '%s'", m_binding.GetPath().c_str());
                         const auto segments = SplitPropertyPath(m_binding.GetPath());
                         if (!TrySetPocoSourceValue(m_sourcePoco, segments, newValue)) {
-                            if (Binding::s_dataBindingDebugging) {
-                                NeoWPF::Diagnostics::LogInfo("[Binding] Failed to write POCO source for '%s'", m_binding.GetPath().c_str());
-                            }
+                            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Failed to write POCO source for '%s'", m_binding.GetPath().c_str());
                         }
                     });
             }
@@ -333,9 +303,7 @@ void BindingExpression::Attach()
         SubscribePocoPath();
 
         const auto currentValue = ResolvePocoValue(m_sourcePoco, m_binding.GetPath());
-        if (Binding::s_dataBindingDebugging) {
-            NeoWPF::Diagnostics::LogInfo("[Binding] Initial POCO source value for '%s' is %s", m_binding.GetPath().c_str(), currentValue.has_value() ? currentValue->type().name() : "<empty>");
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Initial POCO source value for '%s' is %s", m_binding.GetPath().c_str(), currentValue.has_value() ? currentValue->type().name() : "<empty>");
         if (currentValue.has_value()) {
             const bool previousApplying = m_isApplyingTargetValue;
             m_isApplyingTargetValue = true;
@@ -347,9 +315,7 @@ void BindingExpression::Attach()
 
 void BindingExpression::Detach()
 {
-    if (Binding::s_dataBindingDebugging) {
-        NeoWPF::Diagnostics::LogInfo("[Binding] Detach target=%p path=%s", &m_target, m_binding.GetPath().c_str());
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Detach target=%p path=%s", &m_target, m_binding.GetPath().c_str());
     if (m_source && m_sourceProperty && m_sourceChangeHandlerId != 0) {
         m_source->RemoveDependencyPropertyChangedHandler(*m_sourceProperty, m_sourceChangeHandlerId);
         m_sourceChangeHandlerId = 0;
@@ -370,9 +336,7 @@ void BindingExpression::Refresh()
         return;
     }
 
-    if (Binding::s_dataBindingDebugging) {
-        NeoWPF::Diagnostics::LogInfo("[Binding] Refresh target=%p path=%s", &m_target, m_binding.GetPath().c_str());
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Refresh target=%p path=%s", &m_target, m_binding.GetPath().c_str());
     Attach();
 }
 

@@ -32,7 +32,6 @@ public:
     ContentBounds GetContentBounds() const noexcept override;
 
 private:
-    static bool s_contentPresenterDebugging;
     std::shared_ptr<NeoWPF::UI::UIElement> m_content;
     int m_padding = 0;
 };

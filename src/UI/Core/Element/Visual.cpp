@@ -12,7 +12,6 @@
 
 namespace NeoWPF::UI {
 
-bool Visual::s_visualDebugging = true;
 
 namespace {
 
@@ -33,16 +32,13 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
 
     std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
 
-    if (s_visualDebugging) {
-        NeoWPF::Diagnostics::LogInfo(
-            "[Visual::AddVisualChild] thread=%zu this=%p child=%p children=%zu capacity=%zu",
-            std::hash<std::thread::id>{}(std::this_thread::get_id()),
-            this,
-            child.get(),
-            m_children.size(),
-            m_children.capacity()
-        );
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Debug,
+        "[Visual::AddVisualChild] thread=%zu this=%p child=%p children=%zu capacity=%zu",
+        std::hash<std::thread::id>{}(std::this_thread::get_id()),
+        this,
+        child.get(),
+        m_children.size(),
+        m_children.capacity());
 
     if (ShouldWarnDanglingChild(child)) {
         const std::wstring title = std::wstring(NeoWPF::Diagnostics::DeveloperWarnings::kDanglingChildReferenceCode) + L": dangling child reference detected";
@@ -54,13 +50,10 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
 
     if (auto currentParent = child->GetParent()) {
         if (currentParent == this) {
-            if (s_visualDebugging) {
-                NeoWPF::Diagnostics::LogWarn(
-                    "[Visual::AddVisualChild] Duplicate child detected. parent=%p child=%p",
-                    this,
-                    child.get()
-                );
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Debug,
+                "[Visual::AddVisualChild] Duplicate child detected. parent=%p child=%p",
+                this,
+                child.get());
             __debugbreak();
             return;
         }
@@ -77,33 +70,26 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
 
     for (const auto& existing : m_children)
     {
-        if (existing.get() == child.get())
-        {
-            if (s_visualDebugging) {
-                NeoWPF::Diagnostics::LogWarn(
-                    "[Visual::AddVisualChild] Duplicate child detected after detach. parent=%p child=%p",
-                    this,
-                    child.get()
-                );
-            }
+        if (existing.get() == child.get()) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Debug,
+                "[Visual::AddVisualChild] Duplicate child detected after detach. parent=%p child=%p",
+                this,
+                child.get());
 
             __debugbreak();
         }
     }
 
-    if (s_visualDebugging) {
-        NeoWPF::Diagnostics::LogInfo("[Visual::AddVisualChild] Before push_back");
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
+        "[Visual::AddVisualChild] Before push_back");
 
     m_children.push_back(child);
 
     if (IsInitialized()) {
         MarkTreeDirty();
     }
-
-    if (s_visualDebugging) {
-        NeoWPF::Diagnostics::LogInfo("[Visual::AddVisualChild] After push_back");
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
+        "[Visual::AddVisualChild] After push_back");
 
     MarkTreeDirty();
 }
@@ -116,13 +102,10 @@ void Visual::AddChild(const std::shared_ptr<Visual>& child)
 
     if (auto currentParent = child->GetParent()) {
         if (currentParent == this) {
-            if (s_visualDebugging) {
-                NeoWPF::Diagnostics::LogWarn(
-                    "[Visual::AddChild] Duplicate child detected. parent=%p child=%p",
-                    this,
-                    child.get()
-                );
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Debug,
+                "[Visual::AddChild] Duplicate child detected. parent=%p child=%p",
+                this,
+                child.get());
             return;
         }
 
@@ -133,15 +116,11 @@ void Visual::AddChild(const std::shared_ptr<Visual>& child)
 
     for (const auto& existing : m_children)
     {
-        if (existing.get() == child.get())
-        {
-            if (s_visualDebugging) {
-                NeoWPF::Diagnostics::LogWarn(
-                    "[Visual::AddChild] Duplicate child detected after detach. parent=%p child=%p",
-                    this,
-                    child.get()
-                );
-            }
+        if (existing.get() == child.get()) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Debug,
+                "[Visual::AddChild] Duplicate child detected after detach. parent=%p child=%p",
+                this,
+                child.get());
             return;
         }
     }
@@ -280,13 +259,11 @@ void Visual::Initialize()
     }
 
     m_initializationInProgress = true;
-    if (s_visualDebugging) {
-        NeoWPF::Diagnostics::LogInfo(
-            "[Visual::Initialize] start this=%p parent=%p children=%zu",
-            this,
-            m_parent.lock().get(),
-            m_children.size());
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info,
+        "[Visual::Initialize] start this=%p parent=%p children=%zu",
+        this,
+        m_parent.lock().get(),
+        m_children.size());
 
     try {
         OnInitialize();
@@ -305,33 +282,27 @@ void Visual::Initialize()
 
         m_isInitialized = true;
         m_initializationInProgress = false;
-        if (s_visualDebugging) {
-            NeoWPF::Diagnostics::LogInfo(
-                "[Visual::Initialize] complete this=%p parent=%p children=%zu",
-                this,
-                m_parent.lock().get(),
-                m_children.size());
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info,
+            "[Visual::Initialize] complete this=%p parent=%p children=%zu",
+            this,
+            m_parent.lock().get(),
+            m_children.size());
     } catch (const std::exception& ex) {
         m_initializationInProgress = false;
-        if (s_visualDebugging) {
-            NeoWPF::Diagnostics::LogError(
-                "[Visual::Initialize] failed this=%p parent=%p children=%zu error=%s",
-                this,
-                m_parent.lock().get(),
-                m_children.size(),
-                ex.what());
-        }
+        NeoWPF::Diagnostics::LogError(
+            "[Visual::Initialize] failed this=%p parent=%p children=%zu error=%s",
+            this,
+            m_parent.lock().get(),
+            m_children.size(),
+            ex.what());
         throw;
     } catch (...) {
         m_initializationInProgress = false;
-        if (s_visualDebugging) {
-            NeoWPF::Diagnostics::LogError(
-                "[Visual::Initialize] failed this=%p parent=%p children=%zu error=<unknown>",
-                this,
-                m_parent.lock().get(),
-                m_children.size());
-        }
+        NeoWPF::Diagnostics::LogError(
+            "[Visual::Initialize] failed this=%p parent=%p children=%zu error=<unknown>",
+            this,
+            m_parent.lock().get(),
+            m_children.size());
         throw;
     }
 }

@@ -5,6 +5,7 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
+#include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
 #include <NeoWPF/Input/Core/Events.h>
 #include <algorithm>
 #include <cmath>
@@ -235,6 +236,54 @@ std::wstring TextBox::GetFontFamily() const noexcept
         } catch (const std::bad_any_cast&) {}
     }
     return m_fontFamily;
+}
+
+void TextBox::SetTextHorizontalAlignment(TextHorizontalAlignment alignment) noexcept
+{
+    if (m_textHorizontalAlignment == alignment) {
+        return;
+    }
+    m_textHorizontalAlignment = alignment;
+    InvalidateVisual();
+}
+
+TextHorizontalAlignment TextBox::GetTextHorizontalAlignment() const noexcept
+{
+    return m_textHorizontalAlignment;
+}
+
+void TextBox::SetTextVerticalAlignment(TextVerticalAlignment alignment) noexcept
+{
+    if (m_textVerticalAlignment == alignment) {
+        return;
+    }
+    m_textVerticalAlignment = alignment;
+    InvalidateVisual();
+}
+
+TextVerticalAlignment TextBox::GetTextVerticalAlignment() const noexcept
+{
+    return m_textVerticalAlignment;
+}
+
+namespace {
+
+int GetTextVerticalAlignmentOffset(int contentWidth, int contentHeight, int viewportHeight, TextVerticalAlignment alignment) noexcept
+{
+    int unusedX = 0;
+    int outY = 0;
+    TextAlignment::ApplyTextAlignment(contentWidth, contentHeight, contentWidth, viewportHeight, TextHorizontalAlignment::Left, alignment, unusedX, outY);
+    return outY;
+}
+
+int GetLineHorizontalAlignmentOffset(int lineWidth, int viewportWidth, TextHorizontalAlignment alignment) noexcept
+{
+    int outX = 0;
+    int unusedY = 0;
+    TextAlignment::ApplyTextAlignment(lineWidth, 1, viewportWidth, 1, alignment, TextVerticalAlignment::Top, outX, unusedY);
+    return outX;
+}
+
 }
 
 void TextBox::SetTextColor(std::uint32_t color) noexcept
@@ -503,7 +552,21 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     const int contentY = contentHostY;
     const auto clip = NeoWPF::Rendering::ClipRect{ static_cast<float>(contentX), static_cast<float>(contentY), static_cast<float>(viewportWidth), static_cast<float>(viewportHeight), true };
 
-    int currentY = -m_verticalScrollBar->GetValue();
+    const int contentWidth = std::max(0, m_textLayout.GetContentWidth());
+    const int contentHeight = std::max(0, m_textLayout.GetContentHeight());
+    int textOffsetX = 0;
+    int textOffsetY = 0;
+    TextAlignment::ApplyTextAlignment(
+        contentWidth,
+        contentHeight,
+        viewportWidth,
+        viewportHeight,
+        m_textHorizontalAlignment,
+        m_textVerticalAlignment,
+        textOffsetX,
+        textOffsetY);
+
+    int currentY = textOffsetY - m_verticalScrollBar->GetValue();
     const auto& lines = m_textLayout.GetLines();
     for (std::size_t lineIndex = 0; lineIndex < lines.size(); ++lineIndex) {
         const auto& line = lines[lineIndex];
@@ -518,13 +581,14 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const int drawHeight = std::max(1, line.height > 0 ? line.height : lineHeight);
         const float uvBottom = drawHeight > 0 ? static_cast<float>(drawHeight) / static_cast<float>(std::max(1, line.height > 0 ? line.height : lineHeight)) : 1.0f;
         const int lineVerticalOffset = GetLineVisualOffset(lineIndex);
+        const int lineOffsetX = GetLineHorizontalAlignmentOffset(line.width, viewportWidth, m_textHorizontalAlignment);
 
         if (s_textBoxDebug) {
-            NeoWPF::Diagnostics::LogInfo("[TextBox] BuildRenderCommands: line=%zu width=%d height=%d drawWidth=%d drawHeight=%d uvRight=%.3f uvBottom=%.3f", lineIndex, line.width, line.height, drawWidth, drawHeight, uvRight, uvBottom);
+            NeoWPF::Diagnostics::LogInfo("[TextBox] BuildRenderCommands: line=%zu width=%d height=%d drawWidth=%d drawHeight=%d uvRight=%.3f uvBottom=%.3f offsetX=%d", lineIndex, line.width, line.height, drawWidth, drawHeight, uvRight, uvBottom, lineOffsetX);
         }
 
         commands.DrawTexturedQuad(
-            static_cast<float>(contentX - m_horizontalScrollBar->GetValue()),
+            static_cast<float>(contentX - m_horizontalScrollBar->GetValue() + lineOffsetX),
             static_cast<float>(contentY + currentY + lineVerticalOffset),
             static_cast<float>(drawWidth),
             static_cast<float>(drawHeight),

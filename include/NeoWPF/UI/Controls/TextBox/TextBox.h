@@ -9,6 +9,7 @@
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
@@ -201,6 +202,36 @@ public:
     std::wstring GetFontFamily() const noexcept;
 
     /*
+        @summary
+        Sets the horizontal alignment used when placing text inside the TextBox.
+
+        @param alignment
+        The horizontal text alignment to apply.
+    */
+    void SetTextHorizontalAlignment(TextHorizontalAlignment alignment) noexcept;
+
+    /*
+        @summary
+        Returns the current horizontal alignment used for text inside the TextBox.
+    */
+    TextHorizontalAlignment GetTextHorizontalAlignment() const noexcept;
+
+    /*
+        @summary
+        Sets the vertical alignment used when placing text inside the TextBox.
+
+        @param alignment
+        The vertical text alignment to apply.
+    */
+    void SetTextVerticalAlignment(TextVerticalAlignment alignment) noexcept;
+
+    /*
+        @summary
+        Returns the current vertical alignment used for text inside the TextBox.
+    */
+    TextVerticalAlignment GetTextVerticalAlignment() const noexcept;
+
+    /*
         @summary        Sets padding applied around the text.
 
         @param padding
@@ -366,6 +397,8 @@ private:
     NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu);
     NeoWPF::UI::Color m_caretColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
     int m_fontSize = 16;
+    TextHorizontalAlignment m_textHorizontalAlignment = TextHorizontalAlignment::Left;
+    TextVerticalAlignment m_textVerticalAlignment = TextVerticalAlignment::Top;
     std::wstring m_fontFamily = std::wstring(L"Segoe UI");
     bool m_isReadOnly = false;
     bool m_acceptsReturn = false;

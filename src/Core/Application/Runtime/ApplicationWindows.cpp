@@ -22,15 +22,11 @@ HWND CreateApplicationWindow(const wchar_t* title, int width, int height)
 
     HWND hwnd = NeoWPF::Platform::Window::CreateWindow(App().hInst, title, width, height);
     if (!hwnd) {
-        if (NeoWPF::Core::Application::s_applicationDebugging) {
-            NeoWPF::Diagnostics::LogError("CreateApplicationWindow failed for title=%ls width=%d height=%d", title, width, height);
-        }
+        NeoWPF::Diagnostics::LogError("CreateApplicationWindow failed for title=%ls width=%d height=%d", title, width, height);
         return nullptr;
     }
 
-    if (NeoWPF::Core::Application::s_applicationDebugging) {
-        NeoWPF::Diagnostics::LogInfo("CreateApplicationWindow created title=%ls", title);
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "CreateApplicationWindow created title=%ls", title);
 
     WindowState windowState;
     windowState.hwnd = hwnd;
@@ -71,9 +67,7 @@ bool CloseApplicationWindow(HWND hwnd)
         }
     }
 
-    if (NeoWPF::Core::Application::s_applicationDebugging) {
-        NeoWPF::Diagnostics::LogInfo("CloseApplicationWindow");
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "CloseApplicationWindow");
 
     if (IsWindow(hwnd)) {
         return ::DestroyWindow(hwnd) != FALSE;

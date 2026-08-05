@@ -4,14 +4,10 @@
 
 namespace NeoWPF::UI {
 
-bool ScrollBar::s_scrollBarDebug = false;
-
 void ScrollBar::SetContentSize(int size) noexcept
 {
     m_contentSize = std::max(0, size);
-    if (s_scrollBarDebug) {
-        NeoWPF::Diagnostics::LogInfo("[ScrollBar] SetContentSize: size=%d range=%d value=%d", m_contentSize, GetScrollRange(), m_value);
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug, "[ScrollBar] SetContentSize: size=%d range=%d value=%d", m_contentSize, GetScrollRange(), m_value);
     if (m_value > GetScrollRange()) {
         SetValue(GetScrollRange());
     }
@@ -21,9 +17,7 @@ void ScrollBar::SetContentSize(int size) noexcept
 void ScrollBar::SetViewportSize(int size) noexcept
 {
     m_viewportSize = std::max(0, size);
-    if (s_scrollBarDebug) {
-        NeoWPF::Diagnostics::LogInfo("[ScrollBar] SetViewportSize: size=%d range=%d value=%d", m_viewportSize, GetScrollRange(), m_value);
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug, "[ScrollBar] SetViewportSize: size=%d range=%d value=%d", m_viewportSize, GetScrollRange(), m_value);
     if (m_value > GetScrollRange()) {
         SetValue(GetScrollRange());
     }
@@ -69,21 +63,15 @@ int ScrollBar::GetThumbLength(int trackLength) const noexcept
     }
 
     int thumbLength = effectiveTrackLength;
-    if (s_scrollBarDebug) {
-        NeoWPF::Diagnostics::LogInfo("[ScrollBar] GetThumbLength: start track=%d content=%d viewport=%d thumbSize=%d range=%d value=%d", effectiveTrackLength, m_contentSize, m_viewportSize, m_thumbSize, GetScrollRange(), m_value);
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug, "[ScrollBar] GetThumbLength: start track=%d content=%d viewport=%d thumbSize=%d range=%d value=%d", effectiveTrackLength, m_contentSize, m_viewportSize, m_thumbSize, GetScrollRange(), m_value);
     if (m_contentSize > 0 && m_viewportSize > 0 && m_contentSize > m_viewportSize) {
         const int denominator = std::max(1, m_contentSize);
         const int proportionalThumb = std::max(1, (m_viewportSize * effectiveTrackLength) / denominator);
         thumbLength = std::clamp(proportionalThumb, std::min(m_thumbSize, effectiveTrackLength), effectiveTrackLength);
-        if (s_scrollBarDebug) {
-            NeoWPF::Diagnostics::LogInfo("[ScrollBar] GetThumbLength: proportional track=%d content=%d viewport=%d proportionalThumb=%d", effectiveTrackLength, m_contentSize, m_viewportSize, thumbLength);
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug, "[ScrollBar] GetThumbLength: proportional track=%d content=%d viewport=%d proportionalThumb=%d", effectiveTrackLength, m_contentSize, m_viewportSize, thumbLength);
     }
 
-    if (s_scrollBarDebug) {
-        NeoWPF::Diagnostics::LogInfo("[ScrollBar] GetThumbLength: final track=%d content=%d viewport=%d thumb=%d range=%d value=%d", effectiveTrackLength, m_contentSize, m_viewportSize, thumbLength, GetScrollRange(), m_value);
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug, "[ScrollBar] GetThumbLength: final track=%d content=%d viewport=%d thumb=%d range=%d value=%d", effectiveTrackLength, m_contentSize, m_viewportSize, thumbLength, GetScrollRange(), m_value);
     return thumbLength;
 }
 
@@ -101,9 +89,7 @@ int ScrollBar::GetThumbPosition(int trackLength, int thumbLength) const noexcept
         thumbPosition = static_cast<int>((static_cast<long long>(m_value) * (effectiveTrackLength - thumbLength)) / range);
     }
 
-    if (s_scrollBarDebug) {
-        NeoWPF::Diagnostics::LogInfo("[ScrollBar] GetThumbPosition: track=%d thumb=%d value=%d range=%d position=%d", trackLength, thumbLength, m_value, range, thumbPosition);
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug, "[ScrollBar] GetThumbPosition: track=%d thumb=%d value=%d range=%d position=%d", trackLength, thumbLength, m_value, range, thumbPosition);
     return thumbPosition;
 }
 

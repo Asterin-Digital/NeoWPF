@@ -48,5 +48,23 @@ namespace NeoWPF::UI::Properties {
             &UI::TextBox::SetFontFamily,
             fontFamilyMetadata);
 
+        PropertyMetadata textHorizontalAlignmentMetadata;
+        textHorizontalAlignmentMetadata.DefaultValue = std::any(TextHorizontalAlignment::Left);
+        textHorizontalAlignmentMetadata.Flags = PropertyFlags::AffectsRender;
+        RegisterProperty<UI::TextBox, TextHorizontalAlignment>(
+            "TextHorizontalAlignment",
+            &UI::TextBox::GetTextHorizontalAlignment,
+            &UI::TextBox::SetTextHorizontalAlignment,
+            textHorizontalAlignmentMetadata);
+
+        PropertyMetadata textVerticalAlignmentMetadata;
+        textVerticalAlignmentMetadata.DefaultValue = std::any(TextVerticalAlignment::Top);
+        textVerticalAlignmentMetadata.Flags = PropertyFlags::AffectsRender;
+        RegisterProperty<UI::TextBox, TextVerticalAlignment>(
+            "TextVerticalAlignment",
+            &UI::TextBox::GetTextVerticalAlignment,
+            &UI::TextBox::SetTextVerticalAlignment,
+            textVerticalAlignmentMetadata);
+
     }
 }

@@ -44,6 +44,38 @@ void Checkbox::SetText(const std::wstring& text)
     InvalidateVisual();
 }
 
+void Checkbox::SetTextHorizontalAlignment(TextHorizontalAlignment alignment) noexcept
+{
+    if (m_textContent) {
+        m_textContent->SetTextHorizontalAlignment(alignment);
+    }
+    InvalidateVisual();
+}
+
+TextHorizontalAlignment Checkbox::GetTextHorizontalAlignment() const noexcept
+{
+    if (m_textContent) {
+        return m_textContent->GetTextHorizontalAlignment();
+    }
+    return TextHorizontalAlignment::Left;
+}
+
+void Checkbox::SetTextVerticalAlignment(TextVerticalAlignment alignment) noexcept
+{
+    if (m_textContent) {
+        m_textContent->SetTextVerticalAlignment(alignment);
+    }
+    InvalidateVisual();
+}
+
+TextVerticalAlignment Checkbox::GetTextVerticalAlignment() const noexcept
+{
+    if (m_textContent) {
+        return m_textContent->GetTextVerticalAlignment();
+    }
+    return TextVerticalAlignment::Top;
+}
+
 void Checkbox::SetTextColor(NeoWPF::UI::Color color) noexcept
 {
     if (IsApplyingPropertyValue()) { m_textColor = color; if (m_textContent) { m_textContent->SetTextColor(color.ToArgb()); } InvalidateVisual(); return; }

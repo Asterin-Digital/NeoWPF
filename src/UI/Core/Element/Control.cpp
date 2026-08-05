@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Core/Element/Control.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 
 namespace NeoWPF::UI {
 
@@ -22,9 +23,14 @@ int Control::GetPadding() const noexcept {
 }
 
 void Control::SetPadding(int padding) noexcept {
+    const int oldPadding = GetPadding();
     if (IsApplyingPropertyValue()) {
         m_padding = padding;
         OnPaddingChanged(padding);
+        if (oldPadding != padding) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Info,
+                "[Control] SetPadding (applying): old=%d new=%d this=%p", oldPadding, padding, this);
+        }
         return;
     }
 
@@ -38,6 +44,10 @@ void Control::SetPadding(int padding) noexcept {
 
     m_padding = padding;
     OnPaddingChanged(padding);
+    if (oldPadding != padding) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Info,
+            "[Control] SetPadding: old=%d new=%d this=%p", oldPadding, padding, this);
+    }
 }
 
 NeoWPF::UI::Color Control::GetBackgroundColor() const noexcept {

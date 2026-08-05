@@ -329,9 +329,7 @@
     <ClInclude Include="include\NeoWPF\Core\Core.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\Diagnostics\Diagnostics.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    
     <ClInclude Include="include\NeoWPF\Input\Input.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -48,6 +48,20 @@ public:
 
     /*
         @summary
+        Sets the horizontal alignment used for the checkbox label.
+    */
+    void SetTextHorizontalAlignment(TextHorizontalAlignment alignment) noexcept;
+    TextHorizontalAlignment GetTextHorizontalAlignment() const noexcept;
+
+    /*
+        @summary
+        Sets the vertical alignment used for the checkbox label.
+    */
+    void SetTextVerticalAlignment(TextVerticalAlignment alignment) noexcept;
+    TextVerticalAlignment GetTextVerticalAlignment() const noexcept;
+
+    /*
+        @summary
         Sets the text color.
     */
     void SetTextColor(NeoWPF::UI::Color color) noexcept;

@@ -153,7 +153,8 @@ namespace NeoWPF::UI {
 
     void Grid::Measure(int availableWidth, int availableHeight)
     {
-        if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Available: %dx%d", availableWidth, availableHeight);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
+            "[Grid::Measure] Available: %dx%d", availableWidth, availableHeight);
 
         const int INF = 1000000;
         int numRows = std::max(1, static_cast<int>(m_rowDefs.size()));
@@ -272,13 +273,12 @@ namespace NeoWPF::UI {
                 fe->Measure(childAvailableWidth, childAvailableHeight);
             }
 
-            if (GridLayout::s_gridLogging) {
-                NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Child[%zu] at (%d,%d) span(%d,%d): cell %dx%d, desired %dx%d, horizontal=%d vertical=%d",
-                    i, r, c, rspan, cspan, layout.width, layout.height,
-                    fe->GetDesiredWidth(), fe->GetDesiredHeight(),
-                    static_cast<int>(fe->GetHorizontalAlignment()),
-                    static_cast<int>(fe->GetVerticalAlignment()));
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
+                "[Grid::Measure] Child[%zu] at (%d,%d) span(%d,%d): cell %dx%d, desired %dx%d, horizontal=%d vertical=%d",
+                i, r, c, rspan, cspan, layout.width, layout.height,
+                fe->GetDesiredWidth(), fe->GetDesiredHeight(),
+                static_cast<int>(fe->GetHorizontalAlignment()),
+                static_cast<int>(fe->GetVerticalAlignment()));
         }
 
         int totalW = 0, totalH = 0;
@@ -291,14 +291,15 @@ namespace NeoWPF::UI {
             totalH += (isStar && r < metrics.autoRowHeights.size()) ? metrics.autoRowHeights[r] : metrics.rowHeights[r];
         }
         SetDesiredSize(totalW, totalH);
-        if (GridLayout::s_gridLogging) NeoWPF::Diagnostics::LogInfo("[Grid::Measure] Final desired size: %dx%d", totalW, totalH);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
+            "[Grid::Measure] Final desired size: %dx%d", totalW, totalH);
     }
 
     void Grid::Arrange(int finalWidth, int finalHeight)
     {
         FrameworkElement::Arrange(finalWidth, finalHeight);
-        if (GridLayout::s_gridLogging)
-            NeoWPF::Diagnostics::LogInfo("[Grid::Arrange] Final size: %dx%d", finalWidth, finalHeight);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
+            "[Grid::Arrange] Final size: %dx%d", finalWidth, finalHeight);
 
         const auto effectiveRowDefs = GridLayout::ResolveDefinitions(m_rowDefs);
         const auto effectiveColDefs = GridLayout::ResolveDefinitions(m_colDefs);
@@ -423,12 +424,10 @@ namespace NeoWPF::UI {
                 fe->SetLayoutOffset(targetX, targetY);
             }
 
-            if (GridLayout::s_gridLogging) {
-                NeoWPF::Diagnostics::LogInfo(
-                    "[Grid::Arrange] Child[%zu] at (%d,%d): pos(%d,%d -> %d,%d) size(%dx%d) [cell %dx%d] desired=%dx%d",
-                    i, r, c, currentX, currentY, targetX, targetY, alignedW, alignedH, w, h,
-                    desiredW, desiredH);
-            }
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
+                "[Grid::Arrange] Child[%zu] at (%d,%d): pos(%d,%d -> %d,%d) size(%dx%d) [cell %dx%d] desired=%dx%d",
+                i, r, c, currentX, currentY, targetX, targetY, alignedW, alignedH, w, h,
+                desiredW, desiredH);
         }
     }
 

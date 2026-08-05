@@ -33,4 +33,4 @@ public:
     );
 };
 
-} // namespace NeoWPF::UI
+}
