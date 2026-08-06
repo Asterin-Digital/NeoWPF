@@ -84,6 +84,7 @@ void StackPanel::Measure(int availableWidth, int availableHeight)
     }
 
     std::vector<Visual*> seenChildren;
+    bool firstChild = true;
     for (auto child : GetVisualChildren()) {
         if (!child) {
             continue;
@@ -113,6 +114,13 @@ void StackPanel::Measure(int availableWidth, int availableHeight)
             const int resolvedW = std::max(0, fe->ResolveWidth(childAvailableWidth, childDesiredW) + margin.Horizontal());
             const int resolvedH = std::max(0, fe->ResolveHeight(childAvailableHeight, childDesiredH) + margin.Vertical());
             fe->SetDesiredSize(std::max(0, fe->ResolveWidth(childAvailableWidth, childDesiredW)), std::max(0, fe->ResolveHeight(childAvailableHeight, childDesiredH)));
+            if (!firstChild) {
+                if (isHorizontal) {
+                    totalMainExtent += m_spacing;
+                } else {
+                    totalMainExtent += m_spacing;
+                }
+            }
             if (isHorizontal) {
                 totalMainExtent += resolvedW;
                 maxCrossExtent = (std::max)(maxCrossExtent, resolvedH);
@@ -120,6 +128,7 @@ void StackPanel::Measure(int availableWidth, int availableHeight)
                 totalMainExtent += resolvedH;
                 maxCrossExtent = (std::max)(maxCrossExtent, resolvedW);
             }
+            firstChild = false;
             if (stackPanelDebugLogging) {
                 NeoWPF::Diagnostics::LogInfo("[StackPanel::Measure] child=%p desired=%dx%d resolved=%dx%d", child, childDesiredW, childDesiredH, resolvedW, resolvedH);
             }
@@ -157,6 +166,7 @@ void StackPanel::Arrange(int finalWidth, int finalHeight)
 
     const bool isHorizontal = m_orientation == Orientation::Horizontal;
     int mainOffset = 0;
+    bool firstChild = true;
     std::vector<Visual*> seenChildren;
     for (auto child : GetVisualChildren()) {
         if (!child) {
@@ -231,7 +241,11 @@ void StackPanel::Arrange(int finalWidth, int finalHeight)
             if (stackPanelDebugLogging) {
                 NeoWPF::Diagnostics::LogInfo("[StackPanel::Arrange] child=%p offset=%d size=%dx%d desired=%dx%d aligned=%dx%d@%d,%d", child, mainOffset, childW, childH, fe->GetDesiredWidth(), fe->GetDesiredHeight(), alignedW, alignedH, alignedX, alignedY);
             }
+            if (!firstChild) {
+                mainOffset += m_spacing;
+            }
             mainOffset += isHorizontal ? childW + margin.Horizontal() : childH + margin.Vertical();
+            firstChild = false;
         }
     }
 }

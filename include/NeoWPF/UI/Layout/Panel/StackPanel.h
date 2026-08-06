@@ -5,6 +5,21 @@
 
 namespace NeoWPF::UI {
 
+/*
+    @summary
+    Arranges child elements in a single line, either horizontally or vertically.
+
+    @details
+    The StackPanel measures and arranges its children one after another along the chosen orientation.
+    Use SetOrientation() to choose horizontal or vertical layout, and SetSpacing() to add spacing between children.
+
+    @example
+    auto stack = std::make_shared<NeoWPF::UI::StackPanel>();
+    stack->SetOrientation(NeoWPF::UI::Orientation::Horizontal);
+    stack->SetSpacing(8);
+    stack->AddChild(child1);
+    stack->AddChild(child2);
+*/
 class StackPanel : public Panel {
 public:
     StackPanel() noexcept {
@@ -16,6 +31,13 @@ public:
     void Arrange(int finalWidth, int finalHeight) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
+    /*
+        @summary
+        Sets the stacking direction for child layout.
+
+        @param orientation
+        Horizontal places children left-to-right and Vertical places them top-to-bottom.
+    */
     void SetOrientation(Orientation orientation) noexcept {
         if (m_orientation != orientation) {
             m_orientation = orientation;
@@ -25,12 +47,39 @@ public:
         }
     }
 
+    /*
+        @summary
+        Returns the current orientation used by the StackPanel.
+    */
     Orientation GetOrientation() const noexcept { return m_orientation; }
+
+    /*
+        @summary
+        Sets the spacing between consecutive children.
+
+        @param spacing
+        Spacing in pixels inserted between rendered children.
+    */
+    void SetSpacing(int spacing) noexcept {
+        if (m_spacing != spacing) {
+            m_spacing = spacing;
+            InvalidateMeasure();
+            InvalidateArrange();
+            InvalidateVisual();
+        }
+    }
+
+    /*
+        @summary
+        Returns the current spacing between children.
+    */
+    int GetSpacing() const noexcept { return m_spacing; }
 
     static bool stackPanelDebugLogging;
 
 private:
     Orientation m_orientation = Orientation::Vertical;
+    int m_spacing = 0;
 };
 
 }
