@@ -12,6 +12,7 @@ void RegisterCoreControlProperties() {
     RegisterScrollBarProperties();
     RegisterTextBlockProperties();
     RegisterTextBoxProperties();
+    RegisterImageProperties();
     RegisterBorderProperties();
     RegisterPanelProperties();
 }

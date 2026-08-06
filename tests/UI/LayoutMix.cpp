@@ -57,7 +57,6 @@ int main()
 
     auto buttonStack = std::make_shared<UI::StackPanel>();
     buttonStack->SetWidth(250);
-    buttonStack->SetHeight(420);
 
     const std::wstring labels[] = {
         L"Primary action",

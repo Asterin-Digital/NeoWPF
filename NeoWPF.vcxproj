@@ -283,6 +283,11 @@
     <ClCompile Include="src\Rendering\D3D11\Shaders\ShaderManager.cpp" />
     <ClCompile Include="src\UI\Core\Element\Visual.cpp" />
     <ClCompile Include="src\UI\Controls\Text\TextBlock.cpp" />
+    <ClCompile Include="src\UI\Controls\Image\Image.cpp" />
+    <ClCompile Include="src\UI\Controls\Image\ImageProperties.cpp" />
+    <ClCompile Include="src\UI\Core\Media\BitmapSource.cpp" />
+    <ClCompile Include="src\UI\Core\Media\BitmapImage.cpp" />
+    <ClCompile Include="src\UI\Core\Media\ImageSource.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxEditing.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\Panel.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\StackPanel.cpp" />

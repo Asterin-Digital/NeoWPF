@@ -432,6 +432,9 @@
     <ClInclude Include="include\NeoWPF\UI\Controls\Text\TextBlock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Controls\Image\Image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="include\NeoWPF\Input\InputManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>

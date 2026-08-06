@@ -42,6 +42,14 @@ namespace NeoWPF {
 
     using UI::TextBox;
 
+    using UI::Image;
+    
+    namespace Media {
+        using ::NeoWPF::UI::Core::Media::BitmapImage;
+        using ::NeoWPF::UI::Core::Media::Stretch;
+        using ::NeoWPF::UI::Core::Media::StretchDirection;
+    }
+
     using UI::Button;
 
     using UI::Checkbox;

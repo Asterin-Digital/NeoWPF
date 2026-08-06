@@ -245,4 +245,16 @@ namespace NeoWPF::UI::Properties {
         std::unordered_map<const DependencyProperty*, std::shared_ptr<::NeoWPF::UI::Data::BindingExpression>> m_bindingExpressions;
     };
 
+    template<typename T>
+    T DependencyObject::GetValue(const DependencyProperty& property) const
+    {
+        return std::any_cast<T>(GetRawValue(property));
+    }
+
+    template<typename T>
+    void DependencyObject::SetValue(const DependencyProperty& property, const T& value)
+    {
+        SetValue(property, std::any(value));
+    }
+
 }

@@ -236,30 +236,6 @@ std::any DependencyObject::GetRawValue(const DependencyProperty& property) const
     return std::any{};
 }
 
-template<typename T>
-T DependencyObject::GetValue(const DependencyProperty& property) const
-{
-    if (property.GetPropertyType() != typeid(T)) {
-        throw std::bad_any_cast();
-    }
-
-    const std::any rawValue = GetRawValue(property);
-    if (rawValue.has_value()) {
-        return std::any_cast<T>(rawValue);
-    }
-
-    return T{};
-}
-
-template<typename T>
-void DependencyObject::SetValue(const DependencyProperty& property, const T& value)
-{
-    if (property.GetPropertyType() != typeid(T)) {
-        throw std::bad_any_cast();
-    }
-    SetValueInternal(property, std::any(value), PropertyValueSource::Local);
-}
-
 void DependencyObject::SetValue(const DependencyProperty& property, const std::any& value)
 {
     SetValueInternal(property, value, PropertyValueSource::Local);

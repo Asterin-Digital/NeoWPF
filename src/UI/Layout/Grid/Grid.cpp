@@ -235,6 +235,8 @@ namespace NeoWPF::UI {
 
         const auto effectiveRowDefs = GridLayout::ResolveDefinitions(m_rowDefs);
         const auto effectiveColDefs = GridLayout::ResolveDefinitions(m_colDefs);
+        const int effectiveNumRows = std::max(1, static_cast<int>(effectiveRowDefs.size()));
+        const int effectiveNumCols = std::max(1, static_cast<int>(effectiveColDefs.size()));
         auto children = GetVisualChildren();
         auto metrics = GridLayout::ComputeMetrics(
             effectiveRowDefs,
@@ -243,8 +245,8 @@ namespace NeoWPF::UI {
             availableHeight,
             children);
 
-        m_autoRowHeights = metrics.autoRowHeights;
-        m_autoColWidths = metrics.autoColWidths;
+        auto refreshedAutoRowHeights = metrics.autoRowHeights;
+        auto refreshedAutoColWidths = metrics.autoColWidths;
 
         for (size_t i = 0; i < children.size(); ++i)
         {
@@ -273,6 +275,15 @@ namespace NeoWPF::UI {
                 fe->Measure(childAvailableWidth, childAvailableHeight);
             }
 
+            if (rspan == 1 && r < effectiveNumRows && effectiveRowDefs[r].mode == SizeMode::Star && r < static_cast<int>(refreshedAutoRowHeights.size())) {
+                const auto margin = fe->GetMargin();
+                refreshedAutoRowHeights[r] = std::max(refreshedAutoRowHeights[r], fe->GetDesiredHeight() + margin.Vertical());
+            }
+            if (cspan == 1 && c < effectiveNumCols && effectiveColDefs[c].mode == SizeMode::Star && c < static_cast<int>(refreshedAutoColWidths.size())) {
+                const auto margin = fe->GetMargin();
+                refreshedAutoColWidths[c] = std::max(refreshedAutoColWidths[c], fe->GetDesiredWidth() + margin.Horizontal());
+            }
+
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
                 "[Grid::Measure] Child[%zu] at (%d,%d) span(%d,%d): cell %dx%d, desired %dx%d, horizontal=%d vertical=%d",
                 i, r, c, rspan, cspan, layout.width, layout.height,
@@ -281,14 +292,17 @@ namespace NeoWPF::UI {
                 static_cast<int>(fe->GetVerticalAlignment()));
         }
 
+        m_autoRowHeights = refreshedAutoRowHeights;
+        m_autoColWidths = refreshedAutoColWidths;
+
         int totalW = 0, totalH = 0;
         for (size_t c = 0; c < metrics.colWidths.size(); ++c) {
             const bool isStar = c < effectiveColDefs.size() && effectiveColDefs[c].mode == SizeMode::Star;
-            totalW += (isStar && c < metrics.autoColWidths.size()) ? metrics.autoColWidths[c] : metrics.colWidths[c];
+            totalW += (isStar && c < refreshedAutoColWidths.size()) ? refreshedAutoColWidths[c] : metrics.colWidths[c];
         }
         for (size_t r = 0; r < metrics.rowHeights.size(); ++r) {
             const bool isStar = r < effectiveRowDefs.size() && effectiveRowDefs[r].mode == SizeMode::Star;
-            totalH += (isStar && r < metrics.autoRowHeights.size()) ? metrics.autoRowHeights[r] : metrics.rowHeights[r];
+            totalH += (isStar && r < refreshedAutoRowHeights.size()) ? refreshedAutoRowHeights[r] : metrics.rowHeights[r];
         }
         SetDesiredSize(totalW, totalH);
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
