@@ -138,28 +138,6 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
     OnDependencyPropertyChanged(property, metadata, oldValue, newValue, source);
 }
 
-void DependencyObject::ClearValue(const DependencyProperty& property)
-{
-    m_localValues.erase(&property);
-    m_styleValues.erase(&property);
-    m_expressionValues.erase(&property);
-}
-
-void DependencyObject::SetValueExpression(const DependencyProperty& property, const std::any& value)
-{
-    SetValueInternal(property, value, PropertyValueSource::Expression);
-}
-
-void DependencyObject::SetBinding(const DependencyProperty& property, const Data::Binding& binding)
-{
-    Data::BindingOperations::SetBinding(*this, property, binding);
-}
-
-void DependencyObject::ClearBinding(const DependencyProperty& property)
-{
-    Data::BindingOperations::ClearBinding(*this, property);
-}
-
 void DependencyObject::SetBindingExpression(const DependencyProperty& property,
                                            std::shared_ptr<::NeoWPF::UI::Data::BindingExpression> expression)
 {
@@ -284,6 +262,93 @@ void DependencyObject::SetValue(const DependencyProperty& property, const T& val
 void DependencyObject::SetValue(const DependencyProperty& property, const std::any& value)
 {
     SetValueInternal(property, value, PropertyValueSource::Local);
+}
+
+void DependencyObject::SetValue(const DependencyProperty* property, const std::any& value)
+{
+    if (!property) {
+        return;
+    }
+    SetValueInternal(*property, value, PropertyValueSource::Local);
+}
+
+void DependencyObject::SetValueExpression(const DependencyProperty& property, const std::any& value)
+{
+    SetValueInternal(property, value, PropertyValueSource::Expression);
+}
+
+void DependencyObject::SetValueExpression(const DependencyProperty* property, const std::any& value)
+{
+    if (!property) {
+        return;
+    }
+    SetValueInternal(*property, value, PropertyValueSource::Expression);
+}
+
+void DependencyObject::SetBinding(const DependencyProperty& property, const Data::Binding& binding)
+{
+    Data::BindingOperations::SetBinding(*this, property, binding);
+}
+
+void DependencyObject::SetBinding(const DependencyProperty* property, const Data::Binding& binding)
+{
+    if (!property) {
+        return;
+    }
+    Data::BindingOperations::SetBinding(*this, *property, binding);
+}
+
+void DependencyObject::ClearBinding(const DependencyProperty& property)
+{
+    Data::BindingOperations::ClearBinding(*this, property);
+}
+
+void DependencyObject::ClearBinding(const DependencyProperty* property)
+{
+    if (!property) {
+        return;
+    }
+    Data::BindingOperations::ClearBinding(*this, *property);
+}
+
+void DependencyObject::ClearValue(const DependencyProperty& property)
+{
+    m_localValues.erase(&property);
+    m_styleValues.erase(&property);
+    m_expressionValues.erase(&property);
+}
+
+void DependencyObject::ClearValue(const DependencyProperty* property)
+{
+    if (!property) {
+        return;
+    }
+    ClearValue(*property);
+}
+
+const std::any& DependencyObject::ReadLocalValue(const DependencyProperty* property) const
+{
+    static const std::any empty;
+    if (!property) {
+        return empty;
+    }
+    return ReadLocalValue(*property);
+}
+
+PropertyValueSource DependencyObject::GetValueSource(const DependencyProperty* property) const
+{
+    if (!property) {
+        return PropertyValueSource::Default;
+    }
+    return GetValueSource(*property);
+}
+
+std::any DependencyObject::GetRawValue(const DependencyProperty* property) const
+{
+    if (!property) {
+        return std::any{};
+    }
+    return GetRawValue(*property);
 }
 
 

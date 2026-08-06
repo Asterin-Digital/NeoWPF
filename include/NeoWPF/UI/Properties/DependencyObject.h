@@ -76,6 +76,7 @@ namespace NeoWPF::UI::Properties {
             The value to store for the property.
         */
         void SetValue(const DependencyProperty& property, const std::any& value);
+        void SetValue(const DependencyProperty* property, const std::any& value);
 
         /*
             @summary
@@ -88,18 +89,21 @@ namespace NeoWPF::UI::Properties {
             The binding expression or expression payload to assign.
         */
         void SetValueExpression(const DependencyProperty& property, const std::any& value);
+        void SetValueExpression(const DependencyProperty* property, const std::any& value);
 
         /*
             @summary
             Attaches a binding to a dependency property using the common target-side convenience API.
         */
         void SetBinding(const DependencyProperty& property, const Data::Binding& binding);
+        void SetBinding(const DependencyProperty* property, const Data::Binding& binding);
 
         /*
             @summary
             Clears any binding currently attached to a dependency property.
         */
         void ClearBinding(const DependencyProperty& property);
+        void ClearBinding(const DependencyProperty* property);
 
         /*
             @summary
@@ -109,6 +113,7 @@ namespace NeoWPF::UI::Properties {
             The dependency property whose local value should be removed.
         */
         void ClearValue(const DependencyProperty& property);
+        void ClearValue(const DependencyProperty* property);
 
         /*
             @summary
@@ -121,6 +126,7 @@ namespace NeoWPF::UI::Properties {
             The local value stored for the property, if any.
         */
         const std::any& ReadLocalValue(const DependencyProperty& property) const;
+        const std::any& ReadLocalValue(const DependencyProperty* property) const;
 
         /*
             @summary
@@ -133,6 +139,7 @@ namespace NeoWPF::UI::Properties {
             The precedence source for the property value.
         */
         PropertyValueSource GetValueSource(const DependencyProperty& property) const;
+        PropertyValueSource GetValueSource(const DependencyProperty* property) const;
 
         /*
             @summary
@@ -145,6 +152,7 @@ namespace NeoWPF::UI::Properties {
             The current raw value for the property.
         */
         std::any GetRawValue(const DependencyProperty& property) const;
+        std::any GetRawValue(const DependencyProperty* property) const;
 
     protected:
         /*
@@ -232,9 +240,9 @@ namespace NeoWPF::UI::Properties {
         std::unordered_map<const DependencyProperty*, std::any> m_expressionValues;
         std::unordered_map<const DependencyProperty*, std::any> m_localValues;
         std::unordered_map<const DependencyProperty*, std::any> m_styleValues;
+        std::unordered_map<const DependencyProperty*, std::unordered_map<std::size_t, std::function<void(const std::any&, const std::any&)>>> m_dependencyPropertyChangedHandlers;
+        std::size_t m_nextDependencyPropertyChangedHandlerId = 1;
         std::unordered_map<const DependencyProperty*, std::shared_ptr<::NeoWPF::UI::Data::BindingExpression>> m_bindingExpressions;
-    std::unordered_map<const DependencyProperty*, std::unordered_map<std::size_t, std::function<void(const std::any&, const std::any&)>>> m_dependencyPropertyChangedHandlers;
-    std::size_t m_nextDependencyPropertyChangedHandlerId = 1;
     };
 
 }

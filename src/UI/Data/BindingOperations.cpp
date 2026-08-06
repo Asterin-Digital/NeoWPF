@@ -13,6 +13,16 @@ std::shared_ptr<BindingExpression> BindingOperations::SetBinding(Properties::Dep
     return expression;
 }
 
+std::shared_ptr<BindingExpression> BindingOperations::SetBinding(Properties::DependencyObject& target,
+                                                                 const Properties::DependencyProperty* property,
+                                                                 const Binding& binding)
+{
+    if (!property) {
+        return nullptr;
+    }
+    return SetBinding(target, *property, binding);
+}
+
 void BindingOperations::ClearBinding(Properties::DependencyObject& target,
                                      const Properties::DependencyProperty& property)
 {
@@ -22,10 +32,28 @@ void BindingOperations::ClearBinding(Properties::DependencyObject& target,
     target.ClearBindingExpression(property);
 }
 
+void BindingOperations::ClearBinding(Properties::DependencyObject& target,
+                                     const Properties::DependencyProperty* property)
+{
+    if (!property) {
+        return;
+    }
+    ClearBinding(target, *property);
+}
+
 std::shared_ptr<BindingExpression> BindingOperations::GetBindingExpression(const Properties::DependencyObject& target,
                                                                           const Properties::DependencyProperty& property)
 {
     return target.GetBindingExpression(property);
+}
+
+std::shared_ptr<BindingExpression> BindingOperations::GetBindingExpression(const Properties::DependencyObject& target,
+                                                                          const Properties::DependencyProperty* property)
+{
+    if (!property) {
+        return nullptr;
+    }
+    return GetBindingExpression(target, *property);
 }
 
 }

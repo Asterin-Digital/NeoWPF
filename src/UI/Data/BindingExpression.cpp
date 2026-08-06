@@ -315,7 +315,13 @@ void BindingExpression::Attach()
 
 void BindingExpression::Detach()
 {
+    if (m_isDetaching) {
+        return;
+    }
+
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Detach target=%p path=%s", &m_target, m_binding.GetPath().c_str());
+    m_isDetaching = true;
+
     if (m_source && m_sourceProperty && m_sourceChangeHandlerId != 0) {
         m_source->RemoveDependencyPropertyChangedHandler(*m_sourceProperty, m_sourceChangeHandlerId);
         m_sourceChangeHandlerId = 0;
@@ -328,6 +334,7 @@ void BindingExpression::Detach()
     m_source.reset();
     m_sourcePoco.reset();
     m_sourceProperty = nullptr;
+    m_isDetaching = false;
 }
 
 void BindingExpression::Refresh()

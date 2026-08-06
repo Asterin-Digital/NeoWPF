@@ -35,6 +35,22 @@ Checkbox::~Checkbox()
 {
 }
 
+void Checkbox::SetChecked(bool value) noexcept
+{
+    if (IsApplyingPropertyValue()) {
+        ToggleBase::SetChecked(value);
+        return;
+    }
+
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("IsChecked", *this);
+    if (property) {
+        SetValue(*property, value);
+        return;
+    }
+
+    ToggleBase::SetChecked(value);
+}
+
 void Checkbox::SetText(const std::wstring& text)
 {
     if (IsApplyingPropertyValue()) { m_text = text; if (m_textContent) { m_textContent->SetText(text); } InvalidateVisual(); return; }

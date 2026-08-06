@@ -22,7 +22,7 @@ public:
     bool IsInteractable() const noexcept override { return IsEnabled(); }
 
     bool IsChecked() const noexcept { return m_isChecked; }
-    void SetChecked(bool value) noexcept;
+    virtual void SetChecked(bool value) noexcept;
     void Toggle() noexcept;
 
     void SetContentText(const std::wstring& text);

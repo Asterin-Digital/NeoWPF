@@ -42,6 +42,15 @@ public:
 
     /*
         @summary
+        Sets the checked state of the checkbox.
+
+        @param value
+        True when checked, false when unchecked.
+    */
+    void SetChecked(bool value) noexcept override;
+
+    /*
+        @summary
         Returns the checkbox label text.
     */
     const std::wstring& GetText() const noexcept { return m_text; }

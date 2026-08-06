@@ -17,12 +17,19 @@ public:
     static std::shared_ptr<BindingExpression> SetBinding(Properties::DependencyObject& target,
                                                          const Properties::DependencyProperty& property,
                                                          const Binding& binding);
+    static std::shared_ptr<BindingExpression> SetBinding(Properties::DependencyObject& target,
+                                                         const Properties::DependencyProperty* property,
+                                                         const Binding& binding);
 
     static void ClearBinding(Properties::DependencyObject& target,
                              const Properties::DependencyProperty& property);
+    static void ClearBinding(Properties::DependencyObject& target,
+                             const Properties::DependencyProperty* property);
 
     static std::shared_ptr<BindingExpression> GetBindingExpression(const Properties::DependencyObject& target,
                                                                   const Properties::DependencyProperty& property);
+    static std::shared_ptr<BindingExpression> GetBindingExpression(const Properties::DependencyObject& target,
+                                                                  const Properties::DependencyProperty* property);
 };
 
 }

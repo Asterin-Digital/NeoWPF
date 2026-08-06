@@ -56,5 +56,14 @@ namespace NeoWPF::UI::Properties {
             &UI::Checkbox::GetFontSize,
             &UI::Checkbox::SetFontSize,
             fontSizeMetadata);
+
+        PropertyMetadata isCheckedMetadata;
+        isCheckedMetadata.DefaultValue = std::any(false);
+        isCheckedMetadata.Flags = PropertyFlags::None;
+        RegisterProperty<UI::Checkbox, bool>(
+            "IsChecked",
+            &UI::Checkbox::IsChecked,
+            &UI::Checkbox::SetChecked,
+            isCheckedMetadata);
     }
 }
