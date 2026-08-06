@@ -12,6 +12,8 @@ namespace D3D11 {
     void Present();
     uint32_t CreateTexture(unsigned int w, unsigned int h, const void* rgbaData);
     void DestroyTexture(uint32_t id);
+    void ClearTextures();
+    bool IsInitialized();
 }
 }
 
@@ -53,4 +55,14 @@ uint32_t NeoWPF::Rendering::Renderer_CreateTexture(unsigned int w, unsigned int 
 void NeoWPF::Rendering::Renderer_DestroyTexture(uint32_t id)
 {
     D3D11::DestroyTexture(id);
+}
+
+void NeoWPF::Rendering::Renderer_ClearTextures()
+{
+    D3D11::ClearTextures();
+}
+
+bool NeoWPF::Rendering::Renderer_IsInitialized()
+{
+    return D3D11::IsInitialized();
 }

@@ -13,6 +13,7 @@ namespace {
 bool g_suppressDeveloperWarnings = false;
 bool g_isBuildingWarningOverlay = false;
 bool g_hasQueuedDeveloperWarning = false;
+std::optional<DeveloperWarningMessage> g_lastDeveloperWarning;
 
 struct OverlayBuildResult {
     std::shared_ptr<NeoWPF::UI::Panel> panel;
@@ -135,8 +136,14 @@ void QueueDeveloperWarning(const std::wstring& title, const std::wstring& messag
     }
 
     g_hasQueuedDeveloperWarning = true;
+    g_lastDeveloperWarning = DeveloperWarningMessage{title, message, severity};
     auto& appState = NeoWPF::Core::GetAppState();
     appState.pendingDeveloperMessages.push_back({title, message, severity});
+}
+
+std::optional<DeveloperWarningMessage> GetLastWarning() noexcept
+{
+    return g_lastDeveloperWarning;
 }
 
 void ClearDeveloperWarnings()

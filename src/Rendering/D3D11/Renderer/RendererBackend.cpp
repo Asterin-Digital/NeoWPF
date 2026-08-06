@@ -31,6 +31,8 @@ namespace NeoWPF::Rendering::D3D11 {
     HRESULT CreateSwapChainForWindow(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain);
     void InitializeCommonResources();
     ComPtr<ID3D11ShaderResourceView> GetTextureShaderResourceView(uint32_t id);
+    void ClearTextures();
+    bool IsInitialized();
 }
 
 namespace NeoWPF::Rendering::D3D11 {
@@ -43,6 +45,7 @@ void Initialize(HWND hwnd)
 void Shutdown()
 {
     ShutdownRendererWindowing();
+    ClearTextures();
     g_context.Reset();
     g_device.Reset();
     g_vs.Reset();
@@ -54,6 +57,11 @@ void Shutdown()
     g_samplerState.Reset();
     g_vertexBuffer.Reset();
     g_constantBuffer.Reset();
+}
+
+bool IsInitialized()
+{
+    return static_cast<bool>(g_device);
 }
 
 void Resize(unsigned int w, unsigned int h)

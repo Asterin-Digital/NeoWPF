@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Data/BindingExpression.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
@@ -280,6 +281,10 @@ void DependencyObject::SetValueExpression(const DependencyProperty& property, co
 void DependencyObject::SetValueExpression(const DependencyProperty* property, const std::any& value)
 {
     if (!property) {
+        const std::wstring title = std::wstring(NeoWPF::Diagnostics::DeveloperWarnings::kInvalidDependencyPropertyCode) + L": invalid dependency property used for expression value";
+        NeoWPF::Diagnostics::QueueDeveloperWarning(title,
+            L"SetValueExpression was called with an invalid or unregistered DependencyProperty. Check that the target property exists and is registered before applying expression values.",
+            NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
         return;
     }
     SetValueInternal(*property, value, PropertyValueSource::Expression);
@@ -293,6 +298,10 @@ void DependencyObject::SetBinding(const DependencyProperty& property, const Data
 void DependencyObject::SetBinding(const DependencyProperty* property, const Data::Binding& binding)
 {
     if (!property) {
+        const std::wstring title = std::wstring(NeoWPF::Diagnostics::DeveloperWarnings::kInvalidDependencyPropertyCode) + L": invalid dependency property used for binding";
+        NeoWPF::Diagnostics::QueueDeveloperWarning(title,
+            L"SetBinding was called with an invalid or unregistered DependencyProperty. Verify that the bound property exists and is registered for the target.",
+            NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
         return;
     }
     Data::BindingOperations::SetBinding(*this, *property, binding);

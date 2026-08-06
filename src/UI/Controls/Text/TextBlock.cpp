@@ -67,7 +67,9 @@ TextBlock::TextBlock(const std::wstring& text) : TextBlock()
 TextBlock::~TextBlock()
 {
     if (m_textureId != 0) {
-        NeoWPF::Rendering::Renderer_DestroyTexture(m_textureId);
+        if (NeoWPF::Rendering::Renderer_IsInitialized()) {
+            NeoWPF::Rendering::Renderer_DestroyTexture(m_textureId);
+        }
         m_textureId = 0;
     }
 }

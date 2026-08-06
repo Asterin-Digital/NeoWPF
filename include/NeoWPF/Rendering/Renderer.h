@@ -264,4 +264,20 @@ uint32_t Renderer_CreateTexture(unsigned int w, unsigned int h, const void* rgba
 */
 void Renderer_DestroyTexture(uint32_t id);
 
+/*
+    @summary
+    Clears all renderer-managed textures immediately.
+
+    @internal
+*/
+void Renderer_ClearTextures();
+
+/*
+    @summary
+    Returns true when the renderer and its device are initialized.
+
+    @internal
+*/
+bool Renderer_IsInitialized();
+
 }

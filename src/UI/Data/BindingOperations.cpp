@@ -1,3 +1,4 @@
+#include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
 #include <NeoWPF/UI/Data/BindingExpression.h>
 
@@ -18,6 +19,10 @@ std::shared_ptr<BindingExpression> BindingOperations::SetBinding(Properties::Dep
                                                                  const Binding& binding)
 {
     if (!property) {
+        const std::wstring title = std::wstring(NeoWPF::Diagnostics::DeveloperWarnings::kInvalidDependencyPropertyCode) + L": invalid dependency property used for binding";
+        NeoWPF::Diagnostics::QueueDeveloperWarning(title,
+            L"SetBinding was called with an invalid or unregistered DependencyProperty. Verify that the bound property exists and is registered for the target.",
+            NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
         return nullptr;
     }
     return SetBinding(target, *property, binding);

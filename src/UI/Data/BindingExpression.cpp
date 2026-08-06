@@ -2,6 +2,7 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Data/INotifyPropertyChanged.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
+#include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <typeinfo>
 #include <vector>
@@ -255,6 +256,10 @@ void BindingExpression::Attach()
         m_sourceProperty = Properties::DependencyPropertyRegistry::Get().FindProperty(m_binding.GetPath(), *m_source);
         if (!m_sourceProperty) {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Source property '%s' not found on source %p", m_binding.GetPath().c_str(), m_source.get());
+            const std::wstring title = std::wstring(NeoWPF::Diagnostics::DeveloperWarnings::kInvalidDependencyPropertyCode) + L": invalid dependency property used in binding";
+            NeoWPF::Diagnostics::QueueDeveloperWarning(title,
+                std::wstring(L"Binding path '") + std::wstring(m_binding.GetPath().begin(), m_binding.GetPath().end()) + L"' could not be resolved on the source object. Verify the source property name and type.",
+                NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
             return;
         }
 
