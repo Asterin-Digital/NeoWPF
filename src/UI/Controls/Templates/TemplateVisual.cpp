@@ -11,8 +11,7 @@
 
 namespace NeoWPF::UI::Templates {
 
-// Note: if you are experiencing issues related stroke for controls getting cut off on the right
-// or left please check the stroke and how many pixels the border is in here before going deeper
+// Note: if you are experiencing issues related to stroke getting cut off on the right make sure the border is at least 2px
 
 TemplateVisual::TemplateVisual(const std::string& name)
     : m_name(name)

@@ -554,11 +554,12 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         textOffsetX,
         textOffsetY);
 
-    int currentY = textOffsetY - m_verticalScrollBar->GetValue();
+    int currentY = textOffsetY;
     if (!m_verticalScrollBar || !m_horizontalScrollBar) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] BuildRenderCommands: missing scrollbar instances");
         return;
     }
+    currentY -= m_verticalScrollBar->GetValue();
     const auto& lines = m_textLayout.GetLines();
     for (std::size_t lineIndex = 0; lineIndex < lines.size(); ++lineIndex) {
         const auto& line = lines[lineIndex];
@@ -574,12 +575,15 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const float uvBottom = drawHeight > 0 ? static_cast<float>(drawHeight) / static_cast<float>(std::max(1, line.height > 0 ? line.height : lineHeight)) : 1.0f;
         const int lineVerticalOffset = GetLineVisualOffset(lineIndex);
         const int lineOffsetX = GetLineHorizontalAlignmentOffset(line.width, viewportWidth, m_textHorizontalAlignment);
+        const int textureY = contentY + currentY + lineVerticalOffset;
 
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] BuildRenderCommands: line=%zu width=%d height=%d drawWidth=%d drawHeight=%d uvRight=%.3f uvBottom=%.3f offsetX=%d", lineIndex, line.width, line.height, drawWidth, drawHeight, uvRight, uvBottom, lineOffsetX);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] BuildRenderCommands: bitmap texture Y=%d for line=%zu textureId=%u lineHeight=%d lineVerticalOffset=%d currentY=%d contentY=%d", textureY, lineIndex, static_cast<unsigned int>(line.textureId), lineHeight, lineVerticalOffset, currentY, contentY);
 
+        const int horizontalOffset = m_scroll.showHorizontal ? m_horizontalScrollBar->GetValue() : 0;
         commands.DrawTexturedQuad(
-            static_cast<float>(contentX - m_horizontalScrollBar->GetValue() + lineOffsetX),
-            static_cast<float>(contentY + currentY + lineVerticalOffset),
+            static_cast<float>(contentX - horizontalOffset + lineOffsetX),
+            static_cast<float>(textureY),
             static_cast<float>(drawWidth),
             static_cast<float>(drawHeight),
             0.0f, 0.0f,
@@ -608,9 +612,11 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] BuildRenderCommands: caretPosition=%zu rawCaretX=%d clampedCaretX=%d caretY=%d caretVerticalOffset=%d visibleTextWidth=%d", m_caret.position, rawCaretX, caretX, caretY, caretVerticalOffset, viewportWidth);
 
         const uint32_t caretTextureId = GetCaretTextureId();
+        const int horizontalOffset = m_scroll.showHorizontal ? m_horizontalScrollBar->GetValue() : 0;
+        const int verticalOffset = m_scroll.showVertical ? m_verticalScrollBar->GetValue() : 0;
         commands.DrawTexturedQuad(
-            static_cast<float>(contentX + caretX - m_horizontalScrollBar->GetValue()),
-            static_cast<float>(contentY + caretY + caretVerticalOffset - m_verticalScrollBar->GetValue()),
+            static_cast<float>(contentX + caretX - horizontalOffset),
+            static_cast<float>(contentY + caretY + caretVerticalOffset - verticalOffset),
             1.0f,
             static_cast<float>(caretHeight),
             0.0f, 0.0f,

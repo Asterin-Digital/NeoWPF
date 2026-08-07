@@ -54,13 +54,34 @@ void TextBox::UpdateScrollMetrics()
     m_scroll.viewportWidth = viewportWidth;
     m_scroll.viewportHeight = viewportHeight;
     m_scroll.showVertical = showVerticalScrollbar && supportsVerticalScroll && contentHeight > m_scroll.viewportHeight;
-    m_scroll.showHorizontal = showHorizontalScrollbar && contentWidth > m_scroll.viewportWidth;
+    m_scroll.showHorizontal = showHorizontalScrollbar && supportsHorizontalScroll && contentWidth > m_scroll.viewportWidth;
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: final viewport=(%d,%d) showH=%d showV=%d content=(%d,%d)", m_scroll.viewportWidth, m_scroll.viewportHeight, m_scroll.showHorizontal ? 1 : 0, m_scroll.showVertical ? 1 : 0, contentWidth, contentHeight);
 
-    m_verticalScrollBar->SetContentSize(contentHeight);
-    m_verticalScrollBar->SetViewportSize(m_scroll.viewportHeight);
-    m_horizontalScrollBar->SetContentSize(contentWidth);
-    m_horizontalScrollBar->SetViewportSize(m_scroll.viewportWidth);
+    if (supportsVerticalScroll) {
+        m_verticalScrollBar->SetContentSize(contentHeight);
+        m_verticalScrollBar->SetViewportSize(m_scroll.viewportHeight);
+        m_scroll.showVertical = m_scroll.showVertical && m_verticalScrollBar->GetScrollRange() > 0;
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: vertical range=%d final showV=%d", m_verticalScrollBar->GetScrollRange(), m_scroll.showVertical ? 1 : 0);
+    }
+    else {
+        m_verticalScrollBar->SetContentSize(0);
+        m_verticalScrollBar->SetViewportSize(0);
+        m_verticalScrollBar->SetValue(0);
+        m_scroll.showVertical = false;
+    }
+
+    if (supportsHorizontalScroll) {
+        m_horizontalScrollBar->SetContentSize(contentWidth);
+        m_horizontalScrollBar->SetViewportSize(m_scroll.viewportWidth);
+        m_scroll.showHorizontal = m_scroll.showHorizontal && m_horizontalScrollBar->GetScrollRange() > 0;
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: horizontal range=%d final showH=%d", m_horizontalScrollBar->GetScrollRange(), m_scroll.showHorizontal ? 1 : 0);
+    }
+    else {
+        m_horizontalScrollBar->SetContentSize(0);
+        m_horizontalScrollBar->SetViewportSize(0);
+        m_horizontalScrollBar->SetValue(0);
+        m_scroll.showHorizontal = false;
+    }
 
     ClampScrollOffsets();
 }
@@ -90,20 +111,30 @@ void TextBox::EnsureCaretVisible()
     const int caretY = std::max(0, m_textLayout.GetCaretY(m_caret.position));
     const int viewportHeight = std::max(0, GetViewportHeight());
     const int caretHeight = std::max(1, GetCaretHeight());
-    if (caretY < m_verticalScrollBar->GetValue()) {
-        m_verticalScrollBar->SetValue(caretY);
+    if (m_scroll.showVertical) {
+        if (caretY < m_verticalScrollBar->GetValue()) {
+            m_verticalScrollBar->SetValue(caretY);
+        }
+        else if (caretY + caretHeight > m_verticalScrollBar->GetValue() + viewportHeight) {
+            m_verticalScrollBar->SetValue(std::max(0, caretY + caretHeight - viewportHeight));
+        }
     }
-    else if (caretY + caretHeight > m_verticalScrollBar->GetValue() + viewportHeight) {
-        m_verticalScrollBar->SetValue(std::max(0, caretY + caretHeight - viewportHeight));
+    else {
+        m_verticalScrollBar->SetValue(0);
     }
 
     const int caretX = std::max(0, GetCaretX());
     const int viewportWidth = std::max(0, GetViewportWidth());
-    if (caretX < m_horizontalScrollBar->GetValue()) {
-        m_horizontalScrollBar->SetValue(caretX);
+    if (m_scroll.showHorizontal) {
+        if (caretX < m_horizontalScrollBar->GetValue()) {
+            m_horizontalScrollBar->SetValue(caretX);
+        }
+        else if (caretX > m_horizontalScrollBar->GetValue() + viewportWidth) {
+            m_horizontalScrollBar->SetValue(std::max(0, caretX - viewportWidth + 8));
+        }
     }
-    else if (caretX > m_horizontalScrollBar->GetValue() + viewportWidth) {
-        m_horizontalScrollBar->SetValue(std::max(0, caretX - viewportWidth + 8));
+    else {
+        m_horizontalScrollBar->SetValue(0);
     }
 
     ClampScrollOffsets();
