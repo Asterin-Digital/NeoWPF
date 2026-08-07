@@ -124,6 +124,8 @@ void TextLayout::Rebuild(const std::wstring& text, int fontSize, const std::wstr
     m_lines.reserve(std::max(lines.size() * 2, static_cast<std::size_t>(1)));
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] TextLayout::Rebuild: textLength=%zu fontSize=%d available=(%d,%d) wrapping=%d logicalLines=%zu",
         text.size(), fontSize, availableWidth, availableHeight, static_cast<int>(textWrapping), lines.size());
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] TextLayout::Rebuild: availableWidth=%d availableHeight=%d textLength=%zu fontSize=%d wrapping=%d",
+        availableWidth, availableHeight, text.size(), fontSize, static_cast<int>(textWrapping));
 
     for (std::size_t logicalLineIndex = 0; logicalLineIndex < lines.size(); ++logicalLineIndex) {
         const auto& logicalLine = lines[logicalLineIndex];
@@ -147,6 +149,10 @@ void TextLayout::Rebuild(const std::wstring& text, int fontSize, const std::wstr
                 m_contentWidth = std::max(m_contentWidth, lineMetrics.width);
             }
 
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info,
+                "[TextBox] TextLayout::Rebuild: line textLength=%zu measuredWidth=%d measuredHeight=%d renderedHeight=%d availableWidth=%d availableHeight=%d",
+                wrappedLine.text.size(), lineMetrics.width, lineMetrics.height, renderedHeight, availableWidth, availableHeight);
+
             m_lines.push_back({wrappedLine.text, 0, lineMetrics.width, lineMetrics.height, renderedHeight, wrappedLine.startOffset, wrappedLine.endOffset});
         }
     }
@@ -168,6 +174,9 @@ void TextLayout::UploadTextures() {
 
         const int lineWidthConstraint = m_textWrapping != TextWrapping::NoWrap ? std::max(1, m_availableWidth) : 0;
         auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(line.text, m_fontSize, lineWidthConstraint, 0, m_fontFamily, line.width, line.height);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info,
+            "[TextBox] TextLayout::UploadTextures: availableWidth=%d availableHeight=%d textureWidth=%d textureHeight=%d textLength=%zu textureBitmapBytes=%zu",
+            m_availableWidth, m_availableHeight, line.width, line.height, line.text.size(), bitmap.size());
         if (!bitmap.empty() && line.width > 0 && line.height > 0) {
             line.textureId = NeoWPF::Rendering::Renderer_CreateTexture(static_cast<unsigned int>(line.width), static_cast<unsigned int>(line.height), bitmap.data());
         }

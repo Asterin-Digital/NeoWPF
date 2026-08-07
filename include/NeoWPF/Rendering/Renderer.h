@@ -168,6 +168,9 @@ struct CommandList {
         @param clip
         The clipping rectangle to constrain the draw.
 
+       @note
+       Always submit the full quad. The renderer takes care of clipping and UV remapping.
+
         @internal
     */
     void DrawTexturedQuad(float x, float y, float w, float h, float u0, float v0, float u1, float v1, uint32_t tex, uint32_t tintColor, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f) { texturedQuads.push_back({x,y,w,h,u0,v0,u1,v1,tex,tintColor,opacity,clip,rotationRadians}); }

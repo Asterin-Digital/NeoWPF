@@ -531,8 +531,8 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     m_scroll.contentHostHeight = contentHostHeight;
 
     const int scrollbarThickness = 6;
-    const int viewportWidth = std::max(0, m_scroll.contentHostWidth);
-    const int viewportHeight = std::max(0, m_scroll.contentHostHeight);
+    const int viewportWidth = std::max(0, m_scroll.viewportWidth);
+    const int viewportHeight = std::max(0, m_scroll.viewportHeight);
     const int contentX = contentHostX;
     const int contentY = contentHostY;
     const auto clip = NeoWPF::Rendering::ClipRect{ static_cast<float>(contentX), static_cast<float>(contentY), static_cast<float>(viewportWidth), static_cast<float>(viewportHeight), true };
@@ -569,8 +569,8 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             continue;
         }
 
-        const int drawWidth = std::min(line.width, viewportWidth);
-        const float uvRight = drawWidth > 0 ? static_cast<float>(drawWidth) / static_cast<float>(line.width) : 1.0f;
+        const int drawWidth = line.width;
+        const float uvRight = 1.0f;
         const int drawHeight = std::max(1, line.height > 0 ? line.height : lineHeight);
         const float uvBottom = drawHeight > 0 ? static_cast<float>(drawHeight) / static_cast<float>(std::max(1, line.height > 0 ? line.height : lineHeight)) : 1.0f;
         const int lineVerticalOffset = GetLineVisualOffset(lineIndex);
@@ -581,6 +581,13 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] BuildRenderCommands: bitmap texture Y=%d for line=%zu textureId=%u lineHeight=%d lineVerticalOffset=%d currentY=%d contentY=%d", textureY, lineIndex, static_cast<unsigned int>(line.textureId), lineHeight, lineVerticalOffset, currentY, contentY);
 
         const int horizontalOffset = m_scroll.showHorizontal ? m_horizontalScrollBar->GetValue() : 0;
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info,
+            "[TextBox] BuildRenderCommands: line=%zu textureWidth=%d textureHeight=%d viewportWidth=%d viewportHeight=%d lineOffsetX=%d horizontalOffset=%d drawWidth=%d drawHeight=%d contentX=%d contentY=%d textureX=%d textureY=%d",
+            lineIndex, line.width, line.height, viewportWidth, viewportHeight, lineOffsetX, horizontalOffset, drawWidth, drawHeight, contentX, contentY,
+            contentX - horizontalOffset + lineOffsetX, textureY);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info,
+            "[TextBox] BuildRenderCommands: u0=%.3f u1=%.3f textureX=%f horizontalOffset=%f",
+            0.0f, uvRight, static_cast<float>(contentX - horizontalOffset + lineOffsetX), static_cast<float>(horizontalOffset));
         commands.DrawTexturedQuad(
             static_cast<float>(contentX - horizontalOffset + lineOffsetX),
             static_cast<float>(textureY),
@@ -592,6 +599,11 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             GetTextColor().ToArgb(),
             GetOpacity(),
             clip);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info,
+            "[TextBox] BuildRenderCommands: clip contract: clipX=%d clipY=%d clipW=%d clipH=%d drawX=%d drawY=%d drawW=%d drawH=%d lineTextureId=%u",
+            contentX, contentY, viewportWidth, viewportHeight,
+            contentX - horizontalOffset + lineOffsetX, textureY, drawWidth, drawHeight,
+            static_cast<unsigned int>(line.textureId));
 
         currentY += lineHeight;
     }

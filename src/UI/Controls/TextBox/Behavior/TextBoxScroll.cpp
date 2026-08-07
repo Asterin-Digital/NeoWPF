@@ -27,7 +27,6 @@ void TextBox::UpdateScrollMetrics()
     const int scrollbarThickness = 6;
     const bool supportsVerticalScroll = m_acceptsReturn || m_textWrapping != TextWrapping::NoWrap;
     const bool supportsHorizontalScroll = m_textWrapping == TextWrapping::NoWrap;
-    const int viewportInset = std::max(0, m_padding * 2);
 
     int viewportWidth = baseViewportWidth;
     int viewportHeight = baseViewportHeight;
@@ -39,9 +38,8 @@ void TextBox::UpdateScrollMetrics()
         showHorizontalScrollbar = supportsHorizontalScroll && contentWidth > viewportWidth - overflowTolerance;
         showVerticalScrollbar = supportsVerticalScroll && contentHeight > viewportHeight - overflowTolerance && m_textLayout.GetLineCount() > 1;
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: pass=%d content=(%d,%d) viewport=(%d,%d) showH=%d showV=%d", pass, contentWidth, contentHeight, viewportWidth, viewportHeight, showHorizontalScrollbar ? 1 : 0, showVerticalScrollbar ? 1 : 0);
-
-        const int nextViewportWidth = std::max(0, baseViewportWidth - viewportInset - (showVerticalScrollbar ? scrollbarThickness : 0));
-        const int nextViewportHeight = std::max(0, baseViewportHeight - viewportInset - (showHorizontalScrollbar ? scrollbarThickness : 0));
+        const int nextViewportWidth = std::max(0, baseViewportWidth - (showVerticalScrollbar ? scrollbarThickness : 0));
+        const int nextViewportHeight = std::max(0, baseViewportHeight);
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: pass=%d nextViewport=(%d,%d)", pass, nextViewportWidth, nextViewportHeight);
         if (nextViewportWidth == viewportWidth && nextViewportHeight == viewportHeight) {
             break;
@@ -53,8 +51,8 @@ void TextBox::UpdateScrollMetrics()
 
     m_scroll.viewportWidth = viewportWidth;
     m_scroll.viewportHeight = viewportHeight;
-    m_scroll.showVertical = showVerticalScrollbar && supportsVerticalScroll && contentHeight > m_scroll.viewportHeight;
-    m_scroll.showHorizontal = showHorizontalScrollbar && supportsHorizontalScroll && contentWidth > m_scroll.viewportWidth;
+    m_scroll.showVertical = showVerticalScrollbar && supportsVerticalScroll;
+    m_scroll.showHorizontal = showHorizontalScrollbar && supportsHorizontalScroll;
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: final viewport=(%d,%d) showH=%d showV=%d content=(%d,%d)", m_scroll.viewportWidth, m_scroll.viewportHeight, m_scroll.showHorizontal ? 1 : 0, m_scroll.showVertical ? 1 : 0, contentWidth, contentHeight);
 
     if (supportsVerticalScroll) {
