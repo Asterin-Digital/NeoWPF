@@ -51,10 +51,12 @@ public:
         std::size_t charEnd = 0;
     };
 
-    TextLayout() = default;
+    TextLayout() noexcept;
     ~TextLayout();
 
     void Refresh(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int availableWidth, int availableHeight, TextWrapping textWrapping, bool createTextures = true);
+    void Rebuild(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int availableWidth, int availableHeight, TextWrapping textWrapping);
+    void UploadTextures();
     void Clear();
 
     const std::vector<LineRenderData>& GetLines() const noexcept { return m_lines; }
@@ -72,7 +74,7 @@ public:
 private:
     std::wstring m_text;
     int m_fontSize = 16;
-    std::wstring m_fontFamily = std::wstring(L"Segoe UI");
+    std::wstring m_fontFamily;
     std::vector<LineRenderData> m_lines;
     int m_contentWidth = 0;
     int m_contentHeight = 0;
@@ -392,8 +394,42 @@ protected:
     void ApplyVisualState(const std::string& stateName, bool useTransitions = false);
 
 private:
+    struct CaretState {
+        std::size_t position = 0;
+        bool visible = false;
+    };
+
+    struct ScrollState {
+        int offsetX = 0;
+        int offsetY = 0;
+        int viewportWidth = 0;
+        int viewportHeight = 0;
+        int contentHostWidth = 0;
+        int contentHostHeight = 0;
+        bool showVertical = false;
+        bool showHorizontal = false;
+    };
+
+    struct DragState {
+        bool draggingVertical = false;
+        bool draggingHorizontal = false;
+        int lastPointer = 0;
+        int startPointerX = 0;
+        int startPointerY = 0;
+        int startScrollX = 0;
+        int startScrollY = 0;
+    };
+
+    struct ScrollBarGeometry {
+        int barX = 0;
+        int barY = 0;
+        int barLength = 0;
+        int thumbOffset = 0;
+        int thumbLength = 0;
+        int trackLength = 0;
+    };
+
     std::wstring m_text;
-    std::size_t m_caretPosition = 0;
     NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu);
     NeoWPF::UI::Color m_caretColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
     int m_fontSize = 16;
@@ -404,6 +440,7 @@ private:
     bool m_acceptsReturn = false;
     TextWrapping m_textWrapping = TextWrapping::NoWrap;
     bool m_isHitTestVisible = true;
+    bool m_isUpdatingText = false;
 
     std::shared_ptr<Styling::VisualStateManager> m_visualStateManager;
     std::string m_currentVisualState;
@@ -413,19 +450,9 @@ private:
     bool m_isFocused = false;
     std::shared_ptr<ScrollBar> m_verticalScrollBar;
     std::shared_ptr<ScrollBar> m_horizontalScrollBar;
-    bool m_isDraggingVerticalScrollbar = false;
-    bool m_isDraggingHorizontalScrollbar = false;
-    int m_lastDragPointer = 0;
-    int m_dragStartScrollValueX = 0;
-    int m_dragStartScrollValueY = 0;
-    int m_dragStartPointerX = 0;
-    int m_dragStartPointerY = 0;
-    int m_viewportWidth = 0;
-    int m_viewportHeight = 0;
-    int m_contentHostWidth = 0;
-    int m_contentHostHeight = 0;
-    bool m_showVerticalScrollbar = false;
-    bool m_showHorizontalScrollbar = false;
+    CaretState m_caret;
+    ScrollState m_scroll;
+    DragState m_drag;
     /*
         @summary
         Ensure GPU texture(s) backing the rendered text are present.
@@ -433,6 +460,9 @@ private:
         @internal
     */
     void EnsureTextTexture();
+
+    ScrollBarGeometry ComputeVerticalScrollBarGeometry(int contentX, int contentY, int viewportWidth, int viewportHeight) const;
+    ScrollBarGeometry ComputeHorizontalScrollBarGeometry(int contentX, int contentY, int viewportWidth, int viewportHeight) const;
 
     /*
         @summary

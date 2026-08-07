@@ -228,6 +228,8 @@ private:
     uint32_t m_textureId = 0;
     int m_textWidth = 0;
     int m_textHeight = 0;
+    int m_textInkTop = 0;
+    int m_textInkHeight = 0;
     TextHorizontalAlignment m_textHorizontalAlignment = TextHorizontalAlignment::Left;
     TextVerticalAlignment m_textVerticalAlignment = TextVerticalAlignment::Top;
     bool m_textDirty = true;

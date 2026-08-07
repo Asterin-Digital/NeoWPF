@@ -180,6 +180,7 @@ bool SetLevelByName(std::string_view name, Level level) noexcept {
     if (n == "application") { SetLevel(Category::Application, level); return true; }
     if (n == "hittest") { SetLevel(Category::HitTest, level); return true; }
     if (n == "textbox") { SetLevel(Category::TextBox, level); return true; }
+    if (n == "textrendering") { SetLevel(Category::TextRendering, level); return true; }
     return false;
 }
 

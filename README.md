@@ -2,14 +2,11 @@
 
 ### Design Goals
 
-There are plenty of C++ UI frameworks out there, and each has its own strengths.
+There are countless pf UI frameworks out there, and each has it's own strengths.
 
-NeoWPF was built with a different goal: bringing a familiar retained-mode programming model and an intuitive API surface to modern C++, without sacrificing performance or flexibility.
+NeoWPF was built with a different goal: bringing a familiar retained mode programming model and an intuitive API surface to modern C++, without sacrificing performance or flexibility.
 
 ### Familiar API
 
-NeoWPF is designed around consistency. Controls that serve similar purposes expose similar APIs, follow consistent naming, and are predictable. Once you've learned one part of the framework, the rest should feel familiar, making it easier for you to build apps without constantly reading documentation.
+NeoWPF is designed to closely follow WPF. It provides familiar controls, APIs, and behaviors, making it easy for WPF developers to transition without learning an entirely new framework.
 
-### Modern C++
-
-NeoWPF is built with modern C++ in mind. It uses modern language features and the standard library to provide a clean, type safe, and maintainable foundation.

@@ -25,6 +25,7 @@ enum class Category : uint8_t {
 	Application,
 	HitTest,
 	TextBox,
+	TextRendering,
 	Count,
 };
 

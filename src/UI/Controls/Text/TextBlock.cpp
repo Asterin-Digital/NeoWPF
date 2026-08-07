@@ -224,9 +224,10 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     int offsetX = 0;
     int offsetY = 0;
+    const int alignmentHeight = m_textInkHeight > 0 ? m_textInkHeight : m_textHeight;
     TextAlignment::ApplyTextAlignment(
         m_textWidth,
-        m_textHeight,
+        alignmentHeight,
         innerWidth,
         innerHeight,
         m_textHorizontalAlignment,
@@ -235,7 +236,7 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         offsetY);
 
     float drawX = static_cast<float>(absX + padding + offsetX);
-    float drawY = static_cast<float>(absY + padding + offsetY);
+    float drawY = static_cast<float>(absY + padding + offsetY - m_textInkTop);
     float drawWidth = static_cast<float>(m_textWidth);
     float drawHeight = static_cast<float>(m_textHeight);
     ApplyRenderTransform(drawX, drawY, drawWidth, drawHeight);
@@ -269,20 +270,26 @@ void TextBlock::EnsureTextTexture(int availableWidth, int availableHeight)
     if (m_text.empty()) {
         m_textWidth = 0;
         m_textHeight = 0;
+        m_textInkTop = 0;
+        m_textInkHeight = 0;
         m_textDirty = false;
         return;
     }
 
     int width = 0;
     int height = 0;
+    int inkTop = 0;
+    int inkHeight = 0;
     const int INF = 1000000;
     const int widthConstraint = INF;
     const int heightConstraint = availableHeight > 0 ? availableHeight : INF;
-    auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(m_text, m_fontSize, widthConstraint, heightConstraint, GetFontFamily(), width, height);
+    auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(m_text, m_fontSize, widthConstraint, heightConstraint, GetFontFamily(), width, height, inkTop, inkHeight);
     if (bitmap.empty() || width == 0 || height == 0) {
         NeoWPF::Diagnostics::LogError("TextBlock: failed to render text bitmap");
         m_textWidth = 0;
         m_textHeight = 0;
+        m_textInkTop = 0;
+        m_textInkHeight = 0;
         m_textDirty = false;
         return;
     }
@@ -290,6 +297,8 @@ void TextBlock::EnsureTextTexture(int availableWidth, int availableHeight)
     m_textureId = NeoWPF::Rendering::Renderer_CreateTexture(static_cast<unsigned int>(width), static_cast<unsigned int>(height), bitmap.data());
     m_textWidth = width;
     m_textHeight = height;
+    m_textInkTop = inkTop;
+    m_textInkHeight = inkHeight > 0 ? inkHeight : height;
     m_textDirty = false;
 }
 

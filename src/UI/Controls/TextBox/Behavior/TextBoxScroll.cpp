@@ -8,16 +8,22 @@ namespace NeoWPF::UI {
 
 void TextBox::UpdateScrollMetrics()
 {
+    if (m_scroll.contentHostWidth < 0 || m_scroll.contentHostHeight < 0) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] UpdateScrollMetrics: negative content host size (%d,%d); clamping", m_scroll.contentHostWidth, m_scroll.contentHostHeight);
+        m_scroll.contentHostWidth = std::max(0, m_scroll.contentHostWidth);
+        m_scroll.contentHostHeight = std::max(0, m_scroll.contentHostHeight);
+    }
+
     const bool createTextures = m_textDirty;
-    m_textLayout.Refresh(m_text, m_fontSize, GetFontFamily(), m_contentHostWidth, m_contentHostHeight, m_textWrapping, createTextures);
+    m_textLayout.Refresh(m_text, m_fontSize, GetFontFamily(), m_scroll.contentHostWidth, m_scroll.contentHostHeight, m_textWrapping, createTextures);
     if (createTextures) {
         m_textDirty = false;
     }
 
     const int contentWidth = m_textLayout.GetContentWidth();
     const int contentHeight = m_textLayout.GetContentHeight();
-    const int baseViewportWidth = std::max(0, m_contentHostWidth);
-    const int baseViewportHeight = std::max(0, m_contentHostHeight);
+    const int baseViewportWidth = std::max(0, m_scroll.contentHostWidth);
+    const int baseViewportHeight = std::max(0, m_scroll.contentHostHeight);
     const int scrollbarThickness = 6;
     const bool supportsVerticalScroll = m_acceptsReturn || m_textWrapping != TextWrapping::NoWrap;
     const bool supportsHorizontalScroll = m_textWrapping == TextWrapping::NoWrap;
@@ -32,15 +38,11 @@ void TextBox::UpdateScrollMetrics()
     for (int pass = 0; pass < 2; ++pass) {
         showHorizontalScrollbar = supportsHorizontalScroll && contentWidth > viewportWidth - overflowTolerance;
         showVerticalScrollbar = supportsVerticalScroll && contentHeight > viewportHeight - overflowTolerance && m_textLayout.GetLineCount() > 1;
-        if (s_textBoxDebug) {
-            NeoWPF::Diagnostics::LogInfo("[TextBox] UpdateScrollMetrics: pass=%d content=(%d,%d) viewport=(%d,%d) showH=%d showV=%d", pass, contentWidth, contentHeight, viewportWidth, viewportHeight, showHorizontalScrollbar ? 1 : 0, showVerticalScrollbar ? 1 : 0);
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: pass=%d content=(%d,%d) viewport=(%d,%d) showH=%d showV=%d", pass, contentWidth, contentHeight, viewportWidth, viewportHeight, showHorizontalScrollbar ? 1 : 0, showVerticalScrollbar ? 1 : 0);
 
         const int nextViewportWidth = std::max(0, baseViewportWidth - viewportInset - (showVerticalScrollbar ? scrollbarThickness : 0));
         const int nextViewportHeight = std::max(0, baseViewportHeight - viewportInset - (showHorizontalScrollbar ? scrollbarThickness : 0));
-        if (s_textBoxDebug) {
-            NeoWPF::Diagnostics::LogInfo("[TextBox] UpdateScrollMetrics: pass=%d nextViewport=(%d,%d)", pass, nextViewportWidth, nextViewportHeight);
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: pass=%d nextViewport=(%d,%d)", pass, nextViewportWidth, nextViewportHeight);
         if (nextViewportWidth == viewportWidth && nextViewportHeight == viewportHeight) {
             break;
         }
@@ -49,24 +51,27 @@ void TextBox::UpdateScrollMetrics()
         viewportHeight = nextViewportHeight;
     }
 
-    m_viewportWidth = viewportWidth;
-    m_viewportHeight = viewportHeight;
-    m_showVerticalScrollbar = showVerticalScrollbar && supportsVerticalScroll && contentHeight > m_viewportHeight;
-    m_showHorizontalScrollbar = showHorizontalScrollbar && contentWidth > m_viewportWidth;
-    if (s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] UpdateScrollMetrics: final viewport=(%d,%d) showH=%d showV=%d content=(%d,%d)", m_viewportWidth, m_viewportHeight, m_showHorizontalScrollbar ? 1 : 0, m_showVerticalScrollbar ? 1 : 0, contentWidth, contentHeight);
-    }
+    m_scroll.viewportWidth = viewportWidth;
+    m_scroll.viewportHeight = viewportHeight;
+    m_scroll.showVertical = showVerticalScrollbar && supportsVerticalScroll && contentHeight > m_scroll.viewportHeight;
+    m_scroll.showHorizontal = showHorizontalScrollbar && contentWidth > m_scroll.viewportWidth;
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: final viewport=(%d,%d) showH=%d showV=%d content=(%d,%d)", m_scroll.viewportWidth, m_scroll.viewportHeight, m_scroll.showHorizontal ? 1 : 0, m_scroll.showVertical ? 1 : 0, contentWidth, contentHeight);
 
     m_verticalScrollBar->SetContentSize(contentHeight);
-    m_verticalScrollBar->SetViewportSize(m_viewportHeight);
+    m_verticalScrollBar->SetViewportSize(m_scroll.viewportHeight);
     m_horizontalScrollBar->SetContentSize(contentWidth);
-    m_horizontalScrollBar->SetViewportSize(m_viewportWidth);
+    m_horizontalScrollBar->SetViewportSize(m_scroll.viewportWidth);
 
     ClampScrollOffsets();
 }
 
 void TextBox::ClampScrollOffsets()
 {
+    if (!m_verticalScrollBar || !m_horizontalScrollBar) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] ClampScrollOffsets: missing scrollbar instances");
+        return;
+    }
+
     m_verticalScrollBar->SetValue(m_verticalScrollBar->GetValue());
     m_horizontalScrollBar->SetValue(m_horizontalScrollBar->GetValue());
 }
@@ -77,22 +82,13 @@ void TextBox::EnsureCaretVisible()
         return;
     }
 
-    const auto [lineIndex, _] = GetCaretLineColumn(m_caretPosition);
-    int caretY = 0;
-    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, GetFontFamily(), 0, 0);
-    std::size_t lineStart = 0;
-    std::size_t currentLine = 0;
-    while (lineStart < m_text.size() && currentLine < lineIndex) {
-        const std::size_t nextNewline = m_text.find(L'\n', lineStart);
-        const std::size_t lineEnd = nextNewline == std::wstring::npos ? m_text.size() : nextNewline;
-        const std::wstring lineText = m_text.substr(lineStart, lineEnd - lineStart);
-        const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(lineText.empty() ? L"W" : lineText, m_fontSize, GetFontFamily(), 0, 0);
-        caretY += std::max(baseMetrics.height, std::max(lineMetrics.height, m_fontSize));
-        lineStart = lineEnd + 1;
-        ++currentLine;
+    if (!m_verticalScrollBar || !m_horizontalScrollBar) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] EnsureCaretVisible: missing scrollbar instances");
+        return;
     }
 
-    const int viewportHeight = GetViewportHeight();
+    const int caretY = std::max(0, m_textLayout.GetCaretY(m_caret.position));
+    const int viewportHeight = std::max(0, GetViewportHeight());
     const int caretHeight = std::max(1, GetCaretHeight());
     if (caretY < m_verticalScrollBar->GetValue()) {
         m_verticalScrollBar->SetValue(caretY);
@@ -102,7 +98,7 @@ void TextBox::EnsureCaretVisible()
     }
 
     const int caretX = std::max(0, GetCaretX());
-    const int viewportWidth = GetViewportWidth();
+    const int viewportWidth = std::max(0, GetViewportWidth());
     if (caretX < m_horizontalScrollBar->GetValue()) {
         m_horizontalScrollBar->SetValue(caretX);
     }
@@ -115,6 +111,11 @@ void TextBox::EnsureCaretVisible()
 
 void TextBox::ScrollTo(int x, int y)
 {
+    if (!m_horizontalScrollBar || !m_verticalScrollBar) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] ScrollTo: missing scrollbar instances");
+        return;
+    }
+
     m_horizontalScrollBar->SetValue(x);
     m_verticalScrollBar->SetValue(y);
     InvalidateVisual();
@@ -122,22 +123,22 @@ void TextBox::ScrollTo(int x, int y)
 
 int TextBox::GetViewportWidth() const
 {
-    return m_viewportWidth;
+    return m_scroll.viewportWidth;
 }
 
 int TextBox::GetViewportHeight() const
 {
-    return m_viewportHeight;
+    return m_scroll.viewportHeight;
 }
 
 int TextBox::GetMaxHorizontalScroll() const
 {
-    return std::max(0, m_textLayout.GetContentWidth() - m_viewportWidth);
+    return std::max(0, m_textLayout.GetContentWidth() - m_scroll.viewportWidth);
 }
 
 int TextBox::GetMaxVerticalScroll() const
 {
-    return std::max(0, m_textLayout.GetContentHeight() - m_viewportHeight);
+    return std::max(0, m_textLayout.GetContentHeight() - m_scroll.viewportHeight);
 }
 
 int TextBox::GetVerticalThumbLength() const
@@ -147,9 +148,9 @@ int TextBox::GetVerticalThumbLength() const
     }
     const int contentHeight = m_textLayout.GetContentHeight();
     if (contentHeight <= 0) {
-        return m_viewportHeight;
+        return m_scroll.viewportHeight;
     }
-    return m_verticalScrollBar->GetThumbLength(m_viewportHeight);
+    return m_verticalScrollBar->GetThumbLength(m_scroll.viewportHeight);
 }
 
 int TextBox::GetVerticalThumbPosition() const
@@ -161,8 +162,8 @@ int TextBox::GetVerticalThumbPosition() const
     if (contentHeight <= 0) {
         return 0;
     }
-    const int thumbPosition = (m_verticalScrollBar->GetValue() * m_viewportHeight) / contentHeight;
-    return std::max(0, std::min(thumbPosition, m_viewportHeight - GetVerticalThumbLength()));
+    const int thumbPosition = (m_verticalScrollBar->GetValue() * m_scroll.viewportHeight) / contentHeight;
+    return std::max(0, std::min(thumbPosition, m_scroll.viewportHeight - GetVerticalThumbLength()));
 }
 
 int TextBox::GetHorizontalThumbLength() const
@@ -172,9 +173,9 @@ int TextBox::GetHorizontalThumbLength() const
     }
     const int contentWidth = m_textLayout.GetContentWidth();
     if (contentWidth <= 0) {
-        return m_viewportWidth;
+        return m_scroll.viewportWidth;
     }
-    return m_horizontalScrollBar->GetThumbLength(m_viewportWidth);
+    return m_horizontalScrollBar->GetThumbLength(m_scroll.viewportWidth);
 }
 
 int TextBox::GetHorizontalThumbPosition() const
@@ -186,8 +187,8 @@ int TextBox::GetHorizontalThumbPosition() const
     if (contentWidth <= 0) {
         return 0;
     }
-    const int thumbPosition = (m_horizontalScrollBar->GetValue() * m_viewportWidth) / contentWidth;
-    return std::max(0, std::min(thumbPosition, m_viewportWidth - GetHorizontalThumbLength()));
+    const int thumbPosition = (m_horizontalScrollBar->GetValue() * m_scroll.viewportWidth) / contentWidth;
+    return std::max(0, std::min(thumbPosition, m_scroll.viewportWidth - GetHorizontalThumbLength()));
 }
 
 void TextBox::UpdateVerticalScrollFromPointer(int pointerY)
@@ -195,7 +196,7 @@ void TextBox::UpdateVerticalScrollFromPointer(int pointerY)
     if (!m_verticalScrollBar) {
         return;
     }
-    const int trackHeight = m_viewportHeight;
+    const int trackHeight = m_scroll.viewportHeight;
     const int contentHeight = m_textLayout.GetContentHeight();
     if (contentHeight <= 0 || trackHeight <= 0) {
         return;
@@ -209,7 +210,7 @@ void TextBox::UpdateHorizontalScrollFromPointer(int pointerX)
     if (!m_horizontalScrollBar) {
         return;
     }
-    const int trackWidth = m_viewportWidth;
+    const int trackWidth = m_scroll.viewportWidth;
     const int contentWidth = m_textLayout.GetContentWidth();
     if (contentWidth <= 0 || trackWidth <= 0) {
         return;

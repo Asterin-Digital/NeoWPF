@@ -2,6 +2,7 @@
 
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
+#include <any>
 #include <string>
 
 namespace NeoWPF::UI::Properties {
@@ -36,6 +37,33 @@ namespace NeoWPF::UI::Properties {
         }
         (void)getter;
         return RegisterProperty<TOwner, TProperty>(name, registrationMetadata);
+    }
+
+    inline std::wstring CoerceToWString(const std::any& value)
+    {
+        if (value.type() == typeid(std::wstring)) {
+            return std::any_cast<std::wstring>(value);
+        }
+
+        if (value.type() == typeid(std::string)) {
+            const auto textValue = std::any_cast<std::string>(value);
+            return std::wstring(textValue.begin(), textValue.end());
+        }
+
+        if (value.type() == typeid(const wchar_t*)) {
+            const auto textValue = std::any_cast<const wchar_t*>(value);
+            return textValue ? std::wstring(textValue) : std::wstring();
+        }
+
+        if (value.type() == typeid(const char*)) {
+            const auto textValue = std::any_cast<const char*>(value);
+            if (!textValue) {
+                return std::wstring();
+            }
+            return std::wstring(textValue, textValue + std::strlen(textValue));
+        }
+
+        return std::wstring();
     }
 
     void RegisterUIElementProperties();

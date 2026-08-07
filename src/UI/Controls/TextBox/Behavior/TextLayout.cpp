@@ -8,13 +8,9 @@
 
 namespace NeoWPF::UI {
 
-namespace {
+TextLayout::TextLayout() noexcept {}
 
-int MeasureLineHeight(const std::wstring& text, int fontSize, const std::wstring& fontFamily) {
-    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", fontSize, fontFamily, 0, 0);
-    const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(text.empty() ? L"W" : text, fontSize, fontFamily, 0, 0);
-    return std::max(baseMetrics.height, std::max(lineMetrics.height, fontSize));
-}
+namespace {
 
 struct LogicalLine {
     std::wstring text;
@@ -59,6 +55,7 @@ std::vector<WrappedSegment> WrapLine(const std::wstring& lineText, std::size_t l
 
     std::wstring currentLine;
     std::size_t currentLineStartOffset = lineStartOffset;
+    // keep the original offsets around so wrapped lines still map back to the right caret positions
     for (std::size_t i = 0; i < lineText.size(); ++i) {
         const wchar_t ch = lineText[i];
         const std::wstring character(1, ch);
@@ -102,6 +99,81 @@ TextLayout::~TextLayout() {
     Clear();
 }
 
+void TextLayout::Rebuild(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int availableWidth, int availableHeight, TextWrapping textWrapping) {
+    std::wstring effectiveFontFamily = fontFamily;
+
+    if (fontSize <= 0) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] TextLayout::Rebuild: invalid fontSize=%d; using fallback", fontSize);
+        fontSize = 16;
+    }
+
+    if (text == m_text && fontSize == m_fontSize && effectiveFontFamily == m_fontFamily && availableWidth == m_availableWidth && availableHeight == m_availableHeight && textWrapping == m_textWrapping && !m_lines.empty()) {
+        // this is the cheap out, otherwise we rebuild the same layout over and over
+        return;
+    }
+
+    m_text = text;
+    m_fontSize = fontSize;
+    m_fontFamily = effectiveFontFamily;
+    m_availableWidth = availableWidth;
+    m_availableHeight = availableHeight;
+    m_textWrapping = textWrapping;
+    Clear();
+
+    const auto lines = SplitLines(text);
+    m_lines.reserve(std::max(lines.size() * 2, static_cast<std::size_t>(1)));
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] TextLayout::Rebuild: textLength=%zu fontSize=%d available=(%d,%d) wrapping=%d logicalLines=%zu",
+        text.size(), fontSize, availableWidth, availableHeight, static_cast<int>(textWrapping), lines.size());
+
+    for (std::size_t logicalLineIndex = 0; logicalLineIndex < lines.size(); ++logicalLineIndex) {
+        const auto& logicalLine = lines[logicalLineIndex];
+        if (logicalLine.text.empty() && logicalLine.startOffset >= text.size()) {
+            m_lines.push_back({std::wstring(), 0, 0, 0, std::max(1, MeasureLineHeight(L"W", m_fontSize, m_fontFamily)), logicalLine.startOffset, logicalLine.startOffset});
+            continue;
+        }
+        const bool shouldWrap = textWrapping != TextWrapping::NoWrap;
+        const int lineWidthConstraint = shouldWrap ? std::max(1, m_availableWidth) : 0;
+        const auto wrappedLines = shouldWrap ? WrapLine(logicalLine.text, logicalLine.startOffset, lineWidthConstraint, m_fontSize, m_fontFamily, textWrapping) : std::vector<WrappedSegment>{{logicalLine.text, logicalLine.startOffset, logicalLine.startOffset + logicalLine.text.size()}};
+        for (const auto& wrappedLine : wrappedLines) {
+            const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(wrappedLine.text.empty() ? L"W" : wrappedLine.text, m_fontSize, m_fontFamily, lineWidthConstraint, 0);
+            const int lineHeight = MeasureLineHeight(wrappedLine.text, m_fontSize, m_fontFamily);
+            const int renderedHeight = std::max(1, lineHeight);
+
+            m_contentHeight += renderedHeight;
+            if (textWrapping == TextWrapping::NoWrap) {
+                m_contentWidth = std::max(m_contentWidth, std::max(lineMetrics.width, 1));
+            }
+            else {
+                m_contentWidth = std::max(m_contentWidth, lineMetrics.width);
+            }
+
+            m_lines.push_back({wrappedLine.text, 0, lineMetrics.width, lineMetrics.height, renderedHeight, wrappedLine.startOffset, wrappedLine.endOffset});
+        }
+    }
+}
+
+void TextLayout::UploadTextures() {
+    if (m_text.empty()) {
+        return;
+    }
+
+    if (m_lines.empty()) {
+        return;
+    }
+
+    for (auto& line : m_lines) {
+        if (line.textureId != 0 || line.text.empty()) {
+            continue;
+        }
+
+        const int lineWidthConstraint = m_textWrapping != TextWrapping::NoWrap ? std::max(1, m_availableWidth) : 0;
+        auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(line.text, m_fontSize, lineWidthConstraint, 0, m_fontFamily, line.width, line.height);
+        if (!bitmap.empty() && line.width > 0 && line.height > 0) {
+            line.textureId = NeoWPF::Rendering::Renderer_CreateTexture(static_cast<unsigned int>(line.width), static_cast<unsigned int>(line.height), bitmap.data());
+        }
+    }
+}
+
 void TextLayout::Clear() {
     for (auto& line : m_lines) {
         if (line.textureId != 0) {
@@ -115,64 +187,17 @@ void TextLayout::Clear() {
 }
 
 void TextLayout::Refresh(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int availableWidth, int availableHeight, TextWrapping textWrapping, bool createTextures) {
-    if (!createTextures && text == m_text && fontSize == m_fontSize && fontFamily == m_fontFamily && availableWidth == m_availableWidth && availableHeight == m_availableHeight && textWrapping == m_textWrapping && !m_lines.empty()) {
-        return;
-    }
-
-    m_text = text;
-    m_fontSize = fontSize;
-    m_fontFamily = fontFamily;
-    m_availableWidth = availableWidth;
-    m_availableHeight = availableHeight;
-    m_textWrapping = textWrapping;
-    Clear();
-
-    const auto lines = SplitLines(text);
-    m_lines.reserve(std::max(lines.size() * 2, static_cast<std::size_t>(1)));
-    if (TextBox::s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] TextLayout::Refresh: textLength=%zu fontSize=%d available=(%d,%d) wrapping=%d logicalLines=%zu createTextures=%d",
-            text.size(), fontSize, availableWidth, availableHeight, static_cast<int>(textWrapping), lines.size(), createTextures ? 1 : 0);
-    }
-    for (std::size_t logicalLineIndex = 0; logicalLineIndex < lines.size(); ++logicalLineIndex) {
-        const auto& logicalLine = lines[logicalLineIndex];
-        const bool shouldWrap = textWrapping != TextWrapping::NoWrap;
-        const int lineWidthConstraint = shouldWrap ? std::max(1, m_availableWidth) : 0;
-        const int lineHeightConstraint = 0;
-        const auto wrappedLines = shouldWrap ? WrapLine(logicalLine.text, logicalLine.startOffset, lineWidthConstraint, m_fontSize, m_fontFamily, textWrapping) : std::vector<WrappedSegment>{{logicalLine.text, logicalLine.startOffset, logicalLine.startOffset + logicalLine.text.size()}};
-        for (const auto& wrappedLine : wrappedLines) {
-            if (TextBox::s_textBoxDebug) {
-                NeoWPF::Diagnostics::LogInfo("[TextBox] TextLayout::Refresh: logicalLine=%zu startOffset=%zu wrappedSegment=(%zu,%zu) text='%ls'",
-                    logicalLineIndex, logicalLine.startOffset, wrappedLine.startOffset, wrappedLine.endOffset, wrappedLine.text.c_str());
-            }
-            uint32_t textureId = 0;
-            int width = 0;
-            int height = 0;
-            
-            if (createTextures && !wrappedLine.text.empty()) {
-                auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(wrappedLine.text, m_fontSize, lineWidthConstraint, lineHeightConstraint, m_fontFamily, width, height);
-                if (!bitmap.empty() && width > 0 && height > 0) {
-                    textureId = NeoWPF::Rendering::Renderer_CreateTexture(static_cast<unsigned int>(width), static_cast<unsigned int>(height), bitmap.data());
-                }
-            }
-
-            const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(wrappedLine.text.empty() ? L"W" : wrappedLine.text, m_fontSize, m_fontFamily, lineWidthConstraint, lineHeightConstraint);
-            const int lineHeight = MeasureLineHeight(wrappedLine.text, m_fontSize, m_fontFamily);
-            const int renderedHeight = std::max(1, height > 0 ? height : lineHeight);
-            
-            m_contentHeight += renderedHeight;
-            if (textWrapping == TextWrapping::NoWrap) {
-                m_contentWidth = std::max(m_contentWidth, std::max(width > 0 ? width : lineMetrics.width, 1));
-            }
-            else {
-                m_contentWidth = std::max(m_contentWidth, width > 0 ? width : lineMetrics.width);
-            }
-            
-            m_lines.push_back({wrappedLine.text, textureId, width, height, renderedHeight, wrappedLine.startOffset, wrappedLine.endOffset});
-        }
+    Rebuild(text, fontSize, fontFamily, availableWidth, availableHeight, textWrapping);
+    if (createTextures) {
+        UploadTextures();
     }
 }
 
 int TextLayout::MeasureLineHeight(const std::wstring& text, int fontSize, const std::wstring& fontFamily) {
+    if (fontSize <= 0) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] TextLayout::MeasureLineHeight: invalid fontSize=%d", fontSize);
+        fontSize = 16;
+    }
     const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", fontSize, fontFamily, 0, 0);
     const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(text.empty() ? L"W" : text, fontSize, fontFamily, 0, 0);
     return std::max(baseMetrics.height, std::max(lineMetrics.height, fontSize));
@@ -196,44 +221,26 @@ int TextLayout::GetLineVisualOffset(std::size_t lineIndex) const {
 }
 
 std::pair<std::size_t, std::size_t> TextLayout::GetCaretLineColumn(std::size_t caretPosition) const {
-    if (TextBox::s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] TextLayout::GetCaretLineColumn: caretPosition=%zu lineCount=%zu", caretPosition, m_lines.size());
-    }
     for (std::size_t lineIndex = 0; lineIndex < m_lines.size(); ++lineIndex) {
         const auto& line = m_lines[lineIndex];
-        if (TextBox::s_textBoxDebug) {
-            NeoWPF::Diagnostics::LogInfo("[TextBox] TextLayout::GetCaretLineColumn: scanning line=%zu charStart=%zu charEnd=%zu text='%ls'", lineIndex, line.charStart, line.charEnd, line.text.c_str());
-        }
         if (caretPosition < line.charStart) {
             continue;
         }
 
         if (caretPosition < line.charEnd) {
             const std::size_t column = caretPosition - line.charStart;
-            if (TextBox::s_textBoxDebug) {
-                NeoWPF::Diagnostics::LogInfo("[TextBox] TextLayout::GetCaretLineColumn: matched inside line=%zu column=%zu", lineIndex, column);
-            }
             return { lineIndex, column };
         }
 
         if (caretPosition == line.charEnd) {
             if (lineIndex + 1 < m_lines.size()) {
                 const auto& nextLine = m_lines[lineIndex + 1];
-                if (TextBox::s_textBoxDebug) {
-                    NeoWPF::Diagnostics::LogInfo("[TextBox] TextLayout::GetCaretLineColumn: caret at line end line=%zu nextLineStart=%zu", lineIndex, nextLine.charStart);
-                }
                 if (nextLine.charStart == line.charEnd + 1) {
                     const std::size_t column = std::min(static_cast<std::size_t>(line.text.size()), caretPosition - line.charStart);
-                    if (TextBox::s_textBoxDebug) {
-                        NeoWPF::Diagnostics::LogInfo("[TextBox] TextLayout::GetCaretLineColumn: adjusting caret on wrapped boundary line=%zu column=%zu", lineIndex, column);
-                    }
                     return { lineIndex, column };
                 }
             }
             const std::size_t column = std::min(static_cast<std::size_t>(line.text.size()), caretPosition - line.charStart);
-            if (TextBox::s_textBoxDebug) {
-                NeoWPF::Diagnostics::LogInfo("[TextBox] TextLayout::GetCaretLineColumn: caret at line end line=%zu column=%zu", lineIndex, column);
-            }
             return { lineIndex, column };
         }
     }
@@ -241,15 +248,9 @@ std::pair<std::size_t, std::size_t> TextLayout::GetCaretLineColumn(std::size_t c
     if (!m_lines.empty()) {
         const auto& lastLine = m_lines.back();
         const std::size_t column = caretPosition > lastLine.charStart ? caretPosition - lastLine.charStart : 0;
-        if (TextBox::s_textBoxDebug) {
-            NeoWPF::Diagnostics::LogInfo("[TextBox] TextLayout::GetCaretLineColumn: fallback lastLine=%zu column=%zu", m_lines.size() - 1, std::min(column, static_cast<std::size_t>(lastLine.text.size())));
-        }
         return { m_lines.size() - 1, std::min(column, static_cast<std::size_t>(lastLine.text.size())) };
     }
 
-    if (TextBox::s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] TextLayout::GetCaretLineColumn: fallback empty layout");
-    }
     return { 0, 0 };
 }
 
@@ -267,7 +268,7 @@ int TextLayout::GetCaretHeight(std::size_t caretPosition) const {
     if (lineIndex < m_lines.size()) {
         return std::max(1, m_lines[lineIndex].lineHeight);
     }
-    return std::max(1, MeasureLineHeight(L"W", m_fontSize, m_fontFamily));
+    return std::max(1, MeasureLineHeight(L"W", std::max(1, m_fontSize), m_fontFamily));
 }
 
 }

@@ -28,9 +28,14 @@ namespace {
         }
         return s_caretTextureId;
     }
-}
 
-bool NeoWPF::UI::TextBox::s_textBoxDebug = false;
+    void ReleaseCaretTextureId() {
+        const uint32_t caretTextureId = GetCaretTextureId();
+        if (caretTextureId != 0) {
+            NeoWPF::Rendering::Renderer_DestroyTexture(caretTextureId);
+        }
+    }
+}
 
 namespace {
     const NeoWPF::UI::Properties::DependencyProperty& EnsureTextProperty()
@@ -78,6 +83,7 @@ void TextBox::OnInitialize()
 }
 TextBox::~TextBox()
 {
+    ReleaseCaretTextureId();
 }
 
 void TextBox::InitializeVisualStates()
@@ -107,34 +113,40 @@ void TextBox::SetText(const std::wstring& text)
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Text", *this);
-    if (property && !IsApplyingPropertyValue()) {
-        SetValue(*property, text);
-        return;
-    }
-
-    if (IsApplyingPropertyValue()) {
+    if (m_isUpdatingText) {
         m_text = text;
-        m_caretPosition = std::min(m_caretPosition, m_text.size());
-        m_verticalScrollBar->SetValue(0);
-        m_horizontalScrollBar->SetValue(0);
+        m_caret.position = std::min(m_caret.position, m_text.size());
         m_textDirty = true;
         InvalidateVisual();
         TextChanged.Invoke(m_text);
         return;
     }
 
-    if (s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] SetText: oldLength=%zu, newLength=%zu", m_text.size(), text.size());
+    m_isUpdatingText = true;
+
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Text", *this);
+    if (property && !IsApplyingPropertyValue()) {
+        SetValue(*property, text);
+        m_isUpdatingText = false;
+        return;
     }
 
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] SetText: oldLength=%zu, newLength=%zu", m_text.size(), text.size());
+
     m_text = text;
-    m_caretPosition = std::min(m_caretPosition, m_text.size());
-    m_verticalScrollBar->SetValue(0);
-    m_horizontalScrollBar->SetValue(0);
+    m_caret.position = std::min(m_caret.position, m_text.size());
+    m_scroll.offsetX = 0;
+    m_scroll.offsetY = 0;
+    if (m_verticalScrollBar) {
+        m_verticalScrollBar->SetValue(0);
+    }
+    if (m_horizontalScrollBar) {
+        m_horizontalScrollBar->SetValue(0);
+    }
     m_textDirty = true;
     InvalidateVisual();
     TextChanged.Invoke(m_text);
+    m_isUpdatingText = false;
 }
 
 void TextBox::OnDependencyPropertyChanged(const Properties::DependencyProperty& property,
@@ -149,38 +161,10 @@ void TextBox::OnDependencyPropertyChanged(const Properties::DependencyProperty& 
 
     if (property.GetName() == "Text") {
         if (newValue.has_value()) {
-            try {
-                const auto textValue = std::any_cast<std::wstring>(newValue);
+            const std::wstring textValue = NeoWPF::UI::Properties::CoerceToWString(newValue);
+            if (!m_isUpdatingText && m_text != textValue) {
                 SetText(textValue);
                 return;
-            } catch (const std::bad_any_cast&) {
-                try {
-                    const auto textValue = std::any_cast<std::string>(newValue);
-                    SetText(std::wstring(textValue.begin(), textValue.end()));
-                    return;
-                } catch (const std::bad_any_cast&) {
-                    try {
-                        const auto textValue = std::any_cast<const wchar_t*>(newValue);
-                        SetText(textValue ? textValue : L"");
-                        return;
-                    } catch (const std::bad_any_cast&) {
-                        try {
-                            const auto textValue = std::any_cast<const char*>(newValue);
-                            if (textValue) {
-                                std::wstring convertedText;
-                                convertedText.reserve(std::strlen(textValue));
-                                for (const char ch : std::string(textValue)) {
-                                    convertedText.push_back(static_cast<wchar_t>(ch));
-                                }
-                                SetText(convertedText);
-                            } else {
-                                SetText(L"");
-                            }
-                            return;
-                        } catch (const std::bad_any_cast&) {
-                        }
-                    }
-                }
             }
         }
     }
@@ -198,10 +182,8 @@ void TextBox::SetTextColor(NeoWPF::UI::Color color) noexcept
 
 void TextBox::SetFontFamily(const std::wstring& fontFamily) noexcept
 {
-    if (fontFamily.empty()) {
-        return;
-    }
-
+    // renderer already has a fallback font, so do not add one here as well 
+    
     if (IsApplyingPropertyValue()) {
         m_fontFamily = fontFamily;
         m_textDirty = true;
@@ -226,13 +208,12 @@ void TextBox::SetFontFamily(const std::wstring& fontFamily) noexcept
 
 std::wstring TextBox::GetFontFamily() const noexcept
 {
+    // dependency props can override the local field, so we check them first
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("FontFamily", *this);
     if (property) {
         try {
             const auto value = GetValue<std::wstring>(*property);
-            if (!value.empty()) {
-                return value;
-            }
+            return value;
         } catch (const std::bad_any_cast&) {}
     }
     return m_fontFamily;
@@ -431,9 +412,7 @@ void TextBox::Measure(int availableWidth, int availableHeight)
         desiredWidth = std::max(desiredWidth, measureLayout.GetContentWidth() + (GetPadding() * 2));
     }
 
-    if (s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] Measure: available=%dx%d, desired=%dx%d, textLength=%zu", availableWidth, availableHeight, desiredWidth, desiredHeight, m_text.size());
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] Measure: available=%dx%d, desired=%dx%d, textLength=%zu", availableWidth, availableHeight, desiredWidth, desiredHeight, m_text.size());
 
     if (auto presenter = GetPresenter()) {
         presenter->Measure(availableWidth, availableHeight);
@@ -447,8 +426,8 @@ void TextBox::Measure(int availableWidth, int availableHeight)
 void TextBox::Arrange(int finalWidth, int finalHeight)
 {
     Content::ContentControl::Arrange(finalWidth, finalHeight);
-    m_contentHostWidth = std::max(0, finalWidth - (GetPadding() * 2));
-    m_contentHostHeight = std::max(0, finalHeight - (GetPadding() * 2));
+    m_scroll.contentHostWidth = std::max(0, finalWidth - (GetPadding() * 2));
+    m_scroll.contentHostHeight = std::max(0, finalHeight - (GetPadding() * 2));
     UpdateScrollMetrics();
     ClampScrollOffsets();
 
@@ -471,9 +450,7 @@ void TextBox::Arrange(int finalWidth, int finalHeight)
         }
     }
 
-    if (s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] Arrange: final=%dx%d, textDirty=%d, lineCount=%zu", finalWidth, finalHeight, m_textDirty ? 1 : 0, m_textLayout.GetLineCount());
-    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] Arrange: final=%dx%d, textDirty=%d, lineCount=%zu", finalWidth, finalHeight, m_textDirty ? 1 : 0, m_textLayout.GetLineCount());
     if (m_textDirty) {
         EnsureTextTexture();
     }
@@ -484,6 +461,11 @@ void TextBox::Arrange(int finalWidth, int finalHeight)
 
 void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
+    if (m_scroll.contentHostWidth <= 0 || m_scroll.contentHostHeight <= 0) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] BuildRenderCommands: content host size not ready (%d,%d); skipping layout render", m_scroll.contentHostWidth, m_scroll.contentHostHeight);
+        return;
+    }
+
     int absX, absY;
     GetAbsolutePosition(absX, absY);
 
@@ -531,6 +513,9 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     int contentHostY = absY + GetPadding();
     int contentHostWidth = std::max(0, GetFinalWidth() - (GetPadding() * 2));
     int contentHostHeight = std::max(0, GetFinalHeight() - (GetPadding() * 2));
+    if (GetFinalWidth() < 0 || GetFinalHeight() < 0) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] BuildRenderCommands: negative final size (%d,%d)", GetFinalWidth(), GetFinalHeight());
+    }
     if (contentHost) {
         const int inset = std::max(0, GetPadding());
         contentHostWidth = std::max(0, GetFinalWidth() - (inset * 2));
@@ -542,18 +527,21 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         contentHostY = contentHost->GetY();
         contentHost->BuildRenderCommands(commands);
     }
-    m_contentHostWidth = contentHostWidth;
-    m_contentHostHeight = contentHostHeight;
+    m_scroll.contentHostWidth = contentHostWidth;
+    m_scroll.contentHostHeight = contentHostHeight;
 
     const int scrollbarThickness = 6;
-    const int viewportWidth = std::max(0, m_contentHostWidth);
-    const int viewportHeight = std::max(0, m_contentHostHeight);
+    const int viewportWidth = std::max(0, m_scroll.contentHostWidth);
+    const int viewportHeight = std::max(0, m_scroll.contentHostHeight);
     const int contentX = contentHostX;
     const int contentY = contentHostY;
     const auto clip = NeoWPF::Rendering::ClipRect{ static_cast<float>(contentX), static_cast<float>(contentY), static_cast<float>(viewportWidth), static_cast<float>(viewportHeight), true };
 
     const int contentWidth = std::max(0, m_textLayout.GetContentWidth());
     const int contentHeight = std::max(0, m_textLayout.GetContentHeight());
+    if (contentWidth < 0 || contentHeight < 0) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] BuildRenderCommands: negative layout content size (%d,%d)", contentWidth, contentHeight);
+    }
     int textOffsetX = 0;
     int textOffsetY = 0;
     TextAlignment::ApplyTextAlignment(
@@ -567,6 +555,10 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         textOffsetY);
 
     int currentY = textOffsetY - m_verticalScrollBar->GetValue();
+    if (!m_verticalScrollBar || !m_horizontalScrollBar) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] BuildRenderCommands: missing scrollbar instances");
+        return;
+    }
     const auto& lines = m_textLayout.GetLines();
     for (std::size_t lineIndex = 0; lineIndex < lines.size(); ++lineIndex) {
         const auto& line = lines[lineIndex];
@@ -583,9 +575,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const int lineVerticalOffset = GetLineVisualOffset(lineIndex);
         const int lineOffsetX = GetLineHorizontalAlignmentOffset(line.width, viewportWidth, m_textHorizontalAlignment);
 
-        if (s_textBoxDebug) {
-            NeoWPF::Diagnostics::LogInfo("[TextBox] BuildRenderCommands: line=%zu width=%d height=%d drawWidth=%d drawHeight=%d uvRight=%.3f uvBottom=%.3f offsetX=%d", lineIndex, line.width, line.height, drawWidth, drawHeight, uvRight, uvBottom, lineOffsetX);
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] BuildRenderCommands: line=%zu width=%d height=%d drawWidth=%d drawHeight=%d uvRight=%.3f uvBottom=%.3f offsetX=%d", lineIndex, line.width, line.height, drawWidth, drawHeight, uvRight, uvBottom, lineOffsetX);
 
         commands.DrawTexturedQuad(
             static_cast<float>(contentX - m_horizontalScrollBar->GetValue() + lineOffsetX),
@@ -606,13 +596,16 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         int caretX = GetCaretX();
         int rawCaretX = caretX;
         int caretY = GetCaretY();
+        if (caretY < 0 || caretX < 0) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] BuildRenderCommands: negative caret metrics (%d,%d)", caretX, caretY);
+            caretX = std::max(0, caretX);
+            caretY = std::max(0, caretY);
+        }
         caretX = std::min(caretX, viewportWidth);
         const int caretHeight = std::max(1, GetCaretHeight());
-        const auto [caretLineIndex, _] = GetCaretLineColumn(m_caretPosition);
+        const auto [caretLineIndex, _] = GetCaretLineColumn(m_caret.position);
         const int caretVerticalOffset = GetLineVisualOffset(caretLineIndex);
-        if (s_textBoxDebug) {
-            NeoWPF::Diagnostics::LogInfo("[TextBox] BuildRenderCommands: caretPosition=%zu rawCaretX=%d clampedCaretX=%d caretY=%d caretVerticalOffset=%d visibleTextWidth=%d", m_caretPosition, rawCaretX, caretX, caretY, caretVerticalOffset, viewportWidth);
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] BuildRenderCommands: caretPosition=%zu rawCaretX=%d clampedCaretX=%d caretY=%d caretVerticalOffset=%d visibleTextWidth=%d", m_caret.position, rawCaretX, caretX, caretY, caretVerticalOffset, viewportWidth);
 
         const uint32_t caretTextureId = GetCaretTextureId();
         commands.DrawTexturedQuad(
@@ -628,50 +621,40 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             clip);
     }
 
-    const bool showVertical = m_showVerticalScrollbar && m_verticalScrollBar->GetScrollRange() > 0;
-    const bool showHorizontal = m_showHorizontalScrollbar && m_horizontalScrollBar->GetScrollRange() > 0;
+    const bool showVertical = m_scroll.showVertical && m_verticalScrollBar->GetScrollRange() > 0;
+    const bool showHorizontal = m_scroll.showHorizontal && m_horizontalScrollBar->GetScrollRange() > 0;
 
     if (showVertical) {
-        const int barX = contentX + viewportWidth - scrollbarThickness;
-        const int barY = contentY;
-        const int relativeBarX = barX - absX;
-        const int relativeBarY = barY - absY;
-        const int availableVerticalSpace = std::max(8, viewportHeight - (showHorizontal ? scrollbarThickness : 0));
-        const int barHeight = std::max(8, availableVerticalSpace);
+        const auto geometry = ComputeVerticalScrollBarGeometry(contentX, contentY, viewportWidth, viewportHeight);
+        const int relativeBarX = geometry.barX - absX;
+        const int relativeBarY = geometry.barY - absY;
         const int effectiveContentHeight = std::max(m_textLayout.GetContentHeight(), viewportHeight + 1);
         const int effectiveViewportHeight = std::max(1, viewportHeight);
-        if (s_textBoxDebug) {
-            NeoWPF::Diagnostics::LogInfo("[TextBox] Vertical scrollbar debug: contentHost=(%d,%d) viewport=(%d,%d) content=(%d,%d) bar=%d", contentHostX, contentHostY, viewportWidth, viewportHeight, m_textLayout.GetContentWidth(), m_textLayout.GetContentHeight(), barHeight);
-            NeoWPF::Diagnostics::LogInfo("[TextBox] Vertical scrollbar metrics: content=%d viewport=%d track=%d range=%d (thumbQuery returns %d)", effectiveContentHeight, effectiveViewportHeight, barHeight, m_verticalScrollBar->GetScrollRange(), m_verticalScrollBar->GetThumbLength(barHeight));
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] Vertical scrollbar debug: contentHost=(%d,%d) viewport=(%d,%d) content=(%d,%d) bar=%d", contentHostX, contentHostY, viewportWidth, viewportHeight, m_textLayout.GetContentWidth(), m_textLayout.GetContentHeight(), geometry.barLength);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] Vertical scrollbar metrics: content=%d viewport=%d track=%d range=%d (thumbQuery returns %d)", effectiveContentHeight, effectiveViewportHeight, geometry.barLength, m_verticalScrollBar->GetScrollRange(), geometry.thumbLength);
         m_verticalScrollBar->SetOrientation(Orientation::Vertical);
         m_verticalScrollBar->SetViewportSize(effectiveViewportHeight);
         m_verticalScrollBar->SetContentSize(effectiveContentHeight);
         m_verticalScrollBar->SetWidth(scrollbarThickness);
-        m_verticalScrollBar->SetHeight(barHeight);
-        m_verticalScrollBar->Arrange(scrollbarThickness, barHeight);
+        m_verticalScrollBar->SetHeight(geometry.barLength);
+        m_verticalScrollBar->Arrange(scrollbarThickness, geometry.barLength);
         m_verticalScrollBar->SetLayoutOffset(relativeBarX, relativeBarY);
         m_verticalScrollBar->BuildRenderCommands(commands);
     }
 
     if (showHorizontal) {
-        const int barX = contentX;
-        const int barY = contentY + viewportHeight - scrollbarThickness;
-        const int relativeBarX = barX - absX;
-        const int relativeBarY = barY - absY;
-        const int availableHorizontalSpace = std::max(8, viewportWidth - (showVertical ? scrollbarThickness : 0));
-        const int barWidth = std::max(8, availableHorizontalSpace);
+        const auto geometry = ComputeHorizontalScrollBarGeometry(contentX, contentY, viewportWidth, viewportHeight);
+        const int relativeBarX = geometry.barX - absX;
+        const int relativeBarY = geometry.barY - absY;
         const int effectiveContentWidth = std::max(m_textLayout.GetContentWidth(), viewportWidth + 1);
         const int effectiveViewportWidth = std::max(1, viewportWidth);
-        if (s_textBoxDebug) {
-            NeoWPF::Diagnostics::LogInfo("[TextBox] Horizontal scrollbar metrics: content=%d viewport=%d track=%d range=%d thumb=%d", effectiveContentWidth, effectiveViewportWidth, barWidth, m_horizontalScrollBar->GetScrollRange(), m_horizontalScrollBar->GetThumbLength(barWidth));
-        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] Horizontal scrollbar metrics: content=%d viewport=%d track=%d range=%d thumb=%d", effectiveContentWidth, effectiveViewportWidth, geometry.barLength, m_horizontalScrollBar->GetScrollRange(), geometry.thumbLength);
         m_horizontalScrollBar->SetOrientation(Orientation::Horizontal);
         m_horizontalScrollBar->SetViewportSize(effectiveViewportWidth);
         m_horizontalScrollBar->SetContentSize(effectiveContentWidth);
-        m_horizontalScrollBar->SetWidth(barWidth);
+        m_horizontalScrollBar->SetWidth(geometry.barLength);
         m_horizontalScrollBar->SetHeight(scrollbarThickness);
-        m_horizontalScrollBar->Arrange(barWidth, scrollbarThickness);
+        m_horizontalScrollBar->Arrange(geometry.barLength, scrollbarThickness);
         m_horizontalScrollBar->SetLayoutOffset(relativeBarX, relativeBarY);
         m_horizontalScrollBar->BuildRenderCommands(commands);
     }
@@ -685,9 +668,47 @@ void TextBox::EnsureTextTexture()
         return;
     }
 
-    m_textLayout.Refresh(m_text, m_fontSize, GetFontFamily(), m_contentHostWidth, m_contentHostHeight, m_textWrapping, true);
+    if (m_scroll.contentHostWidth < 0 || m_scroll.contentHostHeight < 0) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] EnsureTextTexture: negative content host size (%d,%d); clamping", m_scroll.contentHostWidth, m_scroll.contentHostHeight);
+        m_scroll.contentHostWidth = std::max(0, m_scroll.contentHostWidth);
+        m_scroll.contentHostHeight = std::max(0, m_scroll.contentHostHeight);
+    }
+
+    m_textLayout.Refresh(m_text, m_fontSize, GetFontFamily(), m_scroll.contentHostWidth, m_scroll.contentHostHeight, m_textWrapping, true);
     m_textDirty = false;
     InvalidateVisual();
+}
+
+TextBox::ScrollBarGeometry TextBox::ComputeVerticalScrollBarGeometry(int contentX, int contentY, int viewportWidth, int viewportHeight) const
+{
+    ScrollBarGeometry geometry;
+    const int scrollbarThickness = 6;
+    const int barX = contentX + viewportWidth - scrollbarThickness;
+    const int barY = contentY;
+    const int availableVerticalSpace = std::max(8, viewportHeight - (m_scroll.showHorizontal ? scrollbarThickness : 0));
+    geometry.barX = barX;
+    geometry.barY = barY;
+    geometry.barLength = std::max(8, availableVerticalSpace);
+    geometry.trackLength = geometry.barLength;
+    geometry.thumbLength = m_verticalScrollBar ? m_verticalScrollBar->GetThumbLength(geometry.barLength) : 0;
+    geometry.thumbOffset = m_verticalScrollBar ? m_verticalScrollBar->GetThumbPosition(geometry.barLength, geometry.thumbLength) : 0;
+    return geometry;
+}
+
+TextBox::ScrollBarGeometry TextBox::ComputeHorizontalScrollBarGeometry(int contentX, int contentY, int viewportWidth, int viewportHeight) const
+{
+    ScrollBarGeometry geometry;
+    const int scrollbarThickness = 6;
+    const int barX = contentX;
+    const int barY = contentY + viewportHeight - scrollbarThickness;
+    const int availableHorizontalSpace = std::max(8, viewportWidth - (m_scroll.showVertical ? scrollbarThickness : 0));
+    geometry.barX = barX;
+    geometry.barY = barY;
+    geometry.barLength = std::max(8, availableHorizontalSpace);
+    geometry.trackLength = geometry.barLength;
+    geometry.thumbLength = m_horizontalScrollBar ? m_horizontalScrollBar->GetThumbLength(geometry.barLength) : 0;
+    geometry.thumbOffset = m_horizontalScrollBar ? m_horizontalScrollBar->GetThumbPosition(geometry.barLength, geometry.thumbLength) : 0;
+    return geometry;
 }
 
 int TextBox::GetLineVisualOffset(std::size_t lineIndex) const

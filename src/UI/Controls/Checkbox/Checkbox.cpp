@@ -24,6 +24,7 @@ Checkbox::Checkbox()
     m_textContent->SetVerticalAlignment(VerticalAlignment::Stretch);
     m_textContent->SetText(L"");
     m_textContent->SetTextHorizontalAlignment(TextHorizontalAlignment::Left);
+    m_textContent->SetTextVerticalAlignment(TextVerticalAlignment::Center);
     m_textContent->SetTextColor(m_textColor.ToArgb());
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
@@ -201,6 +202,14 @@ void Checkbox::Arrange(int finalWidth, int finalHeight)
             presenter->SetLayoutOffset(desiredOffsetX, 0);
         }
         presenter->Arrange(std::max(0, finalWidth - (18 + m_padding)), contentHeight);
+        if (auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(presenter->FindTemplateChild("PART_ContentHost"))) {
+            const int desiredTextOffsetY = (finalHeight - contentHeight) / 2;
+            contentHost->SetRect(
+                static_cast<int>(std::lround(presenter->GetLayoutOffsetX())),
+                desiredTextOffsetY,
+                std::max(0, static_cast<int>(std::lround(finalWidth - presenter->GetLayoutOffsetX()))),
+                contentHeight);
+        }
     }
 }
 
@@ -217,9 +226,14 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     float drawHeight = static_cast<float>(GetFinalHeight());
     ApplyRenderTransform(fAbsX, fAbsY, drawWidth, drawHeight);
 
+    const float boxTop = fAbsY + (drawHeight - static_cast<float>(boxSize)) / 2.0f;
+    const float boxLeft = fAbsX;
+    const float boxRight = boxLeft + static_cast<float>(boxSize);
+    const float boxBottom = boxTop + static_cast<float>(boxSize);
+
     auto box = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Box"));
     if (box) {
-        box->SetRect(static_cast<int>(std::lround(fAbsX)), static_cast<int>(std::lround(fAbsY + 1)), boxSize, boxSize);
+        box->SetRect(static_cast<int>(std::lround(boxLeft)), static_cast<int>(std::lround(boxTop)), boxSize, boxSize);
         box->SetFillColor(m_bgColor.ToArgb());
         box->SetBorderColor(m_borderColor.ToArgb());
         box->SetBorderThickness(1);
@@ -227,15 +241,15 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         box->BuildRenderCommands(commands);
     }
     else {
-        commands.DrawRoundedRect(fAbsX, fAbsY + 1.0f, 18.0f, 18.0f, 0.0f, 0.0f, 0.0f, 0.0f, m_bgColor.ToArgb(), GetOpacity());
-        commands.DrawRoundedRect(fAbsX, fAbsY + 1.0f, 18.0f, 18.0f, 0.0f, 0.0f, 0.0f, 0.0f, m_borderColor.ToArgb(), GetOpacity());
+        commands.DrawRoundedRect(boxLeft, boxTop, static_cast<float>(boxSize), static_cast<float>(boxSize), 0.0f, 0.0f, 0.0f, 0.0f, m_bgColor.ToArgb(), GetOpacity());
+        commands.DrawRoundedRect(boxLeft, boxTop, static_cast<float>(boxSize), static_cast<float>(boxSize), 0.0f, 0.0f, 0.0f, 0.0f, m_borderColor.ToArgb(), GetOpacity());
     }
 
-if (IsChecked()) {
-    const auto checkColor = NeoWPF::UI::Color::FromArgb(0xFF212121u);
-    const float checkCenterX = fAbsX + 9.0f;
-    const float checkCenterY = fAbsY + 10.0f;
-    constexpr float kCheckAngle = 0.68f;
+    if (IsChecked()) {
+        const auto checkColor = NeoWPF::UI::Color::FromArgb(0xFF212121u);
+        const float checkCenterX = boxLeft + static_cast<float>(boxSize) * 0.5f;
+        const float checkCenterY = boxTop + static_cast<float>(boxSize) * 0.5f;
+        constexpr float kCheckAngle = 0.68f;
 
     auto drawCheckStroke = [&](float width, float height, float rotationRadians, float offsetX, float offsetY) {
         const float x = checkCenterX + offsetX - width * 0.5f;

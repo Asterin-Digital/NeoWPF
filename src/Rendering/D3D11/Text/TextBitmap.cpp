@@ -11,6 +11,7 @@
 #include <wrl.h>
 #include <algorithm>
 #include <cmath>
+#include <climits>
 #include <vector>
 
 using Microsoft::WRL::ComPtr;
@@ -19,16 +20,38 @@ namespace NeoWPF::Rendering::Text {
 
 namespace {
 
+DWRITE_RENDERING_MODE SelectRenderingMode(float fontSize)
+{
+
+    return DWRITE_RENDERING_MODE_NATURAL;
+}
+
 struct BitmapTextRenderer : public IDWriteTextRenderer {
     ComPtr<IDWriteFactory> factory;
     std::vector<uint8_t>* bitmap;
     int width;
     int height;
+    int inkLeft = INT_MAX;
+    int inkTop = INT_MAX;
+    int inkRight = INT_MIN;
+    int inkBottom = INT_MIN;
     long refCount = 1;
 
     BitmapTextRenderer(ComPtr<IDWriteFactory> factory, std::vector<uint8_t>* bitmap, int width, int height)
         : factory(std::move(factory)), bitmap(bitmap), width(width), height(height)
     {
+    }
+
+    bool GetInkBounds(int& outLeft, int& outTop, int& outWidth, int& outHeight) const
+    {
+        if (inkLeft == INT_MAX || inkTop == INT_MAX || inkRight == INT_MIN || inkBottom == INT_MIN) {
+            return false;
+        }
+        outLeft = inkLeft;
+        outTop = inkTop;
+        outWidth = inkRight - inkLeft;
+        outHeight = inkBottom - inkTop;
+        return outWidth > 0 && outHeight > 0;
     }
 
     STDMETHOD(QueryInterface)(REFIID riid, void** ppvObject) override
@@ -77,123 +100,164 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
         return S_OK;
     }
 
-    STDMETHOD(DrawGlyphRun)(void* clientDrawingContext, FLOAT baselineOriginX, FLOAT baselineOriginY,
-        DWRITE_MEASURING_MODE measuringMode,
-        const DWRITE_GLYPH_RUN* glyphRun,
-        const DWRITE_GLYPH_RUN_DESCRIPTION* glyphRunDescription,
-        IUnknown* clientDrawingEffect) override
-    {
-        if (!glyphRun || !bitmap) {
-            ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: null glyphRun or bitmap");
-            return E_INVALIDARG;
+STDMETHOD(DrawGlyphRun)(void* clientDrawingContext, FLOAT baselineOriginX, FLOAT baselineOriginY,
+    DWRITE_MEASURING_MODE measuringMode,
+    const DWRITE_GLYPH_RUN* glyphRun,
+    const DWRITE_GLYPH_RUN_DESCRIPTION* glyphRunDescription,
+    IUnknown* clientDrawingEffect) override
+{
+    if (!glyphRun || !bitmap) {
+        ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: null glyphRun or bitmap");
+        return E_INVALIDARG;
+    }
+
+    const DWRITE_RENDERING_MODE renderingMode = SelectRenderingMode(glyphRun->fontEmSize);
+
+
+    const DWRITE_TEXTURE_TYPE textureType =
+        (renderingMode == DWRITE_RENDERING_MODE_NATURAL ||
+         renderingMode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC ||
+         renderingMode == DWRITE_RENDERING_MODE_GDI_NATURAL ||
+         renderingMode == DWRITE_RENDERING_MODE_GDI_CLASSIC)
+        ? DWRITE_TEXTURE_CLEARTYPE_3x1
+        : DWRITE_TEXTURE_ALIASED_1x1;
+
+    ::NeoWPF::Diagnostics::Log(::NeoWPF::Diagnostics::Category::TextRendering, ::NeoWPF::Diagnostics::Level::Debug,
+        "DrawGlyphRun: fontEmSize=%.2f baseline=(%.2f, %.2f) glyphCount=%u measuringMode=%d renderingMode=%d textureType=%d",
+        glyphRun->fontEmSize, baselineOriginX, baselineOriginY, glyphRun->glyphCount,
+        measuringMode, static_cast<int>(renderingMode), static_cast<int>(textureType));
+
+    ComPtr<IDWriteGlyphRunAnalysis> glyphRunAnalysis;
+    HRESULT hr = factory->CreateGlyphRunAnalysis(
+        glyphRun,
+        1.0f,
+        nullptr,
+        renderingMode,
+        measuringMode,
+        baselineOriginX,
+        baselineOriginY,
+        &glyphRunAnalysis);
+    if (FAILED(hr)) {
+        ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: CreateGlyphRunAnalysis failed 0x%08X", static_cast<unsigned int>(hr));
+        return hr;
+    }
+
+    RECT textureBounds;
+    hr = glyphRunAnalysis->GetAlphaTextureBounds(textureType, &textureBounds);
+    ::NeoWPF::Diagnostics::Log(::NeoWPF::Diagnostics::Category::TextRendering, ::NeoWPF::Diagnostics::Level::Debug,
+        "DrawGlyphRun: textureBounds={l=%ld,t=%ld,r=%ld,b=%ld} width=%d height=%d",
+        static_cast<long>(textureBounds.left), static_cast<long>(textureBounds.top),
+        static_cast<long>(textureBounds.right), static_cast<long>(textureBounds.bottom),
+        textureBounds.right - textureBounds.left, textureBounds.bottom - textureBounds.top);
+    if (FAILED(hr)) {
+        ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: GetAlphaTextureBounds failed 0x%08X", static_cast<unsigned int>(hr));
+        return hr;
+    }
+
+    int textureWidth = textureBounds.right - textureBounds.left;
+    int textureHeight = textureBounds.bottom - textureBounds.top;
+    if (textureWidth <= 0 || textureHeight <= 0) {
+        ::NeoWPF::Diagnostics::Log(::NeoWPF::Diagnostics::Category::TextRendering, ::NeoWPF::Diagnostics::Level::Debug,
+            "DrawGlyphRun: zero texture size %dx%d; falling back to a small placeholder", textureWidth, textureHeight);
+        const int fallbackWidth = std::max(1, std::min(8, width));
+        const int fallbackHeight = std::max(1, std::min(8, height));
+        const size_t fallbackPixels = static_cast<size_t>(fallbackWidth) * static_cast<size_t>(fallbackHeight);
+        std::vector<uint8_t> fallbackBitmap(fallbackPixels * 4, 0);
+        for (size_t i = 0; i < fallbackPixels; ++i) {
+            fallbackBitmap[i * 4 + 0] = 255;
+            fallbackBitmap[i * 4 + 1] = 255;
+            fallbackBitmap[i * 4 + 2] = 255;
+            fallbackBitmap[i * 4 + 3] = 255;
         }
-
-        ComPtr<IDWriteRenderingParams> renderingParams;
-        HRESULT hr = factory->CreateRenderingParams(&renderingParams);
-        if (FAILED(hr)) {
-            ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: CreateRenderingParams failed 0x%08X", static_cast<unsigned int>(hr));
-            return hr;
-        }
-
-        const DWRITE_RENDERING_MODE renderingMode = DWRITE_RENDERING_MODE_ALIASED;
-        const DWRITE_TEXTURE_TYPE textureType = DWRITE_TEXTURE_ALIASED_1x1;
-
-        ComPtr<IDWriteGlyphRunAnalysis> glyphRunAnalysis;
-        hr = factory->CreateGlyphRunAnalysis(
-            glyphRun,
-            1.0f,
-            nullptr,
-            renderingMode,
-            measuringMode,
-            baselineOriginX,
-            baselineOriginY,
-            &glyphRunAnalysis);
-        if (FAILED(hr)) {
-            ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: CreateGlyphRunAnalysis failed 0x%08X", static_cast<unsigned int>(hr));
-            return hr;
-        }
-
-        RECT textureBounds;
-        hr = glyphRunAnalysis->GetAlphaTextureBounds(textureType, &textureBounds);
-        if (FAILED(hr)) {
-            ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: GetAlphaTextureBounds failed 0x%08X", static_cast<unsigned int>(hr));
-            return hr;
-        }
-
-        int textureWidth = textureBounds.right - textureBounds.left;
-        int textureHeight = textureBounds.bottom - textureBounds.top;
-        if (textureWidth <= 0 || textureHeight <= 0) {
-            ::NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Debug, "DrawGlyphRun: zero texture size %dx%d", textureWidth, textureHeight);
-            return S_OK;
-        }
-
-        UINT32 textureBufferSize = static_cast<UINT32>(textureWidth) * static_cast<UINT32>(textureHeight);
-        std::vector<BYTE> alphaData(textureBufferSize);
-        hr = glyphRunAnalysis->CreateAlphaTexture(textureType, &textureBounds, alphaData.data(), textureBufferSize);
-        if (FAILED(hr)) {
-            ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: CreateAlphaTexture failed 0x%08X", static_cast<unsigned int>(hr));
-            return hr;
-        }
-
-        float adjustedBaselineY = baselineOriginY;
-        float destTop = adjustedBaselineY + static_cast<float>(textureBounds.top);
-        float destBottom = destTop + static_cast<float>(textureHeight);
-        if (destTop < 0.0f) {
-            adjustedBaselineY -= destTop;
-        }
-        if (destBottom > static_cast<float>(height)) {
-            adjustedBaselineY -= (destBottom - static_cast<float>(height));
-        }
-
-        int originX = static_cast<int>(std::floor(baselineOriginX + textureBounds.left));
-        int originY = static_cast<int>(std::floor(adjustedBaselineY + textureBounds.top));
-
-        int extraLeft = std::max(0, -originX);
-        int extraTop = std::max(0, -originY);
-        int extraRight = std::max(0, originX + textureWidth - width);
-        int extraBottom = std::max(0, originY + textureHeight - height);
-
-        if (extraLeft || extraTop || extraRight || extraBottom) {
-            int newWidth = width + extraLeft + extraRight;
-            int newHeight = height + extraTop + extraBottom;
-            std::vector<uint8_t> newBitmap(static_cast<size_t>(newWidth) * static_cast<size_t>(newHeight) * 4, 0);
-
-            for (int r = 0; r < height; ++r) {
-                for (int c = 0; c < width; ++c) {
-                    size_t oldIdx = (static_cast<size_t>(r) * width + static_cast<size_t>(c)) * 4;
-                    size_t newIdx = (static_cast<size_t>(r + extraTop) * newWidth + static_cast<size_t>(c + extraLeft)) * 4;
-                    newBitmap[newIdx + 0] = (*bitmap)[oldIdx + 0];
-                    newBitmap[newIdx + 1] = (*bitmap)[oldIdx + 1];
-                    newBitmap[newIdx + 2] = (*bitmap)[oldIdx + 2];
-                    newBitmap[newIdx + 3] = (*bitmap)[oldIdx + 3];
-                }
-            }
-            (*bitmap) = std::move(newBitmap);
-            originX += extraLeft;
-            originY += extraTop;
-            width = newWidth;
-            height = newHeight;
-        }
-
-        for (int row = 0; row < textureHeight; ++row) {
-            int dstY = originY + row;
-            if (dstY < 0 || dstY >= height) continue;
-
-            const BYTE* rowData = alphaData.data() + static_cast<size_t>(row) * textureWidth;
-            for (int col = 0; col < textureWidth; ++col) {
-                int dstX = originX + col;
-                if (dstX < 0 || dstX >= width) continue;
-                uint8_t alpha = rowData[col];
-                if (alpha == 0) continue;
-                size_t pixelIndex = (static_cast<size_t>(dstY) * width + static_cast<size_t>(dstX)) * 4;
-                (*bitmap)[pixelIndex + 0] = 255;
-                (*bitmap)[pixelIndex + 1] = 255;
-                (*bitmap)[pixelIndex + 2] = 255;
-                (*bitmap)[pixelIndex + 3] = alpha;
-            }
-        }
+        (*bitmap) = std::move(fallbackBitmap);
+        width = fallbackWidth;
+        height = fallbackHeight;
         return S_OK;
     }
+
+    const size_t bytesPerPixel = (textureType == DWRITE_TEXTURE_CLEARTYPE_3x1) ? 3 : 1;
+    const UINT32 textureBufferSize = static_cast<UINT32>(textureWidth * textureHeight * bytesPerPixel);
+    std::vector<BYTE> alphaData(textureBufferSize);
+    hr = glyphRunAnalysis->CreateAlphaTexture(textureType, &textureBounds, alphaData.data(), textureBufferSize);
+    if (FAILED(hr)) {
+        ::NeoWPF::Diagnostics::LogError("DrawGlyphRun: CreateAlphaTexture failed 0x%08X", static_cast<unsigned int>(hr));
+        return hr;
+    }
+
+    float adjustedBaselineY = baselineOriginY;
+    float destTop = adjustedBaselineY + static_cast<float>(textureBounds.top);
+    float destBottom = destTop + static_cast<float>(textureHeight);
+    if (destTop < 0.0f) {
+        adjustedBaselineY -= destTop;
+    }
+    if (destBottom > static_cast<float>(height)) {
+        adjustedBaselineY -= (destBottom - static_cast<float>(height));
+    }
+
+    int originX = static_cast<int>(std::lround(baselineOriginX + textureBounds.left));
+    int originY = static_cast<int>(std::lround(adjustedBaselineY + textureBounds.top));
+
+
+    int extraLeft = std::max(0, -originX);
+    int extraTop = std::max(0, -originY);
+    int extraRight = std::max(0, originX + textureWidth - width);
+    int extraBottom = std::max(0, originY + textureHeight - height);
+
+    if (extraLeft || extraTop || extraRight || extraBottom) {
+        int newWidth = width + extraLeft + extraRight;
+        int newHeight = height + extraTop + extraBottom;
+        std::vector<uint8_t> newBitmap(static_cast<size_t>(newWidth) * static_cast<size_t>(newHeight) * 4, 0);
+        for (int r = 0; r < height; ++r) {
+            for (int c = 0; c < width; ++c) {
+                size_t oldIdx = (static_cast<size_t>(r) * width + static_cast<size_t>(c)) * 4;
+                size_t newIdx = (static_cast<size_t>(r + extraTop) * newWidth + static_cast<size_t>(c + extraLeft)) * 4;
+                newBitmap[newIdx + 0] = (*bitmap)[oldIdx + 0];
+                newBitmap[newIdx + 1] = (*bitmap)[oldIdx + 1];
+                newBitmap[newIdx + 2] = (*bitmap)[oldIdx + 2];
+                newBitmap[newIdx + 3] = (*bitmap)[oldIdx + 3];
+            }
+        }
+        (*bitmap) = std::move(newBitmap);
+        originX += extraLeft;
+        originY += extraTop;
+        width = newWidth;
+        height = newHeight;
+    }
+
+    if (originX < inkLeft) inkLeft = originX;
+    if (originY < inkTop) inkTop = originY;
+    inkRight = std::max(inkRight, originX + textureWidth);
+    inkBottom = std::max(inkBottom, originY + textureHeight);
+
+    for (int row = 0; row < textureHeight; ++row) {
+        int dstY = originY + row;
+        if (dstY < 0 || dstY >= height) continue;
+
+        const BYTE* rowData = alphaData.data() + static_cast<size_t>(row) * textureWidth * bytesPerPixel;
+        for (int col = 0; col < textureWidth; ++col) {
+            int dstX = originX + col;
+            if (dstX < 0 || dstX >= width) continue;
+
+            uint8_t alpha;
+            if (textureType == DWRITE_TEXTURE_CLEARTYPE_3x1) {
+
+                alpha = (rowData[col * 3] + rowData[col * 3 + 1] + rowData[col * 3 + 2]) / 3;
+            } else {
+                alpha = rowData[col];
+            }
+
+            if (alpha == 0) continue;
+            size_t pixelIndex = (static_cast<size_t>(dstY) * width + static_cast<size_t>(dstX)) * 4;
+
+            (*bitmap)[pixelIndex + 0] = 255;
+            (*bitmap)[pixelIndex + 1] = 255;
+            (*bitmap)[pixelIndex + 2] = 255;
+            (*bitmap)[pixelIndex + 3] = alpha;
+        }
+    }
+
+    return S_OK;
+}
 
     STDMETHOD(DrawUnderline)(void*, FLOAT, FLOAT, const DWRITE_UNDERLINE*, IUnknown*) override { return S_OK; }
     STDMETHOD(DrawStrikethrough)(void*, FLOAT, FLOAT, const DWRITE_STRIKETHROUGH*, IUnknown*) override { return S_OK; }
@@ -203,6 +267,7 @@ struct BitmapTextRenderer : public IDWriteTextRenderer {
 }
 
 TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int maxWidth, int maxHeight);
+std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight, int* outInkTop = nullptr, int* outInkHeight = nullptr);
 
 namespace {
 
@@ -288,10 +353,16 @@ bool TryCreateCustomFontFace(IDWriteFactory* factory, const std::wstring& family
 
 }
 
-std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight)
+std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight, int* outInkTop /*= nullptr*/, int* outInkHeight /*= nullptr*/)
 {
     outWidth = 0;
     outHeight = 0;
+    if (outInkTop) {
+        *outInkTop = 0;
+    }
+    if (outInkHeight) {
+        *outInkHeight = 0;
+    }
     if (text.empty()) {
         ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: empty text");
         return {};
@@ -361,6 +432,19 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
                 hr = renderer->DrawGlyphRun(nullptr, 0.0f, static_cast<FLOAT>(fontSize), DWRITE_MEASURING_MODE_NATURAL, &glyphRun, nullptr, nullptr);
                 outWidth = renderer->width;
                 outHeight = renderer->height;
+                if (outInkTop || outInkHeight) {
+                    int inkLeft = 0;
+                    int inkTop = 0;
+                    int inkWidth = 0;
+                    int inkHeight = 0;
+                    if (renderer->GetInkBounds(inkLeft, inkTop, inkWidth, inkHeight)) {
+                        if (outInkTop) *outInkTop = inkTop;
+                        if (outInkHeight) *outInkHeight = inkHeight;
+                    } else {
+                        if (outInkTop) *outInkTop = 0;
+                        if (outInkHeight) *outInkHeight = outHeight;
+                    }
+                }
                 renderer->Release();
                 if (SUCCEEDED(hr)) {
                     return bitmap;
@@ -445,6 +529,19 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
     hr = textLayout->Draw(nullptr, renderer, baselineOriginX, baselineOriginY);
     outWidth = renderer->width;
     outHeight = renderer->height;
+    if (outInkTop || outInkHeight) {
+        int inkLeft = 0;
+        int inkTop = 0;
+        int inkWidth = 0;
+        int inkHeight = 0;
+        if (renderer->GetInkBounds(inkLeft, inkTop, inkWidth, inkHeight)) {
+            if (outInkTop) *outInkTop = inkTop;
+            if (outInkHeight) *outInkHeight = inkHeight;
+        } else {
+            if (outInkTop) *outInkTop = 0;
+            if (outInkHeight) *outInkHeight = outHeight;
+        }
+    }
     renderer->Release();
 
     if (FAILED(hr)) {

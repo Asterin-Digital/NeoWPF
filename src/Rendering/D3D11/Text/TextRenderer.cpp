@@ -90,7 +90,7 @@ std::wstring ResolveFontFamily(const std::wstring& requestedFontFamily)
  
 
 TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int maxWidth, int maxHeight);
-std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight);
+std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight, int* outInkTop = nullptr, int* outInkHeight = nullptr);
 
 TextMetrics MeasureText(const std::wstring& text, int fontSize, int maxWidth, int maxHeight)
 {
@@ -120,6 +120,13 @@ std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, co
 std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight)
 {
     return TextRenderTextBitmapInternal(text, fontSize, maxWidth, maxHeight, fontFamily, outWidth, outHeight);
+}
+
+std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight, int& outInkTop, int& outInkHeight)
+{
+    outInkTop = 0;
+    outInkHeight = 0;
+    return TextRenderTextBitmapInternal(text, fontSize, maxWidth, maxHeight, fontFamily, outWidth, outHeight, &outInkTop, &outInkHeight);
 }
 
 }

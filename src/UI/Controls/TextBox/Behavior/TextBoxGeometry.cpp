@@ -21,14 +21,12 @@ void TextBox::UpdateCaretFromMouse(int x, int y)
     int absY = 0;
     GetAbsolutePosition(absX, absY);
 
-    const int localX = x - absX - m_padding;
-    const int localY = y - absY - m_padding;
-    if (s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] UpdateCaretFromMouse: x=%d y=%d absX=%d absY=%d localX=%d localY=%d textLength=%zu", x, y, absX, absY, localX, localY, m_text.size());
-    }
+    const int localX = x - absX - std::max(0, m_padding);
+    const int localY = y - absY - std::max(0, m_padding);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateCaretFromMouse: x=%d y=%d absX=%d absY=%d localX=%d localY=%d textLength=%zu", x, y, absX, absY, localX, localY, m_text.size());
 
     if (localX <= 0) {
-        m_caretPosition = 0;
+        m_caret.position = 0;
         return;
     }
 
@@ -57,10 +55,13 @@ void TextBox::UpdateCaretFromMouse(int x, int y)
     }
 
     if (lineStart == m_text.size()) {
-        m_caretPosition = m_text.size();
-        if (s_textBoxDebug) {
-            NeoWPF::Diagnostics::LogInfo("[TextBox] UpdateCaretFromMouse: chosen caret=%zu bestDistance=%d targetLine=%zu", m_caretPosition, 0, targetLine);
-        }
+        m_caret.position = m_text.size();
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateCaretFromMouse: chosen caret=%zu bestDistance=%d targetLine=%zu", m_caret.position, 0, targetLine);
+        return;
+    }
+
+    if (lineEnd < lineStart) {
+        m_caret.position = std::min(m_text.size(), lineStart);
         return;
     }
 
@@ -77,35 +78,47 @@ void TextBox::UpdateCaretFromMouse(int x, int y)
         }
     }
 
-    m_caretPosition = bestPosition;
-    if (s_textBoxDebug) {
-        NeoWPF::Diagnostics::LogInfo("[TextBox] UpdateCaretFromMouse: chosen caret=%zu bestDistance=%d targetLine=%zu", m_caretPosition, bestDistance, targetLine);
-    }
+    m_caret.position = bestPosition;
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateCaretFromMouse: chosen caret=%zu bestDistance=%d targetLine=%zu", m_caret.position, bestDistance, targetLine);
 }
 
 int TextBox::GetCaretX() const
 {
-    const auto [lineIndex, column] = GetCaretLineColumn(m_caretPosition);
+    const auto [lineIndex, column] = GetCaretLineColumn(m_caret.position);
     const auto& lines = m_textLayout.GetLines();
-    const std::wstring lineText = lineIndex < lines.size() ? lines[lineIndex].text : std::wstring();
+    if (lineIndex >= lines.size()) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] GetCaretX: invalid lineIndex=%zu lineCount=%zu caret=%zu", lineIndex, lines.size(), m_caret.position);
+        return 0;
+    }
+
+    if (m_caret.position > m_text.size()) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] GetCaretX: caret=%zu exceeds textLength=%zu", m_caret.position, m_text.size());
+        return 0;
+    }
+
+    const std::wstring lineText = lines[lineIndex].text;
     const std::size_t safeColumn = std::min<std::size_t>(column, lineText.size());
     const std::wstring prefix = lineText.substr(0, safeColumn);
     if (prefix.empty()) return 0;
 
     int width = 0, height = 0;
-
-    NeoWPF::Rendering::Text::RenderTextBitmap(prefix, m_fontSize, GetFontFamily(), width, height);
+    try {
+        NeoWPF::Rendering::Text::RenderTextBitmap(prefix, m_fontSize, GetFontFamily(), width, height);
+    } catch (const std::exception& ex) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] GetCaretX: render failed for prefix '%ls' (%s)", prefix.c_str(), ex.what());
+        return 0;
+    }
     return width;
 }
 
 int TextBox::GetCaretY() const
 {
-    return m_textLayout.GetCaretY(m_caretPosition);
+    return m_textLayout.GetCaretY(m_caret.position);
 }
 
 int TextBox::GetCaretHeight() const
 {
-    return m_textLayout.GetCaretHeight(m_caretPosition);
+    return m_textLayout.GetCaretHeight(m_caret.position);
 }
 
 std::pair<std::size_t, std::size_t> TextBox::GetCaretLineColumn(std::size_t caretPosition) const
@@ -115,6 +128,11 @@ std::pair<std::size_t, std::size_t> TextBox::GetCaretLineColumn(std::size_t care
 
 void TextBox::MoveCaretToLineColumn(std::size_t lineIndex, std::size_t column)
 {
+    if (lineIndex == 0 && column == 0) {
+        m_caret.position = 0;
+        return;
+    }
+
     std::size_t currentLine = 0;
     std::size_t lineStart = 0;
     while (lineStart <= m_text.size()) {
@@ -122,14 +140,14 @@ void TextBox::MoveCaretToLineColumn(std::size_t lineIndex, std::size_t column)
         const std::size_t lineEnd = nextNewline == std::wstring::npos ? m_text.size() : nextNewline;
         if (currentLine == lineIndex) {
             const std::size_t maxColumn = lineEnd - lineStart;
-            m_caretPosition = std::min(lineStart + std::min(column, maxColumn), m_text.size());
+            m_caret.position = std::min(lineStart + std::min(column, maxColumn), m_text.size());
             return;
         }
         lineStart = lineEnd + 1;
         ++currentLine;
     }
 
-    m_caretPosition = m_text.size();
+    m_caret.position = m_text.size();
 }
 
 int TextBox::GetLineHeight(const std::wstring& line) const
