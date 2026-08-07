@@ -229,6 +229,11 @@ void UIElement::AddHandler(const NeoWPF::Input::Core::RoutedEvent& routedEvent,
     };
 }
 
+bool UIElement::HasRoutedEventHandler(const NeoWPF::Input::Core::RoutedEvent& routedEvent) const
+{
+    return m_routedEventHandlers.find(routedEvent.EventTypeId) != m_routedEventHandlers.end();
+}
+
 void UIElement::RaiseEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
 {
     if (!args || !args->GetRoutedEvent()) {

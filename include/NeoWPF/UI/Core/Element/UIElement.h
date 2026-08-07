@@ -157,7 +157,8 @@ public:
     virtual void Arrange(int finalWidth, int finalHeight) {}
 
     virtual bool IsHitTestVisible() const noexcept { return true; }
-    virtual bool IsInteractable() const noexcept { return true; }
+    virtual bool IsInteractable() const noexcept { return false; }
+    bool HasRoutedEventHandler(const NeoWPF::Input::Core::RoutedEvent& routedEvent) const;
 
     void SetTemplate(const std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase>& templatePtr);
     const std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase>& GetTemplate() const noexcept { return m_template; }

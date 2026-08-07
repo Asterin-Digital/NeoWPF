@@ -75,7 +75,20 @@ namespace NeoWPF::Input
 
         const bool isEnabled = element->IsEnabled();
         const bool isHitTestVisible = element->IsHitTestVisible();
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  IsEnabled: %s, IsHitTestVisible: %s", indent, isEnabled ? "true" : "false", isHitTestVisible ? "true" : "false");
+        const bool hasMouseHandlers =
+            element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseDownEvent()) ||
+            element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseUpEvent()) ||
+            element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseMoveEvent()) ||
+            element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseEnterEvent()) ||
+            element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseLeaveEvent());
+        const bool isHitTestTarget = isHitTestVisible && (element->IsInteractable() || hasMouseHandlers);
+
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Info,
+            "[HitTest] %s  IsEnabled: %s, IsHitTestVisible: %s, IsHitTestTarget: %s",
+            indent,
+            isEnabled ? "true" : "false",
+            isHitTestVisible ? "true" : "false",
+            isHitTestTarget ? "true" : "false");
 
         if (!isEnabled)
         {
@@ -83,10 +96,10 @@ namespace NeoWPF::Input
             return nullptr;
         }
 
-        NeoWPF::UI::UIElement* deepestHit = isHitTestVisible ? element : nullptr;
-        if (!isHitTestVisible)
+        NeoWPF::UI::UIElement* deepestHit = isHitTestTarget ? element : nullptr;
+        if (!isHitTestTarget)
         {
-            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  Result: PASS (element is not hit-testable, testing children)", indent);
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Info, "[HitTest] %s  Result: PASS (element is not an interactive hit-test target, testing children)", indent);
         }
 
         if (deepestHit)
