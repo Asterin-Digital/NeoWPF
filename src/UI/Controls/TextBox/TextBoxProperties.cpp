@@ -9,7 +9,7 @@ namespace NeoWPF::UI::Properties {
         RegisterProperty<UI::TextBox, std::wstring>(
             "Text",
             &UI::TextBox::GetText,
-            &UI::TextBox::SetText,
+            static_cast<void (UI::TextBox::*)(const std::wstring&)>(&UI::TextBox::SetText),
             textMetadata);
 
         PropertyMetadata textColorMetadata;

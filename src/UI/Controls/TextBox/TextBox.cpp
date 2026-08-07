@@ -109,6 +109,11 @@ void TextBox::ApplyVisualState(const std::string& stateName, bool useTransitions
 
 void TextBox::SetText(const std::wstring& text)
 {
+    SetText(text, true);
+}
+
+void TextBox::SetText(const std::wstring& text, bool resetScrollOffset)
+{
     if (m_text == text) {
         return;
     }
@@ -135,13 +140,15 @@ void TextBox::SetText(const std::wstring& text)
 
     m_text = text;
     m_caret.position = std::min(m_caret.position, m_text.size());
-    m_scroll.offsetX = 0;
-    m_scroll.offsetY = 0;
-    if (m_verticalScrollBar) {
-        m_verticalScrollBar->SetValue(0);
-    }
-    if (m_horizontalScrollBar) {
-        m_horizontalScrollBar->SetValue(0);
+    if (resetScrollOffset) {
+        m_scroll.offsetX = 0;
+        m_scroll.offsetY = 0;
+        if (m_verticalScrollBar) {
+            m_verticalScrollBar->SetValue(0);
+        }
+        if (m_horizontalScrollBar) {
+            m_horizontalScrollBar->SetValue(0);
+        }
     }
     m_textDirty = true;
     InvalidateVisual();
@@ -580,7 +587,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] BuildRenderCommands: line=%zu width=%d height=%d drawWidth=%d drawHeight=%d uvRight=%.3f uvBottom=%.3f offsetX=%d", lineIndex, line.width, line.height, drawWidth, drawHeight, uvRight, uvBottom, lineOffsetX);
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] BuildRenderCommands: bitmap texture Y=%d for line=%zu textureId=%u lineHeight=%d lineVerticalOffset=%d currentY=%d contentY=%d", textureY, lineIndex, static_cast<unsigned int>(line.textureId), lineHeight, lineVerticalOffset, currentY, contentY);
 
-        const int horizontalOffset = m_scroll.showHorizontal ? m_horizontalScrollBar->GetValue() : 0;
+        const int horizontalOffset = m_scroll.showHorizontal ? m_horizontalScrollBar->GetValue() : m_scroll.offsetX;
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info,
             "[TextBox] BuildRenderCommands: line=%zu textureWidth=%d textureHeight=%d viewportWidth=%d viewportHeight=%d lineOffsetX=%d horizontalOffset=%d drawWidth=%d drawHeight=%d contentX=%d contentY=%d textureX=%d textureY=%d",
             lineIndex, line.width, line.height, viewportWidth, viewportHeight, lineOffsetX, horizontalOffset, drawWidth, drawHeight, contentX, contentY,
@@ -624,8 +631,8 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] BuildRenderCommands: caretPosition=%zu rawCaretX=%d clampedCaretX=%d caretY=%d caretVerticalOffset=%d visibleTextWidth=%d", m_caret.position, rawCaretX, caretX, caretY, caretVerticalOffset, viewportWidth);
 
         const uint32_t caretTextureId = GetCaretTextureId();
-        const int horizontalOffset = m_scroll.showHorizontal ? m_horizontalScrollBar->GetValue() : 0;
-        const int verticalOffset = m_scroll.showVertical ? m_verticalScrollBar->GetValue() : 0;
+        const int horizontalOffset = m_scroll.showHorizontal ? m_horizontalScrollBar->GetValue() : m_scroll.offsetX;
+        const int verticalOffset = m_scroll.showVertical ? m_verticalScrollBar->GetValue() : m_scroll.offsetY;
         commands.DrawTexturedQuad(
             static_cast<float>(contentX + caretX - horizontalOffset),
             static_cast<float>(contentY + caretY + caretVerticalOffset - verticalOffset),

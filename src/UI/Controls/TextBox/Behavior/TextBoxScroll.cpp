@@ -25,8 +25,11 @@ void TextBox::UpdateScrollMetrics()
     const int baseViewportWidth = std::max(0, m_scroll.contentHostWidth);
     const int baseViewportHeight = std::max(0, m_scroll.contentHostHeight);
     const int scrollbarThickness = 6;
-    const bool supportsVerticalScroll = m_acceptsReturn || m_textWrapping != TextWrapping::NoWrap;
-    const bool supportsHorizontalScroll = m_textWrapping == TextWrapping::NoWrap;
+
+    // if the TextBox wrapping mode is NoWrap do not show scrollbars 
+    const bool isSingleLine = !m_acceptsReturn && m_textWrapping == TextWrapping::NoWrap;
+    const bool supportsVerticalScroll = !isSingleLine && (m_acceptsReturn || m_textWrapping != TextWrapping::NoWrap);
+    const bool supportsHorizontalScroll = false;
 
     int viewportWidth = baseViewportWidth;
     int viewportHeight = baseViewportHeight;
@@ -131,11 +134,39 @@ void TextBox::EnsureCaretVisible()
             m_horizontalScrollBar->SetValue(std::max(0, caretX - viewportWidth + 8));
         }
     }
+    else if (ShouldFollowCaret()) {
+        UpdateCaretFollowOffset(caretX, viewportWidth);
+    }
     else {
+        m_scroll.offsetX = 0;
         m_horizontalScrollBar->SetValue(0);
     }
 
     ClampScrollOffsets();
+}
+
+bool TextBox::ShouldFollowCaret() const noexcept
+{
+    if (m_caretScrollBehavior == CaretScrollBehavior::Disabled) {
+        return false;
+    }
+
+    if (m_caretScrollBehavior == CaretScrollBehavior::Enabled) {
+        return true;
+    }
+
+    return !m_acceptsReturn && m_textWrapping == TextWrapping::NoWrap;
+}
+
+void TextBox::UpdateCaretFollowOffset(int caretX, int viewportWidth) noexcept
+{
+    const int padding = 8;
+    if (caretX < m_scroll.offsetX + padding) {
+        m_scroll.offsetX = std::max(0, caretX - padding);
+    }
+    else if (caretX > m_scroll.offsetX + viewportWidth - padding) {
+        m_scroll.offsetX = std::max(0, caretX - viewportWidth + padding);
+    }
 }
 
 void TextBox::ScrollTo(int x, int y)

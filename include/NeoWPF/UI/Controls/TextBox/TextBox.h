@@ -34,6 +34,12 @@ enum class TextWrapping {
     WrapWithOverflow
 };
 
+enum class CaretScrollBehavior {
+    Disabled,
+    Enabled,
+    EnabledForSingleLineNoWrap
+};
+
 class TextBoxStyle;  
 void RegisterTextBoxStyles();
 
@@ -128,6 +134,43 @@ public:
         tb->SetText(L"Paste this in");
     */
     void SetText(const std::wstring& text);
+    void SetText(const std::wstring& text, bool resetScrollOffset);
+
+    /*
+        @summary
+        Sets the caret-following policy for this TextBox.
+
+        @internal
+        @param value
+        The desired caret-following mode.
+    */
+    void SetCaretScroll(CaretScrollBehavior value) noexcept { m_caretScrollBehavior = value; if (value == CaretScrollBehavior::Disabled) { m_scroll.offsetX = 0; m_scroll.offsetY = 0; } InvalidateVisual(); }
+
+    /*
+        @summary
+        Returns the current caret-following policy.
+
+        @internal
+    */
+    CaretScrollBehavior GetCaretScroll() const noexcept { return m_caretScrollBehavior; }
+
+    /*
+        @summary
+        Enables or disables caret-following using a simple boolean switch.
+
+        @internal
+        @param value
+        `true` to enable the feature, `false` to disable it.
+    */
+    void SetCaretFollow(bool value) noexcept { SetCaretScroll(value ? CaretScrollBehavior::EnabledForSingleLineNoWrap : CaretScrollBehavior::Disabled); }
+
+    /*
+        @summary
+        Returns whether caret-following is currently active.
+
+        @internal
+    */
+    bool IsCaretFollow() const noexcept { return m_caretScrollBehavior != CaretScrollBehavior::Disabled; }
 
     /*
         @summary
@@ -439,6 +482,7 @@ private:
     bool m_isReadOnly = false;
     bool m_acceptsReturn = false;
     TextWrapping m_textWrapping = TextWrapping::NoWrap;
+    CaretScrollBehavior m_caretScrollBehavior = CaretScrollBehavior::EnabledForSingleLineNoWrap;
     bool m_isHitTestVisible = true;
     bool m_isUpdatingText = false;
 
@@ -487,6 +531,8 @@ private:
         @internal
     */
     void EnsureCaretVisible();
+    bool ShouldFollowCaret() const noexcept;
+    void UpdateCaretFollowOffset(int caretX, int viewportWidth) noexcept;
 
     /*
         @summary
