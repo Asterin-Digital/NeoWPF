@@ -9,15 +9,27 @@ namespace NeoWPF::UI {
 
 void ScrollBar::SetValue(int value) noexcept
 {
-    const int newValue = std::clamp(value, 0, GetScrollRange());
-    if (newValue == m_value) {
-        return;
-    }
-    m_value = newValue;
-    NeoWPF::Diagnostics::LogInfo("[ScrollBar] SetValue: value=%d range=%d content=%d viewport=%d", m_value, GetScrollRange(), m_contentSize, m_viewportSize);
-    InvalidateVisual();
-    ValueChanged.Invoke(m_value);
-    UpdateScrollTarget();
+    RangeBase::SetValue(static_cast<double>(std::clamp(value, 0, GetScrollRange())));
+}
+
+void ScrollBar::LineUp() noexcept
+{
+    SetValue(GetValue() - std::max(1, static_cast<int>(GetSmallChange())));
+}
+
+void ScrollBar::LineDown() noexcept
+{
+    SetValue(GetValue() + std::max(1, static_cast<int>(GetSmallChange())));
+}
+
+void ScrollBar::PageUp() noexcept
+{
+    SetValue(GetValue() - std::max(1, static_cast<int>(GetLargeChange())));
+}
+
+void ScrollBar::PageDown() noexcept
+{
+    SetValue(GetValue() + std::max(1, static_cast<int>(GetLargeChange())));
 }
 
 void ScrollBar::UpdateValueFromPosition(int x, int y) noexcept
@@ -28,9 +40,7 @@ void ScrollBar::UpdateValueFromPosition(int x, int y) noexcept
 
     const bool isVertical = m_orientation == Orientation::Vertical;
     const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
-    const int effectiveTrackLength = m_viewportSize > 0
-        ? std::max(0, std::min(trackLength, m_viewportSize))
-        : trackLength;
+    const int effectiveTrackLength = std::max(0, trackLength);
     const int thumbLength = GetThumbLength(effectiveTrackLength);
     const int availableTrack = std::max(0, effectiveTrackLength - thumbLength);
 
@@ -61,16 +71,17 @@ void ScrollBar::OnMouseDown(int x, int y, std::uint32_t buttonState)
     const bool isVertical = m_orientation == Orientation::Vertical;
     const int localPos = isVertical ? y - absY : x - absX;
     const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
-    const int effectiveTrackLength = m_viewportSize > 0
-        ? std::max(0, std::min(trackLength, m_viewportSize))
-        : trackLength;
+    const int effectiveTrackLength = std::max(0, trackLength);
     const int thumbLength = GetThumbLength(effectiveTrackLength);
     const int thumbPosition = GetThumbPosition(effectiveTrackLength, thumbLength);
 
     if (localPos >= thumbPosition && localPos < thumbPosition + thumbLength) {
         m_isDragging = true;
+        if (m_thumb) {
+            m_thumb->SetDragging(true);
+        }
         Input::InputManager::GetInstance().SetMouseCapture(this);
-        m_dragStartValue = m_value;
+        m_dragStartValue = GetValue();
         m_dragStartPointer = localPos;
         return;
     }
@@ -85,6 +96,9 @@ void ScrollBar::OnMouseUp(int x, int y, std::uint32_t buttonState)
     }
 
     m_isDragging = false;
+    if (m_thumb) {
+        m_thumb->SetDragging(false);
+    }
     Input::InputManager::GetInstance().SetMouseCapture(nullptr);
 }
 
@@ -96,6 +110,9 @@ void ScrollBar::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
 
     if (!args->IsLeftButtonDown()) {
         m_isDragging = false;
+        if (m_thumb) {
+            m_thumb->SetDragging(false);
+        }
         Input::InputManager::GetInstance().SetMouseCapture(nullptr);
         return;
     }
@@ -107,9 +124,7 @@ void ScrollBar::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
     const bool isVertical = m_orientation == Orientation::Vertical;
     const int pointerPos = isVertical ? args->GetY() - absY : args->GetX() - absX;
     const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
-    const int effectiveTrackLength = m_viewportSize > 0
-        ? std::max(0, std::min(trackLength, m_viewportSize))
-        : trackLength;
+    const int effectiveTrackLength = std::max(0, trackLength);
     const int thumbLength = GetThumbLength(effectiveTrackLength);
     const int availableTrack = std::max(0, effectiveTrackLength - thumbLength);
 
@@ -120,7 +135,7 @@ void ScrollBar::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
     }
 
     const int valueDelta = static_cast<int>((static_cast<long long>(dragDelta) * range + availableTrack / 2) / availableTrack);
-    SetValue(std::clamp(m_dragStartValue + valueDelta, 0, range));
+    SetValue(static_cast<int>(std::clamp(m_dragStartValue + valueDelta, 0.0, static_cast<double>(range))));
 }
 
 } // namespace NeoWPF::UI

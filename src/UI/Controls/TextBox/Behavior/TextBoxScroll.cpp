@@ -8,6 +8,11 @@ namespace NeoWPF::UI {
 
 void TextBox::UpdateScrollMetrics()
 {
+    if (m_verticalScrollBar == nullptr || m_horizontalScrollBar == nullptr) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] UpdateScrollMetrics: missing scrollbar instances");
+        return;
+    }
+
     if (m_scroll.contentHostWidth < 0 || m_scroll.contentHostHeight < 0) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] UpdateScrollMetrics: negative content host size (%d,%d); clamping", m_scroll.contentHostWidth, m_scroll.contentHostHeight);
         m_scroll.contentHostWidth = std::max(0, m_scroll.contentHostWidth);
@@ -15,18 +20,24 @@ void TextBox::UpdateScrollMetrics()
     }
 
     const bool createTextures = m_textDirty;
-    m_textLayout.Refresh(m_text, m_fontSize, GetFontFamily(), m_scroll.contentHostWidth, m_scroll.contentHostHeight, m_textWrapping, createTextures);
+    try {
+        m_textLayout.Refresh(m_text, m_fontSize, GetFontFamily(), m_scroll.contentHostWidth, m_scroll.contentHostHeight, m_textWrapping, createTextures);
+    }
+    catch (const std::exception& ex) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: text layout refresh failed: %s", ex.what());
+        return;
+    }
     if (createTextures) {
         m_textDirty = false;
     }
 
-    const int contentWidth = m_textLayout.GetContentWidth();
-    const int contentHeight = m_textLayout.GetContentHeight();
+    const int contentWidth = std::max(0, m_textLayout.GetContentWidth());
+    const int contentHeight = std::max(0, m_textLayout.GetContentHeight());
     const int baseViewportWidth = std::max(0, m_scroll.contentHostWidth);
     const int baseViewportHeight = std::max(0, m_scroll.contentHostHeight);
     const int scrollbarThickness = 6;
 
-    // if the TextBox wrapping mode is NoWrap do not show scrollbars 
+    // if the TextBox wrapping mode is NoWrap (default) do not show scrollbars 
     const bool isSingleLine = !m_acceptsReturn && m_textWrapping == TextWrapping::NoWrap;
     const bool supportsVerticalScroll = !isSingleLine && (m_acceptsReturn || m_textWrapping != TextWrapping::NoWrap);
     const bool supportsHorizontalScroll = false;
@@ -59,28 +70,50 @@ void TextBox::UpdateScrollMetrics()
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: final viewport=(%d,%d) showH=%d showV=%d content=(%d,%d)", m_scroll.viewportWidth, m_scroll.viewportHeight, m_scroll.showHorizontal ? 1 : 0, m_scroll.showVertical ? 1 : 0, contentWidth, contentHeight);
 
     if (supportsVerticalScroll) {
-        m_verticalScrollBar->SetContentSize(contentHeight);
-        m_verticalScrollBar->SetViewportSize(m_scroll.viewportHeight);
-        m_scroll.showVertical = m_scroll.showVertical && m_verticalScrollBar->GetScrollRange() > 0;
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: vertical range=%d final showV=%d", m_verticalScrollBar->GetScrollRange(), m_scroll.showVertical ? 1 : 0);
+        try {
+            m_verticalScrollBar->SetContentSize(contentHeight);
+            m_verticalScrollBar->SetViewportSize(m_scroll.viewportHeight);
+            m_scroll.showVertical = m_scroll.showVertical && m_verticalScrollBar->GetScrollRange() > 0;
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: vertical range=%d final showV=%d", m_verticalScrollBar->GetScrollRange(), m_scroll.showVertical ? 1 : 0);
+        }
+        catch (const std::exception& ex) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: vertical scrollbar update failed: %s", ex.what());
+            m_scroll.showVertical = false;
+        }
     }
     else {
-        m_verticalScrollBar->SetContentSize(0);
-        m_verticalScrollBar->SetViewportSize(0);
-        m_verticalScrollBar->SetValue(0);
+        try {
+            m_verticalScrollBar->SetContentSize(0);
+            m_verticalScrollBar->SetViewportSize(0);
+            m_verticalScrollBar->SetValue(0);
+        }
+        catch (const std::exception& ex) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: vertical scrollbar reset failed: %s", ex.what());
+        }
         m_scroll.showVertical = false;
     }
 
     if (supportsHorizontalScroll) {
-        m_horizontalScrollBar->SetContentSize(contentWidth);
-        m_horizontalScrollBar->SetViewportSize(m_scroll.viewportWidth);
-        m_scroll.showHorizontal = m_scroll.showHorizontal && m_horizontalScrollBar->GetScrollRange() > 0;
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: horizontal range=%d final showH=%d", m_horizontalScrollBar->GetScrollRange(), m_scroll.showHorizontal ? 1 : 0);
+        try {
+            m_horizontalScrollBar->SetContentSize(contentWidth);
+            m_horizontalScrollBar->SetViewportSize(m_scroll.viewportWidth);
+            m_scroll.showHorizontal = m_scroll.showHorizontal && m_horizontalScrollBar->GetScrollRange() > 0;
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: horizontal range=%d final showH=%d", m_horizontalScrollBar->GetScrollRange(), m_scroll.showHorizontal ? 1 : 0);
+        }
+        catch (const std::exception& ex) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: horizontal scrollbar update failed: %s", ex.what());
+            m_scroll.showHorizontal = false;
+        }
     }
     else {
-        m_horizontalScrollBar->SetContentSize(0);
-        m_horizontalScrollBar->SetViewportSize(0);
-        m_horizontalScrollBar->SetValue(0);
+        try {
+            m_horizontalScrollBar->SetContentSize(0);
+            m_horizontalScrollBar->SetViewportSize(0);
+            m_horizontalScrollBar->SetValue(0);
+        }
+        catch (const std::exception& ex) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateScrollMetrics: horizontal scrollbar reset failed: %s", ex.what());
+        }
         m_scroll.showHorizontal = false;
     }
 
@@ -94,8 +127,13 @@ void TextBox::ClampScrollOffsets()
         return;
     }
 
-    m_verticalScrollBar->SetValue(m_verticalScrollBar->GetValue());
-    m_horizontalScrollBar->SetValue(m_horizontalScrollBar->GetValue());
+    try {
+        m_verticalScrollBar->SetValue(m_verticalScrollBar->GetValue());
+        m_horizontalScrollBar->SetValue(m_horizontalScrollBar->GetValue());
+    }
+    catch (const std::exception& ex) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] ClampScrollOffsets: scrollbar clamping failed: %s", ex.what());
+    }
 }
 
 void TextBox::EnsureCaretVisible()
@@ -112,34 +150,39 @@ void TextBox::EnsureCaretVisible()
     const int caretY = std::max(0, m_textLayout.GetCaretY(m_caret.position));
     const int viewportHeight = std::max(0, GetViewportHeight());
     const int caretHeight = std::max(1, GetCaretHeight());
-    if (m_scroll.showVertical) {
-        if (caretY < m_verticalScrollBar->GetValue()) {
-            m_verticalScrollBar->SetValue(caretY);
+    try {
+        if (m_scroll.showVertical) {
+            if (caretY < m_verticalScrollBar->GetValue()) {
+                m_verticalScrollBar->SetValue(caretY);
+            }
+            else if (caretY + caretHeight > m_verticalScrollBar->GetValue() + viewportHeight) {
+                m_verticalScrollBar->SetValue(std::max(0, caretY + caretHeight - viewportHeight));
+            }
         }
-        else if (caretY + caretHeight > m_verticalScrollBar->GetValue() + viewportHeight) {
-            m_verticalScrollBar->SetValue(std::max(0, caretY + caretHeight - viewportHeight));
+        else {
+            m_verticalScrollBar->SetValue(0);
         }
-    }
-    else {
-        m_verticalScrollBar->SetValue(0);
-    }
 
-    const int caretX = std::max(0, GetCaretX());
-    const int viewportWidth = std::max(0, GetViewportWidth());
-    if (m_scroll.showHorizontal) {
-        if (caretX < m_horizontalScrollBar->GetValue()) {
-            m_horizontalScrollBar->SetValue(caretX);
+        const int caretX = std::max(0, GetCaretX());
+        const int viewportWidth = std::max(0, GetViewportWidth());
+        if (m_scroll.showHorizontal) {
+            if (caretX < m_horizontalScrollBar->GetValue()) {
+                m_horizontalScrollBar->SetValue(caretX);
+            }
+            else if (caretX > m_horizontalScrollBar->GetValue() + viewportWidth) {
+                m_horizontalScrollBar->SetValue(std::max(0, caretX - viewportWidth + 8));
+            }
         }
-        else if (caretX > m_horizontalScrollBar->GetValue() + viewportWidth) {
-            m_horizontalScrollBar->SetValue(std::max(0, caretX - viewportWidth + 8));
+        else if (ShouldFollowCaret()) {
+            UpdateCaretFollowOffset(caretX, viewportWidth);
+        }
+        else {
+            m_scroll.offsetX = 0;
+            m_horizontalScrollBar->SetValue(0);
         }
     }
-    else if (ShouldFollowCaret()) {
-        UpdateCaretFollowOffset(caretX, viewportWidth);
-    }
-    else {
-        m_scroll.offsetX = 0;
-        m_horizontalScrollBar->SetValue(0);
+    catch (const std::exception& ex) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] EnsureCaretVisible: scrollbar update failed: %s", ex.what());
     }
 
     ClampScrollOffsets();
@@ -176,8 +219,13 @@ void TextBox::ScrollTo(int x, int y)
         return;
     }
 
-    m_horizontalScrollBar->SetValue(x);
-    m_verticalScrollBar->SetValue(y);
+    try {
+        m_horizontalScrollBar->SetValue(x);
+        m_verticalScrollBar->SetValue(y);
+    }
+    catch (const std::exception& ex) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] ScrollTo: scrollbar update failed: %s", ex.what());
+    }
     InvalidateVisual();
 }
 

@@ -16,8 +16,9 @@ ScrollBarTemplate::ScrollBarTemplate()
     track->SetBorderColor(0x00000000u);
     track->SetBorderThickness(0);
 
-    auto thumb = std::make_shared<Templates::TemplateVisual>("PART_Thumb");
-    thumb->SetFillColor(0xFFCDCDCDu);
+    auto thumb = std::make_shared<Thumb>();
+    thumb->SetOrientation(Orientation::Vertical);
+    thumb->SetBackgroundColor(0xFFCDCDCDu);
     thumb->SetBorderColor(0x00000000u);
     thumb->SetBorderThickness(0);
 

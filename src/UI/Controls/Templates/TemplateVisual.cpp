@@ -11,7 +11,7 @@
 
 namespace NeoWPF::UI::Templates {
 
-// Note: if you are experiencing issues related to stroke getting cut off on the right make sure the border is at least 2px
+
 
 TemplateVisual::TemplateVisual(const std::string& name)
     : m_name(name)
@@ -132,4 +132,4 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
     }
 }
 
-} // namespace NeoWPF::UI::Templates
+}

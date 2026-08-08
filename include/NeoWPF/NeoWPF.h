@@ -16,13 +16,21 @@ Love from Envy!! :3
 
 #pragma once
 
+///////////////////////////////////////////////////
+// API Start
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Platform/Window.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/UI.h>
 #include <NeoWPF/Input/Input.h>
+// API End
+///////////////////////////////////////////////////
+// Diagnostics Start
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Diagnostics/FailureHooks.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
+// Diagnostics End
+///////////////////////////////////////////////////
 
 namespace NeoWPF {
 

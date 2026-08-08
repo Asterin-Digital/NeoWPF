@@ -2,8 +2,9 @@
 
 #include <NeoWPF/Core/Events/Event.h>
 #include <NeoWPF/Input/Core/Events.h>
-#include <NeoWPF/UI/Content/ContentControl.h>
+#include <NeoWPF/UI/Controls/Base/RangeBase/RangeBase.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
+#include <NeoWPF/UI/Controls/Thumb/Thumb.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Layout/Placement/Orientation.h>
 #include <cstdint>
@@ -26,7 +27,7 @@ void RegisterScrollBarStyles();
     scrollBar->SetScrollTarget(contentHost);
     scrollBar->SetViewportElement(viewport);
 */
-class ScrollBar : public NeoWPF::UI::Content::ContentControl {
+class ScrollBar : public NeoWPF::UI::RangeBase {
 public:
     ScrollBar();
 
@@ -42,7 +43,7 @@ public:
         @example
         scrollBar->SetOrientation(Orientation::Horizontal);
     */
-    void SetOrientation(Orientation orientation) noexcept { m_orientation = orientation; InvalidateVisual(); }
+    void SetOrientation(Orientation orientation) noexcept;
 
     /*
         @summary
@@ -96,16 +97,6 @@ public:
         Returns the current thumb size.
     */
     int GetThumbSize() const noexcept { return m_thumbSize; }
-
-    void SetPadding(int padding) noexcept;
-    int GetPadding() const noexcept;
-
-    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept;
-    void SetBorderColor(NeoWPF::UI::Color color) noexcept;
-    NeoWPF::UI::Color GetBorderColor() const noexcept;
-
-    void SetBorderThickness(int thickness) noexcept;
-    int GetBorderThickness() const noexcept;
 
     /*
         @summary
@@ -169,7 +160,12 @@ public:
         @summary
         Returns the current scroll position.
     */
-    int GetValue() const noexcept { return m_value; }
+    int GetValue() const noexcept { return static_cast<int>(RangeBase::GetValue()); }
+
+    void LineUp() noexcept;
+    void LineDown() noexcept;
+    void PageUp() noexcept;
+    void PageDown() noexcept;
 
     /*
         @summary
@@ -271,6 +267,7 @@ private:
     */
     void UpdateScrollTarget() noexcept;
 
+    void OnValueChanged(double value) override;
     void OnPaddingChanged(int padding) override;
     void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
     void OnBorderColorChanged(NeoWPF::UI::Color color) override;
@@ -283,6 +280,14 @@ private:
         @internal
     */
     void UpdateScrollState() noexcept;
+    void UpdateThumbVisualState() noexcept;
+
+public:
+    int GetOrientationValue() const noexcept;
+    void SetOrientationValue(int orientation) noexcept;
+    static const NeoWPF::UI::Properties::DependencyProperty& GetOrientationProperty();
+
+private:
 
     Orientation m_orientation = Orientation::Vertical;
     NeoWPF::UI::Color m_trackColor = NeoWPF::UI::Color::FromArgb(0xFF2A2A2Au);
@@ -290,12 +295,12 @@ private:
     int m_thumbSize = 24;
     int m_contentSize = 0;
     int m_viewportSize = 0;
-    int m_value = 0;
     bool m_isDragging = false;
-    int m_dragStartValue = 0;
+    double m_dragStartValue = 0.0;
     int m_dragStartPointer = 0;
     std::shared_ptr<FrameworkElement> m_scrollTarget;
     std::shared_ptr<FrameworkElement> m_viewportElement;
+    std::shared_ptr<Thumb> m_thumb;
 };
 
 class ScrollBarTemplate : public Templates::ControlTemplate {

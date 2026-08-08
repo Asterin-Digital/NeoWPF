@@ -65,6 +65,7 @@ public:
             InvalidateVisual();
         }
     }
+    void SetVisible(bool visible) noexcept { SetVisibility(visible); }
 
     bool IsEnabled() const noexcept { return m_isEnabled; }
     void SetEnabled(bool enabled) noexcept { m_isEnabled = enabled; }

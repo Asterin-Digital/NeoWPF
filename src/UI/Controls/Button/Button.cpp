@@ -19,6 +19,7 @@ namespace NeoWPF::UI {
 
 namespace {
 
+// temporary workaround till we add actual local and world rot/scale etc
 float GetAbsoluteRenderTransformRotation(const UIElement* element)
 {
     using namespace NeoWPF::UI::Core;

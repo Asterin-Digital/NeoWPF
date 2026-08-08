@@ -95,6 +95,21 @@
     },
     {
       "kind": "method",
+      "name": "LoadFontFromFile",
+      "source": "Application",
+      "summary": "Loads a font file for use by the text renderer.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "filePath",
+          "text": "The path to a .ttf or .otf font file available to the app."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "Run",
       "source": "Application",
       "summary": "Runs the application message loop.",
@@ -526,6 +541,26 @@
     },
     {
       "kind": "method",
+      "name": "SetTextHorizontalAlignment",
+      "source": "Button",
+      "summary": "Sets the horizontal alignment used for the button text.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetTextVerticalAlignment",
+      "source": "Button",
+      "summary": "Sets the vertical alignment used for the button text.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "Arrange",
       "source": "Checkbox",
       "summary": "Positions the checkbox in its final layout bounds.",
@@ -656,6 +691,21 @@
     },
     {
       "kind": "method",
+      "name": "SetChecked",
+      "source": "Checkbox",
+      "summary": "Sets the checked state of the checkbox.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "value",
+          "text": "True when checked, false when unchecked."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "SetFontSize",
       "source": "Checkbox",
       "summary": "Sets the font size of the checkbox label.",
@@ -694,6 +744,26 @@
       "name": "SetTextColor",
       "source": "Checkbox",
       "summary": "Sets the text color.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetTextHorizontalAlignment",
+      "source": "Checkbox",
+      "summary": "Sets the horizontal alignment used for the checkbox label.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetTextVerticalAlignment",
+      "source": "Checkbox",
+      "summary": "Sets the vertical alignment used for the checkbox label.",
       "details": "",
       "example": "",
       "params": [],
@@ -968,6 +1038,455 @@
     },
     {
       "kind": "method",
+      "name": "ClearBinding",
+      "source": "DependencyObject",
+      "summary": "Clears any binding currently attached to a dependency property.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "ClearValue",
+      "source": "DependencyObject",
+      "summary": "Clears the local value for a dependency property.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "property",
+          "text": "The dependency property whose local value should be removed."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "class",
+      "name": "DependencyObject",
+      "source": "DependencyObject",
+      "summary": "Base type for objects that participate in NeoWPF's dependency property system.",
+      "details": "DependencyObject provides storage for local, style, and binding-based values, along with value precedence and change notification hooks for derived classes.",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetInheritanceParent",
+      "source": "DependencyObject",
+      "summary": "Returns the object to use as the inheritance parent for inherited property values.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetRawValue",
+      "source": "DependencyObject",
+      "summary": "Returns the raw value stored for a dependency property.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "property",
+          "text": "The dependency property to inspect."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetValueSource",
+      "source": "DependencyObject",
+      "summary": "Indicates where the current value for a property originated.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "property",
+          "text": "The dependency property to inspect."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "IsApplyingPropertyValue",
+      "source": "DependencyObject",
+      "summary": "Returns whether the object is currently applying a property update.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "OnDependencyPropertyChanged",
+      "source": "DependencyObject",
+      "summary": "Invoked when a dependency property changes value.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "property",
+          "text": "The dependency property that changed."
+        },
+        {
+          "name": "metadata",
+          "text": "The metadata associated with the property."
+        },
+        {
+          "name": "oldValue",
+          "text": "The previous property value."
+        },
+        {
+          "name": "newValue",
+          "text": "The new property value."
+        },
+        {
+          "name": "source",
+          "text": "The source that produced the new value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "ReadLocalValue",
+      "source": "DependencyObject",
+      "summary": "Returns the local value for a dependency property when one exists.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "property",
+          "text": "The dependency property to inspect."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetBinding",
+      "source": "DependencyObject",
+      "summary": "Attaches a binding to a dependency property using the common target-side convenience API.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetValue",
+      "source": "DependencyObject",
+      "summary": "Sets a dependency property value from an std::any container.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "property",
+          "text": "The dependency property to update."
+        },
+        {
+          "name": "value",
+          "text": "The value to store for the property."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetValueExpression",
+      "source": "DependencyObject",
+      "summary": "Associates an expression-based value with a dependency property.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "property",
+          "text": "The dependency property to update."
+        },
+        {
+          "name": "value",
+          "text": "The binding expression or expression payload to assign."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetValueInternal",
+      "source": "DependencyObject",
+      "summary": "Applies a value update to a dependency property.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "property",
+          "text": "The dependency property being updated."
+        },
+        {
+          "name": "value",
+          "text": "The new value to apply."
+        },
+        {
+          "name": "source",
+          "text": "The precedence source of the update."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "class",
+      "name": "DependencyProperty",
+      "source": "DependencyProperty",
+      "summary": "Represents a dependency property definition registered with the property system.",
+      "details": "DependencyProperty describes the property name, value type, owner type, and metadata used when values are stored and propagated.",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "DependencyProperty",
+      "source": "DependencyProperty",
+      "summary": "Creates a dependency property definition.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "name",
+          "text": "The property name."
+        },
+        {
+          "name": "propertyType",
+          "text": "The CLR-like runtime type of the property values."
+        },
+        {
+          "name": "ownerType",
+          "text": "The type that owns the property."
+        },
+        {
+          "name": "metadata",
+          "text": "The default value and callbacks associated with the property."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "struct",
+      "name": "DependencyPropertyChangedEventArgs",
+      "source": "DependencyProperty",
+      "summary": "Carries the old and new values when a dependency property changes.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "class",
+      "name": "DependencyPropertyRegistry",
+      "source": "DependencyProperty",
+      "summary": "Maintains the registry of dependency properties for the application.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "FindProperty",
+      "source": "DependencyProperty",
+      "summary": "Finds a property by name for a specific owner type.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "name",
+          "text": "The property name to look up."
+        },
+        {
+          "name": "ownerType",
+          "text": "The owner type to match."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "FindProperty",
+      "source": "DependencyProperty",
+      "summary": "Finds a property by name for a specific object instance.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "name",
+          "text": "The property name to look up."
+        },
+        {
+          "name": "ownerInstance",
+          "text": "The object instance that should own the property."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "Get",
+      "source": "DependencyProperty",
+      "summary": "Returns the singleton registry instance.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetMetadata",
+      "source": "DependencyProperty",
+      "summary": "Returns the metadata associated with the property.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetName",
+      "source": "DependencyProperty",
+      "summary": "Returns the property name.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetOwnerType",
+      "source": "DependencyProperty",
+      "summary": "Returns the type that owns the property.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetPropertyType",
+      "source": "DependencyProperty",
+      "summary": "Returns the runtime type of the property values.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "HasFlag",
+      "source": "DependencyProperty",
+      "summary": "Checks whether a specific property flag is present.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "enum",
+      "name": "PropertyFlags",
+      "source": "DependencyProperty",
+      "summary": "Flags that describe how a dependency property affects layout and rendering.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "struct",
+      "name": "PropertyMetadata",
+      "source": "DependencyProperty",
+      "summary": "Stores the default value and callbacks used by a dependency property.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "enum",
+      "name": "PropertyValueSource",
+      "source": "DependencyProperty",
+      "summary": "Describes where a dependency property value originated.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "RegisterProperty",
+      "source": "DependencyProperty",
+      "summary": "Registers a dependency property definition in the registry.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "name",
+          "text": "The property name."
+        },
+        {
+          "name": "propertyType",
+          "text": "The runtime value type for the property."
+        },
+        {
+          "name": "ownerType",
+          "text": "The owner type for the property."
+        },
+        {
+          "name": "metadata",
+          "text": "The metadata to associate with the property."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "enum",
+      "name": "FailureHookPoint",
+      "source": "FailureHooks",
+      "summary": "Describes diagnostics failure hook points that can be used to force init failures.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetFailureHookPoint",
+      "source": "FailureHooks",
+      "summary": "Returns the currently configured diagnostics failure hook point.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetFailureHookPoint",
+      "source": "FailureHooks",
+      "summary": "Configures the currently enabled diagnostics failure hook point.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "point",
+          "text": "The failure hook point to enable."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
       "name": "Arrange",
       "source": "FrameworkElement",
       "summary": "Places the element in its final bounds.",
@@ -1092,6 +1611,16 @@
       "name": "GetCornerRadius",
       "source": "FrameworkElement",
       "summary": "Returns the element's corner radius.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetDataContext",
+      "source": "FrameworkElement",
+      "summary": "Gets the current data context for the element.",
       "details": "",
       "example": "",
       "params": [],
@@ -1330,6 +1859,21 @@
         {
           "name": "cornerRadius",
           "text": "The new corner radius values."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetDataContext",
+      "source": "FrameworkElement",
+      "summary": "Sets the current data context for the element.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "dataContext",
+          "text": "The new data context value."
         }
       ],
       "isInternal": false
@@ -1608,7 +2152,7 @@
           "text": "The height assigned to the grid."
         }
       ],
-      "isInternal": false
+      "isInternal": true
     },
     {
       "kind": "method",
@@ -1648,7 +2192,7 @@
           "text": "The child to inspect."
         }
       ],
-      "isInternal": false
+      "isInternal": true
     },
     {
       "kind": "method",
@@ -1663,7 +2207,7 @@
           "text": "The child to inspect."
         }
       ],
-      "isInternal": false
+      "isInternal": true
     },
     {
       "kind": "method",
@@ -1678,7 +2222,7 @@
           "text": "The child to inspect."
         }
       ],
-      "isInternal": false
+      "isInternal": true
     },
     {
       "kind": "method",
@@ -1693,7 +2237,7 @@
           "text": "The child to inspect."
         }
       ],
-      "isInternal": false
+      "isInternal": true
     },
     {
       "kind": "class",
@@ -1722,7 +2266,17 @@
           "text": "The height available to the grid."
         }
       ],
-      "isInternal": false
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "OnRemoveVisualChild",
+      "source": "Grid",
+      "summary": "Called after a child visual has been removed.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
     },
     {
       "kind": "method",
@@ -1741,7 +2295,7 @@
           "text": "The column index."
         }
       ],
-      "isInternal": false
+      "isInternal": true
     },
     {
       "kind": "method",
@@ -1760,7 +2314,7 @@
           "text": "The number of columns the child should cover."
         }
       ],
-      "isInternal": false
+      "isInternal": true
     },
     {
       "kind": "method",
@@ -1779,7 +2333,7 @@
           "text": "The row index."
         }
       ],
-      "isInternal": false
+      "isInternal": true
     },
     {
       "kind": "method",
@@ -1798,7 +2352,7 @@
           "text": "The number of rows the child should cover."
         }
       ],
-      "isInternal": false
+      "isInternal": true
     },
     {
       "kind": "enum",
@@ -2202,6 +2756,16 @@
     },
     {
       "kind": "method",
+      "name": "Renderer_ClearTextures",
+      "source": "Renderer",
+      "summary": "Clears all renderer-managed textures immediately.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
       "name": "Renderer_CreateTexture",
       "source": "Renderer",
       "summary": "Creates a texture from raw RGBA data.",
@@ -2266,6 +2830,16 @@
           "text": "The window handle that owns the rendering surface."
         }
       ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "Renderer_IsInitialized",
+      "source": "Renderer",
+      "summary": "Returns true when the renderer and its device are initialized.",
+      "details": "",
+      "example": "",
+      "params": [],
       "isInternal": true
     },
     {
@@ -2623,6 +3197,66 @@
       "isInternal": true
     },
     {
+      "kind": "method",
+      "name": "GetOrientation",
+      "source": "StackPanel",
+      "summary": "Returns the current orientation used by the StackPanel.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetSpacing",
+      "source": "StackPanel",
+      "summary": "Returns the current spacing between children.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetOrientation",
+      "source": "StackPanel",
+      "summary": "Sets the stacking direction for child layout.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "orientation",
+          "text": "Horizontal places children left-to-right and Vertical places them top-to-bottom."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetSpacing",
+      "source": "StackPanel",
+      "summary": "Sets the spacing between consecutive children.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "spacing",
+          "text": "Spacing in pixels inserted between rendered children."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "class",
+      "name": "StackPanel",
+      "source": "StackPanel",
+      "summary": "Arranges child elements in a single line, either horizontally or vertically.",
+      "details": "The StackPanel measures and arranges its children one after another along the chosen orientation.\nUse SetOrientation() to choose horizontal or vertical layout, and SetSpacing() to add spacing between children.",
+      "example": "auto stack = std::make_shared<NeoWPF::UI::StackPanel>();\nstack->SetOrientation(NeoWPF::UI::Orientation::Horizontal);\nstack->SetSpacing(8);\nstack->AddChild(child1);\nstack->AddChild(child2);",
+      "params": [],
+      "isInternal": false
+    },
+    {
       "kind": "struct",
       "name": "TemplateParts",
       "source": "TemplateParts",
@@ -2930,6 +3564,16 @@
     },
     {
       "kind": "method",
+      "name": "GetFontFamily",
+      "source": "TextBlock",
+      "summary": "Returns the current font family.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "GetFontSize",
       "source": "TextBlock",
       "summary": "Returns the current font size.",
@@ -2970,6 +3614,26 @@
     },
     {
       "kind": "method",
+      "name": "GetTextHorizontalAlignment",
+      "source": "TextBlock",
+      "summary": "Returns the current horizontal alignment used for text inside the TextBlock.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetTextVerticalAlignment",
+      "source": "TextBlock",
+      "summary": "Returns the current vertical alignment used for text inside the TextBlock.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "Measure",
       "source": "TextBlock",
       "summary": "Measures the text and reports the desired size including padding.",
@@ -2986,6 +3650,21 @@
         }
       ],
       "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetFontFamily",
+      "source": "TextBlock",
+      "summary": "Sets the font family used to measure and render text.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "fontFamily",
+          "text": "The font family name, for example `L\"Segoe UI\"`."
+        }
+      ],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -3043,6 +3722,36 @@
         {
           "name": "color",
           "text": "The color to use."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetTextHorizontalAlignment",
+      "source": "TextBlock",
+      "summary": "Sets the horizontal alignment used when placing text inside the TextBlock.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "alignment",
+          "text": "The horizontal text alignment to apply."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetTextVerticalAlignment",
+      "source": "TextBlock",
+      "summary": "Sets the vertical alignment used when placing text inside the TextBlock.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "alignment",
+          "text": "The vertical text alignment to apply."
         }
       ],
       "isInternal": false
@@ -3139,6 +3848,16 @@
     },
     {
       "kind": "method",
+      "name": "GetCaretScroll",
+      "source": "TextBox",
+      "summary": "Returns the current caret-following policy.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
       "name": "GetCaretX",
       "source": "TextBox",
       "summary": "Computes the caret X position in pixels.",
@@ -3156,6 +3875,16 @@
       "example": "",
       "params": [],
       "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "GetFontFamily",
+      "source": "TextBox",
+      "summary": "Returns the current font family.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
     },
     {
       "kind": "method",
@@ -3229,6 +3958,26 @@
     },
     {
       "kind": "method",
+      "name": "GetTextHorizontalAlignment",
+      "source": "TextBox",
+      "summary": "Returns the current horizontal alignment used for text inside the TextBox.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "GetTextVerticalAlignment",
+      "source": "TextBox",
+      "summary": "Returns the current vertical alignment used for text inside the TextBox.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "GetVerticalThumbLength",
       "source": "TextBox",
       "summary": "Returns the vertical thumb length in pixels.",
@@ -3282,6 +4031,16 @@
       "name": "InsertCharacter",
       "source": "TextBox",
       "summary": "Inserts a character at the current caret position.",
+      "details": "",
+      "example": "",
+      "params": [],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "IsCaretFollow",
+      "source": "TextBox",
+      "summary": "Returns whether caret-following is currently active.",
       "details": "",
       "example": "",
       "params": [],
@@ -3439,6 +4198,51 @@
     },
     {
       "kind": "method",
+      "name": "SetCaretFollow",
+      "source": "TextBox",
+      "summary": "Enables or disables caret-following using a simple boolean switch.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "value",
+          "text": "`true` to enable the feature, `false` to disable it."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetCaretScroll",
+      "source": "TextBox",
+      "summary": "Sets the caret-following policy for this TextBox.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "value",
+          "text": "The desired caret-following mode."
+        }
+      ],
+      "isInternal": true
+    },
+    {
+      "kind": "method",
+      "name": "SetFontFamily",
+      "source": "TextBox",
+      "summary": "Sets the font family used to measure and render text.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "fontFamily",
+          "text": "The font family name, for example `L\"Segoe UI\"`."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
       "name": "SetFontSize",
       "source": "TextBox",
       "summary": "Sets the font size for text rendering.",
@@ -3523,6 +4327,36 @@
         {
           "name": "color",
           "text": "ARGB color value."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetTextHorizontalAlignment",
+      "source": "TextBox",
+      "summary": "Sets the horizontal alignment used when placing text inside the TextBox.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "alignment",
+          "text": "The horizontal text alignment to apply."
+        }
+      ],
+      "isInternal": false
+    },
+    {
+      "kind": "method",
+      "name": "SetTextVerticalAlignment",
+      "source": "TextBox",
+      "summary": "Sets the vertical alignment used when placing text inside the TextBox.",
+      "details": "",
+      "example": "",
+      "params": [
+        {
+          "name": "alignment",
+          "text": "The vertical text alignment to apply."
         }
       ],
       "isInternal": false

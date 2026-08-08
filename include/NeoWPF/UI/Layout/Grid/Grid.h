@@ -122,6 +122,8 @@ public:
 
         @param row
         The row index.
+
+        @internal
     */
     static void SetRow(Visual* child, int row);
 
@@ -134,6 +136,8 @@ public:
 
         @param column
         The column index.
+
+        @internal
     */
     static void SetColumn(Visual* child, int column);
 
@@ -143,6 +147,8 @@ public:
 
         @param child
         The child to inspect.
+
+        @internal
     */
     static int GetRow(Visual* child);
 
@@ -152,6 +158,8 @@ public:
 
         @param child
         The child to inspect.
+
+        @internal
     */
     static int GetColumn(Visual* child);
 
@@ -175,6 +183,8 @@ public:
 
         @param span
         The number of rows the child should cover.
+
+        @internal
     */
     static void SetRowSpan(Visual* child, int span);
 
@@ -187,6 +197,8 @@ public:
 
         @param span
         The number of columns the child should cover.
+
+        @internal
     */
     static void SetColumnSpan(Visual* child, int span);
 
@@ -196,6 +208,8 @@ public:
 
         @param child
         The child to inspect.
+
+        @internal
     */
     static int GetRowSpan(Visual* child);
 
@@ -205,6 +219,8 @@ public:
 
         @param child
         The child to inspect.
+
+        @internal
     */
     static int GetColumnSpan(Visual* child);
 
@@ -217,6 +233,8 @@ public:
 
         @param availableHeight
         The height available to the grid.
+
+        @internal
     */
     void Measure(int availableWidth, int availableHeight) override;
 
@@ -229,10 +247,18 @@ public:
 
         @param finalHeight
         The height assigned to the grid.
+
+        @internal
     */
     void Arrange(int finalWidth, int finalHeight) override;
 
 protected:
+    /*
+        @summary
+        Called after a child visual has been removed.
+
+        @internal
+    */
     void OnRemoveVisualChild(Visual* child) override;
 
 private:

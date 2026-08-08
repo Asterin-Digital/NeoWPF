@@ -114,6 +114,12 @@
     </ClCompile>
     <ClCompile Include="src\UI\Controls\Base\ToggleBase\ToggleBase.cpp">
     </ClCompile>
+    <ClCompile Include="src\UI\Controls\Base\RangeBase\RangeBase.cpp">
+      <Filter>src\UI\Controls\Base\RangeBase</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\Base\RangeBase\RangeBaseProperties.cpp">
+      <Filter>src\UI\Controls\Base\RangeBase</Filter>
+    </ClCompile>
     <ClCompile Include="src\UI\Controls\Button\Button.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -150,19 +156,10 @@
     <ClCompile Include="src\Core\Application\Runtime\ApplicationStartup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Layout\Alignment\Alignment.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\Styling\Style\StyleManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Rendering\D3D11\Renderer\RendererWindowing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Rendering\D3D11\Renderer\RendererDraw.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\Styling\Style\DefaultStyles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Styling\State\Core\VisualStateCore.cpp">
@@ -315,6 +312,51 @@
     <ClCompile Include="src\Core\Application\Resources\ApplicationResources.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\UI\Core\Element\Control.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Core\Element\Properties\ControlProperties.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Layout\Placement\Alignment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Layout\Placement\TextAlignment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Data\Binding.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Data\BindingOperations.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Data\BindingExpression.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Data\INotifyPropertyChanged.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Rendering\D3D11\Text\TextFont.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\Image\Image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Controls\Image\ImageProperties.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Core\Media\BitmapSource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Core\Media\BitmapImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Core\Media\ImageSource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Diagnostics\FailureHooks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\NeoWPF\Animation\Animation.h">
@@ -329,7 +371,6 @@
     <ClInclude Include="include\NeoWPF\Core\Core.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    
     <ClInclude Include="include\NeoWPF\Input\Input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -352,12 +393,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\UI.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Styling\Style.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Styling\StyleManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Styling\State\VisualStateManager.h">
@@ -430,9 +465,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Controls\Text\TextBlock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Controls\Image\Image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\Input\InputManager.h">
@@ -529,6 +561,27 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Layout\Alignment\Alignment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\Diagnostics\CrashHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Data\BindingBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Data\Binding.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Data\BindingExpression.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Data\BindingOperations.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Core\Element\Control.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\Diagnostics\FailureHooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,3 +1,4 @@
+#include <NeoWPF/Diagnostics/FailureHooks.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/ShaderSources.h>
@@ -44,6 +45,10 @@ namespace NeoWPF::Rendering::D3D11 {
 void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain)
 {
     if (!g_d3d11Dll) {
+        if (::NeoWPF::Diagnostics::GetFailureHookPoint() == ::NeoWPF::Diagnostics::FailureHookPoint::LoadD3D11Dll) {
+            ::NeoWPF::Diagnostics::LogError("Injected failure: Failed to load d3d11.dll");
+            throw std::runtime_error("Injected failure: Failed to load d3d11.dll");
+        }
         g_d3d11Dll = LoadLibraryW(L"d3d11.dll");
         if (!g_d3d11Dll) {
             ::NeoWPF::Diagnostics::LogError("Failed to load d3d11.dll");
@@ -71,16 +76,33 @@ void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height
 
     const UINT baseCreateFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
     HRESULT hr = E_FAIL;
+    const auto hookPoint = ::NeoWPF::Diagnostics::GetFailureHookPoint();
+    const bool injectedCreateDeviceFailure = hookPoint == ::NeoWPF::Diagnostics::FailureHookPoint::CreateD3D11Device;
+    const bool injectedCreateSwapChainFailure = hookPoint == ::NeoWPF::Diagnostics::FailureHookPoint::CreateD3D11SwapChain;
 
 #if defined(_DEBUG)
     const UINT debugCreateFlags = baseCreateFlags | D3D11_CREATE_DEVICE_DEBUG;
-    hr = g_D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, debugCreateFlags, nullptr, 0, D3D11_SDK_VERSION, &sd, swapChain, &g_device, &g_featureLevel, &g_context);
+    if (injectedCreateDeviceFailure || injectedCreateSwapChainFailure) {
+        ::NeoWPF::Diagnostics::LogWarn("Injected failure: CreateD3D11Device%s", injectedCreateSwapChainFailure ? "/SwapChain" : "");
+        hr = E_FAIL;
+    } else {
+        hr = g_D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, debugCreateFlags, nullptr, 0, D3D11_SDK_VERSION, &sd, swapChain, &g_device, &g_featureLevel, &g_context);
+    }
     if (FAILED(hr)) {
         ::NeoWPF::Diagnostics::LogWarn("Hardware device creation failed (0x%08X). retrying without debug flags", static_cast<unsigned int>(hr));
-        hr = g_D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, baseCreateFlags, nullptr, 0, D3D11_SDK_VERSION, &sd, swapChain, &g_device, &g_featureLevel, &g_context);
+        if (injectedCreateDeviceFailure || injectedCreateSwapChainFailure) {
+            hr = E_FAIL;
+        } else {
+            hr = g_D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, baseCreateFlags, nullptr, 0, D3D11_SDK_VERSION, &sd, swapChain, &g_device, &g_featureLevel, &g_context);
+        }
     }
 #else
-    hr = g_D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, baseCreateFlags, nullptr, 0, D3D11_SDK_VERSION, &sd, swapChain, &g_device, &g_featureLevel, &g_context);
+    if (injectedCreateDeviceFailure || injectedCreateSwapChainFailure) {
+        ::NeoWPF::Diagnostics::LogWarn("Injected failure: CreateD3D11Device%s", injectedCreateSwapChainFailure ? "/SwapChain" : "");
+        hr = E_FAIL;
+    } else {
+        hr = g_D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, baseCreateFlags, nullptr, 0, D3D11_SDK_VERSION, &sd, swapChain, &g_device, &g_featureLevel, &g_context);
+    }
 #endif
 
     if (FAILED(hr)) {
@@ -94,6 +116,11 @@ void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height
 
 HRESULT CreateSwapChainForWindow(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain)
 {
+    if (::NeoWPF::Diagnostics::GetFailureHookPoint() == ::NeoWPF::Diagnostics::FailureHookPoint::CreateD3D11SwapChain) {
+        ::NeoWPF::Diagnostics::LogError("Injected failure: CreateD3D11SwapChain");
+        return E_FAIL;
+    }
+
     if (!g_device || !swapChain) return E_FAIL;
     if (width == 0) width = 1;
     if (height == 0) height = 1;
@@ -144,6 +171,7 @@ void EnsureCompilerLoaded()
 void CompileShaders()
 {
     if (g_vs && g_ps && g_inputLayout && g_vsText && g_psText && g_inputLayoutText && g_samplerState) return;
+    const bool injectedCompileFailure = ::NeoWPF::Diagnostics::GetFailureHookPoint() == ::NeoWPF::Diagnostics::FailureHookPoint::CompileShaders;
     EnsureCompilerLoaded();
 
     std::string vsSrc = D3D11::GetRectVertexShaderSource();
@@ -157,7 +185,13 @@ void CompileShaders()
     ComPtr<ID3DBlob> psBlob;
     ComPtr<ID3DBlob> errBlob;
 
-    HRESULT hr = g_D3DCompile(vsSrc.c_str(), vsSrc.size(), nullptr, nullptr, nullptr, "VSMain", "vs_4_0", 0, 0, &vsBlob, &errBlob);
+    HRESULT hr;
+    if (injectedCompileFailure) {
+        ::NeoWPF::Diagnostics::LogError("Injected failure: CompileShaders");
+        hr = E_FAIL;
+    } else {
+        hr = g_D3DCompile(vsSrc.c_str(), vsSrc.size(), nullptr, nullptr, nullptr, "VSMain", "vs_4_0", 0, 0, &vsBlob, &errBlob);
+    }
     if (FAILED(hr) || !vsBlob) {
         if (errBlob) {
             ::NeoWPF::Diagnostics::LogError("Vertex shader compile error: %s", static_cast<const char*>(errBlob->GetBufferPointer()));

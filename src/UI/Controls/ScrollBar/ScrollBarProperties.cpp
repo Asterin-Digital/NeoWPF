@@ -17,5 +17,14 @@ namespace NeoWPF::UI::Properties {
             "ThumbSize",
             &UI::ScrollBar::GetThumbSize,
             &UI::ScrollBar::SetThumbSize);
+
+        PropertyMetadata orientationMetadata;
+        orientationMetadata.DefaultValue = std::any(static_cast<int>(UI::Orientation::Vertical));
+        orientationMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsRender;
+        RegisterProperty<UI::ScrollBar, int>(
+            "Orientation",
+            static_cast<int (UI::ScrollBar::*)() const>(&UI::ScrollBar::GetOrientationValue),
+            static_cast<void (UI::ScrollBar::*)(int)>(&UI::ScrollBar::SetOrientationValue),
+            orientationMetadata);
     }
 }
