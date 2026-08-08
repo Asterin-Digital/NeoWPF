@@ -54,7 +54,7 @@ public:
     */
     Visual* GetParent() const noexcept {
         std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
-        return m_parent.lock().get();
+        return m_parent;
     }
 
     /*
@@ -221,7 +221,7 @@ private:
     static std::vector<Visual*>& GetRegistry();
 
     mutable std::recursive_mutex m_visualTreeMutex;
-    std::weak_ptr<Visual> m_parent;
+    Visual* m_parent = nullptr;
     std::vector<std::shared_ptr<Visual>> m_children;
     std::vector<std::shared_ptr<Visual>> m_logicalChildren;
     int m_zIndex = 0;

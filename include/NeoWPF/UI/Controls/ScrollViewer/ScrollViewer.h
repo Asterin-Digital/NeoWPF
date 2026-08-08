@@ -38,10 +38,11 @@ public:
     void OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args) override;
 
 private:
+    void InitializeScrollBars() noexcept;
     void UpdateScrollBarState() noexcept;
+    void UpdateScrollBarValues() noexcept;
     void UpdateScrollBarVisibility() noexcept;
     void UpdateOffsets() noexcept;
-    void EnsureScrollBarTemplates() noexcept;
     void UpdateContentPresenterOffset() noexcept;
 
     int m_horizontalOffset = 0;

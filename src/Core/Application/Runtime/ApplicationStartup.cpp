@@ -16,7 +16,9 @@ void DumpVisualTreeImpl(const NeoWPF::Diagnostics::VisualTreeDumpOptions& option
 
     for (const auto& windowState : appState.windows) {
         if (windowState.windowHost && windowState.windowHost->GetContent()) {
-            NeoWPF::Diagnostics::VisualTreeDumper::DumpTree(windowState.windowHost->GetContent().get(), options);
+            auto rootVisual = windowState.windowHost->GetContent();
+            rootVisual->Initialize();
+            NeoWPF::Diagnostics::VisualTreeDumper::DumpTree(rootVisual.get(), options);
         }
     }
 }

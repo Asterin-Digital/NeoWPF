@@ -3,6 +3,7 @@
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -37,6 +38,7 @@ namespace NeoWPF::Input
         InputManager(const InputManager&) = delete;
         InputManager& operator=(const InputManager&) = delete;
 
+        NeoWPF::UI::UIElement* HitTestVisual(NeoWPF::UI::Visual* visual, int x, int y, int depth = 0);
         NeoWPF::UI::UIElement* HitTestElement(NeoWPF::UI::UIElement* element, int x, int y, int depth = 0);
         void RouteMouseEvent(NeoWPF::UI::UIElement* targetElement, const Core::RoutedEvent& eventDef, 
                             int x, int y, std::uint32_t buttonState, int wheelDelta);
@@ -55,5 +57,6 @@ namespace NeoWPF::Input
         std::uint32_t m_mouseButtonState = 0;
 
         std::uint32_t m_prevMouseButtonState = 0;
+        NeoWPF::UI::UIElement* m_lastHitTestResult = nullptr;
     };
 }

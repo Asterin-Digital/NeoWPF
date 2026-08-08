@@ -159,6 +159,10 @@ void TextLayout::Rebuild(const std::wstring& text, int fontSize, const std::wstr
 }
 
 void TextLayout::UploadTextures() {
+    if (!NeoWPF::Rendering::Renderer_IsInitialized()) {
+        return;
+    }
+
     if (m_text.empty()) {
         return;
     }
@@ -184,9 +188,25 @@ void TextLayout::UploadTextures() {
 }
 
 void TextLayout::Clear() {
+    if (!NeoWPF::Rendering::Renderer_IsInitialized()) {
+        for (auto& line : m_lines) {
+            line.textureId = 0;
+        }
+        m_lines.clear();
+        m_contentWidth = 0;
+        m_contentHeight = 0;
+        return;
+    }
+
     for (auto& line : m_lines) {
         if (line.textureId != 0) {
-            NeoWPF::Rendering::Renderer_DestroyTexture(line.textureId);
+            try {
+                NeoWPF::Rendering::Renderer_DestroyTexture(line.textureId);
+            } catch (...) {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info,
+                    "[TextBox] TextLayout::Clear: failed to destroy texture=%u during teardown",
+                    line.textureId);
+            }
             line.textureId = 0;
         }
     }

@@ -27,6 +27,7 @@ namespace NeoWPF::Input
 
         m_captureElement = nullptr;
         m_mouseOverElement = nullptr;
+        m_lastHitTestResult = nullptr;
         m_rootElement = root;
     }
 

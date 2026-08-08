@@ -22,6 +22,9 @@ ScrollBarTemplate::ScrollBarTemplate()
     thumb->SetBorderColor(0x00000000u);
     thumb->SetBorderThickness(0);
 
+    root->AddVisualChild(track);
+    root->AddVisualChild(thumb);
+
     AddTemplateChild("PART_Track", track);
     AddTemplateChild("PART_Thumb", thumb);
 }

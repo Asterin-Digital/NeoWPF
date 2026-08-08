@@ -12,7 +12,6 @@
 #include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
-#include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 
 namespace NeoWPF::UI {
@@ -144,7 +143,7 @@ public:
         @param value
         The desired caret-following mode.
     */
-    void SetCaretScroll(CaretScrollBehavior value) noexcept { m_caretScrollBehavior = value; if (value == CaretScrollBehavior::Disabled) { m_scroll.offsetX = 0; m_scroll.offsetY = 0; } InvalidateVisual(); }
+    void SetCaretScroll(CaretScrollBehavior value) noexcept;
 
     /*
         @summary
@@ -442,35 +441,6 @@ private:
         bool visible = false;
     };
 
-    struct ScrollState {
-        int offsetX = 0;
-        int offsetY = 0;
-        int viewportWidth = 0;
-        int viewportHeight = 0;
-        int contentHostWidth = 0;
-        int contentHostHeight = 0;
-        bool showVertical = false;
-        bool showHorizontal = false;
-    };
-
-    struct DragState {
-        bool draggingVertical = false;
-        bool draggingHorizontal = false;
-        int lastPointer = 0;
-        int startPointerX = 0;
-        int startPointerY = 0;
-        int startScrollX = 0;
-        int startScrollY = 0;
-    };
-
-    struct ScrollBarGeometry {
-        int barX = 0;
-        int barY = 0;
-        int barLength = 0;
-        int thumbOffset = 0;
-        int thumbLength = 0;
-        int trackLength = 0;
-    };
 
     std::wstring m_text;
     NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu);
@@ -492,11 +462,10 @@ private:
     TextLayout m_textLayout;
     bool m_textDirty = true;
     bool m_isFocused = false;
-    std::shared_ptr<ScrollBar> m_verticalScrollBar;
-    std::shared_ptr<ScrollBar> m_horizontalScrollBar;
     CaretState m_caret;
-    ScrollState m_scroll;
-    DragState m_drag;
+    int m_scrollOffsetX = 0;
+    int m_scrollOffsetY = 0;
+
     /*
         @summary
         Ensure GPU texture(s) backing the rendered text are present.
@@ -504,107 +473,6 @@ private:
         @internal
     */
     void EnsureTextTexture();
-
-    ScrollBarGeometry ComputeVerticalScrollBarGeometry(int contentX, int contentY, int viewportWidth, int viewportHeight) const;
-    ScrollBarGeometry ComputeHorizontalScrollBarGeometry(int contentX, int contentY, int viewportWidth, int viewportHeight) const;
-
-    /*
-        @summary
-        Updates the current content size and scrollbar visibility.
-
-        @internal
-    */
-    void UpdateScrollMetrics();
-
-    /*
-        @summary
-        Keeps the current scroll offsets inside the valid range.
-
-        @internal
-    */
-    void ClampScrollOffsets();
-
-    /*
-        @summary
-        Makes sure the current caret is visible within the viewport.
-
-        @internal
-    */
-    void EnsureCaretVisible();
-    bool ShouldFollowCaret() const noexcept;
-    void UpdateCaretFollowOffset(int caretX, int viewportWidth) noexcept;
-
-    /*
-        @summary
-        Scrolls the text viewport to the requested content offsets.
-
-        @internal
-    */
-    void ScrollTo(int x, int y);
-
-    /*
-        @summary
-        Returns the visible width available for text content.
-
-        @internal
-    */
-    int GetViewportWidth() const;
-
-    /*
-        @summary
-        Returns the visible height available for text content.
-
-        @internal
-    */
-    int GetViewportHeight() const;
-
-    /*
-        @summary
-        Returns the maximum horizontal scroll offset.
-
-        @internal
-    */
-    int GetMaxHorizontalScroll() const;
-
-    /*
-        @summary
-        Returns the maximum vertical scroll offset.
-
-        @internal
-    */
-    int GetMaxVerticalScroll() const;
-
-    /*
-        @summary
-        Returns the vertical thumb length in pixels.
-
-        @internal
-    */
-    int GetVerticalThumbLength() const;
-
-    /*
-        @summary
-        Returns the vertical thumb position in pixels.
-
-        @internal
-    */
-    int GetVerticalThumbPosition() const;
-
-    /*
-        @summary
-        Returns the horizontal thumb length in pixels.
-
-        @internal
-    */
-    int GetHorizontalThumbPosition() const;
-
-    /*
-        @summary
-        Returns the horizontal thumb length in pixels.
-
-        @internal
-    */
-    int GetHorizontalThumbLength() const;
 
     /*
         @summary
@@ -616,19 +484,15 @@ private:
 
     /*
         @summary
-        Scrolls the viewport based on a pointer position inside the vertical bar track.
+        Ensures the caret stays visible when there is scrolling.
 
         @internal
     */
-    void UpdateVerticalScrollFromPointer(int pointerY);
+    void EnsureCaretVisible();
 
-    /*
-        @summary
-        Scrolls the viewport based on a pointer position inside the horizontal bar track.
-
-        @internal
-    */
-    void UpdateHorizontalScrollFromPointer(int pointerX);
+    int ClampHorizontalScrollOffset(int offset) const noexcept;
+    int ClampVerticalScrollOffset(int offset) const noexcept;
+    void SetScrollOffset(int x, int y) noexcept;
 
     /*
         @summary

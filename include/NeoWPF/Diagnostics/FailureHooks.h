@@ -14,7 +14,7 @@ enum class FailureHookPoint {
     CreateD3D11Device,
     CreateD3D11SwapChain,
     CompileShaders,
-    //DWriteCreateFactory,
+    //DWriteCreateFactory, // dont need it for now
 };
 
 /*

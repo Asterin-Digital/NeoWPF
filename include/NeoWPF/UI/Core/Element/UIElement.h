@@ -16,6 +16,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include <any>
 #include <type_traits>
 
@@ -174,6 +175,7 @@ public:
     void RegisterTemplateChild(const std::string& name, const std::shared_ptr<Visual>& child);
     std::shared_ptr<Visual> FindTemplateChild(const std::string& name) const;
     bool HasTemplateChild(const std::string& name) const;
+    std::vector<std::string> GetTemplateChildNames() const;
     void ClearTemplateChildren() noexcept;
     bool SetStyleProperty(const std::string& name, uint32_t value);
     bool SetStylePropertyValue(const std::string& name, const std::any& value);

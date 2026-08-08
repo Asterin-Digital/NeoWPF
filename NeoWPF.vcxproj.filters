@@ -192,12 +192,6 @@
     <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Controls\ScrollBar\Behavior\ScrollBarInteraction.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\Controls\ScrollBar\Behavior\ScrollBarLayout.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Rendering\D3D11\Renderer\RendererClipping.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

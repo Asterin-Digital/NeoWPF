@@ -1,9 +1,12 @@
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <NeoWPF/Diagnostics/Logger.h>
-#include <NeoWPF/UI/Core/Element/Visual.h>
-#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/UI/Core/Element/Control.h>
+#include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <typeinfo>
 #include <sstream>
+#include <iomanip>
+#include <vector>
 
 namespace NeoWPF::Diagnostics {
 
@@ -127,6 +130,13 @@ std::string VisualTreeDumper::GetTypeName(NeoWPF::UI::Visual* element)
     return name;
 }
 
+static std::string FormatColor(const NeoWPF::UI::Color& color)
+{
+    std::ostringstream oss;
+    oss << "0x" << std::hex << std::uppercase << std::setfill('0') << std::setw(8) << color.ToArgb();
+    return oss.str();
+}
+
 std::string VisualTreeDumper::FormatLayoutInfo(NeoWPF::UI::Visual* element)
 {
 
@@ -156,23 +166,109 @@ std::string VisualTreeDumper::FormatLayoutInfo(NeoWPF::UI::Visual* element)
 
 std::string VisualTreeDumper::FormatPropertiesInfo(NeoWPF::UI::Visual* element)
 {
-
-
-
-
     std::ostringstream oss;
-    oss << "Props{}";
+    bool wroteAny = false;
+
+    if (auto uiElement = dynamic_cast<NeoWPF::UI::UIElement*>(element)) {
+        oss << "State{";
+        oss << "Visible=" << (uiElement->IsVisible() ? "Yes" : "No");
+        oss << ",Enabled=" << (uiElement->IsEnabled() ? "Yes" : "No");
+        oss << ",HitTestVisible=" << (uiElement->IsHitTestVisible() ? "Yes" : "No");
+        oss << ",Interactable=" << (uiElement->IsInteractable() ? "Yes" : "No");
+        oss << ",Opacity=" << uiElement->GetOpacity();
+        oss << ",Template=" << (uiElement->GetTemplate() ? "Yes" : "No");
+        oss << "}";
+        wroteAny = true;
+    }
+
+    if (auto frameworkElement = dynamic_cast<NeoWPF::UI::FrameworkElement*>(element)) {
+        if (wroteAny) {
+            oss << ", ";
+        }
+        oss << "LayoutState{";
+        oss << "Desired=" << frameworkElement->GetDesiredWidth() << "x" << frameworkElement->GetDesiredHeight();
+        oss << ",Final=" << frameworkElement->GetFinalWidth() << "x" << frameworkElement->GetFinalHeight();
+        oss << ",Offset=" << frameworkElement->GetLayoutOffsetX() << "," << frameworkElement->GetLayoutOffsetY();
+        oss << ",Width=" << frameworkElement->GetWidth() << ",Height=" << frameworkElement->GetHeight();
+        auto margin = frameworkElement->GetMargin();
+        oss << ",Margin=" << margin.Left << "," << margin.Top << "," << margin.Right << "," << margin.Bottom;
+        oss << "}";
+        wroteAny = true;
+    }
+
+    if (auto control = dynamic_cast<NeoWPF::UI::Control*>(element)) {
+        if (wroteAny) {
+            oss << ", ";
+        }
+        oss << "VisualProps{";
+        oss << "Padding=" << control->GetPadding();
+        oss << ",Bg=" << FormatColor(control->GetBackgroundColor());
+        oss << ",Border=" << FormatColor(control->GetBorderColor());
+        oss << ",BorderThickness=" << control->GetBorderThickness();
+        oss << "}";
+        wroteAny = true;
+    }
+
+    if (auto templateVisual = dynamic_cast<NeoWPF::UI::Templates::TemplateVisual*>(element)) {
+        if (wroteAny) {
+            oss << ", ";
+        }
+        oss << "TemplateVisual{";
+        oss << "Rect=" << templateVisual->GetX() << "," << templateVisual->GetY() << "," << templateVisual->GetWidth() << "x" << templateVisual->GetHeight();
+        oss << ",Opacity=" << templateVisual->GetOpacity();
+        oss << ",Rotation=" << templateVisual->GetRotation();
+        oss << "}";
+        wroteAny = true;
+    }
+
+    if (!wroteAny) {
+        return "";
+    }
+
     return oss.str();
 }
 
 std::string VisualTreeDumper::FormatStylesInfo(NeoWPF::UI::Visual* element)
 {
-
-
-
     std::ostringstream oss;
-    oss << "Styles{}";
-    return oss.str();
+    bool wroteAny = false;
+
+    if (auto uiElement = dynamic_cast<NeoWPF::UI::UIElement*>(element)) {
+        if (uiElement->GetTemplate()) {
+            oss << "Template=Yes";
+            wroteAny = true;
+        }
+
+        if (uiElement->GetTemplateVisualStateManager()) {
+            if (wroteAny) {
+                oss << ", ";
+            }
+            oss << "VisualStateManager=Yes";
+            wroteAny = true;
+        }
+
+        auto templateChildren = uiElement->GetTemplateChildNames();
+        if (!templateChildren.empty()) {
+            if (wroteAny) {
+                oss << ", ";
+            }
+            oss << "TemplateChildren={";
+            for (size_t i = 0; i < templateChildren.size(); ++i) {
+                if (i > 0) {
+                    oss << ",";
+                }
+                oss << templateChildren[i];
+            }
+            oss << "}";
+            wroteAny = true;
+        }
+    }
+
+    if (!wroteAny) {
+        return "";
+    }
+
+    return std::string("Styles{") + oss.str() + "}";
 }
 
 std::string VisualTreeDumper::FormatDiagnosticsInfo(NeoWPF::UI::Visual* element)

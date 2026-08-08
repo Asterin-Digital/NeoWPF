@@ -158,6 +158,7 @@
     <ClInclude Include="include\NeoWPF\UI\Controls\Button\ButtonTemplate.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\ScrollBar\ScrollBar.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\ScrollBar\ScrollBarTemplate.h" />
+    <ClInclude Include="include\NeoWPF\UI\Controls\ScrollViewer\ScrollViewer.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Panel.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Templates\TemplateVisual.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\TextBox\TextBox.h" />
@@ -229,11 +230,10 @@
     <ClCompile Include="src\UI\Controls\Button\Visual\ButtonStyles.cpp" />
     <ClCompile Include="src\UI\Controls\Button\Visual\ButtonTemplate.cpp" />
     <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBar.cpp" />
-    <ClCompile Include="src\UI\Controls\ScrollBar\Behavior\ScrollBarInteraction.cpp" />
-    <ClCompile Include="src\UI\Controls\ScrollBar\Behavior\ScrollBarLayout.cpp" />
     <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBarProperties.cpp" />
     <ClCompile Include="src\UI\Controls\ScrollBar\Visual\ScrollBarStyles.cpp" />
     <ClCompile Include="src\UI\Controls\ScrollBar\Visual\ScrollBarTemplate.cpp" />
+    <ClCompile Include="src\UI\Controls\ScrollViewer\ScrollViewer.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxScroll.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextLayout.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\TextBox.cpp" />

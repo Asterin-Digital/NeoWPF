@@ -160,6 +160,11 @@ void ContentPresenter::BuildRenderCommands(NeoWPF::Rendering::CommandList& comma
     }
 }
 
+void ContentPresenter::SetContentRenderOffset(int x, int y) noexcept
+{
+    SetRenderOffset(x, y);
+}
+
 ContentBounds ContentPresenter::GetContentBounds() const noexcept
 {
     return ContentBounds{GetFinalWidth(), GetFinalHeight()};

@@ -10,6 +10,7 @@
 #include <string>
 #include <cstdint>
 #include <Windows.h>
+#include <mutex>
 
 using Microsoft::WRL::ComPtr;
 using namespace NeoWPF::Rendering;
@@ -31,6 +32,7 @@ namespace NeoWPF::Rendering::D3D11 {
     using PFN_D3DCOMPILE = HRESULT(WINAPI*)(LPCVOID, SIZE_T, LPCSTR, const D3D_SHADER_MACRO*, ID3DInclude*, LPCSTR, LPCSTR, UINT, UINT, ID3DBlob**, ID3DBlob**);
     PFN_D3DCOMPILE g_D3DCompile = nullptr;
     D3D_FEATURE_LEVEL g_featureLevel = D3D_FEATURE_LEVEL_11_0;
+    std::mutex g_deviceMutex;
 
     HMODULE g_d3d11Dll = nullptr;
     using PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN = decltype(&D3D11CreateDeviceAndSwapChain);
@@ -44,6 +46,9 @@ namespace NeoWPF::Rendering::D3D11 {
 
 void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain)
 {
+    std::lock_guard<std::mutex> deviceLock(g_deviceMutex);
+    ::NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
+        "[D3D11] CreateDeviceAndSwapChain: begin (hwnd=%p size=%ux%u)", hwnd, width, height);
     if (!g_d3d11Dll) {
         if (::NeoWPF::Diagnostics::GetFailureHookPoint() == ::NeoWPF::Diagnostics::FailureHookPoint::LoadD3D11Dll) {
             ::NeoWPF::Diagnostics::LogError("Injected failure: Failed to load d3d11.dll");
@@ -112,6 +117,8 @@ void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height
     if (FAILED(hr)) {
         throw std::runtime_error("D3D11 device/swapchain creation failed");
     }
+    ::NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
+        "[D3D11] CreateDeviceAndSwapChain: success (device ready)");
 }
 
 HRESULT CreateSwapChainForWindow(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain)

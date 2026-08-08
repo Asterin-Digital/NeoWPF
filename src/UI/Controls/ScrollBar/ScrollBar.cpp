@@ -5,6 +5,7 @@
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <cmath>
 #include <memory>
 #include <algorithm>
 
@@ -29,14 +30,99 @@ ScrollBar::ScrollBar()
     SetBackgroundColor(NeoWPF::UI::Color::FromArgb(0x00000000u));
     SetBorderColor(NeoWPF::UI::Color::FromArgb(0x00000000u));
     SetBorderThickness(0);
-
-    SetClipToBounds(true);
-
-    m_thumb = std::make_shared<Thumb>();
-    m_thumb->SetOrientation(m_orientation);
 }
 
 ScrollBar::~ScrollBar() = default;
+
+void ScrollBar::UpdateScrollRange() noexcept
+{
+    const int range = std::max(0, m_contentSize - m_viewportSize);
+    RangeBase::SetMinimum(0.0);
+    RangeBase::SetMaximum(static_cast<double>(range));
+}
+
+void ScrollBar::SetContentSize(int size) noexcept
+{
+    m_contentSize = std::max(0, size);
+    UpdateScrollRange();
+    InvalidateVisual();
+}
+
+void ScrollBar::SetViewportSize(int size) noexcept
+{
+    m_viewportSize = std::max(0, size);
+    UpdateScrollRange();
+    InvalidateVisual();
+}
+
+void ScrollBar::SetValue(int value) noexcept
+{
+    RangeBase::SetValue(static_cast<double>(value));
+}
+
+void ScrollBar::LineUp() noexcept
+{
+    SetValue(static_cast<int>(GetValue() - GetSmallChange()));
+}
+
+void ScrollBar::LineDown() noexcept
+{
+    SetValue(static_cast<int>(GetValue() + GetSmallChange()));
+}
+
+void ScrollBar::PageUp() noexcept
+{
+    SetValue(static_cast<int>(GetValue() - GetLargeChange()));
+}
+
+void ScrollBar::PageDown() noexcept
+{
+    SetValue(static_cast<int>(GetValue() + GetLargeChange()));
+}
+
+int ScrollBar::GetScrollRange() const noexcept
+{
+    return std::max(0, m_contentSize - m_viewportSize);
+}
+
+int ScrollBar::GetThumbLength(int trackLength) const noexcept
+{
+    if (trackLength <= 0 || GetScrollRange() <= 0) {
+        return std::max(0, trackLength);
+    }
+
+    const int rawLength = (trackLength * m_viewportSize) / m_contentSize;
+    const int thumbLength = std::max(m_thumbSize, rawLength);
+    return std::min(trackLength, std::max(1, thumbLength));
+}
+
+int ScrollBar::GetThumbPosition(int trackLength, int thumbLength) const noexcept
+{
+    const int scrollRange = GetScrollRange();
+    if (trackLength <= 0 || thumbLength <= 0 || scrollRange <= 0) {
+        return 0;
+    }
+
+    const int availableTrack = std::max(0, trackLength - thumbLength);
+    return static_cast<int>((GetValue() * static_cast<double>(availableTrack)) / scrollRange);
+}
+
+void ScrollBar::UpdateValueFromPosition(int x, int y) noexcept
+{
+    const bool isVertical = m_orientation == Orientation::Vertical;
+    const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
+    const int thumbLength = GetThumbLength(trackLength);
+    const int maxThumbOffset = std::max(0, trackLength - thumbLength);
+    if (maxThumbOffset <= 0) {
+        SetValue(0);
+        return;
+    }
+
+    const int pointerPosition = isVertical ? y : x;
+    const int clampedPointer = std::clamp(pointerPosition, 0, maxThumbOffset);
+    const int value = static_cast<int>((clampedPointer * static_cast<double>(GetScrollRange())) / maxThumbOffset);
+    SetValue(value);
+}
 
 void ScrollBar::Measure(int availableWidth, int availableHeight)
 {
@@ -65,19 +151,7 @@ void ScrollBar::Arrange(int finalWidth, int finalHeight)
     int effectiveWidth = finalWidth;
     int effectiveHeight = finalHeight;
 
-    if (isVertical) {
-        const int viewportHeight = m_viewportElement ? std::max(0, m_viewportElement->GetDesiredHeight()) : 0;
-        if (viewportHeight > 0) {
-            effectiveHeight = std::min(finalHeight, viewportHeight);
-        }
-    } else {
-        const int viewportWidth = m_viewportElement ? std::max(0, m_viewportElement->GetDesiredWidth()) : 0;
-        if (viewportWidth > 0) {
-            effectiveWidth = std::min(finalWidth, viewportWidth);
-        }
-    }
-
-    FrameworkElement::Arrange(effectiveWidth, effectiveHeight);
+    FrameworkElement::Arrange(finalWidth, finalHeight);
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug, "[ScrollBar] Arrange: final=%dx%d orientation=%d value=%d content=%d viewport=%d", finalWidth, finalHeight, static_cast<int>(m_orientation), GetValue(), m_contentSize, m_viewportSize);
     UpdateScrollState();
     UpdateThumbVisualState();
@@ -92,7 +166,6 @@ void ScrollBar::OnValueChanged(double value)
 {
     InvalidateVisual();
     UpdateThumbVisualState();
-    UpdateScrollTarget();
     ValueChanged.Invoke(static_cast<int>(value));
 }
 
@@ -117,17 +190,28 @@ void ScrollBar::OnBorderThicknessChanged(int)
     InvalidateVisual();
 }
 
-void ScrollBar::UpdateScrollTarget() noexcept
+void ScrollBar::OnInitialize()
 {
-    if (!m_scrollTarget) {
-        return;
-    }
+    UIElement::OnInitialize();
 
-    const int value = GetValue();
-    if (m_orientation == Orientation::Vertical) {
-        m_scrollTarget->SetRenderOffset(0, -value);
-    } else {
-        m_scrollTarget->SetRenderOffset(-value, 0);
+    if (auto thumbControl = std::dynamic_pointer_cast<Thumb>(FindTemplateChild("PART_Thumb"))) {
+        thumbControl->DragDelta += [this](int delta) {
+            const bool isVertical = m_orientation == Orientation::Vertical;
+            const int trackLength = isVertical ? GetFinalHeight() : GetFinalWidth();
+            const int thumbLength = GetThumbLength(trackLength);
+            const int maxThumbOffset = std::max(0, trackLength - thumbLength);
+            if (maxThumbOffset <= 0) {
+                return;
+            }
+
+            const int scrollRange = GetScrollRange();
+            if (scrollRange <= 0) {
+                return;
+            }
+
+            const double valueDelta = delta * static_cast<double>(scrollRange) / maxThumbOffset;
+            SetValue(static_cast<int>(std::lround(GetValue() + valueDelta)));
+        };
     }
 }
 
@@ -148,8 +232,8 @@ void ScrollBar::SetOrientationValue(int orientation) noexcept
     }
 
     m_orientation = nextOrientation;
-    if (m_thumb) {
-        m_thumb->SetOrientation(m_orientation);
+    if (auto thumbControl = std::dynamic_pointer_cast<Thumb>(FindTemplateChild("PART_Thumb"))) {
+        thumbControl->SetOrientation(m_orientation);
     }
     InvalidateVisual();
 }
@@ -180,8 +264,8 @@ void ScrollBar::UpdateThumbVisualState() noexcept
 
         thumbControl->SetVisible(GetScrollRange() > 0);
         thumbControl->SetBounds(
-            isVertical ? absX : absX + thumbPosition,
-            isVertical ? absY + thumbPosition : absY,
+            isVertical ? 0 : thumbPosition,
+            isVertical ? thumbPosition : 0,
             isVertical ? trackThickness : thumbLength,
             isVertical ? thumbLength : trackThickness);
         thumbControl->SetOrientation(m_orientation);
@@ -190,6 +274,12 @@ void ScrollBar::UpdateThumbVisualState() noexcept
         thumbControl->SetBorderThickness(0);
         thumbControl->SetOpacity(GetOpacity());
     }
+}
+
+void ScrollBar::UpdateScrollState() noexcept
+{
+    UpdateScrollRange();
+    UpdateThumbVisualState();
 }
 
 void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
@@ -222,6 +312,7 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     UpdateThumbVisualState();
 
     if (auto thumbControl = std::dynamic_pointer_cast<Thumb>(FindTemplateChild("PART_Thumb"))) {
+        thumbControl->InvalidateVisual();
         thumbControl->BuildRenderCommands(commands);
     }
 

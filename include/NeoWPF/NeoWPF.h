@@ -64,6 +64,8 @@ namespace NeoWPF {
 
     using UI::ItemsControl;
 
+    using UI::ScrollViewer;
+
     using UI::Content::ContentControl;
 
     using UI::Content::ContentPresenter;

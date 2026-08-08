@@ -68,6 +68,7 @@ void UIElement::SetRenderTransformOrigin(NeoWPF::UI::Core::Point origin) noexcep
 
 void UIElement::SetTemplate(const std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase>& templatePtr) {
     if (m_appliedTemplateRoot) {
+        RemoveVisualChild(m_appliedTemplateRoot.get());
         m_appliedTemplateRoot = nullptr;
     }
 
@@ -82,12 +83,18 @@ bool UIElement::ApplyTemplate() {
 
     m_template->Apply(this);
     m_appliedTemplateRoot = m_template->GetVisualTreeRoot();
+    if (m_appliedTemplateRoot) {
+        AddVisualChild(m_appliedTemplateRoot);
+    }
     m_hasTemplateApplied = true;
     return true;
 }
 
 void UIElement::ClearTemplateVisualRoot() noexcept {
-    m_appliedTemplateRoot = nullptr;
+    if (m_appliedTemplateRoot) {
+        RemoveVisualChild(m_appliedTemplateRoot.get());
+        m_appliedTemplateRoot = nullptr;
+    }
 }
 
 std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> UIElement::GetTemplateVisualStateManager() const {
@@ -112,6 +119,15 @@ std::shared_ptr<Visual> UIElement::FindTemplateChild(const std::string& name) co
 bool UIElement::HasTemplateChild(const std::string& name) const {
     if (name.empty()) return false;
     return m_templateChildren.find(name) != m_templateChildren.end();
+}
+
+std::vector<std::string> UIElement::GetTemplateChildNames() const {
+    std::vector<std::string> names;
+    names.reserve(m_templateChildren.size());
+    for (const auto& entry : m_templateChildren) {
+        names.push_back(entry.first);
+    }
+    return names;
 }
 
 void UIElement::ClearTemplateChildren() noexcept {

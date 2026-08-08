@@ -61,8 +61,7 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
         currentParent->RemoveVisualChild(child);
     }
 
-    child->m_parent.reset();
-    child->m_parent = shared_from_this();
+    child->m_parent = this;
 
     if (IsInitialized() && !child->IsInitialized() && !child->IsInitializing()) {
         child->Initialize();
@@ -94,6 +93,9 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
     MarkTreeDirty();
 }
 
+
+// note: internal controls are not allowed to call this method, it's meant to be apart of the public API
+// NOT for internal usage whatsoever 
 void Visual::AddChild(const std::shared_ptr<Visual>& child)
 {
     if (!child) return;
@@ -112,7 +114,7 @@ void Visual::AddChild(const std::shared_ptr<Visual>& child)
         currentParent->RemoveVisualChild(child);
     }
 
-    child->m_parent.reset();
+    child->m_parent = this;
 
     for (const auto& existing : m_children)
     {
@@ -125,7 +127,6 @@ void Visual::AddChild(const std::shared_ptr<Visual>& child)
         }
     }
 
-    child->m_parent = shared_from_this();
     m_children.push_back(child);
 
     if (IsInitialized()) {
@@ -175,15 +176,15 @@ void Visual::RemoveVisualChild(Visual* child)
         }
     }
 
-    child->m_parent.reset();
+    child->m_parent = nullptr;
     OnRemoveVisualChild(child);
     MarkTreeDirty();
 }
 
 void Visual::RemoveFromParent()
 {
-    if (auto parent = m_parent.lock()) {
-        parent->RemoveVisualChild(this);
+    if (m_parent) {
+        m_parent->RemoveVisualChild(this);
     }
 }
 
@@ -247,8 +248,8 @@ void Visual::MarkTreeDirty()
     }
 
     m_isTreeDirty = true;
-    if (auto parent = m_parent.lock()) {
-        parent->MarkTreeDirty();
+    if (m_parent) {
+        m_parent->MarkTreeDirty();
     }
 }
 
@@ -262,7 +263,7 @@ void Visual::Initialize()
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info,
         "[Visual::Initialize] start this=%p parent=%p children=%zu",
         this,
-        m_parent.lock().get(),
+        m_parent,
         m_children.size());
 
     try {
@@ -285,14 +286,14 @@ void Visual::Initialize()
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info,
             "[Visual::Initialize] complete this=%p parent=%p children=%zu",
             this,
-            m_parent.lock().get(),
+            m_parent,
             m_children.size());
     } catch (const std::exception& ex) {
         m_initializationInProgress = false;
         NeoWPF::Diagnostics::LogError(
             "[Visual::Initialize] failed this=%p parent=%p children=%zu error=%s",
             this,
-            m_parent.lock().get(),
+            m_parent,
             m_children.size(),
             ex.what());
         throw;
@@ -301,7 +302,7 @@ void Visual::Initialize()
         NeoWPF::Diagnostics::LogError(
             "[Visual::Initialize] failed this=%p parent=%p children=%zu error=<unknown>",
             this,
-            m_parent.lock().get(),
+            m_parent,
             m_children.size());
         throw;
     }

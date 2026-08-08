@@ -22,9 +22,12 @@ namespace D3D11 {
     static std::mutex g_textureMutex;
     static uint32_t g_nextTextureId = 1;
 
+    extern std::mutex g_deviceMutex;
+
     uint32_t CreateTexture(unsigned int w, unsigned int h, const void* rgbaData)
     {
-        std::lock_guard<std::mutex> lock(g_textureMutex);
+        std::lock_guard<std::mutex> devLock(g_deviceMutex);
+        std::lock_guard<std::mutex> texLock(g_textureMutex);
         if (!g_device || w == 0 || h == 0 || !rgbaData) {
             return 0;
         }

@@ -31,6 +31,8 @@ public:
     bool IsHitTestVisible() const noexcept override { return false; }
     ContentBounds GetContentBounds() const noexcept override;
 
+    void SetContentRenderOffset(int x, int y) noexcept;
+
 private:
     std::shared_ptr<NeoWPF::UI::UIElement> m_content;
     int m_padding = 0;

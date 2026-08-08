@@ -24,7 +24,7 @@ AppState s_appState;
 }
 
 AppState& GetAppState() { return s_appState; }
- 
+
 void SetInputRootForWindow(HWND hwnd)
 {
     if (!hwnd) {
@@ -69,7 +69,11 @@ void LayoutAndBuildVisualTree(NeoWPF::UI::Visual* rootVisual, unsigned int width
         fe->Measure(static_cast<int>(width), static_cast<int>(height));
         fe->Arrange(static_cast<int>(width), static_cast<int>(height));
     }
-    rootVisual->BuildRenderCommands(buildCommandList);
+    
+    //the renderer may not be ready yet, check before building commands to avoid crashes
+    if (NeoWPF::Rendering::Renderer_IsInitialized()) {
+        rootVisual->BuildRenderCommands(buildCommandList);
+    }
 }
 
 }

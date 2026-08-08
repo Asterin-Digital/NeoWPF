@@ -28,6 +28,12 @@ ScrollViewer::ScrollViewer()
 
     m_verticalScrollBar = std::make_shared<ScrollBar>();
     m_verticalScrollBar->SetOrientation(Orientation::Vertical);
+
+    AddVisualChild(m_contentPresenter);
+    AddVisualChild(m_horizontalScrollBar);
+    AddVisualChild(m_verticalScrollBar);
+
+    InitializeScrollBars();
 }
 
 ScrollViewer::~ScrollViewer() = default;
@@ -40,9 +46,7 @@ void ScrollViewer::SetHorizontalOffset(int offset) noexcept
     }
     m_horizontalOffset = clamped;
     UpdateContentPresenterOffset();
-    if (m_horizontalScrollBar) {
-        m_horizontalScrollBar->SetValue(clamped);
-    }
+    UpdateScrollBarValues();
     InvalidateVisual();
 }
 
@@ -54,9 +58,7 @@ void ScrollViewer::SetVerticalOffset(int offset) noexcept
     }
     m_verticalOffset = clamped;
     UpdateContentPresenterOffset();
-    if (m_verticalScrollBar) {
-        m_verticalScrollBar->SetValue(clamped);
-    }
+    UpdateScrollBarValues();
     InvalidateVisual();
 }
 
@@ -85,10 +87,11 @@ void ScrollViewer::Measure(int availableWidth, int availableHeight)
     m_viewportWidth = std::max(0, availableWidth);
     m_viewportHeight = std::max(0, availableHeight);
 
+    Content::ContentControl::Measure(m_viewportWidth, m_viewportHeight);
+
     if (m_contentPresenter) {
-        m_contentPresenter->Measure(m_viewportWidth, m_viewportHeight);
-        m_contentWidth = m_contentPresenter->GetContentBounds().Width;
-        m_contentHeight = m_contentPresenter->GetContentBounds().Height;
+        m_contentWidth = m_contentPresenter->GetDesiredWidth();
+        m_contentHeight = m_contentPresenter->GetDesiredHeight();
     }
 
     UpdateScrollBarState();
@@ -105,11 +108,7 @@ void ScrollViewer::Arrange(int finalWidth, int finalHeight)
     m_viewportWidth = width;
     m_viewportHeight = height;
 
-    FrameworkElement::Arrange(width, height);
-
-    if (m_contentPresenter) {
-        m_contentPresenter->Arrange(width, height);
-    }
+    Content::ContentControl::Arrange(width, height);
 
     UpdateScrollBarState();
     UpdateContentPresenterOffset();
@@ -132,19 +131,47 @@ void ScrollViewer::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
 }
 
+void ScrollViewer::InitializeScrollBars() noexcept
+{
+    if (m_horizontalScrollBar) {
+        m_horizontalScrollBar->ValueChanged += [this](int value) {
+            SetHorizontalOffset(value);
+        };
+    }
+
+    if (m_verticalScrollBar) {
+        m_verticalScrollBar->ValueChanged += [this](int value) {
+            SetVerticalOffset(value);
+        };
+    }
+}
+
+void ScrollViewer::UpdateScrollBarValues() noexcept
+{
+    if (m_horizontalScrollBar) {
+        m_horizontalScrollBar->SetValue(m_horizontalOffset);
+    }
+
+    if (m_verticalScrollBar) {
+        m_verticalScrollBar->SetValue(m_verticalOffset);
+    }
+}
+
 void ScrollViewer::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
 {
     if (!args) {
         return;
     }
 
-    if (args->GetWheelDelta() == 0) {
+    const int wheelDelta = args->GetWheelDelta();
+    if (wheelDelta == 0) {
         return;
     }
 
-    const int delta = args->GetWheelDelta() / 120;
+    const int delta = wheelDelta / 120;
+    const int smallChange = m_verticalScrollBar ? static_cast<int>(m_verticalScrollBar->GetSmallChange()) : 16;
     if (m_verticalScrollBarVisibility != ScrollBarVisibility::Disabled) {
-        SetVerticalOffset(m_verticalOffset - delta * std::max(1, static_cast<int>(m_verticalScrollBar->GetSmallChange())));
+        SetVerticalOffset(m_verticalOffset - delta * std::max(1, smallChange));
     }
 }
 
@@ -153,14 +180,14 @@ void ScrollViewer::UpdateScrollBarState() noexcept
     if (m_horizontalScrollBar) {
         m_horizontalScrollBar->SetContentSize(m_contentWidth);
         m_horizontalScrollBar->SetViewportSize(m_viewportWidth);
-        m_horizontalScrollBar->SetValue(m_horizontalOffset);
     }
 
     if (m_verticalScrollBar) {
         m_verticalScrollBar->SetContentSize(m_contentHeight);
         m_verticalScrollBar->SetViewportSize(m_viewportHeight);
-        m_verticalScrollBar->SetValue(m_verticalOffset);
     }
+
+    UpdateScrollBarValues();
 }
 
 void ScrollViewer::UpdateScrollBarVisibility() noexcept
@@ -187,6 +214,7 @@ void ScrollViewer::UpdateOffsets() noexcept
         m_horizontalScrollBar->SetWidth(m_viewportWidth);
         m_horizontalScrollBar->SetHeight(barHeight);
         m_horizontalScrollBar->SetLayoutOffset(0, std::max(0, m_viewportHeight - barHeight));
+        m_horizontalScrollBar->Arrange(m_viewportWidth, barHeight);
     }
 
     if (m_verticalScrollBar && m_verticalScrollBar->IsVisible()) {
@@ -194,6 +222,7 @@ void ScrollViewer::UpdateOffsets() noexcept
         m_verticalScrollBar->SetWidth(barWidth);
         m_verticalScrollBar->SetHeight(m_viewportHeight);
         m_verticalScrollBar->SetLayoutOffset(std::max(0, m_viewportWidth - barWidth), 0);
+        m_verticalScrollBar->Arrange(barWidth, m_viewportHeight);
     }
 }
 
@@ -203,14 +232,7 @@ void ScrollViewer::UpdateContentPresenterOffset() noexcept
         return;
     }
 
-    m_contentPresenter->SetRenderOffset(-m_horizontalOffset, -m_verticalOffset);
+    m_contentPresenter->SetContentRenderOffset(-m_horizontalOffset, -m_verticalOffset);
 }
 
-void ScrollViewer::EnsureScrollBarTemplates() noexcept
-{
-    // No template plumbing required for the current implementation.
-    (void)m_horizontalScrollBar;
-    (void)m_verticalScrollBar;
 }
-
-} // namespace NeoWPF::UI

@@ -122,30 +122,6 @@ public:
 
     /*
         @summary
-        Wires the scrollbar to the element that actually scrolls.
-
-        @param target
-        The content element whose position should be offset by the scrollbar value.
-
-        @example
-        scrollBar->SetScrollTarget(contentHost);
-    */
-    void SetScrollTarget(const std::shared_ptr<FrameworkElement>& target) noexcept { m_scrollTarget = target; UpdateScrollState(); }
-
-    /*
-        @summary
-        Wires the scrollbar to the visible viewport element.
-
-        @param viewportElement
-        The element that represents the visible area the user sees.
-
-        @example
-        scrollBar->SetViewportElement(viewport);
-    */
-    void SetViewportElement(const std::shared_ptr<FrameworkElement>& viewportElement) noexcept { m_viewportElement = viewportElement; UpdateScrollState(); }
-
-    /*
-        @summary
         Sets the current scroll position.
 
         @param value
@@ -200,29 +176,8 @@ public:
     */
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
-    /*
-        @summary
-        Handles mouse-down input for dragging the thumb.
-
-        @internal
-    */
-    void OnMouseDown(int x, int y, std::uint32_t buttonState) override;
-
-    /*
-        @summary
-        Handles mouse-up input when dragging ends.
-
-        @internal
-    */
-    void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
-
-    /*
-        @summary
-        Handles mouse movement while dragging the thumb.
-
-        @internal
-    */
-    void OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args) override;
+    
+    void OnInitialize() override;
 
     /*
         @summary
@@ -259,14 +214,6 @@ private:
     */
     void UpdateValueFromPosition(int x, int y) noexcept;
 
-    /*
-        @summary
-        Pushes the current scroll value into the scroll target.
-
-        @internal
-    */
-    void UpdateScrollTarget() noexcept;
-
     void OnValueChanged(double value) override;
     void OnPaddingChanged(int padding) override;
     void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
@@ -279,6 +226,7 @@ private:
 
         @internal
     */
+    void UpdateScrollRange() noexcept;
     void UpdateScrollState() noexcept;
     void UpdateThumbVisualState() noexcept;
 
@@ -295,12 +243,6 @@ private:
     int m_thumbSize = 24;
     int m_contentSize = 0;
     int m_viewportSize = 0;
-    bool m_isDragging = false;
-    double m_dragStartValue = 0.0;
-    int m_dragStartPointer = 0;
-    std::shared_ptr<FrameworkElement> m_scrollTarget;
-    std::shared_ptr<FrameworkElement> m_viewportElement;
-    std::shared_ptr<Thumb> m_thumb;
 };
 
 class ScrollBarTemplate : public Templates::ControlTemplate {
