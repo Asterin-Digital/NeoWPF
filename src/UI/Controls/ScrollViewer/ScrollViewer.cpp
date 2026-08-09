@@ -62,6 +62,16 @@ void ScrollViewer::SetVerticalOffset(int offset) noexcept
     InvalidateVisual();
 }
 
+void ScrollViewer::ScrollToTop() noexcept
+{
+    SetVerticalOffset(0);
+}
+
+void ScrollViewer::ScrollToBottom() noexcept
+{
+    SetVerticalOffset(std::max(0, m_contentHeight - m_viewportHeight));
+}
+
 void ScrollViewer::SetHorizontalScrollBarVisibility(ScrollBarVisibility visibility) noexcept
 {
     if (m_horizontalScrollBarVisibility == visibility) {

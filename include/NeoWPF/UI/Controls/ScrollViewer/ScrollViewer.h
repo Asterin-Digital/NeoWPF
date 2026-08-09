@@ -25,6 +25,8 @@ public:
 
     void SetHorizontalOffset(int offset) noexcept;
     void SetVerticalOffset(int offset) noexcept;
+    void ScrollToTop() noexcept;
+    void ScrollToBottom() noexcept;
 
     ScrollBarVisibility GetHorizontalScrollBarVisibility() const noexcept { return m_horizontalScrollBarVisibility; }
     ScrollBarVisibility GetVerticalScrollBarVisibility() const noexcept { return m_verticalScrollBarVisibility; }
