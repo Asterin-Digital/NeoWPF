@@ -53,33 +53,10 @@ public:
     */
     Orientation GetOrientation() const noexcept { return m_orientation; }
 
-    /*
-        @summary
-        Sets the spacing between consecutive children.
-
-        @param spacing
-        Spacing in pixels inserted between rendered children.
-    */
-    void SetSpacing(int spacing) noexcept {
-        if (m_spacing != spacing) {
-            m_spacing = spacing;
-            InvalidateMeasure();
-            InvalidateArrange();
-            InvalidateVisual();
-        }
-    }
-
-    /*
-        @summary
-        Returns the current spacing between children.
-    */
-    int GetSpacing() const noexcept { return m_spacing; }
-
     static bool stackPanelDebugLogging;
 
 private:
     Orientation m_orientation = Orientation::Vertical;
-    int m_spacing = 0;
 };
 
 }

@@ -13,6 +13,7 @@
 #include <NeoWPF/UI/Core/Media/BitmapSource.h>
 #include <NeoWPF/UI/Core/Media/BitmapImage.h>
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
+#include <NeoWPF/UI/Core/Media/Spacing.h>
 #include <NeoWPF/UI/Data/Binding.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
 #include <NeoWPF/UI/Data/BindingExpression.h>

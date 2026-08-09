@@ -91,7 +91,10 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
     LayoutAndBuildVisualTree(rootVisual.get(), width, height, windowState.buildCommandList);
     const auto layoutElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - layoutStart).count();
     NeoWPF::Diagnostics::PerformanceMetrics::RecordLayoutPass(layoutElapsed);
-    windowState.renderCommandList = windowState.buildCommandList;
+    {
+        std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
+        windowState.renderCommandList = windowState.buildCommandList;
+    }
     windowState.commandListInitialized = true;
 }
 
@@ -156,12 +159,6 @@ void StartRenderThread()
 
                 if (w > 0 && h > 0) {
                     try {
-                        if (!windowState.commandListInitialized || windowState.width != w || windowState.height != h) {
-                            BuildWindowVisualTree(windowState, w, h);
-                            windowState.width = w;
-                            windowState.height = h;
-                        }
-
                         NeoWPF::Rendering::Renderer_Initialize(windowState.hwnd);
                         NeoWPF::Rendering::Renderer_Resize(w, h);
                         const auto renderStart = std::chrono::steady_clock::now();

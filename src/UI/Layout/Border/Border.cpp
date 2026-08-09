@@ -12,7 +12,7 @@ Border::Border()
 {
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
     SetPresenter(presenter);
-
+    SetClipToBounds(true);
     ApplyBorderThemeStyle(this);
 }
 
@@ -101,6 +101,8 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     const auto cornerRadius = GetCornerRadius();
 
+    const auto clip = GetClipRect();
+
     if (GetBorderThickness() > 0 && GetBorderColor().ToArgb() != 0x00000000u) {
         const float borderInset = static_cast<float>(GetBorderThickness()) * 0.5f;
         commands.DrawRoundedRect(
@@ -113,7 +115,9 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             std::max(0.0f, cornerRadius.BottomRight - borderInset),
             std::max(0.0f, cornerRadius.BottomLeft - borderInset),
             GetBorderColor().ToArgb(),
-            GetOpacity());
+            GetOpacity(),
+            clip,
+            0.0f);
     }
 
     if (GetBackgroundColor().ToArgb() != 0x00000000u) {
@@ -128,7 +132,9 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             std::max(0.0f, cornerRadius.BottomRight - inset),
             std::max(0.0f, cornerRadius.BottomLeft - inset),
             GetBackgroundColor().ToArgb(),
-            GetOpacity());
+            GetOpacity(),
+            clip,
+            0.0f);
     }
 
     ContentControl::BuildRenderCommands(commands);

@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 #include <cmath>
 
@@ -18,6 +19,9 @@ NeoWPF::Rendering::ClipRect FrameworkElement::GetClipRect() const noexcept {
         clip.w = static_cast<float>(m_finalWidth);
         clip.h = static_cast<float>(m_finalHeight);
         clip.active = true;
+
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
+            "[GetClipRect] Element clip ACTIVE: (%g, %g, %g, %g)", clip.x, clip.y, clip.w, clip.h);
     }
 
     auto parent = dynamic_cast<FrameworkElement*>(GetParent());
@@ -25,6 +29,8 @@ NeoWPF::Rendering::ClipRect FrameworkElement::GetClipRect() const noexcept {
         const auto parentClip = parent->GetClipRect();
         if (parentClip.active) {
             if (!clip.active) {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
+                    "[GetClipRect] Inheriting parent clip: (%g, %g, %g, %g)", parentClip.x, parentClip.y, parentClip.w, parentClip.h);
                 return parentClip;
             }
 
@@ -33,9 +39,13 @@ NeoWPF::Rendering::ClipRect FrameworkElement::GetClipRect() const noexcept {
             const float right = (std::min)(clip.x + clip.w, parentClip.x + parentClip.w);
             const float bottom = (std::min)(clip.y + clip.h, parentClip.y + parentClip.h);
             if (right <= left || bottom <= top) {
-                return NeoWPF::Rendering::ClipRect{};
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
+                    "[GetClipRect] Intersection is empty - returning active zero-size clip");
+                return NeoWPF::Rendering::ClipRect{left, top, 0.0f, 0.0f, true};
             }
 
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
+                "[GetClipRect] Intersected clip: (%g, %g, %g, %g)", left, top, right - left, bottom - top);
             return NeoWPF::Rendering::ClipRect{left, top, right - left, bottom - top, true};
         }
     }

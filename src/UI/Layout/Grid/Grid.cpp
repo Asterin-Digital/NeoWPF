@@ -237,13 +237,17 @@ namespace NeoWPF::UI {
         const auto effectiveColDefs = GridLayout::ResolveDefinitions(m_colDefs);
         const int effectiveNumRows = std::max(1, static_cast<int>(effectiveRowDefs.size()));
         const int effectiveNumCols = std::max(1, static_cast<int>(effectiveColDefs.size()));
+        const int gapX = GetHorizontalSpacing();
+        const int gapY = GetVerticalSpacing();
         auto children = GetVisualChildren();
         auto metrics = GridLayout::ComputeMetrics(
             effectiveRowDefs,
             effectiveColDefs,
             availableWidth,
             availableHeight,
-            children);
+            children,
+            gapX,
+            gapY);
 
         auto refreshedAutoRowHeights = metrics.autoRowHeights;
         auto refreshedAutoColWidths = metrics.autoColWidths;
@@ -304,6 +308,12 @@ namespace NeoWPF::UI {
             const bool isStar = r < effectiveRowDefs.size() && effectiveRowDefs[r].mode == SizeMode::Star;
             totalH += (isStar && r < refreshedAutoRowHeights.size()) ? refreshedAutoRowHeights[r] : metrics.rowHeights[r];
         }
+        if (metrics.colWidths.size() > 1) {
+            totalW += gapX * static_cast<int>(metrics.colWidths.size() - 1);
+        }
+        if (metrics.rowHeights.size() > 1) {
+            totalH += gapY * static_cast<int>(metrics.rowHeights.size() - 1);
+        }
         SetDesiredSize(totalW, totalH);
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
             "[Grid::Measure] Final desired size: %dx%d", totalW, totalH);
@@ -320,13 +330,17 @@ namespace NeoWPF::UI {
         int numRows = std::max(1, static_cast<int>(effectiveRowDefs.size()));
         int numCols = std::max(1, static_cast<int>(effectiveColDefs.size()));
 
+        const int gapX = GetHorizontalSpacing();
+        const int gapY = GetVerticalSpacing();
         auto children = GetVisualChildren();
         auto metrics = GridLayout::ComputeMetrics(
             effectiveRowDefs,
             effectiveColDefs,
             finalWidth,
             finalHeight,
-            children);
+            children,
+            gapX,
+            gapY);
 
         for (size_t i = 0; i < children.size(); ++i) {
             auto child = children[i];

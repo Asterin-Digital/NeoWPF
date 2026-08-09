@@ -15,16 +15,28 @@ bool ClipRectToBounds(float x, float y, float w, float h, const ClipRect& clip,
     outH = h;
 
     if (!clip.active) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
+            "[ClipRectToBounds] Clip NOT ACTIVE - rendering quad (%g, %g, %g, %g) unclipped!", x, y, w, h);
         return false;
     }
 
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
+        "[ClipRectToBounds] Clip ACTIVE (%g, %g, %g, %g) - clipping quad (%g, %g, %g, %g)", 
+        clip.x, clip.y, clip.w, clip.h, x, y, w, h);
+
     if (w <= 0.0f || h <= 0.0f || clip.w <= 0.0f || clip.h <= 0.0f) {
-        return false;
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
+            "[ClipRectToBounds] Zero-size or empty clip/quad — treating as fully clipped");
+        outX = outY = outW = outH = 0.0f;
+        return true;
     }
 
     if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(w) || !std::isfinite(h) ||
         !std::isfinite(clip.x) || !std::isfinite(clip.y) || !std::isfinite(clip.w) || !std::isfinite(clip.h)) {
-        return false;
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
+            "[ClipRectToBounds] Non-finite value encountered — treating as fully clipped");
+        outX = outY = outW = outH = 0.0f;
+        return true;
     }
 
     const float clipLeft = clip.x;

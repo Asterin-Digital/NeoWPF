@@ -2,6 +2,7 @@
 
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
+#include <NeoWPF/UI/Core/Media/Spacing.h>
 #include <NeoWPF/UI/Core/Media/Thickness.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
 #include <algorithm>
@@ -292,20 +293,62 @@ public:
         @summary
         Sets a uniform layout margin for the element.
     */
-    void SetMargin(int uniform) noexcept { SetMargin(Thickness(uniform)); }
+    void SetMargin(int uniform) noexcept;
 
     /*
         @summary
         Sets a custom layout margin for the element.
     */
-    void SetMargin(int left, int top, int right, int bottom) noexcept { SetMargin(Thickness(left, top, right, bottom)); }
+    void SetMargin(int left, int top, int right, int bottom) noexcept;
 
-    int GetMarginLeft() const noexcept { return m_margin.Left; }
-    int GetMarginTop() const noexcept { return m_margin.Top; }
-    int GetMarginRight() const noexcept { return m_margin.Right; }
-    int GetMarginBottom() const noexcept { return m_margin.Bottom; }
-    int GetMarginHorizontal() const noexcept { return m_margin.Left + m_margin.Right; }
-    int GetMarginVertical() const noexcept { return m_margin.Top + m_margin.Bottom; }
+    int GetMarginLeft() const noexcept;
+    int GetMarginTop() const noexcept;
+    int GetMarginRight() const noexcept;
+    int GetMarginBottom() const noexcept;
+    int GetMarginHorizontal() const noexcept;
+    int GetMarginVertical() const noexcept;
+
+    /*
+        @summary
+        Returns the element's layout spacing.
+    */
+    Spacing GetSpacing() const noexcept;
+
+    /*
+        @summary
+        Sets the element's layout spacing.
+    */
+    void SetSpacing(Spacing spacing) noexcept;
+
+    /*
+        @summary
+        Sets a uniform layout spacing for the element.
+    */
+    void SetSpacing(int uniform) noexcept;
+
+    /*
+        @summary
+        Returns the horizontal spacing used for layout.
+    */
+    int GetHorizontalSpacing() const noexcept;
+
+    /*
+        @summary
+        Sets the horizontal spacing used for layout.
+    */
+    void SetHorizontalSpacing(int spacing) noexcept;
+
+    /*
+        @summary
+        Returns the vertical spacing used for layout.
+    */
+    int GetVerticalSpacing() const noexcept;
+
+    /*
+        @summary
+        Sets the vertical spacing used for layout.
+    */
+    void SetVerticalSpacing(int spacing) noexcept;
 
     /*
         @summary
@@ -482,6 +525,7 @@ private:
     LayoutSizeMode m_heightMode = LayoutSizeMode::Auto;
     int m_height = 0;
     Thickness m_margin;
+    Spacing m_spacing;
     NeoWPF::UI::CornerRadius m_cornerRadius;
     std::any m_dataContext;
     bool m_clipToBounds = false;

@@ -8,6 +8,7 @@ ItemsControl::ItemsControl()
 {
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
+    SetClipToBounds(true);
 }
 
 ItemsControl::~ItemsControl()
@@ -57,24 +58,26 @@ void ItemsControl::ClearItems()
 
 void ItemsControl::Measure(int availableWidth, int availableHeight)
 {
+    const int itemSpacing = GetVerticalSpacing();
     int totalHeight = m_padding * 2;
     int totalWidth = 0;
+    const int contentWidth = availableWidth > 0 ? std::max(0, availableWidth - (m_padding * 2)) : 0;
 
     for (const auto& item : m_items) {
         if (!item) {
             continue;
         }
 
-        item->Measure(availableWidth > 0 ? availableWidth - (m_padding * 2) : 0, availableHeight);
+        item->Measure(contentWidth, 0);
         totalWidth = std::max(totalWidth, item->GetDesiredWidth());
-        totalHeight += item->GetDesiredHeight() + m_itemSpacing;
+        totalHeight += item->GetDesiredHeight() + itemSpacing;
     }
 
     if (!m_items.empty()) {
-        totalHeight -= m_itemSpacing;
+        totalHeight -= itemSpacing;
     }
 
-    const int desiredWidth = totalWidth + m_padding * 2;
+    const int desiredWidth = std::max(totalWidth, contentWidth) + m_padding * 2;
     const int desiredHeight = std::max(0, totalHeight);
     SetDesiredSize(ResolveWidth(availableWidth, desiredWidth), ResolveHeight(availableHeight, desiredHeight));
 }
@@ -83,6 +86,7 @@ void ItemsControl::Arrange(int finalWidth, int finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
+    const int itemSpacing = GetVerticalSpacing();
     int currentY = m_padding;
     const int contentWidth = std::max(0, finalWidth - m_padding * 2);
 
@@ -91,9 +95,10 @@ void ItemsControl::Arrange(int finalWidth, int finalHeight)
             continue;
         }
 
-        item->Arrange(contentWidth, std::max(0, finalHeight - m_padding * 2));
+        const int itemHeight = std::max(0, item->GetDesiredHeight());
+        item->Arrange(contentWidth, itemHeight);
         item->SetLayoutOffset(m_padding, currentY);
-        currentY += item->GetDesiredHeight() + m_itemSpacing;
+        currentY += itemHeight + itemSpacing;
     }
 }
 

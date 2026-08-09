@@ -34,14 +34,18 @@ public:
         const std::vector<Grid::Definition>& colDefs,
         int availableWidth,
         int availableHeight,
-        const std::vector<Visual*>& children);
+        const std::vector<Visual*>& children,
+        int horizontalSpacing = 0,
+        int verticalSpacing = 0);
 
     static GridLayoutMetrics ComputeMetrics(
         const std::vector<Grid::Definition>& rowDefs,
         const std::vector<Grid::Definition>& colDefs,
         int availableWidth,
         int availableHeight,
-        const std::vector<Visual*>& children);
+        const std::vector<Visual*>& children,
+        int horizontalSpacing = 0,
+        int verticalSpacing = 0);
 };
 
 }

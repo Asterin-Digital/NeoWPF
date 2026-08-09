@@ -344,6 +344,7 @@ template std::wstring DependencyObject::GetValue<std::wstring>(const DependencyP
 template std::any DependencyObject::GetValue<std::any>(const DependencyProperty&) const;
 template LayoutSizeMode DependencyObject::GetValue<LayoutSizeMode>(const DependencyProperty&) const;
 template CornerRadius DependencyObject::GetValue<CornerRadius>(const DependencyProperty&) const;
+template Spacing DependencyObject::GetValue<Spacing>(const DependencyProperty&) const;
 template Thickness DependencyObject::GetValue<Thickness>(const DependencyProperty&) const;
 template HorizontalAlignment DependencyObject::GetValue<HorizontalAlignment>(const DependencyProperty&) const;
 template VerticalAlignment DependencyObject::GetValue<VerticalAlignment>(const DependencyProperty&) const;
@@ -355,6 +356,7 @@ template void DependencyObject::SetValue<std::wstring>(const DependencyProperty&
 template void DependencyObject::SetValue<std::any>(const DependencyProperty&, const std::any&);
 template void DependencyObject::SetValue<LayoutSizeMode>(const DependencyProperty&, const LayoutSizeMode&);
 template void DependencyObject::SetValue<CornerRadius>(const DependencyProperty&, const CornerRadius&);
+template void DependencyObject::SetValue<Spacing>(const DependencyProperty&, const Spacing&);
 template void DependencyObject::SetValue<Thickness>(const DependencyProperty&, const Thickness&);
 template void DependencyObject::SetValue<HorizontalAlignment>(const DependencyProperty&, const HorizontalAlignment&);
 template void DependencyObject::SetValue<VerticalAlignment>(const DependencyProperty&, const VerticalAlignment&);

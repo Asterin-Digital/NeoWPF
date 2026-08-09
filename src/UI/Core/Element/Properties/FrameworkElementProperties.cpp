@@ -87,6 +87,20 @@ namespace NeoWPF::UI::Properties {
             },
             marginMetadata);
 
+        PropertyMetadata spacingMetadata;
+        spacingMetadata.DefaultValue = std::any(UI::Spacing{});
+        spacingMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsArrange | PropertyFlags::AffectsRender;
+
+        RegisterProperty<UI::FrameworkElement, UI::Spacing>(
+            "Spacing",
+            &UI::FrameworkElement::GetSpacing,
+            [](UI::FrameworkElement* owner, const UI::Spacing& value) {
+                if (owner) {
+                    owner->SetSpacing(value);
+                }
+            },
+            spacingMetadata);
+
         PropertyMetadata cornerRadiusMetadata;
         cornerRadiusMetadata.DefaultValue = std::any(UI::CornerRadius{});
         cornerRadiusMetadata.Flags = PropertyFlags::AffectsRender;

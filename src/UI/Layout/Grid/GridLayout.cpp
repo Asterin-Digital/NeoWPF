@@ -90,11 +90,15 @@ namespace NeoWPF::UI {
         const std::vector<Grid::Definition>& colDefs,
         int availableWidth,
         int availableHeight,
-        const std::vector<Visual*>& children)
+        const std::vector<Visual*>& children,
+        int horizontalSpacing,
+        int verticalSpacing)
     {
         auto effectiveRowDefs = GridLayout::ResolveDefinitions(rowDefs);
         auto effectiveColDefs = GridLayout::ResolveDefinitions(colDefs);
 
+        const int gapX = std::max(0, horizontalSpacing);
+        const int gapY = std::max(0, verticalSpacing);
         int numRows = std::max(1, static_cast<int>(effectiveRowDefs.size()));
         int numCols = std::max(1, static_cast<int>(effectiveColDefs.size()));
 
@@ -105,6 +109,9 @@ namespace NeoWPF::UI {
         GridLayoutResult result;
         result.rowHeights.resize(numRows, 0);
         result.colWidths.resize(numCols, 0);
+
+        const int totalGapWidth = std::max(0, numCols - 1) * gapX;
+        const int totalGapHeight = std::max(0, numRows - 1) * gapY;
 
         int totalFixedHeight = 0;
         int totalFixedWidth = 0;
@@ -151,8 +158,8 @@ namespace NeoWPF::UI {
             }
         }
 
-        int remainingHeight = std::max(0, availableHeight - totalFixedHeight);
-        int remainingWidth = std::max(0, availableWidth - totalFixedWidth);
+        int remainingHeight = std::max(0, availableHeight - totalFixedHeight - totalGapHeight);
+        int remainingWidth = std::max(0, availableWidth - totalFixedWidth - totalGapWidth);
 
         int starHeightPerUnit = starRowCount > 0 ? remainingHeight / starRowCount : 0;
         int starWidthPerUnit = starColCount > 0 ? remainingWidth / starColCount : 0;
@@ -204,6 +211,8 @@ namespace NeoWPF::UI {
         int totalH = 0, totalW = 0;
         for (int r = 0; r < numRows; ++r) totalH += result.rowHeights[r];
         for (int c = 0; c < numCols; ++c) totalW += result.colWidths[c];
+        totalW += std::max(0, numCols - 1) * gapX;
+        totalH += std::max(0, numRows - 1) * gapY;
 
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
             "[Grid] Layout (Auto=0): %dx%d", totalW, totalH);
@@ -216,8 +225,13 @@ namespace NeoWPF::UI {
         const std::vector<Grid::Definition>& colDefs,
         int availableWidth,
         int availableHeight,
-        const std::vector<Visual*>& children)
+        const std::vector<Visual*>& children,
+        int horizontalSpacing,
+        int verticalSpacing)
     {
+        const int gapX = std::max(0, horizontalSpacing);
+        const int gapY = std::max(0, verticalSpacing);
+
         GridLayoutMetrics metrics;
         metrics.autoRowHeights = ResolveAutoSizes(rowDefs, children, true);
         metrics.autoColWidths = ResolveAutoSizes(colDefs, children, false);
@@ -225,7 +239,7 @@ namespace NeoWPF::UI {
         auto resolvedRowDefs = NormalizeDefinitions(rowDefs, metrics.autoRowHeights);
         auto resolvedColDefs = NormalizeDefinitions(colDefs, metrics.autoColWidths);
 
-        const auto layout = ComputeLayout(resolvedRowDefs, resolvedColDefs, availableWidth, availableHeight, children);
+        const auto layout = ComputeLayout(resolvedRowDefs, resolvedColDefs, availableWidth, availableHeight, children, gapX, gapY);
         metrics.rowHeights = layout.rowHeights;
         metrics.colWidths = layout.colWidths;
         metrics.childLayouts.resize(children.size());
@@ -256,16 +270,22 @@ namespace NeoWPF::UI {
             int endRow = std::min(rowCount, boundedRow + safeRowSpan);
 
             for (int j = 0; j < boundedCol && j < colCount; ++j) {
-                x += metrics.colWidths[j];
+                x += metrics.colWidths[j] + gapX;
             }
             for (int j = boundedCol; j < endCol; ++j) {
                 w += metrics.colWidths[j];
             }
+            if (safeColSpan > 1) {
+                w += gapX * (safeColSpan - 1);
+            }
             for (int j = 0; j < boundedRow && j < rowCount; ++j) {
-                y += metrics.rowHeights[j];
+                y += metrics.rowHeights[j] + gapY;
             }
             for (int j = boundedRow; j < endRow; ++j) {
                 h += metrics.rowHeights[j];
+            }
+            if (safeRowSpan > 1) {
+                h += gapY * (safeRowSpan - 1);
             }
 
             metrics.childLayouts[i] = { x, y, w, h };

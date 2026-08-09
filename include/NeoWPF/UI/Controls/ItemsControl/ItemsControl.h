@@ -58,13 +58,13 @@ public:
         @param spacing
         The spacing in pixels.
     */
-    void SetItemSpacing(int spacing) noexcept { m_itemSpacing = spacing; InvalidateVisual(); }
+    void SetSpacing(int spacing) noexcept { SetVerticalSpacing(spacing); }
 
     /*
         @summary
         Returns the spacing between items.
     */
-    int GetItemSpacing() const noexcept { return m_itemSpacing; }
+    int GetSpacing() const noexcept { return GetVerticalSpacing(); }
 
     /*
         @summary
@@ -128,7 +128,6 @@ public:
 
 private:
     std::vector<std::shared_ptr<FrameworkElement>> m_items;
-    int m_itemSpacing = 4;
     int m_padding = 0;
 };
 

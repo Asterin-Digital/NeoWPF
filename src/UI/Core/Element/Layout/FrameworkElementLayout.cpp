@@ -149,6 +149,118 @@ void FrameworkElement::SetMargin(Thickness margin) noexcept
     }
 }
 
+void FrameworkElement::SetMargin(int uniform) noexcept
+{
+    SetMargin(Thickness(uniform));
+}
+
+void FrameworkElement::SetMargin(int left, int top, int right, int bottom) noexcept
+{
+    SetMargin(Thickness(left, top, right, bottom));
+}
+
+int FrameworkElement::GetMarginLeft() const noexcept
+{
+    return m_margin.Left;
+}
+
+int FrameworkElement::GetMarginTop() const noexcept
+{
+    return m_margin.Top;
+}
+
+int FrameworkElement::GetMarginRight() const noexcept
+{
+    return m_margin.Right;
+}
+
+int FrameworkElement::GetMarginBottom() const noexcept
+{
+    return m_margin.Bottom;
+}
+
+int FrameworkElement::GetMarginHorizontal() const noexcept
+{
+    return m_margin.Left + m_margin.Right;
+}
+
+int FrameworkElement::GetMarginVertical() const noexcept
+{
+    return m_margin.Top + m_margin.Bottom;
+}
+
+Spacing FrameworkElement::GetSpacing() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Spacing", *this);
+    if (property) {
+        try {
+            return GetValue<Spacing>(*property);
+        } catch (const std::bad_any_cast&) {
+            return m_spacing;
+        }
+    }
+
+    return m_spacing;
+}
+
+void FrameworkElement::SetSpacing(Spacing spacing) noexcept
+{
+    if (IsApplyingPropertyValue()) {
+        m_spacing = spacing;
+        return;
+    }
+
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Spacing", *this);
+    if (property) {
+        if (GetSpacing() != spacing) {
+            SetValue(*property, spacing);
+        }
+        return;
+    }
+
+    if (m_spacing != spacing) {
+        m_spacing = spacing;
+        InvalidateMeasure();
+        InvalidateArrange();
+        InvalidateVisual();
+    }
+}
+
+void FrameworkElement::SetSpacing(int uniform) noexcept
+{
+    SetSpacing(Spacing(uniform));
+}
+
+int FrameworkElement::GetHorizontalSpacing() const noexcept
+{
+    return m_spacing.Horizontal;
+}
+
+void FrameworkElement::SetHorizontalSpacing(int spacing) noexcept
+{
+    if (m_spacing.Horizontal != spacing) {
+        m_spacing.Horizontal = spacing;
+        InvalidateMeasure();
+        InvalidateArrange();
+        InvalidateVisual();
+    }
+}
+
+int FrameworkElement::GetVerticalSpacing() const noexcept
+{
+    return m_spacing.Vertical;
+}
+
+void FrameworkElement::SetVerticalSpacing(int spacing) noexcept
+{
+    if (m_spacing.Vertical != spacing) {
+        m_spacing.Vertical = spacing;
+        InvalidateMeasure();
+        InvalidateArrange();
+        InvalidateVisual();
+    }
+}
+
 void FrameworkElement::SetHeight(int height) noexcept
 {
     const int clampedHeight = height < 0 ? 0 : height;
