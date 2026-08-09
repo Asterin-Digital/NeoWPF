@@ -15,6 +15,7 @@ Application* Application::s_current = nullptr;
 
 void Application::Initialize()
 {
+    NEO_WPF_STARTUP_ACTION("Application.Initialize");
     NeoWPF::Diagnostics::InitializeCrashHandler();
     NeoWPF::Core::ApplicationResources::Resources::Initialize();
     NeoWPF::Diagnostics::PerformanceMetrics::Initialize();
@@ -38,14 +39,14 @@ NeoWPF::Platform::Window Application::CreateWindow(const wchar_t* title, int wid
     if (!title) {
         return NeoWPF::Platform::Window();
     }
-
-    NeoWPF::Diagnostics::PerformanceMetrics::RecordWindowCreate();
+    NEO_WPF_STARTUP_ACTION("Application.CreateWindow");    NeoWPF::Diagnostics::PerformanceMetrics::RecordWindowCreate();
     const HWND hwnd = CreateApplicationWindow(title, width, height);
     return NeoWPF::Platform::Window(hwnd);
 }
 
 void Application::ShowConsole(bool visible)
 {
+    NEO_WPF_STARTUP_ACTION("Application.ShowConsole");
     auto& appState = GetAppState();
     if (appState.consoleVisible.load() == visible) {
         return;
@@ -132,6 +133,7 @@ bool Application::TryGetResource(const std::string& key, std::any& outValue)
 
 bool Application::LoadFontFromFile(const std::wstring& filePath)
 {
+    NEO_WPF_STARTUP_ACTION("Application.LoadFontFromFile");
     if (filePath.empty()) {
         NeoWPF::Diagnostics::LogError("Application::LoadFontFromFile: empty file path supplied");
         return false;

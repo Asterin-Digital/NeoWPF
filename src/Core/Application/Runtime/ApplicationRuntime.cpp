@@ -80,6 +80,7 @@ void LayoutAndBuildVisualTree(NeoWPF::UI::Visual* rootVisual, unsigned int width
 
 void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigned int height)
 {
+    NEO_WPF_STARTUP_ACTION("BuildWindowVisualTree");
     const auto layoutStart = std::chrono::steady_clock::now();
     windowState.buildCommandList.Clear();
 
@@ -96,6 +97,7 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
 
 void StartRenderThread()
 {
+    NEO_WPF_STARTUP_ACTION("RenderThread.Start");
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "StartRenderThread");
     s_appState.running = true;
     s_appState.renderThreadInitialized = false;
@@ -251,6 +253,8 @@ int RunApplicationMessageLoop()
 
     ::UpdateWindow(primaryWindow);
     ::RedrawWindow(primaryWindow, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+
+    NeoWPF::Diagnostics::PerformanceMetrics::RecordStartup();
 
     MSG msg;
     unsigned int lastLayoutWidth = 0, lastLayoutHeight = 0;

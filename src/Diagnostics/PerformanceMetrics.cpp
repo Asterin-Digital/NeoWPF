@@ -8,12 +8,17 @@
 #include <cstdint>
 #include <atomic>
 #include <algorithm>
+#include <mutex>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 
 namespace NeoWPF::Diagnostics::PerformanceMetrics {
 namespace {
 
 struct Counters {
     std::atomic<bool> enabled{true};
+    std::atomic<bool> startupActionTrackingEnabled{false};
     std::atomic<uint64_t> frameCount{0};
     std::atomic<uint64_t> layoutPassCount{0};
     std::atomic<uint64_t> renderPassCount{0};
@@ -33,6 +38,11 @@ struct Counters {
     std::atomic<double> currentCpuUsage{0.0};
     std::atomic<double> peakCpuUsage{0.0};
     std::atomic<bool> initialized{false};
+    std::atomic<bool> startupRecorded{false};
+    std::atomic<double> startupElapsedSeconds{0.0};
+    std::unordered_map<std::string, double> startupActionDurations;
+    std::unordered_map<std::string, uint64_t> startupActionCounts;
+    std::mutex startupActionMutex;
 };
 
 Counters& GetCounters()
@@ -45,6 +55,12 @@ std::chrono::steady_clock::time_point& GetLastSummaryTime()
 {
     static std::chrono::steady_clock::time_point last = std::chrono::steady_clock::now();
     return last;
+}
+
+std::chrono::steady_clock::time_point& GetStartupStartTime()
+{
+    static std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    return start;
 }
 
 void UpdateMax(std::atomic<double>& target, double value)
@@ -77,9 +93,11 @@ void EmitSummary(const char* label)
     const uint64_t peakMemMB = counters.peakMemoryBytes.load(std::memory_order_relaxed) / (1024 * 1024);
     const double cpuUsage = counters.currentCpuUsage.load(std::memory_order_relaxed);
     const double peakCpu = counters.peakCpuUsage.load(std::memory_order_relaxed);
+    const double startupSeconds = counters.startupElapsedSeconds.load(std::memory_order_relaxed);
 
-    NeoWPF::Diagnostics::LogInfo("[Perf] %s frames=%llu layouts=%llu renders=%llu ticks=%llu creates=%llu closes=%llu avgFrame=%.4f avgLayout=%.4f avgRender=%.4f avgTick=%.4f maxFrame=%.4f maxLayout=%.4f maxRender=%.4f maxTick=%.4f mem=%lluMB peakMem=%lluMB cpu=%.1f%% peakCpu=%.1f%%",
+    NeoWPF::Diagnostics::LogInfo("[Perf] %s startup=%.4f frames=%llu layouts=%llu renders=%llu ticks=%llu creates=%llu closes=%llu avgFrame=%.4f avgLayout=%.4f avgRender=%.4f avgTick=%.4f maxFrame=%.4f maxLayout=%.4f maxRender=%.4f maxTick=%.4f mem=%lluMB peakMem=%lluMB cpu=%.1f%% peakCpu=%.1f%%",
         label,
+        startupSeconds,
         static_cast<unsigned long long>(frames),
         static_cast<unsigned long long>(layouts),
         static_cast<unsigned long long>(renders),
@@ -108,9 +126,11 @@ void Initialize()
     if (counters.initialized.exchange(true, std::memory_order_acq_rel)) {
         return;
     }
-    GetLastSummaryTime() = std::chrono::steady_clock::now();
-    RecordStartup();
-    EmitSummary("startup");
+    const auto now = std::chrono::steady_clock::now();
+    GetLastSummaryTime() = now;
+    GetStartupStartTime() = now;
+    counters.startupRecorded.store(false, std::memory_order_relaxed);
+    counters.startupElapsedSeconds.store(0.0, std::memory_order_relaxed);
 }
 
 void Shutdown()
@@ -128,10 +148,71 @@ bool IsEnabled()
     return GetCounters().enabled.load(std::memory_order_relaxed);
 }
 
+void SetStartupActionTrackingEnabled(bool enabled)
+{
+    GetCounters().startupActionTrackingEnabled.store(enabled, std::memory_order_relaxed);
+}
+
+bool IsStartupActionTrackingEnabled() noexcept
+{
+    return GetCounters().startupActionTrackingEnabled.load(std::memory_order_relaxed);
+}
+
+void RecordStartupAction(const char* actionName, double elapsedSeconds)
+{
+    auto& counters = GetCounters();
+    if (!counters.enabled.load(std::memory_order_relaxed) ||
+        !counters.initialized.load(std::memory_order_relaxed) ||
+        !counters.startupActionTrackingEnabled.load(std::memory_order_relaxed)) {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(counters.startupActionMutex);
+    counters.startupActionDurations[actionName] += elapsedSeconds;
+    counters.startupActionCounts[actionName] += 1;
+}
+
+void EmitStartupActionSummary()
+{
+    auto& counters = GetCounters();
+    if (!counters.enabled.load(std::memory_order_relaxed) ||
+        !counters.initialized.load(std::memory_order_relaxed) ||
+        !counters.startupActionTrackingEnabled.load(std::memory_order_relaxed)) {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(counters.startupActionMutex);
+    if (counters.startupActionDurations.empty()) {
+        return;
+    }
+
+    NeoWPF::Diagnostics::LogInfo("[Perf] Startup action timing summary:");
+    for (const auto& entry : counters.startupActionDurations) {
+        const auto& name = entry.first;
+        const double totalSeconds = entry.second;
+        const uint64_t count = counters.startupActionCounts[name];
+        const double avgSeconds = count > 0 ? totalSeconds / static_cast<double>(count) : 0.0;
+        NeoWPF::Diagnostics::LogInfo("[Perf]   %s count=%llu total=%.4f avg=%.4f",
+            name.c_str(), static_cast<unsigned long long>(count), totalSeconds, avgSeconds);
+    }
+}
+
 void RecordStartup()
 {
     auto& counters = GetCounters();
-    counters.frameCount.fetch_add(0, std::memory_order_relaxed);
+    if (!counters.enabled.load(std::memory_order_relaxed) || !counters.initialized.load(std::memory_order_relaxed)) {
+        return;
+    }
+
+    bool expected = false;
+    if (!counters.startupRecorded.compare_exchange_strong(expected, true, std::memory_order_acq_rel)) {
+        return;
+    }
+
+    const double elapsedSeconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - GetStartupStartTime()).count();
+    counters.startupElapsedSeconds.store(elapsedSeconds, std::memory_order_relaxed);
+    EmitSummary("startup");
+    EmitStartupActionSummary();
 }
 
 void RecordFrameSample(double elapsedSeconds)

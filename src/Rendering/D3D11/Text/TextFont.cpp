@@ -1,5 +1,6 @@
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <Windows.h>
 #include <dwrite.h>
 #include <wrl.h>
@@ -242,9 +243,13 @@ IDWriteFontCollection* GetCustomFontCollection()
 
 bool RegisterFontFile(const std::wstring& filePath)
 {
+    NEO_WPF_STARTUP_ACTION("RegisterFontFile");
     if (filePath.empty()) {
         return false;
     }
+
+    ::NeoWPF::Diagnostics::Log(::NeoWPF::Diagnostics::Category::Application, ::NeoWPF::Diagnostics::Level::Info,
+        "RegisterFontFile: registering font path '%ls'", filePath.c_str());
 
     ComPtr<IDWriteFactory> factory = GetDWriteFactory();
     if (!factory) {

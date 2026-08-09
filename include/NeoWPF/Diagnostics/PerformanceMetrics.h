@@ -1,6 +1,8 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
+#include <string>
 
 namespace NeoWPF::Diagnostics::PerformanceMetrics {
 
@@ -8,6 +10,12 @@ void Initialize();
 void Shutdown();
 void SetEnabled(bool enabled);
 bool IsEnabled();
+
+void SetStartupActionTrackingEnabled(bool enabled);
+bool IsStartupActionTrackingEnabled() noexcept;
+void RecordStartupAction(const char* actionName, double elapsedSeconds);
+void EmitStartupActionSummary();
+
 void RecordStartup();
 void RecordFrameSample(double elapsedSeconds);
 void RecordLayoutPass(double elapsedSeconds);
@@ -18,5 +26,37 @@ void RecordWindowClose();
 void SampleSystemMetrics();
 void EmitPeriodicSummary();
 void ForceSummary();
+
+class StartupActionTimer {
+public:
+    explicit StartupActionTimer(const char* actionName) noexcept
+        : m_actionName(actionName), m_active(IsStartupActionTrackingEnabled())
+    {
+        if (m_active) {
+            m_startTime = std::chrono::steady_clock::now();
+        }
+    }
+
+    ~StartupActionTimer() noexcept
+    {
+        if (!m_active) {
+            return;
+        }
+
+        const auto elapsedSeconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - m_startTime).count();
+        RecordStartupAction(m_actionName, elapsedSeconds);
+    }
+
+private:
+    const char* m_actionName;
+    std::chrono::steady_clock::time_point m_startTime;
+    bool m_active;
+};
+
+#define NEO_WPF_CONCAT_IMPL(a, b) a##b
+#define NEO_WPF_CONCAT(a, b) NEO_WPF_CONCAT_IMPL(a, b)
+
+#define NEO_WPF_STARTUP_ACTION(actionName) \
+    NeoWPF::Diagnostics::PerformanceMetrics::StartupActionTimer NEO_WPF_CONCAT(_neoWpfStartupActionTimer, __COUNTER__)(actionName)
 
 }
