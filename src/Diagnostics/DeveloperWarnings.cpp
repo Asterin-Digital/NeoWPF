@@ -2,6 +2,7 @@
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
@@ -16,7 +17,7 @@ bool g_hasQueuedDeveloperWarning = false;
 std::optional<DeveloperWarningMessage> g_lastDeveloperWarning;
 
 struct OverlayBuildResult {
-    std::shared_ptr<NeoWPF::UI::Panel> panel;
+    std::shared_ptr<NeoWPF::UI::Visual> panel;
     std::vector<std::shared_ptr<NeoWPF::UI::Visual>> ownedVisuals;
 };
 
@@ -38,11 +39,16 @@ private:
 
 OverlayBuildResult CreateDeveloperWarningOverlay(const DeveloperWarningMessage& warning, int overlayIndex)
 {
-    auto card = std::make_shared<NeoWPF::UI::Panel>();
+    auto card = std::make_shared<NeoWPF::UI::Border>();
     card->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Left);
     card->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Top);
-    card->SetBackgroundColor(warning.severity == DeveloperWarningSeverity::Error ? 0xFFB00020u : 0xFFFF9800u);
-    card->SetOpacity(0.95f);
+    card->SetMargin(0, 0, 0, 10);
+    card->SetPadding(14);
+    card->SetBorderThickness(1);
+    card->SetBorderColor(warning.severity == DeveloperWarningSeverity::Error ? 0xFFB00020u : 0xFFB8731Fu);
+    card->SetBackgroundColor(warning.severity == DeveloperWarningSeverity::Error ? 0xFF2A1113u : 0xFF2B2418u);
+    card->SetCornerRadius(NeoWPF::UI::CornerRadius(12));
+    card->SetOpacity(0.98f);
     card->SetZIndex(100000 + overlayIndex);
 
     auto content = std::make_shared<NeoWPF::UI::StackPanel>();
@@ -50,7 +56,7 @@ OverlayBuildResult CreateDeveloperWarningOverlay(const DeveloperWarningMessage& 
     content->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Top);
 
     auto titleText = std::make_shared<NeoWPF::UI::TextBlock>(warning.title);
-    titleText->SetFontSize(16);
+    titleText->SetFontSize(14);
     titleText->SetTextColor(0xFFFFFFFFu);
     titleText->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Left);
     titleText->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Top);
@@ -61,9 +67,9 @@ OverlayBuildResult CreateDeveloperWarningOverlay(const DeveloperWarningMessage& 
     bodyText->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Left);
     bodyText->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Top);
 
-    content->AddChild(titleText);
-    content->AddChild(bodyText);
-    card->AddChild(content);
+    content->AddVisualChild(titleText);
+    content->AddVisualChild(bodyText);
+    card->SetContent(content);
 
     return {card, {card, content, titleText, bodyText}};
 }
@@ -95,15 +101,16 @@ void AttachDeveloperWarningOverlayToRoot(const DeveloperWarningMessage& warning,
         auto overlayHost = std::make_shared<NeoWPF::UI::StackPanel>();
         overlayHost->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Right);
         overlayHost->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Top);
+        overlayHost->SetMargin(16, 16, 16, 16);
         overlayHost->SetZIndex(100000);
-        targetRoot->AddChild(overlayHost);
+        targetRoot->AddVisualChild(overlayHost);
         appState.developerWarningOverlayHost = overlayHost;
         appState.developerOverlayVisuals.push_back(overlayHost);
     }
 
     auto overlayHost = std::dynamic_pointer_cast<NeoWPF::UI::StackPanel>(appState.developerWarningOverlayHost);
     if (overlayHost) {
-        overlayHost->AddChild(overlay.panel);
+        overlayHost->AddVisualChild(overlay.panel);
     }
 
     for (const auto& visual : overlay.ownedVisuals) {

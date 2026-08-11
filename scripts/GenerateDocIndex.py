@@ -34,16 +34,18 @@ def strip_comment_markers(comment: str) -> str:
 
 def parse_doc_comment(comment: str) -> Dict[str, object]:
     cleaned = strip_comment_markers(comment)
-    sections: Dict[str, List[str]] = {
+    sections: Dict[str, List[object]] = {
         "summary": [],
         "details": [],
         "example": [],
         "params": [],
+        "devwarn": [],
     }
     is_internal = False
 
     current_tag: Optional[str] = None
     current_param: Optional[Dict[str, object]] = None
+    current_devwarn: Optional[Dict[str, object]] = None
 
     for raw_line in cleaned.splitlines():
         line = raw_line.strip()
@@ -56,6 +58,7 @@ def parse_doc_comment(comment: str) -> Dict[str, object]:
             tag = line[1:].split()[0]
             current_tag = tag
             current_param = None
+            current_devwarn = None
 
             if tag == "internal":
                 is_internal = True
@@ -66,12 +69,23 @@ def parse_doc_comment(comment: str) -> Dict[str, object]:
                 param_name = remainder.split()[0] if remainder else ""
                 current_param = {"name": param_name, "text": []}
                 sections["params"].append(current_param)
+            elif tag == "devwarn":
+                code = ""
+                summary = ""
+                if remainder:
+                    parts = remainder.split(maxsplit=1)
+                    code = parts[0]
+                    summary = parts[1] if len(parts) > 1 else ""
+                current_devwarn = {"code": code, "summary": summary, "details": []}
+                sections["devwarn"].append(current_devwarn)
             elif remainder:
                 sections.setdefault(tag, []).append(remainder)
             continue
 
         if current_tag == "param" and current_param is not None:
             current_param["text"].append(line)
+        elif current_tag == "devwarn" and current_devwarn is not None:
+            current_devwarn["details"].append(line)
         elif current_tag:
             sections.setdefault(current_tag, []).append(line)
 
@@ -84,11 +98,17 @@ def parse_doc_comment(comment: str) -> Dict[str, object]:
         if entry["name"] or text:
             params.append({"name": entry["name"], "text": text})
 
+    dev_warnings = []
+    for entry in sections["devwarn"]:
+        details = " ".join(entry["details"]).strip()
+        dev_warnings.append({"code": entry["code"], "summary": entry["summary"], "details": details})
+
     return {
         "summary": join_block(sections["summary"]),
         "details": join_block(sections["details"]),
         "example": join_block(sections["example"]),
         "params": params,
+        "devWarnings": dev_warnings,
         "isInternal": is_internal,
     }
 
@@ -115,6 +135,11 @@ def extract_decl_name(line: str) -> Optional[str]:
         if match:
             return match.group(1)
 
+    if "=" in stripped and stripped.endswith(";"):
+        match = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\s*=", stripped)
+        if match:
+            return match.group(1)
+
     return None
 
 
@@ -134,6 +159,8 @@ def get_declaration_kind(line: str) -> str:
         if stripped.endswith("= default;") or stripped.endswith("= delete;"):
             return "constructor"
         return "method"
+    if "=" in stripped and stripped.endswith(";"):
+        return "field"
     return "declaration"
 
 
@@ -189,6 +216,7 @@ def parse_header(path: Path, repo_root: Path) -> List[Dict[str, object]]:
             "details": doc["details"],
             "example": doc["example"],
             "params": doc["params"],
+            "devWarnings": doc["devWarnings"],
             "isInternal": doc["isInternal"],
         })
 
@@ -219,7 +247,7 @@ def main() -> None:
     args = parse_args()
     repo_root = Path(args.repo_root).resolve()
     include_root = Path(args.include_root).resolve() if args.include_root else (repo_root / "include" / "NeoWPF")
-    output_path = Path(args.output).resolve() if args.output else (repo_root / "docs" / "api-index.json")
+    output_path = Path(r"E:\NeoWPF.doc\public\content\api\api-index.json")
 
     index = build_index(repo_root, include_root)
 

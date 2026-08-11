@@ -7,7 +7,6 @@
 * Use `@details` only when additional explanation is necessary.
 * Omit unused tags.
 * Do not document implementation details or algorithms.
-* Avoid documenting internal header files, you can but keep it only for self-notes.
 
 ## Available Tags
 
@@ -23,7 +22,8 @@
 | `@since`        | Version the API was introduced.                 |
 | `@related`      | Related declarations.                           |
 | `@todo`         | Planned improvements or missing functionality.  |
-| `@internal      | Internal methods that aren't public API's       |
+| `@devwarn`      | Developer warning code and description used by diagnostics. |
+| `@internal`     | Internal methods that aren't public API's       |
 
 ## Example
 
@@ -37,6 +37,9 @@
 
     @param availableHeight
     Maximum height available.
+
+    @devwarn NEO-UI101 Dangling child reference detected.
+    This warning is queued when a visual child is attached without active shared ownership.
 
     @note
     Called before Arrange().
