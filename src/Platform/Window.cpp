@@ -84,6 +84,10 @@ LRESULT CALLBACK NeoWPFWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
         NeoWPF::Core::SetInputRootForWindow(hwnd);
         int x = GET_X_LPARAM(lParam);
         int y = GET_Y_LPARAM(lParam);
+        POINT screenPoint{ x, y };
+        ScreenToClient(hwnd, &screenPoint);
+        x = screenPoint.x;
+        y = screenPoint.y;
         int wheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
         std::uint32_t buttonState = GET_KEYSTATE_WPARAM(wParam);
         NeoWPF::Input::InputManager::GetInstance().ProcessMouseInput(x, y, buttonState, wheelDelta);
