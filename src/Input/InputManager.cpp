@@ -44,16 +44,30 @@ namespace NeoWPF::Input
             {
                 if ((buttonState & 0x01) != 0)
                 {
+                    RouteMouseEvent(captured, Core::PreviewMouseDownEvent(), x, y, buttonState, wheelDelta);
                     captured->OnMouseDown(x, y, buttonState);
+                    RouteMouseEvent(captured, Core::MouseDownEvent(), x, y, buttonState, wheelDelta);
                 }
                 else
                 {
+                    RouteMouseEvent(captured, Core::PreviewMouseUpEvent(), x, y, buttonState, wheelDelta);
                     captured->OnMouseUp(x, y, buttonState);
+                    RouteMouseEvent(captured, Core::MouseUpEvent(), x, y, buttonState, wheelDelta);
                 }
+            }
+            RouteMouseEvent(captured, Core::PreviewMouseMoveEvent(), x, y, buttonState, wheelDelta);
+            if (wheelDelta != 0)
+            {
+                RouteMouseEvent(captured, Core::PreviewMouseWheelEvent(), x, y, buttonState, wheelDelta);
             }
             if (captured)
             {
                 captured->OnMouseInput(&args);
+            }
+            RouteMouseEvent(captured, Core::MouseMoveEvent(), x, y, buttonState, wheelDelta);
+            if (wheelDelta != 0)
+            {
+                RouteMouseEvent(captured, Core::MouseWheelEvent(), x, y, buttonState, wheelDelta);
             }
             m_mouseButtonState = buttonState;
             m_prevMouseButtonState = buttonState;
@@ -85,20 +99,31 @@ namespace NeoWPF::Input
             {
                 if ((buttonState & 0x01) != 0)
                 {
+                    RouteMouseEvent(targetElement, Core::PreviewMouseDownEvent(), x, y, buttonState, wheelDelta);
                     targetElement->OnMouseDown(x, y, buttonState);
                     RouteMouseEvent(targetElement, Core::MouseDownEvent(), x, y, buttonState, wheelDelta);
                     SetFocusedElement(targetElement);
                 }
                 else
                 {
+                    RouteMouseEvent(targetElement, Core::PreviewMouseUpEvent(), x, y, buttonState, wheelDelta);
                     targetElement->OnMouseUp(x, y, buttonState);
                     RouteMouseEvent(targetElement, Core::MouseUpEvent(), x, y, buttonState, wheelDelta);
                 }
             }
 
+            RouteMouseEvent(targetElement, Core::PreviewMouseMoveEvent(), x, y, buttonState, wheelDelta);
+            if (wheelDelta != 0)
+            {
+                RouteMouseEvent(targetElement, Core::PreviewMouseWheelEvent(), x, y, buttonState, wheelDelta);
+            }
             Core::MouseEventArgs args(x, y, buttonState, wheelDelta);
             targetElement->OnMouseInput(&args);
             RouteMouseEvent(targetElement, Core::MouseMoveEvent(), x, y, buttonState, wheelDelta);
+            if (wheelDelta != 0)
+            {
+                RouteMouseEvent(targetElement, Core::MouseWheelEvent(), x, y, buttonState, wheelDelta);
+            }
         }
 
         m_mouseButtonState = buttonState;
@@ -107,14 +132,37 @@ namespace NeoWPF::Input
 
     void InputManager::ProcessKeyboardInput(int keyCode, bool isKeyDown, wchar_t charCode, int repeatCount)
     {
+        if (keyCode >= 0 && keyCode < static_cast<int>(m_keyStates.size()))
+        {
+            m_keyStates[keyCode] = isKeyDown;
+        }
+
         if (!m_focusedElement)
         {
             return;
         }
 
+        auto& eventDef = isKeyDown ? Core::PreviewKeyDownEvent() : Core::PreviewKeyUpEvent();
+        RouteKeyboardEvent(m_focusedElement, eventDef, keyCode, isKeyDown, charCode, repeatCount);
+
         Core::KeyboardEventArgs args(keyCode, isKeyDown, charCode, repeatCount);
         m_focusedElement->OnKeyboardInput(&args);
+
         RouteKeyboardEvent(m_focusedElement, isKeyDown ? Core::KeyDownEvent() : Core::KeyUpEvent(),
                            keyCode, isKeyDown, charCode, repeatCount);
+    }
+
+    bool InputManager::IsKeyDown(int keyCode) const
+    {
+        if (keyCode < 0 || keyCode >= static_cast<int>(m_keyStates.size()))
+        {
+            return false;
+        }
+        return m_keyStates[keyCode];
+    }
+
+    bool InputManager::IsKeyUp(int keyCode) const
+    {
+        return !IsKeyDown(keyCode);
     }
 }

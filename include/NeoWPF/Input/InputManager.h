@@ -2,6 +2,8 @@
 
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/Input/Core/RoutedEvent.h>
+#include <array>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -24,10 +26,13 @@ namespace NeoWPF::Input
 
         void SetMouseCapture(NeoWPF::UI::UIElement* element);
         NeoWPF::UI::UIElement* GetMouseCapture() const { return m_captureElement; }
+        NeoWPF::UI::UIElement* GetMouseOverElement() const { return m_mouseOverElement; }
 
         int GetMouseX() const { return m_mouseX; }
         int GetMouseY() const { return m_mouseY; }
         std::uint32_t GetMouseButtonState() const { return m_mouseButtonState; }
+        bool IsKeyDown(int keyCode) const;
+        bool IsKeyUp(int keyCode) const;
 
         void SetRootElement(NeoWPF::UI::UIElement* root);
 
@@ -55,6 +60,7 @@ namespace NeoWPF::Input
         int m_mouseX = 0;
         int m_mouseY = 0;
         std::uint32_t m_mouseButtonState = 0;
+        std::array<bool, 256> m_keyStates{};
 
         std::uint32_t m_prevMouseButtonState = 0;
         NeoWPF::UI::UIElement* m_lastHitTestResult = nullptr;

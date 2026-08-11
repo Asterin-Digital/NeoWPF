@@ -35,6 +35,34 @@ namespace NeoWPF::Input
 
 namespace NeoWPF::Input::Core
 {
+    const RoutedEvent& PreviewMouseDownEvent()
+    {
+        static const RoutedEvent event("PreviewMouseDown", RoutingStrategy::Tunnel,
+            reinterpret_cast<std::size_t>(&PreviewMouseDownEvent));
+        return event;
+    }
+
+    const RoutedEvent& PreviewMouseUpEvent()
+    {
+        static const RoutedEvent event("PreviewMouseUp", RoutingStrategy::Tunnel,
+            reinterpret_cast<std::size_t>(&PreviewMouseUpEvent));
+        return event;
+    }
+
+    const RoutedEvent& PreviewMouseMoveEvent()
+    {
+        static const RoutedEvent event("PreviewMouseMove", RoutingStrategy::Tunnel,
+            reinterpret_cast<std::size_t>(&PreviewMouseMoveEvent));
+        return event;
+    }
+
+    const RoutedEvent& PreviewMouseWheelEvent()
+    {
+        static const RoutedEvent event("PreviewMouseWheel", RoutingStrategy::Tunnel,
+            reinterpret_cast<std::size_t>(&PreviewMouseWheelEvent));
+        return event;
+    }
+
     const RoutedEvent& MouseDownEvent()
     {
         static const RoutedEvent event("MouseDown", RoutingStrategy::Bubble,
@@ -56,17 +84,38 @@ namespace NeoWPF::Input::Core
         return event;
     }
 
+    const RoutedEvent& MouseWheelEvent()
+    {
+        static const RoutedEvent event("MouseWheel", RoutingStrategy::Direct,
+            reinterpret_cast<std::size_t>(&MouseWheelEvent));
+        return event;
+    }
+
     const RoutedEvent& MouseEnterEvent()
     {
-        static const RoutedEvent event("MouseEnter", RoutingStrategy::Bubble,
+        static const RoutedEvent event("MouseEnter", RoutingStrategy::Direct,
             reinterpret_cast<std::size_t>(&MouseEnterEvent));
         return event;
     }
 
     const RoutedEvent& MouseLeaveEvent()
     {
-        static const RoutedEvent event("MouseLeave", RoutingStrategy::Bubble,
+        static const RoutedEvent event("MouseLeave", RoutingStrategy::Direct,
             reinterpret_cast<std::size_t>(&MouseLeaveEvent));
+        return event;
+    }
+
+    const RoutedEvent& PreviewKeyDownEvent()
+    {
+        static const RoutedEvent event("PreviewKeyDown", RoutingStrategy::Tunnel,
+            reinterpret_cast<std::size_t>(&PreviewKeyDownEvent));
+        return event;
+    }
+
+    const RoutedEvent& PreviewKeyUpEvent()
+    {
+        static const RoutedEvent event("PreviewKeyUp", RoutingStrategy::Tunnel,
+            reinterpret_cast<std::size_t>(&PreviewKeyUpEvent));
         return event;
     }
 

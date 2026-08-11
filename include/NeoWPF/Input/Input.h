@@ -4,3 +4,5 @@
 #include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/Input/Core/EventHandler.h>
 #include <NeoWPF/Input/InputManager.h>
+#include <NeoWPF/Input/Mouse.h>
+#include <NeoWPF/Input/Keyboard.h>

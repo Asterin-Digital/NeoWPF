@@ -121,6 +121,7 @@ namespace NeoWPF::Input
             element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseDownEvent()) ||
             element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseUpEvent()) ||
             element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseMoveEvent()) ||
+            element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseWheelEvent()) ||
             element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseEnterEvent()) ||
             element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseLeaveEvent());
         const bool isHitTestTarget = isHitTestVisible && (element->IsInteractable() || hasMouseHandlers);

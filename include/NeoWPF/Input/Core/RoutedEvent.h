@@ -83,11 +83,18 @@ namespace NeoWPF::Input::Core
         }
     };
 
+    const RoutedEvent& PreviewMouseDownEvent();
+    const RoutedEvent& PreviewMouseUpEvent();
+    const RoutedEvent& PreviewMouseMoveEvent();
+    const RoutedEvent& PreviewMouseWheelEvent();
     const RoutedEvent& MouseDownEvent();
     const RoutedEvent& MouseUpEvent();
     const RoutedEvent& MouseMoveEvent();
+    const RoutedEvent& MouseWheelEvent();
     const RoutedEvent& MouseEnterEvent();
     const RoutedEvent& MouseLeaveEvent();
+    const RoutedEvent& PreviewKeyDownEvent();
+    const RoutedEvent& PreviewKeyUpEvent();
     const RoutedEvent& KeyDownEvent();
     const RoutedEvent& KeyUpEvent();
 }

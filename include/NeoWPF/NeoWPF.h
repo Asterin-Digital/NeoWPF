@@ -54,7 +54,9 @@ namespace NeoWPF {
     
     namespace Media {
         using ::NeoWPF::UI::Core::Media::BitmapImage;
+        
         using ::NeoWPF::UI::Core::Media::Stretch;
+
         using ::NeoWPF::UI::Core::Media::StretchDirection;
     }
 
@@ -73,6 +75,14 @@ namespace NeoWPF {
     using UI::ScrollBar;
 
     using Input::InputManager;
+
+    using Input::Mouse;
+
+    using Input::MouseButtonState;
+
+    using Input::Keyboard;
+    
+    using Input::KeyState;
 
     namespace Input {
 
@@ -96,15 +106,37 @@ namespace NeoWPF {
 
         using ::NeoWPF::Input::Core::RoutedKeyboardEventArgs;
 
+        using ::NeoWPF::Input::Core::PreviewMouseDownEvent;
+
+        using ::NeoWPF::Input::Core::PreviewMouseUpEvent;
+
+        using ::NeoWPF::Input::Core::PreviewMouseMoveEvent;
+
+        using ::NeoWPF::Input::Core::PreviewMouseWheelEvent;
+
         using ::NeoWPF::Input::Core::MouseDownEvent;
 
         using ::NeoWPF::Input::Core::MouseUpEvent;
 
         using ::NeoWPF::Input::Core::MouseMoveEvent;
 
+        using ::NeoWPF::Input::Mouse;
+
+        using ::NeoWPF::Input::MouseButtonState;
+
+        using ::NeoWPF::Input::Keyboard;
+
+        using ::NeoWPF::Input::KeyState;
+
+        using ::NeoWPF::Input::Core::MouseWheelEvent;
+
         using ::NeoWPF::Input::Core::MouseEnterEvent;
 
         using ::NeoWPF::Input::Core::MouseLeaveEvent;
+
+        using ::NeoWPF::Input::Core::PreviewKeyDownEvent;
+
+        using ::NeoWPF::Input::Core::PreviewKeyUpEvent;
 
         using ::NeoWPF::Input::Core::KeyDownEvent;
 
