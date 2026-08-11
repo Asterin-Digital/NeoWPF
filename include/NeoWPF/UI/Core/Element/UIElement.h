@@ -8,6 +8,7 @@
 #include <NeoWPF/UI/Animation/AnimationController.h>
 #include <NeoWPF/UI/Animation/Core/Timeline.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
+#include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
 #include <NeoWPF/Core/Application/ApplicationResources.h>
@@ -95,6 +96,10 @@ public:
 
     NeoWPF::UI::Core::Point GetRenderTransformOrigin() const noexcept;
     void SetRenderTransformOrigin(NeoWPF::UI::Core::Point origin) noexcept;
+
+    virtual NeoWPF::UI::Core::Matrix4 GetLocalTransformMatrix() const noexcept;
+    NeoWPF::UI::Core::Matrix4 GetWorldTransformMatrix() const noexcept;
+    float GetWorldRotationRadians() const noexcept;
 
     void BeginAnimation(float from, float to, float durationSeconds);
 
@@ -221,6 +226,9 @@ public:
 protected:
     void OnInitialize() override;
 
+    void InvalidateTransformCache() const noexcept;
+    void InvalidateWorldTransformCache() const noexcept;
+
     template<typename T>
     void ApplyAnimatedValue(const Properties::DependencyProperty& property,
                             const T& fromValue,
@@ -269,6 +277,10 @@ private:
     std::unordered_map<std::size_t, NeoWPF::Core::Event<UIElement*, NeoWPF::Input::Core::RoutedEventArgs*>> m_routedEventHandlers;
     std::shared_ptr<NeoWPF::UI::Core::Transform> m_renderTransform;
     NeoWPF::UI::Core::Point m_renderTransformOrigin{0.5f, 0.5f};
+    mutable bool m_localTransformDirty = true;
+    mutable bool m_worldTransformDirty = true;
+    mutable NeoWPF::UI::Core::Matrix4 m_cachedLocalTransform;
+    mutable NeoWPF::UI::Core::Matrix4 m_cachedWorldTransform;
     std::unordered_map<std::string, std::any> m_resources;
 };
 

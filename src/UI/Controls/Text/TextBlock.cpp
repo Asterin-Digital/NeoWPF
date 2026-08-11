@@ -10,49 +10,6 @@
 
 namespace NeoWPF::UI {
 
-namespace {
-
-float GetAbsoluteRenderTransformRotation(const UIElement* element)
-{
-    using namespace NeoWPF::UI::Core;
-    Matrix4 matrix = Matrix4::Identity();
-    const UIElement* current = element;
-    while (current) {
-        if (auto fe = dynamic_cast<const FrameworkElement*>(current)) {
-            matrix = matrix * Matrix4::Translation(
-                static_cast<float>(fe->GetLayoutOffsetX() + fe->GetRenderOffsetX()),
-                static_cast<float>(fe->GetLayoutOffsetY() + fe->GetRenderOffsetY()));
-        }
-
-        if (auto transform = current->GetRenderTransform()) {
-            float width = 0.0f;
-            float height = 0.0f;
-            if (auto fe = dynamic_cast<const FrameworkElement*>(current)) {
-                width = static_cast<float>((std::max)(fe->GetFinalWidth(), fe->GetDesiredWidth()));
-                height = static_cast<float>((std::max)(fe->GetFinalHeight(), fe->GetDesiredHeight()));
-            }
-
-            const auto origin = current->GetRenderTransformOrigin();
-            const float originX = width * origin.X;
-            const float originY = height * origin.Y;
-
-            if (originX != 0.0f || originY != 0.0f) {
-                matrix = matrix * Matrix4::Translation(originX, originY);
-                matrix = matrix * transform->GetMatrix();
-                matrix = matrix * Matrix4::Translation(-originX, -originY);
-            } else {
-                matrix = matrix * transform->GetMatrix();
-            }
-        }
-
-        current = dynamic_cast<const UIElement*>(current->GetParent());
-    }
-
-    return std::atan2(matrix.m[1][0], matrix.m[0][0]);
-}
-
-}
-
 TextBlock::TextBlock()
 {
     SetHorizontalAlignment(HorizontalAlignment::Left);
@@ -240,7 +197,7 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     float drawWidth = static_cast<float>(m_textWidth);
     float drawHeight = static_cast<float>(m_textHeight);
     ApplyRenderTransform(drawX, drawY, drawWidth, drawHeight);
-    float rotationRadians = GetAbsoluteRenderTransformRotation(this);
+    float rotationRadians = GetWorldRotationRadians();
 
     commands.DrawTexturedQuad(
         drawX,

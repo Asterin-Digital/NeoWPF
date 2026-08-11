@@ -121,6 +121,51 @@ void FrameworkElement::ApplyRenderTransform(float& x, float& y, float& width, fl
         return;
     }
 
+    if (auto transformGroup = std::dynamic_pointer_cast<const NeoWPF::UI::Core::TransformGroup>(transform)) {
+        for (size_t i = 0; i < transformGroup->GetChildCount(); ++i) {
+            const auto& child = transformGroup->GetChild(i);
+            if (!child) {
+                continue;
+            }
+
+            if (auto childScale = std::dynamic_pointer_cast<const NeoWPF::UI::Core::ScaleTransform>(child)) {
+                const float scaleX = childScale->GetScaleX();
+                const float scaleY = childScale->GetScaleY();
+
+                const float pivotX = x + originX;
+                const float pivotY = y + originY;
+
+                x = pivotX + (x - pivotX) * scaleX;
+                y = pivotY + (y - pivotY) * scaleY;
+                width *= scaleX;
+                height *= scaleY;
+                continue;
+            }
+
+            const NeoWPF::UI::Core::Matrix4 childMatrix = child->GetMatrix();
+            const float translateX = childMatrix.m[3][0];
+            const float translateY = childMatrix.m[3][1];
+
+            const float absoluteOriginX = x + originX;
+            const float absoluteOriginY = y + originY;
+
+            const auto applyPoint = [&](float px, float py, float& outX, float& outY) {
+                const float dx = px - absoluteOriginX;
+                const float dy = py - absoluteOriginY;
+                outX = childMatrix.m[0][0] * dx + childMatrix.m[0][1] * dy + absoluteOriginX + translateX;
+                outY = childMatrix.m[1][0] * dx + childMatrix.m[1][1] * dy + absoluteOriginY + translateY;
+            };
+
+            float transformedOriginX = absoluteOriginX;
+            float transformedOriginY = absoluteOriginY;
+            applyPoint(absoluteOriginX, absoluteOriginY, transformedOriginX, transformedOriginY);
+
+            x = transformedOriginX - originX;
+            y = transformedOriginY - originY;
+        }
+        return;
+    }
+
     const NeoWPF::UI::Core::Matrix4 matrix = transform->GetMatrix();
     const float translateX = matrix.m[3][0];
     const float translateY = matrix.m[3][1];
@@ -141,6 +186,31 @@ void FrameworkElement::ApplyRenderTransform(float& x, float& y, float& width, fl
 
     x = transformedOriginX - originX;
     y = transformedOriginY - originY;
+}
+
+NeoWPF::UI::Core::Matrix4 FrameworkElement::GetLocalTransformMatrix() const noexcept
+{
+    const auto origin = GetRenderTransformOrigin();
+    const float width = static_cast<float>((std::max)(GetFinalWidth(), GetDesiredWidth()));
+    const float height = static_cast<float>((std::max)(GetFinalHeight(), GetDesiredHeight()));
+    const float originX = width * origin.X;
+    const float originY = height * origin.Y;
+
+    NeoWPF::UI::Core::Matrix4 local = NeoWPF::UI::Core::Matrix4::Translation(
+        static_cast<float>(m_offsetX + m_renderOffsetX),
+        static_cast<float>(m_offsetY + m_renderOffsetY));
+
+    if (auto transform = GetRenderTransform()) {
+        if (originX != 0.0f || originY != 0.0f) {
+            local = local * NeoWPF::UI::Core::Matrix4::Translation(originX, originY);
+            local = local * transform->GetMatrix();
+            local = local * NeoWPF::UI::Core::Matrix4::Translation(-originX, -originY);
+        } else {
+            local = local * transform->GetMatrix();
+        }
+    }
+
+    return local;
 }
 
 }

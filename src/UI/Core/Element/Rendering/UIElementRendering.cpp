@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
 #include <NeoWPF/UI/Animation/Core/Timeline.h>
@@ -8,6 +9,7 @@
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <cmath>
 #include <vector>
 
 namespace NeoWPF::UI {
@@ -35,25 +37,107 @@ std::shared_ptr<NeoWPF::UI::Core::Transform> UIElement::GetRenderTransform() con
     return m_renderTransform;
 }
 
-void UIElement::SetRenderTransform(std::shared_ptr<NeoWPF::UI::Core::Transform> transform) noexcept {
-    if (auto oldScaleTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::ScaleTransform>(m_renderTransform)) {
-        oldScaleTransform->m_invalidateCallback = nullptr;
-    }
-    if (auto oldRotateTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::RotateTransform>(m_renderTransform)) {
-        oldRotateTransform->m_invalidateCallback = nullptr;
+void UIElement::InvalidateTransformCache() const noexcept {
+    m_localTransformDirty = true;
+    InvalidateWorldTransformCache();
+}
+
+void UIElement::InvalidateWorldTransformCache() const noexcept {
+    if (m_worldTransformDirty) {
+        return;
     }
 
-    m_renderTransform = transform;
+    m_worldTransformDirty = true;
+    for (auto* child : GetVisualChildren()) {
+        if (auto childElement = dynamic_cast<UIElement*>(child)) {
+            childElement->InvalidateWorldTransformCache();
+        }
+    }
+}
+
+NeoWPF::UI::Core::Matrix4 UIElement::GetLocalTransformMatrix() const noexcept {
+    if (m_localTransformDirty) {
+        m_cachedLocalTransform = NeoWPF::UI::Core::Matrix4::Identity();
+        if (auto transform = GetRenderTransform()) {
+            m_cachedLocalTransform = transform->GetMatrix();
+        }
+        m_localTransformDirty = false;
+    }
+    return m_cachedLocalTransform;
+}
+
+NeoWPF::UI::Core::Matrix4 UIElement::GetWorldTransformMatrix() const noexcept {
+    if (m_worldTransformDirty) {
+        if (auto parentVisual = GetParent()) {
+            if (auto parentElement = dynamic_cast<const UIElement*>(parentVisual)) {
+                m_cachedWorldTransform = parentElement->GetWorldTransformMatrix() * GetLocalTransformMatrix();
+            } else {
+                m_cachedWorldTransform = GetLocalTransformMatrix();
+            }
+        } else {
+            m_cachedWorldTransform = GetLocalTransformMatrix();
+        }
+        m_worldTransformDirty = false;
+    }
+    return m_cachedWorldTransform;
+}
+
+float UIElement::GetWorldRotationRadians() const noexcept {
+    const auto matrix = GetWorldTransformMatrix();
+    return std::atan2(matrix.m[1][0], matrix.m[0][0]);
+}
+
+namespace {
+
+void ClearTransformInvalidateCallbacks(const std::shared_ptr<NeoWPF::UI::Core::Transform>& transform) {
+    if (!transform) {
+        return;
+    }
+
     if (auto scaleTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::ScaleTransform>(transform)) {
-        scaleTransform->m_invalidateCallback = [this]() {
-            this->InvalidateVisual();
-        };
+        scaleTransform->SetInvalidateCallback(nullptr);
     }
     if (auto rotateTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::RotateTransform>(transform)) {
-        rotateTransform->m_invalidateCallback = [this]() {
-            this->InvalidateVisual();
-        };
+        rotateTransform->SetInvalidateCallback(nullptr);
     }
+    if (auto transformGroup = std::dynamic_pointer_cast<NeoWPF::UI::Core::TransformGroup>(transform)) {
+        for (size_t i = 0; i < transformGroup->GetChildCount(); ++i) {
+            ClearTransformInvalidateCallbacks(transformGroup->GetChild(i));
+        }
+    }
+}
+
+void SetTransformInvalidateCallbacks(const std::shared_ptr<NeoWPF::UI::Core::Transform>& transform,
+                                     const std::function<void()>& callback) {
+    if (!transform) {
+        return;
+    }
+
+    if (auto scaleTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::ScaleTransform>(transform)) {
+        scaleTransform->SetInvalidateCallback(callback);
+    }
+    if (auto rotateTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::RotateTransform>(transform)) {
+        rotateTransform->SetInvalidateCallback(callback);
+    }
+    if (auto transformGroup = std::dynamic_pointer_cast<NeoWPF::UI::Core::TransformGroup>(transform)) {
+        for (size_t i = 0; i < transformGroup->GetChildCount(); ++i) {
+            SetTransformInvalidateCallbacks(transformGroup->GetChild(i), callback);
+        }
+    }
+}
+
+} // namespace
+
+void UIElement::SetRenderTransform(std::shared_ptr<NeoWPF::UI::Core::Transform> transform) noexcept {
+    ClearTransformInvalidateCallbacks(m_renderTransform);
+
+    m_renderTransform = transform;
+    SetTransformInvalidateCallbacks(transform, [this]() {
+        this->InvalidateVisual();
+        this->InvalidateTransformCache();
+    });
+
+    InvalidateTransformCache();
     InvalidateVisual();
 }
 
@@ -63,6 +147,7 @@ NeoWPF::UI::Core::Point UIElement::GetRenderTransformOrigin() const noexcept {
 
 void UIElement::SetRenderTransformOrigin(NeoWPF::UI::Core::Point origin) noexcept {
     m_renderTransformOrigin = origin;
+    InvalidateTransformCache();
     InvalidateVisual();
 }
 

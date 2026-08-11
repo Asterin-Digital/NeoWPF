@@ -17,50 +17,6 @@
 
 namespace NeoWPF::UI {
 
-namespace {
-
-// temporary workaround till we add actual local and world rot/scale etc
-float GetAbsoluteRenderTransformRotation(const UIElement* element)
-{
-    using namespace NeoWPF::UI::Core;
-    Matrix4 matrix = Matrix4::Identity();
-    const UIElement* current = element;
-    while (current) {
-        if (auto fe = dynamic_cast<const FrameworkElement*>(current)) {
-            matrix = matrix * Matrix4::Translation(
-                static_cast<float>(fe->GetLayoutOffsetX() + fe->GetRenderOffsetX()),
-                static_cast<float>(fe->GetLayoutOffsetY() + fe->GetRenderOffsetY()));
-        }
-
-        if (auto transform = current->GetRenderTransform()) {
-            float width = 0.0f;
-            float height = 0.0f;
-            if (auto fe = dynamic_cast<const FrameworkElement*>(current)) {
-                width = static_cast<float>((std::max)(fe->GetFinalWidth(), fe->GetDesiredWidth()));
-                height = static_cast<float>((std::max)(fe->GetFinalHeight(), fe->GetDesiredHeight()));
-            }
-
-            const auto origin = current->GetRenderTransformOrigin();
-            const float originX = width * origin.X;
-            const float originY = height * origin.Y;
-
-            if (originX != 0.0f || originY != 0.0f) {
-                matrix = matrix * Matrix4::Translation(originX, originY);
-                matrix = matrix * transform->GetMatrix();
-                matrix = matrix * Matrix4::Translation(-originX, -originY);
-            } else {
-                matrix = matrix * transform->GetMatrix();
-            }
-        }
-
-        current = dynamic_cast<const UIElement*>(current->GetParent());
-    }
-
-    return std::atan2(matrix.m[1][0], matrix.m[0][0]);
-}
-
-}
-
 Button::Button()
     : ButtonBase()
 {
@@ -248,7 +204,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     float drawWidth = static_cast<float>(GetFinalWidth());
     float drawHeight = static_cast<float>(GetFinalHeight());
     ApplyRenderTransform(drawX, drawY, drawWidth, drawHeight);
-    float rotationRadians = GetAbsoluteRenderTransformRotation(this);
+    float rotationRadians = GetWorldRotationRadians();
 
     const auto cornerRadius = GetCornerRadius();
 

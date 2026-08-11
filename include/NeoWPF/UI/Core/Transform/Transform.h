@@ -50,6 +50,7 @@ public:
     void SetScaleY(float value);
     void SetCenterX(float value);
     void SetCenterY(float value);
+    void SetInvalidateCallback(std::function<void()> callback);
 
     Matrix4 GetMatrix() const override;
     std::shared_ptr<Transform> Clone() const override;
@@ -93,6 +94,7 @@ public:
     void SetAngle(float value);
     void SetCenterX(float value);
     void SetCenterY(float value);
+    void SetInvalidateCallback(std::function<void()> callback);
 
     Matrix4 GetMatrix() const override;
     std::shared_ptr<Transform> Clone() const override;

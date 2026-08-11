@@ -69,6 +69,7 @@ void ScaleTransform::SetScaleX(float value) { m_scaleX = value; if (m_invalidate
 void ScaleTransform::SetScaleY(float value) { m_scaleY = value; if (m_invalidateCallback) { m_invalidateCallback(); } }
 void ScaleTransform::SetCenterX(float value) { m_centerX = value; }
 void ScaleTransform::SetCenterY(float value) { m_centerY = value; }
+void ScaleTransform::SetInvalidateCallback(std::function<void()> callback) { m_invalidateCallback = std::move(callback); }
 
 Matrix4 ScaleTransform::GetMatrix() const {
     Matrix4 toCenter = Matrix4::Translation(-m_centerX, -m_centerY);
@@ -130,6 +131,7 @@ float RotateTransform::GetCenterY() const { return m_centerY; }
 void RotateTransform::SetAngle(float value) { m_angle = value; if (m_invalidateCallback) { m_invalidateCallback(); } }
 void RotateTransform::SetCenterX(float value) { m_centerX = value; if (m_invalidateCallback) { m_invalidateCallback(); } }
 void RotateTransform::SetCenterY(float value) { m_centerY = value; if (m_invalidateCallback) { m_invalidateCallback(); } }
+void RotateTransform::SetInvalidateCallback(std::function<void()> callback) { m_invalidateCallback = std::move(callback); }
 
 Matrix4 RotateTransform::GetMatrix() const {
     Matrix4 toCenter = Matrix4::Translation(-m_centerX, -m_centerY);

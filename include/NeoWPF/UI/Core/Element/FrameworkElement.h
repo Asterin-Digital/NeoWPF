@@ -152,6 +152,7 @@ public:
         if (m_offsetX != x || m_offsetY != y) {
             m_offsetX = x;
             m_offsetY = y;
+            InvalidateTransformCache();
             InvalidateVisual();
         }
     }
@@ -507,6 +508,7 @@ public:
 
 protected:
     void ApplyRenderTransform(float& x, float& y, float& width, float& height) const noexcept;
+    NeoWPF::UI::Core::Matrix4 GetLocalTransformMatrix() const noexcept override;
 
 public:
     static bool s_frameworkElementLogging;
@@ -531,7 +533,7 @@ private:
     bool m_clipToBounds = false;
 
 protected:
-    void SetRenderOffset(int x, int y) noexcept { m_renderOffsetX = x; m_renderOffsetY = y; InvalidateVisual(); }
+    void SetRenderOffset(int x, int y) noexcept { m_renderOffsetX = x; m_renderOffsetY = y; InvalidateTransformCache(); InvalidateVisual(); }
 
 public:
     int GetRenderOffsetX() const noexcept { return m_renderOffsetX; }
