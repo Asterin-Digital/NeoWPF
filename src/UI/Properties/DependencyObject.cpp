@@ -249,6 +249,25 @@ void DependencyObject::SetValue(const DependencyProperty* property, const std::a
     SetValueInternal(*property, value, PropertyValueSource::Local);
 }
 
+const DependencyProperty* DependencyObject::FindDependencyProperty(const std::string& propertyName) const
+{
+    return DependencyPropertyRegistry::Get().FindProperty(propertyName, *this);
+}
+
+void DependencyObject::SetBinding(const std::string& propertyName, const Data::Binding& binding)
+{
+    if (const auto* property = FindDependencyProperty(propertyName)) {
+        SetBinding(*property, binding);
+    }
+}
+
+void DependencyObject::ClearBinding(const std::string& propertyName)
+{
+    if (const auto* property = FindDependencyProperty(propertyName)) {
+        ClearBinding(*property);
+    }
+}
+
 void DependencyObject::SetValueExpression(const DependencyProperty& property, const std::any& value)
 {
     SetValueInternal(property, value, PropertyValueSource::Expression);

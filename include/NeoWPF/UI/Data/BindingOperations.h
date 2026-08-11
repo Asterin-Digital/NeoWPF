@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
@@ -20,11 +21,16 @@ public:
     static std::shared_ptr<BindingExpression> SetBinding(Properties::DependencyObject& target,
                                                          const Properties::DependencyProperty* property,
                                                          const Binding& binding);
+    static std::shared_ptr<BindingExpression> SetBinding(Properties::DependencyObject& target,
+                                                         const std::string& propertyName,
+                                                         const Binding& binding);
 
     static void ClearBinding(Properties::DependencyObject& target,
                              const Properties::DependencyProperty& property);
     static void ClearBinding(Properties::DependencyObject& target,
                              const Properties::DependencyProperty* property);
+    static void ClearBinding(Properties::DependencyObject& target,
+                             const std::string& propertyName);
 
     static std::shared_ptr<BindingExpression> GetBindingExpression(const Properties::DependencyObject& target,
                                                                   const Properties::DependencyProperty& property);

@@ -28,6 +28,20 @@ std::shared_ptr<BindingExpression> BindingOperations::SetBinding(Properties::Dep
     return SetBinding(target, *property, binding);
 }
 
+std::shared_ptr<BindingExpression> BindingOperations::SetBinding(Properties::DependencyObject& target,
+                                                                 const std::string& propertyName,
+                                                                 const Binding& binding)
+{
+    if (const auto* property = target.FindDependencyProperty(propertyName)) {
+        return SetBinding(target, *property, binding);
+    }
+    const std::wstring title = std::wstring(NeoWPF::Diagnostics::DeveloperWarnings::kInvalidDependencyPropertyCode) + L": invalid dependency property name used for binding";
+    NeoWPF::Diagnostics::QueueDeveloperWarning(title,
+        L"SetBinding was called with a property name that does not correspond to a registered DependencyProperty for the target.",
+        NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
+    return nullptr;
+}
+
 void BindingOperations::ClearBinding(Properties::DependencyObject& target,
                                      const Properties::DependencyProperty& property)
 {
@@ -44,6 +58,14 @@ void BindingOperations::ClearBinding(Properties::DependencyObject& target,
         return;
     }
     ClearBinding(target, *property);
+}
+
+void BindingOperations::ClearBinding(Properties::DependencyObject& target,
+                                     const std::string& propertyName)
+{
+    if (const auto* property = target.FindDependencyProperty(propertyName)) {
+        ClearBinding(target, *property);
+    }
 }
 
 std::shared_ptr<BindingExpression> BindingOperations::GetBindingExpression(const Properties::DependencyObject& target,

@@ -5,6 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <string>
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
@@ -49,6 +50,15 @@ namespace NeoWPF::UI::Properties {
         template<typename T>
         T GetValue(const DependencyProperty& property) const;
 
+        template<typename T>
+        T GetValue(const std::string& propertyName) const
+        {
+            if (const auto* property = FindDependencyProperty(propertyName)) {
+                return GetValue<T>(*property);
+            }
+            return T{};
+        }
+
         /*
             @summary
             Sets a dependency property value using the provided strongly typed value.
@@ -64,6 +74,14 @@ namespace NeoWPF::UI::Properties {
         */
         template<typename T>
         void SetValue(const DependencyProperty& property, const T& value);
+
+        template<typename T>
+        void SetValue(const std::string& propertyName, const T& value)
+        {
+            if (const auto* property = FindDependencyProperty(propertyName)) {
+                SetValue(*property, value);
+            }
+        }
 
         /*
             @summary
@@ -97,6 +115,20 @@ namespace NeoWPF::UI::Properties {
         */
         void SetBinding(const DependencyProperty& property, const Data::Binding& binding);
         void SetBinding(const DependencyProperty* property, const Data::Binding& binding);
+        void SetBinding(const std::string& propertyName, const Data::Binding& binding);
+
+        /*
+            @summary
+            Finds a dependency property by name for this object.
+
+            @param propertyName
+            The property name to look up.
+
+            @returns
+            The dependency property definition, or nullptr if it does not exist.
+            
+        */
+        const DependencyProperty* FindDependencyProperty(const std::string& propertyName) const;
 
         /*
             @summary
@@ -104,6 +136,7 @@ namespace NeoWPF::UI::Properties {
         */
         void ClearBinding(const DependencyProperty& property);
         void ClearBinding(const DependencyProperty* property);
+        void ClearBinding(const std::string& propertyName);
 
         /*
             @summary
