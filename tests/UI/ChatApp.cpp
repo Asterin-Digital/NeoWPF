@@ -6,16 +6,6 @@
 int main()
 {
     using namespace NeoWPF;
-    using namespace Diagnostics;
-
-    /*SetGlobalLevel(Level::Trace);
-    SetLevel(Category::Visual, Level::Off);
-    SetLevel(Category::GridLayout, Level::Debug);
-    SetLevel(Category::ContentPresenter, Level::Off);
-    SetLevel(Category::Control, Level::Debug);
-    SetLevel(Category::Application, Level::Off);
-    SetLevel(Category::TextBox, Level::Off);
-    SetLevel(Category::HitTest, Level::Off);*/
 
     Core::Application::Initialize();
 

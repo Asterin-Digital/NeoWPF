@@ -10,10 +10,3 @@ NeoWPF was built with a different goal: bringing a familiar retained mode progra
 
 NeoWPF is designed to closely follow WPF. It provides familiar controls, APIs, and behaviors, making it easy for WPF developers to transition without learning an entirely new framework.
 
-### Performance
-
-To do : add this in here
-
-### Documentation
-
-To do: add this in here

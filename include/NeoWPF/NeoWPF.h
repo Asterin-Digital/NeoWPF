@@ -11,28 +11,44 @@
 WPF-Inspired UI framework for Modern C++
 Love from Envy!! :3
 
+Review the project's README for details.
+
 ============================================================
 */
 
 #pragma once
 
+#include <memory>
+#include <utility>
+
 ///////////////////////////////////////////////////
-// API Start
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Platform/Window.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/UI.h>
 #include <NeoWPF/Input/Input.h>
-// API End
 ///////////////////////////////////////////////////
-// Diagnostics Start
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/FailureHooks.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
-// Diagnostics End
 ///////////////////////////////////////////////////
 
+// We recommend not to include individual header files for public usage in your own code. 
+// NeoWPF reserves the right to update paths or method signature's for any implementation.
+// Using this header file for public usage ensure's that even if method signatures change, or the API changes
+// you will get shims, facades, etc for API stability.
+
+// Public API changes will happen, but they are gradual with deprecation warnings.
+// NeoWPF reverses the right to update or otherwise remove a public API if we deem
+// it doesn't fit NeoWPF's architecture or design.
+
 namespace NeoWPF {
+
+    template <typename T, typename... Args>
+    std::shared_ptr<T> New(Args&&... args)
+    {
+        return std::make_shared<T>(std::forward<Args>(args)...);
+    }
 
     using Core::Application;
 
@@ -53,6 +69,7 @@ namespace NeoWPF {
     using UI::Image;
     
     namespace Media {
+
         using ::NeoWPF::UI::Core::Media::BitmapImage;
         
         using ::NeoWPF::UI::Core::Media::Stretch;
@@ -81,7 +98,7 @@ namespace NeoWPF {
     using Input::MouseButtonState;
 
     using Input::Keyboard;
-    
+
     using Input::KeyState;
 
     namespace Input {
@@ -145,3 +162,5 @@ namespace NeoWPF {
     }
 
 }
+
+using NeoWPF::New;

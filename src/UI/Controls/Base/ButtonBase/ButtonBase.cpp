@@ -48,7 +48,27 @@ void ButtonBase::OnVisualStateApplied(const std::string& stateName)
 
 void ButtonBase::RaiseClick()
 {
+    if (m_command) {
+        auto commandTarget = m_commandTarget ? m_commandTarget : this;
+
+        if (auto routedCommand = std::dynamic_pointer_cast<NeoWPF::Input::RoutedCommand>(m_command)) {
+            if (routedCommand->CanExecute(m_commandParameter, commandTarget)) {
+                routedCommand->Execute(m_commandParameter, commandTarget);
+            }
+        }
+        else if (m_command->CanExecute(m_commandParameter)) {
+            m_command->Execute(m_commandParameter);
+        }
+    }
     Click.Invoke();
+}
+
+void ButtonBase::SetCommand(std::shared_ptr<NeoWPF::Input::ICommand> command)
+{
+    m_command = std::move(command);
+    if (!m_commandTarget) {
+        m_commandTarget = this;
+    }
 }
 
 void ButtonBase::OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args)

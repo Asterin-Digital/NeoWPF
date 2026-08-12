@@ -5,15 +5,16 @@
 			"path": "."
 		},
 		{
-			"name": "NeoWPF.doc",
-			"path": "E:/NeoWPF.doc"
-		},
-		{
 			"name": "Saphire",
 			"path": "../Saphire"
 		},
 		{
+			"name": "Saphire.NET",
 			"path": "../Saphire.NET"
+		},
+		{
+			"name": "NeoWPF.doc",
+			"path": "E:/NeoWPF.doc"
 		}
 	],
 	"settings": {
