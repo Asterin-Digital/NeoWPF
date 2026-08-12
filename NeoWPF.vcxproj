@@ -222,7 +222,6 @@
     <ClCompile Include="src\UI\Controls\Thumb\Thumb.cpp" />
     <ClCompile Include="src\UI\Controls\Thumb\ThumbProperties.cpp" />
     <ClCompile Include="src\UI\Controls\Checkbox\Checkbox.cpp" />
-    <ClCompile Include="src\UI\Controls\Checkbox\CheckboxStates.cpp" />
     <ClCompile Include="src\UI\Controls\Checkbox\CheckboxProperties.cpp" />
     <ClCompile Include="src\UI\Controls\ItemsControl\ItemsControl.cpp" />
     <ClCompile Include="src\UI\Controls\ItemsControl\ItemsControlProperties.cpp" />

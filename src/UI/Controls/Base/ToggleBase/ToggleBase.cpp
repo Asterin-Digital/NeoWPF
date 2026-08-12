@@ -15,7 +15,7 @@ ToggleBase::ToggleBase()
 void ToggleBase::OnInitialize()
 {
     UIElement::OnInitialize();
-    ApplyVisualState(m_isChecked ? "Checked" : "Normal", false);
+    ApplyVisualState(m_isChecked ? "Checked" : "Unchecked", false);
 }
 
 void ToggleBase::InitializeVisualStates()
@@ -108,7 +108,7 @@ void ToggleBase::OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args)
 void ToggleBase::OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args)
 {
     if (IsEnabled()) {
-        ApplyVisualState(m_isChecked ? "Checked" : "Normal", false);
+        ApplyVisualState(m_isChecked ? "Checked" : "Unchecked", false);
     }
 }
 

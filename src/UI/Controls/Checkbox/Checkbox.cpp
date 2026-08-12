@@ -234,8 +234,6 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto box = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Box"));
     if (box) {
         box->SetRect(static_cast<int>(std::lround(boxLeft)), static_cast<int>(std::lround(boxTop)), boxSize, boxSize);
-        box->SetFillColor(m_bgColor.ToArgb());
-        box->SetBorderColor(m_borderColor.ToArgb());
         box->SetBorderThickness(1);
         box->SetOpacity(GetOpacity());
         box->BuildRenderCommands(commands);
