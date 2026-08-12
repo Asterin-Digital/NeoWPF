@@ -58,6 +58,7 @@ TextBox::TextBox()
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
     SetClipToBounds(true);
+    SetTemplate(std::make_shared<TextBoxTemplate>());
 
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
     presenter->SetPadding(m_padding);

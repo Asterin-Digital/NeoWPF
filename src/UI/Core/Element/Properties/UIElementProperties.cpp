@@ -13,6 +13,21 @@ namespace NeoWPF::UI::Properties {
             &UI::UIElement::IsEnabled,
             &UI::UIElement::SetEnabled);
 
+        RegisterProperty<UI::UIElement, bool>(
+            "IsTabStop",
+            &UI::UIElement::IsTabStop,
+            &UI::UIElement::SetTabStop);
+
+        RegisterProperty<UI::UIElement, int>(
+            "TabIndex",
+            &UI::UIElement::GetTabIndex,
+            &UI::UIElement::SetTabIndex);
+
+        RegisterProperty<UI::UIElement, bool>(
+            "IsFocused",
+            &UI::UIElement::IsFocused,
+            &UI::UIElement::SetFocused);
+
         RegisterProperty<UI::UIElement, float>(
             "Opacity",
             &UI::UIElement::GetOpacity,

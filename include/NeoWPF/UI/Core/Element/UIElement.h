@@ -38,6 +38,10 @@ namespace NeoWPF::UI::Core {
     };
 }
 
+namespace NeoWPF::Input {
+    void FocusElement(NeoWPF::UI::UIElement* element);
+}
+
 namespace NeoWPF::UI {
 class UIElement;
 }
@@ -71,6 +75,41 @@ public:
 
     bool IsEnabled() const noexcept { return m_isEnabled; }
     void SetEnabled(bool enabled) noexcept { m_isEnabled = enabled; }
+
+    bool IsTabStop() const noexcept { return m_isTabStop; }
+    void SetTabStop(bool tabStop) noexcept {
+        if (m_isTabStop != tabStop) {
+            m_isTabStop = tabStop;
+            InvalidateVisual();
+        }
+    }
+
+    int GetTabIndex() const noexcept { return m_tabIndex; }
+    void SetTabIndex(int tabIndex) noexcept {
+        if (m_tabIndex != tabIndex) {
+            m_tabIndex = tabIndex;
+            InvalidateVisual();
+        }
+    }
+
+    bool IsFocused() const noexcept { return m_isFocused; }
+    void SetFocused(bool focused) noexcept {
+        if (m_isFocused != focused) {
+            m_isFocused = focused;
+            InvalidateVisual();
+        }
+    }
+
+    bool CanFocus() const noexcept { return IsEnabled() && IsVisible() && IsTabStop(); }
+
+    bool Focus() noexcept {
+        if (!CanFocus()) {
+            return false;
+        }
+
+        NeoWPF::Input::FocusElement(this);
+        return IsFocused();
+    }
 
     float GetOpacity() const noexcept { return m_opacity; }
     void SetOpacity(float opacity) noexcept {
@@ -220,8 +259,8 @@ public:
     virtual void OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args) {}
     virtual void OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args) {}
     virtual void OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args) {}
-    virtual void OnGotFocus() {}
-    virtual void OnLostFocus() {}
+    virtual void OnGotFocus();
+    virtual void OnLostFocus();
 
 protected:
     void OnInitialize() override;
@@ -265,6 +304,9 @@ protected:
     }
 
     bool m_isEnabled = true;
+    bool m_isTabStop = true;
+    int m_tabIndex = 0;
+    bool m_isFocused = false;
 
 private:
     bool m_isVisible = true;

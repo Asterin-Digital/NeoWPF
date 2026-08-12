@@ -1,10 +1,65 @@
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/Input/Core/Events.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <algorithm>
 
 namespace NeoWPF::Input
 {
 
+    void InputManager::CollectFocusableElements(NeoWPF::UI::UIElement* root,
+                                               std::vector<NeoWPF::UI::UIElement*>& elements) const
+    {
+        if (!root) {
+            return;
+        }
+
+        if (root->CanFocus()) {
+            elements.push_back(root);
+        }
+
+        for (auto* child : root->GetVisualChildren()) {
+            if (auto* uiChild = dynamic_cast<NeoWPF::UI::UIElement*>(child)) {
+                CollectFocusableElements(uiChild, elements);
+            }
+        }
+    }
+
+    bool InputManager::TryMoveFocus(bool forward)
+    {
+        if (!m_rootElement) {
+            return false;
+        }
+
+        std::vector<NeoWPF::UI::UIElement*> focusables;
+        CollectFocusableElements(m_rootElement, focusables);
+
+        if (focusables.empty()) {
+            return false;
+        }
+
+        if (!m_focusedElement) {
+            SetFocusedElement(forward ? focusables.front() : focusables.back());
+            return true;
+        }
+
+        const auto it = std::find(focusables.begin(), focusables.end(), m_focusedElement);
+        if (it == focusables.end()) {
+            SetFocusedElement(forward ? focusables.front() : focusables.back());
+            return true;
+        }
+
+        const std::size_t currentIndex = static_cast<std::size_t>(std::distance(focusables.begin(), it));
+        const std::size_t nextIndex = forward
+            ? (currentIndex + 1) % focusables.size()
+            : (currentIndex == 0 ? focusables.size() - 1 : currentIndex - 1);
+
+        if (focusables[currentIndex] == focusables[nextIndex]) {
+            return true;
+        }
+
+        SetFocusedElement(focusables[nextIndex]);
+        return true;
+    }
 
     InputManager& InputManager::GetInstance()
     {
@@ -135,6 +190,13 @@ namespace NeoWPF::Input
         if (keyCode >= 0 && keyCode < static_cast<int>(m_keyStates.size()))
         {
             m_keyStates[keyCode] = isKeyDown;
+        }
+
+        if (keyCode == 0x09 && isKeyDown)
+        {
+            const bool shiftPressed = IsKeyDown(0x10);
+            TryMoveFocus(!shiftPressed);
+            return;
         }
 
         if (!m_focusedElement)

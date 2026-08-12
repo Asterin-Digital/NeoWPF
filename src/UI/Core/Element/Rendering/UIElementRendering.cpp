@@ -12,6 +12,26 @@
 #include <cmath>
 #include <vector>
 
+void NeoWPF::UI::UIElement::OnGotFocus()
+{
+    if (auto manager = GetTemplateVisualStateManager()) {
+        if (manager->FindState("Focused")) {
+            manager->GoToState(this, "Focused", false);
+        }
+    }
+    InvalidateVisual();
+}
+
+void NeoWPF::UI::UIElement::OnLostFocus()
+{
+    if (auto manager = GetTemplateVisualStateManager()) {
+        if (manager->FindState("Normal")) {
+            manager->GoToState(this, "Normal", false);
+        }
+    }
+    InvalidateVisual();
+}
+
 namespace NeoWPF::UI {
 
 void UIElement::OnInitialize()

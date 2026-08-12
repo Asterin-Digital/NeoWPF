@@ -11,6 +11,8 @@
 
 namespace NeoWPF::Input
 {
+    void FocusElement(NeoWPF::UI::UIElement* element);
+
     class InputManager
     {
     public:
@@ -35,6 +37,7 @@ namespace NeoWPF::Input
         bool IsKeyUp(int keyCode) const;
 
         void SetRootElement(NeoWPF::UI::UIElement* root);
+        bool TryMoveFocus(bool forward = true);
 
     private:
         InputManager() = default;
@@ -49,8 +52,8 @@ namespace NeoWPF::Input
                             int x, int y, std::uint32_t buttonState, int wheelDelta);
         void RouteKeyboardEvent(NeoWPF::UI::UIElement* targetElement, const Core::RoutedEvent& eventDef,
                                int keyCode, bool isKeyDown, wchar_t charCode, int repeatCount);
-
-        
+        void CollectFocusableElements(NeoWPF::UI::UIElement* root,
+                                     std::vector<NeoWPF::UI::UIElement*>& elements) const;
 
         NeoWPF::UI::UIElement* m_rootElement = nullptr;
         NeoWPF::UI::UIElement* m_focusedElement = nullptr;

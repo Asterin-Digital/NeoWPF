@@ -3,6 +3,15 @@
 
 namespace NeoWPF::Input
 {
+    void FocusElement(NeoWPF::UI::UIElement* element)
+    {
+        if (!element) {
+            return;
+        }
+
+        InputManager::GetInstance().SetFocusedElement(element);
+    }
+
     void InputManager::SetFocusedElement(NeoWPF::UI::UIElement* element)
     {
         if (m_focusedElement == element)
@@ -12,6 +21,7 @@ namespace NeoWPF::Input
 
         if (m_focusedElement)
         {
+            m_focusedElement->SetFocused(false);
             m_focusedElement->OnLostFocus();
         }
 
@@ -19,6 +29,7 @@ namespace NeoWPF::Input
 
         if (m_focusedElement)
         {
+            m_focusedElement->SetFocused(true);
             m_focusedElement->OnGotFocus();
         }
     }

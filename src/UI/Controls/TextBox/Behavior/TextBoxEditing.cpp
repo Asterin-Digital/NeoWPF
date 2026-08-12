@@ -127,9 +127,6 @@ void TextBox::OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args)
                 return;
             }
             break;
-        case VK_TAB:
-            args->SetHandled(true);
-            return;
         default:
             break;
         }
