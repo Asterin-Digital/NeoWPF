@@ -157,18 +157,36 @@ void ItemsControl::Measure(int availableWidth, int availableHeight)
     int totalHeight = m_padding * 2;
     int totalWidth = 0;
 
-    for (const auto& item : m_items) {
-        if (!item) {
-            continue;
+    if (!m_itemsSource.empty()) {
+        const int count = static_cast<int>(m_itemsSource.size());
+        for (int i = 0; i < count; ++i) {
+            auto it = m_realizedItems.find(i);
+            if (it == m_realizedItems.end() || !it->second) {
+                continue;
+            }
+
+            it->second->Measure(contentWidth, 0);
+            totalWidth = std::max(totalWidth, it->second->GetDesiredWidth());
+            totalHeight += it->second->GetDesiredHeight() + itemSpacing;
         }
 
-        item->Measure(contentWidth, 0);
-        totalWidth = std::max(totalWidth, item->GetDesiredWidth());
-        totalHeight += item->GetDesiredHeight() + itemSpacing;
-    }
+        if (count > 0) {
+            totalHeight -= itemSpacing;
+        }
+    } else {
+        for (const auto& item : m_items) {
+            if (!item) {
+                continue;
+            }
 
-    if (!m_items.empty()) {
-        totalHeight -= itemSpacing;
+            item->Measure(contentWidth, 0);
+            totalWidth = std::max(totalWidth, item->GetDesiredWidth());
+            totalHeight += item->GetDesiredHeight() + itemSpacing;
+        }
+
+        if (!m_items.empty()) {
+            totalHeight -= itemSpacing;
+        }
     }
 
     const int desiredWidth = std::max(totalWidth, contentWidth) + m_padding * 2;
@@ -222,15 +240,30 @@ void ItemsControl::Arrange(int finalWidth, int finalHeight)
 
     int currentY = m_padding;
 
-    for (const auto& item : m_items) {
-        if (!item) {
-            continue;
-        }
+    if (!m_itemsSource.empty()) {
+        const int count = static_cast<int>(m_itemsSource.size());
+        for (int i = 0; i < count; ++i) {
+            auto it = m_realizedItems.find(i);
+            if (it == m_realizedItems.end() || !it->second) {
+                continue;
+            }
 
-        const int itemHeight = std::max(0, item->GetDesiredHeight());
-        item->Arrange(contentWidth, itemHeight);
-        item->SetLayoutOffset(m_padding, currentY);
-        currentY += itemHeight + itemSpacing;
+            const int itemHeight = std::max(0, it->second->GetDesiredHeight());
+            it->second->Arrange(contentWidth, itemHeight);
+            it->second->SetLayoutOffset(m_padding, currentY);
+            currentY += itemHeight + itemSpacing;
+        }
+    } else {
+        for (const auto& item : m_items) {
+            if (!item) {
+                continue;
+            }
+
+            const int itemHeight = std::max(0, item->GetDesiredHeight());
+            item->Arrange(contentWidth, itemHeight);
+            item->SetLayoutOffset(m_padding, currentY);
+            currentY += itemHeight + itemSpacing;
+        }
     }
 }
 
@@ -255,9 +288,19 @@ void ItemsControl::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         return;
     }
 
-    for (const auto& item : m_items) {
-        if (item) {
-            item->BuildRenderCommands(commands);
+    if (!m_itemsSource.empty()) {
+        const int count = static_cast<int>(m_itemsSource.size());
+        for (int i = 0; i < count; ++i) {
+            auto it = m_realizedItems.find(i);
+            if (it != m_realizedItems.end() && it->second) {
+                it->second->BuildRenderCommands(commands);
+            }
+        }
+    } else {
+        for (const auto& item : m_items) {
+            if (item) {
+                item->BuildRenderCommands(commands);
+            }
         }
     }
 }
@@ -380,7 +423,7 @@ void ItemsControl::SetVirtualization(bool enabled) noexcept
         }
         if (!m_itemsSource.empty()) m_virtualization->RecomputeRealizedRange();
     } else {
-        // Disable virtualization and realize all items from source so they are visible.
+
         m_virtualization = nullptr;
         if (!m_itemsSource.empty()) {
             for (auto& kv : m_realizedItems) {

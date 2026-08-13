@@ -44,10 +44,98 @@ Review the project's README for details.
 
 namespace NeoWPF {
 
+    // If you don't want to use these wrapper's you can just comment out the using's at the end of the file!! :>
+
+    /*
+        @summary
+        Type alias for std::shared_ptr<T>.
+
+        @related New
+    */
+    template <typename T>
+    using Ref = std::shared_ptr<T>;
+
+    /*
+        @summary
+        Creates a new managed object and returns it as a shared_ptr.
+
+        @param args
+        Arguments forwarded to the constructor of T.
+
+        @returns
+        A shared_ptr to the newly constructed object.
+
+        @example
+        auto button = New<Button>();
+        auto panel = New<StackPanel>(width, height);
+
+        @related Ref
+    */
     template <typename T, typename... Args>
     std::shared_ptr<T> New(Args&&... args)
     {
         return std::make_shared<T>(std::forward<Args>(args)...);
+    }
+
+    /*
+        @summary
+        Converts a numeric value to a wide string representation.
+
+        @param value
+        The value to convert.
+
+        @returns
+        A wide string representation of the value.
+
+        @example
+        auto text = ToString(42);  // L"42"
+        auto text = ToString(3.14);  // L"3.140000"
+    */
+    template <typename T>
+    std::wstring ToString(T value)
+    {
+        return std::to_wstring(value);
+    }
+
+    /*
+        @summary
+        Safely casts a std::any object to the specified type.
+
+        @param value
+        The std::any object to cast.
+
+        @returns
+        The casted value of type T.
+
+        @warning
+        Throws std::bad_any_cast if the stored type does not match T.
+
+        @example
+        auto num = Cast<int>(data);
+        auto str = Cast<std::wstring>(data);
+    */
+    template <typename T>
+    T Cast(const std::any& value)
+    {
+        return std::any_cast<T>(value);
+    }
+
+    /*
+        @summary
+        Creates a wide string from a wide character literal.
+
+        @param str
+        The wide character string literal.
+
+        @returns
+        A std::wstring containing the provided string.
+
+        @example
+        auto text = String(L"Hello World");
+    */
+    inline std::wstring String(const wchar_t* str)
+    {
+        return std::wstring(str);
     }
 
     using Core::Application;
@@ -164,3 +252,7 @@ namespace NeoWPF {
 }
 
 using NeoWPF::New;
+using NeoWPF::Ref;
+using NeoWPF::ToString;
+using NeoWPF::Cast;
+using NeoWPF::String;

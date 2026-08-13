@@ -115,8 +115,6 @@ void ContentControl::Arrange(int finalWidth, int finalHeight)
     FrameworkElement::Arrange(finalWidth, finalHeight);
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
         "[ContentControl] Arrange: this=%p final=(%d,%d) presenter=%p", this, finalWidth, finalHeight, m_presenter.get());
-    // pass the resolved control size to the presenter (this way it keeps the presenter aligned with the actual btn size)
-    // after frameworkelement::arrange clamps it
     if (m_presenter) {
         m_presenter->Arrange(GetFinalWidth(), GetFinalHeight());
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,

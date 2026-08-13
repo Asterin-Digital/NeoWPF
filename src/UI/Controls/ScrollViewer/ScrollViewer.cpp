@@ -127,8 +127,10 @@ void ScrollViewer::SetVerticalScrollBarVisibility(ScrollBarVisibility visibility
 
 void ScrollViewer::Measure(int availableWidth, int availableHeight)
 {
-    m_viewportWidth = std::max(0, availableWidth);
-    m_viewportHeight = std::max(0, availableHeight);
+    const int explicitW = GetWidth();
+    const int explicitH = GetHeight();
+    m_viewportWidth  = explicitW > 0 ? explicitW  : std::max(0, availableWidth);
+    m_viewportHeight = explicitH > 0 ? explicitH  : std::max(0, availableHeight);
 
     Content::ContentControl::Measure(m_viewportWidth, m_viewportHeight);
 
@@ -154,13 +156,27 @@ void ScrollViewer::Measure(int availableWidth, int availableHeight)
 
 void ScrollViewer::Arrange(int finalWidth, int finalHeight)
 {
-    const int width = std::max(0, finalWidth);
-    const int height = std::max(0, finalHeight);
+    FrameworkElement::Arrange(finalWidth, finalHeight);
+    m_viewportWidth = std::max(0, GetFinalWidth());
+    m_viewportHeight = std::max(0, GetFinalHeight());
 
-    m_viewportWidth = width;
-    m_viewportHeight = height;
+    if (m_contentPresenter) {
+        auto content = m_contentPresenter->GetContent();
+        std::shared_ptr<Layout::Scrolling::IScrollInfo> scrollInfo;
+        if (content) {
+            scrollInfo = std::dynamic_pointer_cast<Layout::Scrolling::IScrollInfo>(content);
+        }
 
-    Content::ContentControl::Arrange(width, height);
+        int arrangeWidth = m_viewportWidth;
+        int arrangeHeight = m_viewportHeight;
+
+        if (!scrollInfo) {
+            // physical scrolling needs the full content size
+            arrangeWidth = std::max(m_viewportWidth, m_contentPresenter->GetDesiredWidth());
+            arrangeHeight = std::max(m_viewportHeight, m_contentPresenter->GetDesiredHeight());
+        }
+        m_contentPresenter->Arrange(arrangeWidth, arrangeHeight);
+    }
 
     UpdateScrollBarState();
     UpdateContentPresenterOffset();

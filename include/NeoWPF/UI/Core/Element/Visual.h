@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <mutex>
+#include <functional>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 
@@ -201,6 +202,24 @@ public:
         @internal
     */
     void DumpVisualTree(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options = NeoWPF::Diagnostics::VisualTreeDumpOptions{}) const;
+
+    /*
+        @summary
+        Searches the visual tree for the first element matching the predicate.
+
+        @details
+        Performs a depth-first search of visual children. Returns the first element
+        for which the predicate returns true, or nullptr if no match is found.
+
+        @param predicate
+        A function that returns true if the visual matches the search criteria.
+
+        @return
+        Raw pointer to the matching visual, or nullptr if not found.
+
+        @internal
+    */
+    Visual* FindInVisualTree(std::function<bool(Visual*)> predicate) noexcept;
 
 protected:
     /*

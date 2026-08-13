@@ -340,5 +340,33 @@ void Visual::DumpVisualTree(const NeoWPF::Diagnostics::VisualTreeDumpOptions& op
     NeoWPF::Diagnostics::VisualTreeDumper::DumpTree(const_cast<Visual*>(this), options);
 }
 
+Visual* Visual::FindInVisualTree(std::function<bool(Visual*)> predicate) noexcept
+{
+    if (!predicate) {
+        return nullptr;
+    }
+
+    std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
+
+    try {
+        if (predicate(this)) {
+            return this;
+        }
+    } catch (...) {
+        return nullptr;
+    }
+
+    auto children = GetVisualChildren();
+    for (auto* child : children) {
+        if (!child) continue;
+        auto found = child->FindInVisualTree(predicate);
+        if (found) {
+            return found;
+        }
+    }
+
+    return nullptr;
+}
+
 }
 
