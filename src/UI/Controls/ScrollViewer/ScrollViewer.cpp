@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Controls/ScrollViewer/ScrollViewer.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
+#include <NeoWPF/UI/Layout/Scrolling/IScrollInfo.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 
@@ -44,6 +45,17 @@ void ScrollViewer::SetHorizontalOffset(int offset) noexcept
     if (clamped == m_horizontalOffset) {
         return;
     }
+
+    if (m_contentPresenter) {
+        auto content = m_contentPresenter->GetContent();
+        if (content) {
+            auto scrollInfo = std::dynamic_pointer_cast<Layout::Scrolling::IScrollInfo>(content);
+            if (scrollInfo) {
+                scrollInfo->SetHorizontalOffset(clamped);
+            }
+        }
+    }
+
     m_horizontalOffset = clamped;
     UpdateContentPresenterOffset();
     UpdateScrollBarValues();
@@ -52,10 +64,31 @@ void ScrollViewer::SetHorizontalOffset(int offset) noexcept
 
 void ScrollViewer::SetVerticalOffset(int offset) noexcept
 {
+    if (m_contentPresenter) {
+        auto content = m_contentPresenter->GetContent();
+        if (content) {
+            auto scrollInfo = std::dynamic_pointer_cast<Layout::Scrolling::IScrollInfo>(content);
+            if (scrollInfo) {
+                m_contentHeight = std::max(0, scrollInfo->GetExtentHeight());
+            }
+        }
+    }
+
     const int clamped = std::clamp(offset, 0, std::max(0, m_contentHeight - m_viewportHeight));
     if (clamped == m_verticalOffset) {
         return;
     }
+
+    if (m_contentPresenter) {
+        auto content = m_contentPresenter->GetContent();
+        if (content) {
+            auto scrollInfo = std::dynamic_pointer_cast<Layout::Scrolling::IScrollInfo>(content);
+            if (scrollInfo) {
+                scrollInfo->SetVerticalOffset(clamped);
+            }
+        }
+    }
+
     m_verticalOffset = clamped;
     UpdateContentPresenterOffset();
     UpdateScrollBarValues();
@@ -100,8 +133,17 @@ void ScrollViewer::Measure(int availableWidth, int availableHeight)
     Content::ContentControl::Measure(m_viewportWidth, m_viewportHeight);
 
     if (m_contentPresenter) {
-        m_contentWidth = m_contentPresenter->GetDesiredWidth();
-        m_contentHeight = m_contentPresenter->GetDesiredHeight();
+        auto content = m_contentPresenter->GetContent();
+        if (content) {
+            auto scrollInfo = std::dynamic_pointer_cast<Layout::Scrolling::IScrollInfo>(content);
+            if (scrollInfo) {
+                m_contentWidth = std::max(0, scrollInfo->GetExtentWidth());
+                m_contentHeight = std::max(0, scrollInfo->GetExtentHeight());
+            } else {
+                m_contentWidth = m_contentPresenter->GetDesiredWidth();
+                m_contentHeight = m_contentPresenter->GetDesiredHeight();
+            }
+        }
     }
 
     UpdateScrollBarState();
@@ -174,12 +216,32 @@ void ScrollViewer::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
     }
 
     const int wheelDelta = args->GetWheelDelta();
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
+        "[ScrollViewer] OnMouseInput wheelDelta=%d presenter=%p", wheelDelta, m_contentPresenter.get());
     if (wheelDelta == 0) {
         return;
     }
 
     const int delta = wheelDelta / 120;
     const int smallChange = m_verticalScrollBar ? static_cast<int>(m_verticalScrollBar->GetSmallChange()) : 16;
+    if (m_contentPresenter) {
+        auto content = m_contentPresenter->GetContent();
+        if (content) {
+            auto scrollInfo = std::dynamic_pointer_cast<Layout::Scrolling::IScrollInfo>(content);
+            if (scrollInfo) {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
+                    "[ScrollViewer] MouseWheel cast success, calling scrollInfo->MouseWheel delta=%d adjusted=%d", delta, -delta * std::max(1, smallChange));
+                scrollInfo->MouseWheel(-delta * std::max(1, smallChange));
+                UpdateScrollBarValues();
+                InvalidateVisual();
+                return;
+            } else {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
+                    "[ScrollViewer] MouseWheel cast FAILED, content=%p", content.get());
+            }
+        }
+    }
+
     if (m_verticalScrollBarVisibility != ScrollBarVisibility::Disabled) {
         SetVerticalOffset(m_verticalOffset - delta * std::max(1, smallChange));
     }
@@ -187,14 +249,26 @@ void ScrollViewer::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
 
 void ScrollViewer::UpdateScrollBarState() noexcept
 {
+    std::shared_ptr<Layout::Scrolling::IScrollInfo> scrollInfo;
+    if (m_contentPresenter) {
+        auto content = m_contentPresenter->GetContent();
+        if (content) {
+            scrollInfo = std::dynamic_pointer_cast<Layout::Scrolling::IScrollInfo>(content);
+        }
+    }
+
     if (m_horizontalScrollBar) {
-        m_horizontalScrollBar->SetContentSize(m_contentWidth);
-        m_horizontalScrollBar->SetViewportSize(m_viewportWidth);
+        const int contentSize = scrollInfo ? scrollInfo->GetExtentWidth() : m_contentWidth;
+        const int viewportSize = scrollInfo ? scrollInfo->GetViewportWidth() : m_viewportWidth;
+        m_horizontalScrollBar->SetContentSize(contentSize);
+        m_horizontalScrollBar->SetViewportSize(viewportSize);
     }
 
     if (m_verticalScrollBar) {
-        m_verticalScrollBar->SetContentSize(m_contentHeight);
-        m_verticalScrollBar->SetViewportSize(m_viewportHeight);
+        const int contentSize = scrollInfo ? scrollInfo->GetExtentHeight() : m_contentHeight;
+        const int viewportSize = scrollInfo ? scrollInfo->GetViewportHeight() : m_viewportHeight;
+        m_verticalScrollBar->SetContentSize(contentSize);
+        m_verticalScrollBar->SetViewportSize(viewportSize);
     }
 
     UpdateScrollBarValues();
@@ -242,6 +316,13 @@ void ScrollViewer::UpdateContentPresenterOffset() noexcept
         return;
     }
 
+    auto content = m_contentPresenter->GetContent();
+    if (content) {
+        auto scrollInfo = std::dynamic_pointer_cast<Layout::Scrolling::IScrollInfo>(content);
+        if (scrollInfo) {
+            return;
+        }
+    }
     m_contentPresenter->SetContentRenderOffset(-m_horizontalOffset, -m_verticalOffset);
 }
 

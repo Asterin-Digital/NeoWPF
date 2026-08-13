@@ -10,18 +10,55 @@
 
 namespace NeoWPF::UI {
 
+namespace {
+
+void RefreshBindingsRecursively(Visual* node) {
+    if (!node) {
+        return;
+    }
+
+    if (auto depObj = dynamic_cast<Properties::DependencyObject*>(node)) {
+        depObj->RefreshBindingExpressions();
+    }
+
+    for (auto child : node->GetVisualChildren()) {
+        RefreshBindingsRecursively(child);
+    }
+}
+
+}
+
 bool FrameworkElement::s_frameworkElementLogging = false;
 
 std::any FrameworkElement::GetDataContext() const noexcept
 {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("DataContext", *this);
     if (property) {
-        try {
-            return GetValue<std::any>(*property);
-        } catch (const std::bad_any_cast&) {
+        const auto value = GetRawValue(*property);
+        if (value.has_value()) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, 
+                "[GetDataContext] Found DataContext via property on %p, type=%s", this, value.type().name());
+            return value;
         }
     }
-    return m_dataContext;
+    
+    if (m_dataContext.has_value()) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, 
+            "[GetDataContext] Found local m_dataContext on %p, type=%s", this, m_dataContext.type().name());
+        return m_dataContext;
+    }
+    
+    if (const auto* parent = GetInheritanceParent()) {
+        if (auto parentFE = dynamic_cast<const FrameworkElement*>(parent)) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, 
+                "[GetDataContext] Walking to parent %p from %p", parent, this);
+            return parentFE->GetDataContext();
+        }
+    }
+    
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, 
+        "[GetDataContext] No DataContext found on %p, returning empty", this);
+    return std::any();
 }
 
 void FrameworkElement::SetDataContext(const std::any& dataContext) noexcept
@@ -33,11 +70,19 @@ void FrameworkElement::SetDataContext(const std::any& dataContext) noexcept
 
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("DataContext", *this);
     if (property) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, 
+            "[SetDataContext] Setting DataContext via DependencyProperty on %p, refreshing bindings", this);
         SetValue(*property, dataContext);
+
+        RefreshBindingsRecursively(this);
         return;
     }
 
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, 
+        "[SetDataContext] Setting local DataContext on %p, refreshing bindings", this);
     m_dataContext = dataContext;
+
+    RefreshBindingsRecursively(this);
 }
 
 LayoutSizeMode FrameworkElement::GetWidthMode() const noexcept
@@ -537,24 +582,6 @@ void FrameworkElement::Arrange(int finalWidth, int finalHeight)
 const Properties::DependencyObject* FrameworkElement::GetInheritanceParent() const noexcept
 {
     return dynamic_cast<const Properties::DependencyObject*>(GetParent());
-}
-
-namespace {
-
-void RefreshBindingsRecursively(NeoWPF::UI::Visual* node) {
-    if (!node) {
-        return;
-    }
-
-    if (auto depObj = dynamic_cast<NeoWPF::UI::Properties::DependencyObject*>(node)) {
-        depObj->RefreshBindingExpressions();
-    }
-
-    for (auto child : node->GetVisualChildren()) {
-        RefreshBindingsRecursively(child);
-    }
-}
-
 }
 
 void FrameworkElement::OnDependencyPropertyChanged(const Properties::DependencyProperty& property,

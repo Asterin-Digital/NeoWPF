@@ -227,7 +227,7 @@ void BindingExpression::Attach()
     if (!m_source) {
         const auto* dataContextProperty = Properties::DependencyPropertyRegistry::Get().FindProperty("DataContext", m_target);
         if (dataContextProperty) {
-            const auto dataContextValue = m_target.GetRawValue(*dataContextProperty);
+            const auto dataContextValue = m_target.GetValue<std::any>(*dataContextProperty);
             if (dataContextValue.has_value()) {
                 const auto& valueType = dataContextValue.type();
                 if (valueType == typeid(std::shared_ptr<Properties::DependencyObject>)) {

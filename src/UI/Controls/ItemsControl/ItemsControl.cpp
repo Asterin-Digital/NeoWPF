@@ -1,6 +1,10 @@
 #include <NeoWPF/UI/Controls/ItemsControl/ItemsControl.h>
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
+#include <NeoWPF/UI/Controls/ItemsControl/Virtualization/ItemTemplate.h>
+#include <any>
+#include <unordered_map>
 
 namespace NeoWPF::UI {
 
@@ -9,6 +13,61 @@ ItemsControl::ItemsControl()
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
     SetClipToBounds(true);
+    m_generator = std::make_shared<Controls::ItemsControl::Virtualization::ItemContainerGenerator>(this);
+
+}
+
+void ItemsControl::SetItemsSource(const std::vector<std::any>& source)
+{
+
+    for (const auto& oldItem : m_items) {
+        if (oldItem && oldItem->GetParent() == this) RemoveVisualChild(oldItem);
+    }
+    m_items.clear();
+
+
+    for (auto& kv : m_realizedItems) {
+        if (kv.second && kv.second->GetParent() == this) RemoveVisualChild(kv.second);
+    }
+    m_realizedItems.clear();
+
+    m_itemsSource = source;
+    if (m_virtualization) {
+        m_virtualization->RecomputeRealizedRange();
+    } else {
+
+        for (auto& kv : m_realizedItems) {
+            if (kv.second && kv.second->GetParent() == this) RemoveVisualChild(kv.second);
+        }
+        m_realizedItems.clear();
+
+        const int count = static_cast<int>(m_itemsSource.size());
+        for (int i = 0; i < count; ++i) {
+            std::shared_ptr<FrameworkElement> element;
+            if (m_generator) {
+                element = m_generator->Acquire(m_itemsSource[i], i, m_itemTemplate);
+            } else if (m_itemTemplate) {
+                element = m_itemTemplate(m_itemsSource[i], i);
+            }
+
+            if (element) {
+                m_realizedItems[i] = element;
+                if (element->GetParent() != this) AddVisualChild(element);
+            }
+        }
+    }
+    InvalidateVisual();
+}
+
+void ItemsControl::SetItemTemplate(const Controls::ItemsControl::Virtualization::ItemTemplate& templ)
+{
+    m_itemTemplate = templ;
+
+    for (auto& kv : m_realizedItems) {
+        if (kv.second && kv.second->GetParent() == this) RemoveVisualChild(kv.second);
+    }
+    m_realizedItems.clear();
+    InvalidateVisual();
 }
 
 ItemsControl::~ItemsControl()
@@ -59,9 +118,44 @@ void ItemsControl::ClearItems()
 void ItemsControl::Measure(int availableWidth, int availableHeight)
 {
     const int itemSpacing = GetVerticalSpacing();
+
+    const int contentWidth = availableWidth > 0 ? std::max(0, availableWidth - (m_padding * 2)) : 0;
+    if (m_virtualization) {
+        m_virtualization->SetViewportSize(contentWidth, availableHeight);
+
+
+        int totalWidth = 0;
+        int first = m_virtualization->GetFirstRealizedIndex();
+        int last = m_virtualization->GetLastRealizedIndex();
+
+        if (!m_itemsSource.empty()) {
+            RealizeRange(first, last);
+            for (int i = first; i <= last; ++i) {
+                auto it = m_realizedItems.find(i);
+                if (it == m_realizedItems.end() || !it->second) continue;
+                it->second->Measure(contentWidth, 0);
+                totalWidth = std::max(totalWidth, it->second->GetDesiredWidth());
+            }
+        } else {
+            const int count = static_cast<int>(m_items.size());
+            if (first <= last && count > 0) {
+                for (int i = first; i <= last; ++i) {
+                    const auto& item = m_items[i];
+                    if (!item) continue;
+                    item->Measure(contentWidth, 0);
+                    totalWidth = std::max(totalWidth, item->GetDesiredWidth());
+                }
+            }
+        }
+
+        const int desiredWidth = std::max(totalWidth, contentWidth) + m_padding * 2;
+        const int desiredHeight = std::max(0, m_virtualization->GetExtentHeight());
+        SetDesiredSize(ResolveWidth(availableWidth, desiredWidth), ResolveHeight(availableHeight, desiredHeight));
+        return;
+    }
+
     int totalHeight = m_padding * 2;
     int totalWidth = 0;
-    const int contentWidth = availableWidth > 0 ? std::max(0, availableWidth - (m_padding * 2)) : 0;
 
     for (const auto& item : m_items) {
         if (!item) {
@@ -87,8 +181,46 @@ void ItemsControl::Arrange(int finalWidth, int finalHeight)
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
     const int itemSpacing = GetVerticalSpacing();
-    int currentY = m_padding;
     const int contentWidth = std::max(0, finalWidth - m_padding * 2);
+
+    if (m_virtualization) {
+        const int first = m_virtualization->GetFirstRealizedIndex();
+        const int last = m_virtualization->GetLastRealizedIndex();
+        const int itemHeight = m_virtualization->GetItemHeight();
+        const int vOffset = m_virtualization->GetVerticalOffset();
+
+
+        if (!m_itemsSource.empty()) {
+            RealizeRange(first, last);
+            for (int i = first; i <= last; ++i) {
+                auto it = m_realizedItems.find(i);
+                if (it == m_realizedItems.end() || !it->second) continue;
+                const int h = it->second->GetDesiredHeight();
+                const int y = m_virtualization->GetOffsetForIndex(i) - vOffset;
+                m_virtualization->UpdateMeasuredHeight(i, std::max(1, h));
+                it->second->Arrange(contentWidth, h);
+                it->second->SetLayoutOffset(m_padding, y);
+                auto dataCtx = it->second->GetDataContext();
+                std::string dataStr = dataCtx.has_value() ? dataCtx.type().name() : "null";
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
+                    "[ItemsControl.Arrange] index=%d y=%d h=%d dataCtx=%s", i, y, h, dataStr.c_str());
+            }
+        } else {
+            for (int i = first; i <= last; ++i) {
+                if (i < 0 || i >= static_cast<int>(m_items.size())) continue;
+                const auto& item = m_items[i];
+                if (!item) continue;
+                const int y = m_virtualization->GetOffsetForIndex(i) - vOffset;
+                const int h = m_virtualization->GetMeasuredHeight(i);
+                item->Arrange(contentWidth, h);
+                item->SetLayoutOffset(m_padding, y);
+            }
+        }
+
+        return;
+    }
+
+    int currentY = m_padding;
 
     for (const auto& item : m_items) {
         if (!item) {
@@ -104,11 +236,176 @@ void ItemsControl::Arrange(int finalWidth, int finalHeight)
 
 void ItemsControl::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
+    if (m_virtualization) {
+        const int first = m_virtualization->GetFirstRealizedIndex();
+        const int last = m_virtualization->GetLastRealizedIndex();
+
+        if (!m_itemsSource.empty()) {
+            for (int i = first; i <= last; ++i) {
+                auto it = m_realizedItems.find(i);
+                if (it != m_realizedItems.end() && it->second) it->second->BuildRenderCommands(commands);
+            }
+        } else {
+            for (int i = first; i <= last; ++i) {
+                if (i < 0 || i >= static_cast<int>(m_items.size())) continue;
+                const auto& item = m_items[i];
+                if (item) item->BuildRenderCommands(commands);
+            }
+        }
+        return;
+    }
+
     for (const auto& item : m_items) {
         if (item) {
             item->BuildRenderCommands(commands);
         }
     }
+}
+
+void ItemsControl::RealizeRange(int first, int last)
+{
+    if (m_itemsSource.empty() || !m_itemTemplate) return;
+    const int count = static_cast<int>(m_itemsSource.size());
+    first = std::clamp(first, 0, std::max(0, count - 1));
+    last = std::clamp(last, 0, std::max(0, count - 1));
+
+
+    for (int i = first; i <= last; ++i) {
+        if (m_realizedItems.find(i) == m_realizedItems.end()) {
+            std::shared_ptr<FrameworkElement> element;
+            if (m_generator) {
+                element = m_generator->Acquire(m_itemsSource[i], i, m_itemTemplate);
+            } else if (m_itemTemplate) {
+                element = m_itemTemplate(m_itemsSource[i], i);
+            }
+
+            if (element) {
+                m_realizedItems[i] = element;
+                if (element->GetParent() != this) AddVisualChild(element);
+            }
+        }
+    }
+
+    std::vector<int> toRemove;
+    for (auto& kv : m_realizedItems) {
+        int idx = kv.first;
+        if (idx < first || idx > last) toRemove.push_back(idx);
+    }
+    for (int idx : toRemove) {
+        auto it = m_realizedItems.find(idx);
+        if (it != m_realizedItems.end()) {
+            if (it->second) {
+                if (it->second->GetParent() == this) RemoveVisualChild(it->second);
+                if (m_generator) m_generator->Recycle(idx, it->second);
+            }
+            m_realizedItems.erase(it);
+        }
+    }
+}
+
+
+int ItemsControl::GetExtentWidth() const noexcept
+{
+    if (m_virtualization) return m_virtualization->GetExtentWidth();
+    return GetDesiredWidth();
+}
+
+int ItemsControl::GetExtentHeight() const noexcept
+{
+    if (m_virtualization) {
+        int result = m_virtualization->GetExtentHeight();
+        int count = GetItemCount();
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
+            "[ItemsControl] GetExtentHeight count=%d virt=%d", count, result);
+        return result;
+    }
+    int result = GetDesiredHeight();
+    int count = GetItemCount();
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
+        "[ItemsControl] GetExtentHeight count=%d (no virt)=%d", count, result);
+    return result;
+}
+
+int ItemsControl::GetViewportWidth() const noexcept
+{
+    if (m_virtualization) return m_virtualization->GetViewportWidth();
+    return GetFinalWidth();
+}
+
+int ItemsControl::GetViewportHeight() const noexcept
+{
+    if (m_virtualization) return m_virtualization->GetViewportHeight();
+    return GetFinalHeight();
+}
+
+int ItemsControl::GetHorizontalOffset() const noexcept
+{
+    if (m_virtualization) return m_virtualization->GetHorizontalOffset();
+    return 0;
+}
+
+int ItemsControl::GetVerticalOffset() const noexcept
+{
+    if (m_virtualization) return m_virtualization->GetVerticalOffset();
+    return 0;
+}
+
+void ItemsControl::SetHorizontalOffset(int offset) noexcept
+{
+    if (m_virtualization) m_virtualization->SetHorizontalOffset(offset);
+}
+
+void ItemsControl::SetVerticalOffset(int offset) noexcept
+{
+    if (m_virtualization) m_virtualization->SetVerticalOffset(offset);
+}
+
+void ItemsControl::LineLeft() noexcept { if (m_virtualization) m_virtualization->LineLeft(); }
+void ItemsControl::LineRight() noexcept { if (m_virtualization) m_virtualization->LineRight(); }
+void ItemsControl::LineUp() noexcept { if (m_virtualization) m_virtualization->LineUp(); }
+void ItemsControl::LineDown() noexcept { if (m_virtualization) m_virtualization->LineDown(); }
+
+void ItemsControl::PageLeft() noexcept { if (m_virtualization) m_virtualization->PageLeft(); }
+void ItemsControl::PageRight() noexcept { if (m_virtualization) m_virtualization->PageRight(); }
+void ItemsControl::PageUp() noexcept { if (m_virtualization) m_virtualization->PageUp(); }
+void ItemsControl::PageDown() noexcept { if (m_virtualization) m_virtualization->PageDown(); }
+
+void ItemsControl::MouseWheel(int delta) noexcept { if (m_virtualization) m_virtualization->MouseWheel(delta); }
+
+void ItemsControl::SetVirtualization(bool enabled) noexcept
+{
+    if (enabled) {
+        if (!m_virtualization) {
+            m_virtualization = std::make_shared<Controls::ItemsControl::Virtualization::ItemsControlVirtualizer>(this);
+        }
+        if (!m_itemsSource.empty()) m_virtualization->RecomputeRealizedRange();
+    } else {
+        // Disable virtualization and realize all items from source so they are visible.
+        m_virtualization = nullptr;
+        if (!m_itemsSource.empty()) {
+            for (auto& kv : m_realizedItems) {
+                if (kv.second && kv.second->GetParent() == this) RemoveVisualChild(kv.second);
+            }
+            m_realizedItems.clear();
+
+            const int count = static_cast<int>(m_itemsSource.size());
+            for (int i = 0; i < count; ++i) {
+                std::shared_ptr<FrameworkElement> element;
+                if (m_generator) {
+                    element = m_generator->Acquire(m_itemsSource[i], i, m_itemTemplate);
+                } else if (m_itemTemplate) {
+                    element = m_itemTemplate(m_itemsSource[i], i);
+                }
+
+                if (element) {
+                    m_realizedItems[i] = element;
+                    if (element->GetParent() != this) AddVisualChild(element);
+                }
+            }
+        }
+    }
+
+    InvalidateVisual();
 }
 
 }

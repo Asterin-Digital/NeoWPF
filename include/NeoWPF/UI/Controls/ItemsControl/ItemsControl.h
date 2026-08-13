@@ -4,6 +4,13 @@
 #include <vector>
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Controls/ItemsControl/Virtualization/ItemsControlVirtualization.h>
+#include <NeoWPF/UI/Controls/ItemsControl/Virtualization/ItemTemplate.h>
+#include <any>
+#include <functional>
+#include <unordered_map>
+#include <NeoWPF/UI/Layout/Scrolling/IScrollInfo.h>
+#include <NeoWPF/UI/Controls/ItemsControl/Virtualization/ItemContainerGenerator.h>
 
 namespace NeoWPF::UI {
 
@@ -15,7 +22,7 @@ namespace NeoWPF::UI {
     This control stores a set of child elements and renders them in a
     vertical layout.
 */
-class ItemsControl : public NeoWPF::UI::Content::ContentControl {
+class ItemsControl : public NeoWPF::UI::Content::ContentControl, public Layout::Scrolling::IScrollInfo {
 public:
     ItemsControl();
 
@@ -47,9 +54,32 @@ public:
 
     /*
         @summary
+        Sets an external items source for the control.
+
+        @param source
+        A vector of values (`std::any`) that represent the data items. When
+        using an `ItemsSource`, the control will materialize visuals via the
+        configured item template or the generator.
+    */
+    void SetItemsSource(const std::vector<std::any>& source);
+
+    /*
+        @summary
+        Sets the factory used to create item visuals from an `ItemsSource` item.
+
+        @param templ
+        A callable that produces a `FrameworkElement` given a source item and
+        its index.
+    */
+    void SetItemTemplate(const Controls::ItemsControl::Virtualization::ItemTemplate& templ);
+
+    /*
+        @summary
         Returns the current collection of items.
     */
     const std::vector<std::shared_ptr<FrameworkElement>>& GetItems() const noexcept { return m_items; }
+
+    int GetItemCount() const noexcept { return static_cast<int>(m_itemsSource.empty() ? m_items.size() : m_itemsSource.size()); }
 
     /*
         @summary
@@ -126,9 +156,95 @@ public:
     */
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
+    /* IScrollInfo: extent in device pixels */
+    int GetExtentWidth() const noexcept override;
+    int GetExtentHeight() const noexcept override;
+
+    /* IScrollInfo: viewport dimensions */
+    int GetViewportWidth() const noexcept override;
+    int GetViewportHeight() const noexcept override;
+
+    /* IScrollInfo: current scroll offsets */
+    int GetHorizontalOffset() const noexcept override;
+    int GetVerticalOffset() const noexcept override;
+
+    /* IScrollInfo: set scroll offsets */
+    void SetHorizontalOffset(int offset) noexcept override;
+    void SetVerticalOffset(int offset) noexcept override;
+
+    /* IScrollInfo: small-line scrolling commands */
+    void LineLeft() noexcept override;
+    void LineRight() noexcept override;
+    void LineUp() noexcept override;
+    void LineDown() noexcept override;
+
+    /* IScrollInfo: page scrolling commands */
+    void PageLeft() noexcept override;
+    void PageRight() noexcept override;
+    void PageUp() noexcept override;
+    void PageDown() noexcept override;
+
+    /* IScrollInfo: mouse wheel scroll delta */
+    void MouseWheel(int delta) noexcept override;
+
 private:
     std::vector<std::shared_ptr<FrameworkElement>> m_items;
     int m_padding = 0;
+    std::shared_ptr<Controls::ItemsControl::Virtualization::ItemsControlVirtualizer> m_virtualization;
+    std::vector<std::any> m_itemsSource;
+    Controls::ItemsControl::Virtualization::ItemTemplate m_itemTemplate;
+    std::unordered_map<int, std::shared_ptr<FrameworkElement>> m_realizedItems;
+    std::shared_ptr<Controls::ItemsControl::Virtualization::ItemContainerGenerator> m_generator;
+    /*
+        @summary
+        Ensure visual containers exist for the half-open index range [first, last].
+
+        @param first
+        First index to realize (inclusive).
+        @param last
+        Last index to realize (inclusive).
+    */
+    void RealizeRange(int first, int last);
+public:
+    /*
+        @summary
+        Access the item container generator used to acquire/recycle item visuals.
+    */
+    std::shared_ptr<Controls::ItemsControl::Virtualization::ItemContainerGenerator> GetGenerator() const noexcept { return m_generator; }
+
+    /*
+        @summary
+        Returns the configured item template.
+    */
+    const Controls::ItemsControl::Virtualization::ItemTemplate& GetItemTemplate() const noexcept { return m_itemTemplate; }
+
+    /*
+        @summary
+        Returns the current items source vector (may be empty for inline items).
+    */
+    const std::vector<std::any>& GetItemsSource() const noexcept { return m_itemsSource; }
+
+    /*
+        @summary
+        Assign a custom virtualization engine instance.
+    */
+    void SetVirtualization(const std::shared_ptr<Controls::ItemsControl::Virtualization::ItemsControlVirtualizer>& virtualization) noexcept { m_virtualization = virtualization; }
+
+    /*
+        @summary
+        Retrieve the assigned virtualization engine, or `nullptr` if none.
+    */
+    std::shared_ptr<Controls::ItemsControl::Virtualization::ItemsControlVirtualizer> GetVirtualization() const noexcept { return m_virtualization; }
+
+    /*
+        @summary
+        Toggle a default virtualization engine on or off.
+
+        @param enabled
+        `true` creates and assigns a default engine; `false` removes any
+        existing engine and the control will use non-virtualized behavior.
+    */
+    void SetVirtualization(bool enabled) noexcept;
 };
 
 }

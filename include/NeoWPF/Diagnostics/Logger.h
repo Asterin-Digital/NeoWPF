@@ -6,6 +6,7 @@
 
 namespace NeoWPF::Diagnostics {
 
+// you can still use these but if u want better debugging i recommend adding a Category for what ur debugging
 void LogInfo(const char* fmt, ...);
 void LogWarn(const char* fmt, ...);
 void LogError(const char* fmt, ...);
@@ -24,6 +25,7 @@ enum class Category : uint8_t {
 	Control,
 	Application,
 	HitTest,
+	Virtualization,
 	TextBox,
 	TextRendering,
 	Count,

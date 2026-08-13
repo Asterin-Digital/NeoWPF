@@ -196,6 +196,10 @@
     <ClInclude Include="include\NeoWPF\UI\Content\ContentControl.h" />
     <ClInclude Include="include\NeoWPF\UI\Content\ContentPresenter.h" />
     <ClInclude Include="include\NeoWPF\UI\Core\Element\Control.h" />
+    <ClInclude Include="include\NeoWPF\UI\Layout\Scrolling\IScrollInfo.h" />
+    <ClInclude Include="include\NeoWPF\UI\Controls\ItemsControl\Virtualization\ItemsControlVirtualization.h" />
+    <ClInclude Include="include\NeoWPF\UI\Controls\ItemsControl\Virtualization\ItemTemplate.h" />
+    <ClInclude Include="include\NeoWPF\UI\Controls\ItemsControl\Virtualization\ItemContainerGenerator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Core\Application\Resources\ApplicationResources.cpp" />
@@ -234,6 +238,8 @@
     <ClCompile Include="src\UI\Controls\ScrollBar\Visual\ScrollBarStyles.cpp" />
     <ClCompile Include="src\UI\Controls\ScrollBar\Visual\ScrollBarTemplate.cpp" />
     <ClCompile Include="src\UI\Controls\ScrollViewer\ScrollViewer.cpp" />
+    <ClCompile Include="src\UI\Controls\ItemsControl\Virtualization\ItemsControlVirtualization.cpp" />
+    <ClCompile Include="src\UI\Controls\ItemsControl\Virtualization\ItemContainerGenerator.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxScroll.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextLayout.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\TextBox.cpp" />
