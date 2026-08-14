@@ -140,8 +140,7 @@
     <ClInclude Include="include\NeoWPF\Input\Core\EventHandler.h" />
     <ClInclude Include="include\NeoWPF\Layout\Layout.h" />
     <ClInclude Include="include\NeoWPF\NeoWPF.h" />
-    <ClInclude Include="include\NeoWPF\Platform\Platform.h" />
-    <ClInclude Include="include\NeoWPF\Platform\Window.h" />
+    <ClInclude Include="include\NeoWPF\Platform\NativeWindow.h" />
     <ClInclude Include="include\NeoWPF\Rendering\Clipping.h" />
     <ClInclude Include="include\NeoWPF\Rendering\Renderer.h" />
     <ClInclude Include="include\NeoWPF\Rendering\ShaderSources.h" />
@@ -268,7 +267,6 @@
     <ClCompile Include="src\UI\Data\INotifyPropertyChanged.cpp" />
     <ClCompile Include="src\Diagnostics\Logger.cpp" />
     <ClCompile Include="src\Diagnostics\VisualTreeDumper.cpp" />
-    <ClCompile Include="src\Platform\Window.cpp" />
     <ClCompile Include="src\Input\Command.cpp" />
     <ClCompile Include="src\Input\Events.cpp" />
     <ClCompile Include="src\Input\InputManager.cpp" />
@@ -290,7 +288,11 @@
     <ClCompile Include="src\Rendering\D3D11\Renderer\RendererDraw.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Renderer\RendererClipping.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Device\Device.cpp" />
-    <ClCompile Include="src\Rendering\D3D11\Device\Resources.cpp" />
+    <ClCompile Include="src\Rendering\D3D11\Device\DeviceResources.cpp" />
+    <ClCompile Include="src\Platform\Windows\Http.cpp" />
+    <ClCompile Include="src\Platform\Windows\ImageDecoding.cpp" />
+    <ClCompile Include="src\Platform\Windows\WinResources.cpp" />
+    <ClCompile Include="src\Platform\Windows\Window.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Shaders\VertexShader.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Shaders\PixelShader.cpp" />
     <ClCompile Include="src\Rendering\D3D11\Shaders\ShaderManager.cpp" />
@@ -300,7 +302,6 @@
     <ClCompile Include="src\UI\Controls\Image\ImageProperties.cpp" />
     <ClCompile Include="src\UI\Core\Media\BitmapSource.cpp" />
     <ClCompile Include="src\UI\Core\Media\BitmapImage.cpp" />
-    <ClCompile Include="src\UI\Core\Media\ImageSource.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxEditing.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\Panel.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\StackPanel.cpp" />

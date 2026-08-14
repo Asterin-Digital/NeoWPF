@@ -23,7 +23,7 @@ Review the project's README for details.
 
 ///////////////////////////////////////////////////
 #include <NeoWPF/Core/Application/Application.h>
-#include <NeoWPF/Platform/Window.h>
+#include <NeoWPF/Platform/NativeWindow.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/UI.h>
 #include <NeoWPF/Input/Input.h>
@@ -45,6 +45,7 @@ Review the project's README for details.
 namespace NeoWPF {
 
     // If you don't want to use these wrapper's you can just comment out the using's at the end of the file!! :>
+    // These are only here to make code less verbose and cleaner
 
     /*
         @summary
@@ -138,6 +139,35 @@ namespace NeoWPF {
         return std::wstring(str);
     }
 
+    inline std::wstring String(int value)
+    {
+        return std::to_wstring(value);
+    }
+
+    inline std::wstring String(unsigned int value)
+    {
+        return std::to_wstring(value);
+    }
+
+    inline std::wstring String(long value)
+    {
+        return std::to_wstring(value);
+    }
+
+    inline std::wstring String(unsigned long value)
+    {
+        return std::to_wstring(value);
+    }
+
+    inline std::wstring String(long long value)
+    {
+        return std::to_wstring(value);
+    }
+
+    inline std::wstring String(unsigned long long value)
+    {
+        return std::to_wstring(value);
+    }
     using Core::Application;
 
     using Platform::Window;
@@ -155,14 +185,13 @@ namespace NeoWPF {
     using UI::TextBox;
 
     using UI::Image;
-    
-    namespace Media {
 
-        using ::NeoWPF::UI::Core::Media::BitmapImage;
-        
-        using ::NeoWPF::UI::Core::Media::Stretch;
-
-        using ::NeoWPF::UI::Core::Media::StretchDirection;
+    namespace UI {
+        namespace Media {
+            using BitmapImage = ::NeoWPF::UI::Core::Media::BitmapImage;
+            using Stretch = ::NeoWPF::UI::Core::Media::Stretch;
+            using StretchDirection = ::NeoWPF::UI::Core::Media::StretchDirection;
+        }
     }
 
     using UI::Button;

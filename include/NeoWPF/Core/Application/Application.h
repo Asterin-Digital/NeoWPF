@@ -11,7 +11,7 @@
 #undef FindResourceW
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
-#include <NeoWPF/Platform/Window.h>
+#include <NeoWPF/Platform/NativeWindow.h>
 
 
 #undef CreateWindow

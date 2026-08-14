@@ -40,8 +40,8 @@ NeoWPF::Platform::Window Application::CreateWindow(const wchar_t* title, int wid
         return NeoWPF::Platform::Window();
     }
     NEO_WPF_STARTUP_ACTION("Application.CreateWindow");    NeoWPF::Diagnostics::PerformanceMetrics::RecordWindowCreate();
-    const HWND hwnd = CreateApplicationWindow(title, width, height);
-    return NeoWPF::Platform::Window(hwnd);
+    void* nativeHandle = CreateApplicationWindow(title, width, height);
+    return NeoWPF::Platform::Window(nativeHandle);
 }
 
 void Application::ShowConsole(bool visible)

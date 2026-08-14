@@ -12,9 +12,9 @@ public:
     RenderScheduler() = default;
     ~RenderScheduler() { Stop(); }
 
-    void Start(HWND hwnd)
+    void Start(void* nativeWindowHandle)
     {
-        NeoWPF::Rendering::Renderer_Initialize(hwnd);
+        NeoWPF::Rendering::Renderer_Initialize(nativeWindowHandle);
         m_running = true;
         m_thread = std::thread([this]{ ThreadMain(); });
     }

@@ -1,127 +1,79 @@
 #include <NeoWPF/UI/Core/Media/BitmapImage.h>
 #include <NeoWPF/Diagnostics/Logger.h>
-#include <objbase.h>
-#include <wincodec.h>
+#include <NeoWPF/Core/Threading/AsyncTaskQueue.h>
+#include <NeoWPF/Platform/Http.h>
+#include <NeoWPF/Platform/Resources.h>
+#include <NeoWPF/Platform/ImageDecoding.h>
+#include <algorithm>
 #include <cmath>
-
-#pragma comment(lib, "Ole32.lib")
-#pragma comment(lib, "Windowscodecs.lib")
+#include <mutex>
+#include <unordered_map>
+#include <windows.h>
 
 namespace NeoWPF::UI::Core::Media {
 
-namespace {
-    bool IsLocalFileUri(const std::wstring& uri)
-    {
-        if (uri.empty()) {
-            return false;
-        }
-        if (uri.rfind(L"file:///", 0) == 0 || uri.rfind(L"file://", 0) == 0) {
-            return true;
-        }
-        if (uri.size() >= 2 && ((uri[0] >= L'A' && uri[0] <= L'Z') || (uri[0] >= L'a' && uri[0] <= L'z')) && uri[1] == L':') {
-            return true;
-        }
-        if (uri.find(L":\\") != std::wstring::npos || uri.rfind(L"\\\\", 0) == 0) {
-            return true;
-        }
-        return false;
+static std::unordered_map<std::string, std::shared_ptr<BitmapSource>> g_imageCache;
+static std::mutex g_cacheMutex;
+
+static std::string ToUtf8(const std::wstring& input)
+{
+    if (input.empty()) {
+        return {};
     }
 
-    std::wstring NormalizeFilePath(const std::wstring& uri)
-    {
-        if (uri.rfind(L"file:///", 0) == 0) {
-            return uri.substr(8);
-        }
-        if (uri.rfind(L"file://", 0) == 0) {
-            return uri.substr(7);
-        }
-        return uri;
+    const int sizeNeeded = WideCharToMultiByte(
+        CP_UTF8,
+        0,
+        input.c_str(),
+        static_cast<int>(input.size()),
+        nullptr,
+        0,
+        nullptr,
+        nullptr);
+
+    if (sizeNeeded <= 0) {
+        return {};
     }
 
-    bool DecodeImageFile(const std::wstring& filePath,
-                         std::vector<std::uint8_t>& outPixels,
-                         int& outWidth,
-                         int& outHeight,
-                         int decodeWidth,
-                         int decodeHeight)
-    {
-        const HRESULT coResult = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-        const bool comInitialized = SUCCEEDED(coResult);
-        const bool shouldUninitialize = coResult == S_OK;
-        if (!comInitialized) {
-            NeoWPF::Diagnostics::LogError("BitmapImage::DecodeImageFile failed to initialize COM for %ls", filePath.c_str());
-            return false;
-        }
+    std::string output(static_cast<size_t>(sizeNeeded), '\0');
+    WideCharToMultiByte(
+        CP_UTF8,
+        0,
+        input.c_str(),
+        static_cast<int>(input.size()),
+        output.data(),
+        sizeNeeded,
+        nullptr,
+        nullptr);
 
-        bool success = false;
-        IWICImagingFactory* factory = nullptr;
-        if (SUCCEEDED(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory)))) {
-            IWICBitmapDecoder* decoder = nullptr;
-            if (SUCCEEDED(factory->CreateDecoderFromFilename(filePath.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &decoder))) {
-                IWICBitmapFrameDecode* frame = nullptr;
-                if (SUCCEEDED(decoder->GetFrame(0, &frame))) {
-                    UINT originalWidth = 0;
-                    UINT originalHeight = 0;
-                    if (SUCCEEDED(frame->GetSize(&originalWidth, &originalHeight))) {
-                        UINT targetWidth = originalWidth;
-                        UINT targetHeight = originalHeight;
-                        if (decodeWidth > 0 || decodeHeight > 0) {
-                            if (decodeWidth > 0 && decodeHeight > 0) {
-                                targetWidth = static_cast<UINT>(decodeWidth);
-                                targetHeight = static_cast<UINT>(decodeHeight);
-                            } else if (decodeWidth > 0) {
-                                targetWidth = static_cast<UINT>(decodeWidth);
-                                targetHeight = static_cast<UINT>(std::ceil((static_cast<float>(decodeWidth) / static_cast<float>(originalWidth)) * static_cast<float>(originalHeight)));
-                            } else {
-                                targetHeight = static_cast<UINT>(decodeHeight);
-                                targetWidth = static_cast<UINT>(std::ceil((static_cast<float>(decodeHeight) / static_cast<float>(originalHeight)) * static_cast<float>(originalWidth)));
-                            }
-                        }
+    return output;
+}
 
-                        IWICBitmapSource* source = frame;
-                        IWICBitmapScaler* scaler = nullptr;
-                        if (targetWidth != originalWidth || targetHeight != originalHeight) {
-                            if (SUCCEEDED(factory->CreateBitmapScaler(&scaler))) {
-                                if (SUCCEEDED(scaler->Initialize(frame, targetWidth, targetHeight, WICBitmapInterpolationModeFant))) {
-                                    source = scaler;
-                                } else {
-                                    scaler->Release();
-                                    scaler = nullptr;
-                                }
-                            }
-                        }
+static bool IsLocalFileUri(const std::wstring& uri) {
+    return !uri.empty() && (uri[0] == L'/' || (uri.size() > 1 && uri[1] == L':'));
+}
 
-                        IWICFormatConverter* converter = nullptr;
-                        if (SUCCEEDED(factory->CreateFormatConverter(&converter))) {
-                            if (SUCCEEDED(converter->Initialize(source, GUID_WICPixelFormat32bppRGBA, WICBitmapDitherTypeNone, nullptr, 0.0, WICBitmapPaletteTypeCustom))) {
-                                const size_t stride = static_cast<size_t>(targetWidth) * 4;
-                                outPixels.assign(stride * targetHeight, 0);
-                                if (SUCCEEDED(converter->CopyPixels(nullptr, static_cast<UINT>(stride), static_cast<UINT>(outPixels.size()), outPixels.data()))) {
-                                    outWidth = static_cast<int>(targetWidth);
-                                    outHeight = static_cast<int>(targetHeight);
-                                    success = true;
-                                }
-                            }
-                            converter->Release();
-                        }
+static bool IsHttpUri(const std::wstring& uri) {
+    return uri.find(L"http://") == 0 || uri.find(L"https://") == 0;
+}
 
-                        if (scaler) {
-                            scaler->Release();
-                        }
-                    }
-                    frame->Release();
-                }
-                decoder->Release();
-            }
-            factory->Release();
-        }
+static bool IsResourceUri(const std::wstring& uri) {
+    return uri.find(L"pack://") == 0 || uri.find(L"resource://") == 0;
+}
 
-        if (shouldUninitialize) {
-            CoUninitialize();
-        }
-
-        return success;
+static std::wstring NormalizeFilePath(const std::wstring& uri) {
+    if (uri.find(L"file:///") == 0) {
+        return uri.substr(8);
     }
+    return uri;
+}
+
+static std::wstring ExtractResourcePath(const std::wstring& uri) {
+    size_t pos = uri.find(L'/', 10);
+    if (pos != std::wstring::npos) {
+        return uri.substr(pos);
+    }
+    return uri;
 }
 
 std::shared_ptr<BitmapImage> BitmapImage::Create(const std::wstring& uri)
@@ -208,25 +160,116 @@ bool BitmapImage::TryLoad()
         return false;
     }
 
-    if (!IsLocalFileUri(m_uriSource)) {
-        NeoWPF::Diagnostics::LogError("BitmapImage::TryLoad only supports local files for now: %ls", m_uriSource.c_str());
-        return false;
+    const std::string uriStr = ToUtf8(m_uriSource);
+    const std::string cacheKey = uriStr + "_" +
+                                std::to_string(m_decodePixelWidth) + "x" + std::to_string(m_decodePixelHeight);
+
+    if (m_cachePolicy == CachePolicy::OnLoad) {
+        std::lock_guard<std::mutex> lock(g_cacheMutex);
+        auto it = g_imageCache.find(cacheKey);
+        if (it != g_imageCache.end()) {
+            auto source = std::dynamic_pointer_cast<BitmapSource>(it->second);
+            if (source) {
+                m_width = source->GetPixelWidth();
+                m_height = source->GetPixelHeight();
+                const void* pixels = nullptr;
+                unsigned int stride = 0;
+                if (source->TryGetPixels(pixels, stride) && pixels) {
+                    size_t pixelSize = stride * m_height;
+                    m_pixels.assign(static_cast<const uint8_t*>(pixels), 
+                                   static_cast<const uint8_t*>(pixels) + pixelSize);
+                    return true;
+                }
+            }
+        }
     }
 
-    const std::wstring filePath = NormalizeFilePath(m_uriSource);
     std::vector<std::uint8_t> pixels;
-    int width = 0;
-    int height = 0;
+    int width = 0, height = 0;
+    bool success = false;
 
-    if (!DecodeImageFile(filePath, pixels, width, height, m_decodePixelWidth, m_decodePixelHeight)) {
-        NeoWPF::Diagnostics::LogError("BitmapImage::TryLoad failed to decode %ls", filePath.c_str());
+    if (IsLocalFileUri(m_uriSource)) {
+        const std::wstring filePath = NormalizeFilePath(m_uriSource);
+        success = NeoWPF::Platform::DecodeImageFile(filePath, pixels, width, height, m_decodePixelWidth, m_decodePixelHeight);
+        if (!success) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Info, "TryLoad DecodeImageFile failed for: %ls", filePath.c_str());
+        }
+    } else if (IsHttpUri(m_uriSource)) {
+        std::vector<uint8_t> httpData;
+        if (NeoWPF::Platform::FetchHttpResource(m_uriSource, httpData)) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Debug, "FetchHttpResource succeeded, fetched %u bytes", static_cast<unsigned int>(httpData.size()));
+            success = NeoWPF::Platform::DecodeImageFromMemory(httpData, pixels, width, height, m_decodePixelWidth, m_decodePixelHeight);
+            if (!success) {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Info, "DecodeImageFromMemory failed after fetching %u bytes from: %ls", static_cast<unsigned int>(httpData.size()), m_uriSource.c_str());
+            }
+        } else {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Info, "FetchHttpResource failed for: %ls", m_uriSource.c_str());
+        }
+    } else if (IsResourceUri(m_uriSource)) {
+        std::wstring resourcePath = ExtractResourcePath(m_uriSource);
+        std::vector<uint8_t> resourceData;
+        if (NeoWPF::Platform::LoadResourceData(resourcePath, resourceData)) {
+            success = NeoWPF::Platform::DecodeImageFromMemory(resourceData, pixels, width, height, m_decodePixelWidth, m_decodePixelHeight);
+            if (!success) {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Info, "DecodeImageFromMemory failed for resource: %ls", resourcePath.c_str());
+            }
+        } else {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Info, "LoadResourceData failed for: %ls", resourcePath.c_str());
+        }
+    } else {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Info, "Unsupported URI scheme: %ls", m_uriSource.c_str());
         return false;
     }
 
-    m_width = width;
-    m_height = height;
-    m_pixels = std::move(pixels);
-    return true;
+    if (success) {
+        m_width = width;
+        m_height = height;
+        m_pixels = std::move(pixels);
+
+        if (m_cachePolicy == CachePolicy::OnLoad) {
+            std::lock_guard<std::mutex> lock(g_cacheMutex);
+            g_imageCache[cacheKey] = std::make_shared<BitmapSource>(m_width, m_height, m_pixels);
+        }
+        return true;
+    }
+
+    NeoWPF::Diagnostics::LogError("BitmapImage::TryLoad failed to decode %ls", m_uriSource.c_str());
+    return false;
+}
+
+void BitmapImage::BeginAsyncLoad() {
+    if (m_uriSource.empty()) return;
+    m_isLoading = true;
+    if (m_downloadStartedCallback) m_downloadStartedCallback();
+
+    NeoWPF::Core::Threading::AsyncTaskQueue::GetInstance().Enqueue([this]() { PerformAsyncLoad(); });
+}
+
+void BitmapImage::PerformAsyncLoad() {
+    std::shared_ptr<BitmapImage> self(this, [](void*) {});
+
+    const std::string cacheKey = ToUtf8(m_uriSource) + "_" +
+                                std::to_string(m_decodePixelWidth) + "x" + std::to_string(m_decodePixelHeight);
+
+    if (m_cachePolicy != CachePolicy::None) {
+        std::lock_guard<std::mutex> lock(g_cacheMutex);
+        auto it = g_imageCache.find(cacheKey);
+        if (it != g_imageCache.end()) {
+            m_isLoading = false;
+            if (m_downloadCompletedCallback) m_downloadCompletedCallback();
+            return;
+        }
+    }
+
+    if (TryLoad()) {
+        if (m_cachePolicy != CachePolicy::None && m_cachePolicy != CachePolicy::OnDemand) {
+            std::lock_guard<std::mutex> lock(g_cacheMutex);
+            g_imageCache[cacheKey] = std::make_shared<BitmapSource>(m_width, m_height, m_pixels);
+        }
+    }
+
+    m_isLoading = false;
+    if (m_downloadCompletedCallback) m_downloadCompletedCallback();
 }
 
 }

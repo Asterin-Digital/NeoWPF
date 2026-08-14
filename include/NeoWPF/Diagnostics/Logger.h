@@ -28,6 +28,8 @@ enum class Category : uint8_t {
 	Virtualization,
 	TextBox,
 	TextRendering,
+	Image,
+	Http,
 	Count,
 };
 

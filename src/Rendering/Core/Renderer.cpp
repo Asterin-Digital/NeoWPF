@@ -17,8 +17,9 @@ namespace D3D11 {
 }
 }
 
-void NeoWPF::Rendering::Renderer_Initialize(HWND hwnd)
+void NeoWPF::Rendering::Renderer_Initialize(void* nativeWindowHandle)
 {
+    HWND hwnd = static_cast<HWND>(nativeWindowHandle);
     D3D11::Initialize(hwnd);
 }
 

@@ -2,7 +2,7 @@
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Input/InputManager.h>
-#include <NeoWPF/Platform/Window.h>
+#include <NeoWPF/Platform/NativeWindow.h>
 #include <NeoWPF/UI/Controls/Window.h>
 #include <algorithm>
 #include <mutex>
@@ -14,14 +14,14 @@ AppState& App() { return GetAppState(); }
 
 }
 
-HWND CreateApplicationWindow(const wchar_t* title, int width, int height)
+void* CreateApplicationWindow(const wchar_t* title, int width, int height)
 {
     if (!App().hInst) {
         App().hInst = GetModuleHandleW(nullptr);
     }
 
-    HWND hwnd = NeoWPF::Platform::Window::CreateWindow(App().hInst, title, width, height);
-    if (!hwnd) {
+    void* nativeHandle = NeoWPF::Platform::Window::CreateWindow(App().hInst, title, width, height);
+    if (!nativeHandle) {
         NeoWPF::Diagnostics::LogError("CreateApplicationWindow failed for title=%ls width=%d height=%d", title, width, height);
         return nullptr;
     }
@@ -29,7 +29,7 @@ HWND CreateApplicationWindow(const wchar_t* title, int width, int height)
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "CreateApplicationWindow created title=%ls", title);
 
     WindowState windowState;
-    windowState.hwnd = hwnd;
+    windowState.nativeWindowHandle = nativeHandle;
     windowState.width = width;
     windowState.height = height;
     windowState.needsLayout = true;
@@ -42,25 +42,28 @@ HWND CreateApplicationWindow(const wchar_t* title, int width, int height)
         App().windows.push_back(windowState);
     }
 
+    HWND hwnd = static_cast<HWND>(nativeHandle);
     ::ShowWindow(hwnd, SW_SHOWNORMAL);
     ::UpdateWindow(hwnd);
     ::RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 
-    return hwnd;
+    return nativeHandle;
 }
 
-bool CloseApplicationWindow(HWND hwnd)
+bool CloseApplicationWindow(void* nativeWindowHandle)
 {
-    if (!hwnd) {
+    if (!nativeWindowHandle) {
         return false;
     }
+
+    HWND hwnd = static_cast<HWND>(nativeWindowHandle);
 
     NeoWPF::Input::InputManager::GetInstance().SetRootElement(nullptr);
 
     {
         std::lock_guard<std::mutex> lock(App().windowsMutex);
         auto it = std::find_if(App().windows.begin(), App().windows.end(), [hwnd](const WindowState& windowState) {
-            return windowState.hwnd == hwnd;
+            return windowState.nativeWindowHandle == hwnd;
         });
         if (it != App().windows.end()) {
             App().windows.erase(it);

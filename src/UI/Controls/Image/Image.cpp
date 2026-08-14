@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/Image/Image.h>
+#include <NeoWPF/UI/Core/Media/BitmapImage.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
@@ -108,6 +109,7 @@ void Image::SetSource(const std::shared_ptr<Core::Media::ImageSource>& source)
 
         m_source = source;
         m_sourceDirty = true;
+        SetupAsyncLoading();
         InvalidateMeasure();
         InvalidateVisual();
         return;
@@ -125,6 +127,7 @@ void Image::SetSource(const std::shared_ptr<Core::Media::ImageSource>& source)
 
     m_source = source;
     m_sourceDirty = true;
+    SetupAsyncLoading();
     InvalidateMeasure();
     InvalidateVisual();
 }
@@ -331,6 +334,19 @@ void Image::DestroyTexture() noexcept
         NeoWPF::Rendering::Renderer_DestroyTexture(m_textureId);
     }
     m_textureId = 0;
+}
+
+void Image::SetupAsyncLoading()
+{
+    auto bitmapImage = std::dynamic_pointer_cast<Core::Media::BitmapImage>(m_source);
+    if (!bitmapImage) {
+        return;
+    }
+
+    bitmapImage->SetDownloadCompletedCallback([this]() {
+        m_sourceDirty = true;
+        InvalidateVisual();
+    });
 }
 
 }

@@ -6,6 +6,10 @@
 #include <NeoWPF/UI/Core/Media/Stretch.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 
+namespace NeoWPF::UI::Core::Media {
+class BitmapImage;
+}
+
 namespace NeoWPF::UI {
 
 class Image : public FrameworkElement {
@@ -53,6 +57,7 @@ private:
     void UpdateSourceState();
     void EnsureTexture();
     void DestroyTexture() noexcept;
+    void SetupAsyncLoading();
 };
 
 }

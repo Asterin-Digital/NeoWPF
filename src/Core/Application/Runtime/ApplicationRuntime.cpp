@@ -2,7 +2,7 @@
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
-#include <NeoWPF/Platform/Window.h>
+#include <NeoWPF/Platform/NativeWindow.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
@@ -25,15 +25,15 @@ AppState s_appState;
 
 AppState& GetAppState() { return s_appState; }
 
-void SetInputRootForWindow(HWND hwnd)
+void SetInputRootForWindow(void* nativeWindowHandle)
 {
-    if (!hwnd) {
+    if (!nativeWindowHandle) {
         return;
     }
 
     std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
     for (auto& windowState : s_appState.windows) {
-        if (windowState.hwnd == hwnd) {
+        if (windowState.nativeWindowHandle == nativeWindowHandle) {
             auto rootVisual = windowState.windowHost->GetContent();
             NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual.get()));
             return;
@@ -110,7 +110,7 @@ void StartRenderThread()
             {
                 std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
                 for (const auto& windowState : s_appState.windows) {
-                    NeoWPF::Rendering::Renderer_Initialize(windowState.hwnd);
+                    NeoWPF::Rendering::Renderer_Initialize(windowState.nativeWindowHandle);
                 }
             }
             {
@@ -148,18 +148,19 @@ void StartRenderThread()
             }
 
             for (auto& windowState : windowsSnapshot) {
-                if (!IsWindow(windowState.hwnd)) {
+                HWND hwnd = static_cast<HWND>(windowState.nativeWindowHandle);
+                if (!IsWindow(hwnd)) {
                     continue;
                 }
 
                 RECT rc;
-                GetClientRect(windowState.hwnd, &rc);
+                GetClientRect(hwnd, &rc);
                 unsigned int w = rc.right - rc.left;
                 unsigned int h = rc.bottom - rc.top;
 
                 if (w > 0 && h > 0) {
                     try {
-                        NeoWPF::Rendering::Renderer_Initialize(windowState.hwnd);
+                        NeoWPF::Rendering::Renderer_Initialize(windowState.nativeWindowHandle);
                         NeoWPF::Rendering::Renderer_Resize(w, h);
                         const auto renderStart = std::chrono::steady_clock::now();
                         NeoWPF::Rendering::Renderer_BeginFrame();
@@ -206,7 +207,7 @@ int RunApplicationMessageLoop()
     {
         std::lock_guard<std::mutex> wlock(s_appState.windowsMutex);
         if (!s_appState.windows.empty()) {
-            primaryWindow = s_appState.windows[0].hwnd;
+            primaryWindow = static_cast<HWND>(s_appState.windows[0].nativeWindowHandle);
         }
     }
 
@@ -225,12 +226,13 @@ int RunApplicationMessageLoop()
     {
         std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
         for (auto& windowState : s_appState.windows) {
-            if (!IsWindow(windowState.hwnd)) {
+            HWND hwnd = static_cast<HWND>(windowState.nativeWindowHandle);
+            if (!IsWindow(hwnd)) {
                 continue;
             }
 
             RECT windowRect;
-            GetClientRect(windowState.hwnd, &windowRect);
+            GetClientRect(hwnd, &windowRect);
             unsigned int windowWidth = windowRect.right - windowRect.left;
             unsigned int windowHeight = windowRect.bottom - windowRect.top;
             if (windowWidth == 0 || windowHeight == 0) {
@@ -271,7 +273,8 @@ int RunApplicationMessageLoop()
             std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
             bool anyWindowOpen = false;
             for (const auto& window : s_appState.windows) {
-                if (IsWindow(window.hwnd)) {
+                HWND hwnd = static_cast<HWND>(window.nativeWindowHandle);
+                if (IsWindow(hwnd)) {
                     anyWindowOpen = true;
                     break;
                 }
@@ -303,12 +306,13 @@ int RunApplicationMessageLoop()
         {
             std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
             for (auto& windowState : s_appState.windows) {
-                if (!IsWindow(windowState.hwnd)) {
+                HWND hwnd = static_cast<HWND>(windowState.nativeWindowHandle);
+                if (!IsWindow(hwnd)) {
                     continue;
                 }
 
                 RECT windowRect;
-                GetClientRect(windowState.hwnd, &windowRect);
+                GetClientRect(hwnd, &windowRect);
                 unsigned int windowWidth = windowRect.right - windowRect.left;
                 unsigned int windowHeight = windowRect.bottom - windowRect.top;
                 if (windowWidth == 0 || windowHeight == 0) {
@@ -329,12 +333,13 @@ int RunApplicationMessageLoop()
             NeoWPF::Diagnostics::ProcessPendingDeveloperWarnings();
             std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
             for (auto& windowState : s_appState.windows) {
-                if (!IsWindow(windowState.hwnd)) {
+                HWND hwnd = static_cast<HWND>(windowState.nativeWindowHandle);
+                if (!IsWindow(hwnd)) {
                     continue;
                 }
 
                 RECT windowRect;
-                GetClientRect(windowState.hwnd, &windowRect);
+                GetClientRect(hwnd, &windowRect);
                 unsigned int windowWidth = windowRect.right - windowRect.left;
                 unsigned int windowHeight = windowRect.bottom - windowRect.top;
                 if (windowWidth == 0 || windowHeight == 0) {

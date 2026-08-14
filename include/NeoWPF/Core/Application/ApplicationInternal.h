@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Windows.h>
 #include <atomic>
 #include <condition_variable>
 #include <memory>
@@ -23,7 +22,7 @@ class Visual;
 namespace NeoWPF::Core {
 
 struct WindowState {
-    HWND hwnd = nullptr;
+    void* nativeWindowHandle = nullptr;
     unsigned int width = 0;
     unsigned int height = 0;
     bool needsLayout = true;
@@ -36,7 +35,7 @@ struct WindowState {
 };
 
 struct AppState {
-    HINSTANCE hInst = nullptr;
+    void* hInst = nullptr;
     std::vector<WindowState> windows;
     std::atomic<bool> running{false};
     std::atomic<bool> consoleVisible{false};
@@ -60,11 +59,11 @@ struct AppState {
 
 AppState& GetAppState();
 void StartRenderThread();
-HWND CreateApplicationWindow(const wchar_t* title, int width, int height);
-bool CloseApplicationWindow(HWND hwnd);
+void* CreateApplicationWindow(const wchar_t* title, int width, int height);
+bool CloseApplicationWindow(void* nativeWindowHandle);
 int RunApplicationMessageLoop();
 void ShutdownApplication();
 void DumpVisualTreeImpl(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options);
-void SetInputRootForWindow(HWND hwnd);
+void SetInputRootForWindow(void* nativeWindowHandle);
 
 }

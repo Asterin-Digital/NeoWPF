@@ -180,12 +180,12 @@ struct CommandList {
     @summary
     Sets up the renderer for the target window.
 
-    @param hwnd
-    The window handle that owns the rendering surface.
+    @param nativeWindowHandle
+    The native window handle that owns the rendering surface.
 
     @internal
 */
-void Renderer_Initialize(HWND hwnd);
+void Renderer_Initialize(void* nativeWindowHandle);
 
 /*
     @summary
