@@ -90,6 +90,70 @@ std::shared_ptr<BitmapImage> BitmapImage::CreateFromFile(const std::wstring& fil
     return Create(filePath);
 }
 
+std::shared_ptr<BitmapImage> BitmapImage::CreateFromMemory(const std::vector<std::uint8_t>& data)
+{
+    auto bitmap = std::make_shared<BitmapImage>();
+    bitmap->LoadFromMemory(data);
+    return bitmap;
+}
+
+std::shared_ptr<BitmapImage> BitmapImage::CreateFromMemory(std::vector<std::uint8_t>&& data)
+{
+    auto bitmap = std::make_shared<BitmapImage>();
+    bitmap->LoadFromMemory(std::move(data));
+    return bitmap;
+}
+
+void BitmapImage::LoadFromMemory(const std::vector<std::uint8_t>& data)
+{
+    if (data.empty()) {
+        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed because input data is empty");
+        return;
+    }
+
+    std::vector<std::uint8_t> pixels;
+    int width = 0;
+    int height = 0;
+
+    if (!NeoWPF::Platform::DecodeImageFromMemory(data, pixels, width, height, m_decodePixelWidth, m_decodePixelHeight)) {
+        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed to decode image data");
+        return;
+    }
+
+    m_uriSource.clear();
+    m_width = width;
+    m_height = height;
+    m_pixels = std::move(pixels);
+    m_isInitialized = true;
+    m_isInitPending = false;
+    m_isLoading = false;
+}
+
+void BitmapImage::LoadFromMemory(std::vector<std::uint8_t>&& data)
+{
+    if (data.empty()) {
+        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed because input data is empty");
+        return;
+    }
+
+    std::vector<std::uint8_t> pixels;
+    int width = 0;
+    int height = 0;
+
+    if (!NeoWPF::Platform::DecodeImageFromMemory(data, pixels, width, height, m_decodePixelWidth, m_decodePixelHeight)) {
+        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed to decode image data");
+        return;
+    }
+
+    m_uriSource.clear();
+    m_width = width;
+    m_height = height;
+    m_pixels = std::move(pixels);
+    m_isInitialized = true;
+    m_isInitPending = false;
+    m_isLoading = false;
+}
+
 void BitmapImage::BeginInit()
 {
     m_isInitPending = true;

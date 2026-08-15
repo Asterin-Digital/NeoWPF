@@ -109,13 +109,13 @@ public:
         @summary
         Sets the padding around the checkbox content.
     */
-    void SetPadding(int padding) noexcept;
+    void SetPadding(Thickness padding) noexcept;
 
     /*
         @summary
         Returns the current padding.
     */
-    int GetPadding() const noexcept;
+    Thickness GetPadding() const noexcept;
 
     /*
         @summary

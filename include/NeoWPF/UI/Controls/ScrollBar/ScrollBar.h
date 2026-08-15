@@ -215,7 +215,7 @@ private:
     void UpdateValueFromPosition(int x, int y) noexcept;
 
     void OnValueChanged(double value) override;
-    void OnPaddingChanged(int padding) override;
+    void OnPaddingChanged(Thickness padding) override;
     void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
     void OnBorderColorChanged(NeoWPF::UI::Color color) override;
     void OnBorderThicknessChanged(int thickness) override;

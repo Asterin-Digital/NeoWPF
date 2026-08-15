@@ -4,6 +4,7 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="../FluxRip/FluxRip.vcxproj" Id="a2b38346-6f14-40c6-a430-4322703c351a" />
   <Project Path="../NeoWPF.Gallery/NeoWPF.Gallery.vcxproj" Id="c24d9393-08d6-493a-bd57-5f1132063c3b" />
   <Project Path="../Saphire.NET/Saphire.NET.csproj" Id="b1a0bcc2-0b53-481e-be33-3d9bdbf966a4" />
   <Project Path="../Saphire/Saphire.vcxproj" Id="1f26fac2-9e48-4050-81e0-3413c74ea6f0" />

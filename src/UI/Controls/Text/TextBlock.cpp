@@ -106,18 +106,18 @@ TextVerticalAlignment TextBlock::GetTextVerticalAlignment() const noexcept
     return m_textVerticalAlignment;
 }
 
-int TextBlock::GetPadding() const noexcept {
+Thickness TextBlock::GetPadding() const noexcept {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", *this);
     if (property) {
-        try { return GetValue<int>(*property); } catch (const std::bad_any_cast&) {}
+        try { return GetValue<Thickness>(*property); } catch (const std::bad_any_cast&) {}
     }
-    return m_padding;
+    return Thickness(m_padding);
 }
 
-void TextBlock::SetPadding(int padding) noexcept {
+void TextBlock::SetPadding(Thickness padding) noexcept {
     if (IsApplyingPropertyValue()) {
-        m_padding = padding;
-        OnPaddingChanged(padding);
+        m_padding = padding.Left;
+        OnPaddingChanged(padding.Left);
         return;
     }
 
@@ -129,34 +129,36 @@ void TextBlock::SetPadding(int padding) noexcept {
         return;
     }
 
-    m_padding = padding;
-    OnPaddingChanged(padding);
+    m_padding = padding.Left;
+    OnPaddingChanged(padding.Left);
 }
 
-void TextBlock::OnPaddingChanged(int padding) {
+void TextBlock::OnPaddingChanged(Thickness padding) {
+    (void)padding;
     InvalidateMeasure();
     InvalidateVisual();
 }
 
 void TextBlock::Measure(int availableWidth, int availableHeight)
 {
-    const int padding = GetPadding();
+    const auto padding = GetPadding();
     if (m_text.empty()) {
-        SetDesiredSize(padding * 2, padding * 2);
+        SetDesiredSize(padding.Horizontal(), padding.Vertical());
         return;
     }
 
-    const int widthConstraint = availableWidth > 0 ? std::max(0, availableWidth - (2 * padding)) : 0;
-    const int heightConstraint = availableHeight > 0 ? std::max(0, availableHeight - (2 * padding)) : 0;
+    const int widthConstraint = availableWidth > 0 ? std::max(0, availableWidth - padding.Horizontal()) : 0;
+    const int heightConstraint = availableHeight > 0 ? std::max(0, availableHeight - padding.Vertical()) : 0;
     auto metrics = NeoWPF::Rendering::Text::MeasureText(m_text, m_fontSize, GetFontFamily(), widthConstraint, heightConstraint);
-    SetDesiredSize(metrics.width + (2 * padding), metrics.height + (2 * padding));
+    SetDesiredSize(metrics.width + padding.Horizontal(), metrics.height + padding.Vertical());
 }
 
 void TextBlock::Arrange(int finalWidth, int finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
-    const int innerWidth = std::max(0, finalWidth - (2 * GetPadding()));
-    const int innerHeight = std::max(0, finalHeight - (2 * GetPadding()));
+    const auto padding = GetPadding();
+    const int innerWidth = std::max(0, finalWidth - padding.Horizontal());
+    const int innerHeight = std::max(0, finalHeight - padding.Vertical());
     if (m_textDirty || innerWidth != m_lastArrangeWidth || innerHeight != m_lastArrangeHeight) {
         EnsureTextTexture(innerWidth, innerHeight);
         m_lastArrangeWidth = innerWidth;
@@ -175,9 +177,9 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     int absY = 0;
     GetAbsolutePosition(absX, absY);
 
-    const int padding = GetPadding();
-    const int innerWidth = std::max(0, GetFinalWidth() - (2 * padding));
-    const int innerHeight = std::max(0, GetFinalHeight() - (2 * padding));
+    const auto padding = GetPadding();
+    const int innerWidth = std::max(0, GetFinalWidth() - padding.Horizontal());
+    const int innerHeight = std::max(0, GetFinalHeight() - padding.Vertical());
 
     int offsetX = 0;
     int offsetY = 0;
@@ -192,8 +194,8 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         offsetX,
         offsetY);
 
-    float drawX = static_cast<float>(absX + padding + offsetX);
-    float drawY = static_cast<float>(absY + padding + offsetY - m_textInkTop);
+    float drawX = static_cast<float>(absX + padding.Left + offsetX);
+    float drawY = static_cast<float>(absY + padding.Top + offsetY - m_textInkTop);
     float drawWidth = static_cast<float>(m_textWidth);
     float drawHeight = static_cast<float>(m_textHeight);
     ApplyRenderTransform(drawX, drawY, drawWidth, drawHeight);

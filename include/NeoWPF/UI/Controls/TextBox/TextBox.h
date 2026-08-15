@@ -281,8 +281,8 @@ public:
         @param padding
         Pixels of padding on all sides.
     */
-    void SetPadding(int padding) noexcept;
-    int GetPadding() const noexcept;
+    void SetPadding(Thickness padding) noexcept;
+    Thickness GetPadding() const noexcept;
 
     /*
         @summary
@@ -349,7 +349,7 @@ public:
 
 protected:
     void OnInitialize() override;
-    void OnPaddingChanged(int padding) override;
+    void OnPaddingChanged(Thickness padding) override;
     void OnDependencyPropertyChanged(const Properties::DependencyProperty& property,
                                      const Properties::PropertyMetadata& metadata,
                                      const std::any& oldValue,

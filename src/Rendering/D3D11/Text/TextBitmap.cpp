@@ -158,20 +158,7 @@ STDMETHOD(DrawGlyphRun)(void* clientDrawingContext, FLOAT baselineOriginX, FLOAT
     int textureHeight = textureBounds.bottom - textureBounds.top;
     if (textureWidth <= 0 || textureHeight <= 0) {
         ::NeoWPF::Diagnostics::Log(::NeoWPF::Diagnostics::Category::TextRendering, ::NeoWPF::Diagnostics::Level::Debug,
-            "DrawGlyphRun: zero texture size %dx%d; falling back to a small placeholder", textureWidth, textureHeight);
-        const int fallbackWidth = std::max(1, std::min(8, width));
-        const int fallbackHeight = std::max(1, std::min(8, height));
-        const size_t fallbackPixels = static_cast<size_t>(fallbackWidth) * static_cast<size_t>(fallbackHeight);
-        std::vector<uint8_t> fallbackBitmap(fallbackPixels * 4, 0);
-        for (size_t i = 0; i < fallbackPixels; ++i) {
-            fallbackBitmap[i * 4 + 0] = 255;
-            fallbackBitmap[i * 4 + 1] = 255;
-            fallbackBitmap[i * 4 + 2] = 255;
-            fallbackBitmap[i * 4 + 3] = 255;
-        }
-        (*bitmap) = std::move(fallbackBitmap);
-        width = fallbackWidth;
-        height = fallbackHeight;
+            "DrawGlyphRun: zero texture size %dx%d; skipping bitmap generation", textureWidth, textureHeight);
         return S_OK;
     }
 

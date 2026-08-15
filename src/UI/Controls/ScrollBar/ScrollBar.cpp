@@ -169,7 +169,7 @@ void ScrollBar::OnValueChanged(double value)
     ValueChanged.Invoke(static_cast<int>(value));
 }
 
-void ScrollBar::OnPaddingChanged(int padding)
+void ScrollBar::OnPaddingChanged(Thickness padding)
 {
     (void)padding;
     InvalidateVisual();

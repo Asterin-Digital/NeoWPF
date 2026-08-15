@@ -126,12 +126,12 @@ void Checkbox::SetBorderColor(NeoWPF::UI::Color color) noexcept
     InvalidateVisual();
 }
 
-void Checkbox::SetPadding(int padding) noexcept
+void Checkbox::SetPadding(Thickness padding) noexcept
 {
-    if (IsApplyingPropertyValue()) { m_padding = padding; InvalidateVisual(); return; }
+    if (IsApplyingPropertyValue()) { m_padding = padding.Left; InvalidateVisual(); return; }
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", *this);
     if (property) { SetValue(*property, padding); return; }
-    m_padding = padding;
+    m_padding = padding.Left;
     InvalidateVisual();
 }
 
@@ -162,9 +162,9 @@ NeoWPF::UI::Color Checkbox::GetBorderColor() const noexcept
     return m_borderColor;
 }
 
-int Checkbox::GetPadding() const noexcept
+Thickness Checkbox::GetPadding() const noexcept
 {
-    return m_padding;
+    return Thickness(m_padding);
 }
 
 int Checkbox::GetFontSize() const noexcept

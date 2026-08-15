@@ -13,7 +13,7 @@ int TextBox::ClampHorizontalScrollOffset(int offset) const noexcept
         return 0;
     }
 
-    const int contentHostWidth = std::max(0, GetFinalWidth() - (GetPadding() * 2));
+    const int contentHostWidth = std::max(0, GetFinalWidth() - GetPadding().Horizontal());
     if (contentHostWidth <= 0) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug,
             "[TextBox] ClampHorizontalScrollOffset: content host width=%d too small", contentHostWidth);
@@ -35,7 +35,7 @@ int TextBox::ClampVerticalScrollOffset(int offset) const noexcept
         return 0;
     }
 
-    const int contentHostHeight = std::max(0, GetFinalHeight() - (GetPadding() * 2));
+    const int contentHostHeight = std::max(0, GetFinalHeight() - GetPadding().Vertical());
     if (contentHostHeight <= 0) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug,
             "[TextBox] ClampVerticalScrollOffset: content host height=%d too small", contentHostHeight);
@@ -78,8 +78,8 @@ void TextBox::EnsureCaretVisible()
         return;
     }
 
-    const int contentHostWidth = std::max(0, GetFinalWidth() - (GetPadding() * 2));
-    const int contentHostHeight = std::max(0, GetFinalHeight() - (GetPadding() * 2));
+    const int contentHostWidth = std::max(0, GetFinalWidth() - GetPadding().Horizontal());
+    const int contentHostHeight = std::max(0, GetFinalHeight() - GetPadding().Vertical());
     if (contentHostWidth <= 0 || contentHostHeight <= 0) {
         return;
     }

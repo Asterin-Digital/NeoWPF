@@ -58,12 +58,16 @@ namespace NeoWPF::UI::Properties {
             textVerticalAlignmentMetadata);
 
         PropertyMetadata paddingMetadata;
-        paddingMetadata.DefaultValue = std::any(0);
+        paddingMetadata.DefaultValue = std::any(UI::Thickness{});
         paddingMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsArrange | PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBlock, int>(
+        RegisterProperty<UI::TextBlock, UI::Thickness>(
             "Padding",
             &UI::TextBlock::GetPadding,
-            &UI::TextBlock::SetPadding,
+            [](UI::TextBlock* owner, const UI::Thickness& value) {
+                if (owner) {
+                    owner->SetPadding(value);
+                }
+            },
             paddingMetadata);
     }
 }

@@ -18,8 +18,10 @@ Border::Border()
 
 void Border::Measure(int availableWidth, int availableHeight)
 {
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Measure] available=%dx%d explicit=%dx%d padding=%d border=%d",
-        availableWidth, availableHeight, GetWidth(), GetHeight(), GetPadding(), GetBorderThickness());
+    const auto padding = GetPadding();
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Measure] available=%dx%d explicit=%dx%d padding=(%d,%d,%d,%d) border=%d",
+        availableWidth, availableHeight, GetWidth(), GetHeight(),
+        padding.Left, padding.Top, padding.Right, padding.Bottom, GetBorderThickness());
 
     if (auto presenter = GetPresenter()) {
         if (!presenter->GetParent()) {
@@ -34,8 +36,8 @@ void Border::Measure(int availableWidth, int availableHeight)
         const int availableContentWidth = std::max(0, explicitW > 0 ? explicitW : availableWidth);
         const int availableContentHeight = std::max(0, explicitH > 0 ? explicitH : availableHeight);
 
-        const int innerWidth = std::max(0, availableContentWidth - (2 * GetBorderThickness()) - (2 * GetPadding()));
-        const int innerHeight = std::max(0, availableContentHeight - (2 * GetBorderThickness()) - (2 * GetPadding()));
+        const int innerWidth = std::max(0, availableContentWidth - (2 * GetBorderThickness()) - padding.Horizontal());
+        const int innerHeight = std::max(0, availableContentHeight - (2 * GetBorderThickness()) - padding.Vertical());
 
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Measure] inner=%dx%d content=%dx%d",
             innerWidth, innerHeight, availableContentWidth, availableContentHeight);
@@ -44,8 +46,8 @@ void Border::Measure(int availableWidth, int availableHeight)
 
         const int contentW = presenter->GetDesiredWidth();
         const int contentH = presenter->GetDesiredHeight();
-        const int contentDesiredW = std::max(0, contentW + (2 * GetBorderThickness()) + (2 * GetPadding()));
-        const int contentDesiredH = std::max(0, contentH + (2 * GetBorderThickness()) + (2 * GetPadding()));
+        const int contentDesiredW = std::max(0, contentW + (2 * GetBorderThickness()) + padding.Horizontal());
+        const int contentDesiredH = std::max(0, contentH + (2 * GetBorderThickness()) + padding.Vertical());
 
         const int desiredW = std::max(contentDesiredW, explicitW > 0 ? explicitW : 0);
         const int desiredH = std::max(contentDesiredH, explicitH > 0 ? explicitH : 0);
@@ -64,16 +66,17 @@ void Border::Measure(int availableWidth, int availableHeight)
 
 void Border::Arrange(int finalWidth, int finalHeight)
 {
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Arrange] final=%dx%d padding=%d border=%d",
-        finalWidth, finalHeight, GetPadding(), GetBorderThickness());
+    const auto padding = GetPadding();
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Arrange] final=%dx%d padding=(%d,%d,%d,%d) border=%d",
+        finalWidth, finalHeight, padding.Left, padding.Top, padding.Right, padding.Bottom, GetBorderThickness());
 
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
     if (auto presenter = GetPresenter()) {
-        const int innerX = GetBorderThickness() + GetPadding();
-        const int innerY = GetBorderThickness() + GetPadding();
-        const int innerWidth = std::max(0, finalWidth - (2 * GetBorderThickness()) - (2 * GetPadding()));
-        const int innerHeight = std::max(0, finalHeight - (2 * GetBorderThickness()) - (2 * GetPadding()));
+        const int innerX = GetBorderThickness() + padding.Left;
+        const int innerY = GetBorderThickness() + padding.Top;
+        const int innerWidth = std::max(0, finalWidth - (2 * GetBorderThickness()) - padding.Horizontal());
+        const int innerHeight = std::max(0, finalHeight - (2 * GetBorderThickness()) - padding.Vertical());
 
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Arrange] presenter offset=%dx%d inner=%dx%d",
             innerX, innerY, innerWidth, innerHeight);
@@ -140,13 +143,13 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     ContentControl::BuildRenderCommands(commands);
 }
 
-void Border::SetPadding(int padding) noexcept
+void Border::SetPadding(Thickness padding) noexcept
 {
     Control::SetPadding(padding);
     InvalidateVisual();
 }
 
-int Border::GetPadding() const noexcept
+Thickness Border::GetPadding() const noexcept
 {
     return Control::GetPadding();
 }
@@ -184,7 +187,7 @@ NeoWPF::UI::Color Border::GetBackgroundColor() const noexcept
     return Control::GetBackgroundColor();
 }
 
-void Border::OnPaddingChanged(int)
+void Border::OnPaddingChanged(Thickness)
 {
     InvalidateVisual();
 }

@@ -103,13 +103,13 @@ public:
         @param padding
         The padding in pixels.
     */
-    void SetPadding(int padding) noexcept { m_padding = padding; InvalidateVisual(); }
+    void SetPadding(Thickness padding) noexcept { m_padding = padding.Left; InvalidateVisual(); }
 
     /*
         @summary
         Returns the padding around the item area.
     */
-    int GetPadding() const noexcept { return m_padding; }
+    Thickness GetPadding() const noexcept { return Thickness(m_padding); }
 
     /*
         @summary

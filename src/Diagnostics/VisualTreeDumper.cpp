@@ -201,7 +201,8 @@ std::string VisualTreeDumper::FormatPropertiesInfo(NeoWPF::UI::Visual* element)
             oss << ", ";
         }
         oss << "VisualProps{";
-        oss << "Padding=" << control->GetPadding();
+        const auto padding = control->GetPadding();
+        oss << "Padding=" << padding.Left << "," << padding.Top << "," << padding.Right << "," << padding.Bottom;
         oss << ",Bg=" << FormatColor(control->GetBackgroundColor());
         oss << ",Border=" << FormatColor(control->GetBorderColor());
         oss << ",BorderThickness=" << control->GetBorderThickness();

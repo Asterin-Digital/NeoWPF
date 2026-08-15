@@ -108,13 +108,13 @@ public:
         @param padding
         Padding in pixels.
     */
-    void SetPadding(int padding) noexcept;
+    void SetPadding(Thickness padding) noexcept;
 
     /*
         @summary
         Returns the current padding.
     */
-    int GetPadding() const noexcept;
+    Thickness GetPadding() const noexcept;
 
     /*
         @summary
@@ -183,7 +183,7 @@ public:
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
 protected:
-    void OnPaddingChanged(int padding) override;
+    void OnPaddingChanged(Thickness padding) override;
     void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
     void OnBorderColorChanged(NeoWPF::UI::Color color) override;
     void OnBorderThicknessChanged(int thickness) override;

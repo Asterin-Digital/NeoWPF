@@ -119,13 +119,13 @@ TextVerticalAlignment Button::GetTextVerticalAlignment() const noexcept
     return TextVerticalAlignment::Top;
 }
 
-void Button::SetPadding(int padding) noexcept
+void Button::SetPadding(Thickness padding) noexcept
 {
     Control::SetPadding(padding);
     InvalidateVisual();
 }
 
-int Button::GetPadding() const noexcept
+Thickness Button::GetPadding() const noexcept
 {
     return Control::GetPadding();
 }
@@ -147,7 +147,7 @@ NeoWPF::UI::Color Button::GetBorderColor() const noexcept
     return m_borderColor;
 }
 
-void Button::OnPaddingChanged(int padding)
+void Button::OnPaddingChanged(Thickness padding)
 {
     if (auto presenter = GetPresenter()) {
         presenter->SetPadding(padding);
@@ -273,14 +273,16 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
     if (contentHost) {
-        const int inset = std::max(0, GetPadding());
-        const int chX = static_cast<int>(std::lround(drawX)) + inset;
-        const int chY = static_cast<int>(std::lround(drawY)) + inset;
-        const int chW = std::max(0, static_cast<int>(std::lround(drawWidth)) - (inset * 2));
-        const int chH = std::max(0, static_cast<int>(std::lround(drawHeight)) - (inset * 2));
+        const auto padding = GetPadding();
+        const int insetX = std::max(0, padding.Left);
+        const int insetY = std::max(0, padding.Top);
+        const int chX = static_cast<int>(std::lround(drawX)) + insetX;
+        const int chY = static_cast<int>(std::lround(drawY)) + insetY;
+        const int chW = std::max(0, static_cast<int>(std::lround(drawWidth)) - padding.Horizontal());
+        const int chH = std::max(0, static_cast<int>(std::lround(drawHeight)) - padding.Vertical());
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Info,
-            "[Button] BuildRenderCommands: abs=(%d,%d) size=(%d,%d) inset=%d contentHost=(%d,%d,%d,%d) contentHostPtr=%p",
-            absX, absY, GetFinalWidth(), GetFinalHeight(), inset, chX, chY, chW, chH, contentHost.get());
+            "[Button] BuildRenderCommands: abs=(%d,%d) size=(%d,%d) inset=(%d,%d) contentHost=(%d,%d,%d,%d) contentHostPtr=%p",
+            absX, absY, GetFinalWidth(), GetFinalHeight(), insetX, insetY, chX, chY, chW, chH, contentHost.get());
 
         contentHost->SetRect(chX, chY, chW, chH);
         contentHost->SetBorderThickness(0);

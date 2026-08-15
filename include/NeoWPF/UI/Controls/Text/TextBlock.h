@@ -139,16 +139,16 @@ public:
         @details
         Padding is interior spacing applied between the `TextBlock`'s bounds and its rendered text.
     */
-    int GetPadding() const noexcept;
+    Thickness GetPadding() const noexcept;
 
     /*
         @summary
         Sets the interior padding in device pixels.
 
         @param padding
-        Uniform padding applied to all sides.
+        Padding applied to each side.
     */
-    void SetPadding(int padding) noexcept;
+    void SetPadding(Thickness padding) noexcept;
 
     /*
         @summary
@@ -217,7 +217,7 @@ public:
     int GetContentHeight() const noexcept { return m_textHeight; }
 
 protected:
-    void OnPaddingChanged(int padding);
+    void OnPaddingChanged(Thickness padding);
 
 private:
     std::wstring m_text;

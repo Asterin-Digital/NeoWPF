@@ -3,10 +3,14 @@
 
 namespace NeoWPF::UI::Properties {
     void RegisterBorderProperties() {
-        RegisterProperty<UI::Border, int>(
+        RegisterProperty<UI::Border, UI::Thickness>(
             "Padding",
             &UI::Border::GetPadding,
-            &UI::Border::SetPadding);
+            [](UI::Border* owner, const UI::Thickness& value) {
+                if (owner) {
+                    owner->SetPadding(value);
+                }
+            });
 
         RegisterProperty<UI::Border, int>(
             "BorderThickness",

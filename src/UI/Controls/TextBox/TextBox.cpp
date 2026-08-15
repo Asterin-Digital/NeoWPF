@@ -61,7 +61,7 @@ TextBox::TextBox()
     SetTemplate(std::make_shared<TextBoxTemplate>());
 
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
-    presenter->SetPadding(m_padding);
+    presenter->SetPadding(GetPadding());
     SetPresenter(presenter);
 
     ApplyTextBoxThemeStyle(this);
@@ -292,7 +292,7 @@ void TextBox::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
     InvalidateVisual();
 }
 
-void TextBox::OnPaddingChanged(int padding)
+void TextBox::OnPaddingChanged(Thickness padding)
 {
     if (auto presenter = GetPresenter()) {
         presenter->SetPadding(padding);
@@ -351,13 +351,13 @@ int TextBox::GetFontSize() const noexcept
     return m_fontSize;
 }
 
-void TextBox::SetPadding(int padding) noexcept
+void TextBox::SetPadding(Thickness padding) noexcept
 {
     Control::SetPadding(padding);
     InvalidateVisual();
 }
 
-int TextBox::GetPadding() const noexcept
+Thickness TextBox::GetPadding() const noexcept
 {
     return Control::GetPadding();
 }
@@ -404,17 +404,17 @@ void TextBox::Measure(int availableWidth, int availableHeight)
 {
     const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, GetFontFamily(), 0, 0);
     const int minWidth = 120;
-    const int minHeight = std::max(baseMetrics.height, m_fontSize) + (GetPadding() * 2);
+    const int minHeight = std::max(baseMetrics.height, m_fontSize) + (GetPadding().Horizontal() + GetPadding().Vertical());
     int desiredWidth = std::max(minWidth, availableWidth > 0 ? std::min(minWidth, availableWidth) : minWidth);
     int desiredHeight = std::max(minHeight, availableHeight > 0 ? std::min(minHeight, availableHeight) : minHeight);
 
     {
         TextLayout measureLayout;
-        const int contentHostWidth = std::max(0, availableWidth > 0 ? availableWidth - (GetPadding() * 2) : 0);
-        const int contentHostHeight = std::max(0, availableHeight > 0 ? availableHeight - (GetPadding() * 2) : 0);
+        const int contentHostWidth = std::max(0, availableWidth > 0 ? availableWidth - GetPadding().Horizontal() : 0);
+        const int contentHostHeight = std::max(0, availableHeight > 0 ? availableHeight - GetPadding().Vertical() : 0);
         measureLayout.Refresh(m_text, m_fontSize, GetFontFamily(), contentHostWidth, contentHostHeight, m_textWrapping, false);
-        desiredHeight = std::max(minHeight, measureLayout.GetContentHeight() + (GetPadding() * 2));
-        desiredWidth = std::max(desiredWidth, measureLayout.GetContentWidth() + (GetPadding() * 2));
+        desiredHeight = std::max(minHeight, measureLayout.GetContentHeight() + GetPadding().Vertical());
+        desiredWidth = std::max(desiredWidth, measureLayout.GetContentWidth() + GetPadding().Horizontal());
     }
 
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] Measure: available=%dx%d, desired=%dx%d, textLength=%zu", availableWidth, availableHeight, desiredWidth, desiredHeight, m_text.size());
@@ -488,17 +488,17 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
 
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
-    const int contentHostX = absX + GetPadding();
-    const int contentHostY = absY + GetPadding();
-    const int contentHostWidth = std::max(0, GetFinalWidth() - (GetPadding() * 2));
-    const int contentHostHeight = std::max(0, GetFinalHeight() - (GetPadding() * 2));
+    const int contentHostX = absX + GetPadding().Left;
+    const int contentHostY = absY + GetPadding().Top;
+    const int contentHostWidth = std::max(0, GetFinalWidth() - GetPadding().Horizontal());
+    const int contentHostHeight = std::max(0, GetFinalHeight() - GetPadding().Vertical());
 
     if (contentHostWidth <= 0 || contentHostHeight <= 0) {
         return;
     }
 
     if (contentHost) {
-        const int inset = std::max(0, GetPadding());
+        const int inset = std::max(0, GetPadding().Left);
         contentHost->SetRect(absX + inset, absY + inset, contentHostWidth, contentHostHeight);
         contentHost->SetBorderThickness(0);
         contentHost->SetOpacity(GetOpacity());
@@ -591,8 +591,8 @@ void TextBox::EnsureTextTexture()
         return;
     }
 
-    const int contentHostWidth = std::max(0, GetFinalWidth() - (GetPadding() * 2));
-    const int contentHostHeight = std::max(0, GetFinalHeight() - (GetPadding() * 2));
+    const int contentHostWidth = std::max(0, GetFinalWidth() - GetPadding().Horizontal());
+    const int contentHostHeight = std::max(0, GetFinalHeight() - GetPadding().Vertical());
     if (contentHostWidth <= 0 || contentHostHeight <= 0) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] EnsureTextTexture: content host size not ready (%d,%d); skipping texture refresh", contentHostWidth, contentHostHeight);
         return;

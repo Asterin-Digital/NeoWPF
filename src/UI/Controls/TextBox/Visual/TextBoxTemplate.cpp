@@ -28,8 +28,16 @@ TextBoxTemplate::TextBoxTemplate()
     auto normalState = std::make_shared<Styling::VisualState>("Normal");
     normalState->AddSetter("PART_Border", [](UIElement* element, Visual* visual) {
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFFFFFFFFu);
-            templateVisual->SetBorderColor(0xFFABADB3u);
+            uint32_t bgColor = 0xFFFFFFFFu;
+            uint32_t borderColor = 0xFFABADB3u;
+            
+            if (auto* textBox = dynamic_cast<TextBox*>(element)) {
+                bgColor = textBox->GetBackgroundColor().ToArgb();
+                borderColor = textBox->GetBorderColor().ToArgb();
+            }
+            
+            templateVisual->SetFillColor(bgColor);
+            templateVisual->SetBorderColor(borderColor);
         }
         if (element) {
             element->InvalidateVisual();
@@ -40,8 +48,16 @@ TextBoxTemplate::TextBoxTemplate()
     auto focusedState = std::make_shared<Styling::VisualState>("Focused");
     focusedState->AddSetter("PART_Border", [](UIElement* element, Visual* visual) {
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFFFFFFFFu);
-            templateVisual->SetBorderColor(0xFF569DE5u);
+            uint32_t bgColor = 0xFFFFFFFFu;
+            uint32_t borderColor = 0xFF569DE5u;
+            
+            if (auto* textBox = dynamic_cast<TextBox*>(element)) {
+                bgColor = textBox->GetBackgroundColor().ToArgb();
+                borderColor = textBox->GetBorderColor().ToArgb();
+            }
+            
+            templateVisual->SetFillColor(bgColor);
+            templateVisual->SetBorderColor(borderColor);
         }
         if (element) {
             element->InvalidateVisual();
@@ -52,8 +68,16 @@ TextBoxTemplate::TextBoxTemplate()
     auto disabledState = std::make_shared<Styling::VisualState>("Disabled");
     disabledState->AddSetter("PART_Border", [](UIElement* element, Visual* visual) {
         if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            templateVisual->SetFillColor(0xFFF0F0F0u);
-            templateVisual->SetBorderColor(0xFFABADB3u);
+            uint32_t bgColor = 0xFFF0F0F0u;
+            uint32_t borderColor = 0xFFABADB3u;
+            
+            if (auto* textBox = dynamic_cast<TextBox*>(element)) {
+                bgColor = textBox->GetBackgroundColor().ToArgb();
+                borderColor = textBox->GetBorderColor().ToArgb();
+            }
+            
+            templateVisual->SetFillColor(bgColor);
+            templateVisual->SetBorderColor(borderColor);
         }
         if (element) {
             element->InvalidateVisual();

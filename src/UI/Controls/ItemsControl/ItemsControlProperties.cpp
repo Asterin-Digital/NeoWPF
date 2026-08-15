@@ -4,12 +4,16 @@
 namespace NeoWPF::UI::Properties {
     void RegisterItemsControlProperties() {
         PropertyMetadata paddingMetadata;
-        paddingMetadata.DefaultValue = std::any(0);
+        paddingMetadata.DefaultValue = std::any(UI::Thickness{});
         paddingMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsArrange | PropertyFlags::AffectsRender;
-        RegisterProperty<UI::ItemsControl, int>(
+        RegisterProperty<UI::ItemsControl, UI::Thickness>(
             "Padding",
-            &UI::ItemsControl::GetPadding,
-            &UI::ItemsControl::SetPadding,
+            [](UI::ItemsControl* owner) -> UI::Thickness { return UI::Thickness(owner->GetPadding()); },
+            [](UI::ItemsControl* owner, const UI::Thickness& value) {
+                if (owner) {
+                    owner->SetPadding(value.Left);
+                }
+            },
             paddingMetadata);
     }
 }

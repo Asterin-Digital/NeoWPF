@@ -51,8 +51,8 @@ public:
     */
     void ClearChild() { ClearContent(); }
 
-    void SetPadding(int padding) noexcept;
-    int GetPadding() const noexcept;
+    void SetPadding(Thickness padding) noexcept;
+    Thickness GetPadding() const noexcept;
 
     void SetBorderThickness(int thickness) noexcept;
     int GetBorderThickness() const noexcept;
@@ -100,7 +100,7 @@ public:
 public:
 
 protected:
-    void OnPaddingChanged(int padding) override;
+    void OnPaddingChanged(Thickness padding) override;
     void OnBorderThicknessChanged(int thickness) override;
     void OnBorderColorChanged(NeoWPF::UI::Color color) override;
     void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;

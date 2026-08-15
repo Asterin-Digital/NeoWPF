@@ -40,12 +40,16 @@ namespace NeoWPF::UI::Properties {
             borderMetadata);
 
         PropertyMetadata paddingMetadata;
-        paddingMetadata.DefaultValue = std::any(8);
+        paddingMetadata.DefaultValue = std::any(UI::Thickness(8));
         paddingMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsArrange | PropertyFlags::AffectsRender;
-        RegisterProperty<UI::Checkbox, int>(
+        RegisterProperty<UI::Checkbox, UI::Thickness>(
             "Padding",
             &UI::Checkbox::GetPadding,
-            &UI::Checkbox::SetPadding,
+            [](UI::Checkbox* owner, const UI::Thickness& value) {
+                if (owner) {
+                    owner->SetPadding(value);
+                }
+            },
             paddingMetadata);
 
         PropertyMetadata fontSizeMetadata;

@@ -26,7 +26,7 @@ int ItemsControlVirtualizer::GetExtentHeight() const noexcept
     int measuredTotal = m_bit.Total();
     int unmeasured = std::max(0, count - m_measuredCount);
     int total = measuredTotal + unmeasured * m_estimatedItemHeight;
-    int result = total + std::max(0, m_owner->GetPadding() * 2);
+    int result = total + std::max(0, m_owner->GetPadding().Horizontal() + m_owner->GetPadding().Vertical());
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
         "[Virtualizer.GetExtentHeight] count=%d measured=%d estHeight=%d measuredTotal=%d unmeasured=%d total=%d",
         count, m_measuredCount, m_estimatedItemHeight, measuredTotal, unmeasured, result);
@@ -151,8 +151,8 @@ void ItemsControlVirtualizer::RecomputeRealizedRange() noexcept
         return;
     }
 
-    const int padding = m_owner->GetPadding();
-    const int target = std::max(0, m_verticalOffset - padding);
+    const auto padding = m_owner->GetPadding();
+    const int target = std::max(0, m_verticalOffset - padding.Top);
 
     int measuredTotal = m_bit.Total();
     int first = 0;
@@ -341,12 +341,18 @@ int ItemsControlVirtualizer::IndexFromOffset(int offset) const noexcept
 
 int ItemsControlVirtualizer::GetOffsetForIndex(int index) const noexcept
 {
-    if (!m_owner) return 0;
-    if (index <= 0) return m_owner->GetPadding();
+    if (!m_owner) {
+        return 0;
+    }
+
+    if (index <= 0) {
+        return m_owner->GetPadding().Top;
+    }
+
     int measuredSum = m_bit.Sum(index);
     int measuredCountUpTo = m_countBit.Sum(index);
     int unmeasured = index - measuredCountUpTo;
-    return m_owner->GetPadding() + measuredSum + unmeasured * m_estimatedItemHeight;
+    return m_owner->GetPadding().Top + measuredSum + unmeasured * m_estimatedItemHeight;
 }
 
 }

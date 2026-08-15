@@ -18,8 +18,8 @@ public:
     const std::shared_ptr<NeoWPF::UI::UIElement>& GetContent() const noexcept { return m_content; }
     void ClearContent();
 
-    int GetPadding() const noexcept { return m_padding; }
-    void SetPadding(int padding) noexcept {
+    Thickness GetPadding() const noexcept { return m_padding; }
+    void SetPadding(Thickness padding) noexcept {
         m_padding = padding;
         InvalidateVisual();
     }
@@ -35,7 +35,7 @@ public:
 
 private:
     std::shared_ptr<NeoWPF::UI::UIElement> m_content;
-    int m_padding = 0;
+    Thickness m_padding{};
 };
 
 }

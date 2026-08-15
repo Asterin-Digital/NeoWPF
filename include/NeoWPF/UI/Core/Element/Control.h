@@ -9,8 +9,16 @@ class Control : public FrameworkElement {
 public:
     Control() = default;
 
-    int GetPadding() const noexcept;
-    void SetPadding(int padding) noexcept;
+    Thickness GetPadding() const noexcept;
+    void SetPadding(Thickness padding) noexcept;
+    void SetPadding(int left, int top, int right, int bottom) noexcept;
+
+    int GetPaddingLeft() const noexcept;
+    int GetPaddingTop() const noexcept;
+    int GetPaddingRight() const noexcept;
+    int GetPaddingBottom() const noexcept;
+    int GetPaddingHorizontal() const noexcept;
+    int GetPaddingVertical() const noexcept;
 
     NeoWPF::UI::Color GetBackgroundColor() const noexcept;
     void SetBackgroundColor(NeoWPF::UI::Color color) noexcept;
@@ -24,13 +32,13 @@ public:
     void SetBorderThickness(int thickness) noexcept;
 
 protected:
-    virtual void OnPaddingChanged(int padding);
+    virtual void OnPaddingChanged(Thickness padding);
     virtual void OnBackgroundColorChanged(NeoWPF::UI::Color color);
     virtual void OnBorderColorChanged(NeoWPF::UI::Color color);
     virtual void OnBorderThicknessChanged(int thickness);
 
 protected:
-    int m_padding = 0;
+    Thickness m_padding{};
     NeoWPF::UI::Color m_backgroundColor = NeoWPF::UI::Color::FromArgb(0x00000000u);
     NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0x00000000u);
     int m_borderThickness = 0;

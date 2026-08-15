@@ -71,16 +71,18 @@ void ContentPresenter::Measure(int availableWidth, int availableHeight)
         }
     }
 
-    int desiredWidth = m_padding * 2;
-    int desiredHeight = m_padding * 2;
+    const int horizontalPadding = m_padding.Left + m_padding.Right;
+    const int verticalPadding = m_padding.Top + m_padding.Bottom;
+    int desiredWidth = horizontalPadding;
+    int desiredHeight = verticalPadding;
 
     if (m_content) {
-        const int contentAvailableWidth = availableWidth > 0 ? std::max(0, availableWidth - (m_padding * 2)) : 0;
-        const int contentAvailableHeight = availableHeight > 0 ? std::max(0, availableHeight - (m_padding * 2)) : 0;
+        const int contentAvailableWidth = availableWidth > 0 ? std::max(0, availableWidth - horizontalPadding) : 0;
+        const int contentAvailableHeight = availableHeight > 0 ? std::max(0, availableHeight - verticalPadding) : 0;
         m_content->Measure(contentAvailableWidth, contentAvailableHeight);
         if (auto* frameworkContent = dynamic_cast<FrameworkElement*>(m_content.get())) {
-            desiredWidth = std::max(desiredWidth, frameworkContent->GetDesiredWidth() + (m_padding * 2));
-            desiredHeight = std::max(desiredHeight, frameworkContent->GetDesiredHeight() + (m_padding * 2));
+            desiredWidth = std::max(desiredWidth, frameworkContent->GetDesiredWidth() + horizontalPadding);
+            desiredHeight = std::max(desiredHeight, frameworkContent->GetDesiredHeight() + verticalPadding);
         }
     }
 
@@ -91,11 +93,12 @@ void ContentPresenter::Arrange(int finalWidth, int finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter, NeoWPF::Diagnostics::Level::Debug,
-        "[ContentPresenter] Arrange: this=%p final=(%d,%d) padding=%d", this, finalWidth, finalHeight, m_padding);
+        "[ContentPresenter] Arrange: this=%p final=(%d,%d) padding=(%d,%d,%d,%d)", this, finalWidth, finalHeight,
+        m_padding.Left, m_padding.Top, m_padding.Right, m_padding.Bottom);
 
     if (m_content) {
-        const int contentWidth = std::max(0, finalWidth - (m_padding * 2));
-        const int contentHeight = std::max(0, finalHeight - (m_padding * 2));
+        const int contentWidth = std::max(0, finalWidth - (m_padding.Left + m_padding.Right));
+        const int contentHeight = std::max(0, finalHeight - (m_padding.Top + m_padding.Bottom));
 
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter, NeoWPF::Diagnostics::Level::Debug,
             "[ContentPresenter] Arrange: contentArea=(%d,%d)", contentWidth, contentHeight);
@@ -138,7 +141,7 @@ void ContentPresenter::Arrange(int finalWidth, int finalHeight)
                 break;
             }
 
-            childFe->SetLayoutOffset(offsetX + m_padding, offsetY + m_padding);
+            childFe->SetLayoutOffset(offsetX + m_padding.Left, offsetY + m_padding.Top);
 
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter, NeoWPF::Diagnostics::Level::Debug,
                 "[ContentPresenter] Arrange: child=%p actual=(%d,%d) offset=(%d,%d) layoutOffset=(%d,%d)",

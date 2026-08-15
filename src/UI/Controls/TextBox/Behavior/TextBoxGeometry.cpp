@@ -21,8 +21,8 @@ void TextBox::UpdateCaretFromMouse(int x, int y)
     int absY = 0;
     GetAbsolutePosition(absX, absY);
 
-    const int localX = x - absX - std::max(0, m_padding);
-    const int localY = y - absY - std::max(0, m_padding);
+    const int localX = x - absX - std::max(0, GetPadding().Left);
+    const int localY = y - absY - std::max(0, GetPadding().Top);
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] UpdateCaretFromMouse: x=%d y=%d absX=%d absY=%d localX=%d localY=%d textLength=%zu", x, y, absX, absY, localX, localY, m_text.size());
 
     if (localX <= 0) {

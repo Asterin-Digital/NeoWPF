@@ -25,6 +25,11 @@ public:
 
     static std::shared_ptr<BitmapImage> Create(const std::wstring& uri);
     static std::shared_ptr<BitmapImage> CreateFromFile(const std::wstring& filePath);
+    static std::shared_ptr<BitmapImage> CreateFromMemory(const std::vector<std::uint8_t>& data);
+    static std::shared_ptr<BitmapImage> CreateFromMemory(std::vector<std::uint8_t>&& data);
+
+    void LoadFromMemory(const std::vector<std::uint8_t>& data);
+    void LoadFromMemory(std::vector<std::uint8_t>&& data);
 
     void BeginInit();
     void EndInit();
