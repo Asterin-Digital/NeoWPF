@@ -91,7 +91,7 @@ void ExecuteRendererDraw(const CommandList& cmd)
     constexpr size_t kVertexBufferCapacity = 1 << 20;
     constexpr size_t kMaxRectVertices = kVertexBufferCapacity / sizeof(Vertex);
     std::vector<Vertex> rectVerts;
-    rectVerts.reserve(cmd.rects.size() * 6);
+    rectVerts.reserve(cmd.commands.size() * 2);
 
     struct Point2 { float x; float y; };
     const auto rotatePoint = [](float x, float y, float centerX, float centerY, float angleRadians) {
@@ -200,98 +200,10 @@ void ExecuteRendererDraw(const CommandList& cmd)
         }
     };
 
-    for (const auto& r : cmd.rects) {
-        const float baseAlpha = ((r.color >> 24) & 0xFF) / 255.0f;
-        const float red = ((r.color >> 16) & 0xFF) / 255.0f;
-        const float green = ((r.color >> 8) & 0xFF) / 255.0f;
-        const float blue = (r.color & 0xFF) / 255.0f;
-        const float alpha = baseAlpha * r.opacity;
-
-        if (std::fabs(r.rotationRadians) < 1e-6f) {
-            float clippedX = 0.0f;
-            float clippedY = 0.0f;
-            float clippedW = 0.0f;
-            float clippedH = 0.0f;
-            const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
-            if (clipped) {
-                if (clippedW > 0.0f && clippedH > 0.0f) {
-                    pushRect(clippedX, clippedY, clippedW, clippedH, red, green, blue, alpha, r.rotationRadians);
-                }
-            } else {
-                pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha, r.rotationRadians);
-            }
-        } else {
-            pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha, r.rotationRadians);
-        }
-    }
-
-    for (const auto& r : cmd.roundedRects) {
-        const float baseAlpha = ((r.color >> 24) & 0xFF) / 255.0f;
-        const float red = ((r.color >> 16) & 0xFF) / 255.0f;
-        const float green = ((r.color >> 8) & 0xFF) / 255.0f;
-        const float blue = (r.color & 0xFF) / 255.0f;
-        const float alpha = baseAlpha * r.opacity;
-
-        if (std::fabs(r.rotationRadians) < 1e-6f) {
-            float clippedX = 0.0f;
-            float clippedY = 0.0f;
-            float clippedW = 0.0f;
-            float clippedH = 0.0f;
-            const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
-            if (clipped) {
-                if (clippedW > 0.0f && clippedH > 0.0f) {
-                    pushRoundedRect(clippedX, clippedY, clippedW, clippedH, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians);
-                }
-            } else {
-                pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians);
-            }
-        } else {
-            pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians);
-        }
-    }
-
-    if (!rectVerts.empty() && g_vs && g_ps && g_inputLayout && g_vertexBuffer) {
-        D3D11_MAPPED_SUBRESOURCE mapped = {};
-        if (SUCCEEDED(g_context->Map(g_constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
-            const float vp[2] = {static_cast<float>(width), static_cast<float>(height)};
-            memcpy(mapped.pData, vp, sizeof(vp));
-            g_context->Unmap(g_constantBuffer.Get(), 0);
-        }
-
-        const float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-        g_context->OMSetBlendState(blendState.Get(), blendFactor, 0xffffffff);
-
-        UINT stride = sizeof(Vertex);
-        UINT offset = 0;
-        g_context->IASetInputLayout(g_inputLayout.Get());
-        g_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        g_context->IASetVertexBuffers(0, 1, g_vertexBuffer.GetAddressOf(), &stride, &offset);
-        g_context->VSSetShader(g_vs.Get(), nullptr, 0);
-        g_context->PSSetShader(g_ps.Get(), nullptr, 0);
-        g_context->VSSetConstantBuffers(0, 1, g_constantBuffer.GetAddressOf());
-
-        size_t remainingVertices = rectVerts.size();
-        size_t vertexOffset = 0;
-        while (remainingVertices > 0) {
-            size_t chunkVertices = std::min(remainingVertices, kMaxRectVertices);
-            D3D11_MAPPED_SUBRESOURCE vmap = {};
-            if (SUCCEEDED(g_context->Map(g_vertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &vmap))) {
-                memcpy(vmap.pData, rectVerts.data() + vertexOffset, chunkVertices * sizeof(Vertex));
-                g_context->Unmap(g_vertexBuffer.Get(), 0);
-            }
-            g_context->Draw(static_cast<UINT>(chunkVertices), 0);
-            remainingVertices -= chunkVertices;
-            vertexOffset += chunkVertices;
-        }
-        g_context->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
-    }
-
     struct TextVertex { float x, y; float u, v; float r, g, b, a; };
     constexpr size_t kMaxTextVertices = kVertexBufferCapacity / sizeof(TextVertex);
     std::vector<TextVertex> textVerts;
-    textVerts.reserve(std::min<size_t>(cmd.texturedQuads.size() * 6, kMaxTextVertices));
     std::vector<uint32_t> textQuadTextureIds;
-    textQuadTextureIds.reserve(cmd.texturedQuads.size());
 
     auto pushTextQuad = [&](float x, float y, float w, float h, float u0, float v0, float u1, float v1, uint32_t tintColor, float opacity, uint32_t textureId, float rotationRadians = 0.0f) {
         const float baseAlpha = ((tintColor >> 24) & 0xFF) / 255.0f;
@@ -338,34 +250,52 @@ void ExecuteRendererDraw(const CommandList& cmd)
         textQuadTextureIds.push_back(textureId);
     };
 
-    for (const auto& q : cmd.texturedQuads) {
-        float clippedX = 0.0f;
-        float clippedY = 0.0f;
-        float clippedW = 0.0f;
-        float clippedH = 0.0f;
-        if (q.rotationRadians == 0.0f) {
-            const bool clipped = ClipRectToBounds(q.x, q.y, q.w, q.h, q.clip, clippedX, clippedY, clippedW, clippedH);
-            if (clipped) {
-                if (clippedW > 0.0f && clippedH > 0.0f) {
-                    const float uSpan = q.u1 - q.u0;
-                    const float vSpan = q.v1 - q.v0;
-                    const float xDelta = clippedX - q.x;
-                    const float yDelta = clippedY - q.y;
-                    const float newU0 = q.u0 + (xDelta / q.w) * uSpan;
-                    const float newV0 = q.v0 + (yDelta / q.h) * vSpan;
-                    const float newU1 = newU0 + (clippedW / q.w) * uSpan;
-                    const float newV1 = newV0 + (clippedH / q.h) * vSpan;
-                    pushTextQuad(clippedX, clippedY, clippedW, clippedH, newU0, newV0, newU1, newV1, q.tintColor, q.opacity, q.textureId);
-                }
-            } else {
-                pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId);
-            }
-        } else {
-            pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId, q.rotationRadians);
+    auto flushSolidBatch = [&]() {
+        if (rectVerts.empty() || !g_vs || !g_ps || !g_inputLayout || !g_vertexBuffer) {
+            return;
         }
-    }
 
-    if (!textVerts.empty() && g_vsText && g_psText && g_inputLayoutText && g_vertexBuffer && g_samplerState) {
+        D3D11_MAPPED_SUBRESOURCE mapped = {};
+        if (SUCCEEDED(g_context->Map(g_constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
+            const float vp[2] = {static_cast<float>(width), static_cast<float>(height)};
+            memcpy(mapped.pData, vp, sizeof(vp));
+            g_context->Unmap(g_constantBuffer.Get(), 0);
+        }
+
+        const float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+        g_context->OMSetBlendState(blendState.Get(), blendFactor, 0xffffffff);
+
+        UINT stride = sizeof(Vertex);
+        UINT offset = 0;
+        g_context->IASetInputLayout(g_inputLayout.Get());
+        g_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        g_context->IASetVertexBuffers(0, 1, g_vertexBuffer.GetAddressOf(), &stride, &offset);
+        g_context->VSSetShader(g_vs.Get(), nullptr, 0);
+        g_context->PSSetShader(g_ps.Get(), nullptr, 0);
+        g_context->VSSetConstantBuffers(0, 1, g_constantBuffer.GetAddressOf());
+
+        size_t remainingVertices = rectVerts.size();
+        size_t vertexOffset = 0;
+        while (remainingVertices > 0) {
+            size_t chunkVertices = std::min(remainingVertices, kMaxRectVertices);
+            D3D11_MAPPED_SUBRESOURCE vmap = {};
+            if (SUCCEEDED(g_context->Map(g_vertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &vmap))) {
+                memcpy(vmap.pData, rectVerts.data() + vertexOffset, chunkVertices * sizeof(Vertex));
+                g_context->Unmap(g_vertexBuffer.Get(), 0);
+            }
+            g_context->Draw(static_cast<UINT>(chunkVertices), 0);
+            remainingVertices -= chunkVertices;
+            vertexOffset += chunkVertices;
+        }
+        g_context->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
+        rectVerts.clear();
+    };
+
+    auto flushTextBatch = [&]() {
+        if (textVerts.empty() || !g_vsText || !g_psText || !g_inputLayoutText || !g_vertexBuffer || !g_samplerState) {
+            return;
+        }
+
         const float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         g_context->OMSetBlendState(blendState.Get(), blendFactor, 0xffffffff);
 
@@ -421,6 +351,129 @@ void ExecuteRendererDraw(const CommandList& cmd)
         }
 
         g_context->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
+        textVerts.clear();
+        textQuadTextureIds.clear();
+    };
+
+    CommandList::CommandKind lastKind = CommandList::CommandKind::Rect;
+    bool hasPendingKind = false;
+
+    for (const auto& command : cmd.commands) {
+        if (hasPendingKind && command.kind != lastKind) {
+            if (lastKind == CommandList::CommandKind::TexturedQuad) {
+                flushTextBatch();
+            } else {
+                flushSolidBatch();
+            }
+        }
+
+        switch (command.kind) {
+        case CommandList::CommandKind::Rect: {
+            const auto& r = command.rect;
+            const float baseAlpha = ((r.color >> 24) & 0xFF) / 255.0f;
+            const float red = ((r.color >> 16) & 0xFF) / 255.0f;
+            const float green = ((r.color >> 8) & 0xFF) / 255.0f;
+            const float blue = (r.color & 0xFF) / 255.0f;
+            const float alpha = baseAlpha * r.opacity;
+
+            if (std::fabs(r.rotationRadians) < 1e-6f) {
+                float clippedX = 0.0f;
+                float clippedY = 0.0f;
+                float clippedW = 0.0f;
+                float clippedH = 0.0f;
+                const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
+                if (clipped) {
+                    if (clippedW > 0.0f && clippedH > 0.0f) {
+                        pushRect(clippedX, clippedY, clippedW, clippedH, red, green, blue, alpha, r.rotationRadians);
+                    }
+                } else {
+                    pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha, r.rotationRadians);
+                }
+            } else {
+                pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha, r.rotationRadians);
+            }
+            lastKind = command.kind;
+            hasPendingKind = true;
+            break;
+        }
+        case CommandList::CommandKind::RoundedRect: {
+            const auto& r = command.roundedRect;
+            const float baseAlpha = ((r.color >> 24) & 0xFF) / 255.0f;
+            const float red = ((r.color >> 16) & 0xFF) / 255.0f;
+            const float green = ((r.color >> 8) & 0xFF) / 255.0f;
+            const float blue = (r.color & 0xFF) / 255.0f;
+            const float alpha = baseAlpha * r.opacity;
+
+            if (std::fabs(r.rotationRadians) < 1e-6f) {
+                float clippedX = 0.0f;
+                float clippedY = 0.0f;
+                float clippedW = 0.0f;
+                float clippedH = 0.0f;
+                const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
+                if (clipped) {
+                    if (clippedW > 0.0f && clippedH > 0.0f) {
+                        pushRoundedRect(clippedX, clippedY, clippedW, clippedH, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians);
+                    }
+                } else {
+                    pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians);
+                }
+            } else {
+                pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians);
+            }
+            lastKind = command.kind;
+            hasPendingKind = true;
+            break;
+        }
+        case CommandList::CommandKind::TexturedQuad: {
+            const auto& q = command.texturedQuad;
+            if (hasPendingKind && lastKind != CommandList::CommandKind::TexturedQuad) {
+                flushSolidBatch();
+            }
+            float clippedX = 0.0f;
+            float clippedY = 0.0f;
+            float clippedW = 0.0f;
+            float clippedH = 0.0f;
+            if (q.rotationRadians == 0.0f) {
+                const bool clipped = ClipRectToBounds(q.x, q.y, q.w, q.h, q.clip, clippedX, clippedY, clippedW, clippedH);
+                if (clipped) {
+                    if (clippedW > 0.0f && clippedH > 0.0f) {
+                        const float uSpan = q.u1 - q.u0;
+                        const float vSpan = q.v1 - q.v0;
+                        const float xDelta = clippedX - q.x;
+                        const float yDelta = clippedY - q.y;
+                        const float newU0 = q.u0 + (xDelta / q.w) * uSpan;
+                        const float newV0 = q.v0 + (yDelta / q.h) * vSpan;
+                        const float newU1 = newU0 + (clippedW / q.w) * uSpan;
+                        const float newV1 = newV0 + (clippedH / q.h) * vSpan;
+                        pushTextQuad(clippedX, clippedY, clippedW, clippedH, newU0, newV0, newU1, newV1, q.tintColor, q.opacity, q.textureId);
+                    }
+                } else {
+                    pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId);
+                }
+            } else {
+                pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId, q.rotationRadians);
+            }
+            lastKind = command.kind;
+            hasPendingKind = true;
+            break;
+        }
+        }
+    }
+
+    if (hasPendingKind) {
+        if (lastKind == CommandList::CommandKind::TexturedQuad) {
+            flushTextBatch();
+        } else {
+            flushSolidBatch();
+        }
+    }
+
+    if (hasPendingKind) {
+        if (lastKind == CommandList::CommandKind::TexturedQuad) {
+            flushTextBatch();
+        } else {
+            flushSolidBatch();
+        }
     }
 }
 

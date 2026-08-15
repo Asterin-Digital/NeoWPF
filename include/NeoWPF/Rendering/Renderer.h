@@ -19,6 +19,12 @@ namespace NeoWPF::Rendering {
     @internal
 */
 struct CommandList {
+    enum class CommandKind {
+        Rect,
+        RoundedRect,
+        TexturedQuad,
+    };
+
     /*
         @summary
         Describes a filled rectangle draw command.
@@ -43,9 +49,14 @@ struct CommandList {
     */
     struct DrawTexturedQuad { float x; float y; float w; float h; float u0; float v0; float u1; float v1; uint32_t textureId; uint32_t tintColor; float opacity; ClipRect clip; float rotationRadians = 0.0f; };
 
-    std::vector<DrawRect> rects;
-    std::vector<DrawRoundedRect> roundedRects;
-    std::vector<DrawTexturedQuad> texturedQuads;
+    struct Command {
+        CommandKind kind;
+        DrawRect rect{};
+        DrawRoundedRect roundedRect{};
+        DrawTexturedQuad texturedQuad{};
+    };
+
+    std::vector<Command> commands;
 
     /*
         @summary
@@ -53,7 +64,7 @@ struct CommandList {
 
         @internal
     */
-    void Clear() { rects.clear(); roundedRects.clear(); texturedQuads.clear(); }
+    void Clear() { commands.clear(); }
 
     /*
         @summary
@@ -85,7 +96,9 @@ struct CommandList {
 
         @internal
     */
-    void DrawRect(float x, float y, float w, float h, uint32_t color, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f) { rects.push_back({x,y,w,h,color,opacity,clip,rotationRadians}); }
+    void DrawRect(float x, float y, float w, float h, uint32_t color, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f) {
+        commands.push_back({CommandKind::Rect, {x, y, w, h, color, opacity, clip, rotationRadians}, {}, {}});
+    }
 
     /*
         @summary
@@ -129,7 +142,9 @@ struct CommandList {
 
         @internal
     */
-    void DrawRoundedRect(float x, float y, float w, float h, float topLeft, float topRight, float bottomRight, float bottomLeft, uint32_t color, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f) { roundedRects.push_back({x,y,w,h,topLeft,topRight,bottomRight,bottomLeft,color,opacity,clip,rotationRadians}); }
+    void DrawRoundedRect(float x, float y, float w, float h, float topLeft, float topRight, float bottomRight, float bottomLeft, uint32_t color, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f) {
+        commands.push_back({CommandKind::RoundedRect, {}, {x, y, w, h, topLeft, topRight, bottomRight, bottomLeft, color, opacity, clip, rotationRadians}, {}});
+    }
 
     /*
         @summary
@@ -173,7 +188,9 @@ struct CommandList {
 
         @internal
     */
-    void DrawTexturedQuad(float x, float y, float w, float h, float u0, float v0, float u1, float v1, uint32_t tex, uint32_t tintColor, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f) { texturedQuads.push_back({x,y,w,h,u0,v0,u1,v1,tex,tintColor,opacity,clip,rotationRadians}); }
+    void DrawTexturedQuad(float x, float y, float w, float h, float u0, float v0, float u1, float v1, uint32_t tex, uint32_t tintColor, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f) {
+        commands.push_back({CommandKind::TexturedQuad, {}, {}, {x, y, w, h, u0, v0, u1, v1, tex, tintColor, opacity, clip, rotationRadians}});
+    }
 };
 
 /*
