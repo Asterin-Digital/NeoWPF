@@ -12,6 +12,15 @@ namespace NeoWPF::UI::Properties {
             static_cast<void (UI::TextBox::*)(const std::wstring&)>(&UI::TextBox::SetText),
             textMetadata);
 
+        PropertyMetadata placeholderTextMetadata;
+        placeholderTextMetadata.DefaultValue = std::any(std::wstring());
+        placeholderTextMetadata.Flags = PropertyFlags::AffectsRender | PropertyFlags::AffectsMeasure;
+        RegisterProperty<UI::TextBox, std::wstring>(
+            "PlaceholderText",
+            &UI::TextBox::GetPlaceholderText,
+            static_cast<void (UI::TextBox::*)(const std::wstring&)>(&UI::TextBox::SetPlaceholderText),
+            placeholderTextMetadata);
+
         PropertyMetadata textColorMetadata;
         textColorMetadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu));
         textColorMetadata.Flags = PropertyFlags::AffectsRender;

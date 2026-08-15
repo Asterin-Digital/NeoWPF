@@ -179,6 +179,45 @@ void TextBox::OnDependencyPropertyChanged(const Properties::DependencyProperty& 
     Content::ContentControl::OnDependencyPropertyChanged(property, metadata, oldValue, newValue, source);
 }
 
+void TextBox::SetPlaceholderText(const std::wstring& placeholder)
+{
+    if (IsApplyingPropertyValue()) {
+        m_placeholderText = placeholder;
+        m_textDirty = true;
+        InvalidateVisual();
+        return;
+    }
+
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("PlaceholderText", *this);
+    if (property) {
+        SetValue(*property, placeholder);
+        return;
+    }
+
+    if (m_placeholderText == placeholder) {
+        return;
+    }
+
+    m_placeholderText = placeholder;
+    m_textDirty = true;
+    InvalidateVisual();
+}
+
+const std::wstring& TextBox::GetPlaceholderText() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("PlaceholderText", *this);
+    if (property) {
+        try {
+            const std::wstring value = GetValue<std::wstring>(*property);
+            if (m_placeholderText != value) {
+                const_cast<TextBox*>(this)->m_placeholderText = value;
+            }
+            return m_placeholderText;
+        } catch (const std::bad_any_cast&) {}
+    }
+    return m_placeholderText;
+}
+
 void TextBox::SetTextColor(NeoWPF::UI::Color color) noexcept
 {
     if (IsApplyingPropertyValue()) { m_textColor = color; InvalidateVisual(); return; }
@@ -410,9 +449,10 @@ void TextBox::Measure(int availableWidth, int availableHeight)
 
     {
         TextLayout measureLayout;
+        const auto displayText = m_text.empty() && !m_placeholderText.empty() ? m_placeholderText : m_text;
         const int contentHostWidth = std::max(0, availableWidth > 0 ? availableWidth - GetPadding().Horizontal() : 0);
         const int contentHostHeight = std::max(0, availableHeight > 0 ? availableHeight - GetPadding().Vertical() : 0);
-        measureLayout.Refresh(m_text, m_fontSize, GetFontFamily(), contentHostWidth, contentHostHeight, m_textWrapping, false);
+        measureLayout.Refresh(displayText, m_fontSize, GetFontFamily(), contentHostWidth, contentHostHeight, m_textWrapping, false);
         desiredHeight = std::max(minHeight, measureLayout.GetContentHeight() + GetPadding().Vertical());
         desiredWidth = std::max(desiredWidth, measureLayout.GetContentWidth() + GetPadding().Horizontal());
     }
@@ -507,6 +547,15 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     const auto clip = NeoWPF::Rendering::ClipRect{ static_cast<float>(contentHostX), static_cast<float>(contentHostY), static_cast<float>(contentHostWidth), static_cast<float>(contentHostHeight), true };
 
+    const bool showingPlaceholder = m_text.empty() && !m_placeholderText.empty();
+    auto drawColor = GetTextColor();
+    if (showingPlaceholder) {
+        drawColor.A = static_cast<std::uint8_t>(std::max(0u, static_cast<unsigned>(GetTextColor().A) / 2u));
+        if (drawColor.A < 0x40u) {
+            drawColor.A = 0x40u;
+        }
+    }
+
     const int contentWidth = std::max(0, m_textLayout.GetContentWidth());
     const int contentHeight = std::max(0, m_textLayout.GetContentHeight());
     int textOffsetX = 0;
@@ -549,7 +598,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             0.0f, 0.0f,
             uvRight, uvBottom,
             line.textureId,
-            GetTextColor().ToArgb(),
+            drawColor.ToArgb(),
             GetOpacity(),
             clip);
 
@@ -598,7 +647,8 @@ void TextBox::EnsureTextTexture()
         return;
     }
 
-    m_textLayout.Refresh(m_text, m_fontSize, GetFontFamily(), contentHostWidth, contentHostHeight, m_textWrapping, true);
+    const auto displayText = (m_text.empty() && !m_placeholderText.empty()) ? m_placeholderText : m_text;
+    m_textLayout.Refresh(displayText, m_fontSize, GetFontFamily(), contentHostWidth, contentHostHeight, m_textWrapping, true);
     m_textDirty = false;
     InvalidateVisual();
 }

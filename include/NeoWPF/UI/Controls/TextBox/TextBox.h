@@ -179,6 +179,16 @@ public:
 
     /*
         @summary
+        Sets a ghost-text placeholder shown while the box is empty.
+
+        @param placeholder
+        The text to render when the box has no real content.
+    */
+    void SetPlaceholderText(const std::wstring& placeholder);
+    const std::wstring& GetPlaceholderText() const noexcept;
+
+    /*
+        @summary
         Raised when the text changes.
 
         @details
@@ -443,6 +453,7 @@ private:
 
 
     std::wstring m_text;
+    std::wstring m_placeholderText;
     NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu);
     NeoWPF::UI::Color m_caretColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
     int m_fontSize = 16;
