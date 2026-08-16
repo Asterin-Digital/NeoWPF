@@ -10,6 +10,8 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
+#include <NeoWPF/UI/Layout/Placement/TextWrapping.h>
+#include <NeoWPF/UI/Text/TextRasterCache.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
@@ -18,20 +20,6 @@ namespace NeoWPF::UI {
 
 class UIElement;
 void ApplyTextBoxThemeStyle(UIElement* element);
-
-/*
-    @summary
-    Controls how text wraps inside the available width
-
-    @details
-    `NoWrap` keeps the text on a single line, `Wrap` breaks lines when space runs out, and
-    `WrapWithOverflow` wraps while still allowing the content to extend past the bounds.
-*/
-enum class TextWrapping {
-    NoWrap,
-    Wrap,
-    WrapWithOverflow
-};
 
 enum class CaretScrollBehavior {
     Disabled,
@@ -43,50 +31,6 @@ class TextBoxStyle;
 void RegisterTextBoxStyles();
 
 class TextBoxTemplate; 
-
-class TextLayout {
-public:
-    struct LineRenderData {
-        std::wstring text;
-        uint32_t textureId = 0;
-        int width = 0;
-        int height = 0;
-        int lineHeight = 0;
-        std::size_t charStart = 0;
-        std::size_t charEnd = 0;
-    };
-
-    TextLayout() noexcept;
-    ~TextLayout();
-
-    void Refresh(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int availableWidth, int availableHeight, TextWrapping textWrapping, bool createTextures = true);
-    void Rebuild(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int availableWidth, int availableHeight, TextWrapping textWrapping);
-    void UploadTextures();
-    void Clear();
-
-    const std::vector<LineRenderData>& GetLines() const noexcept { return m_lines; }
-    std::size_t GetLineCount() const noexcept { return m_lines.size(); }
-    int GetContentWidth() const noexcept { return m_contentWidth; }
-    int GetContentHeight() const noexcept { return m_contentHeight; }
-
-    int GetLineHeight(std::size_t lineIndex) const;
-    int GetLineVisualOffset(std::size_t lineIndex) const;
-    std::pair<std::size_t, std::size_t> GetCaretLineColumn(std::size_t caretPosition) const;
-    int GetCaretY(std::size_t caretPosition) const;
-    int GetCaretHeight(std::size_t caretPosition) const;
-    static int MeasureLineHeight(const std::wstring& text, int fontSize, const std::wstring& fontFamily);
-
-private:
-    std::wstring m_text;
-    int m_fontSize = 16;
-    std::wstring m_fontFamily;
-    std::vector<LineRenderData> m_lines;
-    int m_contentWidth = 0;
-    int m_contentHeight = 0;
-    int m_availableWidth = 0;
-    int m_availableHeight = 0;
-    TextWrapping m_textWrapping = TextWrapping::NoWrap;
-};
 
 /*
     @summary
@@ -470,7 +414,7 @@ private:
     std::shared_ptr<Styling::VisualStateManager> m_visualStateManager;
     std::string m_currentVisualState;
 
-    TextLayout m_textLayout;
+    NeoWPF::UI::Text::TextRasterCache m_renderCache;
     bool m_textDirty = true;
     bool m_isFocused = false;
     CaretState m_caret;

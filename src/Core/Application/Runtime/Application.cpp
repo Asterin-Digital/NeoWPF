@@ -163,8 +163,26 @@ Application* Application::Current()
     return s_current;
 }
 
+void Application::SetLayoutInspection(bool enabled)
+{
+    GetAppState().layoutDebugLogging.store(enabled);
+}
+
+bool Application::IsLayoutInspectionEnabled()
+{
+    return GetAppState().layoutDebugLogging.load();
+}
+
 void Application::DumpVisualTree(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options)
 {
+    DumpVisualTreeImpl(options);
+}
+
+void Application::DumpLayoutTree()
+{
+    NeoWPF::Diagnostics::VisualTreeDumpOptions options;
+    options.flags = NeoWPF::Diagnostics::IncludeLayout | NeoWPF::Diagnostics::IncludeProperties;
+    options.maxDepth = 0;
     DumpVisualTreeImpl(options);
 }
 

@@ -57,6 +57,15 @@ namespace NeoWPF::UI::Properties {
             static_cast<void (UI::TextBlock::*)(TextVerticalAlignment)>(&UI::TextBlock::SetTextVerticalAlignment),
             textVerticalAlignmentMetadata);
 
+        PropertyMetadata textWrappingMetadata;
+        textWrappingMetadata.DefaultValue = std::any(TextWrapping::NoWrap);
+        textWrappingMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsRender;
+        RegisterProperty<UI::TextBlock, TextWrapping>(
+            "TextWrapping",
+            &UI::TextBlock::GetTextWrapping,
+            &UI::TextBlock::SetTextWrapping,
+            textWrappingMetadata);
+
         PropertyMetadata paddingMetadata;
         paddingMetadata.DefaultValue = std::any(UI::Thickness{});
         paddingMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsArrange | PropertyFlags::AffectsRender;

@@ -170,6 +170,28 @@ public:
 
     /*
         @summary
+        Enables or disables global layout inspection.
+
+        @param enabled
+        True to log measure/arrange results for framework elements.
+
+        @internal
+    */
+    static void SetLayoutInspection(bool enabled);
+
+    /*
+        @summary
+        Returns whether layout inspection is enabled.
+
+        @returns
+        True when layout measure/arrange state is being reported.
+
+        @internal
+    */
+    static bool IsLayoutInspectionEnabled();
+
+    /*
+        @summary
         Dumps the current visual tree for debugging.
 
         @param options
@@ -178,6 +200,14 @@ public:
         @internal
     */
     static void DumpVisualTree(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options = NeoWPF::Diagnostics::VisualTreeDumpOptions{});
+
+    /*
+        @summary
+        Dumps the current visual tree with layout metadata enabled.
+
+        @internal
+    */
+    static void DumpLayoutTree();
 
     /*
         @summary

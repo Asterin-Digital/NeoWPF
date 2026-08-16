@@ -27,6 +27,12 @@ public:
         TextVerticalAlignment verticalAlignment,
         int& outX,
         int& outY) noexcept;
+
+    static int GetBlockVerticalOffset(int contentWidth, int contentHeight, int viewportHeight,
+                                      TextVerticalAlignment alignment) noexcept;
+
+    static int GetLineHorizontalOffset(int lineWidth, int viewportWidth,
+                                      TextHorizontalAlignment alignment) noexcept;
 };
 
 }

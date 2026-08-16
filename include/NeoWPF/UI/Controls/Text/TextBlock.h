@@ -6,6 +6,8 @@
 #include <NeoWPF/UI/Core/Element/IContentAware.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
+#include <NeoWPF/UI/Layout/Placement/TextWrapping.h>
+#include <NeoWPF/UI/Text/TextRasterCache.h>
 #include <NeoWPF/Rendering/Renderer.h>
 
 namespace NeoWPF::Input::Core
@@ -128,6 +130,21 @@ public:
 
     /*
         @summary
+        Sets text wrapping behavior.
+
+        @param wrapping
+        The wrapping mode to apply (NoWrap, Wrap, WrapWithOverflow).
+    */
+    void SetTextWrapping(TextWrapping wrapping) noexcept;
+
+    /*
+        @summary
+        Returns the current text wrapping mode.
+    */
+    TextWrapping GetTextWrapping() const noexcept;
+
+    /*
+        @summary
         Returns the current font family.
     */
     std::wstring GetFontFamily() const noexcept;
@@ -198,7 +215,9 @@ public:
 
         @internal
     */
-    ContentBounds GetContentBounds() const noexcept override { return {m_textWidth, m_textHeight}; }
+    ContentBounds GetContentBounds() const noexcept override {
+        return { m_textCache.GetContentWidth(), m_textCache.GetContentHeight() };
+    }
 
     /*
         @summary
@@ -206,7 +225,7 @@ public:
 
         @internal
     */
-    int GetContentWidth() const noexcept { return m_textWidth; }
+    int GetContentWidth() const noexcept { return m_textCache.GetContentWidth(); }
 
     /*
         @summary
@@ -214,7 +233,7 @@ public:
 
         @internal
     */
-    int GetContentHeight() const noexcept { return m_textHeight; }
+    int GetContentHeight() const noexcept { return m_textCache.GetContentHeight(); }
 
 protected:
     void OnPaddingChanged(Thickness padding);
@@ -225,17 +244,14 @@ private:
     int m_fontSize = 16;
     std::wstring m_fontFamily = std::wstring(L"Segoe UI");
     int m_padding = 0;
-    uint32_t m_textureId = 0;
-    int m_textWidth = 0;
-    int m_textHeight = 0;
-    int m_textInkTop = 0;
-    int m_textInkHeight = 0;
     TextHorizontalAlignment m_textHorizontalAlignment = TextHorizontalAlignment::Left;
     TextVerticalAlignment m_textVerticalAlignment = TextVerticalAlignment::Top;
+    TextWrapping m_textWrapping = TextWrapping::NoWrap;
     bool m_textDirty = true;
     bool m_isHitTestVisible = true;
-    int m_lastArrangeWidth = 0;
-    int m_lastArrangeHeight = 0;
+    int m_lastArrangeWidth = -1;
+
+    NeoWPF::UI::Text::TextRasterCache m_textCache;
 
     void EnsureTextTexture(int availableWidth, int availableHeight);
 };

@@ -42,6 +42,7 @@ struct AppState {
     std::shared_ptr<NeoWPF::UI::Visual> developerWarningOverlayHost;
     std::atomic<bool> renderThreadInitialized{false};
     std::atomic<bool> renderThreadInitFailed{false};
+    std::atomic<bool> layoutDebugLogging{false};
     std::thread renderThread;
     int exitCode = 0;
 

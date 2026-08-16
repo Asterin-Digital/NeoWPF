@@ -122,6 +122,7 @@ void TextBox::SetText(const std::wstring& text, bool resetScrollOffset)
         m_text = text;
         m_caret.position = std::min(m_caret.position, m_text.size());
         m_textDirty = true;
+        EnsureTextTexture();
         if (resetScrollOffset) {
             if (GetFinalWidth() > 0 && GetFinalHeight() > 0) {
                 SetScrollOffset(0, 0);
@@ -146,6 +147,7 @@ void TextBox::SetText(const std::wstring& text, bool resetScrollOffset)
     m_text = text;
     m_caret.position = std::min(m_caret.position, m_text.size());
     m_textDirty = true;
+    EnsureTextTexture();
     if (resetScrollOffset) {
         if (GetFinalWidth() > 0 && GetFinalHeight() > 0) {
             SetScrollOffset(0, 0);
@@ -291,26 +293,6 @@ TextVerticalAlignment TextBox::GetTextVerticalAlignment() const noexcept
     return m_textVerticalAlignment;
 }
 
-namespace {
-
-int GetTextVerticalAlignmentOffset(int contentWidth, int contentHeight, int viewportHeight, TextVerticalAlignment alignment) noexcept
-{
-    int unusedX = 0;
-    int outY = 0;
-    TextAlignment::ApplyTextAlignment(contentWidth, contentHeight, contentWidth, viewportHeight, TextHorizontalAlignment::Left, alignment, unusedX, outY);
-    return outY;
-}
-
-int GetLineHorizontalAlignmentOffset(int lineWidth, int viewportWidth, TextHorizontalAlignment alignment) noexcept
-{
-    int outX = 0;
-    int unusedY = 0;
-    TextAlignment::ApplyTextAlignment(lineWidth, 1, viewportWidth, 1, alignment, TextVerticalAlignment::Top, outX, unusedY);
-    return outX;
-}
-
-}
-
 void TextBox::SetTextColor(std::uint32_t color) noexcept
 {
     SetTextColor(NeoWPF::UI::Color::FromArgb(color));
@@ -448,13 +430,14 @@ void TextBox::Measure(int availableWidth, int availableHeight)
     int desiredHeight = std::max(minHeight, availableHeight > 0 ? std::min(minHeight, availableHeight) : minHeight);
 
     {
-        TextLayout measureLayout;
         const auto displayText = m_text.empty() && !m_placeholderText.empty() ? m_placeholderText : m_text;
-        const int contentHostWidth = std::max(0, availableWidth > 0 ? availableWidth - GetPadding().Horizontal() : 0);
-        const int contentHostHeight = std::max(0, availableHeight > 0 ? availableHeight - GetPadding().Vertical() : 0);
-        measureLayout.Refresh(displayText, m_fontSize, GetFontFamily(), contentHostWidth, contentHostHeight, m_textWrapping, false);
-        desiredHeight = std::max(minHeight, measureLayout.GetContentHeight() + GetPadding().Vertical());
-        desiredWidth = std::max(desiredWidth, measureLayout.GetContentWidth() + GetPadding().Horizontal());
+        int widthConstraint = 0;
+        if (m_textWrapping != TextWrapping::NoWrap && availableWidth > 0) {
+            widthConstraint = std::max(0, availableWidth - GetPadding().Horizontal());
+        }
+        auto flow = NeoWPF::UI::Text::BreakText(displayText, m_fontSize, GetFontFamily(), widthConstraint, m_textWrapping);
+        desiredHeight = std::max(minHeight, flow.contentHeight + GetPadding().Vertical());
+        desiredWidth = std::max(desiredWidth, flow.contentWidth + GetPadding().Horizontal());
     }
 
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] Measure: available=%dx%d, desired=%dx%d, textLength=%zu", availableWidth, availableHeight, desiredWidth, desiredHeight, m_text.size());
@@ -472,7 +455,7 @@ void TextBox::Arrange(int finalWidth, int finalHeight)
 {
     Content::ContentControl::Arrange(finalWidth, finalHeight);
 
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] Arrange: final=%dx%d, textDirty=%d, lineCount=%zu", finalWidth, finalHeight, m_textDirty ? 1 : 0, m_textLayout.GetLineCount());
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info, "[TextBox] Arrange: final=%dx%d, textDirty=%d, lineCount=%zu", finalWidth, finalHeight, m_textDirty ? 1 : 0, m_renderCache.GetLines().size());
     if (m_textDirty) {
         EnsureTextTexture();
     }
@@ -556,48 +539,37 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         }
     }
 
-    const int contentWidth = std::max(0, m_textLayout.GetContentWidth());
-    const int contentHeight = std::max(0, m_textLayout.GetContentHeight());
-    int textOffsetX = 0;
-    int textOffsetY = 0;
-    TextAlignment::ApplyTextAlignment(
-        contentWidth,
-        contentHeight,
-        contentHostWidth,
-        contentHostHeight,
-        m_textHorizontalAlignment,
-        m_textVerticalAlignment,
-        textOffsetX,
-        textOffsetY);
+    const auto& lines = m_renderCache.GetLines();
+    if (lines.empty()) {
+        return;
+    }
 
-    const int visibleContentOffsetX = textOffsetX - m_scrollOffsetX;
-    const int visibleContentOffsetY = textOffsetY - m_scrollOffsetY;
-    int currentY = visibleContentOffsetY;
-    const auto& lines = m_textLayout.GetLines();
+    const int verticalAlignmentOffset = TextAlignment::GetBlockVerticalOffset(
+        m_renderCache.GetContentWidth(), m_renderCache.GetContentHeight(), contentHostHeight, m_textVerticalAlignment);
+    int currentY = verticalAlignmentOffset - m_scrollOffsetY;
+
     for (std::size_t lineIndex = 0; lineIndex < lines.size(); ++lineIndex) {
         const auto& line = lines[lineIndex];
+        const auto textureId = m_renderCache.GetLineTextureId(lineIndex);
         const int lineHeight = std::max(1, line.lineHeight);
-        if (line.textureId == 0 || line.width <= 0 || line.height <= 0) {
+        if (textureId == 0 || line.width <= 0 || line.height <= 0) {
             currentY += lineHeight;
             continue;
         }
 
-        const int drawWidth = line.width;
-        const float uvRight = 1.0f;
-        const int drawHeight = std::max(1, line.height > 0 ? line.height : lineHeight);
-        const float uvBottom = drawHeight > 0 ? static_cast<float>(drawHeight) / static_cast<float>(std::max(1, line.height > 0 ? line.height : lineHeight)) : 1.0f;
-        const int lineVerticalOffset = GetLineVisualOffset(lineIndex);
-        const int lineOffsetX = GetLineHorizontalAlignmentOffset(line.width, contentHostWidth, m_textHorizontalAlignment);
-        const int textureY = contentHostY + currentY + lineVerticalOffset;
+        const int lineOffsetX = TextAlignment::GetLineHorizontalOffset(
+            line.width, contentHostWidth, m_textHorizontalAlignment);
+        const int lineDrawX = contentHostX + lineOffsetX - m_scrollOffsetX;
+        const int lineDrawY = contentHostY + currentY;
 
         commands.DrawTexturedQuad(
-            static_cast<float>(contentHostX + lineOffsetX + visibleContentOffsetX),
-            static_cast<float>(textureY),
-            static_cast<float>(drawWidth),
-            static_cast<float>(drawHeight),
+            static_cast<float>(lineDrawX),
+            static_cast<float>(lineDrawY),
+            static_cast<float>(line.width),
+            static_cast<float>(line.height),
             0.0f, 0.0f,
-            uvRight, uvBottom,
-            line.textureId,
+            1.0f, 1.0f,
+            textureId,
             drawColor.ToArgb(),
             GetOpacity(),
             clip);
@@ -619,8 +591,8 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
         const uint32_t caretTextureId = GetCaretTextureId();
         commands.DrawTexturedQuad(
-            static_cast<float>(contentHostX + caretX + visibleContentOffsetX),
-            static_cast<float>(contentHostY + caretY + caretVerticalOffset + visibleContentOffsetY),
+            static_cast<float>(contentHostX + caretX - m_scrollOffsetX),
+            static_cast<float>(contentHostY + verticalAlignmentOffset + caretY + caretVerticalOffset - m_scrollOffsetY),
             1.0f,
             static_cast<float>(caretHeight),
             0.0f, 0.0f,
@@ -641,21 +613,22 @@ void TextBox::EnsureTextTexture()
     }
 
     const int contentHostWidth = std::max(0, GetFinalWidth() - GetPadding().Horizontal());
-    const int contentHostHeight = std::max(0, GetFinalHeight() - GetPadding().Vertical());
-    if (contentHostWidth <= 0 || contentHostHeight <= 0) {
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] EnsureTextTexture: content host size not ready (%d,%d); skipping texture refresh", contentHostWidth, contentHostHeight);
+    if (contentHostWidth <= 0) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] EnsureTextTexture: content host width not ready; skipping texture refresh");
         return;
     }
 
+    int widthConstraint = 0;
+    if (m_textWrapping != TextWrapping::NoWrap) {
+        widthConstraint = contentHostWidth;
+    }
+
     const auto displayText = (m_text.empty() && !m_placeholderText.empty()) ? m_placeholderText : m_text;
-    m_textLayout.Refresh(displayText, m_fontSize, GetFontFamily(), contentHostWidth, contentHostHeight, m_textWrapping, true);
+    m_renderCache.Refresh(displayText, m_fontSize, GetFontFamily(), widthConstraint, m_textWrapping);
     m_textDirty = false;
     InvalidateVisual();
 }
 
-int TextBox::GetLineVisualOffset(std::size_t lineIndex) const
-{
-    return m_textLayout.GetLineVisualOffset(lineIndex);
-}
+
 
 }

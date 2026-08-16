@@ -44,4 +44,23 @@ void TextAlignment::ApplyTextAlignment(
     }
 }
 
+int TextAlignment::GetBlockVerticalOffset(int contentWidth, int contentHeight, int viewportHeight,
+                                         TextVerticalAlignment alignment) noexcept
+{
+    int unusedX = 0;
+    int outY = 0;
+    ApplyTextAlignment(contentWidth, contentHeight, contentWidth, viewportHeight,
+                       TextHorizontalAlignment::Left, alignment, unusedX, outY);
+    return outY;
+}
+
+int TextAlignment::GetLineHorizontalOffset(int lineWidth, int viewportWidth,
+                                         TextHorizontalAlignment alignment) noexcept
+{
+    int outX = 0;
+    int unusedY = 0;
+    ApplyTextAlignment(lineWidth, 1, viewportWidth, 1, alignment, TextVerticalAlignment::Top, outX, unusedY);
+    return outX;
+}
+
 }

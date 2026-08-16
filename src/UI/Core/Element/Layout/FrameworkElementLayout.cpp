@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
 #include <NeoWPF/UI/Animation/Core/Timeline.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
@@ -538,6 +539,16 @@ void FrameworkElement::Measure(int availableWidth, int availableHeight)
     }
     m_desiredWidth = availableWidth;
     m_desiredHeight = availableHeight;
+
+    if (NeoWPF::Core::Application::IsLayoutInspectionEnabled()) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
+            "[Layout] Measure %s desired=(%d x %d) available=(%d x %d)",
+            typeid(*this).name(),
+            m_desiredWidth,
+            m_desiredHeight,
+            availableWidth,
+            availableHeight);
+    }
 }
 
 void FrameworkElement::Arrange(int finalWidth, int finalHeight)
@@ -576,6 +587,18 @@ void FrameworkElement::Arrange(int finalWidth, int finalHeight)
         m_finalHeight = std::max(0, finalHeight);
     } else {
         m_finalHeight = ResolveHeight(finalHeight, m_desiredHeight);
+    }
+
+    if (NeoWPF::Core::Application::IsLayoutInspectionEnabled()) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
+            "[Layout] Arrange %s desired=(%d x %d) final=(%d x %d) offset=(%d,%d)",
+            typeid(*this).name(),
+            m_desiredWidth,
+            m_desiredHeight,
+            m_finalWidth,
+            m_finalHeight,
+            m_offsetX,
+            m_offsetY);
     }
 }
 

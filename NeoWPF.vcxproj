@@ -240,7 +240,6 @@
     <ClCompile Include="src\UI\Controls\ItemsControl\Virtualization\ItemsControlVirtualization.cpp" />
     <ClCompile Include="src\UI\Controls\ItemsControl\Virtualization\ItemContainerGenerator.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxScroll.cpp" />
-    <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextLayout.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\TextBox.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxGeometry.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\TextBoxProperties.cpp" />
@@ -255,6 +254,8 @@
     <ClCompile Include="src\UI\Core\Transform\Transform.cpp" />
     <ClCompile Include="src\UI\Layout\Placement\Alignment.cpp" />
     <ClCompile Include="src\UI\Layout\Placement\TextAlignment.cpp" />
+    <ClCompile Include="src\UI\Text\TextFlow.cpp" />
+    <ClCompile Include="src\UI\Text\TextRasterCache.cpp" />
     <ClCompile Include="src\UI\Layout\Border\BorderProperties.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\Panel.Styles.cpp" />
     <ClCompile Include="src\UI\Layout\Border\Visual\BorderStyles.cpp" />
