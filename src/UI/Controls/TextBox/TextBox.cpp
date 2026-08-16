@@ -122,7 +122,6 @@ void TextBox::SetText(const std::wstring& text, bool resetScrollOffset)
         m_text = text;
         m_caret.position = std::min(m_caret.position, m_text.size());
         m_textDirty = true;
-        EnsureTextTexture();
         if (resetScrollOffset) {
             if (GetFinalWidth() > 0 && GetFinalHeight() > 0) {
                 SetScrollOffset(0, 0);
@@ -147,7 +146,6 @@ void TextBox::SetText(const std::wstring& text, bool resetScrollOffset)
     m_text = text;
     m_caret.position = std::min(m_caret.position, m_text.size());
     m_textDirty = true;
-    EnsureTextTexture();
     if (resetScrollOffset) {
         if (GetFinalWidth() > 0 && GetFinalHeight() > 0) {
             SetScrollOffset(0, 0);
@@ -560,7 +558,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const int lineOffsetX = TextAlignment::GetLineHorizontalOffset(
             line.width, contentHostWidth, m_textHorizontalAlignment);
         const int lineDrawX = contentHostX + lineOffsetX - m_scrollOffsetX;
-        const int lineDrawY = contentHostY + currentY;
+        const int lineDrawY = contentHostY + currentY - line.inkTop;
 
         commands.DrawTexturedQuad(
             static_cast<float>(lineDrawX),
@@ -584,15 +582,12 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             caretX = std::max(0, caretX);
             caretY = std::max(0, caretY);
         }
-        caretX = std::min(caretX, contentHostWidth);
         const int caretHeight = std::max(1, GetCaretHeight());
-        const auto [caretLineIndex, _] = GetCaretLineColumn(m_caret.position);
-        const int caretVerticalOffset = GetLineVisualOffset(caretLineIndex);
 
         const uint32_t caretTextureId = GetCaretTextureId();
         commands.DrawTexturedQuad(
             static_cast<float>(contentHostX + caretX - m_scrollOffsetX),
-            static_cast<float>(contentHostY + verticalAlignmentOffset + caretY + caretVerticalOffset - m_scrollOffsetY),
+            static_cast<float>(contentHostY + verticalAlignmentOffset + caretY - m_scrollOffsetY),
             1.0f,
             static_cast<float>(caretHeight),
             0.0f, 0.0f,

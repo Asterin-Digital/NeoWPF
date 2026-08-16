@@ -159,10 +159,12 @@ std::vector<WrappedSegment> WrapLine(const std::wstring& lineText, std::size_t l
 
 } // namespace
 
-int MeasureLineHeight(const std::wstring& /*text*/, int fontSize, const std::wstring& fontFamily) {
+int MeasureLineHeight(const std::wstring& text, int fontSize, const std::wstring& fontFamily) {
     const int effectiveFontSize = fontSize > 0 ? fontSize : 16;
     const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", effectiveFontSize, fontFamily, 0, 0);
-    return std::max(baseMetrics.height, effectiveFontSize);
+    const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(
+        text.empty() ? L"W" : text, effectiveFontSize, fontFamily, 0, 0);
+    return std::max(baseMetrics.height, std::max(lineMetrics.height, effectiveFontSize));
 }
 
 FlowResult BreakText(const std::wstring& text, int fontSize, const std::wstring& fontFamily,

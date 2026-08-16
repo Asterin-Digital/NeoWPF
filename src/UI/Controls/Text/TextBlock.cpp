@@ -23,7 +23,7 @@ TextBlock::TextBlock(const std::wstring& text) : TextBlock()
 
 TextBlock::~TextBlock()
 {
-    // TextRasterCache destructor handles all texture cleanup via RAII
+    // TextRasterCache destructor already handles cleanup
 }
 
 void TextBlock::SetText(const std::wstring& text)
@@ -237,8 +237,12 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const float localX = static_cast<float>(padding.Left + lineOffsetX);
         const float localY = static_cast<float>(padding.Top + currentY);
 
+        /* @note 
+        do not use ink top here. it's not needed and only breaks text positioning 
+        for example if you use it, the text may position at the bottom or at the top slightly outside
+        even if you use - or +, so do not use it.*/
         const float drawX = blockX + localX * scaleX;
-        const float drawY = blockY + localY * scaleY;
+        const float drawY = blockY + localY * scaleY; 
         const float drawWidth = static_cast<float>(line.width) * scaleX;
         const float drawHeight = static_cast<float>(line.height) * scaleY;
 

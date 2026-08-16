@@ -131,6 +131,7 @@
     <ClInclude Include="include\NeoWPF\Diagnostics\DeveloperWarnings.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\FailureHooks.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\Logger.h" />
+    <ClInclude Include="include\NeoWPF\Diagnostics\TextDumper.h" />
     <ClInclude Include="include\NeoWPF\Diagnostics\VisualTreeDumper.h" />
     <ClInclude Include="include\NeoWPF\Input\Command.h" />
     <ClInclude Include="include\NeoWPF\Input\Input.h" />
@@ -211,6 +212,7 @@
     <ClCompile Include="src\Diagnostics\DeveloperWarnings.cpp" />
     <ClCompile Include="src\Diagnostics\FailureHooks.cpp" />
     <ClCompile Include="src\Diagnostics\PerformanceMetrics.cpp" />
+    <ClCompile Include="src\Diagnostics\TextDumper.cpp" />
     <ClCompile Include="src\UI\Animation\AnimationController.cpp" />
     <ClCompile Include="src\UI\Animation\Storyboards\Storyboard.cpp" />
     <ClCompile Include="src\UI\Animation\Core\Clock.cpp" />

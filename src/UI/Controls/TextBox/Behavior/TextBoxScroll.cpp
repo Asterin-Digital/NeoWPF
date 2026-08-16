@@ -43,6 +43,10 @@ void TextBox::SetScrollOffset(int x, int y) noexcept
 
 void TextBox::EnsureCaretVisible()
 {
+    if (m_textDirty) {
+        EnsureTextTexture();
+    }
+
     const auto& lines = m_renderCache.GetLines();
     if (lines.empty()) {
         return;

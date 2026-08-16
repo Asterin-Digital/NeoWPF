@@ -31,6 +31,7 @@ Review the project's README for details.
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/FailureHooks.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
+#include <NeoWPF/Diagnostics/TextDumper.h>
 ///////////////////////////////////////////////////
 
 // We recommend not to include individual header files for public usage in your own code. 

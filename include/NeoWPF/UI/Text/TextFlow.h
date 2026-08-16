@@ -13,6 +13,7 @@ struct FlowLine {
     int width = 0;
     int height = 0;
     int lineHeight = 0;
+    int inkTop = 0;
 };
 
 struct FlowResult {

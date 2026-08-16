@@ -11,6 +11,7 @@
 #undef FindResourceW
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
+#include <NeoWPF/Diagnostics/TextDumper.h>
 #include <NeoWPF/Platform/NativeWindow.h>
 
 
@@ -208,6 +209,14 @@ public:
         @internal
     */
     static void DumpLayoutTree();
+
+    /*
+        @summary
+        Dumps all text-bearing controls in the current visual tree.
+
+        @internal
+    */
+    static void DumpTextTree(const NeoWPF::Diagnostics::TextDumpOptions& options = NeoWPF::Diagnostics::TextDumpOptions{});
 
     /*
         @summary

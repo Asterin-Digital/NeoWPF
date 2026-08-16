@@ -55,9 +55,13 @@ bool TextRasterCache::Refresh(const std::wstring& text, int fontSize, const std:
 
         int w = 0;
         int h = 0;
-        auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(line.text, effectiveFontSize, fontFamily, w, h);
+        int inkTop = 0;
+        int inkHeight = 0;
+        auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(
+            line.text, effectiveFontSize, 0, 0, fontFamily, w, h, inkTop, inkHeight);
         line.width = w;
         line.height = h;
+        line.inkTop = inkTop;
 
         const std::uint32_t textureId = (!bitmap.empty() && w > 0 && h > 0)
             ? NeoWPF::Rendering::Renderer_CreateTexture(static_cast<unsigned int>(w), static_cast<unsigned int>(h), bitmap.data())

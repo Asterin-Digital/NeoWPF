@@ -8,6 +8,7 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
+#include <NeoWPF/Diagnostics/TextDumper.h>
 
 namespace NeoWPF::Core {
 
@@ -184,6 +185,23 @@ void Application::DumpLayoutTree()
     options.flags = NeoWPF::Diagnostics::IncludeLayout | NeoWPF::Diagnostics::IncludeProperties;
     options.maxDepth = 0;
     DumpVisualTreeImpl(options);
+}
+
+void Application::DumpTextTree(const NeoWPF::Diagnostics::TextDumpOptions& options)
+{
+    auto& appState = GetAppState();
+    if (appState.windows.empty()) {
+        NeoWPF::Diagnostics::LogWarn("No text tree to dump, no windows have content attached");
+        return;
+    }
+
+    for (const auto& windowState : appState.windows) {
+        if (windowState.windowHost && windowState.windowHost->GetContent()) {
+            auto rootVisual = windowState.windowHost->GetContent();
+            rootVisual->Initialize();
+            NeoWPF::Diagnostics::TextDumper::Dump(rootVisual.get(), options);
+        }
+    }
 }
 
 void Application::ShowDeveloperMessage(const std::wstring& title, const std::wstring& message, DeveloperMessageSeverity severity)

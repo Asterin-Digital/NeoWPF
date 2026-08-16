@@ -40,6 +40,7 @@ struct AppState {
     std::atomic<bool> running{false};
     std::atomic<bool> consoleVisible{false};
     std::shared_ptr<NeoWPF::UI::Visual> developerWarningOverlayHost;
+    std::shared_ptr<NeoWPF::UI::Visual> textInspectionOverlayHost;
     std::atomic<bool> renderThreadInitialized{false};
     std::atomic<bool> renderThreadInitFailed{false};
     std::atomic<bool> layoutDebugLogging{false};
@@ -56,6 +57,8 @@ struct AppState {
     bool commandListInitialized = false;
     std::vector<NeoWPF::Diagnostics::DeveloperWarningMessage> pendingDeveloperMessages;
     std::vector<std::shared_ptr<NeoWPF::UI::Visual>> developerOverlayVisuals;
+    std::vector<std::wstring> pendingTextInspectionLines;
+    std::vector<std::shared_ptr<NeoWPF::UI::Visual>> textInspectionOverlayVisuals;
 };
 
 AppState& GetAppState();
