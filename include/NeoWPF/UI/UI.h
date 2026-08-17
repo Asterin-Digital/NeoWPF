@@ -10,6 +10,7 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Core/Element/Control.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Text/FontStyle.h>
 #include <NeoWPF/UI/Core/Media/BitmapSource.h>
 #include <NeoWPF/UI/Core/Media/BitmapImage.h>
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>

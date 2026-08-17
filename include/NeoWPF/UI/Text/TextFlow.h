@@ -1,6 +1,8 @@
 #pragma once
 
+#include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/UI/Layout/Placement/TextWrapping.h>
+#include <NeoWPF/UI/Text/FontStyle.h>
 #include <string>
 #include <vector>
 
@@ -24,7 +26,12 @@ struct FlowResult {
 
 FlowResult BreakText(const std::wstring& text, int fontSize, const std::wstring& fontFamily,
                      int availableWidth, TextWrapping wrapping);
+FlowResult BreakText(const std::wstring& text, int fontSize, const std::wstring& fontFamily,
+                     int availableWidth, TextWrapping wrapping, int fontWeight,
+                     NeoWPF::UI::FontStyle fontStyle);
 
 int MeasureLineHeight(const std::wstring& text, int fontSize, const std::wstring& fontFamily);
+int MeasureLineHeight(const std::wstring& text, int fontSize, const std::wstring& fontFamily,
+                     int fontWeight, NeoWPF::UI::FontStyle fontStyle);
 
 }

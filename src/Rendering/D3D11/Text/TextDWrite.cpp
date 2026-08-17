@@ -10,6 +10,7 @@
 #include <dwrite.h>
 #include <wrl.h>
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <mutex>
 #include <stdexcept>
@@ -67,7 +68,27 @@ ComPtr<IDWriteFactory> GetDWriteFactory()
     return factory;
 }
 
-ComPtr<IDWriteTextFormat> CreateTextFormat(const std::wstring& fontFamily, int fontSize, int maxWidth)
+inline DWRITE_FONT_WEIGHT FontWeightToDWrite(int fontWeight) noexcept
+{
+    constexpr std::array<DWRITE_FONT_WEIGHT, 10> weights{
+        DWRITE_FONT_WEIGHT_THIN,
+        DWRITE_FONT_WEIGHT_THIN,
+        DWRITE_FONT_WEIGHT_EXTRA_LIGHT,
+        DWRITE_FONT_WEIGHT_LIGHT,
+        DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_WEIGHT_MEDIUM,
+        DWRITE_FONT_WEIGHT_SEMI_BOLD,
+        DWRITE_FONT_WEIGHT_BOLD,
+        DWRITE_FONT_WEIGHT_EXTRA_BOLD,
+        DWRITE_FONT_WEIGHT_BLACK
+    };
+    int index = fontWeight / 100;
+    if (index < 0) index = 0;
+    if (index >= 9) index = 9;
+    return weights[index];
+}
+
+ComPtr<IDWriteTextFormat> CreateTextFormat(const std::wstring& fontFamily, int fontSize, int maxWidth, int fontWeight, NeoWPF::UI::FontStyle fontStyle)
 {
     const std::wstring effectiveFontFamily = ResolveFontFamily(fontFamily);
 
@@ -78,12 +99,15 @@ ComPtr<IDWriteTextFormat> CreateTextFormat(const std::wstring& fontFamily, int f
 
     IDWriteFontCollection* customFontCollection = nullptr;
 
+    DWRITE_FONT_WEIGHT dwriteWeight = FontWeightToDWrite(fontWeight);
+    DWRITE_FONT_STYLE dwriteStyle = static_cast<DWRITE_FONT_STYLE>(fontStyle);
+
     ComPtr<IDWriteTextFormat> textFormat;
     HRESULT hr = factory->CreateTextFormat(
         effectiveFontFamily.c_str(),
         customFontCollection,
-        DWRITE_FONT_WEIGHT_NORMAL,
-        DWRITE_FONT_STYLE_NORMAL,
+        dwriteWeight,
+        dwriteStyle,
         DWRITE_FONT_STRETCH_NORMAL,
         static_cast<FLOAT>(fontSize),
         L"en-US",
@@ -92,9 +116,9 @@ ComPtr<IDWriteTextFormat> CreateTextFormat(const std::wstring& fontFamily, int f
         ::NeoWPF::Diagnostics::LogError("CreateTextFormat: failed for font family '%ls' with custom collection 0x%08X; falling back to system fonts", effectiveFontFamily.c_str(), static_cast<unsigned int>(hr));
         hr = factory->CreateTextFormat(
             effectiveFontFamily.c_str(),
-            customFontCollection,
-            DWRITE_FONT_WEIGHT_NORMAL,
-            DWRITE_FONT_STYLE_NORMAL,
+            nullptr,
+            dwriteWeight,
+            dwriteStyle,
             DWRITE_FONT_STRETCH_NORMAL,
             static_cast<FLOAT>(fontSize),
             L"en-US",
@@ -104,8 +128,8 @@ ComPtr<IDWriteTextFormat> CreateTextFormat(const std::wstring& fontFamily, int f
             hr = factory->CreateTextFormat(
                 L"Segoe UI",
                 nullptr,
-                DWRITE_FONT_WEIGHT_NORMAL,
-                DWRITE_FONT_STYLE_NORMAL,
+                dwriteWeight,
+                dwriteStyle,
                 DWRITE_FONT_STRETCH_NORMAL,
                 static_cast<FLOAT>(fontSize),
                 L"en-US",
@@ -127,7 +151,7 @@ ComPtr<IDWriteTextFormat> CreateTextFormat(const std::wstring& fontFamily, int f
 
 }
 
-TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int maxWidth, int maxHeight)
+TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int maxWidth, int maxHeight, int fontWeight, NeoWPF::UI::FontStyle fontStyle)
 {
     if (text.empty()) {
         return {};
@@ -138,7 +162,7 @@ TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, cons
         return {};
     }
 
-    ComPtr<IDWriteTextFormat> textFormat = CreateTextFormat(fontFamily, fontSize, maxWidth);
+    ComPtr<IDWriteTextFormat> textFormat = CreateTextFormat(fontFamily, fontSize, maxWidth, fontWeight, fontStyle);
     if (!textFormat) {
         return {};
     }

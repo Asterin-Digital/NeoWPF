@@ -89,44 +89,61 @@ std::wstring ResolveFontFamily(const std::wstring& requestedFontFamily)
 
  
 
-TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int maxWidth, int maxHeight);
-std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight, int* outInkTop = nullptr, int* outInkHeight = nullptr);
+TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int maxWidth, int maxHeight, int fontWeight, NeoWPF::UI::FontStyle fontStyle);
+std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int fontWeight, NeoWPF::UI::FontStyle fontStyle, int& outWidth, int& outHeight, int* outInkTop = nullptr, int* outInkHeight = nullptr);
 
 TextMetrics MeasureText(const std::wstring& text, int fontSize, int maxWidth, int maxHeight)
 {
-    return TextMeasureTextInternal(text, fontSize, std::wstring(L"Segoe UI"), maxWidth, maxHeight);
+    return TextMeasureTextInternal(text, fontSize, std::wstring(L"Segoe UI"), maxWidth, maxHeight, 400, NeoWPF::UI::FontStyle::Normal);
 }
 
 TextMetrics MeasureText(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int maxWidth, int maxHeight)
 {
-    return TextMeasureTextInternal(text, fontSize, fontFamily, maxWidth, maxHeight);
+    return TextMeasureTextInternal(text, fontSize, fontFamily, maxWidth, maxHeight, 400, NeoWPF::UI::FontStyle::Normal);
+}
+
+TextMetrics MeasureText(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int maxWidth, int maxHeight, int fontWeight, NeoWPF::UI::FontStyle fontStyle)
+{
+    return TextMeasureTextInternal(text, fontSize, fontFamily, maxWidth, maxHeight, fontWeight, fontStyle);
 }
 
 std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int& outWidth, int& outHeight)
 {
-    return TextRenderTextBitmapInternal(text, fontSize, 0, 0, std::wstring(L"Segoe UI"), outWidth, outHeight);
+    return TextRenderTextBitmapInternal(text, fontSize, 0, 0, std::wstring(L"Segoe UI"), 400, NeoWPF::UI::FontStyle::Normal, outWidth, outHeight);
 }
 
 std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, int& outWidth, int& outHeight)
 {
-    return TextRenderTextBitmapInternal(text, fontSize, maxWidth, maxHeight, std::wstring(L"Segoe UI"), outWidth, outHeight);
+    return TextRenderTextBitmapInternal(text, fontSize, maxWidth, maxHeight, std::wstring(L"Segoe UI"), 400, NeoWPF::UI::FontStyle::Normal, outWidth, outHeight);
 }
 
 std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int& outWidth, int& outHeight)
 {
-    return TextRenderTextBitmapInternal(text, fontSize, 0, 0, fontFamily, outWidth, outHeight);
+    return TextRenderTextBitmapInternal(text, fontSize, 0, 0, fontFamily, 400, NeoWPF::UI::FontStyle::Normal, outWidth, outHeight);
 }
 
 std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight)
 {
-    return TextRenderTextBitmapInternal(text, fontSize, maxWidth, maxHeight, fontFamily, outWidth, outHeight);
+    return TextRenderTextBitmapInternal(text, fontSize, maxWidth, maxHeight, fontFamily, 400, NeoWPF::UI::FontStyle::Normal, outWidth, outHeight);
 }
 
 std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight, int& outInkTop, int& outInkHeight)
 {
     outInkTop = 0;
     outInkHeight = 0;
-    return TextRenderTextBitmapInternal(text, fontSize, maxWidth, maxHeight, fontFamily, outWidth, outHeight, &outInkTop, &outInkHeight);
+    return TextRenderTextBitmapInternal(text, fontSize, maxWidth, maxHeight, fontFamily, 400, NeoWPF::UI::FontStyle::Normal, outWidth, outHeight, &outInkTop, &outInkHeight);
+}
+
+std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int fontWeight, NeoWPF::UI::FontStyle fontStyle, int& outWidth, int& outHeight)
+{
+    return TextRenderTextBitmapInternal(text, fontSize, maxWidth, maxHeight, fontFamily, fontWeight, fontStyle, outWidth, outHeight);
+}
+
+std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int fontWeight, NeoWPF::UI::FontStyle fontStyle, int& outWidth, int& outHeight, int& outInkTop, int& outInkHeight)
+{
+    outInkTop = 0;
+    outInkHeight = 0;
+    return TextRenderTextBitmapInternal(text, fontSize, maxWidth, maxHeight, fontFamily, fontWeight, fontStyle, outWidth, outHeight, &outInkTop, &outInkHeight);
 }
 
 }

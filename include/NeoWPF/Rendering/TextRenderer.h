@@ -3,6 +3,7 @@
 #include <dwrite.h>
 #include <string>
 #include <vector>
+#include <NeoWPF/UI/Text/FontStyle.h>
 
 namespace NeoWPF::Rendering::Text {
 
@@ -23,12 +24,15 @@ struct TextMetrics {
 
 TextMetrics MeasureText(const std::wstring& text, int fontSize, int maxWidth, int maxHeight);
 TextMetrics MeasureText(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int maxWidth, int maxHeight);
- 
+TextMetrics MeasureText(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int maxWidth, int maxHeight, int fontWeight, NeoWPF::UI::FontStyle fontStyle);
+
 std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int& outWidth, int& outHeight);
 std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, int& outWidth, int& outHeight);
 std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int& outWidth, int& outHeight);
 std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight);
 std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight, int& outInkTop, int& outInkHeight);
+std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int fontWeight, NeoWPF::UI::FontStyle fontStyle, int& outWidth, int& outHeight);
+std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int fontWeight, NeoWPF::UI::FontStyle fontStyle, int& outWidth, int& outHeight, int& outInkTop, int& outInkHeight);
 
 bool RegisterFontFile(const std::wstring& filePath);
 

@@ -13,6 +13,7 @@
 #include <NeoWPF/UI/Layout/Placement/TextWrapping.h>
 #include <NeoWPF/UI/Text/TextRasterCache.h>
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 
@@ -192,6 +193,30 @@ public:
         The font family name, for example `L"Segoe UI"`.
     */
     void SetFontFamily(const std::wstring& fontFamily) noexcept;
+
+    /*
+        @summary
+        Sets the font weight used to measure and render text.
+    */
+    void SetFontWeight(int fontWeight) noexcept;
+
+    /*
+        @summary
+        Returns the current font weight used to measure and render text.
+    */
+    int GetFontWeight() const noexcept;
+
+    /*
+        @summary
+        Sets the font style used to measure and render text.
+    */
+    void SetFontStyle(NeoWPF::UI::FontStyle fontStyle) noexcept;
+
+    /*
+        @summary
+        Returns the current font style used to measure and render text.
+    */
+    NeoWPF::UI::FontStyle GetFontStyle() const noexcept;
 
     /*
         @summary
@@ -404,6 +429,8 @@ private:
     TextHorizontalAlignment m_textHorizontalAlignment = TextHorizontalAlignment::Left;
     TextVerticalAlignment m_textVerticalAlignment = TextVerticalAlignment::Top;
     std::wstring m_fontFamily = std::wstring(L"Segoe UI");
+    int m_fontWeight = 400;
+    NeoWPF::UI::FontStyle m_fontStyle = NeoWPF::UI::FontStyle::Normal;
     bool m_isReadOnly = false;
     bool m_acceptsReturn = false;
     TextWrapping m_textWrapping = TextWrapping::NoWrap;

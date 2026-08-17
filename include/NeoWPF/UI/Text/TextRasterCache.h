@@ -12,7 +12,9 @@ public:
     ~TextRasterCache();
 
     bool Refresh(const std::wstring& text, int fontSize, const std::wstring& fontFamily,
-                 int availableWidth, TextWrapping wrapping);
+                 int availableWidth, TextWrapping wrapping,
+                 int fontWeight = 400,
+                 NeoWPF::UI::FontStyle fontStyle = NeoWPF::UI::FontStyle::Normal);
     void Clear();
 
     const std::vector<FlowLine>& GetLines() const noexcept { return m_flow.lines; }
@@ -29,6 +31,8 @@ private:
     std::wstring m_cachedFontFamily;
     int m_cachedAvailableWidth = 0;
     TextWrapping m_cachedWrapping = TextWrapping::NoWrap;
+    int m_cachedFontWeight = 400;
+    NeoWPF::UI::FontStyle m_cachedFontStyle = NeoWPF::UI::FontStyle::Normal;
     bool m_hasCache = false;
 };
 

@@ -295,8 +295,8 @@ STDMETHOD(DrawGlyphRun)(void* clientDrawingContext, FLOAT baselineOriginX, FLOAT
 
 }
 
-TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int maxWidth, int maxHeight);
-std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight, int* outInkTop = nullptr, int* outInkHeight = nullptr);
+TextMetrics TextMeasureTextInternal(const std::wstring& text, int fontSize, const std::wstring& fontFamily, int maxWidth, int maxHeight, int fontWeight, NeoWPF::UI::FontStyle fontStyle);
+std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int fontWeight, NeoWPF::UI::FontStyle fontStyle, int& outWidth, int& outHeight, int* outInkTop = nullptr, int* outInkHeight = nullptr);
 
 namespace {
 
@@ -382,7 +382,7 @@ bool TryCreateCustomFontFace(IDWriteFactory* factory, const std::wstring& family
 
 }
 
-std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int& outWidth, int& outHeight, int* outInkTop /*= nullptr*/, int* outInkHeight /*= nullptr*/)
+std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int fontSize, int maxWidth, int maxHeight, const std::wstring& fontFamily, int fontWeight, NeoWPF::UI::FontStyle fontStyle, int& outWidth, int& outHeight, int* outInkTop /*= nullptr*/, int* outInkHeight /*= nullptr*/)
 {
     ::NeoWPF::Diagnostics::Log(::NeoWPF::Diagnostics::Category::TextRendering, ::NeoWPF::Diagnostics::Level::Info,
         "TextRenderTextBitmapInternal: ENTER text='%ls' fontSize=%d maxWidth=%d maxHeight=%d fontFamily='%ls'", 
@@ -539,10 +539,35 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
     }
 
     ComPtr<IDWriteFont> matchedFont;
+
+    // Convert fontWeight to DWRITE_FONT_WEIGHT
+    DWRITE_FONT_WEIGHT dwriteWeight = DWRITE_FONT_WEIGHT_NORMAL;
+    if (fontWeight >= 900) {
+        dwriteWeight = DWRITE_FONT_WEIGHT_BLACK;
+    } else if (fontWeight >= 800) {
+        dwriteWeight = DWRITE_FONT_WEIGHT_EXTRA_BOLD;
+    } else if (fontWeight >= 700) {
+        dwriteWeight = DWRITE_FONT_WEIGHT_BOLD;
+    } else if (fontWeight >= 600) {
+        dwriteWeight = DWRITE_FONT_WEIGHT_SEMI_BOLD;
+    } else if (fontWeight >= 500) {
+        dwriteWeight = DWRITE_FONT_WEIGHT_MEDIUM;
+    } else if (fontWeight >= 400) {
+        dwriteWeight = DWRITE_FONT_WEIGHT_NORMAL;
+    } else if (fontWeight >= 300) {
+        dwriteWeight = DWRITE_FONT_WEIGHT_LIGHT;
+    } else if (fontWeight >= 200) {
+        dwriteWeight = DWRITE_FONT_WEIGHT_EXTRA_LIGHT;
+    } else {
+        dwriteWeight = DWRITE_FONT_WEIGHT_THIN;
+    }
+
+    DWRITE_FONT_STYLE dwriteStyle = static_cast<DWRITE_FONT_STYLE>(fontStyle);
+
     matchedFamily->GetFirstMatchingFont(
-        DWRITE_FONT_WEIGHT_NORMAL,
+        dwriteWeight,
         DWRITE_FONT_STRETCH_NORMAL,
-        DWRITE_FONT_STYLE_NORMAL,
+        dwriteStyle,
         &matchedFont);
     if (!matchedFont) {
         ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: failed to get first matching font for '%ls'", effectiveFontFamily.c_str());

@@ -37,11 +37,12 @@ std::vector<LogicalLine> SplitLines(const std::wstring& text) {
     return lines;
 }
 
-bool FitsWithin(const std::wstring& text, int maxWidth, int fontSize, const std::wstring& fontFamily) {
+bool FitsWithin(const std::wstring& text, int maxWidth, int fontSize, const std::wstring& fontFamily,
+                int fontWeight, NeoWPF::UI::FontStyle fontStyle) {
     if (maxWidth <= 0 || text.empty()) {
         return true;
     }
-    return NeoWPF::Rendering::Text::MeasureText(text, fontSize, fontFamily, 0, 0).width <= maxWidth;
+    return NeoWPF::Rendering::Text::MeasureText(text, fontSize, fontFamily, 0, 0, fontWeight, fontStyle).width <= maxWidth;
 }
 
 struct Token {
@@ -72,13 +73,14 @@ struct WrappedSegment {
 };
 
 void BreakWordByCharacter(const std::wstring& word, std::size_t wordStart, int availableWidth,
-                          int fontSize, const std::wstring& fontFamily,
+                          int fontSize, const std::wstring& fontFamily, int fontWeight,
+                          NeoWPF::UI::FontStyle fontStyle,
                           std::vector<WrappedSegment>& out) {
     std::wstring piece;
     std::size_t pieceStart = wordStart;
     for (std::size_t k = 0; k < word.size(); ++k) {
         const std::wstring candidate = piece + word[k];
-        if (piece.empty() || FitsWithin(candidate, availableWidth, fontSize, fontFamily)) {
+        if (piece.empty() || FitsWithin(candidate, availableWidth, fontSize, fontFamily, fontWeight, fontStyle)) {
             piece = candidate;
             continue;
         }
@@ -95,7 +97,8 @@ void BreakWordByCharacter(const std::wstring& word, std::size_t wordStart, int a
 
 std::vector<WrappedSegment> WrapLine(const std::wstring& lineText, std::size_t lineStartOffset,
                                     int availableWidth, int fontSize, const std::wstring& fontFamily,
-                                    TextWrapping wrapping) {
+                                    TextWrapping wrapping, int fontWeight,
+                                    NeoWPF::UI::FontStyle fontStyle) {
     std::vector<WrappedSegment> result;
     if (lineText.empty() || availableWidth <= 0 || wrapping == TextWrapping::NoWrap) {
         result.push_back({lineText, lineStartOffset, lineStartOffset + lineText.size()});
@@ -116,7 +119,7 @@ std::vector<WrappedSegment> WrapLine(const std::wstring& lineText, std::size_t l
 
     for (const auto& token : tokens) {
         const std::wstring candidate = currentLine + token.text;
-        if (FitsWithin(candidate, availableWidth, fontSize, fontFamily)) {
+        if (FitsWithin(candidate, availableWidth, fontSize, fontFamily, fontWeight, fontStyle)) {
             currentLine = candidate;
             currentLineEnd = token.startOffset + token.text.size();
             continue;
@@ -129,7 +132,7 @@ std::vector<WrappedSegment> WrapLine(const std::wstring& lineText, std::size_t l
             continue;
         }
 
-        if (FitsWithin(token.text, availableWidth, fontSize, fontFamily)) {
+        if (FitsWithin(token.text, availableWidth, fontSize, fontFamily, fontWeight, fontStyle)) {
             flush();
             currentLine = token.text;
             currentLineStart = token.startOffset;
@@ -139,7 +142,7 @@ std::vector<WrappedSegment> WrapLine(const std::wstring& lineText, std::size_t l
 
         flush();
         if (wrapping == TextWrapping::Wrap) {
-            BreakWordByCharacter(token.text, token.startOffset, availableWidth, fontSize, fontFamily, result);
+            BreakWordByCharacter(token.text, token.startOffset, availableWidth, fontSize, fontFamily, fontWeight, fontStyle, result);
             currentLineStart = token.startOffset + token.text.size();
             currentLineEnd = currentLineStart;
         }
@@ -160,21 +163,32 @@ std::vector<WrappedSegment> WrapLine(const std::wstring& lineText, std::size_t l
 } // namespace
 
 int MeasureLineHeight(const std::wstring& text, int fontSize, const std::wstring& fontFamily) {
+    return MeasureLineHeight(text, fontSize, fontFamily, 400, NeoWPF::UI::FontStyle::Normal);
+}
+
+int MeasureLineHeight(const std::wstring& text, int fontSize, const std::wstring& fontFamily,
+                     int fontWeight, NeoWPF::UI::FontStyle fontStyle) {
     const int effectiveFontSize = fontSize > 0 ? fontSize : 16;
-    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", effectiveFontSize, fontFamily, 0, 0);
+    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", effectiveFontSize, fontFamily, 0, 0, fontWeight, fontStyle);
     const auto lineMetrics = NeoWPF::Rendering::Text::MeasureText(
-        text.empty() ? L"W" : text, effectiveFontSize, fontFamily, 0, 0);
+        text.empty() ? L"W" : text, effectiveFontSize, fontFamily, 0, 0, fontWeight, fontStyle);
     return std::max(baseMetrics.height, std::max(lineMetrics.height, effectiveFontSize));
 }
 
 FlowResult BreakText(const std::wstring& text, int fontSize, const std::wstring& fontFamily,
                     int availableWidth, TextWrapping wrapping) {
+    return BreakText(text, fontSize, fontFamily, availableWidth, wrapping, 400, NeoWPF::UI::FontStyle::Normal);
+}
+
+FlowResult BreakText(const std::wstring& text, int fontSize, const std::wstring& fontFamily,
+                    int availableWidth, TextWrapping wrapping, int fontWeight,
+                    NeoWPF::UI::FontStyle fontStyle) {
     FlowResult flow;
     const auto logicalLines = SplitLines(text);
 
     for (const auto& logical : logicalLines) {
         if (logical.text.empty() && logical.startOffset >= text.size()) {
-            const int lineHeight = std::max(1, MeasureLineHeight(L"W", fontSize, fontFamily));
+            const int lineHeight = std::max(1, MeasureLineHeight(L"W", fontSize, fontFamily, fontWeight, fontStyle));
             flow.lines.push_back({std::wstring(), logical.startOffset, logical.startOffset, 0, lineHeight, lineHeight});
             flow.contentHeight += lineHeight;
             continue;
@@ -183,13 +197,13 @@ FlowResult BreakText(const std::wstring& text, int fontSize, const std::wstring&
         const bool shouldWrap = wrapping != TextWrapping::NoWrap && availableWidth > 0;
         const int constraint = shouldWrap ? availableWidth : 0;
         const auto segments = shouldWrap
-            ? WrapLine(logical.text, logical.startOffset, constraint, fontSize, fontFamily, wrapping)
+            ? WrapLine(logical.text, logical.startOffset, constraint, fontSize, fontFamily, wrapping, fontWeight, fontStyle)
             : std::vector<WrappedSegment>{{logical.text, logical.startOffset, logical.startOffset + logical.text.size()}};
 
         for (const auto& seg : segments) {
             const auto metrics = NeoWPF::Rendering::Text::MeasureText(
-                seg.text.empty() ? L"W" : seg.text, fontSize, fontFamily, 0, 0);
-            const int lineHeight = std::max(1, MeasureLineHeight(seg.text, fontSize, fontFamily));
+                seg.text.empty() ? L"W" : seg.text, fontSize, fontFamily, 0, 0, fontWeight, fontStyle);
+            const int lineHeight = std::max(1, MeasureLineHeight(seg.text, fontSize, fontFamily, fontWeight, fontStyle));
 
             flow.lines.push_back({seg.text, seg.startOffset, seg.endOffset, metrics.width, metrics.height, lineHeight});
             flow.contentWidth = std::max(flow.contentWidth, metrics.width);

@@ -165,6 +165,7 @@
     <ClInclude Include="include\NeoWPF\UI\Controls\TextBox\TextBox.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Window.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Rectangle.h" />
+    <ClInclude Include="include\NeoWPF\UI\Text\FontStyle.h" />
     <ClInclude Include="include\NeoWPF\UI\Controls\Text\TextBlock.h" />
     <ClInclude Include="include\NeoWPF\UI\Core\Alignment\Alignment.h" />
     <ClInclude Include="include\NeoWPF\UI\Core\Element\FrameworkElement.h" />

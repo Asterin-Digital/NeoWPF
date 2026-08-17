@@ -73,6 +73,47 @@ std::wstring TextBlock::GetFontFamily() const noexcept
     return m_fontFamily;
 }
 
+void TextBlock::SetFontWeight(int fontWeight) noexcept
+{
+    if (fontWeight < 100) {
+        fontWeight = 100;
+    }
+    if (fontWeight > 1000) {
+        fontWeight = 1000;
+    }
+
+    if (m_fontWeight == fontWeight) {
+        return;
+    }
+
+    m_fontWeight = fontWeight;
+    m_textDirty = true;
+    InvalidateMeasure();
+    InvalidateVisual();
+}
+
+int TextBlock::GetFontWeight() const noexcept
+{
+    return m_fontWeight;
+}
+
+void TextBlock::SetFontStyle(NeoWPF::UI::FontStyle fontStyle) noexcept
+{
+    if (m_fontStyle == fontStyle) {
+        return;
+    }
+
+    m_fontStyle = fontStyle;
+    m_textDirty = true;
+    InvalidateMeasure();
+    InvalidateVisual();
+}
+
+NeoWPF::UI::FontStyle TextBlock::GetFontStyle() const noexcept
+{
+    return m_fontStyle;
+}
+
 void TextBlock::SetTextHorizontalAlignment(TextHorizontalAlignment alignment) noexcept
 {
     if (m_textHorizontalAlignment == alignment) {
@@ -179,7 +220,7 @@ void TextBlock::Measure(int availableWidth, int availableHeight)
         widthConstraint = std::max(0, availableWidth - padding.Horizontal());
     }
 
-    auto flow = NeoWPF::UI::Text::BreakText(m_text, m_fontSize, GetFontFamily(), widthConstraint, m_textWrapping);
+    auto flow = NeoWPF::UI::Text::BreakText(m_text, m_fontSize, GetFontFamily(), widthConstraint, m_textWrapping, m_fontWeight, m_fontStyle);
     SetDesiredSize(flow.contentWidth + padding.Horizontal(), flow.contentHeight + padding.Vertical());
 }
 
@@ -265,7 +306,7 @@ void TextBlock::EnsureTextTexture(int availableWidth, int /*availableHeight*/)
         widthConstraint = availableWidth;
     }
 
-    m_textCache.Refresh(m_text, m_fontSize, GetFontFamily(), widthConstraint, m_textWrapping);
+    m_textCache.Refresh(m_text, m_fontSize, GetFontFamily(), widthConstraint, m_textWrapping, m_fontWeight, m_fontStyle);
     m_lastArrangeWidth = availableWidth;
     m_textDirty = false;
 }

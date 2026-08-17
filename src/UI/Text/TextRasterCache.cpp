@@ -22,12 +22,16 @@ void TextRasterCache::Clear() {
 }
 
 bool TextRasterCache::Refresh(const std::wstring& text, int fontSize, const std::wstring& fontFamily,
-                             int availableWidth, TextWrapping wrapping) {
+                             int availableWidth, TextWrapping wrapping,
+                             int fontWeight,
+                             NeoWPF::UI::FontStyle fontStyle) {
     const int effectiveFontSize = fontSize > 0 ? fontSize : 16;
+    const int effectiveFontWeight = fontWeight > 0 ? fontWeight : 400;
 
     if (m_hasCache && text == m_cachedText && effectiveFontSize == m_cachedFontSize &&
         fontFamily == m_cachedFontFamily && availableWidth == m_cachedAvailableWidth &&
-        wrapping == m_cachedWrapping) {
+        wrapping == m_cachedWrapping && effectiveFontWeight == m_cachedFontWeight &&
+        fontStyle == m_cachedFontStyle) {
         return false;
     }
 
@@ -38,13 +42,15 @@ bool TextRasterCache::Refresh(const std::wstring& text, int fontSize, const std:
     m_cachedFontFamily = fontFamily;
     m_cachedAvailableWidth = availableWidth;
     m_cachedWrapping = wrapping;
+    m_cachedFontWeight = effectiveFontWeight;
+    m_cachedFontStyle = fontStyle;
     m_hasCache = true;
 
     if (text.empty()) {
         return true;
     }
 
-    m_flow = BreakText(text, effectiveFontSize, fontFamily, availableWidth, wrapping);
+    m_flow = BreakText(text, effectiveFontSize, fontFamily, availableWidth, wrapping, effectiveFontWeight, fontStyle);
     m_lineTextureIds.reserve(m_flow.lines.size());
 
     for (auto& line : m_flow.lines) {
@@ -58,7 +64,7 @@ bool TextRasterCache::Refresh(const std::wstring& text, int fontSize, const std:
         int inkTop = 0;
         int inkHeight = 0;
         auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(
-            line.text, effectiveFontSize, 0, 0, fontFamily, w, h, inkTop, inkHeight);
+            line.text, effectiveFontSize, 0, 0, fontFamily, effectiveFontWeight, fontStyle, w, h, inkTop, inkHeight);
         line.width = w;
         line.height = h;
         line.inkTop = inkTop;

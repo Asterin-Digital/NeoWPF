@@ -9,6 +9,7 @@
 #include <NeoWPF/UI/Layout/Placement/TextWrapping.h>
 #include <NeoWPF/UI/Text/TextRasterCache.h>
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/Rendering/TextRenderer.h>
 
 namespace NeoWPF::Input::Core
 {
@@ -97,6 +98,30 @@ public:
         The font family name, for example `L"Segoe UI"`.
     */
     void SetFontFamily(const std::wstring& fontFamily) noexcept;
+
+    /*
+        @summary
+        Sets the font weight used to measure and render text.
+    */
+    void SetFontWeight(int fontWeight) noexcept;
+
+    /*
+        @summary
+        Returns the current font weight used to measure and render text.
+    */
+    int GetFontWeight() const noexcept;
+
+    /*
+        @summary
+        Sets the font style used to measure and render text.
+    */
+    void SetFontStyle(NeoWPF::UI::FontStyle fontStyle) noexcept;
+
+    /*
+        @summary
+        Returns the current font style used to measure and render text.
+    */
+    NeoWPF::UI::FontStyle GetFontStyle() const noexcept;
 
     /*
         @summary
@@ -243,6 +268,8 @@ private:
     NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFF000000u);
     int m_fontSize = 16;
     std::wstring m_fontFamily = std::wstring(L"Segoe UI");
+    int m_fontWeight = 400;
+    NeoWPF::UI::FontStyle m_fontStyle = NeoWPF::UI::FontStyle::Normal;
     int m_padding = 0;
     TextHorizontalAlignment m_textHorizontalAlignment = TextHorizontalAlignment::Left;
     TextVerticalAlignment m_textVerticalAlignment = TextVerticalAlignment::Top;
