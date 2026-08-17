@@ -1,0 +1,41 @@
+{
+    "name": "neopm",
+    "version-string": "0.1.0",
+    "dependencies": [
+        {
+            "name": "curl",
+            "default-features": false,
+            "features": [
+                "mbedtls",
+                "ssl"
+            ]
+        },
+        {
+            "name": "nlohmann-json"
+        },
+        {
+            "name": "libzip"
+        },
+        {
+            "name": "boost-interprocess"
+        },
+        {
+            "name": "boost-algorithm"
+        },
+        {
+            "name": "boost-process"
+        },
+        {
+            "name": "boost-dll"
+        },
+        {
+            "name": "boost-filesystem"
+        },
+        {
+            "name": "boost-nowide"
+        },
+        {
+            "name": "gtest"
+        }
+    ]
+}
