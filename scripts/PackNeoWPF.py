@@ -1,38 +1,47 @@
 import sys
-import shutil
 import zipfile
 from pathlib import Path
 
 ROOT = Path(r"C:\Users\Katsu\source\repos\NeoWPF")
 
-INCLUDE = ROOT / "include" / "NeoWPF"
+INCLUDE_DIR = ROOT / "include" / "NeoWPF"
 LICENSE = ROOT / "LICENSE"
+OUTPUT_DIR = ROOT / "output"
 
-MODE = "Release" if len(sys.argv) > 1 and sys.argv[1] == "--release" else "Debug"
+mode = "Release" if len(sys.argv) == 2 and sys.argv[1] == "--release" else "Debug"
 
 if len(sys.argv) > 2 or (len(sys.argv) == 2 and sys.argv[1] != "--release"):
     print("Usage: PackNeoWPF.py [--release]")
     sys.exit(1)
 
-LIB = ROOT / "x64" / MODE / "NeoWPF.lib"
-OUTPUT = ROOT / "output" / MODE
-ZIP = OUTPUT / f"NeoWPF-{MODE}.zip"
+LIB = ROOT / "x64" / mode / "NeoWPF.lib"
+OUTPUT = OUTPUT_DIR / mode
+ZIP = OUTPUT / f"NeoWPF-{mode}.zip"
 
-if OUTPUT.exists():
-    shutil.rmtree(OUTPUT)
+if not INCLUDE_DIR.is_dir():
+    print(f"Missing include directory: {INCLUDE_DIR}")
+    sys.exit(1)
 
-OUTPUT.mkdir(parents=True)
+if not LIB.is_file():
+    print(f"Missing library: {LIB}")
+    sys.exit(1)
 
-with zipfile.ZipFile(ZIP, "w", zipfile.ZIP_DEFLATED) as z:
-    for file in INCLUDE.rglob("*"):
+if not LICENSE.is_file():
+    print(f"Missing LICENSE: {LICENSE}")
+    sys.exit(1)
+
+OUTPUT.mkdir(parents=True, exist_ok=True)
+
+with zipfile.ZipFile(ZIP, "w", zipfile.ZIP_DEFLATED) as archive:
+    for file in INCLUDE_DIR.rglob("*"):
         if file.is_file():
-            z.write(
+            archive.write(
                 file,
-                Path("include") / "NeoWPF" / file.relative_to(INCLUDE)
+                Path("include") / "NeoWPF" / file.relative_to(INCLUDE_DIR)
             )
 
-    z.write(LIB, Path("lib") / "NeoWPF.lib")
-    z.write(LICENSE, "LICENSE")
+    archive.write(LIB, Path("lib") / "NeoWPF.lib")
+    archive.write(LICENSE, "LICENSE")
 
-print(f"Packed NeoWPF {MODE} SDK")
-print(ZIP)
+print(f"Packed NeoWPF {mode} SDK")
+print(f"Output: {ZIP}")

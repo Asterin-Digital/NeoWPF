@@ -3,7 +3,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-
+ 
 configuration = "Release" if "--release" in sys.argv else "Debug"
 
 open_saphire_after_build = False

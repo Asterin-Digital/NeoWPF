@@ -10,6 +10,8 @@ namespace NeoWPF::Rendering::Text {
 std::wstring ResolveFontFamily(const std::wstring& requestedFontFamily);
 
 bool RegisterFontFile(const std::wstring& filePath);
+bool RegisterFontMemory(const unsigned char* data, size_t size, const std::wstring& familyName);
+IDWriteFontFace* CreateRegisteredFontFace(const std::wstring& familyName);
 std::vector<std::wstring> GetRegisteredFontFiles();
 IDWriteFontCollection* GetCustomFontCollection();
 

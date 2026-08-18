@@ -14,7 +14,11 @@ void ApplyTextBoxThemeStyle(UIElement* element)
     element->SetStylePropertyValue("BorderColor", element->GetResourceValue("TextBox.BorderColor", uint32_t(0xFFABADB3u)));
     element->SetStylePropertyValue("CaretColor", element->GetResourceValue("TextBox.CaretColor", uint32_t(0xFF000000u)));
     element->SetStylePropertyValue("FontSize", element->GetResourceValue("TextBox.FontSize", 14));
-    element->SetStylePropertyValue("FontFamily", element->GetResourceValue("TextBox.FontFamily", element->GetResourceValue("FontFamily", std::wstring())));
+    const std::wstring defaultFontFamily = element->GetResourceValue<std::wstring>(
+        "FontFamily", std::wstring());
+    const std::wstring fontFamily = element->GetResourceValue<std::wstring>(
+        "TextBox.FontFamily", defaultFontFamily);
+    element->SetStylePropertyValue("FontFamily", fontFamily);
     element->SetStylePropertyValue("Padding", element->GetResourceValue("TextBox.Padding", 4));
 
     element->SetStyleProperty("VisualState.Normal.Background", element->GetResourceValue("TextBox.VisualState.Normal.Background", 0xFFFFFFFFu));

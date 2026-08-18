@@ -19,6 +19,8 @@ using Microsoft::WRL::ComPtr;
 
 namespace NeoWPF::Rendering::Text {
 
+IDWriteFontCollection* GetCustomFontCollection();
+
 namespace {
 
 bool IsRegisteredCustomFontFamily(const std::wstring& familyName)
@@ -97,7 +99,10 @@ ComPtr<IDWriteTextFormat> CreateTextFormat(const std::wstring& fontFamily, int f
         return nullptr;
     }
 
-    IDWriteFontCollection* customFontCollection = nullptr;
+    IDWriteFontCollection* customFontCollection =
+        IsRegisteredCustomFontFamily(effectiveFontFamily)
+            ? GetCustomFontCollection()
+            : nullptr;
 
     DWRITE_FONT_WEIGHT dwriteWeight = FontWeightToDWrite(fontWeight);
     DWRITE_FONT_STYLE dwriteStyle = static_cast<DWRITE_FONT_STYLE>(fontStyle);

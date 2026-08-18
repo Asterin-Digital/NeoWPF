@@ -164,6 +164,32 @@ bool Application::LoadFontFromFile(const std::wstring& filePath)
     return registered;
 }
 
+bool Application::LoadFontFromMemory(
+    const unsigned char* data,
+    size_t size,
+    const std::wstring& familyName)
+{
+    NEO_WPF_STARTUP_ACTION("Application.LoadFontFromMemory");
+    if (!data || size == 0 || familyName.empty()) {
+        NeoWPF::Diagnostics::LogError("Application::LoadFontFromMemory: invalid font data or family name");
+        return false;
+    }
+
+    NeoWPF::Diagnostics::Log(
+        NeoWPF::Diagnostics::Category::Application,
+        NeoWPF::Diagnostics::Level::Info,
+        "Application::LoadFontFromMemory: registering '%ls' (%zu bytes)",
+        familyName.c_str(), size);
+
+    const bool registered = NeoWPF::Rendering::Text::RegisterFontMemory(data, size, familyName);
+    NeoWPF::Diagnostics::Log(
+        NeoWPF::Diagnostics::Category::Application,
+        NeoWPF::Diagnostics::Level::Info,
+        "Application::LoadFontFromMemory: '%ls' registration %s",
+        familyName.c_str(), registered ? "succeeded" : "failed");
+    return registered;
+}
+
 Application& Application::Current()
 {
     if (!s_current) {

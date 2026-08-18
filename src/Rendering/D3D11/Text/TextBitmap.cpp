@@ -327,6 +327,11 @@ bool IsRegisteredCustomFontFamily(const std::wstring& familyName)
         }
 
         if (CaseInsensitiveEquals(fileNameNoExt, familyName)) {
+            ::NeoWPF::Diagnostics::Log(
+                ::NeoWPF::Diagnostics::Category::TextRendering,
+                ::NeoWPF::Diagnostics::Level::Info,
+                "IsRegisteredCustomFontFamily: '%ls' matched registered font '%ls'",
+                familyName.c_str(), filePath.c_str());
             return true;
         }
     }
@@ -339,6 +344,45 @@ bool TryCreateCustomFontFace(IDWriteFactory* factory, const std::wstring& family
     outFontFace = nullptr;
     if (!factory || familyName.empty()) {
         return false;
+    }
+
+    if (auto* registeredFontFace = CreateRegisteredFontFace(familyName)) {
+        outFontFace.Attach(registeredFontFace);
+        ::NeoWPF::Diagnostics::Log(
+            ::NeoWPF::Diagnostics::Category::TextRendering,
+            ::NeoWPF::Diagnostics::Level::Info,
+            "TryCreateCustomFontFace: family '%ls' created directly from registered font file",
+            familyName.c_str());
+        return true;
+    }
+
+    if (auto* customCollection = GetCustomFontCollection()) {
+        UINT32 familyIndex = 0;
+        BOOL exists = FALSE;
+        if (SUCCEEDED(customCollection->FindFamilyName(familyName.c_str(), &familyIndex, &exists)) && exists) {
+            ::NeoWPF::Diagnostics::Log(
+                ::NeoWPF::Diagnostics::Category::TextRendering,
+                ::NeoWPF::Diagnostics::Level::Info,
+                "TryCreateCustomFontFace: family '%ls' found in custom DirectWrite collection",
+                familyName.c_str());
+            ComPtr<IDWriteFontFamily> family;
+            if (SUCCEEDED(customCollection->GetFontFamily(familyIndex, &family)) && family) {
+                ComPtr<IDWriteFont> font;
+                if (SUCCEEDED(family->GetFirstMatchingFont(
+                        DWRITE_FONT_WEIGHT_NORMAL,
+                        DWRITE_FONT_STRETCH_NORMAL,
+                        DWRITE_FONT_STYLE_NORMAL,
+                        &font)) && font) {
+                    const bool created = SUCCEEDED(font->CreateFontFace(&outFontFace)) && outFontFace;
+                    ::NeoWPF::Diagnostics::Log(
+                        ::NeoWPF::Diagnostics::Category::TextRendering,
+                        ::NeoWPF::Diagnostics::Level::Info,
+                        "TryCreateCustomFontFace: family '%ls' face creation %s",
+                        familyName.c_str(), created ? "succeeded" : "failed");
+                    return created;
+                }
+            }
+        }
     }
 
     for (const auto& filePath : GetRegisteredFontFiles()) {
@@ -516,23 +560,32 @@ std::vector<uint8_t> TextRenderTextBitmapInternal(const std::wstring& text, int 
         }
     }
 
-    ComPtr<IDWriteFontCollection> systemFontCollection;
-    hr = factory->GetSystemFontCollection(&systemFontCollection);
-    if (FAILED(hr) || !systemFontCollection) {
-        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: GetSystemFontCollection failed 0x%08X", static_cast<unsigned int>(hr));
+    ComPtr<IDWriteFontCollection> fontCollection;
+    if (IsRegisteredCustomFontFamily(effectiveFontFamily)) {
+        IDWriteFontCollection* customCollection = GetCustomFontCollection();
+        if (customCollection) {
+            fontCollection = customCollection;
+        }
+    }
+
+    if (!fontCollection) {
+        hr = factory->GetSystemFontCollection(&fontCollection);
+    }
+    if (FAILED(hr) || !fontCollection) {
+        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: failed to get font collection 0x%08X", static_cast<unsigned int>(hr));
         return {};
     }
 
     UINT32 familyIndex = 0;
     BOOL exists = FALSE;
-    systemFontCollection->FindFamilyName(effectiveFontFamily.c_str(), &familyIndex, &exists);
+    fontCollection->FindFamilyName(effectiveFontFamily.c_str(), &familyIndex, &exists);
     if (!exists) {
-        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: font family '%ls' not found in system collection", effectiveFontFamily.c_str());
+        ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: font family '%ls' not found in selected collection", effectiveFontFamily.c_str());
         return {};
     }
 
     ComPtr<IDWriteFontFamily> matchedFamily;
-    systemFontCollection->GetFontFamily(familyIndex, &matchedFamily);
+    fontCollection->GetFontFamily(familyIndex, &matchedFamily);
     if (!matchedFamily) {
         ::NeoWPF::Diagnostics::LogError("RenderTextBitmap: failed to get matched font family for '%ls'", effectiveFontFamily.c_str());
         return {};

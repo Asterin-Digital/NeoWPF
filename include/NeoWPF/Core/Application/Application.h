@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Windows.h>
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <any>
@@ -156,6 +157,27 @@ public:
         True if the font was registered successfully.
     */
     static bool LoadFontFromFile(const std::wstring& filePath);
+
+    /*
+        @summary
+        Loads an embedded font from memory for use by the text renderer.
+
+        @param data
+        The font bytes.
+
+        @param size
+        The number of bytes in the font.
+
+        @param familyName
+        The family name used by controls, normally the font filename without its extension.
+
+        @returns
+        True if the font was registered successfully.
+    */
+    static bool LoadFontFromMemory(
+        const unsigned char* data,
+        size_t size,
+        const std::wstring& familyName);
 
     /*
         @summary

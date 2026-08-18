@@ -7,10 +7,7 @@
   <Project Path="../FluxRip/FluxRip.vcxproj" Id="a2b38346-6f14-40c6-a430-4322703c351a" />
   <Project Path="../NeoPM/NeoPM.vcxproj" Id="504c9518-24c0-4e2b-9c4f-89068828e274" />
   <Project Path="../NeoWPF.Gallery/NeoWPF.Gallery.vcxproj" Id="c24d9393-08d6-493a-bd57-5f1132063c3b" />
-  <Project Path="../NeoWPFTest/NeoWPFTest.vcxproj" Id="e9a34975-1a60-46ba-95bc-1c795f4e05cb">
-    <Platform Project="x64" />
-  </Project>
-  <Project Path="../Pythonpython/Pythonpython.vcxproj" Id="153669fa-6b87-4c61-a36b-7da855cfb015">
+  <Project Path="../Pythonpython/Pythonpython.vcxproj" Id="04820b3b-01a3-467a-80be-e7b5135d6bde">
     <Platform Project="x64" />
   </Project>
   <Project Path="../Saphire.NET/Saphire.NET.csproj" Id="b1a0bcc2-0b53-481e-be33-3d9bdbf966a4" />
