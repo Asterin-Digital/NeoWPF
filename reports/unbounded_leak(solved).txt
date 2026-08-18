@@ -1,3 +1,0 @@
-s_rowMap/s_colMap/s_rowSpanMap/s_colSpanMap are keyed by raw Visual* and nothing ever erases an entry when a Visual is destroyed. 
-Over a long-running app that's an unbounded leak, and worse, if a new object gets allocated at the 
-same address as a destroyed one, it'll silently inherit stale row/column/span data from the old object

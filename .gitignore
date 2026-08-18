@@ -1,10 +1,16 @@
 .vs
+
 x64
 x86
+Debug
 build
 output
+reports
+
 .vscode
+
 /NeoWPF/
+
 private
 
 out.txt
