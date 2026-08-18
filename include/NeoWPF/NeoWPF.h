@@ -33,6 +33,12 @@ Review the project's README for details.
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Diagnostics/TextDumper.h>
 ///////////////////////////////////////////////////
+#include <NeoWPF/UI/Data/ResourceKey.h>
+#include <NeoWPF/UI/Data/IResourceProvider.h>
+#include <NeoWPF/UI/Data/EmbeddedResourceProvider.h>
+#include <NeoWPF/UI/Data/ExternalFileResourceProvider.h>
+#include <NeoWPF/UI/Data/ResourceManager.h>
+///////////////////////////////////////////////////
 
 // We recommend not to include individual header files for public usage in your own code. 
 // NeoWPF reserves the right to update paths or method signature's for any implementation.

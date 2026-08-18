@@ -1,110 +1,81 @@
-#!/usr/bin/env python3
-import os
-import re
-import sys
+import shutil
+import subprocess
+import xml.etree.ElementTree as ET
+from pathlib import Path
 
-def ask_yes_no(prompt):
-    while True:
-        ans = input(prompt + " [Y/N]: ").strip().lower()
-        if ans in ('y', 'yes'):
-            return True
-        if ans in ('n', 'no'):
-            return False
-        print("Please answer Y or N.")
+MSBUILD_NS = "http://schemas.microsoft.com/developer/msbuild/2003"
+ET.register_namespace("", MSBUILD_NS)
 
-def camel_to_title(name):
-    if not name:
-        return "MyApp"
-    return re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', name)
+project = Path(r"C:\Users\Katsu\source\repos\Pythonpython")
+neopm = Path(r"C:\Users\Katsu\source\repos\NeoWPF\x64\Debug\NeoPM.exe")
+neo_wpf_include = r"C:\Users\Katsu\source\repos\NeoWPF\include"
+neo_wpf_lib = r"C:\Users\Katsu\source\repos\NeoWPF\x64\Debug\NeoWPF.lib"
+vcxproj_path = project / "Pythonpython.vcxproj"
 
-def write_file(path, content):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
-        f.write(content)
+if project.exists():
+    print(f"Deleting {project}...")
+    shutil.rmtree(project)
 
-def main():
-    print("NeoWPF Project Generator")
-    if not ask_yes_no("Are you sure you're running this script at the root of your workspace?"):
-        print("Aborted.")
-        sys.exit(0)
+print("Creating project...")
+subprocess.run(
+    [str(neopm), "new", "Pythonpython"],
+    check=True,
+)
 
-    project_name = input("What's the name of your project? (You can skip this by not typing anything): ").strip()
-    if project_name:
-        include_root = os.path.join("include", project_name)
-        include_header = f"<{project_name}/MainWindow.h>"
-        window_title = camel_to_title(project_name)
-    else:
-        include_root = "include"
-        include_header = "<MainWindow.h>"
-        window_title = "MyApp"
+print("Patching generated project...")
 
-    os.makedirs("src", exist_ok=True)
-    os.makedirs(include_root, exist_ok=True)
+def ensure_namespaced_child(parent, tag_name):
+    tag = f"{{{MSBUILD_NS}}}{tag_name}"
+    child = parent.find(tag)
+    if child is None:
+        child = ET.SubElement(parent, tag)
+    return child
 
-    main_window_h = """#pragma once
 
-#include <NeoWPF/NeoWPF.h>
-#include <memory>
+def normalize_list_text(value):
+    if not value:
+        return []
+    return [part.strip() for part in value.split(";") if part.strip()]
 
-std::shared_ptr<NeoWPF::UI::Grid> CreateMainContent();
-"""
-    write_file(os.path.join(include_root, "MainWindow.h"), main_window_h)
 
-    main_window_cpp = f"""#include {include_header}
-#include <NeoWPF/NeoWPF.h>
+def append_path_value(parent, item_name, value, macro_name):
+    child = ensure_namespaced_child(parent, item_name)
+    values = normalize_list_text(child.text)
+    values = [part for part in values if part != macro_name]
+    if value not in values:
+        values.append(value)
+    values.append(macro_name)
+    child.text = ";".join(values)
+    return child
 
-std::shared_ptr<NeoWPF::UI::Grid> CreateMainContent() {{
-    using namespace NeoWPF;
-    using namespace NeoWPF::UI;
 
-    auto root = std::make_shared<Grid>();
-    root->SetBackgroundColor(0xFF0B1220u);
-    root->AddRow(SizeMode::Star, 1);
-    root->AddColumn(SizeMode::Star, 1);
+def append_lib_value(parent, item_name, value, macro_name):
+    child = ensure_namespaced_child(parent, item_name)
+    values = normalize_list_text(child.text)
+    values = [part for part in values if part != macro_name]
+    if value not in values:
+        values.append(value)
+    values.append(macro_name)
+    child.text = ";".join(values)
+    return child
 
-    auto card = std::make_shared<Border>();
-    card->SetWidth(520);
-    card->SetHeight(160);
-    card->SetPadding(16);
-    card->SetCornerRadius(CornerRadius(14.0f));
-    card->SetBorderThickness(1);
-    card->SetBackgroundColor(0xFF0F172Au);
-    card->SetBorderColor(0xFF334155u);
-    card->SetHorizontalAlignment(HorizontalAlignment::Center);
-    card->SetVerticalAlignment(VerticalAlignment::Center);
 
-    auto text = std::make_shared<TextBlock>();
-    text->SetText(L"Welcome to {window_title}");
-    text->SetTextColor(0xFFEDF2F7u);
-    text->SetFontSize(24);
+tree = ET.parse(vcxproj_path)
+root = tree.getroot()
+ns = {"msb": MSBUILD_NS}
 
-    card->SetChild(text);
-    root->AddChild(card, 0, 0);
+for item_group in root.findall(".//msb:ItemDefinitionGroup", ns):
+    cl_compile = item_group.find("msb:ClCompile", ns)
+    if cl_compile is None:
+        cl_compile = ET.SubElement(item_group, f"{{{MSBUILD_NS}}}ClCompile")
+    append_path_value(cl_compile, "AdditionalIncludeDirectories", neo_wpf_include, "%(AdditionalIncludeDirectories)")
 
-    return root;
-}}
-"""
-    write_file(os.path.join("src", "MainWindow.cpp"), main_window_cpp)
+    link = item_group.find("msb:Link", ns)
+    if link is None:
+        link = ET.SubElement(item_group, f"{{{MSBUILD_NS}}}Link")
+    append_lib_value(link, "AdditionalDependencies", neo_wpf_lib, "%(AdditionalDependencies)")
 
-    app_cpp = f"""#include {include_header}
-#include <NeoWPF/NeoWPF.h>
+# Preserve the generated file as valid MSBuild XML with the default namespace.
+tree.write(vcxproj_path, encoding="utf-8", xml_declaration=True)
 
-int main() {{
-    NeoWPF::Core::Application::Initialize();
-
-    auto content = CreateMainContent();
-    auto window = NeoWPF::Core::Application::Current()->CreateWindow(L"{window_title}", 900, 680);
-    window.SetContent(content);
-
-    return NeoWPF::Core::Application::Run();
-}}
-"""
-    write_file(os.path.join("src", "App.cpp"), app_cpp)
-
-    print("\nProject generated.")
-    print(f"  src/App.cpp")
-    print(f"  src/MainWindow.cpp")
-    print(f"  {include_root}/MainWindow.h")
-
-if __name__ == "__main__":
-    main()
+print("Done.")

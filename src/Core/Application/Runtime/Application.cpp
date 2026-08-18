@@ -132,6 +132,11 @@ bool Application::TryGetResource(const std::string& key, std::any& outValue)
     return NeoWPF::Core::ApplicationResources::Resources::TryGetResource(key, outValue);
 }
 
+NeoWPF::ResourceManager& Application::Resources()
+{
+    return NeoWPF::ResourceManager::Instance();
+}
+
 bool Application::LoadFontFromFile(const std::wstring& filePath)
 {
     NEO_WPF_STARTUP_ACTION("Application.LoadFontFromFile");
@@ -159,9 +164,13 @@ bool Application::LoadFontFromFile(const std::wstring& filePath)
     return registered;
 }
 
-Application* Application::Current()
+Application& Application::Current()
 {
-    return s_current;
+    if (!s_current) {
+        NeoWPF::Diagnostics::LogError("Application::Current: Application not initialized. Call Initialize() first.");
+        std::abort();
+    }
+    return *s_current;
 }
 
 void Application::SetLayoutInspection(bool enabled)

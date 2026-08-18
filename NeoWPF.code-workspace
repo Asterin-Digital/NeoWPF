@@ -5,6 +5,18 @@
 			"path": "."
 		},
 		{
+			"name": "NeoPM",
+			"path": "../NeoPM"
+		},
+		{
+			"name": "NeoWPF.doc",
+			"path": "E:/NeoWPF.doc"
+		},
+		{
+			"name": "FluxRip",
+			"path": "../FluxRip"
+		},
+		{
 			"name": "Saphire",
 			"path": "../Saphire"
 		},
@@ -13,11 +25,7 @@
 			"path": "../Saphire.NET"
 		},
 		{
-			"name": "NeoWPF.doc",
-			"path": "E:/NeoWPF.doc"
-		},
-		{
-			"path": "../FluxRip"
+			"path": "../Pythonpython"
 		}
 	],
 	"settings": {

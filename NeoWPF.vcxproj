@@ -176,6 +176,11 @@
     <ClInclude Include="include\NeoWPF\UI\Data\Binding.h" />
     <ClInclude Include="include\NeoWPF\UI\Data\BindingExpression.h" />
     <ClInclude Include="include\NeoWPF\UI\Data\BindingOperations.h" />
+    <ClInclude Include="include\NeoWPF\UI\Data\ResourceKey.h" />
+    <ClInclude Include="include\NeoWPF\UI\Data\IResourceProvider.h" />
+    <ClInclude Include="include\NeoWPF\UI\Data\EmbeddedResourceProvider.h" />
+    <ClInclude Include="include\NeoWPF\UI\Data\ExternalFileResourceProvider.h" />
+    <ClInclude Include="include\NeoWPF\UI\Data\ResourceManager.h" />
     <ClInclude Include="include\NeoWPF\UI\Core\Transform\Transform.h" />
     <ClInclude Include="include\NeoWPF\UI\Layout\Alignment\Alignment.h" />
     <ClInclude Include="include\NeoWPF\UI\Layout\Panel\Panel.h" />
@@ -306,6 +311,9 @@
     <ClCompile Include="src\UI\Controls\Image\ImageProperties.cpp" />
     <ClCompile Include="src\UI\Core\Media\BitmapSource.cpp" />
     <ClCompile Include="src\UI\Core\Media\BitmapImage.cpp" />
+    <ClCompile Include="src\UI\Data\ResourceManager.cpp" />
+    <ClCompile Include="src\UI\Data\EmbeddedResourceProvider.cpp" />
+    <ClCompile Include="src\UI\Data\ExternalFileResourceProvider.cpp" />
     <ClCompile Include="src\UI\Controls\TextBox\Behavior\TextBoxEditing.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\Panel.cpp" />
     <ClCompile Include="src\UI\Layout\Panel\StackPanel.cpp" />

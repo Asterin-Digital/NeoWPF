@@ -5,15 +5,15 @@
 #include <vector>
 #include <any>
 #include <NeoWPF/Core/Application/ApplicationResources.h>
-
-#undef FindResource
-#undef FindResourceA
-#undef FindResourceW
+#include <NeoWPF/UI/Data/ResourceManager.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <NeoWPF/Diagnostics/TextDumper.h>
 #include <NeoWPF/Platform/NativeWindow.h>
 
+#undef FindResource
+#undef FindResourceA
+#undef FindResourceW
 
 #undef CreateWindow
 
@@ -81,9 +81,9 @@ public:
         Returns the current application instance.
 
         @returns
-        The active Application singleton, or nullptr if none is initialized.
+        A reference to the active Application singleton.
     */
-    static Application* Current();
+    static Application& Current();
 
     /*
         @summary
@@ -138,6 +138,12 @@ public:
         True if the resource was found, otherwise false.
     */
     static bool TryGetResource(const std::string& key, std::any& outValue);
+
+    /*
+        @summary
+        Returns the runtime resource manager used by the application.
+    */
+    NeoWPF::ResourceManager& Resources();
 
     /*
         @summary

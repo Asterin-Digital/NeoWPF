@@ -160,13 +160,13 @@ struct Colors {
     static constexpr Color Blue900   = Color(0xFF0D47A1u);
     static constexpr Color SkyBlue   = Color(0xFF87CEEBu);
     static constexpr Color LightBlue = Color(0xFFADD8E6u);
-    static constexpr Color DeepSkyBlue = Color(0xFF00BFFFFu);
     static constexpr Color Navy      = Color(0xFF000080u);
     static constexpr Color DarkBlue  = Color(0xFF00008Bu);
     static constexpr Color RoyalBlue = Color(0xFF4169E1u);
     static constexpr Color CornflowerBlue = Color(0xFF6495EDu);
     static constexpr Color MidnightBlue = Color(0xFF191970u);
     static constexpr Color DodgerBlue = Color(0xFF1E90FFu);
+    static constexpr Color DeepSkyBlue = Color(0xFF00BFFFu);
     static constexpr Color SteelBlue = Color(0xFF4682B4u);
 
     // Purples
