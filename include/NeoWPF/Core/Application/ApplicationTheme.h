@@ -1,6 +1,6 @@
 #pragma once
 
-#include <NeoWPF/Core/Application/ApplicationResources.h>
+#include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <any>
 #include <string>
 #include <unordered_map>

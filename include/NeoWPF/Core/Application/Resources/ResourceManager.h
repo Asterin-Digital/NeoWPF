@@ -8,7 +8,7 @@
 #include <NeoWPF/Platform/ImageDecoding.h>
 #include <NeoWPF/Platform/Resources.h>
 #include <NeoWPF/UI/Core/Media/BitmapSource.h>
-#include <NeoWPF/UI/Data/IResourceProvider.h>
+#include <NeoWPF/Core/Application/Resources/IResourceProvider.h>
 
 namespace NeoWPF {
 

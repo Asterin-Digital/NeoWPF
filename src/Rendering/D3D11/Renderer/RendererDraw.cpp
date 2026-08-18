@@ -9,7 +9,7 @@
 #include <cmath>
 #include <Windows.h>
 #include <any>
-#include <NeoWPF/Core/Application/ApplicationResources.h>
+#include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 
 #ifdef min
 #undef min

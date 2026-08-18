@@ -2,7 +2,7 @@
 
 #include <filesystem>
 
-#include <NeoWPF/UI/Data/IResourceProvider.h>
+#include <NeoWPF/Core/Application/Resources/IResourceProvider.h>
 
 namespace NeoWPF {
 

@@ -18,11 +18,11 @@
 #include <NeoWPF/UI/Data/Binding.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
 #include <NeoWPF/UI/Data/BindingExpression.h>
-#include <NeoWPF/UI/Data/ResourceKey.h>
-#include <NeoWPF/UI/Data/IResourceProvider.h>
-#include <NeoWPF/UI/Data/EmbeddedResourceProvider.h>
-#include <NeoWPF/UI/Data/ExternalFileResourceProvider.h>
-#include <NeoWPF/UI/Data/ResourceManager.h>
+#include <NeoWPF/Core/Application/Resources/ResourceKey.h>
+#include <NeoWPF/Core/Application/Resources/IResourceProvider.h>
+#include <NeoWPF/Core/Application/Resources/EmbeddedResourceProvider.h>
+#include <NeoWPF/Core/Application/Resources/ExternalFileResourceProvider.h>
+#include <NeoWPF/Core/Application/Resources/ResourceManager.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
 #include <NeoWPF/UI/Animation/Core/Timeline.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
@@ -49,5 +49,5 @@
 #include <NeoWPF/UI/Controls/Templates/TemplateParts.h>
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
-#include <NeoWPF/Core/Application/ApplicationResources.h>
+#include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 

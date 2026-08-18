@@ -330,13 +330,13 @@
     <ClCompile Include="src\UI\Data\INotifyPropertyChanged.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Data\ResourceManager.cpp">
+    <ClCompile Include="src\Core\Application\Resources\ResourceManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Data\EmbeddedResourceProvider.cpp">
+    <ClCompile Include="src\Core\Application\Resources\EmbeddedResourceProvider.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Data\ExternalFileResourceProvider.cpp">
+    <ClCompile Include="src\Core\Application\Resources\ExternalFileResourceProvider.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Rendering\D3D11\Text\TextFont.cpp">
@@ -389,7 +389,7 @@
     <ClInclude Include="include\NeoWPF\Rendering\Rendering.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\Core\Application\ApplicationResources.h">
+    <ClInclude Include="include\NeoWPF\Core\Application\Resources\ApplicationResources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\Styling\Styling.h">
@@ -584,19 +584,19 @@
     <ClInclude Include="include\NeoWPF\UI\Data\BindingOperations.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Data\ResourceKey.h">
+    <ClInclude Include="include\NeoWPF\Core\Application\Resources\ResourceKey.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Data\IResourceProvider.h">
+    <ClInclude Include="include\NeoWPF\Core\Application\Resources\IResourceProvider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Data\EmbeddedResourceProvider.h">
+    <ClInclude Include="include\NeoWPF\Core\Application\Resources\EmbeddedResourceProvider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Data\ExternalFileResourceProvider.h">
+    <ClInclude Include="include\NeoWPF\Core\Application\Resources\ExternalFileResourceProvider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Data\ResourceManager.h">
+    <ClInclude Include="include\NeoWPF\Core\Application\Resources\ResourceManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Core\Element\Control.h">

@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-#include <NeoWPF/UI/Data/ResourceKey.h>
+#include <NeoWPF/Core/Application/Resources/ResourceKey.h>
 
 namespace NeoWPF {
 

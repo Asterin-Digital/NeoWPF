@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include <NeoWPF/UI/Data/IResourceProvider.h>
+#include <NeoWPF/Core/Application/Resources/IResourceProvider.h>
 
 namespace NeoWPF {
 

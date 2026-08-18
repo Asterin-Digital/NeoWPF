@@ -1,4 +1,4 @@
-#include <NeoWPF/UI/Data/EmbeddedResourceProvider.h>
+#include <NeoWPF/Core/Application/Resources/EmbeddedResourceProvider.h>
 
 namespace NeoWPF {
 

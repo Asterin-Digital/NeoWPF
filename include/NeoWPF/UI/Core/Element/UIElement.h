@@ -11,7 +11,7 @@
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
-#include <NeoWPF/Core/Application/ApplicationResources.h>
+#include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <algorithm>
 #include <cmath>
 #include <memory>

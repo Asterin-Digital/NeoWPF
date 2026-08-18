@@ -1,7 +1,7 @@
-#include <NeoWPF/UI/Data/ResourceManager.h>
+#include <NeoWPF/Core/Application/Resources/ResourceManager.h>
 
-#include <NeoWPF/UI/Data/EmbeddedResourceProvider.h>
-#include <NeoWPF/UI/Data/ExternalFileResourceProvider.h>
+#include <NeoWPF/Core/Application/Resources/EmbeddedResourceProvider.h>
+#include <NeoWPF/Core/Application/Resources/ExternalFileResourceProvider.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 
 #include <filesystem>

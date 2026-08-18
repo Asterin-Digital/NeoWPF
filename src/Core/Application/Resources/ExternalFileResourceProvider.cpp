@@ -1,4 +1,4 @@
-#include <NeoWPF/UI/Data/ExternalFileResourceProvider.h>
+#include <NeoWPF/Core/Application/Resources/ExternalFileResourceProvider.h>
 
 #include <NeoWPF/Diagnostics/Logger.h>
 

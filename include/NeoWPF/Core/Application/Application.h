@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 #include <any>
-#include <NeoWPF/Core/Application/ApplicationResources.h>
-#include <NeoWPF/UI/Data/ResourceManager.h>
+#include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
+#include <NeoWPF/Core/Application/Resources/ResourceManager.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <NeoWPF/Diagnostics/TextDumper.h>

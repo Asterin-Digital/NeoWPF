@@ -1,4 +1,4 @@
-#include <NeoWPF/Core/Application/ApplicationResources.h>
+#include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 
 namespace NeoWPF::Core::ApplicationResources {
