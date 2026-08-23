@@ -6,7 +6,7 @@
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
-#include <NeoWPF/UI/Animation/Core/Timeline.h>
+#include <NeoWPF/UI/Animation/Definitions/DoubleAnimation.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
@@ -152,13 +152,18 @@ public:
             return;
         }
 
-        using namespace NeoWPF::UI::Animation;
-        auto storyboard = std::make_shared<Storyboard>();
-        auto timeline = std::make_shared<Timeline>(0.0f, 1.0f, durationSeconds, [this, property, fromValue, toValue](float progress) {
-            this->ApplyAnimatedValue(property, fromValue, toValue, progress);
-        });
-        storyboard->AddTimeline(timeline);
-        NeoWPF::UI::AddStoryboard(storyboard);
+        if constexpr (std::is_same_v<T, float>) {
+            using namespace NeoWPF::UI::Animation;
+            auto storyboard = std::make_shared<Storyboard>();
+            auto animation = std::make_shared<DoubleAnimation>();
+            animation->SetFrom(fromValue);
+            animation->SetTo(toValue);
+            animation->SetDuration(durationSeconds);
+            storyboard->AddChild({}, property.GetName(), animation);
+            NeoWPF::UI::BeginStoryboard(storyboard, this);
+        } else {
+            SetValue(property, std::any(toValue));
+        }
     }
 
     template<typename T>

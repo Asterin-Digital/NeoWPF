@@ -2,7 +2,6 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
-#include <NeoWPF/UI/Animation/Core/Timeline.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>

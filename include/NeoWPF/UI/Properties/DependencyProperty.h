@@ -22,7 +22,9 @@ enum class PropertyValueSource {
     Default,
     Local,
     Style,
+    Trigger,
     Expression,
+    Animation,
 };
 
 /*

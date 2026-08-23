@@ -104,11 +104,15 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
 
     if (source == PropertyValueSource::Expression) {
         m_localValues.erase(&property);
-    } else if (source != PropertyValueSource::Local) {
+    } else if (source != PropertyValueSource::Local && source != PropertyValueSource::Animation && source != PropertyValueSource::Trigger) {
         ClearBindingExpression(property);
     }
 
-    if (source == PropertyValueSource::Style) {
+    if (source == PropertyValueSource::Animation) {
+        m_animatedValues[&property] = std::move(value);
+    } else if (source == PropertyValueSource::Trigger) {
+        m_triggerValues[&property] = std::move(value);
+    } else if (source == PropertyValueSource::Style) {
         m_styleValues[&property] = std::move(value);
     } else if (source == PropertyValueSource::Local) {
         m_localValues[&property] = std::move(value);
@@ -202,11 +206,17 @@ const std::any& DependencyObject::ReadLocalValue(const DependencyProperty& prope
 
 PropertyValueSource DependencyObject::GetValueSource(const DependencyProperty& property) const
 {
+    if (m_animatedValues.find(&property) != m_animatedValues.end()) {
+        return PropertyValueSource::Animation;
+    }
     if (m_localValues.find(&property) != m_localValues.end()) {
         return PropertyValueSource::Local;
     }
     if (m_expressionValues.find(&property) != m_expressionValues.end()) {
         return PropertyValueSource::Expression;
+    }
+    if (m_triggerValues.find(&property) != m_triggerValues.end()) {
+        return PropertyValueSource::Trigger;
     }
     if (m_styleValues.find(&property) != m_styleValues.end()) {
         return PropertyValueSource::Style;
@@ -216,10 +226,16 @@ PropertyValueSource DependencyObject::GetValueSource(const DependencyProperty& p
 
 std::any DependencyObject::GetRawValue(const DependencyProperty& property) const
 {
+    if (auto it = m_animatedValues.find(&property); it != m_animatedValues.end()) {
+        return it->second;
+    }
     if (auto it = m_localValues.find(&property); it != m_localValues.end()) {
         return it->second;
     }
     if (auto it = m_expressionValues.find(&property); it != m_expressionValues.end()) {
+        return it->second;
+    }
+    if (auto it = m_triggerValues.find(&property); it != m_triggerValues.end()) {
         return it->second;
     }
     if (auto it = m_styleValues.find(&property); it != m_styleValues.end()) {
@@ -283,6 +299,39 @@ void DependencyObject::SetValueExpression(const DependencyProperty* property, co
         return;
     }
     SetValueInternal(*property, value, PropertyValueSource::Expression);
+}
+
+void DependencyObject::SetValueAnimated(const DependencyProperty& property, const std::any& value)
+{
+    SetValueInternal(property, value, PropertyValueSource::Animation);
+}
+
+void DependencyObject::ClearAnimatedValue(const DependencyProperty& property)
+{
+    const auto animatedValue = m_animatedValues.find(&property);
+    if (animatedValue == m_animatedValues.end()) {
+        return;
+    }
+
+    const std::any oldValue = animatedValue->second;
+    m_animatedValues.erase(animatedValue);
+    const auto& metadata = property.GetMetadata();
+    const std::any newValue = GetRawValue(property);
+    const bool previousApplying = m_isApplyingPropertyValue;
+    m_isApplyingPropertyValue = true;
+    if (metadata.PropertyChangedCallback) {
+        DependencyPropertyChangedEventArgs args{&property, oldValue, newValue, PropertyValueSource::Animation};
+        metadata.PropertyChangedCallback(this, args);
+    }
+    if (auto handlers = m_dependencyPropertyChangedHandlers.find(&property); handlers != m_dependencyPropertyChangedHandlers.end()) {
+        for (const auto& [id, handler] : handlers->second) {
+            if (handler) {
+                handler(oldValue, newValue);
+            }
+        }
+    }
+    m_isApplyingPropertyValue = previousApplying;
+    OnDependencyPropertyChanged(property, metadata, oldValue, newValue, PropertyValueSource::Animation);
 }
 
 void DependencyObject::SetBinding(const DependencyProperty& property, const Data::Binding& binding)

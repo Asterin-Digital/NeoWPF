@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClInclude Include="include\NeoWPF\UI\Animation\Definitions\AnimationTimeline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Animation\Definitions\DoubleAnimation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Animation\Definitions\ColorAnimation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Animation\Easing\EasingFunctionBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NeoWPF\UI\Animation\Easing\EasingFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <Filter Include="Source Files">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
@@ -180,13 +195,28 @@
     <ClCompile Include="src\UI\Animation\AnimationController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\UI\Animation\Definitions\AnimationTimeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Animation\Definitions\DoubleAnimation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Animation\Definitions\ColorAnimation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Animation\Easing\EasingFunctionBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\Animation\Easing\EasingFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\UI\Animation\Storyboards\Storyboard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Animation\Core\Clock.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\Animation\Core\Timeline.cpp">
+    <ClCompile Include="src\UI\Animation\Core\AnimationClock.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Controls\ScrollBar\ScrollBar.cpp">
@@ -518,7 +548,7 @@
     <ClInclude Include="include\NeoWPF\UI\Animation\Core\Clock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NeoWPF\UI\Animation\Core\Timeline.h">
+    <ClInclude Include="include\NeoWPF\UI\Animation\Core\AnimationClock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NeoWPF\UI\Controls\ScrollBar\ScrollBar.h">

@@ -2,24 +2,16 @@
 
 namespace NeoWPF::UI::Animation {
 
-void Storyboard::AddTimeline(const TimelinePtr& timeline) {
+void Storyboard::AddChild(const std::string& targetName,
+                          const std::string& targetPropertyName,
+                          std::shared_ptr<AnimationTimeline> timeline) {
     if (timeline) {
-        m_timelines.push_back(timeline);
+        m_children.push_back({targetName, targetPropertyName, std::move(timeline)});
     }
-}
-
-bool Storyboard::Update(float elapsedSeconds) {
-    bool completed = true;
-    for (const auto& timeline : m_timelines) {
-        if (timeline && !timeline->Update(elapsedSeconds)) {
-            completed = false;
-        }
-    }
-    return completed;
 }
 
 void Storyboard::Clear() {
-    m_timelines.clear();
+    m_children.clear();
 }
 
 }

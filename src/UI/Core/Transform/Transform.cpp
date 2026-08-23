@@ -1,7 +1,5 @@
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
-#include <NeoWPF/UI/Animation/Core/Timeline.h>
-#include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
 #include <cmath>
 
 namespace NeoWPF::UI {
@@ -83,25 +81,19 @@ std::shared_ptr<Transform> ScaleTransform::Clone() const {
 }
 
 void ScaleTransform::AnimateTo(float scaleValue, float durationSeconds) {
-    using namespace NeoWPF::UI::Animation;
+    if (m_animationHandle != 0) {
+        NeoWPF::UI::StopAnimation(m_animationHandle);
+    }
 
-    auto storyboard = std::make_shared<Storyboard>();
-    auto scaleXTimeline = std::make_shared<Timeline>(m_scaleX, scaleValue, durationSeconds, [this](float value) {
-        SetScaleX(value);
-        if (m_invalidateCallback) {
-            m_invalidateCallback();
-        }
-    });
-    auto scaleYTimeline = std::make_shared<Timeline>(m_scaleY, scaleValue, durationSeconds, [this](float value) {
-        SetScaleY(value);
-        if (m_invalidateCallback) {
-            m_invalidateCallback();
-        }
-    });
-
-    storyboard->AddTimeline(scaleXTimeline);
-    storyboard->AddTimeline(scaleYTimeline);
-    NeoWPF::UI::AddStoryboard(storyboard);
+    const float fromScale = m_scaleX;
+    m_animationHandle = NeoWPF::UI::BeginValueAnimation(
+        fromScale,
+        scaleValue,
+        durationSeconds,
+        [this](float value) {
+            SetScaleX(value);
+            SetScaleY(value);
+        });
 }
 
 TranslateTransform::TranslateTransform(float x, float y)

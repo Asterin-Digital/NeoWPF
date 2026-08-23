@@ -24,7 +24,12 @@
 #include <NeoWPF/Core/Application/Resources/ExternalFileResourceProvider.h>
 #include <NeoWPF/Core/Application/Resources/ResourceManager.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
-#include <NeoWPF/UI/Animation/Core/Timeline.h>
+#include <NeoWPF/UI/Animation/Definitions/AnimationTimeline.h>
+#include <NeoWPF/UI/Animation/Definitions/DoubleAnimation.h>
+#include <NeoWPF/UI/Animation/Definitions/ColorAnimation.h>
+#include <NeoWPF/UI/Animation/Easing/EasingFunctionBase.h>
+#include <NeoWPF/UI/Animation/Easing/EasingFunctions.h>
+#include <NeoWPF/UI/Animation/Core/AnimationClock.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <NeoWPF/UI/Layout/Panel/Panel.h>

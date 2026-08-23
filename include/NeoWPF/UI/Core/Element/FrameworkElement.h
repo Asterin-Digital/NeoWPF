@@ -478,18 +478,6 @@ public:
 
         @internal
     */
-    /*
-        @summary
-        Returns the element's position in absolute coordinates.
-
-        @param outX
-        Receives the absolute X position.
-
-        @param outY
-        Receives the absolute Y position.
-
-        @internal
-    */
     void GetAbsolutePosition(int& outX, int& outY) const noexcept;
 
     /*

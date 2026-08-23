@@ -1,7 +1,6 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
-#include <NeoWPF/UI/Animation/Core/Timeline.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/Diagnostics/Logger.h>

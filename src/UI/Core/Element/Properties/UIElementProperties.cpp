@@ -28,9 +28,13 @@ namespace NeoWPF::UI::Properties {
             &UI::UIElement::IsFocused,
             &UI::UIElement::SetFocused);
 
+        PropertyMetadata opacityMetadata;
+        opacityMetadata.Flags = PropertyFlags::AffectsRender;
+
         RegisterProperty<UI::UIElement, float>(
             "Opacity",
             &UI::UIElement::GetOpacity,
-            &UI::UIElement::SetOpacity);
+            &UI::UIElement::SetOpacity,
+            opacityMetadata);
     }
 }

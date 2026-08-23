@@ -255,12 +255,36 @@ int RunApplicationMessageLoop()
 
     NeoWPF::Diagnostics::PerformanceMetrics::RecordStartup();
 
-    MSG msg;
+    MSG msg{};
     unsigned int lastLayoutWidth = 0, lastLayoutHeight = 0;
+    constexpr auto frameInterval = std::chrono::milliseconds(16);
+    auto nextFrame = std::chrono::steady_clock::now();
+    bool quitRequested = false;
 
-    while (GetMessage(&msg, nullptr, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+    while (!quitRequested) {
+        const auto now = std::chrono::steady_clock::now();
+        if (now < nextFrame) {
+            const auto waitMilliseconds = static_cast<DWORD>(std::chrono::duration_cast<std::chrono::milliseconds>(nextFrame - now).count());
+            const DWORD waitResult = MsgWaitForMultipleObjects(0, nullptr, FALSE, waitMilliseconds, QS_ALLINPUT);
+            if (waitResult == WAIT_FAILED) {
+                break;
+            }
+        }
+
+        while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+            if (msg.message == WM_QUIT) {
+                quitRequested = true;
+                break;
+            }
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+        if (quitRequested) {
+            break;
+        }
+
+        nextFrame = std::chrono::steady_clock::now() + frameInterval;
 
         const auto tickStart = std::chrono::steady_clock::now();
         NeoWPF::UI::Tick();

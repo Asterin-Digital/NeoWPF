@@ -109,6 +109,9 @@ namespace NeoWPF::UI::Properties {
         void SetValueExpression(const DependencyProperty& property, const std::any& value);
         void SetValueExpression(const DependencyProperty* property, const std::any& value);
 
+        void SetValueAnimated(const DependencyProperty& property, const std::any& value);
+        void ClearAnimatedValue(const DependencyProperty& property);
+
         /*
             @summary
             Attaches a binding to a dependency property using the common target-side convenience API.
@@ -273,6 +276,8 @@ namespace NeoWPF::UI::Properties {
         std::unordered_map<const DependencyProperty*, std::any> m_expressionValues;
         std::unordered_map<const DependencyProperty*, std::any> m_localValues;
         std::unordered_map<const DependencyProperty*, std::any> m_styleValues;
+        std::unordered_map<const DependencyProperty*, std::any> m_triggerValues;
+        std::unordered_map<const DependencyProperty*, std::any> m_animatedValues;
         std::unordered_map<const DependencyProperty*, std::unordered_map<std::size_t, std::function<void(const std::any&, const std::any&)>>> m_dependencyPropertyChangedHandlers;
         std::size_t m_nextDependencyPropertyChangedHandlerId = 1;
         std::unordered_map<const DependencyProperty*, std::shared_ptr<::NeoWPF::UI::Data::BindingExpression>> m_bindingExpressions;

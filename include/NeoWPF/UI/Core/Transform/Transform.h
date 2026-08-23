@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include <cstdint>
 
 namespace NeoWPF::UI {
 class UIElement;
@@ -62,6 +63,7 @@ private:
     float m_centerX;
     float m_centerY;
     std::function<void()> m_invalidateCallback;
+    std::uint64_t m_animationHandle = 0;
     friend class NeoWPF::UI::UIElement;
 };
 
