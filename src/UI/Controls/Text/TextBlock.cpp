@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
@@ -268,6 +269,10 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const auto textureId = m_textCache.GetLineTextureId(i);
         const int lineHeight = std::max(1, line.lineHeight);
         if (textureId == 0 || line.width <= 0 || line.height <= 0) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
+                NeoWPF::Diagnostics::Level::Debug,
+                "[TextBlock] skip line=%zu textureId=%u size=%dx%d lineHeight=%d",
+                i, textureId, line.width, line.height, lineHeight);
             currentY += lineHeight;
             continue;
         }
@@ -290,6 +295,10 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         commands.DrawTexturedQuad(drawX, drawY, drawWidth, drawHeight,
                                    0.0f, 0.0f, 1.0f, 1.0f,
                                    textureId, m_textColor.ToArgb(), GetOpacity(), clip, rotationRadians);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[TextBlock] draw line=%zu textureId=%u pos=%.1f,%.1f size=%.1fx%.1f opacity=%.2f",
+            i, textureId, drawX, drawY, drawWidth, drawHeight, GetOpacity());
 
         currentY += lineHeight;
     }

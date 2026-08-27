@@ -4,6 +4,7 @@
 #include <NeoWPF/Rendering/Text/TextRasterizer.h>
 #include <NeoWPF/Rendering/Text/TextShaper.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 
 #include <algorithm>
 #include <filesystem>
@@ -26,7 +27,17 @@ TextBitmap Rasterize(const std::wstring& text, int fontSize, const std::wstring&
     auto& fonts = GetFontDatabase();
     const auto request = MakeRequest(family, weight, style);
     const auto glyphs = CreateHarfBuzzTextShaper(fonts)->Shape(WideToUtf8(text), request, fontSize);
-    return CreateFreeTypeTextRasterizer(fonts)->Rasterize(glyphs, request, fontSize);
+    auto bitmap = CreateFreeTypeTextRasterizer(fonts)->Rasterize(glyphs, request, fontSize);
+    std::size_t nonzeroAlphaBytes = 0;
+    for (std::size_t index = 3; index < bitmap.rgba.size(); index += 4) {
+        nonzeroAlphaBytes += bitmap.rgba[index] != 0 ? 1 : 0;
+    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
+        NeoWPF::Diagnostics::Level::Debug,
+        "[TextRenderer] textLength=%zu family='%ls' fontSize=%d glyphs=%zu bitmap=%dx%d stride=%d rgbaBytes=%zu nonzeroAlpha=%zu",
+        text.size(), family.c_str(), fontSize, glyphs.size(), bitmap.width, bitmap.height,
+        bitmap.stride, bitmap.rgba.size(), nonzeroAlphaBytes);
+    return bitmap;
 }
 
 TextMetrics Measure(const std::wstring& text, int fontSize, const std::wstring& family,
@@ -80,7 +91,12 @@ std::wstring ResolveFontFamily(const std::wstring& requestedFontFamily)
 
 bool RegisterFontFile(const std::wstring& filePath)
 {
-    if (!GetFontDatabase().RegisterFile(std::filesystem::path(filePath))) {
+    const bool registered = GetFontDatabase().RegisterFile(std::filesystem::path(filePath));
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
+        NeoWPF::Diagnostics::Level::Info,
+        "[TextRenderer] RegisterFontFile path='%ls' result=%d records=%zu",
+        filePath.c_str(), registered ? 1 : 0, GetFontDatabase().Records().size());
+    if (!registered) {
         return false;
     }
     std::lock_guard<std::mutex> lock(RegisteredFilesMutex());
@@ -97,7 +113,12 @@ bool RegisterFontMemory(const unsigned char* data, size_t size, const std::wstri
     std::transform(data, data + size, bytes->begin(), [](unsigned char value) {
         return static_cast<std::byte>(value);
     });
-    return GetFontDatabase().RegisterMemory(std::move(bytes), WideToUtf8(familyName));
+    const bool registered = GetFontDatabase().RegisterMemory(std::move(bytes), WideToUtf8(familyName));
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
+        NeoWPF::Diagnostics::Level::Info,
+        "[TextRenderer] RegisterFontMemory family='%ls' bytes=%zu result=%d records=%zu",
+        familyName.c_str(), size, registered ? 1 : 0, GetFontDatabase().Records().size());
+    return registered;
 }
 
 std::vector<std::wstring> GetRegisteredFontFiles()
@@ -183,6 +204,10 @@ std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, in
     outHeight = maxHeight > 0 ? (std::min)(bitmap.height, maxHeight) : bitmap.height;
     outInkTop = bitmap.inkTop;
     outInkHeight = bitmap.inkHeight;
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
+        NeoWPF::Diagnostics::Level::Debug,
+        "[TextRenderer] RenderTextBitmap textLength=%zu output=%dx%d inkTop=%d inkHeight=%d rgba=%zu",
+        text.size(), outWidth, outHeight, outInkTop, outInkHeight, bitmap.rgba.size());
     if (outWidth == bitmap.width && outHeight == bitmap.height) {
         return bitmap.rgba;
     }

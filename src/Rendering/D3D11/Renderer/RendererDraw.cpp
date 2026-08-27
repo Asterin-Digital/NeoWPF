@@ -10,6 +10,7 @@
 #include <Windows.h>
 #include <any>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 
 #ifdef min
 #undef min
@@ -46,6 +47,17 @@ void ExecuteRendererDraw(const CommandList& cmd)
 {
     ID3D11RenderTargetView* rtv = GetCurrentRendererTargetView();
     if (!rtv) return;
+
+    std::size_t textCommandCount = 0;
+    for (const auto& command : cmd.commands) {
+        if (command.kind == CommandList::CommandKind::TexturedQuad) {
+            ++textCommandCount;
+        }
+    }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
+        NeoWPF::Diagnostics::Level::Debug,
+        "[D3D11] ExecuteRendererDraw commands=%zu texturedQuads=%zu target=%p",
+        cmd.commands.size(), textCommandCount, rtv);
 
     const unsigned int width = GetCurrentRendererWidth();
     const unsigned int height = GetCurrentRendererHeight();
@@ -293,8 +305,17 @@ void ExecuteRendererDraw(const CommandList& cmd)
 
     auto flushTextBatch = [&]() {
         if (textVerts.empty() || !g_vsText || !g_psText || !g_inputLayoutText || !g_vertexBuffer || !g_samplerState) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
+                NeoWPF::Diagnostics::Level::Debug,
+                "[D3D11] text batch skipped vertices=%zu shaderReady=%d",
+                textVerts.size(), g_vsText && g_psText && g_inputLayoutText && g_vertexBuffer && g_samplerState ? 1 : 0);
             return;
         }
+
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[D3D11] flush text batch vertices=%zu quads=%zu textures=%zu",
+            textVerts.size(), textVerts.size() / 6, textQuadTextureIds.size());
 
         const float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         g_context->OMSetBlendState(blendState.Get(), blendFactor, 0xffffffff);

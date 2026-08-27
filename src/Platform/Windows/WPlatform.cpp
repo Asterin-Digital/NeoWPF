@@ -2,6 +2,9 @@
 #include <NeoWPF/Diagnostics/CallStackTracer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <windows.h>
+#include <shlobj.h>
+
+#include <filesystem>
 
 namespace NeoWPF::Platform {
 
@@ -23,6 +26,31 @@ std::uint32_t CurrentThreadIdWindows() noexcept;
 }
 
 namespace NeoWPF::Platform::Windows {
+namespace {
+
+std::filesystem::path FindDefaultFont()
+{
+    PWSTR knownFolder = nullptr;
+    if (FAILED(::SHGetKnownFolderPath(FOLDERID_Fonts, KF_FLAG_DEFAULT, nullptr, &knownFolder))) {
+        return {};
+    }
+
+    std::filesystem::path fontsDirectory(knownFolder);
+    ::CoTaskMemFree(knownFolder);
+
+    const auto defaultFont = fontsDirectory / L"segoeui.ttf";
+    return std::filesystem::is_regular_file(defaultFont) ? defaultFont : std::filesystem::path{};
+}
+
+}
+
+WPlatform::WPlatform()
+{
+    const auto defaultFont = FindDefaultFont();
+    if (!defaultFont.empty()) {
+        RegisterFontFile(defaultFont.wstring());
+    }
+}
 
 const char* WPlatform::Name() const noexcept
 {

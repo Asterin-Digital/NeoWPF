@@ -52,6 +52,7 @@ public:
 
         hb_ot_font_set_funcs(font);
         const int fontScale = (std::max)(fontSize, 1) * 64;
+        constexpr float kHarfBuzzUnitScale = 64.0f;
         hb_font_set_scale(font, fontScale, fontScale);
         hb_buffer_t* buffer = hb_buffer_create();
         if (!buffer) {
@@ -74,10 +75,10 @@ public:
             const auto& position = positions[index];
             glyphs.push_back({
                 info.codepoint,
-                static_cast<float>(position.x_advance) / fontScale,
-                static_cast<float>(position.y_advance) / fontScale,
-                static_cast<float>(position.x_offset) / fontScale,
-                static_cast<float>(position.y_offset) / fontScale,
+                static_cast<float>(position.x_advance) / kHarfBuzzUnitScale,
+                static_cast<float>(position.y_advance) / kHarfBuzzUnitScale,
+                static_cast<float>(position.x_offset) / kHarfBuzzUnitScale,
+                static_cast<float>(position.y_offset) / kHarfBuzzUnitScale,
                 info.cluster,
             });
         }

@@ -1,5 +1,6 @@
 #include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 
 namespace {
 
@@ -56,8 +57,14 @@ void NeoWPF::Rendering::Renderer_Present()
 uint32_t NeoWPF::Rendering::Renderer_CreateTexture(unsigned int w, unsigned int h, const void* rgbaData)
 {
     if (auto* rendering = CurrentRendering()) {
-        return rendering->CreateTexture(w, h, rgbaData);
+        const auto textureId = rendering->CreateTexture(w, h, rgbaData);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[Renderer] CreateTexture size=%ux%u data=%p textureId=%u initialized=%d",
+            w, h, rgbaData, textureId, rendering->IsInitialized() ? 1 : 0);
+        return textureId;
     }
+    NeoWPF::Diagnostics::LogError("[Renderer] CreateTexture no active rendering backend size=%ux%u", w, h);
     return 0;
 }
 

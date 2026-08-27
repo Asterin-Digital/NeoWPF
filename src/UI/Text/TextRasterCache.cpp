@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Text/TextRasterCache.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 
 namespace NeoWPF::UI::Text {
 
@@ -51,6 +52,10 @@ bool TextRasterCache::Refresh(const std::wstring& text, int fontSize, const std:
     }
 
     m_flow = BreakText(text, effectiveFontSize, fontFamily, availableWidth, wrapping, effectiveFontWeight, fontStyle);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
+        NeoWPF::Diagnostics::Level::Debug,
+        "[TextRasterCache] refresh textLength=%zu lines=%zu content=%dx%d availableWidth=%d",
+        text.size(), m_flow.lines.size(), m_flow.contentWidth, m_flow.contentHeight, availableWidth);
     m_lineTextureIds.reserve(m_flow.lines.size());
 
     for (auto& line : m_flow.lines) {
@@ -73,6 +78,10 @@ bool TextRasterCache::Refresh(const std::wstring& text, int fontSize, const std:
             ? NeoWPF::Rendering::Renderer_CreateTexture(static_cast<unsigned int>(w), static_cast<unsigned int>(h), bitmap.data())
             : 0;
         m_lineTextureIds.push_back(textureId);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[TextRasterCache] line textLength=%zu bitmap=%dx%d rgba=%zu textureId=%u",
+            line.text.size(), w, h, bitmap.size(), textureId);
     }
 
     return true;

@@ -8,6 +8,9 @@
 #include <algorithm>
 #include <cctype>
 #include <vector>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 namespace NeoWPF::Diagnostics {
 
@@ -86,8 +89,23 @@ static void Output(const char* prefix, const char* fmt, va_list ap)
         remaining -= chunk_size;
     }
 
+#ifdef _WIN32
+    const HANDLE consoleHandle = ::GetStdHandle(STD_ERROR_HANDLE);
+    DWORD consoleMode = 0;
+    if (consoleHandle != INVALID_HANDLE_VALUE &&
+        consoleHandle != nullptr &&
+        ::GetConsoleMode(consoleHandle, &consoleMode)) {
+        DWORD written = 0;
+        ::WriteConsoleA(consoleHandle, buffer.data(), static_cast<DWORD>(total_len - 1), &written, nullptr);
+    } else {
+        fputs(buffer.data(), stderr);
+        fflush(stderr);
+    }
+    ::OutputDebugStringA(buffer.data());
+#else
     fputs(buffer.data(), stderr);
     fflush(stderr);
+#endif
 
 }
 
