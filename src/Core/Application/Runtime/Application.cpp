@@ -10,7 +10,6 @@
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <NeoWPF/Diagnostics/TextDumper.h>
 #include <NeoWPF/Platform/PlatformRegistry.h>
-#include <NeoWPF/Platform/Windows/WPlatform.h>
 
 namespace NeoWPF::Core {
 
@@ -20,7 +19,11 @@ void Application::Initialize()
 {
     NEO_WPF_STARTUP_ACTION("Application.Initialize");
     if (!NeoWPF::Platform::HasPlatform()) {
-        NeoWPF::Platform::RegisterPlatform(std::make_unique<NeoWPF::Platform::Windows::WPlatform>());
+        NeoWPF::Platform::RegisterPlatform(NeoWPF::Platform::CreateDefaultPlatform());
+    }
+    if (!NeoWPF::Platform::HasPlatform()) {
+        NeoWPF::Diagnostics::LogError("Application::Initialize: no platform backend is available");
+        return;
     }
     NeoWPF::Diagnostics::InitializeCrashHandler();
     NeoWPF::Core::ApplicationResources::Resources::Initialize();
@@ -44,8 +47,12 @@ NeoWPF::Platform::Window Application::CreateWindow(const wchar_t* title, int wid
     if (!title) {
         return NeoWPF::Platform::Window();
     }
+    auto* platform = NeoWPF::Platform::CurrentPlatform();
+    if (!platform) {
+        return NeoWPF::Platform::Window();
+    }
     NEO_WPF_STARTUP_ACTION("Application.CreateWindow");    NeoWPF::Diagnostics::PerformanceMetrics::RecordWindowCreate();
-    void* nativeHandle = NeoWPF::Platform::CurrentPlatform()->Windowing().CreateWindow(title, width, height);
+    void* nativeHandle = platform->Windowing().CreateWindow(title, width, height);
     return NeoWPF::Platform::Window(nativeHandle);
 }
 

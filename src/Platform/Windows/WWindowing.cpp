@@ -55,6 +55,18 @@ void* WWindowing::CreateWindow(const wchar_t* title, int width, int height)
     return nativeHandle;
 }
 
+bool WWindowing::GetNativeWindowInfo(void* nativeWindowHandle, NeoWPF::Contracts::NativeWindowInfo& outInfo) const noexcept
+{
+    outInfo = {};
+    if (!IsWindowAlive(nativeWindowHandle)) {
+        return false;
+    }
+
+    outInfo.system = NeoWPF::Contracts::NativeWindowSystem::Win32;
+    outInfo.window = nativeWindowHandle;
+    return true;
+}
+
 bool WWindowing::IsWindowAlive(void* nativeWindowHandle) const noexcept
 {
     return nativeWindowHandle && ::IsWindow(static_cast<HWND>(nativeWindowHandle)) != FALSE;
@@ -101,7 +113,10 @@ void WWindowing::HideWindow(void* nativeWindowHandle) noexcept
 void WWindowing::CloseWindow(void* nativeWindowHandle) noexcept
 {
     if (nativeWindowHandle) {
-        NeoWPF::Core::CloseApplicationWindow(nativeWindowHandle);
+        const auto hwnd = static_cast<HWND>(nativeWindowHandle);
+        if (NeoWPF::Core::CloseApplicationWindow(nativeWindowHandle) && IsWindow(hwnd)) {
+            ::DestroyWindow(hwnd);
+        }
     }
 }
 

@@ -1,5 +1,9 @@
 #include <NeoWPF/Platform/PlatformRegistry.h>
 
+#ifdef _WIN32
+#include <NeoWPF/Platform/Windows/WPlatform.h>
+#endif
+
 #include <mutex>
 #include <utility>
 
@@ -24,6 +28,15 @@ void RegisterPlatform(std::unique_ptr<NeoWPF::Contracts::IPlatform> platform)
 {
     std::lock_guard<std::mutex> lock(RegistryMutex());
     RegisteredPlatform() = std::move(platform);
+}
+
+std::unique_ptr<NeoWPF::Contracts::IPlatform> CreateDefaultPlatform()
+{
+#ifdef _WIN32
+    return std::make_unique<NeoWPF::Platform::Windows::WPlatform>();
+#else
+    return nullptr;
+#endif
 }
 
 NeoWPF::Contracts::IPlatform* CurrentPlatform() noexcept

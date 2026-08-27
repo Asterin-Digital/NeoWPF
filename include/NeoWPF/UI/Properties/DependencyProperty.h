@@ -90,6 +90,8 @@ struct DependencyPropertyChangedEventArgs {
 
 using PropertyChangedCallback = std::function<void(DependencyObject*, const DependencyPropertyChangedEventArgs&)>;
 using CoerceValueCallback = std::function<std::any(DependencyObject*, const std::any&)>;
+using PropertyChangedCallbackFunction = PropertyChangedCallback;
+using CoerceValueCallbackFunction = CoerceValueCallback;
 
 /*
     @summary
@@ -97,8 +99,8 @@ using CoerceValueCallback = std::function<std::any(DependencyObject*, const std:
 */
 struct PropertyMetadata {
     std::any DefaultValue;
-    PropertyChangedCallback PropertyChangedCallback;
-    CoerceValueCallback CoerceValueCallback;
+    PropertyChangedCallbackFunction PropertyChangedCallback;
+    CoerceValueCallbackFunction CoerceValueCallback;
     PropertyFlags Flags = PropertyFlags::None;
 };
 

@@ -430,7 +430,5 @@ template void DependencyObject::SetValue<HorizontalAlignment>(const DependencyPr
 template void DependencyObject::SetValue<VerticalAlignment>(const DependencyProperty&, const VerticalAlignment&);
 template NeoWPF::UI::Color DependencyObject::GetValue<NeoWPF::UI::Color>(const DependencyProperty&) const;
 template void DependencyObject::SetValue<NeoWPF::UI::Color>(const DependencyProperty&, const NeoWPF::UI::Color&);
-template NeoWPF::UI::Thickness DependencyObject::GetValue<NeoWPF::UI::Thickness>(const DependencyProperty&) const;
-template void DependencyObject::SetValue<NeoWPF::UI::Thickness>(const DependencyProperty&, const NeoWPF::UI::Thickness&);
 
 }

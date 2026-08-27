@@ -227,7 +227,7 @@ public:
 private:
     struct TemplateChild {
         std::string Name;
-        std::shared_ptr<Visual> Visual;
+        std::shared_ptr<NeoWPF::UI::Visual> Visual;
     };
 
     std::shared_ptr<Visual> m_visualTree;

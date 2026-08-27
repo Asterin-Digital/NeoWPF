@@ -1,4 +1,3 @@
-#include <Windows.h>
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Diagnostics/Logger.h>
@@ -20,14 +19,12 @@ bool CloseApplicationWindow(void* nativeWindowHandle)
         return false;
     }
 
-    HWND hwnd = static_cast<HWND>(nativeWindowHandle);
-
     NeoWPF::Input::InputManager::GetInstance().SetRootElement(nullptr);
 
     {
         std::lock_guard<std::mutex> lock(App().windowsMutex);
-        auto it = std::find_if(App().windows.begin(), App().windows.end(), [hwnd](const WindowState& windowState) {
-            return windowState.nativeWindowHandle == hwnd;
+        auto it = std::find_if(App().windows.begin(), App().windows.end(), [nativeWindowHandle](const WindowState& windowState) {
+            return windowState.nativeWindowHandle == nativeWindowHandle;
         });
         if (it != App().windows.end()) {
             App().windows.erase(it);
@@ -35,10 +32,6 @@ bool CloseApplicationWindow(void* nativeWindowHandle)
     }
 
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "CloseApplicationWindow");
-
-    if (IsWindow(hwnd)) {
-        return ::DestroyWindow(hwnd) != FALSE;
-    }
 
     return true;
 }

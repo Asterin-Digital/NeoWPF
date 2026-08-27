@@ -6,10 +6,59 @@ include(CTest)
 
 if(WIN32)
     set(NEOWPF_PLATFORM "Windows")
+    set(NEOWPF_DEFAULT_RENDERER_BACKEND "D3D11")
 elseif(UNIX)
     set(NEOWPF_PLATFORM "Linux")
+    set(NEOWPF_DEFAULT_RENDERER_BACKEND "Vulkan")
 else()
     message(FATAL_ERROR "Unsupported NeoWPF platform: ${CMAKE_SYSTEM_NAME}")
+endif()
+
+set(NEOWPF_RENDERER_BACKEND "${NEOWPF_DEFAULT_RENDERER_BACKEND}" CACHE STRING
+    "Renderer backend to compile (D3D11 or Vulkan)")
+set_property(CACHE NEOWPF_RENDERER_BACKEND PROPERTY STRINGS D3D11 Vulkan)
+string(TOLOWER "${NEOWPF_RENDERER_BACKEND}" NEOWPF_RENDERER_BACKEND_LOWER)
+if(NOT NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "d3d11" AND
+   NOT NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "vulkan")
+    message(FATAL_ERROR
+        "Unsupported NEOWPF_RENDERER_BACKEND='${NEOWPF_RENDERER_BACKEND}'. "
+        "Choose D3D11 or Vulkan.")
+endif()
+if(NOT WIN32 AND NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "d3d11")
+    message(FATAL_ERROR "D3D11 is only supported on Windows.")
+endif()
+
+if(NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "d3d11")
+    set(NEOWPF_RENDERER_BACKEND "D3D11")
+else()
+    set(NEOWPF_RENDERER_BACKEND "Vulkan")
+    find_package(Vulkan REQUIRED)
+endif()
+
+if(UNIX)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(WAYLAND REQUIRED IMPORTED_TARGET wayland-client)
+    find_program(WAYLAND_SCANNER wayland-scanner REQUIRED)
+    pkg_get_variable(WAYLAND_PROTOCOLS_DATADIR wayland-protocols pkgdatadir)
+    set(NEOWPF_XDG_SHELL_XML "${WAYLAND_PROTOCOLS_DATADIR}/stable/xdg-shell/xdg-shell.xml")
+    if(NOT EXISTS "${NEOWPF_XDG_SHELL_XML}")
+        message(FATAL_ERROR "Could not find xdg-shell protocol XML: ${NEOWPF_XDG_SHELL_XML}")
+    endif()
+    set(NEOWPF_WAYLAND_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/wayland")
+    set(NEOWPF_XDG_SHELL_HEADER "${NEOWPF_WAYLAND_GENERATED_DIR}/xdg-shell-client-protocol.h")
+    set(NEOWPF_XDG_SHELL_SOURCE "${NEOWPF_WAYLAND_GENERATED_DIR}/xdg-shell-protocol.cpp")
+    add_custom_command(
+        OUTPUT "${NEOWPF_XDG_SHELL_HEADER}" "${NEOWPF_XDG_SHELL_SOURCE}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_WAYLAND_GENERATED_DIR}"
+        COMMAND "${WAYLAND_SCANNER}" client-header "${NEOWPF_XDG_SHELL_XML}" "${NEOWPF_XDG_SHELL_HEADER}"
+        COMMAND "${WAYLAND_SCANNER}" private-code "${NEOWPF_XDG_SHELL_XML}" "${NEOWPF_XDG_SHELL_SOURCE}"
+        DEPENDS "${NEOWPF_XDG_SHELL_XML}"
+        VERBATIM
+    )
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        set_source_files_properties("${NEOWPF_XDG_SHELL_SOURCE}"
+            PROPERTIES COMPILE_OPTIONS "-Wno-attributes")
+    endif()
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -17,6 +66,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(cmake/NeoWPFSources.cmake)
+if(UNIX)
+    list(APPEND NEOWPF_SOURCES "${NEOWPF_XDG_SHELL_SOURCE}")
+    list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_SHELL_HEADER}")
+endif()
 
 add_library(NeoWPF STATIC ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})
 add_library(NeoWPF::NeoWPF ALIAS NeoWPF)
@@ -33,6 +86,9 @@ target_include_directories(NeoWPF
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
+if(UNIX)
+    target_include_directories(NeoWPF PRIVATE "${NEOWPF_WAYLAND_GENERATED_DIR}")
+endif()
 
 target_compile_definitions(NeoWPF
     PRIVATE
@@ -81,7 +137,8 @@ if(WIN32)
             windowscodecs
     )
 else()
-    message(STATUS "NeoWPF Linux configuration selected; Linux platform backends are not implemented yet.")
+    target_link_libraries(NeoWPF PUBLIC Vulkan::Vulkan PkgConfig::WAYLAND)
+    message(STATUS "NeoWPF Linux configuration selected with Vulkan renderer backend.")
 endif()
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})

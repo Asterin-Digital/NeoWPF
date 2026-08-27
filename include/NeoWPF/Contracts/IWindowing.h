@@ -6,11 +6,24 @@
 
 namespace NeoWPF::Contracts {
 
+enum class NativeWindowSystem {
+    Unknown,
+    Win32,
+    Wayland,
+};
+
+struct NativeWindowInfo {
+    NativeWindowSystem system = NativeWindowSystem::Unknown;
+    void* window = nullptr;
+    void* display = nullptr;
+};
+
 class IWindowing {
 public:
     virtual ~IWindowing() = default;
 
     virtual void* CreateWindow(const wchar_t* title, int width, int height) = 0;
+    virtual bool GetNativeWindowInfo(void* nativeWindowHandle, NativeWindowInfo& outInfo) const noexcept = 0;
     virtual bool IsWindowAlive(void* nativeWindowHandle) const noexcept = 0;
     virtual void GetWindowSize(void* nativeWindowHandle, unsigned int& outWidth, unsigned int& outHeight) const noexcept = 0;
     virtual void ResizeWindow(void* nativeWindowHandle, int width, int height) noexcept = 0;

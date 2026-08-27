@@ -15,6 +15,15 @@ namespace NeoWPF::UI {
 
 namespace {
 
+void DebugBreakPortable() noexcept
+{
+#if defined(_MSC_VER)
+    __debugbreak();
+#elif defined(__GNUC__) || defined(__clang__)
+    __builtin_trap();
+#endif
+}
+
 bool ShouldWarnDanglingChild(const std::shared_ptr<Visual>& child)
 {
     if (!child || NeoWPF::Diagnostics::IsDeveloperWarningSuppressionEnabled()) {
@@ -54,7 +63,7 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
                 "[Visual::AddVisualChild] Duplicate child detected. parent=%p child=%p",
                 this,
                 child.get());
-            __debugbreak();
+            DebugBreakPortable();
             return;
         }
 
@@ -75,7 +84,7 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
                 this,
                 child.get());
 
-            __debugbreak();
+            DebugBreakPortable();
         }
     }
 

@@ -1,69 +1,82 @@
-#include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/Rendering/Renderer.h>
-#include <Windows.h>
 
-namespace NeoWPF::Rendering {
-namespace D3D11 {
-    void Initialize(HWND hwnd);
-    void Shutdown();
-    void Resize(unsigned int w, unsigned int h);
-    void BeginFrame();
-    void Execute(const CommandList& cmd);
-    void Present();
-    uint32_t CreateTexture(unsigned int w, unsigned int h, const void* rgbaData);
-    void DestroyTexture(uint32_t id);
-    void ClearTextures();
-    bool IsInitialized();
+namespace {
+
+NeoWPF::Contracts::IRendering* CurrentRendering() noexcept
+{
+    auto* platform = NeoWPF::Platform::CurrentPlatform();
+    return platform ? &platform->Rendering() : nullptr;
 }
+
 }
 
 void NeoWPF::Rendering::Renderer_Initialize(void* nativeWindowHandle)
 {
-    HWND hwnd = static_cast<HWND>(nativeWindowHandle);
-    D3D11::Initialize(hwnd);
+    if (auto* rendering = CurrentRendering()) {
+        rendering->Initialize(nativeWindowHandle);
+    }
 }
 
 void NeoWPF::Rendering::Renderer_Shutdown()
 {
-    D3D11::Shutdown();
+    if (auto* rendering = CurrentRendering()) {
+        rendering->Shutdown();
+    }
 }
 
 void NeoWPF::Rendering::Renderer_Resize(unsigned int w, unsigned int h)
 {
-    D3D11::Resize(w, h);
+    if (auto* rendering = CurrentRendering()) {
+        rendering->Resize(w, h);
+    }
 }
 
 void NeoWPF::Rendering::Renderer_BeginFrame()
 {
-    D3D11::BeginFrame();
+    if (auto* rendering = CurrentRendering()) {
+        rendering->BeginFrame();
+    }
 }
 
 void NeoWPF::Rendering::Renderer_Execute(const CommandList& cmd)
 {
-    D3D11::Execute(cmd);
+    if (auto* rendering = CurrentRendering()) {
+        rendering->Execute(cmd);
+    }
 }
 
 void NeoWPF::Rendering::Renderer_Present()
 {
-    D3D11::Present();
+    if (auto* rendering = CurrentRendering()) {
+        rendering->Present();
+    }
 }
 
 uint32_t NeoWPF::Rendering::Renderer_CreateTexture(unsigned int w, unsigned int h, const void* rgbaData)
 {
-    return D3D11::CreateTexture(w, h, rgbaData);
+    if (auto* rendering = CurrentRendering()) {
+        return rendering->CreateTexture(w, h, rgbaData);
+    }
+    return 0;
 }
 
 void NeoWPF::Rendering::Renderer_DestroyTexture(uint32_t id)
 {
-    D3D11::DestroyTexture(id);
+    if (auto* rendering = CurrentRendering()) {
+        rendering->DestroyTexture(id);
+    }
 }
 
 void NeoWPF::Rendering::Renderer_ClearTextures()
 {
-    D3D11::ClearTextures();
+    if (auto* rendering = CurrentRendering()) {
+        rendering->ClearTextures();
+    }
 }
 
 bool NeoWPF::Rendering::Renderer_IsInitialized()
 {
-    return D3D11::IsInitialized();
+    auto* rendering = CurrentRendering();
+    return rendering && rendering->IsInitialized();
 }

@@ -3,6 +3,7 @@
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
 #include <any>
+#include <cstring>
 #include <string>
 
 namespace NeoWPF::UI::Properties {

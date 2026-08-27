@@ -7,6 +7,7 @@ namespace NeoWPF::Platform::Windows {
 class WWindowing final : public NeoWPF::Contracts::IWindowing {
 public:
     void* CreateWindow(const wchar_t* title, int width, int height) override;
+    bool GetNativeWindowInfo(void* nativeWindowHandle, NeoWPF::Contracts::NativeWindowInfo& outInfo) const noexcept override;
     bool IsWindowAlive(void* nativeWindowHandle) const noexcept override;
     void GetWindowSize(void* nativeWindowHandle, unsigned int& outWidth, unsigned int& outHeight) const noexcept override;
     void ResizeWindow(void* nativeWindowHandle, int width, int height) noexcept override;
