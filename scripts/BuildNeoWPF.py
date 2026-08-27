@@ -48,6 +48,17 @@ def load_msvc_environment() -> None:
 
 load_msvc_environment()
 
+vcpkg_root = os.environ.get("VCPKG_ROOT")
+if not vcpkg_root:
+    vcpkg_candidates = [
+        Path("C:/vcpkg"),
+        Path(os.environ.get("LOCALAPPDATA", "")) / "vcpkg",
+    ]
+    vcpkg_root = next(
+        (str(path) for path in vcpkg_candidates if (path / "scripts" / "buildsystems" / "vcpkg.cmake").is_file()),
+        None,
+    )
+
 msvc_tools_dir = Path(os.environ["VCToolsInstallDir"])
 msvc_bin_dir = msvc_tools_dir / "bin" / "Hostx64" / "x64"
 msvc_compiler = msvc_bin_dir / "cl.exe"
@@ -66,6 +77,8 @@ subprocess.run(
         f"-DCMAKE_CXX_COMPILER={msvc_compiler}",
         f"-DCMAKE_LINKER={msvc_linker}",
         f"-DCMAKE_BUILD_TYPE={configuration}",
+        "-DVCPKG_TARGET_TRIPLET=x64-windows-static-md",
+        *([f"-DCMAKE_TOOLCHAIN_FILE={Path(vcpkg_root) / 'scripts' / 'buildsystems' / 'vcpkg.cmake'}"] if vcpkg_root else []),
     ],
     cwd=source_root,
     check=True,

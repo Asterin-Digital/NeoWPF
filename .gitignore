@@ -19,3 +19,4 @@ NeoWPF.code-workspace
 NeoWPF.vcxproj.user
 cmake
 out
+vcpkg_installed

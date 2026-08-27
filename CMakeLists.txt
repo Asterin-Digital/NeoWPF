@@ -38,6 +38,8 @@ endif()
 if(UNIX)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(WAYLAND REQUIRED IMPORTED_TARGET wayland-client)
+    pkg_check_modules(FREETYPE REQUIRED IMPORTED_TARGET freetype2)
+    pkg_check_modules(HARFBUZZ REQUIRED IMPORTED_TARGET harfbuzz)
     find_program(WAYLAND_SCANNER wayland-scanner REQUIRED)
     pkg_get_variable(WAYLAND_PROTOCOLS_DATADIR wayland-protocols pkgdatadir)
     set(NEOWPF_XDG_SHELL_XML "${WAYLAND_PROTOCOLS_DATADIR}/stable/xdg-shell/xdg-shell.xml")
@@ -61,6 +63,49 @@ if(UNIX)
     endif()
 endif()
 
+if(WIN32)
+    find_program(NEOWPF_WHERE_EXECUTABLE where REQUIRED)
+    execute_process(
+        COMMAND "${NEOWPF_WHERE_EXECUTABLE}" vcpkg
+        OUTPUT_VARIABLE NEOWPF_VCPKG_EXECUTABLES
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE NEOWPF_WHERE_RESULT
+    )
+    if(NEOWPF_WHERE_RESULT EQUAL 0)
+        string(REPLACE "\r\n" ";" NEOWPF_VCPKG_EXECUTABLES "${NEOWPF_VCPKG_EXECUTABLES}")
+        string(REPLACE "\n" ";" NEOWPF_VCPKG_EXECUTABLES "${NEOWPF_VCPKG_EXECUTABLES}")
+        foreach(NEOWPF_VCPKG_EXECUTABLE IN LISTS NEOWPF_VCPKG_EXECUTABLES)
+            get_filename_component(NEOWPF_VCPKG_CANDIDATE_ROOT "${NEOWPF_VCPKG_EXECUTABLE}" DIRECTORY)
+            foreach(NEOWPF_VCPKG_CANDIDATE_TRIPLET IN ITEMS
+                "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows-static-md"
+                "${NEOWPF_VCPKG_CANDIDATE_ROOT}/installed/x64-windows-static-md")
+                if(EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/ft2build.h" AND
+                   EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/harfbuzz/hb.h" AND
+                   EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/share/freetype/freetype-config.cmake" AND
+                   EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/share/harfbuzz/harfbuzzConfig.cmake")
+                set(NEOWPF_VCPKG_ROOT "${NEOWPF_VCPKG_CANDIDATE_ROOT}")
+                set(NEOWPF_VCPKG_TRIPLET "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}")
+                get_filename_component(VCPKG_INSTALLED_DIR "${NEOWPF_VCPKG_TRIPLET}" DIRECTORY)
+                set(_VCPKG_INSTALLED_DIR "${VCPKG_INSTALLED_DIR}")
+                set(VCPKG_TARGET_TRIPLET "x64-windows-static-md")
+                list(PREPEND CMAKE_PREFIX_PATH "${NEOWPF_VCPKG_TRIPLET}")
+                break()
+                endif()
+            endforeach()
+            if(NEOWPF_VCPKG_TRIPLET)
+                break()
+            endif()
+        endforeach()
+    endif()
+    if(NOT NEOWPF_VCPKG_TRIPLET)
+        message(FATAL_ERROR
+            "Could not locate a vcpkg installation containing the x64-windows-static-md "
+            "FreeType and HarfBuzz packages. Ensure vcpkg is available on PATH.")
+    endif()
+    find_package(Freetype CONFIG REQUIRED)
+    find_package(harfbuzz CONFIG REQUIRED)
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -74,6 +119,35 @@ endif()
 add_library(NeoWPF STATIC ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})
 add_library(NeoWPF::NeoWPF ALIAS NeoWPF)
 
+if(WIN32)
+    set(NEOWPF_HARFBUZZ_DEBUG_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/debug/lib/harfbuzz.lib")
+    set(NEOWPF_FREETYPE_DEBUG_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/debug/lib/freetyped.lib")
+    set(NEOWPF_HARFBUZZ_RELEASE_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/lib/harfbuzz.lib")
+    set(NEOWPF_FREETYPE_RELEASE_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/lib/freetype.lib")
+    foreach(NEOWPF_TEXT_ARCHIVE IN ITEMS
+        "${NEOWPF_HARFBUZZ_DEBUG_ARCHIVE}"
+        "${NEOWPF_FREETYPE_DEBUG_ARCHIVE}"
+        "${NEOWPF_HARFBUZZ_RELEASE_ARCHIVE}"
+        "${NEOWPF_FREETYPE_RELEASE_ARCHIVE}")
+        if(NOT EXISTS "${NEOWPF_TEXT_ARCHIVE}")
+            message(FATAL_ERROR "Missing static text archive: ${NEOWPF_TEXT_ARCHIVE}")
+        endif()
+    endforeach()
+
+    add_custom_command(TARGET NeoWPF POST_BUILD
+        COMMAND "${CMAKE_AR}"
+            "/OUT:$<TARGET_FILE:NeoWPF>.merged"
+            "$<TARGET_FILE:NeoWPF>"
+            "$<IF:$<CONFIG:Debug>,${NEOWPF_HARFBUZZ_DEBUG_ARCHIVE},${NEOWPF_HARFBUZZ_RELEASE_ARCHIVE}>"
+            "$<IF:$<CONFIG:Debug>,${NEOWPF_FREETYPE_DEBUG_ARCHIVE},${NEOWPF_FREETYPE_RELEASE_ARCHIVE}>"
+        COMMAND "${CMAKE_COMMAND}" -E copy
+            "$<TARGET_FILE:NeoWPF>.merged"
+            "$<TARGET_FILE:NeoWPF>"
+        COMMAND "${CMAKE_COMMAND}" -E rm -f "$<TARGET_FILE:NeoWPF>.merged"
+        VERBATIM
+    )
+endif()
+
 set_target_properties(NeoWPF PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/x64"
     ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/x64/Debug"
@@ -86,6 +160,10 @@ target_include_directories(NeoWPF
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
+if(WIN32)
+    target_include_directories(NeoWPF PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include")
+    target_include_directories(NeoWPF PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include/harfbuzz")
+endif()
 if(UNIX)
     target_include_directories(NeoWPF PRIVATE "${NEOWPF_WAYLAND_GENERATED_DIR}")
 endif()
@@ -127,17 +205,22 @@ endif()
 
 if(WIN32)
     target_link_libraries(NeoWPF
-        PUBLIC
+        PRIVATE
             d3d11
             dxgi
-            dwrite
             dbghelp
             winhttp
             ole32
             windowscodecs
     )
 else()
-    target_link_libraries(NeoWPF PUBLIC Vulkan::Vulkan PkgConfig::WAYLAND)
+    target_link_libraries(NeoWPF
+        PUBLIC
+            Vulkan::Vulkan
+            PkgConfig::WAYLAND
+            PkgConfig::FREETYPE
+            PkgConfig::HARFBUZZ
+    )
     message(STATUS "NeoWPF Linux configuration selected with Vulkan renderer backend.")
 endif()
 

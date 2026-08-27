@@ -1,0 +1,17 @@
+{
+    "name": "neowpf",
+    "version-string": "0.1.0",
+    "dependencies": [
+        {
+            "name": "freetype",
+            "default-features": false
+        },
+        {
+            "name": "harfbuzz",
+            "default-features": false,
+            "features": [
+                "freetype"
+            ]
+        }
+    ]
+}
