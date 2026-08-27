@@ -38,7 +38,7 @@ public:
             return {};
         }
 
-        hb_face_t* face = hb_face_create(blob, 0);
+        hb_face_t* face = hb_face_create(blob, record->faceIndex);
         hb_blob_destroy(blob);
         if (!face) {
             return {};

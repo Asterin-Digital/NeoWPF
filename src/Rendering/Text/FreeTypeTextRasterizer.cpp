@@ -44,7 +44,8 @@ public:
 
         const auto* bytes = reinterpret_cast<const FT_Byte*>(record->data->data());
         const auto faceResult = FT_New_Memory_Face(
-            library, bytes, static_cast<FT_Long>(record->data->size()), 0, &face);
+            library, bytes, static_cast<FT_Long>(record->data->size()),
+            static_cast<FT_Long>(record->faceIndex), &face);
         if (faceResult != 0 || !face || FT_Set_Pixel_Sizes(face, 0, (std::max)(fontSize, 1)) != 0) {
             if (face) {
                 FT_Done_Face(face);

@@ -4,11 +4,14 @@
 #include <NeoWPF/Rendering/Text/TextRasterizer.h>
 #include <NeoWPF/Rendering/Text/TextShaper.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
+#include <NeoWPF/Core/Application/Application.h>
+#include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 
 #include <algorithm>
 #include <filesystem>
 #include <mutex>
+#include <unordered_set>
 
 namespace NeoWPF::Rendering::Text {
 namespace {
@@ -18,7 +21,46 @@ using NeoWPF::Platform::WideToUtf8;
 
 FontRequest MakeRequest(const std::wstring& family, int weight, NeoWPF::UI::FontStyle style)
 {
-    return {WideToUtf8(family), weight > 0 ? weight : 400, style};
+    std::wstring effectiveFamily = family;
+    if (effectiveFamily.empty()) {
+        std::any applicationFamily;
+        if (NeoWPF::Core::Application::TryFindResource("FontFamily", applicationFamily)) {
+            try {
+                effectiveFamily = std::any_cast<std::wstring>(applicationFamily);
+            } catch (const std::bad_any_cast&) {
+                effectiveFamily.clear();
+            }
+        }
+    }
+
+    static std::mutex platformResolutionMutex;
+    static std::unordered_set<std::wstring> platformResolutionAttempts;
+    if (!effectiveFamily.empty()) {
+        std::lock_guard<std::mutex> lock(platformResolutionMutex);
+        if (platformResolutionAttempts.insert(effectiveFamily).second) {
+            if (auto* platform = NeoWPF::Platform::CurrentPlatform()) {
+                platform->ResolveFontFamily(effectiveFamily);
+            }
+        }
+    }
+
+    FontRequest request{WideToUtf8(effectiveFamily), weight > 0 ? weight : 400, style};
+    auto record = GetFontDatabase().Resolve(request);
+    if (record) {
+        request.familyUtf8 = record->familyUtf8;
+    }
+
+    static std::once_flag resolutionLogOnce;
+    std::call_once(resolutionLogOnce, [&] {
+        NeoWPF::Diagnostics::Log(
+            NeoWPF::Diagnostics::Category::TextRendering,
+            NeoWPF::Diagnostics::Level::Info,
+            "[TextRenderer] FontFamily requested='%ls' effective='%ls' resolved='%s' records=%zu",
+            family.c_str(), effectiveFamily.c_str(),
+            record ? record->familyUtf8.c_str() : "<none>",
+            GetFontDatabase().Records().size());
+    });
+    return request;
 }
 
 TextBitmap Rasterize(const std::wstring& text, int fontSize, const std::wstring& family,
@@ -28,15 +70,6 @@ TextBitmap Rasterize(const std::wstring& text, int fontSize, const std::wstring&
     const auto request = MakeRequest(family, weight, style);
     const auto glyphs = CreateHarfBuzzTextShaper(fonts)->Shape(WideToUtf8(text), request, fontSize);
     auto bitmap = CreateFreeTypeTextRasterizer(fonts)->Rasterize(glyphs, request, fontSize);
-    std::size_t nonzeroAlphaBytes = 0;
-    for (std::size_t index = 3; index < bitmap.rgba.size(); index += 4) {
-        nonzeroAlphaBytes += bitmap.rgba[index] != 0 ? 1 : 0;
-    }
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
-        NeoWPF::Diagnostics::Level::Debug,
-        "[TextRenderer] textLength=%zu family='%ls' fontSize=%d glyphs=%zu bitmap=%dx%d stride=%d rgbaBytes=%zu nonzeroAlpha=%zu",
-        text.size(), family.c_str(), fontSize, glyphs.size(), bitmap.width, bitmap.height,
-        bitmap.stride, bitmap.rgba.size(), nonzeroAlphaBytes);
     return bitmap;
 }
 
@@ -74,19 +107,12 @@ std::mutex& RegisteredFilesMutex()
 
 std::wstring ResolveFontFamily(const std::wstring& requestedFontFamily)
 {
-    const auto& records = GetFontDatabase().Records();
-    if (records.empty()) {
+    const auto resolved = GetFontDatabase().Resolve({
+        WideToUtf8(requestedFontFamily), 400, NeoWPF::UI::FontStyle::Normal});
+    if (!resolved) {
         return requestedFontFamily;
     }
-    if (!requestedFontFamily.empty()) {
-        const auto requested = WideToUtf8(requestedFontFamily);
-        for (const auto& record : records) {
-            if (record && record->familyUtf8 == requested) {
-                return requestedFontFamily;
-            }
-        }
-    }
-    return Utf8ToWide(records.front()->familyUtf8);
+    return Utf8ToWide(resolved->familyUtf8);
 }
 
 bool RegisterFontFile(const std::wstring& filePath)
@@ -204,10 +230,6 @@ std::vector<uint8_t> RenderTextBitmap(const std::wstring& text, int fontSize, in
     outHeight = maxHeight > 0 ? (std::min)(bitmap.height, maxHeight) : bitmap.height;
     outInkTop = bitmap.inkTop;
     outInkHeight = bitmap.inkHeight;
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
-        NeoWPF::Diagnostics::Level::Debug,
-        "[TextRenderer] RenderTextBitmap textLength=%zu output=%dx%d inkTop=%d inkHeight=%d rgba=%zu",
-        text.size(), outWidth, outHeight, outInkTop, outInkHeight, bitmap.rgba.size());
     if (outWidth == bitmap.width && outHeight == bitmap.height) {
         return bitmap.rgba;
     }

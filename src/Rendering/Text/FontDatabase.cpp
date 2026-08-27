@@ -4,11 +4,37 @@
 #include FT_FREETYPE_H
 
 #include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <mutex>
+#include <string>
 #include <utility>
 
 namespace NeoWPF::Rendering::Text {
+
+namespace {
+
+std::string NormalizeFamily(std::string family)
+{
+    std::string normalized;
+    normalized.reserve(family.size());
+    bool pendingSpace = false;
+    for (const auto character : family) {
+        const auto value = static_cast<unsigned char>(character);
+        if (std::isspace(value)) {
+            pendingSpace = !normalized.empty();
+            continue;
+        }
+        if (pendingSpace) {
+            normalized.push_back(' ');
+            pendingSpace = false;
+        }
+        normalized.push_back(static_cast<char>(std::tolower(value)));
+    }
+    return normalized;
+}
+
+}
 
 struct FontDatabase::Impl {
     struct Entry {
@@ -76,45 +102,72 @@ bool FontDatabase::RegisterMemory(std::shared_ptr<const std::vector<std::byte>> 
         return false;
     }
 
-    FT_Face face = nullptr;
     const auto* bytes = reinterpret_cast<const FT_Byte*>(data->data());
-    if (FT_New_Memory_Face(m_impl->library, bytes, static_cast<FT_Long>(data->size()), 0, &face) != 0) {
+    FT_Face probe = nullptr;
+    if (FT_New_Memory_Face(m_impl->library, bytes, static_cast<FT_Long>(data->size()), -1, &probe) != 0 ||
+        !probe || probe->num_faces <= 0) {
+        if (probe) {
+            FT_Done_Face(probe);
+        }
         return false;
     }
-
-    if (familyUtf8.empty() && face->family_name) {
-        familyUtf8 = face->family_name;
-    }
-    if (familyUtf8.empty()) {
-        FT_Done_Face(face);
-        return false;
-    }
-
-    auto record = std::make_shared<FontRecord>();
-    record->familyUtf8 = std::move(familyUtf8);
-    record->data = data;
-    record->weight = 400;
-    record->style = (face->style_flags & FT_STYLE_FLAG_ITALIC)
-        ? NeoWPF::UI::FontStyle::Italic
-        : NeoWPF::UI::FontStyle::Normal;
+    const auto faceCount = probe->num_faces;
+    FT_Done_Face(probe);
 
     std::lock_guard<std::mutex> lock(m_impl->mutex);
-    m_impl->entries.push_back({std::move(record), face, std::move(data)});
-    return true;
+    bool registered = false;
+    for (long faceIndex = 0; faceIndex < faceCount; ++faceIndex) {
+        FT_Face face = nullptr;
+        if (FT_New_Memory_Face(m_impl->library, bytes, static_cast<FT_Long>(data->size()), faceIndex, &face) != 0 ||
+            !face) {
+            continue;
+        }
+
+        std::string recordFamily = familyUtf8;
+        if (recordFamily.empty() && face->family_name) {
+            recordFamily = face->family_name;
+        }
+        if (recordFamily.empty()) {
+            FT_Done_Face(face);
+            continue;
+        }
+
+        const auto duplicate = std::find_if(m_impl->entries.begin(), m_impl->entries.end(), [&](const Impl::Entry& entry) {
+            return NormalizeFamily(entry.record->familyUtf8) == NormalizeFamily(recordFamily) &&
+                   entry.record->faceIndex == static_cast<unsigned int>(faceIndex) &&
+                   entry.record->data == data;
+        });
+        if (duplicate != m_impl->entries.end()) {
+            FT_Done_Face(face);
+            continue;
+        }
+
+        auto record = std::make_shared<FontRecord>();
+        record->familyUtf8 = std::move(recordFamily);
+        record->data = data;
+        record->faceIndex = static_cast<unsigned int>(faceIndex);
+        record->style = (face->style_flags & FT_STYLE_FLAG_ITALIC)
+            ? NeoWPF::UI::FontStyle::Italic
+            : NeoWPF::UI::FontStyle::Normal;
+        m_impl->entries.push_back({std::move(record), face, data});
+        registered = true;
+    }
+    return registered;
 }
 
 std::shared_ptr<const FontRecord> FontDatabase::Resolve(FontRequest request) const
 {
     std::lock_guard<std::mutex> lock(m_impl->mutex);
+    const auto requestedFamily = NormalizeFamily(request.familyUtf8);
     const auto matches = [&](const Impl::Entry& entry) {
-        return entry.record->familyUtf8 == request.familyUtf8 &&
+        return NormalizeFamily(entry.record->familyUtf8) == requestedFamily &&
                entry.record->style == request.style;
     };
 
     auto it = std::find_if(m_impl->entries.begin(), m_impl->entries.end(), matches);
     if (it == m_impl->entries.end()) {
         it = std::find_if(m_impl->entries.begin(), m_impl->entries.end(), [&](const Impl::Entry& entry) {
-            return entry.record->familyUtf8 == request.familyUtf8;
+            return NormalizeFamily(entry.record->familyUtf8) == requestedFamily;
         });
     }
     if (it != m_impl->entries.end()) {
@@ -123,7 +176,7 @@ std::shared_ptr<const FontRecord> FontDatabase::Resolve(FontRequest request) con
             return std::abs(entry.record->weight - request.weight);
         };
         for (auto candidate = std::next(it); candidate != m_impl->entries.end(); ++candidate) {
-            if (candidate->record->familyUtf8 == request.familyUtf8 &&
+            if (NormalizeFamily(candidate->record->familyUtf8) == requestedFamily &&
                 candidate->record->style == request.style &&
                 weightDistance(*candidate) < weightDistance(*best)) {
                 best = candidate;

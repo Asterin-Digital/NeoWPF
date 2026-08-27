@@ -5,6 +5,7 @@
 #include <shlobj.h>
 
 #include <filesystem>
+#include <cwctype>
 
 namespace NeoWPF::Platform {
 
@@ -28,7 +29,7 @@ std::uint32_t CurrentThreadIdWindows() noexcept;
 namespace NeoWPF::Platform::Windows {
 namespace {
 
-std::filesystem::path FindDefaultFont()
+std::filesystem::path FindFontsDirectory()
 {
     PWSTR knownFolder = nullptr;
     if (FAILED(::SHGetKnownFolderPath(FOLDERID_Fonts, KF_FLAG_DEFAULT, nullptr, &knownFolder))) {
@@ -38,8 +39,93 @@ std::filesystem::path FindDefaultFont()
     std::filesystem::path fontsDirectory(knownFolder);
     ::CoTaskMemFree(knownFolder);
 
+    return fontsDirectory;
+}
+
+std::filesystem::path FindDefaultFont()
+{
+    const auto fontsDirectory = FindFontsDirectory();
+    if (fontsDirectory.empty()) {
+        return {};
+    }
     const auto defaultFont = fontsDirectory / L"segoeui.ttf";
     return std::filesystem::is_regular_file(defaultFont) ? defaultFont : std::filesystem::path{};
+}
+
+std::wstring NormalizeFamily(std::wstring family)
+{
+    std::wstring normalized;
+    for (const auto character : family) {
+        if (!std::iswspace(character)) {
+            normalized.push_back(static_cast<wchar_t>(std::towlower(character)));
+        }
+    }
+    return normalized;
+}
+
+bool LoadSystemFontFamily(const std::wstring& requestedFamily)
+{
+    HKEY key = nullptr;
+    if (RegOpenKeyExW(
+            HKEY_LOCAL_MACHINE,
+            L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts",
+            0, KEY_READ, &key) != ERROR_SUCCESS) {
+        return false;
+    }
+
+    const auto fontsDirectory = FindFontsDirectory();
+    const auto normalizedRequested = NormalizeFamily(requestedFamily);
+    bool loaded = false;
+
+    for (DWORD index = 0; !loaded; ++index) {
+        wchar_t valueName[512] = {};
+        wchar_t fileName[512] = {};
+        DWORD valueNameSize = static_cast<DWORD>(std::size(valueName));
+        DWORD fileNameSize = static_cast<DWORD>(sizeof(fileName));
+        DWORD type = 0;
+        const auto result = RegEnumValueW(
+            key, index, valueName, &valueNameSize, nullptr, &type,
+            reinterpret_cast<LPBYTE>(fileName), &fileNameSize);
+        if (result != ERROR_SUCCESS) {
+            break;
+        }
+        if (type != REG_SZ && type != REG_EXPAND_SZ) {
+            continue;
+        }
+
+        std::wstring familyName(valueName, valueNameSize);
+        const auto styleStart = familyName.find(L'(');
+        if (styleStart != std::wstring::npos) {
+            familyName.resize(styleStart);
+        }
+        while (!familyName.empty() && std::iswspace(familyName.back())) {
+            familyName.pop_back();
+        }
+        if (NormalizeFamily(familyName) != normalizedRequested) {
+            continue;
+        }
+
+        std::wstring resolvedFileName(fileName, fileNameSize / sizeof(wchar_t));
+        if (type == REG_EXPAND_SZ) {
+            wchar_t expandedName[512] = {};
+            const auto expandedSize = ExpandEnvironmentStringsW(
+                resolvedFileName.c_str(), expandedName, static_cast<DWORD>(std::size(expandedName)));
+            if (expandedSize > 0 && expandedSize <= std::size(expandedName)) {
+                resolvedFileName.assign(expandedName, expandedSize - 1);
+            }
+        }
+
+        std::filesystem::path fontPath(resolvedFileName);
+        if (fontPath.is_relative() && !fontsDirectory.empty()) {
+            fontPath = fontsDirectory / fontPath;
+        }
+        if (std::filesystem::is_regular_file(fontPath)) {
+            loaded = NeoWPF::Rendering::Text::RegisterFontFile(fontPath.wstring());
+        }
+    }
+
+    RegCloseKey(key);
+    return loaded;
 }
 
 }
@@ -109,6 +195,7 @@ bool WPlatform::RegisterFontMemory(const unsigned char* data, std::size_t size, 
 
 std::wstring WPlatform::ResolveFontFamily(const std::wstring& requestedFontFamily)
 {
+    LoadSystemFontFamily(requestedFontFamily);
     return NeoWPF::Rendering::Text::ResolveFontFamily(requestedFontFamily);
 }
 

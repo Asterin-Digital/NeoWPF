@@ -20,6 +20,7 @@ struct FontRecord {
     std::string familyUtf8;
     int weight = 400;
     NeoWPF::UI::FontStyle style = NeoWPF::UI::FontStyle::Normal;
+    unsigned int faceIndex = 0;
     std::shared_ptr<const std::vector<std::byte>> data;
 };
 

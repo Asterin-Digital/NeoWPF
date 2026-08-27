@@ -2,6 +2,8 @@
 
 #ifdef _WIN32
 #include <NeoWPF/Platform/Windows/WPlatform.h>
+#else
+#include <NeoWPF/Platform/Linux/LPlatform.h>
 #endif
 
 #include <mutex>
@@ -35,7 +37,7 @@ std::unique_ptr<NeoWPF::Contracts::IPlatform> CreateDefaultPlatform()
 #ifdef _WIN32
     return std::make_unique<NeoWPF::Platform::Windows::WPlatform>();
 #else
-    return nullptr;
+    return std::make_unique<NeoWPF::Platform::Linux::LPlatform>();
 #endif
 }
 

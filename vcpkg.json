@@ -12,6 +12,9 @@
             "features": [
                 "freetype"
             ]
+        },
+        {
+            "name": "fontconfig"
         }
     ]
 }

@@ -2,7 +2,7 @@ import os
 import sys
 
 IGNORED = {".git", "__pycache__", ".DS_Store", "Library", "Temp", "obj", "Build",
-           "Logs", "UserSettings", "*.meta", "*.cs.meta", "*.unity.meta", "x64", ".vs", "out", "cmake"}
+           "Logs", "UserSettings", "*.meta", "*.cs.meta", "*.unity.meta", "x64", ".vs", "out", "cmake", "vcpkg_installed", "build"}
 
 def should_ignore(name):
     if name.endswith(".meta"):

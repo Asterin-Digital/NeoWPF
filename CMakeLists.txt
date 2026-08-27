@@ -40,6 +40,7 @@ if(UNIX)
     pkg_check_modules(WAYLAND REQUIRED IMPORTED_TARGET wayland-client)
     pkg_check_modules(FREETYPE REQUIRED IMPORTED_TARGET freetype2)
     pkg_check_modules(HARFBUZZ REQUIRED IMPORTED_TARGET harfbuzz)
+    pkg_check_modules(FONTCONFIG REQUIRED IMPORTED_TARGET fontconfig)
     find_program(WAYLAND_SCANNER wayland-scanner REQUIRED)
     pkg_get_variable(WAYLAND_PROTOCOLS_DATADIR wayland-protocols pkgdatadir)
     set(NEOWPF_XDG_SHELL_XML "${WAYLAND_PROTOCOLS_DATADIR}/stable/xdg-shell/xdg-shell.xml")
@@ -220,6 +221,7 @@ else()
             PkgConfig::WAYLAND
             PkgConfig::FREETYPE
             PkgConfig::HARFBUZZ
+            PkgConfig::FONTCONFIG
     )
     message(STATUS "NeoWPF Linux configuration selected with Vulkan renderer backend.")
 endif()
