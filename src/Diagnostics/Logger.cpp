@@ -1,14 +1,13 @@
 #include <NeoWPF/Diagnostics/Logger.h>
-#include <Windows.h>
 #include <cstdio>
 #include <cstdarg>
 #include <cstring>
-#include <new>
 #include <atomic>
 #include <array>
 #include <string>
 #include <algorithm>
 #include <cctype>
+#include <vector>
 
 namespace NeoWPF::Diagnostics {
 
@@ -24,11 +23,10 @@ static void Output(const char* prefix, const char* fmt, va_list ap)
 
     va_list ap_copy;
     va_copy(ap_copy, ap);
-    int msg_len = _vscprintf(fmt, ap_copy);
+    int msg_len = std::vsnprintf(nullptr, 0, fmt, ap_copy);
     va_end(ap_copy);
 
     if (msg_len < 0) {
-        OutputDebugStringA("Logger error: invalid format string\n");
         fputs("Logger error: invalid format string\n", stderr);
         return;
     }
@@ -45,14 +43,13 @@ static void Output(const char* prefix, const char* fmt, va_list ap)
         static_cast<size_t>(msg_len) +
         2;
 
-    char* buffer = new (std::nothrow) char[total_len];
-    if (!buffer) {
-        OutputDebugStringA("Logger error: out of memory\n");
+    std::vector<char> buffer(total_len);
+    if (buffer.empty()) {
         fputs("Logger error: out of memory\n", stderr);
         return;
     }
 
-    char* p = buffer;
+    char* p = buffer.data();
 
     memcpy(p, idBuffer, idLen);
     p += idLen;
@@ -63,10 +60,9 @@ static void Output(const char* prefix, const char* fmt, va_list ap)
     memcpy(p, ": ", 2);
     p += 2;
 
-    int written = _vsnprintf_s(
+    int written = std::vsnprintf(
         p,
         static_cast<size_t>(msg_len) + 1,
-        _TRUNCATE,
         fmt,
         ap);
 
@@ -76,7 +72,7 @@ static void Output(const char* prefix, const char* fmt, va_list ap)
     *p = '\0';
 
     constexpr size_t kDebugChunk = 4000;
-    const char* chunk_start = buffer;
+    const char* chunk_start = buffer.data();
     size_t remaining = total_len - 1;
 
     while (remaining > 0) {
@@ -86,16 +82,13 @@ static void Output(const char* prefix, const char* fmt, va_list ap)
         memcpy(chunk_buf, chunk_start, chunk_size);
         chunk_buf[chunk_size] = '\0';
 
-        OutputDebugStringA(chunk_buf);
-
         chunk_start += chunk_size;
         remaining -= chunk_size;
     }
 
-    fputs(buffer, stderr);
+    fputs(buffer.data(), stderr);
     fflush(stderr);
 
-    delete[] buffer;
 }
 
 [[deprecated("Use the new logger, its better")]]

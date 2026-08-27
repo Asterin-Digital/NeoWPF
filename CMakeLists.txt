@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(NeoWPF LANGUAGES CXX)
 
+include(CTest)
+
 if(WIN32)
     set(NEOWPF_PLATFORM "Windows")
 elseif(UNIX)
@@ -83,6 +85,37 @@ else()
 endif()
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})
+
+if(BUILD_TESTING)
+    include(FetchContent)
+
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.zip
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+
+    if(MSVC)
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    endif()
+
+    FetchContent_MakeAvailable(googletest)
+
+    add_executable(NeoWPF.AutomatedTests
+        tests/Automated/ResourceKeyTests.cpp
+        tests/Automated/EventTests.cpp
+        tests/Automated/DependencyPropertyTests.cpp
+    )
+
+    target_link_libraries(NeoWPF.AutomatedTests
+        PRIVATE
+            NeoWPF::NeoWPF
+            GTest::gtest_main
+    )
+
+    include(GoogleTest)
+    gtest_discover_tests(NeoWPF.AutomatedTests)
+endif()
 
 install(TARGETS NeoWPF ARCHIVE DESTINATION lib)
 install(DIRECTORY include/NeoWPF DESTINATION include)

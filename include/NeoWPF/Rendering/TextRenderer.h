@@ -1,9 +1,11 @@
 #pragma once
 
-#include <dwrite.h>
 #include <string>
 #include <vector>
 #include <NeoWPF/UI/Text/FontStyle.h>
+
+struct IDWriteFontFace;
+struct IDWriteFontCollection;
 
 namespace NeoWPF::Rendering::Text {
 

@@ -1,4 +1,3 @@
-#include <NeoWPF/Platform/Http.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <windows.h>
 #include <winhttp.h>
@@ -10,7 +9,7 @@
 namespace NeoWPF::Platform {
 
 bool FetchHttpResource(const std::wstring& url, std::vector<uint8_t>& outData) {
-    HINTERNET hSession = WinHttpOpen(L"NeoWPF/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 
+    HINTERNET hSession = WinHttpOpen(L"NeoWPF/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
                                      WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
     if (!hSession) {
         NeoWPF::Diagnostics::LogError("FetchHttpResource: WinHttpOpen failed");
@@ -29,10 +28,10 @@ bool FetchHttpResource(const std::wstring& url, std::vector<uint8_t>& outData) {
         return false;
     }
 
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Http, NeoWPF::Diagnostics::Level::Info, "Parsed URL - scheme: %u, host length: %u, port: %u, path length: %u", 
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Http, NeoWPF::Diagnostics::Level::Info, "Parsed URL - scheme: %u, host length: %u, port: %u, path length: %u",
         urlComp.nScheme, urlComp.dwHostNameLength, urlComp.nPort, urlComp.dwUrlPathLength);
 
-    // Extract null-terminated hostname and path since lpszHostName and lpszUrlPath are not null-terminated
+
     std::wstring hostname(urlComp.lpszHostName, urlComp.dwHostNameLength);
     std::wstring urlPath(urlComp.lpszUrlPath, urlComp.dwUrlPathLength);
 
@@ -43,9 +42,9 @@ bool FetchHttpResource(const std::wstring& url, std::vector<uint8_t>& outData) {
         return false;
     }
 
-    HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", urlPath.c_str(), 
-                                            nullptr, WINHTTP_NO_REFERER, 
-                                            WINHTTP_DEFAULT_ACCEPT_TYPES, 
+    HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", urlPath.c_str(),
+                                            nullptr, WINHTTP_NO_REFERER,
+                                            WINHTTP_DEFAULT_ACCEPT_TYPES,
                                             urlComp.nScheme == INTERNET_SCHEME_HTTPS ? WINHTTP_FLAG_SECURE : 0);
     if (!hRequest) {
         NeoWPF::Diagnostics::LogError("FetchHttpResource: WinHttpOpenRequest failed");
@@ -81,7 +80,7 @@ bool FetchHttpResource(const std::wstring& url, std::vector<uint8_t>& outData) {
     WinHttpCloseHandle(hRequest);
     WinHttpCloseHandle(hConnect);
     WinHttpCloseHandle(hSession);
-    
+
     if (outData.empty()) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Http, NeoWPF::Diagnostics::Level::Info, "No data received from URL: %ls", url.c_str());
     } else {

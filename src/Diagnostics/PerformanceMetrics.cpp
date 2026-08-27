@@ -1,10 +1,7 @@
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Diagnostics/Logger.h>
-#include <Windows.h>
-#undef min
-#undef max
-#include <psapi.h>
 #include <chrono>
+#include <ctime>
 #include <cstdint>
 #include <atomic>
 #include <algorithm>
@@ -309,38 +306,15 @@ void SampleSystemMetrics()
     }
 
 
-    HANDLE hProcess = GetCurrentProcess();
-    PROCESS_MEMORY_COUNTERS pmc = {};
-    if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
-        counters.currentMemoryBytes.store(pmc.WorkingSetSize, std::memory_order_relaxed);
-        uint64_t current = pmc.WorkingSetSize;
-        uint64_t peak = counters.peakMemoryBytes.load(std::memory_order_relaxed);
-        if (current > peak) {
-            counters.peakMemoryBytes.store(current, std::memory_order_relaxed);
-        }
-    }
-
-
-    static FILETIME lastKernel = {0};
-    static FILETIME lastUser = {0};
+    static std::clock_t lastCpuTime = 0;
     static std::chrono::steady_clock::time_point lastSample = std::chrono::steady_clock::now();
 
-    FILETIME creation, exit, kernel, user;
-    if (GetProcessTimes(hProcess, &creation, &exit, &kernel, &user)) {
-        auto now = std::chrono::steady_clock::now();
-        auto timeDelta = std::chrono::duration<double>(now - lastSample).count();
-
-        if (timeDelta > 0.0 && (lastKernel.dwHighDateTime || lastKernel.dwLowDateTime)) {
-            uint64_t kernelTicks = (static_cast<uint64_t>(kernel.dwHighDateTime) << 32) | kernel.dwLowDateTime;
-            uint64_t userTicks = (static_cast<uint64_t>(user.dwHighDateTime) << 32) | user.dwLowDateTime;
-            uint64_t lastKernelTicks = (static_cast<uint64_t>(lastKernel.dwHighDateTime) << 32) | lastKernel.dwLowDateTime;
-            uint64_t lastUserTicks = (static_cast<uint64_t>(lastUser.dwHighDateTime) << 32) | lastUser.dwLowDateTime;
-
-            uint64_t kernelDelta = kernelTicks - lastKernelTicks;
-            uint64_t userDelta = userTicks - lastUserTicks;
-            uint64_t totalDelta = kernelDelta + userDelta;
-
-            double cpuUsage = (totalDelta / 10000.0) / (timeDelta * 1000.0) * 100.0;
+    const std::clock_t currentCpuTime = std::clock();
+    const auto now = std::chrono::steady_clock::now();
+    const auto timeDelta = std::chrono::duration<double>(now - lastSample).count();
+    if (timeDelta > 0.0 && lastCpuTime != 0 && currentCpuTime >= lastCpuTime) {
+            const double cpuSeconds = static_cast<double>(currentCpuTime - lastCpuTime) / CLOCKS_PER_SEC;
+            double cpuUsage = cpuSeconds / timeDelta * 100.0;
             cpuUsage = std::min(cpuUsage, 100.0);
 
             counters.currentCpuUsage.store(cpuUsage, std::memory_order_relaxed);
@@ -348,12 +322,9 @@ void SampleSystemMetrics()
             if (cpuUsage > peak) {
                 counters.peakCpuUsage.store(cpuUsage, std::memory_order_relaxed);
             }
-        }
-
-        lastKernel = kernel;
-        lastUser = user;
-        lastSample = now;
     }
+    lastCpuTime = currentCpuTime;
+    lastSample = now;
 }
 
 }

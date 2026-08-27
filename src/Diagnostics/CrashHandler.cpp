@@ -1,7 +1,8 @@
 #include <NeoWPF/Diagnostics/CrashHandler.h>
 #include <NeoWPF/Diagnostics/CallStackTracer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
-#include <DbgHelp.h>
+#include <NeoWPF/Platform/PlatformRegistry.h>
+#include <NeoWPF/Platform/PlatformUtils.h>
 #include <algorithm>
 #include <atomic>
 #include <csignal>
@@ -10,10 +11,9 @@
 #include <exception>
 #include <mutex>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
-
-#pragma comment(lib, "Dbghelp.lib")
 
 namespace NeoWPF::Diagnostics {
 namespace {
@@ -35,38 +35,6 @@ std::vector<ExceptionHandlerEntry> s_exceptionHandlers;
 std::atomic<bool> s_initialized{false};
 std::atomic<bool> s_shutdown{false};
 
-std::wstring GetCurrentModulePath()
-{
-    wchar_t path[MAX_PATH] = {};
-    if (GetModuleFileNameW(nullptr, path, MAX_PATH) == 0) {
-        return L"<unknown>";
-    }
-    return path;
-}
-
-std::string ToNarrow(const std::wstring& input)
-{
-    if (input.empty()) {
-        return {};
-    }
-
-    const int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, input.c_str(), -1, nullptr, 0, nullptr, nullptr);
-    if (sizeNeeded <= 0) {
-        return {};
-    }
-
-    std::string output(static_cast<size_t>(sizeNeeded) - 1, '\0');
-    WideCharToMultiByte(CP_UTF8, 0, input.c_str(), -1, output.data(), sizeNeeded, nullptr, nullptr);
-    return output;
-}
-
-std::wstring BuildExceptionMessage(DWORD code)
-{
-    std::wostringstream stream;
-    stream << L"0x" << std::hex << code;
-    return stream.str();
-}
-
 std::vector<std::wstring> CaptureCallStackText()
 {
     std::vector<std::wstring> output;
@@ -87,9 +55,9 @@ std::vector<std::wstring> CaptureCallStackText()
 void EmitCrashReport(const CrashContext& context)
 {
     if (!context.message.empty()) {
-        LogError("Crash report: %s", ToNarrow(context.message).c_str());
+        LogError("Crash report: %s", NeoWPF::Platform::WideToUtf8(context.message).c_str());
     } else {
-        LogError("Crash report: %s", ToNarrow(context.description).c_str());
+        LogError("Crash report: %s", NeoWPF::Platform::WideToUtf8(context.description).c_str());
     }
 
     if (context.exceptionCode != 0) {
@@ -97,21 +65,21 @@ void EmitCrashReport(const CrashContext& context)
     }
 
     if (!context.exceptionType.empty()) {
-        LogError("Exception type: %s", ToNarrow(context.exceptionType).c_str());
+        LogError("Exception type: %s", NeoWPF::Platform::WideToUtf8(context.exceptionType).c_str());
     }
 
     if (!context.source.empty()) {
-        LogError("Source: %s", ToNarrow(context.source).c_str());
+        LogError("Source: %s", NeoWPF::Platform::WideToUtf8(context.source).c_str());
     }
 
     if (!context.modulePath.empty()) {
-        LogError("Module: %s", ToNarrow(context.modulePath).c_str());
+        LogError("Module: %s", NeoWPF::Platform::WideToUtf8(context.modulePath).c_str());
     }
 
     if (!context.callStack.empty()) {
         LogError("Call stack:");
         for (const auto& frame : context.callStack) {
-            LogError("  %s", ToNarrow(frame).c_str());
+            LogError("  %s", NeoWPF::Platform::WideToUtf8(frame).c_str());
         }
     }
 }
@@ -141,32 +109,16 @@ void DispatchCrash(const CrashContext& context)
     EmitCrashReport(context);
 }
 
-LONG WINAPI UnhandledExceptionFilterImpl(EXCEPTION_POINTERS* exceptionInfo)
-{
-    CrashContext context;
-    context.category = CrashCategory::UnhandledException;
-    context.exceptionCode = exceptionInfo && exceptionInfo->ExceptionRecord ? exceptionInfo->ExceptionRecord->ExceptionCode : 0;
-    context.exceptionAddress = exceptionInfo && exceptionInfo->ExceptionRecord ? reinterpret_cast<std::uintptr_t>(exceptionInfo->ExceptionRecord->ExceptionAddress) : 0;
-    context.threadId = GetCurrentThreadId();
-    context.exceptionType = L"UnhandledException";
-    context.message = BuildExceptionMessage(context.exceptionCode);
-    context.source = L"NeoWPF.UnhandledException";
-    context.modulePath = GetCurrentModulePath();
-    context.description = L"Unhandled exception was raised before the application could continue.";
-    context.callStack = CaptureCallStackText();
-    context.handled = false;
-    DispatchCrash(context);
-    return EXCEPTION_EXECUTE_HANDLER;
-}
-
 void TerminateHandler()
 {
     CrashContext context;
     context.category = CrashCategory::Terminate;
-    context.threadId = GetCurrentThreadId();
+    if (auto* platform = NeoWPF::Platform::CurrentPlatform()) {
+        context.threadId = platform->CurrentThreadId();
+        context.modulePath = platform->CurrentModulePath();
+    }
     context.exceptionType = L"std::terminate";
     context.source = L"NeoWPF.Terminate";
-    context.modulePath = GetCurrentModulePath();
     context.description = L"The process was terminated by std::terminate().";
     context.callStack = CaptureCallStackText();
     context.handled = false;
@@ -178,11 +130,13 @@ void SignalHandler(int signal)
 {
     CrashContext context;
     context.category = CrashCategory::Signal;
-    context.threadId = GetCurrentThreadId();
+    if (auto* platform = NeoWPF::Platform::CurrentPlatform()) {
+        context.threadId = platform->CurrentThreadId();
+        context.modulePath = platform->CurrentModulePath();
+    }
     context.exceptionType = L"signal";
     context.message = std::to_wstring(signal);
     context.source = L"NeoWPF.Signal";
-    context.modulePath = GetCurrentModulePath();
     context.description = L"The process received a fatal signal.";
     context.callStack = CaptureCallStackText();
     context.handled = false;
@@ -193,7 +147,9 @@ void SignalHandler(int signal)
 
 void InstallHandlers()
 {
-    SetUnhandledExceptionFilter(UnhandledExceptionFilterImpl);
+    if (auto* platform = NeoWPF::Platform::CurrentPlatform()) {
+        platform->InstallCrashHandler();
+    }
     std::set_terminate(TerminateHandler);
     std::signal(SIGABRT, SignalHandler);
     std::signal(SIGFPE, SignalHandler);
@@ -203,7 +159,9 @@ void InstallHandlers()
 
 void UninstallHandlers()
 {
-    SetUnhandledExceptionFilter(nullptr);
+    if (auto* platform = NeoWPF::Platform::CurrentPlatform()) {
+        platform->UninstallCrashHandler();
+    }
     std::signal(SIGABRT, SIG_DFL);
     std::signal(SIGFPE, SIG_DFL);
     std::signal(SIGILL, SIG_DFL);

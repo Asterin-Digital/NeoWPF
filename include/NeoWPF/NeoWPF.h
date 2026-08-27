@@ -23,6 +23,7 @@ Review the project's README for details.
 
 ///////////////////////////////////////////////////
 #include <NeoWPF/Core/Application/Application.h>
+#include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/Platform/NativeWindow.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/UI.h>

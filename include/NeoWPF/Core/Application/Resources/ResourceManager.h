@@ -1,14 +1,13 @@
 #pragma once
 
-#include <dwrite.h>
 #include <memory>
 #include <unordered_map>
 #include <vector>
 
-#include <NeoWPF/Platform/ImageDecoding.h>
-#include <NeoWPF/Platform/Resources.h>
 #include <NeoWPF/UI/Core/Media/BitmapSource.h>
 #include <NeoWPF/Core/Application/Resources/IResourceProvider.h>
+
+struct IDWriteFontFace;
 
 namespace NeoWPF {
 

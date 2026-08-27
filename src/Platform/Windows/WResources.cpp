@@ -1,4 +1,3 @@
-#include <NeoWPF/Platform/Resources.h>
 #include <windows.h>
 #include <vector>
 #include <string>

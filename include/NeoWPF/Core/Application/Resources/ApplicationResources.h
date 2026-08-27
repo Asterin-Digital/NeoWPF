@@ -1,13 +1,8 @@
 #pragma once
 
-#include <Windows.h>
 #include <any>
 #include <string>
 #include <unordered_map>
-
-#undef FindResource
-#undef FindResourceA
-#undef FindResourceW
 
 namespace NeoWPF::Core::ApplicationResources {
 

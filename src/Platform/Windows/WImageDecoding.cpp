@@ -1,4 +1,3 @@
-#include <NeoWPF/Platform/ImageDecoding.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <objbase.h>
 #include <wincodec.h>

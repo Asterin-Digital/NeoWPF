@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Windows.h>
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -11,10 +10,6 @@
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <NeoWPF/Diagnostics/TextDumper.h>
 #include <NeoWPF/Platform/NativeWindow.h>
-
-#undef FindResource
-#undef FindResourceA
-#undef FindResourceW
 
 #undef CreateWindow
 

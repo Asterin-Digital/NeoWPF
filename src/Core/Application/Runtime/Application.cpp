@@ -9,6 +9,8 @@
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <NeoWPF/Diagnostics/TextDumper.h>
+#include <NeoWPF/Platform/PlatformRegistry.h>
+#include <NeoWPF/Platform/Windows/WPlatform.h>
 
 namespace NeoWPF::Core {
 
@@ -17,6 +19,9 @@ Application* Application::s_current = nullptr;
 void Application::Initialize()
 {
     NEO_WPF_STARTUP_ACTION("Application.Initialize");
+    if (!NeoWPF::Platform::HasPlatform()) {
+        NeoWPF::Platform::RegisterPlatform(std::make_unique<NeoWPF::Platform::Windows::WPlatform>());
+    }
     NeoWPF::Diagnostics::InitializeCrashHandler();
     NeoWPF::Core::ApplicationResources::Resources::Initialize();
     NeoWPF::Diagnostics::PerformanceMetrics::Initialize();
@@ -26,7 +31,6 @@ void Application::Initialize()
     ShowConsole(false);
 #endif
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application::Initialize begin");
-    GetAppState().hInst = GetModuleHandleW(nullptr);
     if (!s_current) {
         s_current = new Application();
     }
@@ -41,7 +45,7 @@ NeoWPF::Platform::Window Application::CreateWindow(const wchar_t* title, int wid
         return NeoWPF::Platform::Window();
     }
     NEO_WPF_STARTUP_ACTION("Application.CreateWindow");    NeoWPF::Diagnostics::PerformanceMetrics::RecordWindowCreate();
-    void* nativeHandle = CreateApplicationWindow(title, width, height);
+    void* nativeHandle = NeoWPF::Platform::CurrentPlatform()->Windowing().CreateWindow(title, width, height);
     return NeoWPF::Platform::Window(nativeHandle);
 }
 
@@ -55,19 +59,16 @@ void Application::ShowConsole(bool visible)
 
     appState.consoleVisible.store(visible);
 
-    if (visible) {
-        if (AllocConsole()) {
-            FILE* dummy = nullptr;
-            freopen_s(&dummy, "CONOUT$", "w", stdout);
-            freopen_s(&dummy, "CONOUT$", "w", stderr);
-        }
-    } else {
-        FreeConsole();
+    if (auto* platform = NeoWPF::Platform::CurrentPlatform()) {
+        platform->Windowing().SetConsoleVisible(visible);
     }
 }
 
 bool Application::IsConsoleVisible()
 {
+    if (auto* platform = NeoWPF::Platform::CurrentPlatform()) {
+        return platform->Windowing().IsConsoleVisible();
+    }
     return GetAppState().consoleVisible.load();
 }
 
@@ -75,7 +76,8 @@ int Application::Run()
 {
     auto& appState = GetAppState();
     if (appState.windows.empty()) {
-        MessageBoxW(nullptr, L"No windows created. Call CreateWindow() before Run().", L"NeoWPF Error", MB_OK | MB_ICONERROR);
+        NeoWPF::Platform::CurrentPlatform()->Windowing().ShowFatalError(
+            L"NeoWPF Error", L"No windows created. Call CreateWindow() before Run().");
         return -1;
     }
 
@@ -85,7 +87,8 @@ int Application::Run()
     if (!appState.renderInitCondition.wait_for(lock, std::chrono::seconds(2), [] {
             return GetAppState().renderThreadInitialized.load() || GetAppState().renderThreadInitFailed.load();
         })) {
-        MessageBoxW(nullptr, L"NeoWPF render initialization timed out.", L"NeoWPF Error", MB_OK | MB_ICONERROR);
+        NeoWPF::Platform::CurrentPlatform()->Windowing().ShowFatalError(
+            L"NeoWPF Error", L"NeoWPF render initialization timed out.");
         appState.running = false;
         if (appState.renderThread.joinable()) {
             appState.renderThread.join();
@@ -94,7 +97,8 @@ int Application::Run()
     }
 
     if (appState.renderThreadInitFailed.load()) {
-        MessageBoxW(nullptr, L"NeoWPF failed to initialize rendering.", L"NeoWPF Error", MB_OK | MB_ICONERROR);
+        NeoWPF::Platform::CurrentPlatform()->Windowing().ShowFatalError(
+            L"NeoWPF Error", L"NeoWPF failed to initialize rendering.");
         appState.running = false;
         if (appState.renderThread.joinable()) {
             appState.renderThread.join();
@@ -147,16 +151,7 @@ bool Application::LoadFontFromFile(const std::wstring& filePath)
 
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application::LoadFontFromFile: attempting to load custom font '%ls'", filePath.c_str());
 
-    int result = AddFontResourceExW(filePath.c_str(), FR_PRIVATE, nullptr);
-    if (result <= 0) {
-        const DWORD errorCode = GetLastError();
-        NeoWPF::Diagnostics::LogError("Application::LoadFontFromFile: AddFontResourceExW failed for '%ls' (error %u)", filePath.c_str(), static_cast<unsigned int>(errorCode));
-        return false;
-    }
-
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application::LoadFontFromFile: AddFontResourceExW succeeded for '%ls'", filePath.c_str());
-
-    const bool registered = NeoWPF::Rendering::Text::RegisterFontFile(filePath);
+    const bool registered = NeoWPF::Platform::CurrentPlatform()->RegisterFontFile(filePath);
     if (!registered) {
         NeoWPF::Diagnostics::LogError("Application::LoadFontFromFile: RegisterFontFile failed for '%ls'", filePath.c_str());
     }
@@ -181,7 +176,7 @@ bool Application::LoadFontFromMemory(
         "Application::LoadFontFromMemory: registering '%ls' (%zu bytes)",
         familyName.c_str(), size);
 
-    const bool registered = NeoWPF::Rendering::Text::RegisterFontMemory(data, size, familyName);
+    const bool registered = NeoWPF::Platform::CurrentPlatform()->RegisterFontMemory(data, size, familyName);
     NeoWPF::Diagnostics::Log(
         NeoWPF::Diagnostics::Category::Application,
         NeoWPF::Diagnostics::Level::Info,

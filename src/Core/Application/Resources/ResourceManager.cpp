@@ -3,6 +3,7 @@
 #include <NeoWPF/Core/Application/Resources/EmbeddedResourceProvider.h>
 #include <NeoWPF/Core/Application/Resources/ExternalFileResourceProvider.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Platform/PlatformRegistry.h>
 
 #include <filesystem>
 #include <fstream>
@@ -65,7 +66,8 @@ std::shared_ptr<UI::Core::Media::BitmapSource> ResourceManager::FindImage(const 
     std::vector<uint8_t> pixels;
     int width = 0;
     int height = 0;
-    if (!NeoWPF::Platform::DecodeImageFromMemory(std::vector<uint8_t>(blob.Data, blob.Data + blob.Size), pixels, width, height, 0, 0)) {
+    auto* platform = NeoWPF::Platform::CurrentPlatform();
+    if (!platform || !platform->DecodeImageFromMemory(std::vector<uint8_t>(blob.Data, blob.Data + blob.Size), pixels, width, height, 0, 0)) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
             "[ResourceManager] DecodeImageFromMemory failed for '%s' (%zu bytes)", key.Name(), blob.Size);
         return nullptr;

@@ -63,7 +63,6 @@ struct AppState {
 
 AppState& GetAppState();
 void StartRenderThread();
-void* CreateApplicationWindow(const wchar_t* title, int width, int height);
 bool CloseApplicationWindow(void* nativeWindowHandle);
 int RunApplicationMessageLoop();
 void ShutdownApplication();

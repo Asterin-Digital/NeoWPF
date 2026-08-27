@@ -1,7 +1,6 @@
 #pragma once
 
 #include <NeoWPF/Rendering/Clipping.h>
-#include <Windows.h>
 #include <vector>
 #include <cstdint>
 

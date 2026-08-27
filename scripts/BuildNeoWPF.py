@@ -16,9 +16,6 @@ preset_name = f"x64-{configuration.lower()}"
 
 
 def load_msvc_environment() -> None:
-    if os.environ.get("VCToolsInstallDir"):
-        return
-
     visual_studio_roots = [
         Path(value) / "Microsoft Visual Studio"
         for value in (os.environ.get("ProgramFiles"), os.environ.get("ProgramFiles(x86)"))
@@ -51,6 +48,14 @@ def load_msvc_environment() -> None:
 
 load_msvc_environment()
 
+msvc_tools_dir = Path(os.environ["VCToolsInstallDir"])
+msvc_bin_dir = msvc_tools_dir / "bin" / "Hostx64" / "x64"
+msvc_compiler = msvc_bin_dir / "cl.exe"
+msvc_linker = msvc_bin_dir / "link.exe"
+
+if not msvc_compiler.is_file() or not msvc_linker.is_file():
+    raise FileNotFoundError(f"MSVC compiler or linker not found under {msvc_bin_dir}")
+
 print(f"Building NeoWPF ({configuration})...")
 
 subprocess.run(
@@ -58,6 +63,8 @@ subprocess.run(
         "cmake",
         "--preset",
         preset_name,
+        f"-DCMAKE_CXX_COMPILER={msvc_compiler}",
+        f"-DCMAKE_LINKER={msvc_linker}",
         f"-DCMAKE_BUILD_TYPE={configuration}",
     ],
     cwd=source_root,

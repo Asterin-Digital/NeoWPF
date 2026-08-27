@@ -4,6 +4,21 @@
 #include <windows.h>
 #include <windowsx.h>
 
+// Undef Windows Macros
+#ifdef CreateWindow
+#undef CreateWindow
+#endif
+#ifdef CreateWindowEx
+#undef CreateWindowEx
+#endif
+#ifdef CreateWindowExA
+#undef CreateWindowExA
+#endif
+#ifdef CreateWindowExW
+#undef CreateWindowExW
+#endif
+//
+
 namespace {
 
 const wchar_t* NeoWPFWindowClassName = L"NeoWPFWindowClass";
