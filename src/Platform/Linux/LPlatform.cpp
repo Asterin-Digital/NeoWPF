@@ -51,6 +51,8 @@ bool LoadSystemFontFamily(const std::wstring& requestedFamily)
 
 }
 
+}
+
 LPlatform::LPlatform()
     = default;
 

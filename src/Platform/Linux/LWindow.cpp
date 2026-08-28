@@ -1,5 +1,8 @@
 #include <NeoWPF/Platform/Linux/LWindow.h>
+#include <NeoWPF/Platform/NativeWindow.h>
+#include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
+#include <NeoWPF/Core/Application/ApplicationInternal.h>
 
 #include <algorithm>
 #include <string>
@@ -139,6 +142,85 @@ void LWindow::HandleToplevelConfigure(void* data, xdg_toplevel*, int32_t width,
 void LWindow::HandleToplevelClose(void* data, xdg_toplevel*)
 {
     static_cast<LWindow*>(data)->m_closed = true;
+}
+
+}
+
+namespace NeoWPF::Platform {
+
+void Window::Resize(int width, int height) const noexcept
+{
+    if (auto* platform = CurrentPlatform()) {
+        platform->Windowing().ResizeWindow(m_nativeHandle, width, height);
+    }
+}
+
+void Window::Show() const noexcept
+{
+    if (auto* platform = CurrentPlatform()) {
+        platform->Windowing().ShowWindow(m_nativeHandle);
+    }
+}
+
+void Window::Hide() const noexcept
+{
+    if (auto* platform = CurrentPlatform()) {
+        platform->Windowing().HideWindow(m_nativeHandle);
+    }
+}
+
+void Window::Close() const noexcept
+{
+    if (auto* platform = CurrentPlatform()) {
+        platform->Windowing().CloseWindow(m_nativeHandle);
+    }
+}
+
+void Window::SetContent(std::shared_ptr<NeoWPF::UI::Visual> content) noexcept
+{
+    SetWindowContent(m_nativeHandle, content);
+    if (!m_nativeHandle) {
+        m_content = std::move(content);
+    }
+}
+
+std::shared_ptr<NeoWPF::UI::Visual> Window::GetContent() const noexcept
+{
+    if (m_nativeHandle) {
+        return GetWindowContent(m_nativeHandle);
+    }
+    return m_content;
+}
+
+void Window::SetWindowContent(void* nativeHandle, std::shared_ptr<NeoWPF::UI::Visual> content)
+{
+    auto& app = NeoWPF::Core::GetAppState();
+    std::lock_guard<std::mutex> lock(app.windowsMutex);
+    for (auto& windowState : app.windows) {
+        if (windowState.nativeWindowHandle == nativeHandle && windowState.windowHost) {
+            windowState.contentRoot = content.get();
+            windowState.windowHost->SetContent(std::move(content));
+            return;
+        }
+    }
+}
+
+std::shared_ptr<NeoWPF::UI::Visual> Window::GetWindowContent(void* nativeHandle)
+{
+    auto& app = NeoWPF::Core::GetAppState();
+    std::lock_guard<std::mutex> lock(app.windowsMutex);
+    for (const auto& windowState : app.windows) {
+        if (windowState.nativeWindowHandle == nativeHandle && windowState.windowHost) {
+            return windowState.windowHost->GetContent();
+        }
+    }
+    return nullptr;
+}
+
+void* Window::CreateWindow(void*, const wchar_t* title, int width, int height)
+{
+    auto* platform = CurrentPlatform();
+    return platform ? platform->Windowing().CreateWindow(title, width, height) : nullptr;
 }
 
 }

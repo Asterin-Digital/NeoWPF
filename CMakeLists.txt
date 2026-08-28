@@ -248,6 +248,10 @@ if(BUILD_TESTING)
         tests/Automated/EventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
         tests/Automated/TransformTests.cpp
+        tests/Automated/LayoutTests.cpp
+        tests/Automated/TransformCompositionTests.cpp
+        tests/Automated/RenderCommandTests.cpp
+        tests/Automated/GridTests.cpp
     )
 
     target_link_libraries(NeoWPF.AutomatedTests

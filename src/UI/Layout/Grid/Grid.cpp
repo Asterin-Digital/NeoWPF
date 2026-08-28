@@ -135,6 +135,7 @@ namespace NeoWPF::UI {
                 NeoWPF::Diagnostics::DeveloperWarnings::kInvalidGridIndexCode,
                 L"invalid Grid row or column index",
                 L"Grid children must use non-negative row and column indices.");
+            return;
         }
 
         if (rowSpan <= 0 || columnSpan <= 0) {
@@ -142,6 +143,7 @@ namespace NeoWPF::UI {
                 NeoWPF::Diagnostics::DeveloperWarnings::kInvalidGridSpanCode,
                 L"invalid Grid span",
                 L"Grid spans must be greater than zero.");
+            return;
         }
 
         SetRow(child.get(), row);
@@ -263,6 +265,11 @@ namespace NeoWPF::UI {
             int c = GetColumn(child);
             int rspan = GetRowSpan(child);
             int cspan = GetColumnSpan(child);
+            // skip bad placement
+            if (r < 0 || c < 0 || rspan <= 0 || cspan <= 0 ||
+                r >= numRows || c >= numCols || rspan > numRows - r || cspan > numCols - c) {
+                continue;
+            }
 
             const auto& layout = metrics.childLayouts[i];
 
@@ -350,6 +357,11 @@ namespace NeoWPF::UI {
             int c = GetColumn(child);
             int rspan = GetRowSpan(child);
             int cspan = GetColumnSpan(child);
+
+            if (r < 0 || c < 0 || rspan <= 0 || cspan <= 0 ||
+                r >= numRows || c >= numCols || rspan > numRows - r || cspan > numCols - c) {
+                continue;
+            }
 
             const auto& layout = metrics.childLayouts[i];
             int x = layout.x;

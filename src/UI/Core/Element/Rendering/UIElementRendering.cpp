@@ -1,1 +1,424 @@
-Giv
+#include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/Input/Core/RoutedEvent.h>
+#include <NeoWPF/UI/Animation/AnimationController.h>
+#include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
+#include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
+#include <NeoWPF/UI/Core/Transform/Transform.h>
+#include <NeoWPF/UI/Styling/State/VisualStateManager.h>
+#include <NeoWPF/UI/Properties/DependencyObject.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <cmath>
+#include <vector>
+
+void NeoWPF::UI::UIElement::OnGotFocus()
+{
+    if (auto manager = GetTemplateVisualStateManager()) {
+        if (manager->FindState("Focused")) {
+            manager->GoToState(this, "Focused", false);
+        }
+    }
+    InvalidateVisual();
+}
+
+void NeoWPF::UI::UIElement::OnLostFocus()
+{
+    if (auto manager = GetTemplateVisualStateManager()) {
+        if (manager->FindState("Normal")) {
+            manager->GoToState(this, "Normal", false);
+        }
+    }
+    InvalidateVisual();
+}
+
+namespace NeoWPF::UI {
+
+void UIElement::OnInitialize()
+{
+    if (!m_hasTemplateApplied && m_template) {
+        ApplyTemplate();
+    }
+
+    if (m_appliedTemplateRoot) {
+        m_appliedTemplateRoot->Initialize();
+    }
+}
+
+void UIElement::BeginAnimation(float from, float to, float durationSeconds) {
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Opacity", *this);
+    if (!property) {
+        return;
+    }
+    BeginAnimation(*property, from, to, durationSeconds);
+}
+
+std::shared_ptr<NeoWPF::UI::Core::Transform> UIElement::GetRenderTransform() const noexcept {
+    return m_renderTransform;
+}
+
+void UIElement::InvalidateTransformCache() const noexcept {
+    m_localTransformDirty = true;
+    InvalidateWorldTransformCache();
+}
+
+void UIElement::InvalidateWorldTransformCache() const noexcept {
+    if (m_worldTransformDirty) {
+        return;
+    }
+
+    m_worldTransformDirty = true;
+    for (auto* child : GetVisualChildren()) {
+        if (auto childElement = dynamic_cast<UIElement*>(child)) {
+            childElement->InvalidateWorldTransformCache();
+        }
+    }
+}
+
+NeoWPF::UI::Core::Matrix4 UIElement::GetLocalTransformMatrix() const noexcept {
+    if (m_localTransformDirty) {
+        m_cachedLocalTransform = NeoWPF::UI::Core::Matrix4::Identity();
+        if (auto transform = GetRenderTransform()) {
+            const auto origin = GetRenderTransformOrigin();
+            m_cachedLocalTransform = NeoWPF::UI::Core::Matrix4::Translation(-origin.X, -origin.Y)
+                * transform->GetMatrix()
+                * NeoWPF::UI::Core::Matrix4::Translation(origin.X, origin.Y);
+        }
+        m_localTransformDirty = false;
+    }
+    return m_cachedLocalTransform;
+}
+
+NeoWPF::UI::Core::Matrix4 UIElement::GetWorldTransformMatrix() const noexcept {
+    if (m_worldTransformDirty) {
+        if (auto parentVisual = GetParent()) {
+            if (auto parentElement = dynamic_cast<const UIElement*>(parentVisual)) {
+                m_cachedWorldTransform = GetLocalTransformMatrix() * parentElement->GetWorldTransformMatrix();
+            } else {
+                m_cachedWorldTransform = GetLocalTransformMatrix();
+            }
+        } else {
+            m_cachedWorldTransform = GetLocalTransformMatrix();
+        }
+        m_worldTransformDirty = false;
+    }
+    return m_cachedWorldTransform;
+}
+
+float UIElement::GetWorldRotationRadians() const noexcept {
+    const auto matrix = GetWorldTransformMatrix();
+    return std::atan2(matrix.m[1][0], matrix.m[0][0]);
+}
+
+namespace {
+
+void ClearTransformInvalidateCallbacks(const std::shared_ptr<NeoWPF::UI::Core::Transform>& transform) {
+    if (!transform) {
+        return;
+    }
+
+    if (auto scaleTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::ScaleTransform>(transform)) {
+        scaleTransform->SetInvalidateCallback(nullptr);
+    }
+    if (auto rotateTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::RotateTransform>(transform)) {
+        rotateTransform->SetInvalidateCallback(nullptr);
+    }
+    if (auto transformGroup = std::dynamic_pointer_cast<NeoWPF::UI::Core::TransformGroup>(transform)) {
+        for (size_t i = 0; i < transformGroup->GetChildCount(); ++i) {
+            ClearTransformInvalidateCallbacks(transformGroup->GetChild(i));
+        }
+    }
+}
+
+void SetTransformInvalidateCallbacks(const std::shared_ptr<NeoWPF::UI::Core::Transform>& transform,
+                                     const std::function<void()>& callback) {
+    if (!transform) {
+        return;
+    }
+
+    if (auto scaleTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::ScaleTransform>(transform)) {
+        scaleTransform->SetInvalidateCallback(callback);
+    }
+    if (auto rotateTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::RotateTransform>(transform)) {
+        rotateTransform->SetInvalidateCallback(callback);
+    }
+    if (auto transformGroup = std::dynamic_pointer_cast<NeoWPF::UI::Core::TransformGroup>(transform)) {
+        for (size_t i = 0; i < transformGroup->GetChildCount(); ++i) {
+            SetTransformInvalidateCallbacks(transformGroup->GetChild(i), callback);
+        }
+    }
+}
+
+} // namespace
+
+void UIElement::SetRenderTransform(std::shared_ptr<NeoWPF::UI::Core::Transform> transform) noexcept {
+    ClearTransformInvalidateCallbacks(m_renderTransform);
+
+    m_renderTransform = transform;
+    SetTransformInvalidateCallbacks(transform, [this]() {
+        this->InvalidateVisual();
+        this->InvalidateTransformCache();
+    });
+
+    InvalidateTransformCache();
+    InvalidateVisual();
+}
+
+NeoWPF::UI::Core::Point UIElement::GetRenderTransformOrigin() const noexcept {
+    return m_renderTransformOrigin;
+}
+
+void UIElement::SetRenderTransformOrigin(NeoWPF::UI::Core::Point origin) noexcept {
+    m_renderTransformOrigin = origin;
+    InvalidateTransformCache();
+    InvalidateVisual();
+}
+
+void UIElement::SetTemplate(const std::shared_ptr<NeoWPF::UI::Templates::ControlTemplateBase>& templatePtr) {
+    if (m_appliedTemplateRoot) {
+        RemoveVisualChild(m_appliedTemplateRoot.get());
+        m_appliedTemplateRoot = nullptr;
+    }
+
+    m_template = templatePtr;
+    m_hasTemplateApplied = false;
+}
+
+bool UIElement::ApplyTemplate() {
+    if (!m_template || m_hasTemplateApplied) {
+        return false;
+    }
+
+    m_template->Apply(this);
+    m_appliedTemplateRoot = m_template->GetVisualTreeRoot();
+    if (m_appliedTemplateRoot) {
+        AddVisualChild(m_appliedTemplateRoot);
+    }
+    m_hasTemplateApplied = true;
+    return true;
+}
+
+void UIElement::ClearTemplateVisualRoot() noexcept {
+    if (m_appliedTemplateRoot) {
+        RemoveVisualChild(m_appliedTemplateRoot.get());
+        m_appliedTemplateRoot = nullptr;
+    }
+}
+
+std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> UIElement::GetTemplateVisualStateManager() const {
+    if (!m_template) {
+        return nullptr;
+    }
+
+    return m_template->GetVisualStateManager();
+}
+
+void UIElement::RegisterTemplateChild(const std::string& name, const std::shared_ptr<Visual>& child) {
+    if (name.empty() || !child) return;
+    m_templateChildren[name] = child;
+}
+
+std::shared_ptr<Visual> UIElement::FindTemplateChild(const std::string& name) const {
+    if (name.empty()) return nullptr;
+    auto it = m_templateChildren.find(name);
+    return it != m_templateChildren.end() ? it->second : nullptr;
+}
+
+bool UIElement::HasTemplateChild(const std::string& name) const {
+    if (name.empty()) return false;
+    return m_templateChildren.find(name) != m_templateChildren.end();
+}
+
+std::vector<std::string> UIElement::GetTemplateChildNames() const {
+    std::vector<std::string> names;
+    names.reserve(m_templateChildren.size());
+    for (const auto& entry : m_templateChildren) {
+        names.push_back(entry.first);
+    }
+    return names;
+}
+
+void UIElement::ClearTemplateChildren() noexcept {
+    m_templateChildren.clear();
+    m_hasTemplateApplied = false;
+}
+
+bool UIElement::SetStyleProperty(const std::string& name, uint32_t value)
+{
+    if (name.empty()) {
+        return false;
+    }
+
+    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, *this);
+    if (!property) {
+        return false;
+    }
+
+    SetValueInternal(*property, std::any(value), Properties::PropertyValueSource::Style);
+    return true;
+}
+
+bool UIElement::SetStylePropertyValue(const std::string& name, const std::any& value)
+{
+    if (name.empty()) {
+        return false;
+    }
+
+    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, *this);
+    if (!property) {
+        return false;
+    }
+
+    SetValueInternal(*property, value, Properties::PropertyValueSource::Style);
+    return true;
+}
+
+bool UIElement::SetPropertyValue(const std::string& name, const std::any& value)
+{
+    if (name.empty()) {
+        return false;
+    }
+
+    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, *this);
+    if (!property) {
+        return false;
+    }
+
+    SetValueInternal(*property, value, Properties::PropertyValueSource::Local);
+    PropertyChanged.Invoke(name, value);
+    return true;
+}
+
+bool UIElement::SetResource(const std::string& key, const std::any& value)
+{
+    if (key.empty()) {
+        return false;
+    }
+
+    m_resources[key] = value;
+    return true;
+}
+
+bool UIElement::TryFindResource(const std::string& key, std::any& outValue) const
+{
+    if (key.empty()) {
+        return false;
+    }
+
+    const UIElement* current = this;
+    while (current)
+    {
+        const auto it = current->m_resources.find(key);
+        if (it != current->m_resources.end()) {
+            outValue = it->second;
+            return true;
+        }
+
+        const auto* parentVisual = current->GetParent();
+        current = dynamic_cast<const UIElement*>(parentVisual);
+    }
+
+    return NeoWPF::Core::ApplicationResources::Resources::TryFindResource(key, outValue);
+}
+
+std::any UIElement::FindResource(const std::string& key) const
+{
+    std::any value;
+    if (TryFindResource(key, value)) {
+        return value;
+    }
+    return {};
+}
+
+std::any UIElement::GetPropertyValue(const std::string& name) const
+{
+    if (name.empty()) {
+        return {};
+    }
+
+    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, *this);
+    if (!property) {
+        return {};
+    }
+
+    return GetRawValue(*property);
+}
+
+
+void UIElement::AddHandler(const NeoWPF::Input::Core::RoutedEvent& routedEvent,
+                           const NeoWPF::Input::Core::RoutedEventHandler& handler)
+{
+    m_routedEventHandlers[routedEvent.EventTypeId] += [handler](UIElement* sender, NeoWPF::Input::Core::RoutedEventArgs* args) {
+        handler(sender, args);
+    };
+}
+
+bool UIElement::HasRoutedEventHandler(const NeoWPF::Input::Core::RoutedEvent& routedEvent) const
+{
+    return m_routedEventHandlers.find(routedEvent.EventTypeId) != m_routedEventHandlers.end();
+}
+
+void UIElement::RaiseEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
+{
+    if (!args || !args->GetRoutedEvent()) {
+        return;
+    }
+
+    if (!args->GetOriginalSource()) {
+        args->SetOriginalSource(this);
+    }
+
+    if (!args->GetSource()) {
+        args->SetSource(this);
+    }
+
+    const auto routingStrategy = args->GetRoutingStrategy();
+    const auto eventTypeId = args->GetRoutedEvent()->EventTypeId;
+
+    auto invokeOnElement = [&](UIElement* element) {
+        if (!element) {
+            return;
+        }
+        args->SetSource(element);
+        auto it = element->m_routedEventHandlers.find(eventTypeId);
+        if (it != element->m_routedEventHandlers.end())
+        {
+            it->second.Invoke(element, args);
+        }
+    };
+
+    if (routingStrategy == NeoWPF::Input::Core::RoutingStrategy::Direct)
+    {
+        invokeOnElement(this);
+        return;
+    }
+
+    if (routingStrategy == NeoWPF::Input::Core::RoutingStrategy::Tunnel)
+    {
+        std::vector<UIElement*> route;
+        auto* current = this;
+        while (current)
+        {
+            route.push_back(current);
+            auto* parentVisual = current->GetParent();
+            current = dynamic_cast<UIElement*>(parentVisual);
+        }
+        for (auto it = route.rbegin(); it != route.rend() && !args->IsHandled(); ++it)
+        {
+            invokeOnElement(*it);
+        }
+        return;
+    }
+
+    if (routingStrategy == NeoWPF::Input::Core::RoutingStrategy::Bubble)
+    {
+        auto* current = this;
+        while (current && !args->IsHandled())
+        {
+            invokeOnElement(current);
+            auto* parentVisual = current->GetParent();
+            current = dynamic_cast<UIElement*>(parentVisual);
+        }
+    }
+}
+
+}

@@ -112,7 +112,15 @@ void StartRenderThread()
             {
                 std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
                 for (const auto& windowState : s_appState.windows) {
-                    platform->Rendering().Initialize(windowState.nativeWindowHandle);
+                    if (!platform || !platform->Rendering().Initialize(windowState.nativeWindowHandle)) {
+                        NeoWPF::Diagnostics::LogError("Render backend initialization failed");
+                        std::lock_guard<std::mutex> initLock(s_appState.renderInitMutex);
+                        s_appState.renderThreadInitFailed = true;
+                        s_appState.renderThreadInitialized = false;
+                        s_appState.running = false;
+                        s_appState.renderInitCondition.notify_one();
+                        return;
+                    }
                 }
             }
             {

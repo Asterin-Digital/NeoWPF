@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -12,10 +13,21 @@ enum class NativeWindowSystem {
     Wayland,
 };
 
+using VulkanSurfaceCreateCallback = bool (*)(
+    void* userData,
+    void* instance,
+    void* window,
+    void* display,
+    void* outSurface) noexcept;
+
 struct NativeWindowInfo {
     NativeWindowSystem system = NativeWindowSystem::Unknown;
     void* window = nullptr;
     void* display = nullptr;
+    const char* const* vulkanInstanceExtensions = nullptr;
+    std::size_t vulkanInstanceExtensionCount = 0;
+    VulkanSurfaceCreateCallback createVulkanSurface = nullptr;
+    void* vulkanSurfaceUserData = nullptr;
 };
 
 class IWindowing {
