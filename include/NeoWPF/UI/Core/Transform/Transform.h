@@ -20,6 +20,8 @@ struct Matrix4 {
     static Matrix4 Translation(float tx, float ty);
     static Matrix4 Scale(float sx, float sy);
     static Matrix4 Rotation(float angleRadians);
+
+    void TransformPoint(float x, float y, float& outX, float& outY) const noexcept;
 };
 
 class Transform {

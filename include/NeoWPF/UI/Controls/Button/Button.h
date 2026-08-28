@@ -102,6 +102,27 @@ public:
     int GetFontSize() const noexcept { return m_fontSize; }
 
     /*
+    * @todo Verify if this is correct later
+    */
+    void SetFontFamily(const std::wstring& fontFamily) noexcept
+    {
+        if (fontFamily.empty()) {
+            return;
+        }
+        m_fontFamily = fontFamily;
+        if (m_textContent) {
+            m_textContent->SetFontFamily(fontFamily);
+        }
+        InvalidateVisual();
+    }
+
+    /*
+       @summary
+       Returns the current font family.
+    */
+    const std::wstring& GetFontFamily() const noexcept { return m_fontFamily; }
+
+    /*
         @summary
         Sets the padding around the text inside the button.
 
@@ -200,6 +221,7 @@ private:
     NeoWPF::UI::Color m_baseBackgroundColor = NeoWPF::UI::Color::FromArgb(0xFF2F2F2Fu);
     NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0xFF333333u);
     int m_fontSize = 16;
+    std::wstring m_fontFamily;
 
 private:
     int m_padding = 8;

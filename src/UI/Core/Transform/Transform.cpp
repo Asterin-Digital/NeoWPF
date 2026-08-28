@@ -55,6 +55,11 @@ Matrix4 Matrix4::Rotation(float angleRadians) {
     return m;
 }
 
+void Matrix4::TransformPoint(float x, float y, float& outX, float& outY) const noexcept {
+    outX = x * m[0][0] + y * m[1][0] + m[3][0];
+    outY = x * m[0][1] + y * m[1][1] + m[3][1];
+}
+
 ScaleTransform::ScaleTransform(float scaleX, float scaleY, float centerX, float centerY)
     : m_scaleX(scaleX), m_scaleY(scaleY), m_centerX(centerX), m_centerY(centerY) {}
 
@@ -73,7 +78,7 @@ Matrix4 ScaleTransform::GetMatrix() const {
     Matrix4 toCenter = Matrix4::Translation(-m_centerX, -m_centerY);
     Matrix4 scale = Matrix4::Scale(m_scaleX, m_scaleY);
     Matrix4 fromCenter = Matrix4::Translation(m_centerX, m_centerY);
-    return fromCenter * scale * toCenter;
+    return toCenter * scale * fromCenter;
 }
 
 std::shared_ptr<Transform> ScaleTransform::Clone() const {
@@ -129,7 +134,7 @@ Matrix4 RotateTransform::GetMatrix() const {
     Matrix4 toCenter = Matrix4::Translation(-m_centerX, -m_centerY);
     Matrix4 rotation = Matrix4::Rotation(m_angle);
     Matrix4 fromCenter = Matrix4::Translation(m_centerX, m_centerY);
-    return fromCenter * rotation * toCenter;
+    return toCenter * rotation * fromCenter;
 }
 
 std::shared_ptr<Transform> RotateTransform::Clone() const {

@@ -217,7 +217,7 @@ void ExecuteRendererDraw(const CommandList& cmd)
     std::vector<TextVertex> textVerts;
     std::vector<uint32_t> textQuadTextureIds;
 
-    auto pushTextQuad = [&](float x, float y, float w, float h, float u0, float v0, float u1, float v1, uint32_t tintColor, float opacity, uint32_t textureId, float rotationRadians = 0.0f) {
+    auto pushTextQuad = [&](float x, float y, float w, float h, float u0, float v0, float u1, float v1, uint32_t tintColor, float opacity, uint32_t textureId, float rotationRadians = 0.0f, float pivotX = 0.0f, float pivotY = 0.0f) {
         const float baseAlpha = ((tintColor >> 24) & 0xFF) / 255.0f;
         const float red = ((tintColor >> 16) & 0xFF) / 255.0f;
         const float green = ((tintColor >> 8) & 0xFF) / 255.0f;
@@ -235,8 +235,8 @@ void ExecuteRendererDraw(const CommandList& cmd)
             return;
         }
 
-        const float cx = x + w * 0.5f;
-        const float cy = y + h * 0.5f;
+        const float cx = pivotX;
+        const float cy = pivotY;
         const float cos_a = std::cos(rotationRadians);
         const float sin_a = std::sin(rotationRadians);
 
@@ -472,7 +472,7 @@ void ExecuteRendererDraw(const CommandList& cmd)
                     pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId);
                 }
             } else {
-                pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId, q.rotationRadians);
+                pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId, q.rotationRadians, q.pivotX, q.pivotY);
             }
             lastKind = command.kind;
             hasPendingKind = true;

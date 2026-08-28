@@ -46,7 +46,7 @@ struct CommandList {
 
         @internal
     */
-    struct DrawTexturedQuad { float x; float y; float w; float h; float u0; float v0; float u1; float v1; uint32_t textureId; uint32_t tintColor; float opacity; ClipRect clip; float rotationRadians = 0.0f; };
+    struct DrawTexturedQuad { float x; float y; float w; float h; float u0; float v0; float u1; float v1; uint32_t textureId; uint32_t tintColor; float opacity; ClipRect clip; float rotationRadians = 0.0f; float pivotX = 0.0f; float pivotY = 0.0f; };
 
     struct Command {
         CommandKind kind;
@@ -187,8 +187,8 @@ struct CommandList {
 
         @internal
     */
-    void DrawTexturedQuad(float x, float y, float w, float h, float u0, float v0, float u1, float v1, uint32_t tex, uint32_t tintColor, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f) {
-        commands.push_back({CommandKind::TexturedQuad, {}, {}, {x, y, w, h, u0, v0, u1, v1, tex, tintColor, opacity, clip, rotationRadians}});
+    void DrawTexturedQuad(float x, float y, float w, float h, float u0, float v0, float u1, float v1, uint32_t tex, uint32_t tintColor, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f, float pivotX = 0.0f, float pivotY = 0.0f) {
+        commands.push_back({CommandKind::TexturedQuad, {}, {}, {x, y, w, h, u0, v0, u1, v1, tex, tintColor, opacity, clip, rotationRadians, pivotX, pivotY}});
     }
 };
 

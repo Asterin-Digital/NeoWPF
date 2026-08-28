@@ -247,6 +247,7 @@ if(BUILD_TESTING)
         tests/Automated/ResourceKeyTests.cpp
         tests/Automated/EventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
+        tests/Automated/TransformTests.cpp
     )
 
     target_link_libraries(NeoWPF.AutomatedTests

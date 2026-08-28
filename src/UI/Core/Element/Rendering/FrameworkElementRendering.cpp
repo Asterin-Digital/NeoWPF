@@ -202,11 +202,14 @@ NeoWPF::UI::Core::Matrix4 FrameworkElement::GetLocalTransformMatrix() const noex
 
     if (auto transform = GetRenderTransform()) {
         if (originX != 0.0f || originY != 0.0f) {
+            local = NeoWPF::UI::Core::Matrix4::Translation(-originX, -originY);
+            local = local * transform->GetMatrix();
             local = local * NeoWPF::UI::Core::Matrix4::Translation(originX, originY);
-            local = local * transform->GetMatrix();
-            local = local * NeoWPF::UI::Core::Matrix4::Translation(-originX, -originY);
+            local = local * NeoWPF::UI::Core::Matrix4::Translation(
+                static_cast<float>(m_offsetX + m_renderOffsetX),
+                static_cast<float>(m_offsetY + m_renderOffsetY));
         } else {
-            local = local * transform->GetMatrix();
+            local = transform->GetMatrix() * local;
         }
     }
 
