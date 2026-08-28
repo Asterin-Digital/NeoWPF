@@ -128,8 +128,9 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
     void* mapped = nullptr;
     const VkDeviceSize offset = 0;
     const float viewport[] = {static_cast<float>(context->swapchainExtent.width), static_cast<float>(context->swapchainExtent.height)};
-    const VkViewport vkViewport{0.0f, 0.0f, static_cast<float>(context->swapchainExtent.width),
-                                static_cast<float>(context->swapchainExtent.height), 0.0f, 1.0f};
+    const VkViewport vkViewport{0.0f, static_cast<float>(context->swapchainExtent.height),
+                                static_cast<float>(context->swapchainExtent.width),
+                                -static_cast<float>(context->swapchainExtent.height), 0.0f, 1.0f};
     const VkRect2D scissor{{0, 0}, context->swapchainExtent};
     if (!vertices.empty() && vertices.size() * sizeof(Vertex) <= 1024 * 1024) {
         if (vkMapMemory(m_device, m_solidVertexMemory, 0, vertices.size() * sizeof(Vertex), 0, &mapped) != VK_SUCCESS) {
@@ -155,12 +156,10 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
     std::vector<VkDescriptorSet> descriptors;
     texturedVertices.reserve(commands.commands.size() * 6);
     descriptors.reserve(commands.commands.size());
-    std::size_t texturedCommandCount = 0;
     for (const auto& command : commands.commands) {
         if (command.kind != NeoWPF::Rendering::CommandList::CommandKind::TexturedQuad) {
             continue;
         }
-        ++texturedCommandCount;
         const auto& quad = command.texturedQuad;
         VkDescriptorSet descriptor = VK_NULL_HANDLE;
         {
@@ -211,20 +210,6 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
                                          red, green, blue, alpha});
         }
         descriptors.push_back(descriptor);
-        NeoWPF::Diagnostics::Log(
-            NeoWPF::Diagnostics::Category::TextRendering,
-            NeoWPF::Diagnostics::Level::Debug,
-            "[Vulkan] TexturedQuad textureId=%u descriptor=%p rect=%.1f,%.1f %.1fx%.1f uv=%.3f,%.3f-%.3f,%.3f",
-            quad.textureId, static_cast<void*>(descriptor), x, y, width, height,
-            u0, v0, u1, v1);
-    }
-    if (texturedCommandCount > 0) {
-        NeoWPF::Diagnostics::Log(
-            NeoWPF::Diagnostics::Category::TextRendering,
-            NeoWPF::Diagnostics::Level::Debug,
-            "[Vulkan] Textured draw batch commands=%zu valid=%zu vertices=%zu buffer=%p pipeline=%p",
-            texturedCommandCount, descriptors.size(), texturedVertices.size(),
-            static_cast<void*>(m_texturedVertexBuffer), static_cast<void*>(m_texturedPipeline));
     }
     if (texturedVertices.empty() || texturedVertices.size() * sizeof(TexturedVertex) > 1024 * 1024) {
         return;
@@ -246,11 +231,6 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
         vkCmdBindDescriptorSets(context->commandBuffers[context->currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 m_texturedPipelineLayout, 0, 1, &descriptors[index], 0, nullptr);
         vkCmdDraw(context->commandBuffers[context->currentImage], 6, 1, static_cast<std::uint32_t>(index * 6), 0);
-        NeoWPF::Diagnostics::Log(
-            NeoWPF::Diagnostics::Category::TextRendering,
-            NeoWPF::Diagnostics::Level::Debug,
-            "[Vulkan] Textured draw submitted index=%zu firstVertex=%u vertexCount=6",
-            index, static_cast<unsigned int>(index * 6));
     }
 }
 

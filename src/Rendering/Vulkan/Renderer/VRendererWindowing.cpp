@@ -78,7 +78,11 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
         NeoWPF::Diagnostics::LogError("[Vulkan] Surface format list query failed: %d", static_cast<int>(result));
         return false;
     }
-    const auto format = formats[0];
+    const auto formatIterator = std::find_if(formats.begin(), formats.end(), [](const auto& candidate) {
+        return candidate.format == VK_FORMAT_B8G8R8A8_UNORM ||
+               candidate.format == VK_FORMAT_R8G8B8A8_UNORM;
+    });
+    const auto format = formatIterator != formats.end() ? *formatIterator : formats[0];
     context.swapchainFormat = format.format;
     context.swapchainExtent = capabilities.currentExtent.width != std::numeric_limits<std::uint32_t>::max()
         ? capabilities.currentExtent

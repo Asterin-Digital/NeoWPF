@@ -297,7 +297,7 @@ std::uint32_t VulkanRendering::CreateTexture(unsigned int width, unsigned int he
         vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
                              VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toTransfer);
         const VkBufferImageCopy copy{
-            0, width * 4, height, {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1}, {0, 0, 0}, {width, height, 1}};
+            0, 0, 0, {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1}, {0, 0, 0}, {width, height, 1}};
         vkCmdCopyBufferToImage(commandBuffer, stagingBuffer, texture.image,
                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
         const VkImageMemoryBarrier toShader{
