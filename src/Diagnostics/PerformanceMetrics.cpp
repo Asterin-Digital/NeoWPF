@@ -283,7 +283,8 @@ void EmitPeriodicSummary()
 
     const auto now = std::chrono::steady_clock::now();
     const auto elapsed = std::chrono::duration<double>(now - GetLastSummaryTime()).count();
-    if (elapsed < 1.0) {
+    constexpr double summaryIntervalSeconds = 10.0;
+    if (elapsed < summaryIntervalSeconds) {
         return;
     }
 

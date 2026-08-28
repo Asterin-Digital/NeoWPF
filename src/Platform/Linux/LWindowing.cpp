@@ -15,6 +15,7 @@
 #pragma GCC diagnostic ignored "-Wattributes"
 #endif
 #include <xdg-shell-protocol.cpp>
+#include <xdg-decoration-protocol.cpp>
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
@@ -41,9 +42,13 @@ bool CreateVulkanSurface(void*, void* instance, void* window, void* display,
         static_cast<wl_display*>(display),
         static_cast<wl_surface*>(window),
     };
-    return vkCreateWaylandSurfaceKHR(
-               static_cast<VkInstance>(instance), &createInfo, nullptr,
-               static_cast<VkSurfaceKHR*>(outSurface)) == VK_SUCCESS;
+    const VkResult result = vkCreateWaylandSurfaceKHR(
+        static_cast<VkInstance>(instance), &createInfo, nullptr,
+        static_cast<VkSurfaceKHR*>(outSurface));
+    NeoWPF::Diagnostics::LogInfo(
+        "[Vulkan/Wayland] vkCreateWaylandSurfaceKHR: instance=%p display=%p surface=%p result=%d",
+        instance, display, window, static_cast<int>(result));
+    return result == VK_SUCCESS;
 }
 
 const wl_registry_listener RegistryListener = {
@@ -275,6 +280,10 @@ const LWindow* LWindowing::FindWindow(void* nativeWindowHandle) const noexcept
 
 void LWindowing::Disconnect() noexcept
 {
+    for (auto& window : m_windows) {
+        window->Close();
+    }
+    m_windows.clear();
     if (m_compositor) {
         wl_compositor_destroy(m_compositor);
         m_compositor = nullptr;
@@ -286,6 +295,10 @@ void LWindowing::Disconnect() noexcept
     if (m_xdgWmBase) {
         xdg_wm_base_destroy(m_xdgWmBase);
         m_xdgWmBase = nullptr;
+    }
+    if (m_xdgDecorationManager) {
+        zxdg_decoration_manager_v1_destroy(m_xdgDecorationManager);
+        m_xdgDecorationManager = nullptr;
     }
     if (m_registry) {
         wl_registry_destroy(m_registry);
@@ -323,6 +336,11 @@ xdg_wm_base* LWindowing::XdgWmBase() const noexcept
     return m_xdgWmBase;
 }
 
+zxdg_decoration_manager_v1* LWindowing::XdgDecorationManager() const noexcept
+{
+    return m_xdgDecorationManager;
+}
+
 bool LWindowing::HasXdgShell() const noexcept
 {
     return m_hasXdgShell;
@@ -346,6 +364,11 @@ void LWindowing::HandleGlobal(void* data, wl_registry* registry, std::uint32_t n
             xdg_wm_base_add_listener(windowing->m_xdgWmBase, &XdgWmBaseListener, windowing);
             windowing->m_hasXdgShell = true;
         }
+    } else if (std::strcmp(interface, "zxdg_decoration_manager_v1") == 0) {
+        windowing->m_xdgDecorationManager = static_cast<zxdg_decoration_manager_v1*>(wl_registry_bind(
+            registry, name, &zxdg_decoration_manager_v1_interface, 1));
+        NeoWPF::Diagnostics::LogInfo("[Wayland] xdg-decoration manager available: %s",
+                                     windowing->m_xdgDecorationManager ? "yes" : "no");
     }
 }
 

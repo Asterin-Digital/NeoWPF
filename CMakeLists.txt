@@ -47,9 +47,18 @@ if(UNIX)
     if(NOT EXISTS "${NEOWPF_XDG_SHELL_XML}")
         message(FATAL_ERROR "Could not find xdg-shell protocol XML: ${NEOWPF_XDG_SHELL_XML}")
     endif()
+    set(NEOWPF_XDG_DECORATION_XML "${WAYLAND_PROTOCOLS_DATADIR}/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml")
+    if(NOT EXISTS "${NEOWPF_XDG_DECORATION_XML}")
+        set(NEOWPF_XDG_DECORATION_XML "${WAYLAND_PROTOCOLS_DATADIR}/staging/xdg-decoration/xdg-decoration-unstable-v1.xml")
+    endif()
+    if(NOT EXISTS "${NEOWPF_XDG_DECORATION_XML}")
+        message(FATAL_ERROR "Could not find xdg-decoration protocol XML in ${WAYLAND_PROTOCOLS_DATADIR}")
+    endif()
     set(NEOWPF_WAYLAND_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/wayland")
     set(NEOWPF_XDG_SHELL_HEADER "${NEOWPF_WAYLAND_GENERATED_DIR}/xdg-shell-client-protocol.h")
     set(NEOWPF_XDG_SHELL_SOURCE "${NEOWPF_WAYLAND_GENERATED_DIR}/xdg-shell-protocol.cpp")
+    set(NEOWPF_XDG_DECORATION_HEADER "${NEOWPF_WAYLAND_GENERATED_DIR}/xdg-decoration-client-protocol.h")
+    set(NEOWPF_XDG_DECORATION_SOURCE "${NEOWPF_WAYLAND_GENERATED_DIR}/xdg-decoration-protocol.cpp")
     add_custom_command(
         OUTPUT "${NEOWPF_XDG_SHELL_HEADER}" "${NEOWPF_XDG_SHELL_SOURCE}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_WAYLAND_GENERATED_DIR}"
@@ -58,8 +67,18 @@ if(UNIX)
         DEPENDS "${NEOWPF_XDG_SHELL_XML}"
         VERBATIM
     )
+    add_custom_command(
+        OUTPUT "${NEOWPF_XDG_DECORATION_HEADER}" "${NEOWPF_XDG_DECORATION_SOURCE}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_WAYLAND_GENERATED_DIR}"
+        COMMAND "${WAYLAND_SCANNER}" client-header "${NEOWPF_XDG_DECORATION_XML}" "${NEOWPF_XDG_DECORATION_HEADER}"
+        COMMAND "${WAYLAND_SCANNER}" private-code "${NEOWPF_XDG_DECORATION_XML}" "${NEOWPF_XDG_DECORATION_SOURCE}"
+        DEPENDS "${NEOWPF_XDG_DECORATION_XML}"
+        VERBATIM
+    )
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         set_source_files_properties("${NEOWPF_XDG_SHELL_SOURCE}"
+            PROPERTIES COMPILE_OPTIONS "-Wno-attributes")
+        set_source_files_properties("${NEOWPF_XDG_DECORATION_SOURCE}"
             PROPERTIES COMPILE_OPTIONS "-Wno-attributes")
     endif()
 endif()
@@ -115,6 +134,7 @@ include(cmake/NeoWPFSources.cmake)
 if(UNIX)
     list(APPEND NEOWPF_SOURCES "${NEOWPF_XDG_SHELL_SOURCE}")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_SHELL_HEADER}")
+    list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_DECORATION_HEADER}")
 endif()
 
 add_library(NeoWPF STATIC ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})

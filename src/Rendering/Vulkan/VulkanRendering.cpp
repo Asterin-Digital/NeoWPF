@@ -13,6 +13,29 @@
 namespace NeoWPF::Rendering::Vulkan {
 namespace {
 
+const char* VkResultName(VkResult result)
+{
+    switch (result) {
+    case VK_SUCCESS: return "VK_SUCCESS";
+    case VK_NOT_READY: return "VK_NOT_READY";
+    case VK_TIMEOUT: return "VK_TIMEOUT";
+    case VK_INCOMPLETE: return "VK_INCOMPLETE";
+    case VK_ERROR_OUT_OF_HOST_MEMORY: return "VK_ERROR_OUT_OF_HOST_MEMORY";
+    case VK_ERROR_OUT_OF_DEVICE_MEMORY: return "VK_ERROR_OUT_OF_DEVICE_MEMORY";
+    case VK_ERROR_INITIALIZATION_FAILED: return "VK_ERROR_INITIALIZATION_FAILED";
+    case VK_ERROR_DEVICE_LOST: return "VK_ERROR_DEVICE_LOST";
+    case VK_ERROR_LAYER_NOT_PRESENT: return "VK_ERROR_LAYER_NOT_PRESENT";
+    case VK_ERROR_EXTENSION_NOT_PRESENT: return "VK_ERROR_EXTENSION_NOT_PRESENT";
+    case VK_ERROR_FEATURE_NOT_PRESENT: return "VK_ERROR_FEATURE_NOT_PRESENT";
+    case VK_ERROR_INCOMPATIBLE_DRIVER: return "VK_ERROR_INCOMPATIBLE_DRIVER";
+    case VK_ERROR_SURFACE_LOST_KHR: return "VK_ERROR_SURFACE_LOST_KHR";
+    case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR: return "VK_ERROR_NATIVE_WINDOW_IN_USE_KHR";
+    case VK_ERROR_OUT_OF_DATE_KHR: return "VK_ERROR_OUT_OF_DATE_KHR";
+    case VK_ERROR_VALIDATION_FAILED_EXT: return "VK_ERROR_VALIDATION_FAILED_EXT";
+    default: return "VK_RESULT_UNKNOWN";
+    }
+}
+
 bool HasExtension(const std::vector<VkExtensionProperties>& extensions, const char* name)
 {
     return std::any_of(extensions.begin(), extensions.end(), [name](const auto& extension) {
@@ -28,23 +51,42 @@ bool VulkanRendering::Initialize(void* nativeWindowHandle)
         return true;
     }
 
+    NeoWPF::Diagnostics::LogInfo("[Vulkan] Initialize begin: nativeWindowHandle=%p", nativeWindowHandle);
     NeoWPF::Contracts::NativeWindowInfo windowInfo;
     auto* platform = NeoWPF::Platform::CurrentPlatform();
     if (!platform || !platform->Windowing().GetNativeWindowInfo(nativeWindowHandle, windowInfo) ||
         !windowInfo.window || !windowInfo.createVulkanSurface) {
-        NeoWPF::Diagnostics::LogError("Vulkan initialization requires a valid platform surface factory");
+        NeoWPF::Diagnostics::LogError(
+            "[Vulkan] Invalid surface factory: platform=%p window=%p display=%p callback=%p",
+            platform, windowInfo.window, windowInfo.display,
+            reinterpret_cast<void*>(windowInfo.createVulkanSurface));
         return false;
     }
+    NeoWPF::Diagnostics::LogInfo(
+        "[Vulkan] Native window info: system=%d window=%p display=%p requestedExtensions=%zu",
+        static_cast<int>(windowInfo.system), windowInfo.window, windowInfo.display,
+        windowInfo.vulkanInstanceExtensionCount);
 
     std::uint32_t extensionCount = 0;
-    if (vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr) != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("Vulkan failed to enumerate instance extensions");
+    VkResult result = vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+    if (result != VK_SUCCESS) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Instance extension count query failed: %s (%d)",
+                                      VkResultName(result), static_cast<int>(result));
         return false;
     }
     std::vector<VkExtensionProperties> extensions(extensionCount);
-    if (vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data()) != VK_SUCCESS ||
-        !HasExtension(extensions, VK_KHR_SURFACE_EXTENSION_NAME)) {
-        NeoWPF::Diagnostics::LogError("Vulkan surface extension is unavailable");
+    result = vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+    if (result != VK_SUCCESS) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Instance extension list query failed: %s (%d)",
+                                      VkResultName(result), static_cast<int>(result));
+        return false;
+    }
+    NeoWPF::Diagnostics::LogInfo("[Vulkan] Available instance extensions: %u", extensionCount);
+    for (const auto& extension : extensions) {
+        NeoWPF::Diagnostics::LogInfo("[Vulkan] Available extension: %s", extension.extensionName);
+    }
+    if (!HasExtension(extensions, VK_KHR_SURFACE_EXTENSION_NAME)) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Required extension unavailable: %s", VK_KHR_SURFACE_EXTENSION_NAME);
         return false;
     }
 
@@ -54,40 +96,85 @@ bool VulkanRendering::Initialize(void* nativeWindowHandle)
     std::vector<const char*> instanceExtensions;
     instanceExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
     for (std::size_t index = 0; index < windowInfo.vulkanInstanceExtensionCount; ++index) {
+        NeoWPF::Diagnostics::LogInfo("[Vulkan] Checking platform extension: %s",
+            windowInfo.vulkanInstanceExtensions[index] ? windowInfo.vulkanInstanceExtensions[index] : "<null>");
         if (windowInfo.vulkanInstanceExtensions[index] &&
             HasExtension(extensions, windowInfo.vulkanInstanceExtensions[index])) {
             instanceExtensions.push_back(windowInfo.vulkanInstanceExtensions[index]);
         } else {
-            NeoWPF::Diagnostics::LogError("Required platform Vulkan instance extension is unavailable");
+            NeoWPF::Diagnostics::LogError("[Vulkan] Required platform instance extension unavailable: %s",
+                windowInfo.vulkanInstanceExtensions[index] ? windowInfo.vulkanInstanceExtensions[index] : "<null>");
             return false;
         }
     }
     const VkInstanceCreateInfo instanceCreateInfo{
-        VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, nullptr, 0, &applicationInfo,
-        static_cast<std::uint32_t>(instanceExtensions.size()), instanceExtensions.data(), 0, nullptr};
-    const VkResult instanceResult = vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance);
-    if (instanceResult != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("Vulkan instance creation failed: %d", static_cast<int>(instanceResult));
-        return false;
+        VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        nullptr,
+        0,
+        &applicationInfo,
+        0,
+        nullptr,
+        static_cast<std::uint32_t>(instanceExtensions.size()),
+        instanceExtensions.data()
+    };
+
+    NeoWPF::Diagnostics::LogInfo(
+        "[Vulkan] Creating instance: extensions=%u layers=%u apiVersion=%u.%u.%u",
+        instanceCreateInfo.enabledExtensionCount,
+        instanceCreateInfo.enabledLayerCount,
+        VK_VERSION_MAJOR(applicationInfo.apiVersion), VK_VERSION_MINOR(applicationInfo.apiVersion),
+        VK_VERSION_PATCH(applicationInfo.apiVersion));
+
+    for (std::uint32_t i = 0; i < instanceCreateInfo.enabledExtensionCount; ++i) {
+        NeoWPF::Diagnostics::LogInfo(
+            "[Vulkan] Enabled instance extension[%u]: %s",
+            i,
+            instanceCreateInfo.ppEnabledExtensionNames[i]);
     }
 
+    const VkResult instanceResult = vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance);
+    if (instanceResult != VK_SUCCESS) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] vkCreateInstance failed: %s (%d)",
+            VkResultName(instanceResult), static_cast<int>(instanceResult));
+        return false;
+    }
+    NeoWPF::Diagnostics::LogInfo("[Vulkan] Instance created: %p", static_cast<void*>(m_instance));
+
+    NeoWPF::Diagnostics::LogInfo("[Vulkan] Creating platform surface");
     if (!windowInfo.createVulkanSurface(
             windowInfo.vulkanSurfaceUserData, m_instance, windowInfo.window,
             windowInfo.display, &m_surface)) {
-        NeoWPF::Diagnostics::LogError("Platform Vulkan surface creation failed");
+        NeoWPF::Diagnostics::LogError("[Vulkan] Platform surface creation failed");
         Shutdown();
         return false;
     }
+    NeoWPF::Diagnostics::LogInfo("[Vulkan] Surface created: %p", static_cast<void*>(m_surface));
 
     std::uint32_t deviceCount = 0;
-    if (vkEnumeratePhysicalDevices(m_instance, &deviceCount, nullptr) != VK_SUCCESS || deviceCount == 0) {
-        NeoWPF::Diagnostics::LogError("Vulkan found no physical devices");
+    result = vkEnumeratePhysicalDevices(m_instance, &deviceCount, nullptr);
+    if (result != VK_SUCCESS || deviceCount == 0) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Physical device count query failed: %s (%d), count=%u",
+            VkResultName(result), static_cast<int>(result), deviceCount);
         Shutdown();
         return false;
     }
+    NeoWPF::Diagnostics::LogInfo("[Vulkan] Physical devices found: %u", deviceCount);
     std::vector<VkPhysicalDevice> devices(deviceCount);
-    vkEnumeratePhysicalDevices(m_instance, &deviceCount, devices.data());
-    for (auto device : devices) {
+    result = vkEnumeratePhysicalDevices(m_instance, &deviceCount, devices.data());
+    if (result != VK_SUCCESS) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Physical device list query failed: %s (%d)",
+            VkResultName(result), static_cast<int>(result));
+        Shutdown();
+        return false;
+    }
+    for (std::uint32_t deviceIndex = 0; deviceIndex < deviceCount; ++deviceIndex) {
+        const auto device = devices[deviceIndex];
+        VkPhysicalDeviceProperties properties{};
+        vkGetPhysicalDeviceProperties(device, &properties);
+        NeoWPF::Diagnostics::LogInfo("[Vulkan] Device[%u]: name='%s' type=%d apiVersion=%u.%u.%u",
+            deviceIndex, properties.deviceName, static_cast<int>(properties.deviceType),
+            VK_VERSION_MAJOR(properties.apiVersion), VK_VERSION_MINOR(properties.apiVersion),
+            VK_VERSION_PATCH(properties.apiVersion));
         std::uint32_t queueCount = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueCount, nullptr);
         std::vector<VkQueueFamilyProperties> queues(queueCount);
@@ -99,7 +186,12 @@ bool VulkanRendering::Initialize(void* nativeWindowHandle)
                 graphicsFamily = index;
             }
             VkBool32 presentSupported = VK_FALSE;
-            vkGetPhysicalDeviceSurfaceSupportKHR(device, index, m_surface, &presentSupported);
+            const VkResult presentResult = vkGetPhysicalDeviceSurfaceSupportKHR(
+                device, index, m_surface, &presentSupported);
+            NeoWPF::Diagnostics::LogInfo("[Vulkan] Device[%u] queue[%u]: flags=0x%X graphics=%s present=%s result=%s",
+                deviceIndex, index, queues[index].queueFlags,
+                (queues[index].queueFlags & VK_QUEUE_GRAPHICS_BIT) ? "yes" : "no",
+                presentSupported ? "yes" : "no", VkResultName(presentResult));
             if (presentSupported) {
                 presentFamily = index;
             }
@@ -109,11 +201,13 @@ bool VulkanRendering::Initialize(void* nativeWindowHandle)
             m_physicalDevice = device;
             m_graphicsQueueFamily = graphicsFamily;
             m_presentQueueFamily = presentFamily;
+            NeoWPF::Diagnostics::LogInfo("[Vulkan] Selected device[%u]: graphicsQueueFamily=%u presentQueueFamily=%u",
+                deviceIndex, m_graphicsQueueFamily, m_presentQueueFamily);
             break;
         }
     }
     if (m_physicalDevice == VK_NULL_HANDLE) {
-        NeoWPF::Diagnostics::LogError("Vulkan found no device with graphics and Wayland presentation support");
+        NeoWPF::Diagnostics::LogError("[Vulkan] No device has graphics and surface presentation support");
         Shutdown();
         return false;
     }
@@ -133,19 +227,22 @@ bool VulkanRendering::Initialize(void* nativeWindowHandle)
         0, nullptr, 1, deviceExtensions, nullptr};
     const VkResult deviceResult = vkCreateDevice(m_physicalDevice, &deviceCreateInfo, nullptr, &m_device);
     if (deviceResult != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("Vulkan logical device creation failed: %d", static_cast<int>(deviceResult));
+        NeoWPF::Diagnostics::LogError("[Vulkan] vkCreateDevice failed: %s (%d)",
+            VkResultName(deviceResult), static_cast<int>(deviceResult));
         Shutdown();
         return false;
     }
+    NeoWPF::Diagnostics::LogInfo("[Vulkan] Logical device created: %p", static_cast<void*>(m_device));
     vkGetDeviceQueue(m_device, m_graphicsQueueFamily, 0, &m_graphicsQueue);
     vkGetDeviceQueue(m_device, m_presentQueueFamily, 0, &m_presentQueue);
 
     if (!CreateSwapchainResources(1, 1)) {
-        NeoWPF::Diagnostics::LogError("Vulkan swapchain resource creation failed");
+        NeoWPF::Diagnostics::LogError("[Vulkan] Swapchain resource creation failed during initialization");
         Shutdown();
         return false;
     }
     m_initialized = true;
+    NeoWPF::Diagnostics::LogInfo("[Vulkan] Initialize complete");
     return true;
 }
 
@@ -205,7 +302,10 @@ void VulkanRendering::BeginFrame()
     m_frameActive = true;
 }
 
-void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList&) {}
+void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList&) 
+{
+    // @todo make this
+}
 
 void VulkanRendering::Present()
 {
@@ -227,7 +327,15 @@ void VulkanRendering::Present()
 }
 
 std::uint32_t VulkanRendering::CreateTexture(unsigned int, unsigned int, const void*) { return 0; }
-void VulkanRendering::DestroyTexture(std::uint32_t) noexcept {}
-void VulkanRendering::ClearTextures() noexcept {}
+
+void VulkanRendering::DestroyTexture(std::uint32_t) noexcept 
+{
+    // @todo make this
+}
+
+void VulkanRendering::ClearTextures() noexcept 
+{
+    // @todo make this
+}
 
 }

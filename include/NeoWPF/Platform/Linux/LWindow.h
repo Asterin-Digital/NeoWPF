@@ -37,6 +37,7 @@ private:
     wl_surface* m_surface = nullptr;
     xdg_surface* m_xdgSurface = nullptr;
     xdg_toplevel* m_xdgToplevel = nullptr;
+    zxdg_toplevel_decoration_v1* m_xdgDecoration = nullptr;
     std::wstring m_title;
     int m_width = 0;
     int m_height = 0;

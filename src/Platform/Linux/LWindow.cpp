@@ -3,6 +3,7 @@
 #include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 
 #include <algorithm>
 #include <string>
@@ -41,6 +42,17 @@ LWindow::LWindow(LWindowing& windowing, const wchar_t* title, int width, int hei
                 const auto titleUtf8 = NeoWPF::Platform::WideToUtf8(m_title);
                 xdg_toplevel_set_title(m_xdgToplevel, titleUtf8.c_str());
                 xdg_toplevel_set_app_id(m_xdgToplevel, "NeoWPF");
+                if (windowing.XdgDecorationManager()) {
+                    m_xdgDecoration = zxdg_decoration_manager_v1_get_toplevel_decoration(
+                        windowing.XdgDecorationManager(), m_xdgToplevel);
+                    if (m_xdgDecoration) {
+                        zxdg_toplevel_decoration_v1_set_mode(
+                            m_xdgDecoration, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+                    }
+                } else {
+                    NeoWPF::Diagnostics::LogInfo(
+                        "[Wayland] Compositor does not advertise xdg-decoration; using borderless window");
+                }
                 wl_surface_commit(m_surface);
                 wl_display_flush(m_display);
             }
@@ -60,6 +72,10 @@ bool LWindow::IsValid() const noexcept
 
 void LWindow::Close() noexcept
 {
+    if (m_xdgDecoration) {
+        zxdg_toplevel_decoration_v1_destroy(m_xdgDecoration);
+        m_xdgDecoration = nullptr;
+    }
     if (m_xdgToplevel) {
         xdg_toplevel_destroy(m_xdgToplevel);
         m_xdgToplevel = nullptr;
