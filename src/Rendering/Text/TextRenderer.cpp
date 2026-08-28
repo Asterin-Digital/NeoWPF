@@ -32,6 +32,9 @@ FontRequest MakeRequest(const std::wstring& family, int weight, NeoWPF::UI::Font
             }
         }
     }
+    if (effectiveFamily.empty()) {
+        effectiveFamily = L"Sans";
+    }
 
     static std::mutex platformResolutionMutex;
     static std::unordered_set<std::wstring> platformResolutionAttempts;

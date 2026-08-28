@@ -90,8 +90,9 @@ int Application::Run()
 
     StartRenderThread();
 
+    constexpr auto renderInitializationTimeout = std::chrono::seconds(2);
     std::unique_lock<std::mutex> lock(appState.renderInitMutex);
-    if (!appState.renderInitCondition.wait_for(lock, std::chrono::seconds(2), [] {
+    if (!appState.renderInitCondition.wait_for(lock, renderInitializationTimeout, [] {
             return GetAppState().renderThreadInitialized.load() || GetAppState().renderThreadInitFailed.load();
         })) {
         NeoWPF::Platform::CurrentPlatform()->Windowing().ShowFatalError(
