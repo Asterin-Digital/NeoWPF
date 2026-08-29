@@ -331,6 +331,11 @@ wl_shm* LWindowing::Shm() const noexcept
     return m_shm;
 }
 
+wl_seat* LWindowing::Seat() const noexcept
+{
+    return m_seat;
+}
+
 xdg_wm_base* LWindowing::XdgWmBase() const noexcept
 {
     return m_xdgWmBase;
@@ -357,6 +362,12 @@ void LWindowing::HandleGlobal(void* data, wl_registry* registry, std::uint32_t n
     } else if (std::strcmp(interface, wl_shm_interface.name) == 0) {
         windowing->m_shm = static_cast<wl_shm*>(wl_registry_bind(
             registry, name, &wl_shm_interface, 1));
+    } else if (std::strcmp(interface, wl_seat_interface.name) == 0) {
+        windowing->m_seat = static_cast<wl_seat*>(wl_registry_bind(
+            registry, name, &wl_seat_interface, 1));
+        if (windowing->m_seat) {
+            NeoWPF::Diagnostics::LogInfo("[Wayland] Connected to seat");
+        }
     } else if (std::strcmp(interface, "xdg_wm_base") == 0) {
         windowing->m_xdgWmBase = static_cast<xdg_wm_base*>(wl_registry_bind(
             registry, name, &xdg_wm_base_interface, 1));

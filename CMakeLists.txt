@@ -84,6 +84,7 @@ if(UNIX)
         PROPERTIES HEADER_FILE_ONLY TRUE)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(WAYLAND REQUIRED IMPORTED_TARGET wayland-client)
+    pkg_check_modules(XKBCOMMON REQUIRED IMPORTED_TARGET xkbcommon)
     pkg_check_modules(FREETYPE REQUIRED IMPORTED_TARGET freetype2)
     pkg_check_modules(HARFBUZZ REQUIRED IMPORTED_TARGET harfbuzz)
     pkg_check_modules(FONTCONFIG REQUIRED IMPORTED_TARGET fontconfig)
@@ -145,19 +146,22 @@ if(WIN32)
             foreach(NEOWPF_VCPKG_CANDIDATE_TRIPLET IN ITEMS
                 "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows-static-md"
                 "${NEOWPF_VCPKG_CANDIDATE_ROOT}/installed/x64-windows-static-md")
-                     if(EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/ft2build.h" AND
+                if(EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/ft2build.h" AND
                    EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/harfbuzz/hb.h" AND
-                         EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/curl/curl.h" AND
-                         EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/stb_image.h" AND
+                   EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/curl/curl.h" AND
+                   EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/stb_image.h" AND
                    EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/share/freetype/freetype-config.cmake" AND
                    EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/share/harfbuzz/harfbuzzConfig.cmake")
-                set(NEOWPF_VCPKG_ROOT "${NEOWPF_VCPKG_CANDIDATE_ROOT}")
-                set(NEOWPF_VCPKG_TRIPLET "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}")
-                get_filename_component(VCPKG_INSTALLED_DIR "${NEOWPF_VCPKG_TRIPLET}" DIRECTORY)
-                set(_VCPKG_INSTALLED_DIR "${VCPKG_INSTALLED_DIR}")
-                set(VCPKG_TARGET_TRIPLET "x64-windows-static-md")
-                list(PREPEND CMAKE_PREFIX_PATH "${NEOWPF_VCPKG_TRIPLET}")
-                break()
+                    set(NEOWPF_VCPKG_ROOT "${NEOWPF_VCPKG_CANDIDATE_ROOT}")
+                    set(NEOWPF_VCPKG_TRIPLET "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}")
+                    get_filename_component(VCPKG_INSTALLED_DIR "${NEOWPF_VCPKG_TRIPLET}" DIRECTORY)
+                    set(_VCPKG_INSTALLED_DIR "${VCPKG_INSTALLED_DIR}")
+                    set(VCPKG_TARGET_TRIPLET "x64-windows-static-md")
+                    list(PREPEND CMAKE_PREFIX_PATH "${NEOWPF_VCPKG_TRIPLET}")
+                    list(PREPEND CMAKE_MODULE_PATH "${NEOWPF_VCPKG_TRIPLET}/share/stb")
+                    set(ZLIB_ROOT "${NEOWPF_VCPKG_TRIPLET}")
+                    set(ZLIB_USE_STATIC_LIBS ON)
+                    break()
                 endif()
             endforeach()
             if(NEOWPF_VCPKG_TRIPLET)
@@ -170,6 +174,7 @@ if(WIN32)
             "Could not locate a vcpkg installation containing the x64-windows-static-md "
             "FreeType and HarfBuzz packages. Ensure vcpkg is available on PATH.")
     endif()
+    find_package(ZLIB REQUIRED)
     find_package(Freetype CONFIG REQUIRED)
     find_package(harfbuzz CONFIG REQUIRED)
 endif()
@@ -194,6 +199,7 @@ if(UNIX)
     list(PREPEND CMAKE_MODULE_PATH "${NEOWPF_VCPKG_PREFIX}/share/stb")
 endif()
 
+find_package(ZLIB REQUIRED)
 find_package(CURL CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 if(UNIX)
@@ -236,19 +242,11 @@ if(WIN32)
             message(FATAL_ERROR "Missing static text archive: ${NEOWPF_TEXT_ARCHIVE}")
         endif()
     endforeach()
-
-    add_custom_command(TARGET NeoWPF POST_BUILD
-        COMMAND "${CMAKE_AR}"
-            "/OUT:$<TARGET_FILE:NeoWPF>.merged"
-            "$<TARGET_FILE:NeoWPF>"
-            "$<IF:$<CONFIG:Debug>,${NEOWPF_HARFBUZZ_DEBUG_ARCHIVE},${NEOWPF_HARFBUZZ_RELEASE_ARCHIVE}>"
-            "$<IF:$<CONFIG:Debug>,${NEOWPF_FREETYPE_DEBUG_ARCHIVE},${NEOWPF_FREETYPE_RELEASE_ARCHIVE}>"
-        COMMAND "${CMAKE_COMMAND}" -E copy
-            "$<TARGET_FILE:NeoWPF>.merged"
-            "$<TARGET_FILE:NeoWPF>"
-        COMMAND "${CMAKE_COMMAND}" -E rm -f "$<TARGET_FILE:NeoWPF>.merged"
-        VERBATIM
-    )
+    # NOTE: these validated paths are consumed directly in the NEOWPF_STATIC_DEPENDENCIES
+    # merge step below, since neither the "harfbuzz::harfbuzz" nor "Freetype::Freetype"
+    # imported targets reliably expose IMPORTED_LOCATION_DEBUG/RELEASE across vcpkg
+    # versions, and the Linux-only "PkgConfig::HARFBUZZ" target used by the generic
+    # dependency-target loop doesn't exist on Windows at all.
 endif()
 
 set_target_properties(NeoWPF PROPERTIES
@@ -272,7 +270,7 @@ if(WIN32)
 endif()
 target_include_directories(NeoWPF PRIVATE "${Stb_INCLUDE_DIR}")
 if(UNIX)
-    target_include_directories(NeoWPF PRIVATE "${NEOWPF_WAYLAND_GENERATED_DIR}" "${NEOWPF_VULKAN_GENERATED_DIR}")
+    target_include_directories(NeoWPF SYSTEM PRIVATE "${NEOWPF_WAYLAND_GENERATED_DIR}" "${NEOWPF_VULKAN_GENERATED_DIR}")
 endif()
 
 target_compile_definitions(NeoWPF
@@ -287,6 +285,7 @@ if(WIN32)
         _CONSOLE
         UNICODE
         _UNICODE
+        NOMINMAX
     )
 endif()
 
@@ -312,19 +311,31 @@ endif()
 
 if(WIN32)
     target_link_libraries(NeoWPF
-        PRIVATE
+        PUBLIC
+            Freetype::Freetype
+            harfbuzz::harfbuzz
+            CURL::libcurl
             d3d11
             dxgi
             dbghelp
             ole32
             windowscodecs
-            CURL::libcurl
+            bcrypt
+            crypt32
+            ws2_32
+            wldap32
+            winmm
+            advapi32
+            iphlpapi
+            normaliz
+            secur32
     )
 else()
     target_link_libraries(NeoWPF
         PUBLIC
             Vulkan::Vulkan
             PkgConfig::WAYLAND
+            PkgConfig::XKBCOMMON
             Freetype::Freetype
             PkgConfig::HARFBUZZ
             PkgConfig::FONTCONFIG
@@ -346,6 +357,7 @@ if(NEOWPF_STATIC_DEPENDENCIES)
         PNG::PNG
         Vulkan::Vulkan
         PkgConfig::WAYLAND
+        PkgConfig::XKBCOMMON
         Freetype::Freetype
         PkgConfig::HARFBUZZ
         PkgConfig::FONTCONFIG
@@ -378,8 +390,12 @@ if(NEOWPF_STATIC_DEPENDENCIES)
         endif()
     endforeach()
 
+    list(REMOVE_DUPLICATES NEOWPF_STATIC_ARCHIVES_DEBUG)
+    list(REMOVE_DUPLICATES NEOWPF_STATIC_ARCHIVES_RELEASE)
+
     foreach(NEOWPF_STATIC_LIBRARY_SPEC IN ITEMS
         "wayland-client;${WAYLAND_LIBRARY_DIRS}"
+        "xkbcommon;${XKBCOMMON_LIBRARY_DIRS}"
         "freetype;${FREETYPE_LIBRARY_DIRS}"
         "harfbuzz;${HARFBUZZ_LIBRARY_DIRS}"
         "fontconfig;${FONTCONFIG_LIBRARY_DIRS}")
@@ -418,20 +434,59 @@ if(NEOWPF_STATIC_DEPENDENCIES)
 
     list(REMOVE_DUPLICATES NEOWPF_STATIC_ARCHIVES_DEBUG)
     list(REMOVE_DUPLICATES NEOWPF_STATIC_ARCHIVES_RELEASE)
-    if(NOT NEOWPF_STATIC_ARCHIVES_RELEASE)
-        message(FATAL_ERROR "No static Linux dependency archives were found for NeoWPF.")
-    endif()
 
     if(WIN32)
+        set(NEOWPF_WINDOWS_SYSTEM_LIBRARIES "")
+        foreach(NEOWPF_SYSTEM_LIBRARY_NAME IN ITEMS
+            d3d11
+            dxgi
+            dbghelp
+            ole32
+            windowscodecs
+            bcrypt
+            crypt32
+            ws2_32
+            wldap32
+            winmm
+            advapi32
+            iphlpapi
+            normaliz
+            secur32)
+            find_library(NEOWPF_SYSTEM_LIBRARY
+                NAMES "${NEOWPF_SYSTEM_LIBRARY_NAME}")
+            if(NEOWPF_SYSTEM_LIBRARY)
+                list(APPEND NEOWPF_WINDOWS_SYSTEM_LIBRARIES "${NEOWPF_SYSTEM_LIBRARY}")
+            endif()
+            unset(NEOWPF_SYSTEM_LIBRARY CACHE)
+        endforeach()
+
+        set(NEOWPF_WINDOWS_MERGE_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/merge-neowpf-libraries-$<CONFIG>.cmake")
+        string(CONCAT NEOWPF_WINDOWS_MERGE_SCRIPT_CONTENT
+            "set(NEOWPF_ARCHIVER [==[${CMAKE_AR}]==])\n"
+            "set(NEOWPF_TARGET [==[$<TARGET_FILE:NeoWPF>]==])\n"
+            "set(NEOWPF_TRIPLET [==[${NEOWPF_VCPKG_TRIPLET}]==])\n"
+            "set(NEOWPF_SYSTEM_LIBRARIES [==[${NEOWPF_WINDOWS_SYSTEM_LIBRARIES}]==])\n"
+            "if(\"$<CONFIG>\" STREQUAL \"Debug\")\n"
+            "    set(NEOWPF_LIBRARY_DIR \"\${NEOWPF_TRIPLET}/debug/lib\")\n"
+            "else()\n"
+            "    set(NEOWPF_LIBRARY_DIR \"\${NEOWPF_TRIPLET}/lib\")\n"
+            "endif()\n"
+            "file(GLOB_RECURSE NEOWPF_DEPENDENCY_LIBRARIES \"\${NEOWPF_LIBRARY_DIR}/*.lib\")\n"
+            "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E copy \"\${NEOWPF_TARGET}\" \"\${NEOWPF_TARGET}.base\" RESULT_VARIABLE NEOWPF_COPY_RESULT)\n"
+            "if(NEOWPF_COPY_RESULT)\n"
+            "    message(FATAL_ERROR \"NeoWPF archive staging failed with exit code \${NEOWPF_COPY_RESULT}\")\n"
+            "endif()\n"
+            "execute_process(COMMAND \"\${NEOWPF_ARCHIVER}\" \"/OUT:\${NEOWPF_TARGET}\" \"/IGNORE:4006\" \"\${NEOWPF_TARGET}.base\" \${NEOWPF_DEPENDENCY_LIBRARIES} \${NEOWPF_SYSTEM_LIBRARIES} RESULT_VARIABLE NEOWPF_ARCHIVE_RESULT)\n"
+            "file(REMOVE \"\${NEOWPF_TARGET}.base\")\n"
+            "if(NEOWPF_ARCHIVE_RESULT)\n"
+            "    message(FATAL_ERROR \"NeoWPF dependency merge failed with exit code \${NEOWPF_ARCHIVE_RESULT}\")\n"
+            "endif()\n"
+        )
+        file(GENERATE OUTPUT "${NEOWPF_WINDOWS_MERGE_SCRIPT}" CONTENT
+            "${NEOWPF_WINDOWS_MERGE_SCRIPT_CONTENT}"
+        )
         add_custom_command(TARGET NeoWPF POST_BUILD
-            COMMAND "${CMAKE_AR}"
-                "/OUT:$<TARGET_FILE:NeoWPF>.merged"
-                "$<TARGET_FILE:NeoWPF>"
-                "$<IF:$<CONFIG:Debug>,${NEOWPF_STATIC_ARCHIVES_DEBUG},${NEOWPF_STATIC_ARCHIVES_RELEASE}>"
-            COMMAND "${CMAKE_COMMAND}" -E copy
-                "$<TARGET_FILE:NeoWPF>.merged"
-                "$<TARGET_FILE:NeoWPF>"
-            COMMAND "${CMAKE_COMMAND}" -E rm -f "$<TARGET_FILE:NeoWPF>.merged"
+            COMMAND "${CMAKE_COMMAND}" -P "${NEOWPF_WINDOWS_MERGE_SCRIPT}"
             VERBATIM
         )
     elseif(UNIX)
@@ -461,7 +516,7 @@ if(NEOWPF_STATIC_DEPENDENCIES)
             "${NEOWPF_ARCHIVE_SCRIPT_CONTENT}"
         )
         file(GENERATE OUTPUT "${NEOWPF_LINKER_SCRIPT}" CONTENT
-            "GROUP ( $<TARGET_FILE:NeoWPF> -lvulkan -lwayland-client -lharfbuzz -lfontconfig -lfreetype -lpng16 -lz -lbrotlidec -lbrotlicommon -lbz2 -lexpat $<IF:$<CONFIG:Debug>,${NEOWPF_CURL_DEBUG},${NEOWPF_CURL_RELEASE}> -ldl -lpthread )\n"
+            "GROUP ( $<TARGET_FILE:NeoWPF> -lvulkan -lwayland-client -lxkbcommon -lharfbuzz -lfontconfig -lfreetype -lpng16 -lz -lbrotlidec -lbrotlicommon -lbz2 -lexpat $<IF:$<CONFIG:Debug>,${NEOWPF_CURL_DEBUG},${NEOWPF_CURL_RELEASE}> -ldl -lpthread )\n"
         )
         add_custom_command(TARGET NeoWPF POST_BUILD
             COMMAND sh -c "\"${CMAKE_AR}\" -M < \"${NEOWPF_ARCHIVE_SCRIPT}\""

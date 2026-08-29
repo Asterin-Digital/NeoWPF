@@ -150,6 +150,10 @@ void StartRenderThread()
             return;
         }
 
+        bool rendererInitialized = false;
+        unsigned int lastWidth = 0;
+        unsigned int lastHeight = 0;
+
         while (s_appState.running.load()) {
             std::vector<WindowState> windowsSnapshot;
             {
@@ -167,8 +171,17 @@ void StartRenderThread()
 
                 if (w > 0 && h > 0) {
                     try {
-                        platform->Rendering().Initialize(windowState.nativeWindowHandle);
-                        platform->Rendering().Resize(w, h);
+                        if (!rendererInitialized) {
+                            platform->Rendering().Initialize(windowState.nativeWindowHandle);
+                            rendererInitialized = true;
+                            lastWidth = 0;
+                            lastHeight = 0;
+                        }
+                        if (w != lastWidth || h != lastHeight) {
+                            platform->Rendering().Resize(w, h);
+                            lastWidth = w;
+                            lastHeight = h;
+                        }
                         const auto renderStart = std::chrono::steady_clock::now();
                         platform->Rendering().BeginFrame();
 

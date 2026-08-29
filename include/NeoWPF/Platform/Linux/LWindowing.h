@@ -46,6 +46,7 @@ public:
     wl_display* Display() const noexcept;
     wl_compositor* Compositor() const noexcept;
     wl_shm* Shm() const noexcept;
+    wl_seat* Seat() const noexcept;
     xdg_wm_base* XdgWmBase() const noexcept;
     zxdg_decoration_manager_v1* XdgDecorationManager() const noexcept;
     bool HasXdgShell() const noexcept;
@@ -62,6 +63,7 @@ private:
     wl_registry* m_registry = nullptr;
     wl_compositor* m_compositor = nullptr;
     wl_shm* m_shm = nullptr;
+    wl_seat* m_seat = nullptr;
     xdg_wm_base* m_xdgWmBase = nullptr;
     zxdg_decoration_manager_v1* m_xdgDecorationManager = nullptr;
     bool m_hasXdgShell = false;
