@@ -13,6 +13,13 @@
 
 namespace NeoWPF::Platform::Linux {
 
+int CaptureCallStackLinux(NeoWPF::Diagnostics::CallStackEntry* entries,
+                          int maxEntries, int skipFrames) noexcept;
+void InstallCrashHandlerLinux() noexcept;
+void UninstallCrashHandlerLinux() noexcept;
+std::wstring CurrentModulePathLinux();
+std::uint32_t CurrentThreadIdLinux() noexcept;
+
 namespace {
 
 bool LoadSystemFontFamily(const std::wstring& requestedFamily)
@@ -103,10 +110,30 @@ std::wstring LPlatform::ResolveFontFamily(const std::wstring& requestedFontFamil
     return NeoWPF::Rendering::Text::ResolveFontFamily(requestedFontFamily);
 }
 
-int LPlatform::CaptureCallStack(NeoWPF::Diagnostics::CallStackEntry*, int, int) noexcept { return 0; }
-void LPlatform::InstallCrashHandler() noexcept {}
-void LPlatform::UninstallCrashHandler() noexcept {}
-std::wstring LPlatform::CurrentModulePath() const { return {}; }
-std::uint32_t LPlatform::CurrentThreadId() const noexcept { return static_cast<std::uint32_t>(getpid()); }
+int LPlatform::CaptureCallStack(NeoWPF::Diagnostics::CallStackEntry* entries,
+                                int maxEntries, int skipFrames) noexcept
+{
+    return CaptureCallStackLinux(entries, maxEntries, skipFrames);
+}
+
+void LPlatform::InstallCrashHandler() noexcept
+{
+    InstallCrashHandlerLinux();
+}
+
+void LPlatform::UninstallCrashHandler() noexcept
+{
+    UninstallCrashHandlerLinux();
+}
+
+std::wstring LPlatform::CurrentModulePath() const
+{
+    return CurrentModulePathLinux();
+}
+
+std::uint32_t LPlatform::CurrentThreadId() const noexcept
+{
+    return CurrentThreadIdLinux();
+}
 
 }

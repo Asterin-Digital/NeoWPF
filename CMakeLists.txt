@@ -175,24 +175,30 @@ if(WIN32)
 endif()
 
 if(UNIX)
-    file(GLOB NEOWPF_VCPKG_PREFIXES LIST_DIRECTORIES true
-        "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg_installed/*")
-    foreach(NEOWPF_VCPKG_PREFIX IN LISTS NEOWPF_VCPKG_PREFIXES)
-        if(EXISTS "${NEOWPF_VCPKG_PREFIX}/include/curl/curl.h" AND
-           EXISTS "${NEOWPF_VCPKG_PREFIX}/include/stb_image.h" AND
-           EXISTS "${NEOWPF_VCPKG_PREFIX}/share/curl/CURLConfig.cmake" AND
-           EXISTS "${NEOWPF_VCPKG_PREFIX}/share/stb/FindStb.cmake" AND
-           EXISTS "${NEOWPF_VCPKG_PREFIX}/share/freetype/freetype-config.cmake")
-            list(PREPEND CMAKE_PREFIX_PATH "${NEOWPF_VCPKG_PREFIX}")
-            list(PREPEND CMAKE_MODULE_PATH "${NEOWPF_VCPKG_PREFIX}/share/stb")
-            break()
-        endif()
-    endforeach()
+    set(VCPKG_TARGET_TRIPLET "x64-linux" CACHE STRING
+        "vcpkg triplet used for Linux dependencies")
+    set(VCPKG_LIBRARY_LINKAGE "static" CACHE STRING
+        "Build Linux vcpkg libraries as static libraries")
+    set(NEOWPF_VCPKG_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
+    if(NOT EXISTS "${NEOWPF_VCPKG_PREFIX}/include/curl/curl.h" OR
+       NOT EXISTS "${NEOWPF_VCPKG_PREFIX}/include/stb_image.h" OR
+       NOT EXISTS "${NEOWPF_VCPKG_PREFIX}/share/curl/CURLConfig.cmake" OR
+       NOT EXISTS "${NEOWPF_VCPKG_PREFIX}/share/stb/FindStb.cmake" OR
+       NOT EXISTS "${NEOWPF_VCPKG_PREFIX}/share/freetype/freetype-config.cmake")
+        message(FATAL_ERROR
+            "Could not locate the static Linux vcpkg triplet '${VCPKG_TARGET_TRIPLET}' "
+            "under ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg_installed. Install the manifest "
+            "dependencies with this triplet before configuring NeoWPF.")
+    endif()
+    list(PREPEND CMAKE_PREFIX_PATH "${NEOWPF_VCPKG_PREFIX}")
+    list(PREPEND CMAKE_MODULE_PATH "${NEOWPF_VCPKG_PREFIX}/share/stb")
 endif()
 
 find_package(CURL CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 if(UNIX)
+    find_package(MbedTLS CONFIG REQUIRED)
+    find_package(OpenSSL CONFIG REQUIRED)
     find_package(Freetype CONFIG REQUIRED)
     find_package(PNG REQUIRED)
 endif()
@@ -331,6 +337,11 @@ endif()
 if(NEOWPF_STATIC_DEPENDENCIES)
     set(NEOWPF_STATIC_DEPENDENCY_TARGETS
         CURL::libcurl
+        MbedTLS::mbedcrypto
+        MbedTLS::mbedx509
+        MbedTLS::mbedtls
+        OpenSSL::Crypto
+        OpenSSL::SSL
         ZLIB::ZLIB
         PNG::PNG
         Vulkan::Vulkan
