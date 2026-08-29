@@ -1,6 +1,8 @@
 #pragma once
 
 #include <NeoWPF/Contracts/IPlatform.h>
+#include <NeoWPF/Platform/CurlHttp.h>
+#include <NeoWPF/Platform/Linux/LImageDecoding.h>
 #include <NeoWPF/Platform/Linux/LWindowing.h>
 #include <NeoWPF/Rendering/Vulkan/VulkanRendering.h>
 
@@ -32,6 +34,8 @@ public:
     std::uint32_t CurrentThreadId() const noexcept override;
 
 private:
+    NeoWPF::Platform::CurlHttp m_http;
+    LImageDecoding m_imageDecoding;
     LWindowing m_windowing;
     NeoWPF::Rendering::Vulkan::VulkanRendering m_rendering;
 };

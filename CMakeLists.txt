@@ -145,8 +145,10 @@ if(WIN32)
             foreach(NEOWPF_VCPKG_CANDIDATE_TRIPLET IN ITEMS
                 "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows-static-md"
                 "${NEOWPF_VCPKG_CANDIDATE_ROOT}/installed/x64-windows-static-md")
-                if(EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/ft2build.h" AND
+                     if(EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/ft2build.h" AND
                    EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/harfbuzz/hb.h" AND
+                         EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/curl/curl.h" AND
+                         EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/stb_image.h" AND
                    EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/share/freetype/freetype-config.cmake" AND
                    EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/share/harfbuzz/harfbuzzConfig.cmake")
                 set(NEOWPF_VCPKG_ROOT "${NEOWPF_VCPKG_CANDIDATE_ROOT}")
@@ -172,13 +174,39 @@ if(WIN32)
     find_package(harfbuzz CONFIG REQUIRED)
 endif()
 
+if(UNIX)
+    file(GLOB NEOWPF_VCPKG_PREFIXES LIST_DIRECTORIES true
+        "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg_installed/*")
+    foreach(NEOWPF_VCPKG_PREFIX IN LISTS NEOWPF_VCPKG_PREFIXES)
+        if(EXISTS "${NEOWPF_VCPKG_PREFIX}/include/curl/curl.h" AND
+           EXISTS "${NEOWPF_VCPKG_PREFIX}/include/stb_image.h" AND
+           EXISTS "${NEOWPF_VCPKG_PREFIX}/share/curl/CURLConfig.cmake" AND
+           EXISTS "${NEOWPF_VCPKG_PREFIX}/share/stb/FindStb.cmake" AND
+           EXISTS "${NEOWPF_VCPKG_PREFIX}/share/freetype/freetype-config.cmake")
+            list(PREPEND CMAKE_PREFIX_PATH "${NEOWPF_VCPKG_PREFIX}")
+            list(PREPEND CMAKE_MODULE_PATH "${NEOWPF_VCPKG_PREFIX}/share/stb")
+            break()
+        endif()
+    endforeach()
+endif()
+
+find_package(CURL CONFIG REQUIRED)
+find_package(Stb REQUIRED)
+if(UNIX)
+    find_package(Freetype CONFIG REQUIRED)
+    find_package(PNG REQUIRED)
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(NEOWPF_STATIC_DEPENDENCIES
+    "Merge static NeoWPF dependencies into the NeoWPF archive"
+    ON)
+
 include(cmake/NeoWPFSources.cmake)
 if(UNIX)
-    list(APPEND NEOWPF_SOURCES "${NEOWPF_XDG_SHELL_SOURCE}")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_SHELL_HEADER}")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_DECORATION_HEADER}")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_SOLID_VERT_HEADER}" "${NEOWPF_SOLID_FRAG_HEADER}")
@@ -224,6 +252,9 @@ set_target_properties(NeoWPF PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_SOURCE_DIR}/x64/RelWithDebInfo"
     ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_SOURCE_DIR}/x64/MinSizeRel"
 )
+if(UNIX)
+    set_target_properties(NeoWPF PROPERTIES OUTPUT_NAME "NeoWPF.objects")
+endif()
 
 target_include_directories(NeoWPF
     PUBLIC
@@ -233,6 +264,7 @@ if(WIN32)
     target_include_directories(NeoWPF PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include")
     target_include_directories(NeoWPF PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include/harfbuzz")
 endif()
+target_include_directories(NeoWPF PRIVATE "${Stb_INCLUDE_DIR}")
 if(UNIX)
     target_include_directories(NeoWPF PRIVATE "${NEOWPF_WAYLAND_GENERATED_DIR}" "${NEOWPF_VULKAN_GENERATED_DIR}")
 endif()
@@ -278,20 +310,157 @@ if(WIN32)
             d3d11
             dxgi
             dbghelp
-            winhttp
             ole32
             windowscodecs
+            CURL::libcurl
     )
 else()
     target_link_libraries(NeoWPF
         PUBLIC
             Vulkan::Vulkan
             PkgConfig::WAYLAND
-            PkgConfig::FREETYPE
+            Freetype::Freetype
             PkgConfig::HARFBUZZ
             PkgConfig::FONTCONFIG
+            CURL::libcurl
+            PNG::PNG
     )
     message(STATUS "NeoWPF Linux configuration selected with Vulkan renderer backend.")
+endif()
+
+if(NEOWPF_STATIC_DEPENDENCIES)
+    set(NEOWPF_STATIC_DEPENDENCY_TARGETS
+        CURL::libcurl
+        ZLIB::ZLIB
+        PNG::PNG
+        Vulkan::Vulkan
+        PkgConfig::WAYLAND
+        Freetype::Freetype
+        PkgConfig::HARFBUZZ
+        PkgConfig::FONTCONFIG
+    )
+    set(NEOWPF_STATIC_ARCHIVES_DEBUG)
+    set(NEOWPF_STATIC_ARCHIVES_RELEASE)
+    foreach(NEOWPF_DEPENDENCY_TARGET IN LISTS NEOWPF_STATIC_DEPENDENCY_TARGETS)
+        if(NOT TARGET "${NEOWPF_DEPENDENCY_TARGET}")
+            continue()
+        endif()
+
+        get_target_property(NEOWPF_DEPENDENCY_DEBUG
+            "${NEOWPF_DEPENDENCY_TARGET}" IMPORTED_LOCATION_DEBUG)
+        get_target_property(NEOWPF_DEPENDENCY_RELEASE
+            "${NEOWPF_DEPENDENCY_TARGET}" IMPORTED_LOCATION_RELEASE)
+        get_target_property(NEOWPF_DEPENDENCY_LOCATION
+            "${NEOWPF_DEPENDENCY_TARGET}" IMPORTED_LOCATION)
+        if(NOT NEOWPF_DEPENDENCY_DEBUG)
+            set(NEOWPF_DEPENDENCY_DEBUG "${NEOWPF_DEPENDENCY_LOCATION}")
+        endif()
+        if(NOT NEOWPF_DEPENDENCY_RELEASE)
+            set(NEOWPF_DEPENDENCY_RELEASE "${NEOWPF_DEPENDENCY_LOCATION}")
+        endif()
+
+        if(NEOWPF_DEPENDENCY_DEBUG MATCHES "\\.(a|lib)$")
+            list(APPEND NEOWPF_STATIC_ARCHIVES_DEBUG "${NEOWPF_DEPENDENCY_DEBUG}")
+        endif()
+        if(NEOWPF_DEPENDENCY_RELEASE MATCHES "\\.(a|lib)$")
+            list(APPEND NEOWPF_STATIC_ARCHIVES_RELEASE "${NEOWPF_DEPENDENCY_RELEASE}")
+        endif()
+    endforeach()
+
+    foreach(NEOWPF_STATIC_LIBRARY_SPEC IN ITEMS
+        "wayland-client;${WAYLAND_LIBRARY_DIRS}"
+        "freetype;${FREETYPE_LIBRARY_DIRS}"
+        "harfbuzz;${HARFBUZZ_LIBRARY_DIRS}"
+        "fontconfig;${FONTCONFIG_LIBRARY_DIRS}")
+        list(GET NEOWPF_STATIC_LIBRARY_SPEC 0 NEOWPF_STATIC_LIBRARY_NAME)
+        list(REMOVE_AT NEOWPF_STATIC_LIBRARY_SPEC 0)
+        find_file(NEOWPF_STATIC_LIBRARY
+            "lib${NEOWPF_STATIC_LIBRARY_NAME}.a"
+            PATHS ${NEOWPF_STATIC_LIBRARY_SPEC}
+            NO_DEFAULT_PATH)
+        if(NEOWPF_STATIC_LIBRARY)
+            list(APPEND NEOWPF_STATIC_ARCHIVES_DEBUG "${NEOWPF_STATIC_LIBRARY}")
+            list(APPEND NEOWPF_STATIC_ARCHIVES_RELEASE "${NEOWPF_STATIC_LIBRARY}")
+        endif()
+        unset(NEOWPF_STATIC_LIBRARY CACHE)
+    endforeach()
+
+    set(NEOWPF_FIND_LIBRARY_SUFFIXES "${CMAKE_FIND_LIBRARY_SUFFIXES}")
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+    foreach(NEOWPF_TRANSITIVE_LIBRARY_NAME IN ITEMS
+        bz2
+        z
+        png16
+        brotlidec
+        brotlicommon
+        expat)
+        find_library(NEOWPF_TRANSITIVE_LIBRARY
+            NAMES "${NEOWPF_TRANSITIVE_LIBRARY_NAME}")
+        if(NEOWPF_TRANSITIVE_LIBRARY)
+            list(APPEND NEOWPF_STATIC_ARCHIVES_DEBUG "${NEOWPF_TRANSITIVE_LIBRARY}")
+            list(APPEND NEOWPF_STATIC_ARCHIVES_RELEASE "${NEOWPF_TRANSITIVE_LIBRARY}")
+        endif()
+        unset(NEOWPF_TRANSITIVE_LIBRARY CACHE)
+    endforeach()
+    set(CMAKE_FIND_LIBRARY_SUFFIXES "${NEOWPF_FIND_LIBRARY_SUFFIXES}")
+    unset(NEOWPF_FIND_LIBRARY_SUFFIXES)
+
+    list(REMOVE_DUPLICATES NEOWPF_STATIC_ARCHIVES_DEBUG)
+    list(REMOVE_DUPLICATES NEOWPF_STATIC_ARCHIVES_RELEASE)
+    if(NOT NEOWPF_STATIC_ARCHIVES_RELEASE)
+        message(FATAL_ERROR "No static Linux dependency archives were found for NeoWPF.")
+    endif()
+
+    if(WIN32)
+        add_custom_command(TARGET NeoWPF POST_BUILD
+            COMMAND "${CMAKE_AR}"
+                "/OUT:$<TARGET_FILE:NeoWPF>.merged"
+                "$<TARGET_FILE:NeoWPF>"
+                "$<IF:$<CONFIG:Debug>,${NEOWPF_STATIC_ARCHIVES_DEBUG},${NEOWPF_STATIC_ARCHIVES_RELEASE}>"
+            COMMAND "${CMAKE_COMMAND}" -E copy
+                "$<TARGET_FILE:NeoWPF>.merged"
+                "$<TARGET_FILE:NeoWPF>"
+            COMMAND "${CMAKE_COMMAND}" -E rm -f "$<TARGET_FILE:NeoWPF>.merged"
+            VERBATIM
+        )
+    elseif(UNIX)
+        set(NEOWPF_ARCHIVE_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/merge-neowpf-archives-$<CONFIG>.mri")
+        set(NEOWPF_LINKER_SCRIPT "$<TARGET_FILE_DIR:NeoWPF>/libNeoWPF.a")
+        get_target_property(NEOWPF_CURL_DEBUG CURL::libcurl IMPORTED_LOCATION_DEBUG)
+        get_target_property(NEOWPF_CURL_RELEASE CURL::libcurl IMPORTED_LOCATION_RELEASE)
+        if(NOT NEOWPF_CURL_DEBUG)
+            set(NEOWPF_CURL_DEBUG "${NEOWPF_CURL_RELEASE}")
+        endif()
+        if(NOT NEOWPF_CURL_RELEASE)
+            set(NEOWPF_CURL_RELEASE "${NEOWPF_CURL_DEBUG}")
+        endif()
+        if(NOT NEOWPF_CURL_DEBUG OR NOT NEOWPF_CURL_RELEASE)
+            message(FATAL_ERROR "Could not determine the vcpkg curl archive for the Linux linker wrapper.")
+        endif()
+        string(CONCAT NEOWPF_ARCHIVE_SCRIPT_CONTENT
+            "create $<TARGET_FILE:NeoWPF>.merged\n"
+            "addlib $<TARGET_FILE:NeoWPF>\n"
+        )
+        foreach(NEOWPF_STATIC_ARCHIVE IN LISTS NEOWPF_STATIC_ARCHIVES_RELEASE)
+            string(APPEND NEOWPF_ARCHIVE_SCRIPT_CONTENT
+                "addlib ${NEOWPF_STATIC_ARCHIVE}\n")
+        endforeach()
+        string(APPEND NEOWPF_ARCHIVE_SCRIPT_CONTENT "save\nend\n")
+        file(GENERATE OUTPUT "${NEOWPF_ARCHIVE_SCRIPT}" CONTENT
+            "${NEOWPF_ARCHIVE_SCRIPT_CONTENT}"
+        )
+        file(GENERATE OUTPUT "${NEOWPF_LINKER_SCRIPT}" CONTENT
+            "GROUP ( $<TARGET_FILE:NeoWPF> -lvulkan -lwayland-client -lharfbuzz -lfontconfig -lfreetype -lpng16 -lz -lbrotlidec -lbrotlicommon -lbz2 -lexpat $<IF:$<CONFIG:Debug>,${NEOWPF_CURL_DEBUG},${NEOWPF_CURL_RELEASE}> -ldl -lpthread )\n"
+        )
+        add_custom_command(TARGET NeoWPF POST_BUILD
+            COMMAND sh -c "\"${CMAKE_AR}\" -M < \"${NEOWPF_ARCHIVE_SCRIPT}\""
+            COMMAND "${CMAKE_COMMAND}" -E copy
+                "$<TARGET_FILE:NeoWPF>.merged"
+                "$<TARGET_FILE:NeoWPF>"
+            COMMAND "${CMAKE_COMMAND}" -E rm -f "$<TARGET_FILE:NeoWPF>.merged"
+            VERBATIM
+        )
+    endif()
 endif()
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})
@@ -320,6 +489,7 @@ if(BUILD_TESTING)
         tests/Automated/TransformCompositionTests.cpp
         tests/Automated/RenderCommandTests.cpp
         tests/Automated/GridTests.cpp
+        tests/Automated/LImageDecodingTests.cpp
     )
 
     target_link_libraries(NeoWPF.AutomatedTests

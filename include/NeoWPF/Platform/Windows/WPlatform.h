@@ -1,6 +1,7 @@
 #pragma once
 
 #include <NeoWPF/Contracts/IPlatform.h>
+#include <NeoWPF/Platform/CurlHttp.h>
 #include <NeoWPF/Platform/Windows/WWindowing.h>
 #include <NeoWPF/Rendering/D3D11/WRendering.h>
 
@@ -32,6 +33,7 @@ public:
     std::uint32_t CurrentThreadId() const noexcept override;
 
 private:
+    NeoWPF::Platform::CurlHttp m_http;
     WWindowing m_windowing;
     NeoWPF::Rendering::D3D11::WRendering m_rendering;
 };

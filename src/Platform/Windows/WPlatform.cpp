@@ -11,7 +11,6 @@ namespace NeoWPF::Platform {
 
 bool LoadResourceData(const std::wstring& resourcePath, std::vector<std::uint8_t>& outData);
 std::filesystem::path GetExecutableDirectory();
-bool FetchHttpResource(const std::wstring& url, std::vector<std::uint8_t>& outData);
 bool DecodeImageFromMemory(const std::vector<std::uint8_t>& data, std::vector<std::uint8_t>& outPixels,
                            int& outWidth, int& outHeight, int decodeWidth, int decodeHeight);
 bool DecodeImageFile(const std::wstring& filePath, std::vector<std::uint8_t>& outPixels,
@@ -165,7 +164,7 @@ std::filesystem::path WPlatform::GetExecutableDirectory() const
 
 bool WPlatform::FetchHttpResource(const std::wstring& url, std::vector<std::uint8_t>& outData)
 {
-    return NeoWPF::Platform::FetchHttpResource(url, outData);
+    return m_http.Fetch(url, outData);
 }
 
 bool WPlatform::DecodeImageFromMemory(const std::vector<std::uint8_t>& data, std::vector<std::uint8_t>& outPixels,

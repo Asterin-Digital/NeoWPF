@@ -64,11 +64,28 @@ NeoWPF::Contracts::IRendering& LPlatform::Rendering() noexcept { return m_render
 
 bool LPlatform::LoadResourceData(const std::wstring&, std::vector<std::uint8_t>&) { return false; }
 std::filesystem::path LPlatform::GetExecutableDirectory() const { return std::filesystem::current_path(); }
-bool LPlatform::FetchHttpResource(const std::wstring&, std::vector<std::uint8_t>&) { return false; }
-bool LPlatform::DecodeImageFromMemory(const std::vector<std::uint8_t>&, std::vector<std::uint8_t>&,
-                                      int&, int&, int, int) { return false; }
-bool LPlatform::DecodeImageFile(const std::wstring&, std::vector<std::uint8_t>&,
-                                int&, int&, int, int) { return false; }
+bool LPlatform::FetchHttpResource(const std::wstring& url, std::vector<std::uint8_t>& outData)
+{
+    return m_http.Fetch(url, outData);
+}
+
+bool LPlatform::DecodeImageFromMemory(const std::vector<std::uint8_t>& data,
+                                      std::vector<std::uint8_t>& outPixels,
+                                      int& outWidth, int& outHeight,
+                                      int decodeWidth, int decodeHeight)
+{
+    return m_imageDecoding.DecodeImageFromMemory(data, outPixels, outWidth, outHeight,
+                                                 decodeWidth, decodeHeight);
+}
+
+bool LPlatform::DecodeImageFile(const std::wstring& filePath,
+                                std::vector<std::uint8_t>& outPixels,
+                                int& outWidth, int& outHeight,
+                                int decodeWidth, int decodeHeight)
+{
+    return m_imageDecoding.DecodeImageFile(filePath, outPixels, outWidth, outHeight,
+                                           decodeWidth, decodeHeight);
+}
 
 bool LPlatform::RegisterFontFile(const std::wstring& filePath)
 {
