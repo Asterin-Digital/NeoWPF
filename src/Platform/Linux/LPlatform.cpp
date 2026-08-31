@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <cwctype>
 #include <unistd.h>
 
 namespace NeoWPF::Platform::Linux {
@@ -21,6 +22,18 @@ std::wstring CurrentModulePathLinux();
 std::uint32_t CurrentThreadIdLinux() noexcept;
 
 namespace {
+
+std::wstring NormalizeFamily(std::wstring family)
+{
+    std::wstring normalized;
+    normalized.reserve(family.size());
+    for (const auto character : family) {
+        if (!std::iswspace(character)) {
+            normalized.push_back(static_cast<wchar_t>(std::towlower(character)));
+        }
+    }
+    return normalized;
+}
 
 bool LoadSystemFontFamily(const std::wstring& requestedFamily)
 {
@@ -45,8 +58,13 @@ bool LoadSystemFontFamily(const std::wstring& requestedFamily)
     FcPattern* match = FcFontMatch(config, pattern, &result);
     bool loaded = false;
     if (match && result == FcResultMatch) {
+        FcChar8* matchedFamily = nullptr;
         FcChar8* file = nullptr;
-        if (FcPatternGetString(match, FC_FILE, 0, &file) == FcResultMatch && file) {
+        if (FcPatternGetString(match, FC_FAMILY, 0, &matchedFamily) == FcResultMatch &&
+            matchedFamily &&
+            NormalizeFamily(NeoWPF::Platform::Utf8ToWide(
+                reinterpret_cast<const char*>(matchedFamily))) == NormalizeFamily(requestedFamily) &&
+            FcPatternGetString(match, FC_FILE, 0, &file) == FcResultMatch && file) {
             loaded = NeoWPF::Rendering::Text::RegisterFontFile(
                 NeoWPF::Platform::Utf8ToWide(reinterpret_cast<const char*>(file)));
         }
