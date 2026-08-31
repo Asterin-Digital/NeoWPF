@@ -2,7 +2,6 @@
 
 #include <NeoWPF/Contracts/IWindowing.h>
 #include <wayland-client.h>
-#include <xdg-decoration-client-protocol.h>
 #include <xdg-shell-client-protocol.h>
 
 #include <cstdint>
@@ -48,7 +47,6 @@ public:
     wl_shm* Shm() const noexcept;
     wl_seat* Seat() const noexcept;
     xdg_wm_base* XdgWmBase() const noexcept;
-    zxdg_decoration_manager_v1* XdgDecorationManager() const noexcept;
     bool HasXdgShell() const noexcept;
 
     static void HandleGlobal(void* data, wl_registry* registry, std::uint32_t name,
@@ -65,7 +63,6 @@ private:
     wl_shm* m_shm = nullptr;
     wl_seat* m_seat = nullptr;
     xdg_wm_base* m_xdgWmBase = nullptr;
-    zxdg_decoration_manager_v1* m_xdgDecorationManager = nullptr;
     bool m_hasXdgShell = false;
     std::vector<std::unique_ptr<LWindow>> m_windows;
     int m_exitCode = 0;

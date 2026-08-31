@@ -2,6 +2,19 @@
 
 #include <NeoWPF/Contracts/IWindowing.h>
 
+#ifdef CreateWindow
+#undef CreateWindow
+#endif
+#ifdef CreateWindowEx
+#undef CreateWindowEx
+#endif
+#ifdef CreateWindowExA
+#undef CreateWindowExA
+#endif
+#ifdef CreateWindowExW
+#undef CreateWindowExW
+#endif
+
 namespace NeoWPF::Platform::Windows {
 
 class WWindowing final : public NeoWPF::Contracts::IWindowing {

@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include <NeoWPF/Contracts/IWindowChrome.h>
 #include <NeoWPF/Contracts/IRendering.h>
 #include <NeoWPF/Contracts/IWindowing.h>
 
@@ -22,6 +23,7 @@ public:
     virtual const char* Name() const noexcept = 0;
     virtual IWindowing& Windowing() noexcept = 0;
     virtual IRendering& Rendering() noexcept = 0;
+    virtual IWindowChrome* Chrome() noexcept = 0;
 
     virtual bool LoadResourceData(const std::wstring& resourcePath, std::vector<std::uint8_t>& outData) = 0;
     virtual std::filesystem::path GetExecutableDirectory() const = 0;

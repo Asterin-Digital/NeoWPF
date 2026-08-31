@@ -2,6 +2,7 @@
 
 #include <NeoWPF/Contracts/IPlatform.h>
 #include <NeoWPF/Platform/CurlHttp.h>
+#include <NeoWPF/Platform/Windows/WWindowChrome.h>
 #include <NeoWPF/Platform/Windows/WWindowing.h>
 #include <NeoWPF/Rendering/D3D11/WRendering.h>
 
@@ -14,6 +15,7 @@ public:
     const char* Name() const noexcept override;
     NeoWPF::Contracts::IWindowing& Windowing() noexcept override;
     NeoWPF::Contracts::IRendering& Rendering() noexcept override;
+    NeoWPF::Contracts::IWindowChrome* Chrome() noexcept override;
 
     bool LoadResourceData(const std::wstring& resourcePath, std::vector<std::uint8_t>& outData) override;
     std::filesystem::path GetExecutableDirectory() const override;
@@ -35,6 +37,7 @@ public:
 private:
     NeoWPF::Platform::CurlHttp m_http;
     WWindowing m_windowing;
+    WWindowChrome m_chrome;
     NeoWPF::Rendering::D3D11::WRendering m_rendering;
 };
 

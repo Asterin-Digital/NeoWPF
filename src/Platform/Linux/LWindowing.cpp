@@ -296,10 +296,6 @@ void LWindowing::Disconnect() noexcept
         xdg_wm_base_destroy(m_xdgWmBase);
         m_xdgWmBase = nullptr;
     }
-    if (m_xdgDecorationManager) {
-        zxdg_decoration_manager_v1_destroy(m_xdgDecorationManager);
-        m_xdgDecorationManager = nullptr;
-    }
     if (m_registry) {
         wl_registry_destroy(m_registry);
         m_registry = nullptr;
@@ -341,11 +337,6 @@ xdg_wm_base* LWindowing::XdgWmBase() const noexcept
     return m_xdgWmBase;
 }
 
-zxdg_decoration_manager_v1* LWindowing::XdgDecorationManager() const noexcept
-{
-    return m_xdgDecorationManager;
-}
-
 bool LWindowing::HasXdgShell() const noexcept
 {
     return m_hasXdgShell;
@@ -375,11 +366,6 @@ void LWindowing::HandleGlobal(void* data, wl_registry* registry, std::uint32_t n
             xdg_wm_base_add_listener(windowing->m_xdgWmBase, &XdgWmBaseListener, windowing);
             windowing->m_hasXdgShell = true;
         }
-    } else if (std::strcmp(interface, "zxdg_decoration_manager_v1") == 0) {
-        windowing->m_xdgDecorationManager = static_cast<zxdg_decoration_manager_v1*>(wl_registry_bind(
-            registry, name, &zxdg_decoration_manager_v1_interface, 1));
-        NeoWPF::Diagnostics::LogInfo("[Wayland] xdg-decoration manager available: %s",
-                                     windowing->m_xdgDecorationManager ? "yes" : "no");
     }
 }
 

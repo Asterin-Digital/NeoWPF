@@ -152,6 +152,11 @@ NeoWPF::Contracts::IRendering& WPlatform::Rendering() noexcept
     return m_rendering;
 }
 
+NeoWPF::Contracts::IWindowChrome* WPlatform::Chrome() noexcept
+{
+    return &m_chrome;
+}
+
 bool WPlatform::LoadResourceData(const std::wstring& resourcePath, std::vector<std::uint8_t>& outData)
 {
     return NeoWPF::Platform::LoadResourceData(resourcePath, outData);

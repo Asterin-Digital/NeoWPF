@@ -329,6 +329,7 @@ if(WIN32)
             iphlpapi
             normaliz
             secur32
+            dwmapi
     )
 else()
     target_link_libraries(NeoWPF
@@ -451,7 +452,8 @@ if(NEOWPF_STATIC_DEPENDENCIES)
             advapi32
             iphlpapi
             normaliz
-            secur32)
+            secur32
+            dwmapi)
             find_library(NEOWPF_SYSTEM_LIBRARY
                 NAMES "${NEOWPF_SYSTEM_LIBRARY_NAME}")
             if(NEOWPF_SYSTEM_LIBRARY)
@@ -556,6 +558,7 @@ if(BUILD_TESTING)
         tests/Automated/RenderCommandTests.cpp
         tests/Automated/GridTests.cpp
         tests/Automated/LImageDecodingTests.cpp
+        tests/Automated/WindowChromeTests.cpp
     )
 
     target_link_libraries(NeoWPF.AutomatedTests

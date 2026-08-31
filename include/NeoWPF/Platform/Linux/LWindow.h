@@ -70,7 +70,6 @@ private:
     wl_keyboard* m_keyboard = nullptr;
     xdg_surface* m_xdgSurface = nullptr;
     xdg_toplevel* m_xdgToplevel = nullptr;
-    zxdg_toplevel_decoration_v1* m_xdgDecoration = nullptr;
     xkb_context* m_xkbContext = nullptr;
     xkb_keymap* m_xkbKeymap = nullptr;
     xkb_state* m_xkbState = nullptr;

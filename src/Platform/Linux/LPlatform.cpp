@@ -86,6 +86,7 @@ LPlatform::~LPlatform() = default;
 const char* LPlatform::Name() const noexcept { return "Linux"; }
 NeoWPF::Contracts::IWindowing& LPlatform::Windowing() noexcept { return m_windowing; }
 NeoWPF::Contracts::IRendering& LPlatform::Rendering() noexcept { return m_rendering; }
+NeoWPF::Contracts::IWindowChrome* LPlatform::Chrome() noexcept { return nullptr; }
 
 bool LPlatform::LoadResourceData(const std::wstring&, std::vector<std::uint8_t>&) { return false; }
 std::filesystem::path LPlatform::GetExecutableDirectory() const { return std::filesystem::current_path(); }

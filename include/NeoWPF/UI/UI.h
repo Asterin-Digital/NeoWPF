@@ -38,6 +38,7 @@
 #include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Layout/Placement/Orientation.h>
 #include <NeoWPF/UI/Controls/Window.h>
+#include <NeoWPF/UI/Controls/DefaultTitleBar.h>
 #include <NeoWPF/UI/Data/INotifyPropertyChanged.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>

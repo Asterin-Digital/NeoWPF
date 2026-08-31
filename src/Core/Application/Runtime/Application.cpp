@@ -1,5 +1,6 @@
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
@@ -119,6 +120,7 @@ int Application::Run()
 
 void Application::Shutdown()
 {
+    NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().Clear();
     NeoWPF::Core::ApplicationResources::Resources::Shutdown();
     NeoWPF::Diagnostics::PerformanceMetrics::Shutdown();
     ShutdownApplication();

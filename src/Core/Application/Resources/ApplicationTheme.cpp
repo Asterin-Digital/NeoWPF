@@ -18,6 +18,8 @@ void ThemeManager::RegisterBuiltInThemes()
     light.Name = "Light";
     light.Resources["Window.BackgroundColor"] = uint32_t(0xFFFFFFFFu);
     light.Resources["Window.ForegroundColor"] = uint32_t(0xFF1E1E1Eu);
+    light.Resources["Chrome.BackgroundColor"] = uint32_t(0xFFFFFFFFu);
+    light.Resources["Chrome.ForegroundColor"] = uint32_t(0xFF1E1E1Eu);
     light.Resources["Button.BackgroundColor"] = uint32_t(0xFFEEEEEEu);
     light.Resources["Button.BorderColor"] = uint32_t(0xFF707070u);
     light.Resources["Button.ForegroundColor"] = uint32_t(0xFF000000u);
@@ -34,6 +36,8 @@ void ThemeManager::RegisterBuiltInThemes()
     dark.Name = "Dark";
     dark.Resources["Window.BackgroundColor"] = uint32_t(0xFF1E1E1Eu);
     dark.Resources["Window.ForegroundColor"] = uint32_t(0xFFEDEDEDu);
+    dark.Resources["Chrome.BackgroundColor"] = uint32_t(0xFF1E1E1Eu);
+    dark.Resources["Chrome.ForegroundColor"] = uint32_t(0xFFEDEDEDu);
     dark.Resources["Button.BackgroundColor"] = uint32_t(0xFF3A3A3Au);
     dark.Resources["Button.BorderColor"] = uint32_t(0xFF707070u);
     dark.Resources["Button.ForegroundColor"] = uint32_t(0xFFEDEDEDu);
