@@ -30,6 +30,7 @@ namespace NeoWPF::UI {
         }
 
         std::vector<int> ResolveAutoSizes(
+            const Grid* grid,
             const std::vector<Grid::Definition>& defs,
             const std::vector<Visual*>& children,
             bool resolveRowHeights)
@@ -46,12 +47,12 @@ namespace NeoWPF::UI {
 
                 int maxSize = 0;
                 for (auto child : children) {
-                    if (!child) {
+                    if (!child || !grid) {
                         continue;
                     }
 
                     if (resolveRowHeights) {
-                        if (Grid::GetRow(child) == index && Grid::GetRowSpan(child) == 1) {
+                        if (grid->GetRow(child) == index && Grid::GetRowSpan(child) == 1) {
                             if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
                                 const auto margin = fe->GetMargin();
                                 maxSize = std::max(maxSize, fe->GetDesiredHeight() + margin.Vertical());
@@ -59,7 +60,7 @@ namespace NeoWPF::UI {
                         }
                     }
                     else {
-                        if (Grid::GetColumn(child) == index && Grid::GetColumnSpan(child) == 1) {
+                        if (grid->GetColumn(child) == index && Grid::GetColumnSpan(child) == 1) {
                             if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
                                 const auto margin = fe->GetMargin();
                                 maxSize = std::max(maxSize, fe->GetDesiredWidth() + margin.Horizontal());
@@ -221,6 +222,7 @@ namespace NeoWPF::UI {
     }
 
     GridLayoutMetrics GridLayout::ComputeMetrics(
+        const Grid* grid,
         const std::vector<Grid::Definition>& rowDefs,
         const std::vector<Grid::Definition>& colDefs,
         int availableWidth,
@@ -233,8 +235,8 @@ namespace NeoWPF::UI {
         const int gapY = std::max(0, verticalSpacing);
 
         GridLayoutMetrics metrics;
-        metrics.autoRowHeights = ResolveAutoSizes(rowDefs, children, true);
-        metrics.autoColWidths = ResolveAutoSizes(colDefs, children, false);
+        metrics.autoRowHeights = ResolveAutoSizes(grid, rowDefs, children, true);
+        metrics.autoColWidths = ResolveAutoSizes(grid, colDefs, children, false);
 
         auto resolvedRowDefs = NormalizeDefinitions(rowDefs, metrics.autoRowHeights);
         auto resolvedColDefs = NormalizeDefinitions(colDefs, metrics.autoColWidths);
@@ -250,8 +252,8 @@ namespace NeoWPF::UI {
                 continue;
             }
 
-            int r = Grid::GetRow(child);
-            int c = Grid::GetColumn(child);
+            int r = grid ? grid->GetRow(child) : 0;
+            int c = grid ? grid->GetColumn(child) : 0;
             int rspan = Grid::GetRowSpan(child);
             int cspan = Grid::GetColumnSpan(child);
 

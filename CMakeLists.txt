@@ -242,11 +242,6 @@ if(WIN32)
             message(FATAL_ERROR "Missing static text archive: ${NEOWPF_TEXT_ARCHIVE}")
         endif()
     endforeach()
-    # NOTE: these validated paths are consumed directly in the NEOWPF_STATIC_DEPENDENCIES
-    # merge step below, since neither the "harfbuzz::harfbuzz" nor "Freetype::Freetype"
-    # imported targets reliably expose IMPORTED_LOCATION_DEBUG/RELEASE across vcpkg
-    # versions, and the Linux-only "PkgConfig::HARFBUZZ" target used by the generic
-    # dependency-target loop doesn't exist on Windows at all.
 endif()
 
 set_target_properties(NeoWPF PROPERTIES

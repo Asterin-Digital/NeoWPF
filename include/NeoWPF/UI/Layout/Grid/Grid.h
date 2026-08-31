@@ -125,7 +125,7 @@ public:
 
         @internal
     */
-    static void SetRow(Visual* child, int row);
+    void SetRow(Visual* child, int row) noexcept;
 
     /*
         @summary
@@ -139,7 +139,7 @@ public:
 
         @internal
     */
-    static void SetColumn(Visual* child, int column);
+    void SetColumn(Visual* child, int column) noexcept;
 
     /*
         @summary
@@ -150,7 +150,7 @@ public:
 
         @internal
     */
-    static int GetRow(Visual* child);
+    int GetRow(Visual* child) const noexcept;
 
     /*
         @summary
@@ -161,7 +161,7 @@ public:
 
         @internal
     */
-    static int GetColumn(Visual* child);
+    int GetColumn(Visual* child) const noexcept;
 
     /*
         @summary
@@ -172,7 +172,7 @@ public:
 
         @internal
     */
-    static void ClearAttachedProperties(Visual* child);
+    void ClearAttachedProperties(Visual* child);
 
     /*
         @summary
@@ -266,9 +266,9 @@ private:
     std::vector<Definition> m_colDefs;
     std::vector<int> m_autoRowHeights;
     std::vector<int> m_autoColWidths;
+    std::unordered_map<Visual*, int> m_rowMap;
+    std::unordered_map<Visual*, int> m_colMap;
 
-    static std::unordered_map<Visual*, int> s_rowMap;
-    static std::unordered_map<Visual*, int> s_colMap;
     static std::unordered_map<Visual*, int> s_rowSpanMap;
     static std::unordered_map<Visual*, int> s_colSpanMap;
 };

@@ -48,11 +48,11 @@ int main()
     grid->AddChild(button, 0, 0, 1, 100);
 
     // Attached property tests
-    Grid::SetRow(button.get(), -1);
-    Grid::SetColumn(button.get(), -1);
+    grid->SetRow(button.get(), -1);
+    grid->SetColumn(button.get(), -1);
 
-    Grid::SetRow(button.get(), 100);
-    Grid::SetColumn(button.get(), 100);
+    grid->SetRow(button.get(), 100);
+    grid->SetColumn(button.get(), 100);
 
     Grid::SetRowSpan(button.get(), 0);
     Grid::SetColumnSpan(button.get(), 0);

@@ -39,6 +39,7 @@ public:
         int verticalSpacing = 0);
 
     static GridLayoutMetrics ComputeMetrics(
+        const Grid* grid,
         const std::vector<Grid::Definition>& rowDefs,
         const std::vector<Grid::Definition>& colDefs,
         int availableWidth,

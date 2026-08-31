@@ -25,50 +25,48 @@ namespace {
 
 namespace NeoWPF::UI {
 
-    std::unordered_map<Visual*, int> Grid::s_rowMap;
-    std::unordered_map<Visual*, int> Grid::s_colMap;
     std::unordered_map<Visual*, int> Grid::s_rowSpanMap;
     std::unordered_map<Visual*, int> Grid::s_colSpanMap;
 
-    void Grid::SetRow(Visual* v, int r)
+    void Grid::SetRow(Visual* v, int r) noexcept
     {
         if (!v) return;
         if (r <= 0) {
-            s_rowMap.erase(v);
+            m_rowMap.erase(v);
         } else {
-            s_rowMap[v] = r;
+            m_rowMap[v] = r;
         }
     }
 
-    void Grid::SetColumn(Visual* v, int c)
+    void Grid::SetColumn(Visual* v, int c) noexcept
     {
         if (!v) return;
         if (c <= 0) {
-            s_colMap.erase(v);
+            m_colMap.erase(v);
         } else {
-            s_colMap[v] = c;
+            m_colMap[v] = c;
         }
     }
 
-    int Grid::GetRow(Visual* v)
+    int Grid::GetRow(Visual* v) const noexcept
     {
         if (!v) return 0;
-        auto it = s_rowMap.find(v);
-        return it == s_rowMap.end() ? 0 : it->second;
+        auto it = m_rowMap.find(v);
+        return it == m_rowMap.end() ? 0 : it->second;
     }
 
-    int Grid::GetColumn(Visual* v)
+    int Grid::GetColumn(Visual* v) const noexcept
     {
         if (!v) return 0;
-        auto it = s_colMap.find(v);
-        return it == s_colMap.end() ? 0 : it->second;
+        auto it = m_colMap.find(v);
+        return it == m_colMap.end() ? 0 : it->second;
     }
 
     void Grid::ClearAttachedProperties(Visual* v)
     {
         if (!v) return;
-        s_rowMap.erase(v);
-        s_colMap.erase(v);
+        m_rowMap.erase(v);
+        m_colMap.erase(v);
         s_rowSpanMap.erase(v);
         s_colSpanMap.erase(v);
     }
@@ -243,6 +241,7 @@ namespace NeoWPF::UI {
         const int gapY = GetVerticalSpacing();
         auto children = GetVisualChildren();
         auto metrics = GridLayout::ComputeMetrics(
+            this,
             effectiveRowDefs,
             effectiveColDefs,
             availableWidth,
@@ -341,6 +340,7 @@ namespace NeoWPF::UI {
         const int gapY = GetVerticalSpacing();
         auto children = GetVisualChildren();
         auto metrics = GridLayout::ComputeMetrics(
+            this,
             effectiveRowDefs,
             effectiveColDefs,
             finalWidth,
@@ -376,85 +376,34 @@ namespace NeoWPF::UI {
             const auto margin = fe->GetMargin();
             const int contentW = std::max(0, w - margin.Horizontal());
             const int contentH = std::max(0, h - margin.Vertical());
-            int desiredW = std::max(0, fe->GetDesiredWidth());
-            int desiredH = std::max(0, fe->GetDesiredHeight());
+            const int resolvedW = std::max(0, fe->ResolveWidth(contentW, fe->GetDesiredWidth()));
+            const int resolvedH = std::max(0, fe->ResolveHeight(contentH, fe->GetDesiredHeight()));
 
-            int alignedX = 0, alignedY = 0;
-            int alignedW = desiredW;
-            int alignedH = desiredH;
+            int alignedX = 0;
+            int alignedY = 0;
+            int alignedW = resolvedW;
+            int alignedH = resolvedH;
 
-            switch (fe->GetHorizontalAlignment()) {
-            case HorizontalAlignment::Left:
-                alignedX = 0;
-                alignedW = desiredW;
-                break;
-            case HorizontalAlignment::Center:
-                alignedX = (contentW - desiredW) / 2;
-                alignedW = desiredW;
-                break;
-            case HorizontalAlignment::Right:
-                alignedX = contentW - desiredW;
-                alignedW = desiredW;
-                break;
-            case HorizontalAlignment::Stretch:
-                alignedX = 0;
-                alignedW = contentW;
-                break;
+            Alignment::ApplyAlignment(
+                fe,
+                contentW,
+                contentH,
+                fe->GetHorizontalAlignment(),
+                fe->GetVerticalAlignment(),
+                alignedX,
+                alignedY,
+                alignedW,
+                alignedH
+            );
+
+            if (fe->GetHorizontalAlignment() != HorizontalAlignment::Stretch) {
+                alignedW = resolvedW;
             }
-
-            switch (fe->GetVerticalAlignment()) {
-            case VerticalAlignment::Top:
-                alignedY = 0;
-                alignedH = desiredH;
-                break;
-            case VerticalAlignment::Center:
-                alignedY = (contentH - desiredH) / 2;
-                alignedH = desiredH;
-                break;
-            case VerticalAlignment::Bottom:
-                alignedY = contentH - desiredH;
-                alignedH = desiredH;
-                break;
-            case VerticalAlignment::Stretch:
-                alignedY = 0;
-                alignedH = contentH;
-                break;
+            if (fe->GetVerticalAlignment() != VerticalAlignment::Stretch) {
+                alignedH = resolvedH;
             }
 
             fe->Arrange(alignedW, alignedH);
-
-            const int resolvedW = fe->GetFinalWidth();
-            const int resolvedH = fe->GetFinalHeight();
-
-            switch (fe->GetHorizontalAlignment()) {
-            case HorizontalAlignment::Left:
-                alignedX = 0;
-                break;
-            case HorizontalAlignment::Center:
-                alignedX = (contentW - resolvedW) / 2;
-                break;
-            case HorizontalAlignment::Right:
-                alignedX = contentW - resolvedW;
-                break;
-            case HorizontalAlignment::Stretch:
-                alignedX = (contentW - resolvedW) / 2;
-                break;
-            }
-
-            switch (fe->GetVerticalAlignment()) {
-            case VerticalAlignment::Top:
-                alignedY = 0;
-                break;
-            case VerticalAlignment::Center:
-                alignedY = (contentH - resolvedH) / 2;
-                break;
-            case VerticalAlignment::Bottom:
-                alignedY = contentH - resolvedH;
-                break;
-            case VerticalAlignment::Stretch:
-                alignedY = (contentH - resolvedH) / 2;
-                break;
-            }
 
             const int targetX = x + alignedX + margin.Left;
             const int targetY = y + alignedY + margin.Top;
@@ -467,7 +416,7 @@ namespace NeoWPF::UI {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
                 "[Grid::Arrange] Child[%zu] at (%d,%d): pos(%d,%d -> %d,%d) size(%dx%d) [cell %dx%d] desired=%dx%d",
                 i, r, c, currentX, currentY, targetX, targetY, alignedW, alignedH, w, h,
-                desiredW, desiredH);
+                resolvedW, resolvedH);
         }
     }
 
