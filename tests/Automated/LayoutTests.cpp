@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <NeoWPF/UI/Controls/DefaultTitleBar.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 

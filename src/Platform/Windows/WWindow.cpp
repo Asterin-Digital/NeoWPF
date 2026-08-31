@@ -3,6 +3,7 @@
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/Platform/Windows/WWindowChrome.h>
+#include <NeoWPF/UI/Controls/DefaultTitleBar.h>
 #include <windows.h>
 #include <windowsx.h>
 #include <dwmapi.h>
@@ -380,10 +381,17 @@ void Window::SetWindowTitleBar(void* nativeHandle, std::shared_ptr<NeoWPF::UI::V
         return;
     }
 
+    auto* platform = NeoWPF::Platform::CurrentPlatform();
+    auto* chrome = platform ? platform->Chrome() : nullptr;
+
     auto& windows = NeoWPF::Core::GetAppState().windows;
     for (auto& windowState : windows) {
         if (windowState.nativeWindowHandle == hwnd) {
             windowState.windowHost->SetTitleBar(titleBar);
+
+            if (chrome) {
+                chrome->SetTitleBarHitTest(hwnd, nullptr, nullptr);
+            }
             return;
         }
     }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <NeoWPF/Contracts/IWindowChrome.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>

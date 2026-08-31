@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/DefaultTitleBar.h>
+#include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
@@ -45,16 +46,24 @@ DefaultTitleBar::DefaultTitleBar()
     m_closeButton->SetBorderColor(0x00000000u);
     m_closeButton->SetTextColor(NeoWPF::UI::Color::FromArgb(m_textColor));
 
+    m_minimizeButton->AddHandler(NeoWPF::Input::Core::MouseEnterEvent(), [](NeoWPF::UI::UIElement*, NeoWPF::Input::Core::RoutedEventArgs*) {});
+    m_minimizeButton->AddHandler(NeoWPF::Input::Core::MouseLeaveEvent(), [](NeoWPF::UI::UIElement*, NeoWPF::Input::Core::RoutedEventArgs*) {});
     m_minimizeButton->Click += [this]() {
         if (m_onMinimize) {
             m_onMinimize();
         }
     };
+
+    m_maximizeButton->AddHandler(NeoWPF::Input::Core::MouseEnterEvent(), [](NeoWPF::UI::UIElement*, NeoWPF::Input::Core::RoutedEventArgs*) {});
+    m_maximizeButton->AddHandler(NeoWPF::Input::Core::MouseLeaveEvent(), [](NeoWPF::UI::UIElement*, NeoWPF::Input::Core::RoutedEventArgs*) {});
     m_maximizeButton->Click += [this]() {
         if (m_onMaximize) {
             m_onMaximize();
         }
     };
+
+    m_closeButton->AddHandler(NeoWPF::Input::Core::MouseEnterEvent(), [](NeoWPF::UI::UIElement*, NeoWPF::Input::Core::RoutedEventArgs*) {});
+    m_closeButton->AddHandler(NeoWPF::Input::Core::MouseLeaveEvent(), [](NeoWPF::UI::UIElement*, NeoWPF::Input::Core::RoutedEventArgs*) {});
     m_closeButton->Click += [this]() {
         if (m_onClose) {
             m_onClose();
