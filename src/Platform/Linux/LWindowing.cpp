@@ -1,4 +1,5 @@
 #include <NeoWPF/Platform/Linux/LWindowing.h>
+#include <NeoWPF/Platform/Linux/LClientSideTitleBar.h>
 #include <NeoWPF/Platform/Linux/LWindow.h>
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Diagnostics/Logger.h>
@@ -15,7 +16,6 @@
 #pragma GCC diagnostic ignored "-Wattributes"
 #endif
 #include <xdg-shell-protocol.cpp>
-#include <xdg-decoration-protocol.cpp>
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
@@ -133,6 +133,9 @@ void* LWindowing::CreateWindow(const wchar_t* title, int width, int height)
         app.windows.push_back(windowState);
     }
     m_windows.push_back(std::move(window));
+
+    EnsureClientTitleBar(nativeHandle, NeoWPF::Contracts::ChromeMode::Native);
+
     return nativeHandle;
 }
 
@@ -225,6 +228,7 @@ bool LWindowing::PumpMessages(std::chrono::milliseconds timeout)
         return false;
     }
     for (auto& window : m_windows) {
+        window->ProcessKeyRepeat();
         if (window->IsClosed()) {
             void* closedWindow = window.get();
             CloseWindow(closedWindow);

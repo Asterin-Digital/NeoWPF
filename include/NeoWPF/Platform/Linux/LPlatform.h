@@ -3,6 +3,7 @@
 #include <NeoWPF/Contracts/IPlatform.h>
 #include <NeoWPF/Platform/CurlHttp.h>
 #include <NeoWPF/Platform/Linux/LImageDecoding.h>
+#include <NeoWPF/Platform/Linux/LWindowChrome.h>
 #include <NeoWPF/Platform/Linux/LWindowing.h>
 #include <NeoWPF/Rendering/Vulkan/VulkanRendering.h>
 
@@ -38,6 +39,7 @@ private:
     NeoWPF::Platform::CurlHttp m_http;
     LImageDecoding m_imageDecoding;
     LWindowing m_windowing;
+    LWindowChrome m_chrome;
     NeoWPF::Rendering::Vulkan::VulkanRendering m_rendering;
 };
 

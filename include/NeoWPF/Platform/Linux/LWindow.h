@@ -3,6 +3,7 @@
 #include <NeoWPF/Platform/Linux/LWindowing.h>
 
 #include <string>
+#include <chrono>
 
 #include <xkbcommon/xkbcommon.h>
 
@@ -27,8 +28,12 @@ public:
     void SetSize(int width, int height) noexcept;
     bool IsConfigured() const noexcept;
     bool IsClosed() const noexcept;
+    bool IsMaximized() const noexcept;
+    void Minimize() noexcept;
+    void Maximize(bool maximize) noexcept;
     void AcknowledgeConfigure() noexcept;
     void AttachInputDevices();
+    void ProcessKeyRepeat();
 
     static void HandleSurfaceConfigure(void* data, xdg_surface* surface, std::uint32_t serial);
     static void HandleToplevelConfigure(void* data, xdg_toplevel* toplevel, int32_t width,
@@ -59,7 +64,7 @@ public:
                                        std::uint32_t mods_locked, std::uint32_t group);
 
 private:
-    void UpdateKeyStateFromWayland(std::uint32_t key, bool isPressed);
+    void UpdateKeyStateFromWayland(std::uint32_t key, bool isPressed, wchar_t charCode);
     std::uint32_t WaylandButtonToNeoWPFButton(std::uint32_t button) const noexcept;
     static std::uint32_t TranslateXkbKeysymToVirtualKey(std::uint32_t keysym) noexcept;
 
@@ -82,6 +87,10 @@ private:
     std::uint32_t m_configureSerial = 0;
     bool m_configured = false;
     bool m_closed = false;
+    bool m_maximized = false;
+    std::uint32_t m_repeatKey = 0;
+    bool m_repeatActive = false;
+    std::chrono::steady_clock::time_point m_repeatNext{};
 };
 
 }

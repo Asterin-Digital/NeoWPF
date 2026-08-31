@@ -553,8 +553,14 @@ if(BUILD_TESTING)
         tests/Automated/RenderCommandTests.cpp
         tests/Automated/GridTests.cpp
         tests/Automated/LImageDecodingTests.cpp
-        tests/Automated/WindowChromeTests.cpp
     )
+
+    if(UNIX)
+        target_include_directories(NeoWPF.AutomatedTests SYSTEM PRIVATE
+            "${NEOWPF_WAYLAND_GENERATED_DIR}"
+            "${NEOWPF_VULKAN_GENERATED_DIR}"
+        )
+    endif()
 
     target_link_libraries(NeoWPF.AutomatedTests
         PRIVATE

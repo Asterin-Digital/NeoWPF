@@ -1,4 +1,5 @@
 #include <NeoWPF/Platform/Windows/WPlatform.h>
+#include <NeoWPF/Core/Application/Resources/Embedded/FallbackFont.h>
 #include <NeoWPF/Diagnostics/CallStackTracer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <windows.h>
@@ -60,6 +61,26 @@ std::wstring NormalizeFamily(std::wstring family)
         }
     }
     return normalized;
+}
+
+bool LoadEmbeddedFallbackFont()
+{
+    using NeoWPF::Core::Application::Resources::Embedded::FontRecord;
+    using NeoWPF::Core::Application::Resources::Embedded::TryGetEmbeddedFallbackFont;
+    using NeoWPF::Core::Application::Resources::Embedded::GetEmbeddedFallbackFontCount;
+
+    for (std::size_t index = 0; index < GetEmbeddedFallbackFontCount(); ++index) {
+        FontRecord record{};
+        if (!TryGetEmbeddedFallbackFont(index, record) || !record.data || record.size == 0) {
+            continue;
+        }
+
+        const auto familyName = NeoWPF::Platform::Utf8ToWide(record.name ? record.name : "Noto Sans");
+        if (NeoWPF::Rendering::Text::RegisterFontMemory(record.data, record.size, familyName)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool LoadSystemFontFamily(const std::wstring& requestedFamily)
@@ -199,8 +220,32 @@ bool WPlatform::RegisterFontMemory(const unsigned char* data, std::size_t size, 
 
 std::wstring WPlatform::ResolveFontFamily(const std::wstring& requestedFontFamily)
 {
-    LoadSystemFontFamily(requestedFontFamily);
-    return NeoWPF::Rendering::Text::ResolveFontFamily(requestedFontFamily);
+    if (!requestedFontFamily.empty()) {
+        LoadSystemFontFamily(requestedFontFamily);
+        const auto resolved = NeoWPF::Rendering::Text::ResolveFontFamily(requestedFontFamily);
+        if (!resolved.empty()) {
+            return resolved;
+        }
+    }
+
+    if (LoadEmbeddedFallbackFont()) {
+        using NeoWPF::Core::Application::Resources::Embedded::GetEmbeddedFallbackFontCount;
+        using NeoWPF::Core::Application::Resources::Embedded::TryGetEmbeddedFallbackFont;
+        using NeoWPF::Core::Application::Resources::Embedded::FontRecord;
+
+        for (std::size_t index = 0; index < GetEmbeddedFallbackFontCount(); ++index) {
+            FontRecord record{};
+            if (!TryGetEmbeddedFallbackFont(index, record) || !record.name || !record.data || record.size == 0) {
+                continue;
+            }
+            const auto resolved = NeoWPF::Rendering::Text::ResolveFontFamily(NeoWPF::Platform::Utf8ToWide(record.name));
+            if (!resolved.empty()) {
+                return resolved;
+            }
+        }
+    }
+
+    return NeoWPF::Rendering::Text::ResolveFontFamily(L"Sans");
 }
 
 int WPlatform::CaptureCallStack(NeoWPF::Diagnostics::CallStackEntry* entries,

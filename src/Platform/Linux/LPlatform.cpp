@@ -1,5 +1,6 @@
 #include <NeoWPF/Platform/Linux/LPlatform.h>
 
+#include <NeoWPF/Core/Application/Resources/Embedded/FallbackFont.h>
 #include <NeoWPF/Platform/Linux/LWindow.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
@@ -35,6 +36,26 @@ std::wstring NormalizeFamily(std::wstring family)
     return normalized;
 }
 
+bool LoadEmbeddedFallbackFont()
+{
+    using NeoWPF::Core::Application::Resources::Embedded::FontRecord;
+    using NeoWPF::Core::Application::Resources::Embedded::GetEmbeddedFallbackFontCount;
+    using NeoWPF::Core::Application::Resources::Embedded::TryGetEmbeddedFallbackFont;
+
+    for (std::size_t index = 0; index < GetEmbeddedFallbackFontCount(); ++index) {
+        FontRecord record{};
+        if (!TryGetEmbeddedFallbackFont(index, record) || !record.data || record.size == 0) {
+            continue;
+        }
+
+        const auto familyName = NeoWPF::Platform::Utf8ToWide(record.name ? record.name : "Noto Sans");
+        if (NeoWPF::Rendering::Text::RegisterFontMemory(record.data, record.size, familyName)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool LoadSystemFontFamily(const std::wstring& requestedFamily)
 {
     if (requestedFamily.empty() || !FcInit()) {
@@ -58,13 +79,8 @@ bool LoadSystemFontFamily(const std::wstring& requestedFamily)
     FcPattern* match = FcFontMatch(config, pattern, &result);
     bool loaded = false;
     if (match && result == FcResultMatch) {
-        FcChar8* matchedFamily = nullptr;
         FcChar8* file = nullptr;
-        if (FcPatternGetString(match, FC_FAMILY, 0, &matchedFamily) == FcResultMatch &&
-            matchedFamily &&
-            NormalizeFamily(NeoWPF::Platform::Utf8ToWide(
-                reinterpret_cast<const char*>(matchedFamily))) == NormalizeFamily(requestedFamily) &&
-            FcPatternGetString(match, FC_FILE, 0, &file) == FcResultMatch && file) {
+        if (FcPatternGetString(match, FC_FILE, 0, &file) == FcResultMatch && file) {
             loaded = NeoWPF::Rendering::Text::RegisterFontFile(
                 NeoWPF::Platform::Utf8ToWide(reinterpret_cast<const char*>(file)));
         }
@@ -86,7 +102,7 @@ LPlatform::~LPlatform() = default;
 const char* LPlatform::Name() const noexcept { return "Linux"; }
 NeoWPF::Contracts::IWindowing& LPlatform::Windowing() noexcept { return m_windowing; }
 NeoWPF::Contracts::IRendering& LPlatform::Rendering() noexcept { return m_rendering; }
-NeoWPF::Contracts::IWindowChrome* LPlatform::Chrome() noexcept { return nullptr; }
+NeoWPF::Contracts::IWindowChrome* LPlatform::Chrome() noexcept { return &m_chrome; }
 
 bool LPlatform::LoadResourceData(const std::wstring&, std::vector<std::uint8_t>&) { return false; }
 std::filesystem::path LPlatform::GetExecutableDirectory() const { return std::filesystem::current_path(); }
@@ -125,8 +141,33 @@ bool LPlatform::RegisterFontMemory(const unsigned char* data, std::size_t size, 
 
 std::wstring LPlatform::ResolveFontFamily(const std::wstring& requestedFontFamily)
 {
-    LoadSystemFontFamily(requestedFontFamily);
-    return NeoWPF::Rendering::Text::ResolveFontFamily(requestedFontFamily);
+    if (!requestedFontFamily.empty()) {
+        LoadSystemFontFamily(requestedFontFamily);
+        const auto resolved = NeoWPF::Rendering::Text::ResolveFontFamily(requestedFontFamily);
+        if (!resolved.empty()) {
+            return resolved;
+        }
+    }
+
+    if (LoadEmbeddedFallbackFont()) {
+        using NeoWPF::Core::Application::Resources::Embedded::FontRecord;
+        using NeoWPF::Core::Application::Resources::Embedded::GetEmbeddedFallbackFontCount;
+        using NeoWPF::Core::Application::Resources::Embedded::TryGetEmbeddedFallbackFont;
+
+        for (std::size_t index = 0; index < GetEmbeddedFallbackFontCount(); ++index) {
+            FontRecord record{};
+            if (!TryGetEmbeddedFallbackFont(index, record) || !record.name || !record.data || record.size == 0) {
+                continue;
+            }
+
+            const auto resolved = NeoWPF::Rendering::Text::ResolveFontFamily(NeoWPF::Platform::Utf8ToWide(record.name));
+            if (!resolved.empty()) {
+                return resolved;
+            }
+        }
+    }
+
+    return NeoWPF::Rendering::Text::ResolveFontFamily(L"Sans");
 }
 
 int LPlatform::CaptureCallStack(NeoWPF::Diagnostics::CallStackEntry* entries,
