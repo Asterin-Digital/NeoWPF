@@ -1,8 +1,11 @@
 #pragma once
 
-// pls dont add implementations in this header file
-// keep it only as an umbrella header file without a source implementation
-// DO NOT USE THIS IN FRAMEWORK INTERNALS, ONLY FOR NeoWPF.h FILE!! bcs its for public API
+/* Notes:
+/* Keep src implementations out of this file,
+/* don't create a src file for UI.h (this) I prefer to keep it header only
+/* Do not use this header file in internal code, doing so will make compile time explode
+/* when this header file changes, tyy!! :3
+*/
 
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
@@ -51,6 +54,15 @@
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
 #include <NeoWPF/UI/Controls/ScrollViewer/ScrollViewer.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
+#include <NeoWPF/UI/Styling/Triggers/Setter.h>
+#include <NeoWPF/UI/Styling/Triggers/TriggerBase.h>
+#include <NeoWPF/UI/Styling/Triggers/Trigger.h>
+#include <NeoWPF/UI/Styling/Triggers/DataTrigger.h>
+#include <NeoWPF/UI/Styling/Triggers/EventTrigger.h>
+#include <NeoWPF/UI/Styling/Triggers/TriggerCollection.h>
+#include <NeoWPF/UI/Styling/Triggers/Actions/TriggerAction.h>
+#include <NeoWPF/UI/Styling/Triggers/Actions/BeginStoryboardAction.h>
+#include <NeoWPF/UI/Styling/Triggers/Actions/StopStoryboardAction.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateParts.h>
 #include <NeoWPF/UI/Content/ContentControl.h>

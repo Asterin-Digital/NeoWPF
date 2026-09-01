@@ -553,6 +553,7 @@ if(BUILD_TESTING)
         tests/Automated/RenderCommandTests.cpp
         tests/Automated/GridTests.cpp
         tests/Automated/LImageDecodingTests.cpp
+        tests/Automated/TriggerTests.cpp
     )
 
     if(UNIX)

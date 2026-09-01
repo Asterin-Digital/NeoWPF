@@ -352,6 +352,33 @@ void UIElement::AddHandler(const NeoWPF::Input::Core::RoutedEvent& routedEvent,
     };
 }
 
+void UIElement::AddEventTrigger(const std::shared_ptr<NeoWPF::UI::Styling::Triggers::EventTrigger>& trigger)
+{
+    if (!trigger) {
+        return;
+    }
+
+    if (std::find(m_eventTriggers.begin(), m_eventTriggers.end(), trigger) == m_eventTriggers.end()) {
+        m_eventTriggers.push_back(trigger);
+    }
+}
+
+void UIElement::RemoveEventTrigger(const std::shared_ptr<NeoWPF::UI::Styling::Triggers::EventTrigger>& trigger)
+{
+    if (!trigger) {
+        return;
+    }
+
+    m_eventTriggers.erase(
+        std::remove(m_eventTriggers.begin(), m_eventTriggers.end(), trigger),
+        m_eventTriggers.end());
+}
+
+std::vector<std::shared_ptr<NeoWPF::UI::Styling::Triggers::EventTrigger>> UIElement::GetEventTriggers() const
+{
+    return m_eventTriggers;
+}
+
 bool UIElement::HasRoutedEventHandler(const NeoWPF::Input::Core::RoutedEvent& routedEvent) const
 {
     return m_routedEventHandlers.find(routedEvent.EventTypeId) != m_routedEventHandlers.end();
@@ -383,6 +410,17 @@ void UIElement::RaiseEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
         if (it != element->m_routedEventHandlers.end())
         {
             it->second.Invoke(element, args);
+        }
+
+        for (const auto& trigger : element->m_eventTriggers)
+        {
+            if (!trigger) {
+                continue;
+            }
+
+            if (trigger->GetRoutedEventName() == args->GetRoutedEvent()->Name) {
+                trigger->Invoke(element);
+            }
         }
     };
 
