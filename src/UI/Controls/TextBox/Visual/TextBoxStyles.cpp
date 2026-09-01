@@ -9,7 +9,7 @@ void ApplyTextBoxThemeStyle(UIElement* element)
         return;
     }
 
-    element->SetStylePropertyValue("TextColor", element->GetResourceValue("TextBox.TextColor", uint32_t(0xFF000000u)));
+    element->SetStylePropertyValue("TextColor", element->GetResourceValue("TextBox.ForegroundColor", uint32_t(0xFF000000u)));
     element->SetStylePropertyValue("BackgroundColor", element->GetResourceValue("TextBox.BackgroundColor", uint32_t(0xFFFFFFFFu)));
     element->SetStylePropertyValue("BorderColor", element->GetResourceValue("TextBox.BorderColor", uint32_t(0xFFABADB3u)));
     element->SetStylePropertyValue("CaretColor", element->GetResourceValue("TextBox.CaretColor", uint32_t(0xFF000000u)));

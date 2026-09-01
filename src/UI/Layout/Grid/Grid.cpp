@@ -1,5 +1,7 @@
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Layout/Grid/GridLayout.h>
+#include <NeoWPF/UI/Layout/Grid/RowDefinition.h>
+#include <NeoWPF/UI/Layout/Grid/ColumnDefinition.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
@@ -69,6 +71,22 @@ namespace NeoWPF::UI {
         m_colMap.erase(v);
         s_rowSpanMap.erase(v);
         s_colSpanMap.erase(v);
+    }
+
+    void Grid::AddRowDefinition(std::shared_ptr<RowDefinition> rowDef)
+    {
+        if (!rowDef) return;
+
+        int mode = rowDef->GetMode();
+        m_rowDefs.push_back({static_cast<SizeMode>(mode), 0});
+    }
+
+    void Grid::AddColumnDefinition(std::shared_ptr<ColumnDefinition> colDef)
+    {
+        if (!colDef) return;
+
+        int mode = colDef->GetMode();
+        m_colDefs.push_back({static_cast<SizeMode>(mode), 0});
     }
 
     void Grid::OnRemoveVisualChild(Visual* child)
@@ -325,6 +343,98 @@ namespace NeoWPF::UI {
             "[Grid::Measure] Final desired size: %dx%d", totalW, totalH);
     }
 
+ /*   Grid::Arrange (read below)
+ *    Final Width × Final Height
+ *              │
+ *              ▼
+ *    Resolve row / column definitions
+ *              │
+ *              ├── no row definitions  ──────────►  1 row
+ *              │
+ *              ├── no column definitions ────────►  1 column
+ *              │
+ *              ▼
+ *       Compute grid metrics
+ *              │
+ *              ▼
+ *       For each child
+ *              │
+ *              ▼
+ *       child == null?
+ *              │
+ *        ┌─────┴───────────────► YES ──► SKIP
+ *        │
+ *       NO
+ *        │
+ *        ▼
+ *    Read row / column
+ *    Read rowSpan / colSpan
+ *        │
+ *        ▼
+ *    Is grid position valid?
+ *        │
+ *        ├── NO ───────────────────────────────► SKIP
+ *        │
+ *       YES
+ *        │
+ *        ▼
+ *    Get computed child layout
+ *    (x, y, width, height)
+ *        │
+ *        ▼
+ *    FrameworkElement available?
+ *        │
+ *        ├── NO ───────────────────────────────► SKIP
+ *        │
+ *       YES
+ *        │
+ *        ▼
+ *    Read margin
+ *        │
+ *        ▼
+ *    Calculate content area
+ *        │
+ *        ▼
+ *    Resolve requested width / height
+ *        │
+ *        ▼
+ *    Apply alignment
+ *        │
+ *        ├──────────── Horizontal ──────────────┐
+ *        │                                      │
+ *        │    Stretch ──► aligned width        │
+ *        │                                      │
+ *        │    Other   ──► resolved width       │
+ *        │                                      │
+ *        └───────────────┬──────────────────────┘
+ *                        │
+ *                        ├──────────── Vertical ───────────────┐
+ *                        │                                     │
+ *                        │    Stretch ──► aligned height      │
+ *                        │                                     │
+ *                        │    Other   ──► resolved height     │
+ *                        │                                     │
+ *                        └──────────────────┬──────────────────┘
+ *                                           │
+ *                                           ▼
+ *                                   Arrange the child
+ *                                           │
+ *                                           ▼
+ *                                   Calculate target offset
+ *                                           │
+ *                                           ▼
+ *                                   Current offset == target?
+ *                                           │
+ *                                    ┌──────┴──────┐
+ *                                    │             │
+ *                                   YES            NO
+ *                                    │             │
+ *                                    ▼             ▼
+ *                                  No-op     Update layout offset
+ *                                                  │
+ *                                                  ▼
+ *                                              Next child
+ */
     void Grid::Arrange(int finalWidth, int finalHeight)
     {
         FrameworkElement::Arrange(finalWidth, finalHeight);
@@ -397,11 +507,9 @@ namespace NeoWPF::UI {
             );
 
             if (fe->GetHorizontalAlignment() != HorizontalAlignment::Stretch) {
-                alignedW = resolvedW;
-            }
+                alignedW = resolvedW;            }
             if (fe->GetVerticalAlignment() != VerticalAlignment::Stretch) {
-                alignedH = resolvedH;
-            }
+                alignedH = resolvedH;            }
 
             fe->Arrange(alignedW, alignedH);
 

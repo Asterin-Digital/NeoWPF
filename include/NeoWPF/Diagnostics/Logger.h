@@ -30,6 +30,7 @@ enum class Category : uint8_t {
 	TextRendering,
 	Image,
 	Http,
+	XamlParser,
 	Count,
 };
 

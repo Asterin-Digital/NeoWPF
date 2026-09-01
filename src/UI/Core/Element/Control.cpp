@@ -8,8 +8,8 @@ namespace NeoWPF::UI {
 namespace {
 
 int DefaultPadding() noexcept { return 0; }
-NeoWPF::UI::Color DefaultBackgroundColor() noexcept { return NeoWPF::UI::Color::FromArgb(0x00000000u); }
-NeoWPF::UI::Color DefaultBorderColor() noexcept { return NeoWPF::UI::Color::FromArgb(0x00000000u); }
+NeoWPF::UI::Color DefaultBackgroundColor() noexcept { return NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu); }
+NeoWPF::UI::Color DefaultBorderColor() noexcept { return NeoWPF::UI::Color::FromArgb(0xFFABADB3u); }
 int DefaultBorderThickness() noexcept { return 0; }
 
 }
@@ -64,7 +64,7 @@ void Control::OnPaddingChanged(Thickness)
 }
 
 NeoWPF::UI::Color Control::GetBackgroundColor() const noexcept {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", *this);
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Background", *this);
     if (property) {
         try { return GetValue<NeoWPF::UI::Color>(*property); } catch (const std::bad_any_cast&) {}
     }
@@ -78,7 +78,7 @@ void Control::SetBackgroundColor(NeoWPF::UI::Color color) noexcept {
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", *this);
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Background", *this);
     if (property) {
         if (GetBackgroundColor() != color) {
             SetValue(*property, color);
@@ -91,7 +91,7 @@ void Control::SetBackgroundColor(NeoWPF::UI::Color color) noexcept {
 }
 
 NeoWPF::UI::Color Control::GetBorderColor() const noexcept {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", *this);
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderBrush", *this);
     if (property) {
         try { return GetValue<NeoWPF::UI::Color>(*property); } catch (const std::bad_any_cast&) {}
     }
@@ -105,7 +105,7 @@ void Control::SetBorderColor(NeoWPF::UI::Color color) noexcept {
         return;
     }
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", *this);
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderBrush", *this);
     if (property) {
         if (GetBorderColor() != color) {
             SetValue(*property, color);

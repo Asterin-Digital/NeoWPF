@@ -99,7 +99,7 @@ TextVerticalAlignment Checkbox::GetTextVerticalAlignment() const noexcept
 void Checkbox::SetTextColor(NeoWPF::UI::Color color) noexcept
 {
     if (IsApplyingPropertyValue()) { m_textColor = color; if (m_textContent) { m_textContent->SetTextColor(color.ToArgb()); } InvalidateVisual(); return; }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("TextColor", *this);
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Foreground", *this);
     if (property) { SetValue(*property, color); return; }
     m_textColor = color;
     if (m_textContent) {
@@ -111,7 +111,7 @@ void Checkbox::SetTextColor(NeoWPF::UI::Color color) noexcept
 void Checkbox::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
 {
     if (IsApplyingPropertyValue()) { m_bgColor = color; InvalidateVisual(); return; }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BackgroundColor", *this);
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Background", *this);
     if (property) { SetValue(*property, color); return; }
     m_bgColor = color;
     InvalidateVisual();
@@ -120,7 +120,7 @@ void Checkbox::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
 void Checkbox::SetBorderColor(NeoWPF::UI::Color color) noexcept
 {
     if (IsApplyingPropertyValue()) { m_borderColor = color; InvalidateVisual(); return; }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderColor", *this);
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderBrush", *this);
     if (property) { SetValue(*property, color); return; }
     m_borderColor = color;
     InvalidateVisual();

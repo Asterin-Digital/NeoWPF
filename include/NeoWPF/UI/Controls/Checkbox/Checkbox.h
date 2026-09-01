@@ -27,6 +27,14 @@ class CheckboxTemplate;
 */
 class Checkbox : public NeoWPF::UI::ToggleBase {
 public:
+    static const Properties::DependencyProperty& TextProperty();
+    static const Properties::DependencyProperty& TextColorProperty();
+    static const Properties::DependencyProperty& BackgroundColorProperty();
+    static const Properties::DependencyProperty& BorderColorProperty();
+    static const Properties::DependencyProperty& PaddingProperty();
+    static const Properties::DependencyProperty& FontSizeProperty();
+    static const Properties::DependencyProperty& IsCheckedProperty();
+
     Checkbox();
 
     ~Checkbox();

@@ -69,6 +69,13 @@ namespace NeoWPF::UI {
 
 class UIElement : public Visual, public Properties::DependencyObject {
 public:
+    static const Properties::DependencyProperty& VisibilityProperty();
+    static const Properties::DependencyProperty& IsEnabledProperty();
+    static const Properties::DependencyProperty& IsTabStopProperty();
+    static const Properties::DependencyProperty& TabIndexProperty();
+    static const Properties::DependencyProperty& IsFocusedProperty();
+    static const Properties::DependencyProperty& OpacityProperty();
+
     /*
         @summary
         Returns whether the element is currently visible to the user.

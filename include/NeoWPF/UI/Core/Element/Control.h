@@ -7,6 +7,11 @@ namespace NeoWPF::UI {
 
 class Control : public FrameworkElement {
 public:
+    static const Properties::DependencyProperty& PaddingProperty();
+    static const Properties::DependencyProperty& BackgroundColorProperty();
+    static const Properties::DependencyProperty& BorderColorProperty();
+    static const Properties::DependencyProperty& BorderThicknessProperty();
+
     Control() = default;
 
     Thickness GetPadding() const noexcept;
@@ -39,8 +44,8 @@ protected:
 
 protected:
     Thickness m_padding{};
-    NeoWPF::UI::Color m_backgroundColor = NeoWPF::UI::Color::FromArgb(0x00000000u);
-    NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0x00000000u);
+    NeoWPF::UI::Color m_backgroundColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
+    NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0xFFABADB3u);
     int m_borderThickness = 0;
 };
 

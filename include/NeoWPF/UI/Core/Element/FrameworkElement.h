@@ -38,6 +38,18 @@ enum class LayoutSizeMode {
 class FrameworkElement : public UIElement {
     friend class ScrollBar;
 public:
+    static const Properties::DependencyProperty& WidthProperty();
+    static const Properties::DependencyProperty& HeightProperty();
+    static const Properties::DependencyProperty& WidthModeProperty();
+    static const Properties::DependencyProperty& HeightModeProperty();
+    static const Properties::DependencyProperty& ClipToBoundsProperty();
+    static const Properties::DependencyProperty& HorizontalAlignmentProperty();
+    static const Properties::DependencyProperty& VerticalAlignmentProperty();
+    static const Properties::DependencyProperty& MarginProperty();
+    static const Properties::DependencyProperty& SpacingProperty();
+    static const Properties::DependencyProperty& CornerRadiusProperty();
+    static const Properties::DependencyProperty& DataContextProperty();
+
     using UIElement::BeginAnimation;
     /*
         @summary

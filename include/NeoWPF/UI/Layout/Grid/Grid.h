@@ -1,11 +1,17 @@
 #pragma once
 
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <initializer_list>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 namespace NeoWPF::UI {
+
+// Forward declarations
+class RowDefinition;
+class ColumnDefinition;
 
 
 /*
@@ -50,6 +56,13 @@ public:
 
     Grid() = default;
 
+    static const NeoWPF::UI::Properties::DependencyProperty& RowProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& ColumnProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& RowSpanProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& ColumnSpanProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& RowDefinitionsProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& ColumnDefinitionsProperty();
+
     /*
         @summary
         Adds a row definition to the grid.
@@ -91,6 +104,30 @@ public:
         The columns to add, in order.
     */
     void AddColumns(std::initializer_list<Definition> defs) { m_colDefs.insert(m_colDefs.end(), defs.begin(), defs.end()); }
+
+    /*
+        @summary
+        Adds a RowDefinition to the grid.
+
+        @param rowDef
+        The RowDefinition object to add.
+
+        @remarks
+        This is used by XAML parsing to add row definitions created from XAML tags.
+    */
+    void AddRowDefinition(std::shared_ptr<RowDefinition> rowDef);
+
+    /*
+        @summary
+        Adds a ColumnDefinition to the grid.
+
+        @param colDef
+        The ColumnDefinition object to add.
+
+        @remarks
+        This is used by XAML parsing to add column definitions created from XAML tags.
+    */
+    void AddColumnDefinition(std::shared_ptr<ColumnDefinition> colDef);
 
     /*
         @summary

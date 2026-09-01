@@ -14,6 +14,11 @@ namespace NeoWPF::UI::Properties {
         return DependencyProperty::Register<TOwner, TProperty>(name, metadata);
     }
 
+    template<typename TOwner, typename TTarget, typename TProperty>
+    const DependencyProperty& RegisterAttachedProperty(const std::string& name, const PropertyMetadata& metadata = {}) {
+        return DependencyProperty::RegisterAttached<TOwner, TTarget, TProperty>(name, metadata);
+    }
+
     template<typename TOwner, typename TProperty, typename TGetter, typename TSetter>
     const DependencyProperty* RegisterStaticPropertyHandle(const char* name,
                                                           TGetter getter,
@@ -41,9 +46,26 @@ namespace NeoWPF::UI::Properties {
             return existing;
         }
 
+        PropertyMetadata registrationMetadata = metadata;
+        if (!registrationMetadata.PropertyChangedCallback) {
+            registrationMetadata.PropertyChangedCallback = [setter](DependencyObject* sender, const DependencyPropertyChangedEventArgs& args) {
+                if (auto owner = dynamic_cast<TOwner*>(sender)) {
+                    try {
+                        std::invoke(setter, owner, std::any_cast<TProperty>(args.NewValue));
+                    } catch (const std::bad_any_cast&) {
+                        if constexpr (std::is_same_v<TProperty, ::NeoWPF::UI::Color>) {
+                            if (args.NewValue.type() == typeid(std::uint32_t)) {
+                                const auto value = std::any_cast<std::uint32_t>(args.NewValue);
+                                std::invoke(setter, owner, ::NeoWPF::UI::Color::FromArgb(value));
+                            }
+                        }
+                    }
+                }
+            };
+        }
+
         (void)getter;
-        (void)setter;
-        return &DependencyProperty::Register<TOwner, TProperty>(name, metadata);
+        return &DependencyProperty::Register<TOwner, TProperty>(name, registrationMetadata);
     }
 
     template<typename TOwner, typename TProperty, typename TGetter, typename TSetter>
@@ -59,10 +81,10 @@ namespace NeoWPF::UI::Properties {
                     try {
                         std::invoke(setter, owner, std::any_cast<TProperty>(args.NewValue));
                     } catch (const std::bad_any_cast&) {
-                        if constexpr (std::is_same_v<TProperty, NeoWPF::UI::Color>) {
+                        if constexpr (std::is_same_v<TProperty, ::NeoWPF::UI::Color>) {
                             if (args.NewValue.type() == typeid(std::uint32_t)) {
                                 const auto value = std::any_cast<std::uint32_t>(args.NewValue);
-                                std::invoke(setter, owner, NeoWPF::UI::Color::FromArgb(value));
+                                std::invoke(setter, owner, ::NeoWPF::UI::Color::FromArgb(value));
                             }
                         }
                     }
@@ -123,6 +145,15 @@ namespace NeoWPF::UI::Properties {
             return *property; \
         }
 
+    #define DEFINE_STATIC_ATTACHED_PROPERTY_HANDLE(OwnerType, PropertyName, AttachedTargetType, PropertyType, GetterExpression, SetterExpression, MetadataFactory) \
+        [[nodiscard]] const NeoWPF::UI::Properties::DependencyProperty& OwnerType::PropertyName##Property() { \
+            static const auto* property = []() -> const NeoWPF::UI::Properties::DependencyProperty* { \
+                const auto metadata = (MetadataFactory)(); \
+                return &NeoWPF::UI::Properties::RegisterAttachedProperty<OwnerType, AttachedTargetType, PropertyType>(#PropertyName, metadata); \
+            }(); \
+            return *property; \
+        }
+
     void RegisterUIElementProperties();
     void RegisterFrameworkElementProperties();
     void RegisterControlProperties();
@@ -137,6 +168,10 @@ namespace NeoWPF::UI::Properties {
     void RegisterImageProperties();
     void RegisterBorderProperties();
     void RegisterPanelProperties();
+    void RegisterGridProperties();
+    void RegisterRowDefinitionProperties();
+    void RegisterColumnDefinitionProperties();
+    void RegisterScrollViewerProperties();
 
     void RegisterCoreControlProperties();
 

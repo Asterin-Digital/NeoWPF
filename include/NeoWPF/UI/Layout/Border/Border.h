@@ -20,6 +20,11 @@ void RegisterBorderStyles();
 
 class Border : public NeoWPF::UI::Content::ContentControl {
 public:
+    static const NeoWPF::UI::Properties::DependencyProperty& PaddingProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& BorderThicknessProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& BorderColorProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& BackgroundColorProperty();
+
     /*
         @summary
         Creates a border with default empty content and styling.

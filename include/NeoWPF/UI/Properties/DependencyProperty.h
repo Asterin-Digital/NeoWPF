@@ -76,6 +76,13 @@ inline bool HasFlag(PropertyFlags flags, PropertyFlags test) noexcept {
 
 class DependencyObject;
 class DependencyPropertyRegistry;
+}
+
+namespace NeoWPF::UI::Markup::Xaml {
+struct XamlPropertyBinding;
+}
+
+namespace NeoWPF::UI::Properties {
 
 /*
     @summary
@@ -92,6 +99,7 @@ using PropertyChangedCallback = std::function<void(DependencyObject*, const Depe
 using CoerceValueCallback = std::function<std::any(DependencyObject*, const std::any&)>;
 using PropertyChangedCallbackFunction = PropertyChangedCallback;
 using CoerceValueCallbackFunction = CoerceValueCallback;
+using XamlValueParser = std::function<bool(const std::string&, std::any&)>;
 
 /*
     @summary
@@ -102,6 +110,7 @@ struct PropertyMetadata {
     PropertyChangedCallbackFunction PropertyChangedCallback;
     CoerceValueCallbackFunction CoerceValueCallback;
     PropertyFlags Flags = PropertyFlags::None;
+    XamlValueParser ValueParser;
 };
 
 /*
@@ -128,11 +137,19 @@ public:
 
         @param metadata
         The default value and callbacks associated with the property.
+
+        @param attachedTargetType
+        The target type an attached property applies to, if this is an attached property.
+
+        @param isAttached
+        True if the property is an attached property rather than an owner-bound property.
     */
     DependencyProperty(const std::string& name,
                        const std::type_index& propertyType,
                        const std::type_index& ownerType,
-                       const PropertyMetadata& metadata);
+                       const PropertyMetadata& metadata,
+                       const std::type_index& attachedTargetType = std::type_index(typeid(void)),
+                       bool isAttached = false);
 
     /*
         @summary
@@ -160,6 +177,33 @@ public:
 
     /*
         @summary
+        Returns true when the property is attached to another target type.
+    */
+    bool IsAttached() const noexcept;
+
+    /*
+        @summary
+        Returns the type this attached property applies to.
+    */
+    const std::type_index& GetAttachedTargetType() const noexcept;
+
+    /*
+        @summary
+        Returns XAML property binding metadata for this property, if registered.
+
+        @return
+        Pointer to XamlPropertyBinding if this property has XAML binding metadata; nullptr otherwise.
+    */
+    const NeoWPF::UI::Markup::Xaml::XamlPropertyBinding* GetXamlBinding() const noexcept;
+
+    /*
+        @summary
+        Tries to parse a XAML attribute string into the value type for this property.
+    */
+    bool TryParseValue(const std::string& rawValue, std::any& parsedValue) const;
+
+    /*
+        @summary
         Registers a dependency property for a specific owner type.
 
         @tparam TOwner
@@ -177,11 +221,20 @@ public:
     template<typename TOwner, typename TProperty>
     static const DependencyProperty& Register(const std::string& name, const PropertyMetadata& metadata = {});
 
+    /*
+        @summary
+        Registers an attached dependency property for a specific owner and target type.
+    */
+    template<typename TOwner, typename TTarget, typename TProperty>
+    static const DependencyProperty& RegisterAttached(const std::string& name, const PropertyMetadata& metadata = {});
+
 private:
     std::type_index m_propertyType;
     std::type_index m_ownerType;
     std::string m_name;
     PropertyMetadata m_metadata;
+    std::type_index m_attachedTargetType = std::type_index(typeid(void));
+    bool m_isAttached = false;
 };
 
 /*
@@ -240,6 +293,16 @@ public:
 
     /*
         @summary
+        Registers an attached dependency property definition.
+    */
+    const DependencyProperty& RegisterAttachedProperty(const std::string& name,
+                                                       const std::type_index& propertyType,
+                                                       const std::type_index& ownerType,
+                                                       const std::type_index& attachedTargetType,
+                                                       const PropertyMetadata& metadata);
+
+    /*
+        @summary
         Registers the owner type so the registry can recognize instances of it.
 
         @tparam TOwner
@@ -274,6 +337,22 @@ public:
     const DependencyProperty* FindProperty(const std::string& name,
                                            const DependencyObject& ownerInstance) const;
 
+    /*
+        @summary
+        Finds an attached property by name for a target type and owner type.
+    */
+    const DependencyProperty* FindAttachedProperty(const std::string& name,
+                                                  const std::type_index& targetType,
+                                                  const std::type_index& ownerType) const;
+
+    /*
+        @summary
+        Finds an attached property by name for a target instance and owner type.
+    */
+    const DependencyProperty* FindAttachedProperty(const std::string& name,
+                                                  const DependencyObject& targetInstance,
+                                                  const std::type_index& ownerType) const;
+
 private:
     std::vector<std::unique_ptr<DependencyProperty>> m_properties;
     std::unordered_map<std::type_index, std::function<bool(const DependencyObject*)>> m_ownerTypeChecks;
@@ -284,6 +363,13 @@ const DependencyProperty& DependencyProperty::Register(const std::string& name, 
 {
     auto& registry = DependencyPropertyRegistry::Get();
     return registry.RegisterProperty<TOwner>(name, typeid(TProperty), metadata);
+}
+
+template<typename TOwner, typename TTarget, typename TProperty>
+const DependencyProperty& DependencyProperty::RegisterAttached(const std::string& name, const PropertyMetadata& metadata)
+{
+    auto& registry = DependencyPropertyRegistry::Get();
+    return registry.RegisterAttachedProperty(name, typeid(TProperty), typeid(TOwner), typeid(TTarget), metadata);
 }
 
 template<typename TOwner>

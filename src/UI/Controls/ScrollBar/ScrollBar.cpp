@@ -27,8 +27,8 @@ ScrollBar::ScrollBar()
     SetTemplate(std::make_shared<ScrollBarTemplate>());
 
     SetPadding(0);
-    SetBackgroundColor(NeoWPF::UI::Color::FromArgb(0x00000000u));
-    SetBorderColor(NeoWPF::UI::Color::FromArgb(0x00000000u));
+    SetBackgroundColor(NeoWPF::UI::Color::FromArgb(0xFFEAEAEAu));
+    SetBorderColor(NeoWPF::UI::Color::FromArgb(0xFF707070u));
     SetBorderThickness(0);
 }
 
@@ -270,7 +270,7 @@ void ScrollBar::UpdateThumbVisualState() noexcept
             isVertical ? thumbLength : trackThickness);
         thumbControl->SetOrientation(m_orientation);
         thumbControl->SetBackgroundColor(m_thumbColor);
-        thumbControl->SetBorderColor(NeoWPF::UI::Color::FromArgb(0x00000000u));
+        thumbControl->SetBorderColor(NeoWPF::UI::Color::FromArgb(0xFF707070u));
         thumbControl->SetBorderThickness(0);
         thumbControl->SetOpacity(GetOpacity());
     }

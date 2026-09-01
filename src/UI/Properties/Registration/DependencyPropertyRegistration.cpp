@@ -17,6 +17,10 @@ void RegisterCoreControlProperties() {
     RegisterImageProperties();
     RegisterBorderProperties();
     RegisterPanelProperties();
+    RegisterGridProperties();
+    RegisterRowDefinitionProperties();
+    RegisterColumnDefinitionProperties();
+    RegisterScrollViewerProperties();
 }
 
 } // namespace NeoWPF::UI::Properties

@@ -36,6 +36,11 @@ enum class ScrollBarVisibility : int {
 */
 class ScrollViewer : public Content::ContentControl {
 public:
+    static const NeoWPF::UI::Properties::DependencyProperty& HorizontalOffsetProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& VerticalOffsetProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& HorizontalScrollBarVisibilityProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& VerticalScrollBarVisibilityProperty();
+
     /*
         @summary
         Constructs a new scroll viewer.

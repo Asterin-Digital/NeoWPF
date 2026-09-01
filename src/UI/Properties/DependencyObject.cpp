@@ -1,10 +1,10 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Data/BindingExpression.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/UI/Markup/Xaml/XamlPropertyBinding.h>
 #include <stdexcept>
 
 namespace NeoWPF::UI::Properties {
@@ -12,11 +12,15 @@ namespace NeoWPF::UI::Properties {
 DependencyProperty::DependencyProperty(const std::string& name,
                                        const std::type_index& propertyType,
                                        const std::type_index& ownerType,
-                                       const PropertyMetadata& metadata)
+                                       const PropertyMetadata& metadata,
+                                       const std::type_index& attachedTargetType,
+                                       bool isAttached)
     : m_propertyType(propertyType)
     , m_ownerType(ownerType)
     , m_name(name)
     , m_metadata(metadata)
+    , m_attachedTargetType(attachedTargetType)
+    , m_isAttached(isAttached)
 {
 }
 
@@ -34,6 +38,18 @@ const PropertyMetadata& DependencyProperty::GetMetadata() const noexcept {
 
 const std::string& DependencyProperty::GetName() const noexcept {
     return m_name;
+}
+
+bool DependencyProperty::IsAttached() const noexcept {
+    return m_isAttached;
+}
+
+const std::type_index& DependencyProperty::GetAttachedTargetType() const noexcept {
+    return m_attachedTargetType;
+}
+
+const NeoWPF::UI::Markup::Xaml::XamlPropertyBinding* DependencyProperty::GetXamlBinding() const noexcept {
+    return NeoWPF::UI::Markup::Xaml::XamlPropertyBindingRegistry::Get().Find(*this);
 }
 
 DependencyPropertyRegistry& DependencyPropertyRegistry::Get() {
@@ -73,8 +89,19 @@ const DependencyProperty* DependencyPropertyRegistry::FindProperty(const std::st
                                                                    const DependencyObject& ownerInstance) const
 {
     const std::type_index ownerType(typeid(ownerInstance));
+
+    const auto splitQualifiedName = [](const std::string& input) {
+        const auto dot = input.find('.');
+        if (dot == std::string::npos) {
+            return std::make_pair(std::string(), input);
+        }
+        return std::make_pair(input.substr(0, dot), input.substr(dot + 1));
+    };
+
+    const auto [ownerQualifier, propertyName] = splitQualifiedName(name);
+
     for (const auto& property : m_properties) {
-        if (property->GetName() != name) {
+        if (property->GetName() != (propertyName.empty() ? name : propertyName)) {
             continue;
         }
         if (property->GetOwnerType() == ownerType) {
@@ -83,7 +110,7 @@ const DependencyProperty* DependencyPropertyRegistry::FindProperty(const std::st
     }
 
     for (const auto& property : m_properties) {
-        if (property->GetName() != name) {
+        if (property->GetName() != (propertyName.empty() ? name : propertyName)) {
             continue;
         }
 
@@ -93,7 +120,63 @@ const DependencyProperty* DependencyPropertyRegistry::FindProperty(const std::st
         }
     }
 
+    if (!ownerQualifier.empty()) {
+        for (const auto& property : m_properties) {
+            if (!property->IsAttached() || property->GetName() != propertyName) {
+                continue;
+            }
+            const auto targetType = property->GetAttachedTargetType();
+            if (targetType == ownerType) {
+                return property.get();
+            }
+        }
+    }
+
     return nullptr;
+}
+
+const DependencyProperty& DependencyPropertyRegistry::RegisterAttachedProperty(const std::string& name,
+                                                                               const std::type_index& propertyType,
+                                                                               const std::type_index& ownerType,
+                                                                               const std::type_index& attachedTargetType,
+                                                                               const PropertyMetadata& metadata)
+{
+    for (const auto& existingProperty : m_properties) {
+        if (existingProperty->GetName() == name &&
+            existingProperty->GetOwnerType() == ownerType &&
+            existingProperty->IsAttached() &&
+            existingProperty->GetAttachedTargetType() == attachedTargetType) {
+            return *existingProperty;
+        }
+    }
+
+    auto property = std::make_unique<DependencyProperty>(name, propertyType, ownerType, metadata, attachedTargetType, true);
+    const DependencyProperty& ref = *property;
+    m_properties.push_back(std::move(property));
+    return ref;
+}
+
+const DependencyProperty* DependencyPropertyRegistry::FindAttachedProperty(const std::string& name,
+                                                                          const std::type_index& targetType,
+                                                                          const std::type_index& ownerType) const
+{
+    for (const auto& property : m_properties) {
+        if (property->GetName() == name &&
+            property->GetOwnerType() == ownerType &&
+            property->IsAttached() &&
+            property->GetAttachedTargetType() == targetType) {
+            return property.get();
+        }
+    }
+    return nullptr;
+}
+
+const DependencyProperty* DependencyPropertyRegistry::FindAttachedProperty(const std::string& name,
+                                                                          const DependencyObject& targetInstance,
+                                                                          const std::type_index& ownerType) const
+{
+    const std::type_index targetType(typeid(targetInstance));
+    return FindAttachedProperty(name, targetType, ownerType);
 }
 
 void DependencyObject::SetValueInternal(const DependencyProperty& property,

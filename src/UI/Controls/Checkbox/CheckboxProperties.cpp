@@ -1,73 +1,156 @@
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
+#include <NeoWPF/UI/Markup/Xaml/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 namespace NeoWPF::UI::Properties {
+    namespace UI = ::NeoWPF::UI;
+    using ::NeoWPF::UI::Color;
+}
+
+namespace {
+    NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxTextMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(std::wstring());
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxTextColorMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(::NeoWPF::UI::Color::FromArgb(0xFF000000u));
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxBackgroundColorMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(::NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu));
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxBorderColorMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(::NeoWPF::UI::Color::FromArgb(0xFF202020u));
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxPaddingMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(::NeoWPF::UI::Thickness(8));
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxFontSizeMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(14);
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxIsCheckedMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(false);
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::None;
+        return metadata;
+    }
+}
+
+namespace NeoWPF::UI::Properties {
     void RegisterCheckboxProperties() {
-        PropertyMetadata textMetadata;
-        textMetadata.DefaultValue = std::any(std::wstring());
-        textMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsRender;
-        RegisterProperty<UI::Checkbox, std::wstring>(
-            "Text",
+        RegisterProperty<UI::Checkbox, std::wstring>("Text",
             &UI::Checkbox::GetText,
             &UI::Checkbox::SetText,
-            textMetadata);
-
-        PropertyMetadata textColorMetadata;
-        textColorMetadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFF000000u));
-        textColorMetadata.Flags = PropertyFlags::AffectsRender;
-        RegisterProperty<UI::Checkbox, NeoWPF::UI::Color>(
-            "TextColor",
+            MakeCheckboxTextMetadata());
+        RegisterProperty<UI::Checkbox, ::NeoWPF::UI::Color>("Foreground",
             &UI::Checkbox::GetTextColor,
-            static_cast<void (UI::Checkbox::*)(NeoWPF::UI::Color)>(&UI::Checkbox::SetTextColor),
-            textColorMetadata);
-
-        PropertyMetadata backgroundMetadata;
-        backgroundMetadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu));
-        backgroundMetadata.Flags = PropertyFlags::AffectsRender;
-        RegisterProperty<UI::Checkbox, NeoWPF::UI::Color>(
-            "BackgroundColor",
+            static_cast<void (UI::Checkbox::*)(::NeoWPF::UI::Color)>(&UI::Checkbox::SetTextColor),
+            MakeCheckboxTextColorMetadata());
+        RegisterProperty<UI::Checkbox, ::NeoWPF::UI::Color>("Background",
             &UI::Checkbox::GetBackgroundColor,
-            static_cast<void (UI::Checkbox::*)(NeoWPF::UI::Color)>(&UI::Checkbox::SetBackgroundColor),
-            backgroundMetadata);
-
-        PropertyMetadata borderMetadata;
-        borderMetadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFF202020u));
-        borderMetadata.Flags = PropertyFlags::AffectsRender;
-        RegisterProperty<UI::Checkbox, NeoWPF::UI::Color>(
-            "BorderColor",
+            static_cast<void (UI::Checkbox::*)(::NeoWPF::UI::Color)>(&UI::Checkbox::SetBackgroundColor),
+            MakeCheckboxBackgroundColorMetadata());
+        RegisterProperty<UI::Checkbox, ::NeoWPF::UI::Color>("BorderBrush",
             &UI::Checkbox::GetBorderColor,
-            static_cast<void (UI::Checkbox::*)(NeoWPF::UI::Color)>(&UI::Checkbox::SetBorderColor),
-            borderMetadata);
-
-        PropertyMetadata paddingMetadata;
-        paddingMetadata.DefaultValue = std::any(UI::Thickness(8));
-        paddingMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsArrange | PropertyFlags::AffectsRender;
-        RegisterProperty<UI::Checkbox, UI::Thickness>(
-            "Padding",
+            static_cast<void (UI::Checkbox::*)(::NeoWPF::UI::Color)>(&UI::Checkbox::SetBorderColor),
+            MakeCheckboxBorderColorMetadata());
+        RegisterProperty<UI::Checkbox, UI::Thickness>("Padding",
             &UI::Checkbox::GetPadding,
-            [](UI::Checkbox* owner, const UI::Thickness& value) {
-                if (owner) {
-                    owner->SetPadding(value);
-                }
-            },
-            paddingMetadata);
-
-        PropertyMetadata fontSizeMetadata;
-        fontSizeMetadata.DefaultValue = std::any(14);
-        fontSizeMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsRender;
-        RegisterProperty<UI::Checkbox, int>(
-            "FontSize",
+            static_cast<void (UI::Checkbox::*)(UI::Thickness)>(&UI::Checkbox::SetPadding),
+            MakeCheckboxPaddingMetadata());
+        RegisterProperty<UI::Checkbox, int>("FontSize",
             &UI::Checkbox::GetFontSize,
             &UI::Checkbox::SetFontSize,
-            fontSizeMetadata);
-
-        PropertyMetadata isCheckedMetadata;
-        isCheckedMetadata.DefaultValue = std::any(false);
-        isCheckedMetadata.Flags = PropertyFlags::None;
-        RegisterProperty<UI::Checkbox, bool>(
-            "IsChecked",
+            MakeCheckboxFontSizeMetadata());
+        RegisterProperty<UI::Checkbox, bool>("IsChecked",
             &UI::Checkbox::IsChecked,
             &UI::Checkbox::SetChecked,
-            isCheckedMetadata);
+            MakeCheckboxIsCheckedMetadata());
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Checkbox>("Checkbox");
     }
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::TextProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Checkbox, std::wstring>(
+        "Text",
+        &NeoWPF::UI::Checkbox::GetText,
+        &NeoWPF::UI::Checkbox::SetText,
+        MakeCheckboxTextMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::TextColorProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Checkbox, NeoWPF::UI::Color>(
+        "Foreground",
+        &NeoWPF::UI::Checkbox::GetTextColor,
+        static_cast<void (NeoWPF::UI::Checkbox::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::Checkbox::SetTextColor),
+        MakeCheckboxTextColorMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::BackgroundColorProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Checkbox, NeoWPF::UI::Color>(
+        "Background",
+        &NeoWPF::UI::Checkbox::GetBackgroundColor,
+        static_cast<void (NeoWPF::UI::Checkbox::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::Checkbox::SetBackgroundColor),
+        MakeCheckboxBackgroundColorMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::BorderColorProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Checkbox, NeoWPF::UI::Color>(
+        "BorderBrush",
+        &NeoWPF::UI::Checkbox::GetBorderColor,
+        static_cast<void (NeoWPF::UI::Checkbox::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::Checkbox::SetBorderColor),
+        MakeCheckboxBorderColorMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::PaddingProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Checkbox, NeoWPF::UI::Thickness>(
+        "Padding",
+        &NeoWPF::UI::Checkbox::GetPadding,
+        static_cast<void (NeoWPF::UI::Checkbox::*)(NeoWPF::UI::Thickness)>(&NeoWPF::UI::Checkbox::SetPadding),
+        MakeCheckboxPaddingMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::FontSizeProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Checkbox, int>(
+        "FontSize",
+        &NeoWPF::UI::Checkbox::GetFontSize,
+        &NeoWPF::UI::Checkbox::SetFontSize,
+        MakeCheckboxFontSizeMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::IsCheckedProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Checkbox, bool>(
+        "IsChecked",
+        &NeoWPF::UI::Checkbox::IsChecked,
+        &NeoWPF::UI::Checkbox::SetChecked,
+        MakeCheckboxIsCheckedMetadata());
+    return *property;
 }

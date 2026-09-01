@@ -20,8 +20,12 @@ namespace NeoWPF::UI {
 Button::Button()
     : ButtonBase()
 {
-    SetHorizontalAlignment(HorizontalAlignment::Stretch);
-    SetVerticalAlignment(VerticalAlignment::Stretch);
+    /* @note 
+    * Keep this as is, in WPF the button defaults to center
+    * which matches the intended behavior we want
+    */
+    SetHorizontalAlignment(HorizontalAlignment::Center);
+    SetVerticalAlignment(VerticalAlignment::Center);
     SetTemplate(std::make_shared<ButtonTemplate>());
 
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
@@ -48,8 +52,12 @@ Button::Button()
 Button::Button(const std::wstring& text)
     : ButtonBase()
 {
-    SetHorizontalAlignment(HorizontalAlignment::Stretch);
-    SetVerticalAlignment(VerticalAlignment::Stretch);
+    /* @note 
+    * Keep this as is, in WPF the button defaults to center
+    * which matches the intended behavior we want
+    */
+    SetHorizontalAlignment(HorizontalAlignment::Center);
+    SetVerticalAlignment(VerticalAlignment::Center);
     SetTemplate(std::make_shared<ButtonTemplate>());
 
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();

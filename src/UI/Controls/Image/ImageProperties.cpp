@@ -2,12 +2,14 @@
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 namespace NeoWPF::UI::Properties {
+    namespace UI = ::NeoWPF::UI;
+    using ::NeoWPF::UI::Color;
 
 void RegisterImageProperties() {
     PropertyMetadata sourceMetadata;
-    sourceMetadata.DefaultValue = std::any(std::shared_ptr<NeoWPF::UI::Core::Media::ImageSource>());
+    sourceMetadata.DefaultValue = std::any(std::shared_ptr<::NeoWPF::UI::Core::Media::ImageSource>());
     sourceMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsArrange | PropertyFlags::AffectsRender;
-    RegisterProperty<UI::Image, std::shared_ptr<UI::Core::Media::ImageSource>>(
+    RegisterProperty<UI::Image, std::shared_ptr<::NeoWPF::UI::Core::Media::ImageSource>>(
         "Source",
         &UI::Image::GetSource,
         &UI::Image::SetSource,

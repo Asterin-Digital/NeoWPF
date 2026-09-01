@@ -554,6 +554,7 @@ if(BUILD_TESTING)
         tests/Automated/GridTests.cpp
         tests/Automated/LImageDecodingTests.cpp
         tests/Automated/TriggerTests.cpp
+        tests/Automated/XamlParserTests.cpp
     )
 
     if(UNIX)

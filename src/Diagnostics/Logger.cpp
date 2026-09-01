@@ -193,6 +193,7 @@ bool SetLevelByName(std::string_view name, Level level) noexcept {
     if (n == "virtualization") { SetLevel(Category::Virtualization, level); return true; }
     if (n == "textbox") { SetLevel(Category::TextBox, level); return true; }
     if (n == "textrendering") { SetLevel(Category::TextRendering, level); return true; }
+    if (n == "xamlparser") { SetLevel(Category::XamlParser, level); return true; }
     return false;
 }
 
