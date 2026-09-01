@@ -7,6 +7,7 @@
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
 
 namespace NeoWPF::UI::Styling {
     class Style;  
@@ -29,6 +30,10 @@ void ApplyButtonThemeStyle(UIElement* element);
 */
 class Button : public NeoWPF::UI::ButtonBase {
 public:
+    static const Properties::DependencyProperty& TextProperty();
+    static const Properties::DependencyProperty& TextColorProperty();
+    static const Properties::DependencyProperty& FontSizeProperty();
+
     Button();
 
     /*

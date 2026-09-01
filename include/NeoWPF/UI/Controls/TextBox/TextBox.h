@@ -53,7 +53,14 @@ class TextBoxTemplate;
 class TextBox : public NeoWPF::UI::Content::ContentControl {
 public:
     static bool s_textBoxDebug;
-    static const Properties::DependencyProperty& TextProperty;
+    static const Properties::DependencyProperty& TextProperty();
+    static const Properties::DependencyProperty& PlaceholderTextProperty();
+    static const Properties::DependencyProperty& TextColorProperty();
+    static const Properties::DependencyProperty& CaretColorProperty();
+    static const Properties::DependencyProperty& FontSizeProperty();
+    static const Properties::DependencyProperty& FontFamilyProperty();
+    static const Properties::DependencyProperty& TextHorizontalAlignmentProperty();
+    static const Properties::DependencyProperty& TextVerticalAlignmentProperty();
 
     /*
         @summary

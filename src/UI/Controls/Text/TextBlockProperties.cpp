@@ -1,82 +1,122 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
-namespace NeoWPF::UI::Properties {
-    void RegisterTextBlockProperties() {
-        PropertyMetadata textMetadata;
-        textMetadata.DefaultValue = std::any(std::wstring());
-        textMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBlock, std::wstring>(
-            "Text",
-            &UI::TextBlock::GetText,
-            &UI::TextBlock::SetText,
-            textMetadata);
+namespace {
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockTextMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(std::wstring());
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 
-        PropertyMetadata textColorMetadata;
-        textColorMetadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFF000000u));
-        textColorMetadata.Flags = PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBlock, NeoWPF::UI::Color>(
-            "TextColor",
-            &UI::TextBlock::GetTextColor,
-            static_cast<void (UI::TextBlock::*)(NeoWPF::UI::Color)>(&UI::TextBlock::SetTextColor),
-            textColorMetadata);
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockTextColorMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFF000000u));
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 
-        PropertyMetadata fontSizeMetadata;
-        fontSizeMetadata.DefaultValue = std::any(16);
-        fontSizeMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBlock, int>(
-            "FontSize",
-            &UI::TextBlock::GetFontSize,
-            &UI::TextBlock::SetFontSize,
-            fontSizeMetadata);
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockFontSizeMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(16);
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 
-        PropertyMetadata fontFamilyMetadata;
-        fontFamilyMetadata.DefaultValue = std::any(std::wstring());
-        fontFamilyMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBlock, std::wstring>(
-            "FontFamily",
-            &UI::TextBlock::GetFontFamily,
-            &UI::TextBlock::SetFontFamily,
-            fontFamilyMetadata);
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockFontFamilyMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(std::wstring());
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 
-        PropertyMetadata textHorizontalAlignmentMetadata;
-        textHorizontalAlignmentMetadata.DefaultValue = std::any(TextHorizontalAlignment::Left);
-        textHorizontalAlignmentMetadata.Flags = PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBlock, TextHorizontalAlignment>(
-            "TextHorizontalAlignment",
-            &UI::TextBlock::GetTextHorizontalAlignment,
-            static_cast<void (UI::TextBlock::*)(TextHorizontalAlignment)>(&UI::TextBlock::SetTextHorizontalAlignment),
-            textHorizontalAlignmentMetadata);
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockTextHorizontalAlignmentMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(NeoWPF::UI::TextHorizontalAlignment::Left);
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 
-        PropertyMetadata textVerticalAlignmentMetadata;
-        textVerticalAlignmentMetadata.DefaultValue = std::any(TextVerticalAlignment::Top);
-        textVerticalAlignmentMetadata.Flags = PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBlock, TextVerticalAlignment>(
-            "TextVerticalAlignment",
-            &UI::TextBlock::GetTextVerticalAlignment,
-            static_cast<void (UI::TextBlock::*)(TextVerticalAlignment)>(&UI::TextBlock::SetTextVerticalAlignment),
-            textVerticalAlignmentMetadata);
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockTextVerticalAlignmentMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(NeoWPF::UI::TextVerticalAlignment::Top);
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 
-        PropertyMetadata textWrappingMetadata;
-        textWrappingMetadata.DefaultValue = std::any(TextWrapping::NoWrap);
-        textWrappingMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBlock, TextWrapping>(
-            "TextWrapping",
-            &UI::TextBlock::GetTextWrapping,
-            &UI::TextBlock::SetTextWrapping,
-            textWrappingMetadata);
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockTextWrappingMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(NeoWPF::UI::TextWrapping::NoWrap);
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 
-        PropertyMetadata paddingMetadata;
-        paddingMetadata.DefaultValue = std::any(UI::Thickness{});
-        paddingMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsArrange | PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBlock, UI::Thickness>(
-            "Padding",
-            &UI::TextBlock::GetPadding,
-            [](UI::TextBlock* owner, const UI::Thickness& value) {
-                if (owner) {
-                    owner->SetPadding(value);
-                }
-            },
-            paddingMetadata);
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockPaddingMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(NeoWPF::UI::Thickness{});
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
     }
 }
+
+namespace NeoWPF::UI::Properties {
+    void RegisterTextBlockProperties() {
+        RegisterProperty<UI::TextBlock, std::wstring>("Text", MakeTextBlockTextMetadata());
+        RegisterProperty<UI::TextBlock, NeoWPF::UI::Color>("TextColor", MakeTextBlockTextColorMetadata());
+        RegisterProperty<UI::TextBlock, int>("FontSize", MakeTextBlockFontSizeMetadata());
+        RegisterProperty<UI::TextBlock, std::wstring>("FontFamily", MakeTextBlockFontFamilyMetadata());
+        RegisterProperty<UI::TextBlock, TextHorizontalAlignment>("TextHorizontalAlignment", MakeTextBlockTextHorizontalAlignmentMetadata());
+        RegisterProperty<UI::TextBlock, TextVerticalAlignment>("TextVerticalAlignment", MakeTextBlockTextVerticalAlignmentMetadata());
+        RegisterProperty<UI::TextBlock, TextWrapping>("TextWrapping", MakeTextBlockTextWrappingMetadata());
+        RegisterProperty<UI::TextBlock, UI::Thickness>("Padding", MakeTextBlockPaddingMetadata());
+    }
+}
+
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBlock,
+                             Text,
+                             std::wstring,
+                             &NeoWPF::UI::TextBlock::GetText,
+                             &NeoWPF::UI::TextBlock::SetText,
+                             MakeTextBlockTextMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBlock,
+                             TextColor,
+                             NeoWPF::UI::Color,
+                             &NeoWPF::UI::TextBlock::GetTextColor,
+                             static_cast<void (NeoWPF::UI::TextBlock::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::TextBlock::SetTextColor),
+                             MakeTextBlockTextColorMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBlock,
+                             FontSize,
+                             int,
+                             &NeoWPF::UI::TextBlock::GetFontSize,
+                             &NeoWPF::UI::TextBlock::SetFontSize,
+                             MakeTextBlockFontSizeMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBlock,
+                             FontFamily,
+                             std::wstring,
+                             &NeoWPF::UI::TextBlock::GetFontFamily,
+                             &NeoWPF::UI::TextBlock::SetFontFamily,
+                             MakeTextBlockFontFamilyMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBlock,
+                             TextHorizontalAlignment,
+                             TextHorizontalAlignment,
+                             &NeoWPF::UI::TextBlock::GetTextHorizontalAlignment,
+                             static_cast<void (NeoWPF::UI::TextBlock::*)(TextHorizontalAlignment)>(&NeoWPF::UI::TextBlock::SetTextHorizontalAlignment),
+                             MakeTextBlockTextHorizontalAlignmentMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBlock,
+                             TextVerticalAlignment,
+                             TextVerticalAlignment,
+                             &NeoWPF::UI::TextBlock::GetTextVerticalAlignment,
+                             static_cast<void (NeoWPF::UI::TextBlock::*)(TextVerticalAlignment)>(&NeoWPF::UI::TextBlock::SetTextVerticalAlignment),
+                             MakeTextBlockTextVerticalAlignmentMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBlock,
+                             TextWrapping,
+                             TextWrapping,
+                             &NeoWPF::UI::TextBlock::GetTextWrapping,
+                             &NeoWPF::UI::TextBlock::SetTextWrapping,
+                             MakeTextBlockTextWrappingMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBlock,
+                             Padding,
+                             UI::Thickness,
+                             &NeoWPF::UI::TextBlock::GetPadding,
+                             static_cast<void (NeoWPF::UI::TextBlock::*)(UI::Thickness)>(&NeoWPF::UI::TextBlock::SetPadding),
+                             MakeTextBlockPaddingMetadata)

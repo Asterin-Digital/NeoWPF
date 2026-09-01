@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <NeoWPF/UI/Controls/Button/Button.h>
+#include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/UI/Controls/TextBox/TextBox.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 
@@ -98,6 +101,44 @@ TEST(DependencyPropertyTests, FindsPropertiesByExactAndDerivedOwner)
     EXPECT_EQ(object.FindDependencyProperty("Automated.IntProperty"), &IntProperty());
     EXPECT_EQ(derivedObject.FindDependencyProperty("Automated.IntProperty"), &IntProperty());
     EXPECT_EQ(object.FindDependencyProperty("Automated.DoesNotExist"), nullptr);
+}
+
+TEST(DependencyPropertyTests, ButtonExposesStaticPropertyHandles)
+{
+    const auto& textProperty = NeoWPF::UI::Button::TextProperty();
+
+    EXPECT_EQ(textProperty.GetName(), "Text");
+    EXPECT_EQ(textProperty.GetOwnerType(), std::type_index(typeid(NeoWPF::UI::Button)));
+    EXPECT_EQ(textProperty.GetPropertyType(), std::type_index(typeid(std::wstring)));
+    EXPECT_EQ(NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("Text", typeid(NeoWPF::UI::Button)), &textProperty);
+}
+
+TEST(DependencyPropertyTests, TextBlockExposesStaticPropertyHandles)
+{
+    const auto& textProperty = NeoWPF::UI::TextBlock::TextProperty();
+    const auto& fontSizeProperty = NeoWPF::UI::TextBlock::FontSizeProperty();
+
+    EXPECT_EQ(textProperty.GetName(), "Text");
+    EXPECT_EQ(textProperty.GetOwnerType(), std::type_index(typeid(NeoWPF::UI::TextBlock)));
+    EXPECT_EQ(textProperty.GetPropertyType(), std::type_index(typeid(std::wstring)));
+    EXPECT_EQ(fontSizeProperty.GetName(), "FontSize");
+    EXPECT_EQ(fontSizeProperty.GetPropertyType(), std::type_index(typeid(int)));
+    EXPECT_EQ(NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("Text", typeid(NeoWPF::UI::TextBlock)), &textProperty);
+}
+
+TEST(DependencyPropertyTests, TextBoxExposesStaticPropertyHandles)
+{
+    const auto& textProperty = NeoWPF::UI::TextBox::TextProperty();
+    const auto& placeholderTextProperty = NeoWPF::UI::TextBox::PlaceholderTextProperty();
+    const auto& fontSizeProperty = NeoWPF::UI::TextBox::FontSizeProperty();
+
+    EXPECT_EQ(textProperty.GetName(), "Text");
+    EXPECT_EQ(textProperty.GetOwnerType(), std::type_index(typeid(NeoWPF::UI::TextBox)));
+    EXPECT_EQ(textProperty.GetPropertyType(), std::type_index(typeid(std::wstring)));
+    EXPECT_EQ(placeholderTextProperty.GetName(), "PlaceholderText");
+    EXPECT_EQ(fontSizeProperty.GetName(), "FontSize");
+    EXPECT_EQ(fontSizeProperty.GetPropertyType(), std::type_index(typeid(int)));
+    EXPECT_EQ(NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("Text", typeid(NeoWPF::UI::TextBox)), &textProperty);
 }
 
 TEST(DependencyPropertyTests, AnimationTakesPrecedenceAndCanBeCleared)

@@ -1,4 +1,5 @@
 #include <NeoWPF/Platform/Windows/WPlatform.h>
+#include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/Core/Application/Resources/Embedded/FallbackFont.h>
 #include <NeoWPF/Diagnostics/CallStackTracer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>

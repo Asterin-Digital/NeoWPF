@@ -1,79 +1,122 @@
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
-namespace NeoWPF::UI::Properties {
-    void RegisterTextBoxProperties() {
-        PropertyMetadata textMetadata;
-        textMetadata.DefaultValue = std::any(std::wstring());
-        textMetadata.Flags = PropertyFlags::None;
-        RegisterProperty<UI::TextBox, std::wstring>(
-            "Text",
-            &UI::TextBox::GetText,
-            static_cast<void (UI::TextBox::*)(const std::wstring&)>(&UI::TextBox::SetText),
-            textMetadata);
+namespace {
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxTextMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(std::wstring());
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::None;
+        return metadata;
+    }
 
-        PropertyMetadata placeholderTextMetadata;
-        placeholderTextMetadata.DefaultValue = std::any(std::wstring());
-        placeholderTextMetadata.Flags = PropertyFlags::AffectsRender | PropertyFlags::AffectsMeasure;
-        RegisterProperty<UI::TextBox, std::wstring>(
-            "PlaceholderText",
-            &UI::TextBox::GetPlaceholderText,
-            static_cast<void (UI::TextBox::*)(const std::wstring&)>(&UI::TextBox::SetPlaceholderText),
-            placeholderTextMetadata);
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxPlaceholderTextMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(std::wstring());
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender | NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure;
+        return metadata;
+    }
 
-        PropertyMetadata textColorMetadata;
-        textColorMetadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu));
-        textColorMetadata.Flags = PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBox, NeoWPF::UI::Color>(
-            "TextColor",
-            &UI::TextBox::GetTextColor,
-            static_cast<void (UI::TextBox::*)(NeoWPF::UI::Color)>(&UI::TextBox::SetTextColor),
-            textColorMetadata);
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxTextColorMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu));
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 
-        PropertyMetadata caretMetadata;
-        caretMetadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu));
-        caretMetadata.Flags = PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBox, NeoWPF::UI::Color>(
-            "CaretColor",
-            &UI::TextBox::GetCaretColor,
-            static_cast<void (UI::TextBox::*)(NeoWPF::UI::Color)>(&UI::TextBox::SetCaretColor),
-            caretMetadata);
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxCaretColorMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu));
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 
-        PropertyMetadata fontSizeMetadata;
-        fontSizeMetadata.DefaultValue = std::any(16);
-        fontSizeMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBox, int>(
-            "FontSize",
-            &UI::TextBox::GetFontSize,
-            &UI::TextBox::SetFontSize,
-            fontSizeMetadata);
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxFontSizeMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(16);
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 
-        PropertyMetadata fontFamilyMetadata;
-        fontFamilyMetadata.DefaultValue = std::any(std::wstring());
-        fontFamilyMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBox, std::wstring>(
-            "FontFamily",
-            &UI::TextBox::GetFontFamily,
-            &UI::TextBox::SetFontFamily,
-            fontFamilyMetadata);
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxFontFamilyMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(std::wstring());
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 
-        PropertyMetadata textHorizontalAlignmentMetadata;
-        textHorizontalAlignmentMetadata.DefaultValue = std::any(TextHorizontalAlignment::Left);
-        textHorizontalAlignmentMetadata.Flags = PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBox, TextHorizontalAlignment>(
-            "TextHorizontalAlignment",
-            &UI::TextBox::GetTextHorizontalAlignment,
-            static_cast<void (UI::TextBox::*)(TextHorizontalAlignment)>(&UI::TextBox::SetTextHorizontalAlignment),
-            textHorizontalAlignmentMetadata);
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxTextHorizontalAlignmentMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(NeoWPF::UI::TextHorizontalAlignment::Left);
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 
-        PropertyMetadata textVerticalAlignmentMetadata;
-        textVerticalAlignmentMetadata.DefaultValue = std::any(TextVerticalAlignment::Top);
-        textVerticalAlignmentMetadata.Flags = PropertyFlags::AffectsRender;
-        RegisterProperty<UI::TextBox, TextVerticalAlignment>(
-            "TextVerticalAlignment",
-            &UI::TextBox::GetTextVerticalAlignment,
-            static_cast<void (UI::TextBox::*)(TextVerticalAlignment)>(&UI::TextBox::SetTextVerticalAlignment),
-            textVerticalAlignmentMetadata);
-
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxTextVerticalAlignmentMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(NeoWPF::UI::TextVerticalAlignment::Top);
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
     }
 }
+
+namespace NeoWPF::UI::Properties {
+    void RegisterTextBoxProperties() {
+        RegisterProperty<UI::TextBox, std::wstring>("Text", MakeTextBoxTextMetadata());
+        RegisterProperty<UI::TextBox, std::wstring>("PlaceholderText", MakeTextBoxPlaceholderTextMetadata());
+        RegisterProperty<UI::TextBox, NeoWPF::UI::Color>("TextColor", MakeTextBoxTextColorMetadata());
+        RegisterProperty<UI::TextBox, NeoWPF::UI::Color>("CaretColor", MakeTextBoxCaretColorMetadata());
+        RegisterProperty<UI::TextBox, int>("FontSize", MakeTextBoxFontSizeMetadata());
+        RegisterProperty<UI::TextBox, std::wstring>("FontFamily", MakeTextBoxFontFamilyMetadata());
+        RegisterProperty<UI::TextBox, TextHorizontalAlignment>("TextHorizontalAlignment", MakeTextBoxTextHorizontalAlignmentMetadata());
+        RegisterProperty<UI::TextBox, TextVerticalAlignment>("TextVerticalAlignment", MakeTextBoxTextVerticalAlignmentMetadata());
+    }
+}
+
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBox,
+                             Text,
+                             std::wstring,
+                             &NeoWPF::UI::TextBox::GetText,
+                             static_cast<void (NeoWPF::UI::TextBox::*)(const std::wstring&)>(&NeoWPF::UI::TextBox::SetText),
+                             MakeTextBoxTextMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBox,
+                             PlaceholderText,
+                             std::wstring,
+                             &NeoWPF::UI::TextBox::GetPlaceholderText,
+                             &NeoWPF::UI::TextBox::SetPlaceholderText,
+                             MakeTextBoxPlaceholderTextMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBox,
+                             TextColor,
+                             NeoWPF::UI::Color,
+                             &NeoWPF::UI::TextBox::GetTextColor,
+                             static_cast<void (NeoWPF::UI::TextBox::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::TextBox::SetTextColor),
+                             MakeTextBoxTextColorMetadata) 
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBox,
+                             CaretColor,
+                             NeoWPF::UI::Color,
+                             &NeoWPF::UI::TextBox::GetCaretColor,
+                             static_cast<void (NeoWPF::UI::TextBox::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::TextBox::SetCaretColor),
+                             MakeTextBoxCaretColorMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBox,
+                             FontSize,
+                             int,
+                             &NeoWPF::UI::TextBox::GetFontSize,
+                             &NeoWPF::UI::TextBox::SetFontSize,
+                             MakeTextBoxFontSizeMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBox,
+                             FontFamily,
+                             std::wstring,
+                             &NeoWPF::UI::TextBox::GetFontFamily,
+                             &NeoWPF::UI::TextBox::SetFontFamily,
+                             MakeTextBoxFontFamilyMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBox,
+                             TextHorizontalAlignment,
+                             TextHorizontalAlignment,
+                             &NeoWPF::UI::TextBox::GetTextHorizontalAlignment,
+                             static_cast<void (NeoWPF::UI::TextBox::*)(TextHorizontalAlignment)>(&NeoWPF::UI::TextBox::SetTextHorizontalAlignment),
+                             MakeTextBoxTextHorizontalAlignmentMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::TextBox,
+                             TextVerticalAlignment,
+                             TextVerticalAlignment,
+                             &NeoWPF::UI::TextBox::GetTextVerticalAlignment,
+                             static_cast<void (NeoWPF::UI::TextBox::*)(TextVerticalAlignment)>(&NeoWPF::UI::TextBox::SetTextVerticalAlignment),
+                             MakeTextBoxTextVerticalAlignmentMetadata)

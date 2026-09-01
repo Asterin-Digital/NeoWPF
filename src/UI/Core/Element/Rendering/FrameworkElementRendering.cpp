@@ -64,8 +64,17 @@ void FrameworkElement::GetAbsolutePosition(int& outX, int& outY) const noexcept
         auto fw = dynamic_cast<FrameworkElement*>(parent);
         if (fw)
         {
-            float width = static_cast<float>((std::max)(fw->GetFinalWidth(), fw->GetDesiredWidth()));
-            float height = static_cast<float>((std::max)(fw->GetFinalHeight(), fw->GetDesiredHeight()));
+            /* @note
+               do not use desired size here. the render transform pivot must use the final
+               arranged size, otherwise the pivot can be different from the size actually
+               used when rendering the element.
+
+               for example, if the desired width is larger than the final width, the pivot
+               will be shifted and the element's transform can stop lining up with its
+               rendered background or child content.
+            */
+            float width = static_cast<float>(fw->GetFinalWidth());
+            float height = static_cast<float>(fw->GetFinalHeight());
 
             x += static_cast<float>(fw->GetLayoutOffsetX() + fw->GetRenderOffsetX());
             y += static_cast<float>(fw->GetLayoutOffsetY() + fw->GetRenderOffsetY());
@@ -191,8 +200,16 @@ void FrameworkElement::ApplyRenderTransform(float& x, float& y, float& width, fl
 NeoWPF::UI::Core::Matrix4 FrameworkElement::GetLocalTransformMatrix() const noexcept
 {
     const auto origin = GetRenderTransformOrigin();
-    const float width = static_cast<float>((std::max)(GetFinalWidth(), GetDesiredWidth()));
-    const float height = static_cast<float>((std::max)(GetFinalHeight(), GetDesiredHeight()));
+    /* @note
+       do not use desired size here. the render transform pivot must be based on the
+       final arranged size, otherwise the pivot can shift when the desired size is
+       larger than the actual size of the element
+
+       this can cause transformed content to no longer line up correctly with the
+       element or its parent
+    */
+    const float width = static_cast<float>(GetFinalWidth());
+    const float height = static_cast<float>(GetFinalHeight());
     const float originX = width * origin.X;
     const float originY = height * origin.Y;
 

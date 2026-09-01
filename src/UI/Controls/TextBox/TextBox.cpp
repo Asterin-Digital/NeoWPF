@@ -37,19 +37,6 @@ namespace {
     }
 }
 
-namespace {
-    const NeoWPF::UI::Properties::DependencyProperty& EnsureTextProperty()
-    {
-        NeoWPF::UI::Properties::RegisterTextBoxProperties();
-        if (const auto* property = NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("Text", typeid(NeoWPF::UI::TextBox))) {
-            return *property;
-        }
-        return NeoWPF::UI::Properties::RegisterProperty<NeoWPF::UI::TextBox, std::wstring>("Text");
-    }
-}
-
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBox::TextProperty = EnsureTextProperty();
-
 namespace NeoWPF::UI {
 
 TextBox::TextBox()
