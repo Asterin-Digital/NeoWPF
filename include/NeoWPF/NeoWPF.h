@@ -197,8 +197,30 @@ namespace NeoWPF {
     namespace UI {
         namespace Media {
             using BitmapImage = ::NeoWPF::UI::Core::Media::BitmapImage;
+
             using Stretch = ::NeoWPF::UI::Core::Media::Stretch;
+
             using StretchDirection = ::NeoWPF::UI::Core::Media::StretchDirection;
+        }
+
+        namespace Triggers {
+            using ::NeoWPF::UI::Styling::Triggers::TriggerBase;
+
+            using ::NeoWPF::UI::Styling::Triggers::Setter;
+
+            using ::NeoWPF::UI::Styling::Triggers::Trigger;
+
+            using ::NeoWPF::UI::Styling::Triggers::DataTrigger;
+
+            using ::NeoWPF::UI::Styling::Triggers::EventTrigger;
+
+            using ::NeoWPF::UI::Styling::Triggers::TriggerCollection;
+
+            using ::NeoWPF::UI::Styling::Triggers::TriggerAction;
+
+            using ::NeoWPF::UI::Styling::Triggers::BeginStoryboardAction;
+            
+            using ::NeoWPF::UI::Styling::Triggers::StopStoryboardAction;
         }
     }
 
