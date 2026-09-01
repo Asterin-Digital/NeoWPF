@@ -4,69 +4,39 @@
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/UI/Markup/Xaml/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Markup/Xaml/XamlPropertyBinding.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
+#include <NeoWPF/UI/Properties/TypeConverter.h>
 
 namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeGridRowMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(0);
+        metadata.Converter = NeoWPF::UI::Properties::GetIntConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange;
-        metadata.PropertyChangedCallback = [](NeoWPF::UI::Properties::DependencyObject* sender, const NeoWPF::UI::Properties::DependencyPropertyChangedEventArgs& args) {
-            auto* visual = dynamic_cast<NeoWPF::UI::Visual*>(sender);
-            if (!visual) {
-                return;
-            }
-            if (auto* grid = dynamic_cast<NeoWPF::UI::Grid*>(visual->GetParent())) {
-                grid->SetRow(visual, std::any_cast<int>(args.NewValue));
-            }
-        };
         return metadata;
     }
 
     NeoWPF::UI::Properties::PropertyMetadata MakeGridColumnMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(0);
+        metadata.Converter = NeoWPF::UI::Properties::GetIntConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange;
-        metadata.PropertyChangedCallback = [](NeoWPF::UI::Properties::DependencyObject* sender, const NeoWPF::UI::Properties::DependencyPropertyChangedEventArgs& args) {
-            auto* visual = dynamic_cast<NeoWPF::UI::Visual*>(sender);
-            if (!visual) {
-                return;
-            }
-            if (auto* grid = dynamic_cast<NeoWPF::UI::Grid*>(visual->GetParent())) {
-                grid->SetColumn(visual, std::any_cast<int>(args.NewValue));
-            }
-        };
         return metadata;
     }
 
     NeoWPF::UI::Properties::PropertyMetadata MakeGridRowSpanMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(1);
+        metadata.Converter = NeoWPF::UI::Properties::GetIntConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange;
-        metadata.PropertyChangedCallback = [](NeoWPF::UI::Properties::DependencyObject* sender, const NeoWPF::UI::Properties::DependencyPropertyChangedEventArgs& args) {
-            auto* visual = dynamic_cast<NeoWPF::UI::Visual*>(sender);
-            if (!visual) {
-                return;
-            }
-            if (auto* grid = dynamic_cast<NeoWPF::UI::Grid*>(visual->GetParent())) {
-                grid->SetRowSpan(visual, std::any_cast<int>(args.NewValue));
-            }
-        };
         return metadata;
     }
 
     NeoWPF::UI::Properties::PropertyMetadata MakeGridColumnSpanMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(1);
+        metadata.Converter = NeoWPF::UI::Properties::GetIntConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange;
-        metadata.PropertyChangedCallback = [](NeoWPF::UI::Properties::DependencyObject* sender, const NeoWPF::UI::Properties::DependencyPropertyChangedEventArgs& args) {
-            auto* visual = dynamic_cast<NeoWPF::UI::Visual*>(sender);
-            if (!visual) {
-                return;
-            }
-            if (auto* grid = dynamic_cast<NeoWPF::UI::Grid*>(visual->GetParent())) {
-                grid->SetColumnSpan(visual, std::any_cast<int>(args.NewValue));
-            }
-        };
         return metadata;
     }
 
@@ -98,6 +68,8 @@ namespace NeoWPF::UI::Properties {
             &::NeoWPF::UI::Grid::AddColumnDefinition);
 
         ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Grid>("Grid", "Children");
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::RowDefinition>("RowDefinition");
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::ColumnDefinition>("ColumnDefinition");
     }
 }
 

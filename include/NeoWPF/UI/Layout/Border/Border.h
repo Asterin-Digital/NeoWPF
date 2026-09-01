@@ -61,6 +61,8 @@ public:
 
     void SetBorderThickness(int thickness) noexcept;
     int GetBorderThickness() const noexcept;
+    void SetBorderThickness(Thickness thickness) noexcept;
+    Thickness GetBorderThicknessValue() const noexcept;
 
     void SetBorderColor(NeoWPF::UI::Color color) noexcept;
     void SetBorderColor(std::uint32_t color) noexcept { SetBorderColor(NeoWPF::UI::Color::FromArgb(color)); }
@@ -109,6 +111,9 @@ protected:
     void OnBorderThicknessChanged(int thickness) override;
     void OnBorderColorChanged(NeoWPF::UI::Color color) override;
     void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
+
+private:
+    Thickness m_borderThicknesses{};
 };
 
 }

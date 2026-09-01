@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Markup/Xaml/XamlTypeRegistry.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 namespace NeoWPF::UI::Properties {
@@ -11,13 +12,21 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeBorderPaddingMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::Thickness{});
+        metadata.Converter = NeoWPF::UI::Properties::GetThicknessConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
 
     NeoWPF::UI::Properties::PropertyMetadata MakeBorderThicknessMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(0);
+        metadata.DefaultValue = std::any(NeoWPF::UI::Thickness{});
+        metadata.Converter = NeoWPF::UI::Properties::GetThicknessConverter();
+        metadata.PropertyChangedCallback = [](NeoWPF::UI::Properties::DependencyObject* sender,
+                                              const NeoWPF::UI::Properties::DependencyPropertyChangedEventArgs& args) {
+            if (auto* border = dynamic_cast<NeoWPF::UI::Border*>(sender)) {
+                border->SetBorderThickness(std::any_cast<NeoWPF::UI::Thickness>(args.NewValue));
+            }
+        };
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -25,6 +34,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeBorderColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0x00000000));
+        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -32,6 +42,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeBorderBackgroundColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0x00000000));
+        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -43,9 +54,7 @@ namespace NeoWPF::UI::Properties {
             &UI::Border::GetPadding,
             static_cast<void (UI::Border::*)(UI::Thickness)>(&UI::Border::SetPadding),
             MakeBorderPaddingMetadata());
-        RegisterProperty<UI::Border, int>("BorderThickness",
-            &UI::Border::GetBorderThickness,
-            &UI::Border::SetBorderThickness,
+        RegisterProperty<UI::Border, UI::Thickness>("BorderThickness",
             MakeBorderThicknessMetadata());
         RegisterProperty<UI::Border, ::NeoWPF::UI::Color>("BorderBrush",
             &UI::Border::GetBorderColor,
@@ -55,7 +64,7 @@ namespace NeoWPF::UI::Properties {
             &UI::Border::GetBackgroundColor,
             static_cast<void (UI::Border::*)(::NeoWPF::UI::Color)>(&UI::Border::SetBackgroundColor),
             MakeBorderBackgroundColorMetadata());
-        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Border>("Border", "Children");
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Border>("Border", "Content");
     }
 }
 
@@ -69,11 +78,8 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Border::PaddingPro
 }
 
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Border::BorderThicknessProperty() {
-    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Border, int>(
-        "BorderThickness",
-        &NeoWPF::UI::Border::GetBorderThickness,
-        &NeoWPF::UI::Border::SetBorderThickness,
-        MakeBorderThicknessMetadata());
+    static const auto* property = &NeoWPF::UI::Properties::DependencyProperty::Register<
+        NeoWPF::UI::Border, NeoWPF::UI::Thickness>("BorderThickness", MakeBorderThicknessMetadata());
     return *property;
 }
 

@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
 #include <NeoWPF/UI/Markup/Xaml/XamlTypeRegistry.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 namespace NeoWPF::UI::Properties {
@@ -11,6 +12,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxTextMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(std::wstring());
+        metadata.Converter = NeoWPF::UI::Properties::GetWideStringConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -18,6 +20,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxTextColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(::NeoWPF::UI::Color::FromArgb(0xFF000000u));
+        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -25,6 +28,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxBackgroundColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(::NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu));
+        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -32,6 +36,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxBorderColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(::NeoWPF::UI::Color::FromArgb(0xFF202020u));
+        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -39,6 +44,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxPaddingMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(::NeoWPF::UI::Thickness(8));
+        metadata.Converter = NeoWPF::UI::Properties::GetThicknessConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -46,6 +52,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxFontSizeMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(14);
+        metadata.Converter = NeoWPF::UI::Properties::GetIntConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -53,6 +60,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxIsCheckedMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(false);
+        metadata.Converter = NeoWPF::UI::Properties::GetBoolConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::None;
         return metadata;
     }

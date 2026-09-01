@@ -1,3 +1,4 @@
+#include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Data/BindingExpression.h>
@@ -52,6 +53,19 @@ const NeoWPF::UI::Markup::Xaml::XamlPropertyBinding* DependencyProperty::GetXaml
     return NeoWPF::UI::Markup::Xaml::XamlPropertyBindingRegistry::Get().Find(*this);
 }
 
+bool DependencyProperty::TryParseValue(const std::string& rawValue, std::any& parsedValue) const
+{
+    if (m_metadata.Converter) {
+        return m_metadata.Converter->ConvertFromString(rawValue, parsedValue);
+    }
+
+    if (m_metadata.ValueParser) {
+        return m_metadata.ValueParser(rawValue, parsedValue);
+    }
+
+    return false;
+}
+
 DependencyPropertyRegistry& DependencyPropertyRegistry::Get() {
     static DependencyPropertyRegistry registry;
     return registry;
@@ -99,9 +113,12 @@ const DependencyProperty* DependencyPropertyRegistry::FindProperty(const std::st
     };
 
     const auto [ownerQualifier, propertyName] = splitQualifiedName(name);
+    const auto matchesName = [&](const auto& property) {
+        return property->GetName() == name || property->GetName() == propertyName;
+    };
 
     for (const auto& property : m_properties) {
-        if (property->GetName() != (propertyName.empty() ? name : propertyName)) {
+        if (!matchesName(property)) {
             continue;
         }
         if (property->GetOwnerType() == ownerType) {
@@ -110,7 +127,7 @@ const DependencyProperty* DependencyPropertyRegistry::FindProperty(const std::st
     }
 
     for (const auto& property : m_properties) {
-        if (property->GetName() != (propertyName.empty() ? name : propertyName)) {
+        if (!matchesName(property)) {
             continue;
         }
 
@@ -127,6 +144,10 @@ const DependencyProperty* DependencyPropertyRegistry::FindProperty(const std::st
             }
             const auto targetType = property->GetAttachedTargetType();
             if (targetType == ownerType) {
+                return property.get();
+            }
+            const auto targetCheck = m_ownerTypeChecks.find(targetType);
+            if (targetCheck != m_ownerTypeChecks.end() && targetCheck->second(&ownerInstance)) {
                 return property.get();
             }
         }

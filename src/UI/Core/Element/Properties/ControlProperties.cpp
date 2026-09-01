@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Core/Element/Control.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 namespace NeoWPF::UI::Properties {
@@ -10,6 +11,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeControlPaddingMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::Thickness{});
+        metadata.Converter = NeoWPF::UI::Properties::GetThicknessConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -17,6 +19,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeControlBackgroundColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu));
+        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -24,6 +27,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeControlBorderColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFFABADB3u));
+        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -31,6 +35,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeControlBorderThicknessMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(0);
+        metadata.Converter = NeoWPF::UI::Properties::GetIntConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }

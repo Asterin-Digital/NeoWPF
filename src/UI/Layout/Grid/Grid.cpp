@@ -33,6 +33,13 @@ namespace NeoWPF::UI {
     void Grid::SetRow(Visual* v, int r) noexcept
     {
         if (!v) return;
+        if (auto* obj = dynamic_cast<NeoWPF::UI::Properties::DependencyObject*>(v)) {
+            if (r <= 0) {
+                obj->ClearValue(Grid::RowProperty());
+            } else {
+                obj->SetValue(Grid::RowProperty(), r);
+            }
+        }
         if (r <= 0) {
             m_rowMap.erase(v);
         } else {
@@ -43,6 +50,13 @@ namespace NeoWPF::UI {
     void Grid::SetColumn(Visual* v, int c) noexcept
     {
         if (!v) return;
+        if (auto* obj = dynamic_cast<NeoWPF::UI::Properties::DependencyObject*>(v)) {
+            if (c <= 0) {
+                obj->ClearValue(Grid::ColumnProperty());
+            } else {
+                obj->SetValue(Grid::ColumnProperty(), c);
+            }
+        }
         if (c <= 0) {
             m_colMap.erase(v);
         } else {
@@ -53,6 +67,12 @@ namespace NeoWPF::UI {
     int Grid::GetRow(Visual* v) const noexcept
     {
         if (!v) return 0;
+        if (auto* obj = dynamic_cast<const NeoWPF::UI::Properties::DependencyObject*>(v)) {
+            try {
+                return obj->GetValue<int>(Grid::RowProperty());
+            } catch (const std::bad_any_cast&) {
+            }
+        }
         auto it = m_rowMap.find(v);
         return it == m_rowMap.end() ? 0 : it->second;
     }
@@ -60,6 +80,12 @@ namespace NeoWPF::UI {
     int Grid::GetColumn(Visual* v) const noexcept
     {
         if (!v) return 0;
+        if (auto* obj = dynamic_cast<const NeoWPF::UI::Properties::DependencyObject*>(v)) {
+            try {
+                return obj->GetValue<int>(Grid::ColumnProperty());
+            } catch (const std::bad_any_cast&) {
+            }
+        }
         auto it = m_colMap.find(v);
         return it == m_colMap.end() ? 0 : it->second;
     }
@@ -67,6 +93,12 @@ namespace NeoWPF::UI {
     void Grid::ClearAttachedProperties(Visual* v)
     {
         if (!v) return;
+        if (auto* obj = dynamic_cast<NeoWPF::UI::Properties::DependencyObject*>(v)) {
+            obj->ClearValue(Grid::RowProperty());
+            obj->ClearValue(Grid::ColumnProperty());
+            obj->ClearValue(Grid::RowSpanProperty());
+            obj->ClearValue(Grid::ColumnSpanProperty());
+        }
         m_rowMap.erase(v);
         m_colMap.erase(v);
         s_rowSpanMap.erase(v);
@@ -97,6 +129,13 @@ namespace NeoWPF::UI {
     void Grid::SetRowSpan(Visual* v, int span)
     {
         if (!v) return;
+        if (auto* obj = dynamic_cast<NeoWPF::UI::Properties::DependencyObject*>(v)) {
+            if (span <= 1) {
+                obj->ClearValue(Grid::RowSpanProperty());
+            } else {
+                obj->SetValue(Grid::RowSpanProperty(), span);
+            }
+        }
         if (span <= 1) {
             s_rowSpanMap.erase(v);
         } else {
@@ -107,6 +146,13 @@ namespace NeoWPF::UI {
     void Grid::SetColumnSpan(Visual* v, int span)
     {
         if (!v) return;
+        if (auto* obj = dynamic_cast<NeoWPF::UI::Properties::DependencyObject*>(v)) {
+            if (span <= 1) {
+                obj->ClearValue(Grid::ColumnSpanProperty());
+            } else {
+                obj->SetValue(Grid::ColumnSpanProperty(), span);
+            }
+        }
         if (span <= 1) {
             s_colSpanMap.erase(v);
         } else {
@@ -117,6 +163,12 @@ namespace NeoWPF::UI {
     int Grid::GetRowSpan(Visual* v)
     {
         if (!v) return 1;
+        if (auto* obj = dynamic_cast<const NeoWPF::UI::Properties::DependencyObject*>(v)) {
+            try {
+                return obj->GetValue<int>(Grid::RowSpanProperty());
+            } catch (const std::bad_any_cast&) {
+            }
+        }
         auto it = s_rowSpanMap.find(v);
         return it == s_rowSpanMap.end() ? 1 : it->second;
     }
@@ -124,6 +176,12 @@ namespace NeoWPF::UI {
     int Grid::GetColumnSpan(Visual* v)
     {
         if (!v) return 1;
+        if (auto* obj = dynamic_cast<const NeoWPF::UI::Properties::DependencyObject*>(v)) {
+            try {
+                return obj->GetValue<int>(Grid::ColumnSpanProperty());
+            } catch (const std::bad_any_cast&) {
+            }
+        }
         auto it = s_colSpanMap.find(v);
         return it == s_colSpanMap.end() ? 1 : it->second;
     }

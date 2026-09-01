@@ -1,5 +1,6 @@
 #pragma once
 
+#include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 

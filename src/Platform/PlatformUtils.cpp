@@ -1,5 +1,7 @@
 #include <NeoWPF/Platform/PlatformUtils.h>
 
+#include <algorithm>
+
 #ifdef _WIN32
 #include <Windows.h>
 #else
@@ -8,6 +10,79 @@
 #endif
 
 namespace NeoWPF::Platform {
+
+std::string Trim(const std::string& value)
+{
+    const auto begin = std::find_if_not(value.begin(), value.end(), [](unsigned char ch) {
+        return std::isspace(ch) != 0;
+    });
+    const auto end = std::find_if_not(value.rbegin(), value.rend(), [](unsigned char ch) {
+        return std::isspace(ch) != 0;
+    }).base();
+
+    if (begin >= end) {
+        return {};
+    }
+
+    return std::string(begin, end);
+}
+
+std::string ToLower(std::string value)
+{
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+    return value;
+}
+
+std::vector<std::string> Split(const std::string& value, char delimiter)
+{
+    std::vector<std::string> parts;
+    std::string current;
+    for (const char ch : value) {
+        if (ch == delimiter) {
+            if (!current.empty()) {
+                parts.push_back(current);
+                current.clear();
+            }
+            continue;
+        }
+        current.push_back(ch);
+    }
+    if (!current.empty()) {
+        parts.push_back(current);
+    }
+    return parts;
+}
+
+int TryParseInt(const std::string& value, int fallback)
+{
+    try {
+        return std::stoi(value);
+    } catch (...) {
+        return fallback;
+    }
+}
+
+bool TryParseUInt32Hex(const std::string& value, std::uint32_t& output)
+{
+    std::string candidate = Trim(value);
+    if (candidate.empty()) {
+        return false;
+    }
+    if (!candidate.empty() && candidate[0] == '#') {
+        candidate = candidate.substr(1);
+    }
+    if (!candidate.empty() && candidate.rfind("0x", 0) == 0) {
+        candidate = candidate.substr(2);
+    }
+    try {
+        output = static_cast<std::uint32_t>(std::stoul(candidate, nullptr, 16));
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
 
 std::string WideToUtf8(const std::wstring& input)
 {

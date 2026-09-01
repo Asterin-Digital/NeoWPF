@@ -151,12 +151,12 @@ TEST(XamlParserTests, CollectionPropertiesProcessRowAndColumnDefinitionsAsCollec
     const std::string xml = R"(
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Fixed:20" />
-                <RowDefinition Height="Star:1" />
+                <RowDefinition Height="20" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Fixed:30" />
-                <ColumnDefinition Width="Star:1" />
+                <ColumnDefinition Width="30" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
         </Grid>
     )";

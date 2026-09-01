@@ -160,7 +160,7 @@ inline void RegisterXamlCollectionProperty(
 template<typename TOwner, typename TItem>
 inline void RegisterXamlElementProperty(
     const NeoWPF::UI::Properties::DependencyProperty& property,
-    void (TOwner::*setter)(std::shared_ptr<TItem>))
+    void (TOwner::*setter)(const std::shared_ptr<TItem>&))
 {
     XamlPropertyBinding binding{
         XamlPropertyKind::Element,

@@ -1,6 +1,8 @@
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/UI/Markup/Xaml/XamlPropertyBinding.h>
+#include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <unordered_map>
 
@@ -12,6 +14,18 @@ ContentControl::ContentControl()
     : m_content(nullptr)
     , m_presenter(nullptr)
 {
+    ContentProperty();
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& ContentControl::ContentProperty()
+{
+    static const auto& property = NeoWPF::UI::Properties::DependencyProperty::Register<
+        ContentControl, std::shared_ptr<NeoWPF::UI::UIElement>>(
+            "Content");
+    static const bool bindingRegistered = (NeoWPF::UI::Markup::Xaml::RegisterXamlElementProperty<
+        ContentControl, NeoWPF::UI::UIElement>(property, &ContentControl::SetContent), true);
+    (void)bindingRegistered;
+    return property;
 }
 
 void ContentControl::SetContent(const std::shared_ptr<NeoWPF::UI::UIElement>& content)

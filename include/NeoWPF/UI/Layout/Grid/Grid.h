@@ -54,6 +54,15 @@ public:
         int value = 0;
     };
 
+    struct GridLength {
+        SizeMode Mode = SizeMode::Auto;
+        int Value = 0;
+
+        static GridLength Auto() noexcept { return {SizeMode::Auto, 0}; }
+        static GridLength Star(int weight = 1) noexcept { return {SizeMode::Star, weight > 0 ? weight : 1}; }
+        static GridLength Fixed(int pixels) noexcept { return {SizeMode::Fixed, pixels > 0 ? pixels : 0}; }
+    };
+
     Grid() = default;
 
     static const NeoWPF::UI::Properties::DependencyProperty& RowProperty();

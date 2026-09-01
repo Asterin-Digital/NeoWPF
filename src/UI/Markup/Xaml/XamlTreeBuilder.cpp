@@ -19,6 +19,7 @@
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 
 #include <functional>
 #include <memory>
@@ -47,12 +48,22 @@ void ApplyAttributes(const XamlNode& node, NeoWPF::UI::Properties::DependencyObj
     for (const auto& [name, value] : node.Attributes) {
         const auto* property = target.FindDependencyProperty(name);
         if (!property) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
+                "[XamlTreeBuilder] Attribute property not found object=%p name='%s' value='%s'",
+                &target, name.c_str(), value.c_str());
             continue;
         }
 
         std::any parsedValue;
         if (property->TryParseValue(value, parsedValue)) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
+                "[XamlTreeBuilder] Attribute applied object=%p property='%s' parsedType='%s'",
+                &target, name.c_str(), parsedValue.type().name());
             target.SetValue(*property, parsedValue);
+        } else {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Info,
+                "[XamlTreeBuilder] Attribute conversion failed object=%p property='%s' value='%s'",
+                &target, name.c_str(), value.c_str());
         }
     }
 }
@@ -99,6 +110,10 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
         return nullptr;
     }
 
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
+        "[XamlTreeBuilder] Created tag='%s' object=%p contentProperty='%s' attributes=%zu children=%zu",
+        node.Name.c_str(), obj.get(), typeInfo->ContentPropertyName.c_str(), node.Attributes.size(), node.Children.size());
+
 
     ApplyAttributes(node, *obj);
 
@@ -114,6 +129,10 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
 
         const auto [ownerName, propName] = SplitDottedName(childNode.Name);
         if (!propName.empty()) {
+
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
+                "[XamlTreeBuilder] Property element parent='%s' property='%s' children=%zu",
+                node.Name.c_str(), propName.c_str(), childNode.Children.size());
 
             const auto* prop = obj->FindDependencyProperty(propName);
             if (!prop) {
@@ -133,12 +152,19 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
                 continue;
             }
 
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
+                "[XamlTreeBuilder] Binding found parent='%s' property='%s' kind=%d",
+                node.Name.c_str(), propName.c_str(), static_cast<int>(binding->Kind));
+
 
             if (binding->Kind == XamlPropertyKind::Collection) {
 
                 for (const auto& grandChild : childNode.Children) {
                     auto child = BuildXamlObjectInternal(grandChild);
                     if (child) {
+                        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
+                            "[XamlTreeBuilder] Assign collection parent='%s' property='%s' child=%p",
+                            node.Name.c_str(), propName.c_str(), child.get());
                         binding->Assign(*obj, child);
                     }
                 }
@@ -147,6 +173,9 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
                 if (childNode.Children.size() == 1) {
                     auto child = BuildXamlObjectInternal(childNode.Children[0]);
                     if (child) {
+                        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
+                            "[XamlTreeBuilder] Assign element parent='%s' property='%s' child=%p",
+                            node.Name.c_str(), propName.c_str(), child.get());
                         binding->Assign(*obj, child);
                     }
                 } else if (childNode.Children.empty()) {
@@ -167,15 +196,26 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
                 const auto* contentProp = obj->FindDependencyProperty(typeInfo2->ContentPropertyName);
                 if (contentProp) {
                     const auto* binding = contentProp->GetXamlBinding();
-                    if (binding && binding->Kind == XamlPropertyKind::Collection) {
+                    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
+                        "[XamlTreeBuilder] Default content parent='%s' property='%s' binding=%s kind=%d child=%p",
+                        node.Name.c_str(), typeInfo2->ContentPropertyName.c_str(), binding ? "yes" : "no",
+                        binding ? static_cast<int>(binding->Kind) : -1, child.get());
+                    if (binding && (binding->Kind == XamlPropertyKind::Collection || binding->Kind == XamlPropertyKind::Element)) {
                         binding->Assign(*obj, child);
                         continue;
                     }
+                } else {
+                    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Info,
+                        "[XamlTreeBuilder] Default content property missing parent='%s' property='%s' object=%p",
+                        node.Name.c_str(), typeInfo2->ContentPropertyName.c_str(), obj.get());
                 }
             }
 
             if (auto visualOwner = std::dynamic_pointer_cast<NeoWPF::UI::Visual>(obj)) {
                 if (auto visualChild = std::dynamic_pointer_cast<NeoWPF::UI::Visual>(child)) {
+                    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
+                        "[XamlTreeBuilder] Add visual child parent='%s' parentObject=%p child=%p",
+                        node.Name.c_str(), obj.get(), child.get());
                     visualOwner->AddChild(visualChild);
                 }
             }

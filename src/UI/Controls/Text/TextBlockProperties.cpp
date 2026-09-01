@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Markup/Xaml/XamlTypeRegistry.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 namespace NeoWPF::UI::Properties {
@@ -11,6 +12,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockTextMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(std::wstring());
+        metadata.Converter = NeoWPF::UI::Properties::GetWideStringConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -18,6 +20,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockTextColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(::NeoWPF::UI::Color::FromArgb(0xFF000000u));
+        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -25,6 +28,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockFontSizeMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(16);
+        metadata.Converter = NeoWPF::UI::Properties::GetIntConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -32,6 +36,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockFontFamilyMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(std::wstring());
+        metadata.Converter = NeoWPF::UI::Properties::GetWideStringConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -60,6 +65,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockPaddingMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::Thickness{});
+        metadata.Converter = NeoWPF::UI::Properties::GetThicknessConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }

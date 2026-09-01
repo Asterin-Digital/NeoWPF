@@ -9,9 +9,9 @@ void ApplyCheckboxThemeStyle(UIElement* element)
         return;
     }
 
-    element->SetStylePropertyValue("TextColor", element->GetResourceValue("Checkbox.TextColor", NeoWPF::UI::Color::FromArgb(0xFF000000u)));
-    element->SetStylePropertyValue("BoxColor", element->GetResourceValue("Checkbox.BoxColor", NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu)));
-    element->SetStylePropertyValue("BorderColor", element->GetResourceValue("Checkbox.BorderColor", NeoWPF::UI::Color::FromArgb(0xFF202020u)));
+    element->SetStylePropertyValue("Foreground", element->GetResourceValue("Checkbox.TextColor", NeoWPF::UI::Color::FromArgb(0xFF000000u)));
+    element->SetStylePropertyValue("Background", element->GetResourceValue("Checkbox.BoxColor", NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu)));
+    element->SetStylePropertyValue("BorderBrush", element->GetResourceValue("Checkbox.BorderColor", NeoWPF::UI::Color::FromArgb(0xFF202020u)));
 }
 
 }

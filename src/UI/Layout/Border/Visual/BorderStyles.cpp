@@ -10,9 +10,9 @@ void ApplyBorderThemeStyle(UIElement* element)
     }
 
     element->SetStylePropertyValue("Padding", element->GetResourceValue("Border.Padding", 0));
-    element->SetStylePropertyValue("BorderThickness", element->GetResourceValue("Border.BorderThickness", 1));
-    element->SetStylePropertyValue("BorderColor", element->GetResourceValue("Border.BorderColor", uint32_t(0xFF707070u)));
-    element->SetStylePropertyValue("BackgroundColor", element->GetResourceValue("Border.BackgroundColor", uint32_t(0xFFFFFFFFu)));
+    element->SetStylePropertyValue("BorderThickness", element->GetResourceValue("Border.BorderThickness", NeoWPF::UI::Thickness(1)));
+    element->SetStylePropertyValue("BorderBrush", element->GetResourceValue("Border.BorderColor", uint32_t(0xFF707070u)));
+    element->SetStylePropertyValue("Background", element->GetResourceValue("Border.BackgroundColor", uint32_t(0xFFFFFFFFu)));
 }
 
 }

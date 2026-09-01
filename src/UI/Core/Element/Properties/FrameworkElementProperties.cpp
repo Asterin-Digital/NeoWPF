@@ -1,10 +1,12 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementWidthMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(0);
+        metadata.Converter = NeoWPF::UI::Properties::GetIntConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -12,6 +14,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementHeightMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(0);
+        metadata.Converter = NeoWPF::UI::Properties::GetIntConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -33,6 +36,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementClipToBoundsMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(false);
+        metadata.Converter = NeoWPF::UI::Properties::GetBoolConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -40,6 +44,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementHorizontalAlignmentMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::HorizontalAlignment::Stretch);
+        metadata.Converter = NeoWPF::UI::Properties::GetHorizontalAlignmentConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -47,6 +52,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementVerticalAlignmentMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::VerticalAlignment::Stretch);
+        metadata.Converter = NeoWPF::UI::Properties::GetVerticalAlignmentConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -54,6 +60,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementMarginMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::Thickness{});
+        metadata.Converter = NeoWPF::UI::Properties::GetThicknessConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }

@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <type_traits>
+#include <NeoWPF/UI/Properties/TypeConverter.h>
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
@@ -111,6 +112,7 @@ struct PropertyMetadata {
     CoerceValueCallbackFunction CoerceValueCallback;
     PropertyFlags Flags = PropertyFlags::None;
     XamlValueParser ValueParser;
+    std::shared_ptr<const TypeConverter> Converter;
 };
 
 /*
@@ -369,6 +371,7 @@ template<typename TOwner, typename TTarget, typename TProperty>
 const DependencyProperty& DependencyProperty::RegisterAttached(const std::string& name, const PropertyMetadata& metadata)
 {
     auto& registry = DependencyPropertyRegistry::Get();
+    registry.RegisterOwnerType<TTarget>();
     return registry.RegisterAttachedProperty(name, typeid(TProperty), typeid(TOwner), typeid(TTarget), metadata);
 }
 

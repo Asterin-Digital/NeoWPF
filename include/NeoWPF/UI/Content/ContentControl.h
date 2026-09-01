@@ -14,6 +14,8 @@ class ContentPresenter;
 
 class ContentControl : public NeoWPF::UI::Control, public NeoWPF::UI::IContentAware {
 public:
+    static const Properties::DependencyProperty& ContentProperty();
+
     ContentControl();
 
     void SetContent(const std::shared_ptr<NeoWPF::UI::UIElement>& content);
