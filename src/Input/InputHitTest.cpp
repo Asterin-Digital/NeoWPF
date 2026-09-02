@@ -3,12 +3,15 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Core/Element/IContentAware.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <algorithm>
 
 namespace NeoWPF::Input
 {
     NeoWPF::UI::UIElement* InputManager::HitTest(int x, int y)
     {
+        NEO_WPF_ACTION("Input.HitTest");
+
         if (!m_rootElement)
         {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Debug, "[HitTest] No root element set");

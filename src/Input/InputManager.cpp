@@ -1,4 +1,5 @@
 #include <NeoWPF/Input/InputManager.h>
+#include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Input/Core/Events.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <algorithm>
@@ -88,6 +89,8 @@ namespace NeoWPF::Input
 
     void InputManager::ProcessMouseInput(int x, int y, std::uint32_t buttonState, int wheelDelta)
     {
+        NEO_WPF_ACTION("Input.ProcessMouseInput");
+
         m_mouseX = x;
         m_mouseY = y;
 

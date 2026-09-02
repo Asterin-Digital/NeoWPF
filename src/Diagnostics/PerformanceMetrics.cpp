@@ -16,6 +16,7 @@ namespace {
 struct Counters {
     std::atomic<bool> enabled{true};
     std::atomic<bool> startupActionTrackingEnabled{false};
+    std::atomic<bool> actionTimingEnabled{false};
     std::atomic<uint64_t> frameCount{0};
     std::atomic<uint64_t> layoutPassCount{0};
     std::atomic<uint64_t> renderPassCount{0};
@@ -192,6 +193,29 @@ void EmitStartupActionSummary()
         NeoWPF::Diagnostics::LogInfo("[Perf]   %s count=%llu total=%.4f avg=%.4f",
             name.c_str(), static_cast<unsigned long long>(count), totalSeconds, avgSeconds);
     }
+}
+
+void SetActionTimingEnabled(bool enabled)
+{
+    GetCounters().actionTimingEnabled.store(enabled, std::memory_order_relaxed);
+}
+
+bool IsActionTimingEnabled() noexcept
+{
+    return GetCounters().actionTimingEnabled.load(std::memory_order_relaxed);
+}
+
+void RecordAction(const char* actionName, double elapsedSeconds)
+{
+    auto& counters = GetCounters();
+    if (!actionName ||
+        !counters.enabled.load(std::memory_order_relaxed) ||
+        !counters.initialized.load(std::memory_order_relaxed) ||
+        !counters.actionTimingEnabled.load(std::memory_order_relaxed)) {
+        return;
+    }
+
+    NeoWPF::Diagnostics::LogInfo("[Perf] action=%s elapsed=%.6f", actionName, elapsedSeconds);
 }
 
 void RecordStartup()

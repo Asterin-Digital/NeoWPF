@@ -10,11 +10,13 @@ void UIElement::InvalidateVisual() {
 }
 
 void UIElement::InvalidateMeasure() {
-    InvalidateVisual();
+    m_isDirty = true;
+    MarkLayoutDirty();
 }
 
 void UIElement::InvalidateArrange() {
-    InvalidateVisual();
+    m_isDirty = true;
+    MarkLayoutDirty();
 }
 
 void UIElement::ClearDirty() noexcept {

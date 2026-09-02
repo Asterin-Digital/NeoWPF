@@ -171,6 +171,8 @@ public:
     */
     bool IsTreeDirty() const noexcept { return m_isTreeDirty; }
 
+    bool IsLayoutDirty() const noexcept { return m_isLayoutDirty; }
+
     /*
         @summary
         Marks the visual tree as dirty.
@@ -179,6 +181,8 @@ public:
     */
     void MarkTreeDirty();
 
+    void MarkLayoutDirty();
+
     /*
         @summary
         Clears the dirty flag.
@@ -186,6 +190,8 @@ public:
         @internal
     */
     void ClearTreeDirty() noexcept { m_isTreeDirty = false; }
+
+    void ClearLayoutDirty() noexcept { m_isLayoutDirty = false; }
 
     /*
         @summary
@@ -245,6 +251,7 @@ private:
     std::vector<std::shared_ptr<Visual>> m_logicalChildren;
     int m_zIndex = 0;
     bool m_isTreeDirty = false;
+    bool m_isLayoutDirty = false;
     bool m_isInitialized = false;
     bool m_initializationInProgress = false;
 };

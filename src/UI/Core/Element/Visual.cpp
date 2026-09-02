@@ -94,12 +94,12 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
     m_children.push_back(child);
 
     if (IsInitialized()) {
-        MarkTreeDirty();
+        MarkLayoutDirty();
     }
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
         "[Visual::AddVisualChild] After push_back");
 
-    MarkTreeDirty();
+    MarkLayoutDirty();
 }
 
 
@@ -139,7 +139,7 @@ void Visual::AddChild(const std::shared_ptr<Visual>& child)
     m_children.push_back(child);
 
     if (IsInitialized()) {
-        MarkTreeDirty();
+        MarkLayoutDirty();
     }
 
     if (IsInitialized() && !child->IsInitialized() && !child->IsInitializing()) {
@@ -150,14 +150,14 @@ void Visual::AddChild(const std::shared_ptr<Visual>& child)
     {
         if (existing.get() == child.get())
         {
-            MarkTreeDirty();
+            MarkLayoutDirty();
             return;
         }
     }
 
     m_logicalChildren.push_back(child);
 
-    MarkTreeDirty();
+    MarkLayoutDirty();
 }
 
 void Visual::RemoveVisualChild(const std::shared_ptr<Visual>& child)
@@ -187,7 +187,7 @@ void Visual::RemoveVisualChild(Visual* child)
 
     child->m_parent = nullptr;
     OnRemoveVisualChild(child);
-    MarkTreeDirty();
+    MarkLayoutDirty();
 }
 
 void Visual::RemoveFromParent()
@@ -259,6 +259,19 @@ void Visual::MarkTreeDirty()
     m_isTreeDirty = true;
     if (m_parent) {
         m_parent->MarkTreeDirty();
+    }
+}
+
+void Visual::MarkLayoutDirty()
+{
+    if (m_isLayoutDirty) {
+        return;
+    }
+
+    m_isLayoutDirty = true;
+    MarkTreeDirty();
+    if (m_parent) {
+        m_parent->MarkLayoutDirty();
     }
 }
 

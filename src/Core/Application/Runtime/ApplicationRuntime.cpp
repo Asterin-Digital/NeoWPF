@@ -50,6 +50,7 @@ void ClearVisualTreeDirtyForRoot(NeoWPF::UI::Visual* rootVisual)
     }
 
     rootVisual->ClearTreeDirty();
+    rootVisual->ClearLayoutDirty();
     if (auto uiElement = dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual)) {
         uiElement->ClearDirty();
     }
@@ -59,7 +60,7 @@ void ClearVisualTreeDirtyForRoot(NeoWPF::UI::Visual* rootVisual)
     }
 }
 
-void LayoutAndBuildVisualTree(NeoWPF::UI::Visual* rootVisual, unsigned int width, unsigned int height, NeoWPF::Rendering::CommandList& buildCommandList)
+void LayoutVisualTree(NeoWPF::UI::Visual* rootVisual, unsigned int width, unsigned int height)
 {
     if (!rootVisual) {
         return;
@@ -69,7 +70,14 @@ void LayoutAndBuildVisualTree(NeoWPF::UI::Visual* rootVisual, unsigned int width
         fe->Measure(static_cast<int>(width), static_cast<int>(height));
         fe->Arrange(static_cast<int>(width), static_cast<int>(height));
     }
-    
+}
+
+void BuildVisualTreeCommands(NeoWPF::UI::Visual* rootVisual, NeoWPF::Rendering::CommandList& buildCommandList)
+{
+    if (!rootVisual) {
+        return;
+    }
+
     //the renderer may not be ready yet, check before building commands to avoid crashes
     auto* platform = NeoWPF::Platform::CurrentPlatform();
     if (platform && platform->Rendering().IsInitialized()) {
@@ -79,20 +87,33 @@ void LayoutAndBuildVisualTree(NeoWPF::UI::Visual* rootVisual, unsigned int width
 
 }
 
-void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigned int height)
+void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigned int height, bool layoutRequired)
 {
     NEO_WPF_STARTUP_ACTION("BuildWindowVisualTree");
     const auto layoutStart = std::chrono::steady_clock::now();
     windowState.buildCommandList.Clear();
 
     auto rootVisual = windowState.windowHost->GetContent();
-    if (rootVisual) {
-        rootVisual->Initialize();
+    {
+        NEO_WPF_ACTION("BuildWindowVisualTree.Initialize");
+        if (rootVisual) {
+            rootVisual->Initialize();
+        }
     }
-    LayoutAndBuildVisualTree(rootVisual.get(), width, height, windowState.buildCommandList);
+    if (layoutRequired) {
+        NEO_WPF_ACTION("BuildWindowVisualTree.MeasureArrange");
+        LayoutVisualTree(rootVisual.get(), width, height);
+    } else {
+        NEO_WPF_ACTION("BuildWindowVisualTree.MeasureArrangeSkipped");
+    }
+    {
+        NEO_WPF_ACTION("BuildWindowVisualTree.BuildRenderCommands");
+        BuildVisualTreeCommands(rootVisual.get(), windowState.buildCommandList);
+    }
     const auto layoutElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - layoutStart).count();
     NeoWPF::Diagnostics::PerformanceMetrics::RecordLayoutPass(layoutElapsed);
     {
+        NEO_WPF_ACTION("BuildWindowVisualTree.PublishCommandList");
         std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
         windowState.renderCommandList = windowState.buildCommandList;
     }
@@ -260,7 +281,7 @@ int RunApplicationMessageLoop()
                 windowWidth = clientWidth;
                 windowHeight = clientHeight;
             }
-            BuildWindowVisualTree(windowState, windowWidth, windowHeight);
+            BuildWindowVisualTree(windowState, windowWidth, windowHeight, true);
             windowState.width = windowWidth;
             windowState.height = windowHeight;
         }
@@ -373,7 +394,11 @@ int RunApplicationMessageLoop()
                     windowWidth = currentClientWidth;
                     windowHeight = currentClientHeight;
                 }
-                BuildWindowVisualTree(windowState, windowWidth, windowHeight);
+                auto rootVisual = windowState.windowHost ? windowState.windowHost->GetContent() : nullptr;
+                const bool layoutRequired = sizeChanged ||
+                    !windowState.commandListInitialized ||
+                    (rootVisual && rootVisual->IsLayoutDirty());
+                BuildWindowVisualTree(windowState, windowWidth, windowHeight, layoutRequired);
                 windowState.width = windowWidth;
                 windowState.height = windowHeight;
             }
