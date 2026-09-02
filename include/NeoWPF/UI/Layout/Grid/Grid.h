@@ -138,6 +138,9 @@ public:
     */
     void AddColumnDefinition(std::shared_ptr<ColumnDefinition> colDef);
 
+    const std::vector<Definition>& GetRowDefinitions() const noexcept { return m_rowDefs; }
+    const std::vector<Definition>& GetColumnDefinitions() const noexcept { return m_colDefs; }
+
     /*
         @summary
         Places a child in a grid cell.

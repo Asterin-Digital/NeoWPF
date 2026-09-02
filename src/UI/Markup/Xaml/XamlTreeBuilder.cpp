@@ -51,9 +51,12 @@ void ApplyAttributes(const XamlNode& node, NeoWPF::UI::Properties::DependencyObj
     for (const auto& [name, value] : node.Attributes) {
         const auto* property = target.FindDependencyProperty(name);
         if (!property) {
-            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
-                "[XamlTreeBuilder] Attribute property not found object=%p name='%s' value='%s'",
-                &target, name.c_str(), value.c_str());
+            NeoWPF::Diagnostics::QueueDeveloperWarning(
+                L"XAML_PROPERTY_NOT_FOUND",
+                L"Unknown attribute property '" + ToWideString(name) + L"' on XAML object at " +
+                    ToWideString(std::to_string(node.Line)) + L":" + ToWideString(std::to_string(node.Column)) +
+                    L" (value='" + ToWideString(value) + L"')",
+                NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
             continue;
         }
 
@@ -127,7 +130,7 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
         NeoWPF::Diagnostics::QueueDeveloperWarning(
             L"XAML_TYPE_NOT_FOUND",
             L"Unknown XAML type: " + ToWideString(node.Name),
-            NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
+            NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
         return nullptr;
     }
 
@@ -166,7 +169,7 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
                 NeoWPF::Diagnostics::QueueDeveloperWarning(
                     L"XAML_PROPERTY_NOT_FOUND",
                     L"Unknown property: " + ToWideString(propName),
-                    NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
+                    NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
                 continue;
             }
 
@@ -175,7 +178,7 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
                 NeoWPF::Diagnostics::QueueDeveloperWarning(
                     L"XAML_NO_BINDING",
                     L"Property not registered for XAML: " + ToWideString(propName),
-                    NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
+                    NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
                 continue;
             }
 

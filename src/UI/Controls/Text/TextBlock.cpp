@@ -32,6 +32,15 @@ void TextBlock::SetText(const std::wstring& text)
     if (m_text == text) {
         return;
     }
+
+    if (!IsApplyingPropertyValue()) {
+        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Text", *this);
+        if (property) {
+            SetValue(*property, text);
+            return;
+        }
+    }
+
     m_text = text;
     m_textDirty = true;
     InvalidateVisual();

@@ -12,6 +12,7 @@
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
+#include <NeoWPF/UI/Data/Binding.h>
 #include <NeoWPF/UI/Markup/Builder/Builder.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
@@ -26,6 +27,15 @@ struct TestObject : NeoWPF::UI::Properties::DependencyObject {
 
 struct DerivedTestObject : TestObject {
 };
+
+const auto& BindingValueProperty()
+{
+    using namespace NeoWPF::UI::Properties;
+    static const auto& property = DependencyProperty::Register<TestObject, int>(
+        "Automated.BindingValue",
+        PropertyMetadata{0});
+    return property;
+}
 
 int callbackCount = 0;
 int callbackOldValue = -1;
@@ -121,6 +131,70 @@ TEST(DependencyPropertyTests, ButtonExposesStaticPropertyHandles)
     EXPECT_EQ(textProperty.GetOwnerType(), std::type_index(typeid(NeoWPF::UI::Button)));
     EXPECT_EQ(textProperty.GetPropertyType(), std::type_index(typeid(std::wstring)));
     EXPECT_EQ(NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("Text", typeid(NeoWPF::UI::Button)), &textProperty);
+}
+
+TEST(DependencyPropertyTests, ButtonTextSetterKeepsDependencyPropertyInSync)
+{
+    NeoWPF::UI::Button button;
+    const auto& property = NeoWPF::UI::Button::TextProperty();
+
+    button.SetText(L"Direct C++ text");
+
+    EXPECT_EQ(button.GetText(), L"Direct C++ text");
+    EXPECT_EQ(button.GetValue<std::wstring>(property), L"Direct C++ text");
+    EXPECT_EQ(std::any_cast<std::wstring>(button.GetRawValue(property)), L"Direct C++ text");
+}
+
+TEST(DependencyPropertyTests, CheckboxPaddingPreservesThicknessInDependencyProperty)
+{
+    NeoWPF::UI::Checkbox checkbox;
+    const auto& property = NeoWPF::UI::Checkbox::PaddingProperty();
+    const NeoWPF::UI::Thickness padding(1, 2, 3, 4);
+
+    checkbox.SetPadding(padding);
+
+    EXPECT_EQ(checkbox.GetPadding(), padding);
+    EXPECT_EQ(checkbox.GetValue<NeoWPF::UI::Thickness>(property), padding);
+    EXPECT_EQ(std::any_cast<NeoWPF::UI::Thickness>(checkbox.GetRawValue(property)), padding);
+}
+
+TEST(DependencyPropertyTests, SupportsTwoWayBindingBetweenDependencyObjects)
+{
+    auto source = std::make_shared<TestObject>();
+    TestObject target;
+    const auto& property = BindingValueProperty();
+    source->SetValue(property, 7);
+
+    target.SetBinding(property,
+        NeoWPF::UI::Data::Binding("Automated.BindingValue", NeoWPF::UI::Data::BindingMode::TwoWay)
+            .WithSource(source));
+
+    EXPECT_EQ(target.GetValue<int>(property), 7);
+
+    source->SetValue(property, 11);
+    EXPECT_EQ(target.GetValue<int>(property), 11);
+
+    target.SetValue(property, 13);
+    EXPECT_EQ(source->GetValue<int>(property), 13);
+
+    target.ClearBinding(property);
+    source->SetValue(property, 17);
+    EXPECT_EQ(target.GetValue<int>(property), 0);
+}
+
+TEST(DependencyPropertyTests, DoesNotWriteBackOneWayDependencyObjectBinding)
+{
+    auto source = std::make_shared<TestObject>();
+    TestObject target;
+    const auto& property = BindingValueProperty();
+    source->SetValue(property, 7);
+
+    target.SetBinding(property,
+        NeoWPF::UI::Data::Binding("Automated.BindingValue", NeoWPF::UI::Data::BindingMode::OneWay)
+            .WithSource(source));
+
+    target.SetValue(property, 13);
+    EXPECT_EQ(source->GetValue<int>(property), 7);
 }
 
 TEST(DependencyPropertyTests, TextBlockExposesStaticPropertyHandles)

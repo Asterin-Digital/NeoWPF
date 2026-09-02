@@ -128,10 +128,10 @@ void Checkbox::SetBorderColor(NeoWPF::UI::Color color) noexcept
 
 void Checkbox::SetPadding(Thickness padding) noexcept
 {
-    if (IsApplyingPropertyValue()) { m_padding = padding.Left; InvalidateVisual(); return; }
+    if (IsApplyingPropertyValue()) { m_padding = padding; InvalidateVisual(); return; }
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", *this);
     if (property) { SetValue(*property, padding); return; }
-    m_padding = padding.Left;
+    m_padding = padding;
     InvalidateVisual();
 }
 
@@ -164,7 +164,7 @@ NeoWPF::UI::Color Checkbox::GetBorderColor() const noexcept
 
 Thickness Checkbox::GetPadding() const noexcept
 {
-    return Thickness(m_padding);
+    return m_padding;
 }
 
 int Checkbox::GetFontSize() const noexcept
@@ -174,7 +174,7 @@ int Checkbox::GetFontSize() const noexcept
 
 void Checkbox::Measure(int availableWidth, int availableHeight)
 {
-    const int contentAvailableWidth = availableWidth > 0 ? std::max(0, availableWidth - m_padding) : 0;
+    const int contentAvailableWidth = availableWidth > 0 ? std::max(0, availableWidth - m_padding.Horizontal()) : 0;
     Content::ContentControl::Measure(contentAvailableWidth, 0);
 
     int contentWidth = 0;
@@ -185,8 +185,8 @@ void Checkbox::Measure(int availableWidth, int availableHeight)
     }
 
     const int boxSize = std::max(18, contentHeight);
-    int desiredWidth = boxSize + m_padding + contentWidth;
-    int desiredHeight = std::max(boxSize, contentHeight);
+    int desiredWidth = boxSize + m_padding.Horizontal() + contentWidth;
+    int desiredHeight = std::max(boxSize, contentHeight) + m_padding.Vertical();
 
     SetDesiredSize(desiredWidth, desiredHeight);
 }
@@ -197,16 +197,17 @@ void Checkbox::Arrange(int finalWidth, int finalHeight)
     Content::ContentControl::Arrange(finalWidth, finalHeight);
 
     if (auto presenter = GetPresenter()) {
-        const int desiredOffsetX = 18 + m_padding;
-        if (presenter->GetLayoutOffsetX() != desiredOffsetX || presenter->GetLayoutOffsetY() != 0) {
-            presenter->SetLayoutOffset(desiredOffsetX, 0);
+        const int desiredOffsetX = 18 + m_padding.Left;
+        if (presenter->GetLayoutOffsetX() != desiredOffsetX || presenter->GetLayoutOffsetY() != m_padding.Top) {
+            presenter->SetLayoutOffset(desiredOffsetX, m_padding.Top);
         }
-        presenter->Arrange(std::max(0, finalWidth - (18 + m_padding)), contentHeight);
+        presenter->Arrange(std::max(0, finalWidth - (18 + m_padding.Left + m_padding.Right)),
+            std::max(0, contentHeight - m_padding.Top - m_padding.Bottom));
         if (auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(presenter->FindTemplateChild("PART_ContentHost"))) {
             const int desiredTextOffsetY = (finalHeight - contentHeight) / 2;
             contentHost->SetRect(
                 static_cast<int>(std::lround(presenter->GetLayoutOffsetX())),
-                desiredTextOffsetY,
+                desiredTextOffsetY + m_padding.Top,
                 std::max(0, static_cast<int>(std::lround(finalWidth - presenter->GetLayoutOffsetX()))),
                 contentHeight);
         }
@@ -266,10 +267,12 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
     if (contentHost) {
         contentHost->SetRect(
-            static_cast<int>(std::lround(fAbsX)) + boxSize + m_padding,
-            static_cast<int>(std::lround(fAbsY)),
-            std::max(0, static_cast<int>(std::lround(drawWidth)) - (boxSize + m_padding)),
-            std::max(1, static_cast<int>(std::lround(drawHeight))));
+            static_cast<int>(std::lround(fAbsX)) + boxSize + m_padding.Left,
+            static_cast<int>(std::lround(fAbsY)) + m_padding.Top,
+            std::max(0, static_cast<int>(std::lround(drawWidth)) -
+                (boxSize + m_padding.Left + m_padding.Right)),
+            std::max(1, static_cast<int>(std::lround(drawHeight)) -
+                m_padding.Top - m_padding.Bottom));
         contentHost->BuildRenderCommands(commands);
     }
 

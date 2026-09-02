@@ -1,7 +1,9 @@
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Core/Media/Thickness.h>
+#include <NeoWPF/UI/Core/Media/Spacing.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
 
 #include <cstdint>
@@ -119,6 +121,33 @@ bool ThicknessConverter::ConvertFromString(const std::string& rawValue, std::any
     }
 }
 
+bool SpacingConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+{
+    const auto parts = NeoWPF::Platform::Split(NeoWPF::Platform::Trim(rawValue), ',');
+    if (parts.size() != 1 && parts.size() != 2) {
+        return false;
+    }
+
+    try {
+        std::vector<int> values;
+        for (const auto& part : parts) {
+            std::size_t parsed = 0;
+            const auto input = NeoWPF::Platform::Trim(part);
+            values.push_back(std::stoi(input, &parsed));
+            if (parsed != input.size()) {
+                return false;
+            }
+        }
+
+        convertedValue = values.size() == 1
+            ? NeoWPF::UI::Spacing(values[0])
+            : NeoWPF::UI::Spacing(values[0], values[1]);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
 bool HorizontalAlignmentConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
     const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
@@ -155,9 +184,42 @@ DEFINE_CONVERTER_FACTORY(Float, FloatConverter)
 DEFINE_CONVERTER_FACTORY(Bool, BoolConverter)
 DEFINE_CONVERTER_FACTORY(Color, ColorConverter)
 DEFINE_CONVERTER_FACTORY(Thickness, ThicknessConverter)
+DEFINE_CONVERTER_FACTORY(Spacing, SpacingConverter)
 DEFINE_CONVERTER_FACTORY(HorizontalAlignment, HorizontalAlignmentConverter)
 DEFINE_CONVERTER_FACTORY(VerticalAlignment, VerticalAlignmentConverter)
 
 #undef DEFINE_CONVERTER_FACTORY
+
+bool TryConvertValue(const DependencyProperty& property,
+                     const std::any& value,
+                     std::any& convertedValue)
+{
+    if (!value.has_value()) {
+        convertedValue.reset();
+        return true;
+    }
+
+    if (value.type() == property.GetPropertyType()) {
+        convertedValue = value;
+        return true;
+    }
+
+    std::string text;
+    if (value.type() == typeid(std::wstring)) {
+        text = NeoWPF::Platform::WideToUtf8(std::any_cast<std::wstring>(value));
+    } else if (value.type() == typeid(std::string)) {
+        text = std::any_cast<std::string>(value);
+    } else {
+        return false;
+    }
+
+    if (!property.TryParseValue(text, convertedValue) ||
+        convertedValue.type() != property.GetPropertyType()) {
+        convertedValue.reset();
+        return false;
+    }
+
+    return true;
+}
 
 }

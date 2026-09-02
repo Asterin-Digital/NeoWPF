@@ -47,6 +47,7 @@ private:
     std::size_t m_targetChangeHandlerId = 0;
     std::vector<std::pair<std::shared_ptr<INotifyPropertyChanged>, std::size_t>> m_sourcePocoHandlerIds;
     bool m_isApplyingTargetValue = false;
+    bool m_isApplyingSourceValue = false;
     bool m_isDetaching = false;
 
     void UpdatePocoTargetValue();

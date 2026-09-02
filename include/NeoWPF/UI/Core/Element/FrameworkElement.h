@@ -507,6 +507,8 @@ public:
     void GetAbsoluteLayoutPosition(int& outX, int& outY) const noexcept;
 
 protected:
+    void OnAddChild(Visual* child) override;
+
     void ApplyRenderTransform(float& x, float& y, float& width, float& height) const noexcept;
     NeoWPF::UI::Core::Matrix4 GetLocalTransformMatrix() const noexcept override;
 

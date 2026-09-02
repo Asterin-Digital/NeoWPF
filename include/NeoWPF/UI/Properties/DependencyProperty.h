@@ -355,6 +355,8 @@ public:
                                                   const DependencyObject& targetInstance,
                                                   const std::type_index& ownerType) const;
 
+    std::vector<const DependencyProperty*> GetPropertiesFor(const DependencyObject& ownerInstance) const;
+
 private:
     std::vector<std::unique_ptr<DependencyProperty>> m_properties;
     std::unordered_map<std::type_index, std::function<bool(const DependencyObject*)>> m_ownerTypeChecks;

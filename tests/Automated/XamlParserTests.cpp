@@ -2,14 +2,68 @@
 
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
+#include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/UI/Controls/TextBox/TextBox.h>
+#include <NeoWPF/UI/Data/INotifyPropertyChanged.h>
+#include <NeoWPF/UI/Content/ContentControl.h>
+#include <NeoWPF/UI/Layout/Border/Border.h>
+#include <NeoWPF/UI/Layout/Grid/ColumnDefinition.h>
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
+#include <NeoWPF/UI/Layout/Grid/RowDefinition.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
+#include <NeoWPF/UI/Data/BindingOperations.h>
 #include <NeoWPF/UI/Markup/Xaml/XamlParser.h>
 #include <NeoWPF/UI/Markup/Xaml/XamlMarkupExtension.h>
 #include <NeoWPF/UI/Markup/Xaml/XamlTreeBuilder.h>
+#include <NeoWPF/UI/Markup/Xaml/XamlTypeRegistry.h>
+#include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 
+#include <any>
 #include <string>
+
+namespace {
+
+void ExpectLayoutParity(const NeoWPF::UI::Visual& xamlRoot,
+                        const NeoWPF::UI::Visual& cppRoot)
+{
+    const auto xamlDescendants = xamlRoot.GetVisualDescendants();
+    const auto cppDescendants = cppRoot.GetVisualDescendants();
+    ASSERT_EQ(xamlDescendants.size(), cppDescendants.size());
+
+    for (std::size_t index = 0; index < xamlDescendants.size(); ++index) {
+        ASSERT_NE(xamlDescendants[index], nullptr);
+        ASSERT_NE(cppDescendants[index], nullptr);
+        EXPECT_EQ(typeid(*xamlDescendants[index]), typeid(*cppDescendants[index]));
+
+        const auto* xamlElement = dynamic_cast<const NeoWPF::UI::FrameworkElement*>(xamlDescendants[index]);
+        const auto* cppElement = dynamic_cast<const NeoWPF::UI::FrameworkElement*>(cppDescendants[index]);
+        ASSERT_EQ(xamlElement != nullptr, cppElement != nullptr);
+        if (!xamlElement || !cppElement) {
+            continue;
+        }
+
+        EXPECT_EQ(xamlElement->GetDesiredWidth(), cppElement->GetDesiredWidth());
+        EXPECT_EQ(xamlElement->GetDesiredHeight(), cppElement->GetDesiredHeight());
+        EXPECT_EQ(xamlElement->GetFinalWidth(), cppElement->GetFinalWidth());
+        EXPECT_EQ(xamlElement->GetFinalHeight(), cppElement->GetFinalHeight());
+        EXPECT_EQ(xamlElement->GetLayoutOffsetX(), cppElement->GetLayoutOffsetX());
+        EXPECT_EQ(xamlElement->GetLayoutOffsetY(), cppElement->GetLayoutOffsetY());
+    }
+}
+
+}
+
+TEST(XamlRegistrationTests, BuiltInRegistrationsValidate)
+{
+    NeoWPF::Core::Application::Initialize();
+    NeoWPF::Diagnostics::ClearDeveloperWarnings();
+
+    EXPECT_TRUE(NeoWPF::UI::Markup::Xaml::ValidateXamlRegistrations());
+    EXPECT_FALSE(NeoWPF::Diagnostics::GetLastWarning().has_value());
+
+    NeoWPF::Core::Application::Shutdown();
+}
 
 TEST(XamlMarkupExtensionTests, ParsesRegisteredBindingExtension)
 {
@@ -102,6 +156,126 @@ TEST(XamlParserTests, BuildsLiveTreeFromXaml)
     ASSERT_NE(secondButton, nullptr);
     EXPECT_EQ(firstText->GetText(), L"Hello");
     EXPECT_EQ(secondButton->GetText(), L"Click me");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, AppliesPocoBindingValuesToXamlTargets)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<StackPanel><TextBlock Text="{Binding Message}" /><TextBox Text="{Binding Query, Mode=TwoWay}" PlaceholderText="Type a message" /></StackPanel>)");
+    const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(tree, nullptr);
+
+    auto viewModel = std::make_shared<NeoWPF::UI::Data::PropertyBagNotify>();
+    viewModel->SetProperty("Message", L"Bound message");
+    viewModel->SetProperty("Query", L"Bound query");
+    auto* rootElement = dynamic_cast<NeoWPF::UI::FrameworkElement*>(tree.get());
+    ASSERT_NE(rootElement, nullptr);
+    rootElement->SetDataContext(viewModel);
+
+    const auto children = tree->GetVisualChildren();
+    ASSERT_EQ(children.size(), 2u);
+    ASSERT_EQ(dynamic_cast<NeoWPF::UI::TextBlock*>(children[0])->GetText(), L"Bound message");
+    ASSERT_EQ(dynamic_cast<NeoWPF::UI::TextBox*>(children[1])->GetText(), L"Bound query");
+    ASSERT_EQ(dynamic_cast<NeoWPF::UI::TextBox*>(children[1])->GetPlaceholderText(), L"Type a message");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, RefreshesBindingsWhenBorderContentIsMaterialized)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<Border><StackPanel><TextBlock Text="{Binding PreviewTitle}" /><TextBlock Text="{Binding PreviewDetail}" /></StackPanel></Border>)");
+    const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(tree, nullptr);
+
+    auto viewModel = std::make_shared<NeoWPF::UI::Data::PropertyBagNotify>();
+    viewModel->SetProperty("PreviewTitle", L"Preview is active");
+    viewModel->SetProperty("PreviewDetail", L"The binding reached deferred content.");
+    auto* rootElement = dynamic_cast<NeoWPF::UI::FrameworkElement*>(tree.get());
+    ASSERT_NE(rootElement, nullptr);
+    rootElement->SetDataContext(viewModel);
+
+    rootElement->Measure(400, 200);
+    rootElement->Arrange(400, 200);
+
+    auto* border = dynamic_cast<NeoWPF::UI::Border*>(tree.get());
+    ASSERT_NE(border, nullptr);
+    auto* panel = dynamic_cast<NeoWPF::UI::StackPanel*>(border->GetChild().get());
+    ASSERT_NE(panel, nullptr);
+    const auto children = panel->GetVisualChildren();
+    ASSERT_EQ(children.size(), 2u);
+    EXPECT_EQ(dynamic_cast<NeoWPF::UI::TextBlock*>(children[0])->GetText(), L"Preview is active");
+    EXPECT_EQ(dynamic_cast<NeoWPF::UI::TextBlock*>(children[1])->GetText(), L"The binding reached deferred content.");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, XamlAndCppConstructionProduceEquivalentTreeState)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const std::string xml = R"(
+        <StackPanel Width="320" Height="120">
+            <Button Text="Action" />
+            <TextBlock Text="Status" />
+        </StackPanel>
+    )";
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(xml);
+    const auto xamlTree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(xamlTree, nullptr);
+
+    auto cppTree = std::make_shared<NeoWPF::UI::StackPanel>();
+    cppTree->SetWidth(320);
+    cppTree->SetHeight(120);
+    auto cppButton = std::make_shared<NeoWPF::UI::Button>();
+    cppButton->SetText(L"Action");
+    auto cppText = std::make_shared<NeoWPF::UI::TextBlock>();
+    cppText->SetText(L"Status");
+    cppTree->AddChild(cppButton);
+    cppTree->AddChild(cppText);
+
+    EXPECT_EQ(typeid(*xamlTree), typeid(*cppTree));
+    EXPECT_EQ(xamlTree->GetVisualChildren().size(), cppTree->GetVisualChildren().size());
+    EXPECT_EQ(xamlTree->GetLogicalChildren().size(), cppTree->GetLogicalChildren().size());
+    EXPECT_EQ(xamlTree->GetLogicalChildren().size(), 2u);
+
+    const auto xamlChildren = xamlTree->GetLogicalChildren();
+    const auto cppChildren = cppTree->GetLogicalChildren();
+    ASSERT_EQ(xamlChildren.size(), 2u);
+    ASSERT_EQ(cppChildren.size(), 2u);
+    EXPECT_EQ(typeid(*xamlChildren[0]), typeid(*cppChildren[0]));
+    EXPECT_EQ(typeid(*xamlChildren[1]), typeid(*cppChildren[1]));
+
+    const auto* xamlButton = dynamic_cast<const NeoWPF::UI::Button*>(xamlChildren[0]);
+    const auto* cppButtonValue = dynamic_cast<const NeoWPF::UI::Button*>(cppChildren[0]);
+    const auto* xamlText = dynamic_cast<const NeoWPF::UI::TextBlock*>(xamlChildren[1]);
+    const auto* cppTextValue = dynamic_cast<const NeoWPF::UI::TextBlock*>(cppChildren[1]);
+    ASSERT_NE(xamlButton, nullptr);
+    ASSERT_NE(cppButtonValue, nullptr);
+    ASSERT_NE(xamlText, nullptr);
+    ASSERT_NE(cppTextValue, nullptr);
+
+    EXPECT_EQ(xamlButton->GetText(), cppButtonValue->GetText());
+    EXPECT_EQ(xamlText->GetText(), cppTextValue->GetText());
+    const auto* xamlFrameworkElement = dynamic_cast<const NeoWPF::UI::FrameworkElement*>(xamlTree.get());
+    const auto* cppFrameworkElement = dynamic_cast<const NeoWPF::UI::FrameworkElement*>(cppTree.get());
+    ASSERT_NE(xamlFrameworkElement, nullptr);
+    ASSERT_NE(cppFrameworkElement, nullptr);
+    EXPECT_EQ(std::any_cast<int>(xamlFrameworkElement->GetRawValue(NeoWPF::UI::FrameworkElement::WidthProperty())),
+              std::any_cast<int>(cppFrameworkElement->GetRawValue(NeoWPF::UI::FrameworkElement::WidthProperty())));
+    EXPECT_EQ(std::any_cast<int>(xamlFrameworkElement->GetRawValue(NeoWPF::UI::FrameworkElement::HeightProperty())),
+              std::any_cast<int>(cppFrameworkElement->GetRawValue(NeoWPF::UI::FrameworkElement::HeightProperty())));
+    EXPECT_EQ(std::any_cast<std::wstring>(xamlButton->GetRawValue(NeoWPF::UI::Button::TextProperty())),
+              std::any_cast<std::wstring>(cppButtonValue->GetRawValue(NeoWPF::UI::Button::TextProperty())));
+    EXPECT_EQ(std::any_cast<std::wstring>(xamlText->GetRawValue(NeoWPF::UI::TextBlock::TextProperty())),
+              std::any_cast<std::wstring>(cppTextValue->GetRawValue(NeoWPF::UI::TextBlock::TextProperty())));
 
     NeoWPF::Core::Application::Shutdown();
 }
@@ -205,6 +379,607 @@ TEST(XamlParserTests, CollectionPropertiesProcessRowAndColumnDefinitionsAsCollec
 
     const auto logicalChildren = grid->GetLogicalChildren();
     EXPECT_EQ(logicalChildren.size(), 0u) << "Definition objects should not appear in logical children";
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, XamlAndCppMatchScalarLayoutProperties)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<StackPanel Width="240" Height="80" Margin="1,2,3,4" Spacing="6" />)");
+    const auto xamlTree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(xamlTree, nullptr);
+
+    auto cppTree = std::make_shared<NeoWPF::UI::StackPanel>();
+    cppTree->SetWidth(240);
+    cppTree->SetHeight(80);
+    cppTree->SetMargin(NeoWPF::UI::Thickness(1, 2, 3, 4));
+    cppTree->SetSpacing(6);
+
+    const auto* xamlElement = dynamic_cast<const NeoWPF::UI::FrameworkElement*>(xamlTree.get());
+    ASSERT_NE(xamlElement, nullptr);
+    EXPECT_EQ(xamlElement->GetWidth(), cppTree->GetWidth());
+    EXPECT_EQ(xamlElement->GetHeight(), cppTree->GetHeight());
+    EXPECT_EQ(xamlElement->GetMargin(), cppTree->GetMargin());
+    EXPECT_EQ(xamlElement->GetSpacing(), cppTree->GetSpacing());
+    EXPECT_EQ(std::any_cast<int>(xamlElement->GetRawValue(NeoWPF::UI::FrameworkElement::WidthProperty())),
+              std::any_cast<int>(cppTree->GetRawValue(NeoWPF::UI::FrameworkElement::WidthProperty())));
+    EXPECT_EQ(std::any_cast<NeoWPF::UI::Thickness>(xamlElement->GetRawValue(NeoWPF::UI::FrameworkElement::MarginProperty())),
+              std::any_cast<NeoWPF::UI::Thickness>(cppTree->GetRawValue(NeoWPF::UI::FrameworkElement::MarginProperty())));
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, XamlAndCppMatchControlAppearanceProperties)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<Button Text="Run" Foreground="#FF112233" Background="#FF445566" BorderBrush="#FF778899" Padding="2,3,4,5" FontSize="18" />)");
+    const auto xamlTree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(xamlTree, nullptr);
+    auto* xamlButton = dynamic_cast<NeoWPF::UI::Button*>(xamlTree.get());
+    ASSERT_NE(xamlButton, nullptr);
+
+    auto cppButton = std::make_shared<NeoWPF::UI::Button>();
+    cppButton->SetText(L"Run");
+    cppButton->SetTextColor(NeoWPF::UI::Color::FromArgb(0xFF112233u));
+    cppButton->SetBackgroundColor(NeoWPF::UI::Color::FromArgb(0xFF445566u));
+    cppButton->SetBorderColor(NeoWPF::UI::Color::FromArgb(0xFF778899u));
+    cppButton->SetPadding(NeoWPF::UI::Thickness(2, 3, 4, 5));
+    cppButton->SetFontSize(18);
+
+    EXPECT_EQ(xamlButton->GetText(), cppButton->GetText());
+    EXPECT_EQ(xamlButton->GetTextColor(), cppButton->GetTextColor());
+    EXPECT_EQ(xamlButton->GetBackgroundColor(), cppButton->GetBackgroundColor());
+    EXPECT_EQ(xamlButton->GetBorderColor(), cppButton->GetBorderColor());
+    EXPECT_EQ(xamlButton->GetPadding(), cppButton->GetPadding());
+    EXPECT_EQ(xamlButton->GetFontSize(), cppButton->GetFontSize());
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, XamlAndCppMatchCheckboxStateAndPadding)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<Checkbox Text="Accept" IsChecked="True" Padding="1,2,3,4" FontSize="16" />)");
+    const auto xamlTree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(xamlTree, nullptr);
+    auto* xamlCheckbox = dynamic_cast<NeoWPF::UI::Checkbox*>(xamlTree.get());
+    ASSERT_NE(xamlCheckbox, nullptr);
+
+    auto cppCheckbox = std::make_shared<NeoWPF::UI::Checkbox>();
+    cppCheckbox->SetText(L"Accept");
+    cppCheckbox->SetChecked(true);
+    cppCheckbox->SetPadding(NeoWPF::UI::Thickness(1, 2, 3, 4));
+    cppCheckbox->SetFontSize(16);
+
+    EXPECT_EQ(xamlCheckbox->GetText(), cppCheckbox->GetText());
+    EXPECT_EQ(xamlCheckbox->IsChecked(), cppCheckbox->IsChecked());
+    EXPECT_EQ(xamlCheckbox->GetPadding(), cppCheckbox->GetPadding());
+    EXPECT_EQ(xamlCheckbox->GetFontSize(), cppCheckbox->GetFontSize());
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, XamlAndCppMatchGridAttachedProperties)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<Grid><Button Grid.Row="1" Grid.Column="2" Grid.RowSpan="2" Grid.ColumnSpan="3" /></Grid>)");
+    const auto xamlTree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(xamlTree, nullptr);
+    auto* xamlGrid = dynamic_cast<NeoWPF::UI::Grid*>(xamlTree.get());
+    ASSERT_NE(xamlGrid, nullptr);
+    auto* xamlButton = dynamic_cast<NeoWPF::UI::Button*>(xamlGrid->GetVisualChildren()[0]);
+    ASSERT_NE(xamlButton, nullptr);
+
+    auto cppGrid = std::make_shared<NeoWPF::UI::Grid>();
+    auto cppButton = std::make_shared<NeoWPF::UI::Button>();
+    cppGrid->AddChild(cppButton, 1, 2, 2, 3);
+
+    EXPECT_EQ(xamlGrid->GetRow(xamlButton), cppGrid->GetRow(cppButton.get()));
+    EXPECT_EQ(xamlGrid->GetColumn(xamlButton), cppGrid->GetColumn(cppButton.get()));
+    EXPECT_EQ(NeoWPF::UI::Grid::GetRowSpan(xamlButton), NeoWPF::UI::Grid::GetRowSpan(cppButton.get()));
+    EXPECT_EQ(NeoWPF::UI::Grid::GetColumnSpan(xamlButton), NeoWPF::UI::Grid::GetColumnSpan(cppButton.get()));
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, XamlAndCppMatchGridDefinitionValues)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<Grid><Grid.RowDefinitions><RowDefinition Height="24" /><RowDefinition Height="*" /></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="2*" /></Grid.ColumnDefinitions></Grid>)");
+    const auto xamlTree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(xamlTree, nullptr);
+    auto* xamlGrid = dynamic_cast<NeoWPF::UI::Grid*>(xamlTree.get());
+    ASSERT_NE(xamlGrid, nullptr);
+
+    auto cppGrid = std::make_shared<NeoWPF::UI::Grid>();
+    auto row = std::make_shared<NeoWPF::UI::RowDefinition>();
+    row->SetHeight(NeoWPF::UI::Grid::GridLength::Fixed(24));
+    auto starRow = std::make_shared<NeoWPF::UI::RowDefinition>();
+    starRow->SetHeight(NeoWPF::UI::Grid::GridLength::Star());
+    auto column = std::make_shared<NeoWPF::UI::ColumnDefinition>();
+    column->SetWidth(NeoWPF::UI::Grid::GridLength::Star(2));
+    cppGrid->AddRowDefinition(row);
+    cppGrid->AddRowDefinition(starRow);
+    cppGrid->AddColumnDefinition(column);
+
+    EXPECT_EQ(xamlGrid->GetVisualChildren().size(), 0u);
+    EXPECT_EQ(row->GetHeight().Mode, NeoWPF::UI::SizeMode::Fixed);
+    EXPECT_EQ(row->GetHeight().Value, 24);
+    EXPECT_EQ(starRow->GetHeight().Mode, NeoWPF::UI::SizeMode::Star);
+    EXPECT_EQ(column->GetWidth().Mode, NeoWPF::UI::SizeMode::Star);
+    EXPECT_EQ(column->GetWidth().Value, 2);
+    ASSERT_EQ(xamlGrid->GetRowDefinitions().size(), cppGrid->GetRowDefinitions().size());
+    ASSERT_EQ(xamlGrid->GetColumnDefinitions().size(), cppGrid->GetColumnDefinitions().size());
+    for (std::size_t index = 0; index < xamlGrid->GetRowDefinitions().size(); ++index) {
+        EXPECT_EQ(xamlGrid->GetRowDefinitions()[index].mode, cppGrid->GetRowDefinitions()[index].mode);
+        EXPECT_EQ(xamlGrid->GetRowDefinitions()[index].value, cppGrid->GetRowDefinitions()[index].value);
+    }
+    for (std::size_t index = 0; index < xamlGrid->GetColumnDefinitions().size(); ++index) {
+        EXPECT_EQ(xamlGrid->GetColumnDefinitions()[index].mode, cppGrid->GetColumnDefinitions()[index].mode);
+        EXPECT_EQ(xamlGrid->GetColumnDefinitions()[index].value, cppGrid->GetColumnDefinitions()[index].value);
+    }
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, XamlAndCppMatchNestedGridLayout)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <Grid Width="600" Height="300">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="180" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Padding="8">
+                <TextBlock Text="Header" />
+            </Border>
+            <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
+                <Button Text="One" />
+                <Button Text="Two" />
+            </StackPanel>
+            <TextBox Grid.Row="1" Grid.Column="1" Text="Input" PlaceholderText="Type" />
+        </Grid>
+    )");
+    const auto xamlTree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(xamlTree, nullptr);
+    auto* xamlGrid = dynamic_cast<NeoWPF::UI::Grid*>(xamlTree.get());
+    ASSERT_NE(xamlGrid, nullptr);
+
+    auto cppGrid = std::make_shared<NeoWPF::UI::Grid>();
+    cppGrid->SetWidth(600);
+    cppGrid->SetHeight(300);
+    cppGrid->AddRows({{NeoWPF::UI::SizeMode::Auto, 0}, {NeoWPF::UI::SizeMode::Star, 1}});
+    cppGrid->AddColumns({{NeoWPF::UI::SizeMode::Fixed, 180}, {NeoWPF::UI::SizeMode::Star, 1}});
+    auto cppBorder = std::make_shared<NeoWPF::UI::Border>();
+    cppBorder->SetPadding(8);
+    cppBorder->SetChild(std::make_shared<NeoWPF::UI::TextBlock>(L"Header"));
+    auto cppStack = std::make_shared<NeoWPF::UI::StackPanel>();
+    cppStack->SetSpacing(4);
+    cppStack->AddChild(std::make_shared<NeoWPF::UI::Button>(L"One"));
+    cppStack->AddChild(std::make_shared<NeoWPF::UI::Button>(L"Two"));
+    auto cppTextBox = std::make_shared<NeoWPF::UI::TextBox>();
+    cppTextBox->SetText(L"Input");
+    cppTextBox->SetPlaceholderText(L"Type");
+    cppGrid->AddChild(cppBorder, 0, 0, 1, 2);
+    cppGrid->AddChild(cppStack, 1, 0);
+    cppGrid->AddChild(cppTextBox, 1, 1);
+
+    ASSERT_EQ(xamlGrid->GetRowDefinitions().size(), 2u);
+    ASSERT_EQ(cppGrid->GetRowDefinitions().size(), 2u);
+    ASSERT_EQ(xamlGrid->GetColumnDefinitions().size(), 2u);
+    ASSERT_EQ(cppGrid->GetColumnDefinitions().size(), 2u);
+    EXPECT_EQ(xamlGrid->GetVisualChildren().size(), cppGrid->GetVisualChildren().size());
+    ASSERT_EQ(xamlGrid->GetVisualDescendants().size(), cppGrid->GetVisualDescendants().size());
+    for (std::size_t index = 0; index < xamlGrid->GetVisualDescendants().size(); ++index) {
+        EXPECT_EQ(typeid(*xamlGrid->GetVisualDescendants()[index]),
+                  typeid(*cppGrid->GetVisualDescendants()[index]));
+    }
+
+    const auto xamlChildren = xamlGrid->GetVisualChildren();
+    const auto cppChildren = cppGrid->GetVisualChildren();
+    ASSERT_EQ(xamlChildren.size(), 3u);
+    ASSERT_EQ(cppChildren.size(), 3u);
+    for (std::size_t index = 0; index < xamlChildren.size(); ++index) {
+        EXPECT_EQ(xamlGrid->GetRow(xamlChildren[index]), cppGrid->GetRow(cppChildren[index]));
+        EXPECT_EQ(xamlGrid->GetColumn(xamlChildren[index]), cppGrid->GetColumn(cppChildren[index]));
+        EXPECT_EQ(NeoWPF::UI::Grid::GetRowSpan(xamlChildren[index]),
+                  NeoWPF::UI::Grid::GetRowSpan(cppChildren[index]));
+        EXPECT_EQ(NeoWPF::UI::Grid::GetColumnSpan(xamlChildren[index]),
+                  NeoWPF::UI::Grid::GetColumnSpan(cppChildren[index]));
+    }
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, XamlAndCppMatchContentControlNesting)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<Border Padding="5"><Border Padding="3"><TextBlock Text="Nested" /></Border></Border>)");
+    const auto xamlTree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(xamlTree, nullptr);
+
+    auto cppOuter = std::make_shared<NeoWPF::UI::Border>();
+    auto cppInner = std::make_shared<NeoWPF::UI::Border>();
+    cppOuter->SetPadding(5);
+    cppInner->SetPadding(3);
+    cppInner->SetChild(std::make_shared<NeoWPF::UI::TextBlock>(L"Nested"));
+    cppOuter->SetChild(cppInner);
+
+    const auto xamlDescendants = xamlTree->GetVisualDescendants();
+    const auto cppDescendants = cppOuter->GetVisualDescendants();
+    ASSERT_EQ(xamlDescendants.size(), cppDescendants.size());
+    for (std::size_t index = 0; index < xamlDescendants.size(); ++index) {
+        EXPECT_EQ(typeid(*xamlDescendants[index]), typeid(*cppDescendants[index]));
+    }
+
+    const auto* xamlOuter = dynamic_cast<const NeoWPF::UI::Border*>(xamlTree.get());
+    ASSERT_NE(xamlOuter, nullptr);
+    EXPECT_EQ(xamlOuter->GetPadding(), cppOuter->GetPadding());
+    const auto* xamlInner = dynamic_cast<const NeoWPF::UI::Border*>(xamlOuter->GetChild().get());
+    const auto* cppInnerValue = dynamic_cast<const NeoWPF::UI::Border*>(cppOuter->GetChild().get());
+    ASSERT_NE(xamlInner, nullptr);
+    ASSERT_NE(cppInnerValue, nullptr);
+    EXPECT_EQ(xamlInner->GetPadding(), cppInnerValue->GetPadding());
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, XamlAndCppMatchArrangedPaddedGrid)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <Grid Width="420" Height="220" Padding="10,5,10,5" Spacing="6,4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="120" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="80" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Title" Margin="2,3,4,5" />
+            <TextBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="Query" Padding="3,4,5,6" />
+            <Checkbox Grid.Row="1" Grid.Column="2" Text="Ready" IsChecked="True" />
+        </Grid>
+    )");
+    const auto xamlTree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(xamlTree, nullptr);
+
+    auto cppGrid = std::make_shared<NeoWPF::UI::Grid>();
+    cppGrid->SetWidth(420);
+    cppGrid->SetHeight(220);
+    cppGrid->SetPadding(NeoWPF::UI::Thickness(10, 5, 10, 5));
+    cppGrid->SetSpacing(NeoWPF::UI::Spacing(6, 4));
+    cppGrid->AddRows({{NeoWPF::UI::SizeMode::Fixed, 40}, {NeoWPF::UI::SizeMode::Star, 1}});
+    cppGrid->AddColumns({{NeoWPF::UI::SizeMode::Fixed, 120}, {NeoWPF::UI::SizeMode::Star, 1}, {NeoWPF::UI::SizeMode::Fixed, 80}});
+
+    auto cppTitle = std::make_shared<NeoWPF::UI::TextBlock>(L"Title");
+    cppTitle->SetMargin(NeoWPF::UI::Thickness(2, 3, 4, 5));
+    auto cppInput = std::make_shared<NeoWPF::UI::TextBox>();
+    cppInput->SetText(L"Query");
+    cppInput->SetPadding(NeoWPF::UI::Thickness(3, 4, 5, 6));
+    auto cppReady = std::make_shared<NeoWPF::UI::Checkbox>();
+    cppReady->SetText(L"Ready");
+    cppReady->SetChecked(true);
+    cppGrid->AddChild(cppTitle, 0, 0);
+    cppGrid->AddChild(cppInput, 1, 0, 1, 2);
+    cppGrid->AddChild(cppReady, 1, 2);
+
+    auto* xamlGrid = dynamic_cast<NeoWPF::UI::Grid*>(xamlTree.get());
+    ASSERT_NE(xamlGrid, nullptr);
+    xamlGrid->Measure(420, 220);
+    xamlGrid->Arrange(420, 220);
+    cppGrid->Measure(420, 220);
+    cppGrid->Arrange(420, 220);
+
+    EXPECT_EQ(xamlGrid->GetDesiredWidth(), cppGrid->GetDesiredWidth());
+    EXPECT_EQ(xamlGrid->GetDesiredHeight(), cppGrid->GetDesiredHeight());
+    EXPECT_EQ(xamlGrid->GetFinalWidth(), cppGrid->GetFinalWidth());
+    EXPECT_EQ(xamlGrid->GetFinalHeight(), cppGrid->GetFinalHeight());
+    ASSERT_EQ(xamlGrid->GetRowDefinitions().size(), cppGrid->GetRowDefinitions().size());
+    ASSERT_EQ(xamlGrid->GetColumnDefinitions().size(), cppGrid->GetColumnDefinitions().size());
+    EXPECT_EQ(xamlGrid->GetVisualChildren().size(), cppGrid->GetVisualChildren().size());
+    ExpectLayoutParity(*xamlGrid, *cppGrid);
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, XamlAndCppMatchNestedStackPanelArrangement)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <StackPanel Width="360" Height="180" Spacing="8">
+            <StackPanel Width="140" Margin="4,6,8,10" Spacing="3">
+                <Button Text="A" Height="32" />
+                <Button Text="B" Height="36" />
+            </StackPanel>
+            <Border Width="180" Padding="7,5,3,2">
+                <TextBlock Text="Panel" Margin="2,1,4,3" />
+            </Border>
+        </StackPanel>
+    )");
+    const auto xamlTree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(xamlTree, nullptr);
+
+    auto cppRoot = std::make_shared<NeoWPF::UI::StackPanel>();
+    cppRoot->SetWidth(360);
+    cppRoot->SetHeight(180);
+    cppRoot->SetSpacing(8);
+    auto cppStack = std::make_shared<NeoWPF::UI::StackPanel>();
+    cppStack->SetWidth(140);
+    cppStack->SetMargin(NeoWPF::UI::Thickness(4, 6, 8, 10));
+    cppStack->SetSpacing(3);
+    auto cppFirstButton = std::make_shared<NeoWPF::UI::Button>(L"A");
+    cppFirstButton->SetHeight(32);
+    auto cppSecondButton = std::make_shared<NeoWPF::UI::Button>(L"B");
+    cppSecondButton->SetHeight(36);
+    cppStack->AddChild(cppFirstButton);
+    cppStack->AddChild(cppSecondButton);
+    auto cppBorder = std::make_shared<NeoWPF::UI::Border>();
+    cppBorder->SetWidth(180);
+    cppBorder->SetPadding(NeoWPF::UI::Thickness(7, 5, 3, 2));
+    auto cppPanelText = std::make_shared<NeoWPF::UI::TextBlock>(L"Panel");
+    cppPanelText->SetMargin(NeoWPF::UI::Thickness(2, 1, 4, 3));
+    cppBorder->SetChild(cppPanelText);
+    cppRoot->AddChild(cppStack);
+    cppRoot->AddChild(cppBorder);
+
+    auto* xamlPanel = dynamic_cast<NeoWPF::UI::StackPanel*>(xamlTree.get());
+    ASSERT_NE(xamlPanel, nullptr);
+    xamlPanel->Measure(360, 180);
+    xamlPanel->Arrange(360, 180);
+    cppRoot->Measure(360, 180);
+    cppRoot->Arrange(360, 180);
+
+    ExpectLayoutParity(*xamlPanel, *cppRoot);
+    EXPECT_EQ(xamlPanel->GetVisualChildren().size(), cppRoot->GetVisualChildren().size());
+    EXPECT_EQ(xamlPanel->GetDesiredWidth(), cppRoot->GetDesiredWidth());
+    EXPECT_EQ(xamlPanel->GetDesiredHeight(), cppRoot->GetDesiredHeight());
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, RaspyCppAndXamlLayoutsMatchEverySemanticNode)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <Grid Background="#FF0B1324" Padding="32">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Margin="0,0,0,24">
+                <TextBlock Text="NeoWPF Binding Laboratory" FontSize="32" Foreground="#FFF8FAFC" />
+                <TextBlock Text="Edit a bound value and watch the preview answer immediately." FontSize="15" Foreground="#FF9FB0C7" Margin="0,7,0,0" />
+            </StackPanel>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="320" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Background="#FF16233A" BorderBrush="#FF2D4263" BorderThickness="1" Padding="20" Margin="0,0,24,0">
+                    <StackPanel>
+                        <TextBlock Text="Change the input" FontSize="20" Foreground="#FFE5EDF8" Margin="0,0,0,18" />
+                        <TextBlock Text="The values below are TwoWay bindings." FontSize="13" Foreground="#FF9FB0C7" Margin="0,0,0,18" />
+                        <TextBlock Text="Message" FontSize="12" Foreground="#FF9FB0C7" />
+                        <TextBox Text="Hello from the view model" PlaceholderText="Type a message" Height="40" Margin="0,6,0,20" />
+                        <Checkbox Text="Enable live preview" IsChecked="True" Margin="0,0,0,22" />
+                        <Button Text="Apply binding update" Height="42" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="1" Background="#FF12304A" BorderBrush="#FF5EEAD4" BorderThickness="2" Padding="28">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="LIVE PREVIEW" FontSize="12" Foreground="#FF5EEAD4" />
+                        <TextBlock Text="Preview is active" FontSize="34" Foreground="#FFF8FAFC" Margin="0,10,0,8" />
+                        <TextBlock Text="This panel is driven by properties on the bound view model." FontSize="17" Foreground="#FFD7E2F2" TextWrapping="Wrap" />
+                        <TextBlock Text="Hello from the view model" FontSize="22" Foreground="#FF5EEAD4" Margin="0,24,0,0" />
+                        <TextBlock Text="Bindings are connected" FontSize="14" Foreground="#FF9FB0C7" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+            <Grid Grid.Row="2" Margin="0,24,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="TextBox and Checkbox use TwoWay bindings" FontSize="13" Foreground="#FF9FB0C7" />
+                <TextBlock Grid.Column="1" Text="Initial snapshot" FontSize="13" Foreground="#FF7183A1" />
+            </Grid>
+        </Grid>
+    )");
+    const auto xamlTree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(xamlTree, nullptr);
+
+    auto content = std::make_shared<NeoWPF::UI::Grid>();
+    content->SetBackgroundColor(0xFF0B1324u);
+    content->SetPadding(32);
+    content->AddRow(NeoWPF::UI::SizeMode::Auto);
+    content->AddRow(NeoWPF::UI::SizeMode::Star, 1);
+    content->AddRow(NeoWPF::UI::SizeMode::Auto);
+
+    auto header = std::make_shared<NeoWPF::UI::StackPanel>();
+    header->SetMargin(0, 0, 0, 24);
+    auto title = std::make_shared<NeoWPF::UI::TextBlock>(L"NeoWPF Binding Laboratory");
+    title->SetFontSize(32); title->SetTextColor(0xFFF8FAFCu); header->AddChild(title);
+    auto subtitle = std::make_shared<NeoWPF::UI::TextBlock>(L"Edit a bound value and watch the preview answer immediately.");
+    subtitle->SetFontSize(15); subtitle->SetTextColor(0xFF9FB0C7u); subtitle->SetMargin(0, 7, 0, 0); header->AddChild(subtitle);
+    content->AddChild(header, 0, 0);
+
+    auto body = std::make_shared<NeoWPF::UI::Grid>();
+    body->AddColumn(NeoWPF::UI::SizeMode::Fixed, 320);
+    body->AddColumn(NeoWPF::UI::SizeMode::Star, 1);
+    auto leftBorder = std::make_shared<NeoWPF::UI::Border>();
+    leftBorder->SetBackgroundColor(0xFF16233Au); leftBorder->SetBorderColor(0xFF2D4263u);
+    leftBorder->SetBorderThickness(NeoWPF::UI::Thickness(1)); leftBorder->SetPadding(20); leftBorder->SetMargin(0, 0, 24, 0);
+    auto leftStack = std::make_shared<NeoWPF::UI::StackPanel>();
+    auto inputTitle = std::make_shared<NeoWPF::UI::TextBlock>(L"Change the input");
+    inputTitle->SetFontSize(20); inputTitle->SetTextColor(0xFFE5EDF8u); inputTitle->SetMargin(0, 0, 0, 18); leftStack->AddChild(inputTitle);
+    auto inputDescription = std::make_shared<NeoWPF::UI::TextBlock>(L"The values below are TwoWay bindings.");
+    inputDescription->SetFontSize(13); inputDescription->SetTextColor(0xFF9FB0C7u); inputDescription->SetMargin(0, 0, 0, 18); leftStack->AddChild(inputDescription);
+    auto messageLabel = std::make_shared<NeoWPF::UI::TextBlock>(L"Message");
+    messageLabel->SetFontSize(12); messageLabel->SetTextColor(0xFF9FB0C7u); leftStack->AddChild(messageLabel);
+    auto queryBox = std::make_shared<NeoWPF::UI::TextBox>();
+    queryBox->SetText(L"Hello from the view model"); queryBox->SetPlaceholderText(L"Type a message"); queryBox->SetHeight(40); queryBox->SetMargin(0, 6, 0, 20); leftStack->AddChild(queryBox);
+    auto checkbox = std::make_shared<NeoWPF::UI::Checkbox>();
+    checkbox->SetText(L"Enable live preview"); checkbox->SetChecked(true); checkbox->SetMargin(0, 0, 0, 22); leftStack->AddChild(checkbox);
+    auto applyButton = std::make_shared<NeoWPF::UI::Button>(L"Apply binding update"); applyButton->SetHeight(42); leftStack->AddChild(applyButton);
+    leftBorder->SetChild(leftStack); body->AddChild(leftBorder, 0, 0);
+
+    auto previewBorder = std::make_shared<NeoWPF::UI::Border>();
+    previewBorder->SetBackgroundColor(0xFF12304Au); previewBorder->SetBorderColor(0xFF5EEAD4u); previewBorder->SetBorderThickness(NeoWPF::UI::Thickness(2)); previewBorder->SetPadding(28);
+    auto previewStack = std::make_shared<NeoWPF::UI::StackPanel>(); previewStack->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Center);
+    auto previewLabel = std::make_shared<NeoWPF::UI::TextBlock>(L"LIVE PREVIEW"); previewLabel->SetFontSize(12); previewLabel->SetTextColor(0xFF5EEAD4u); previewStack->AddChild(previewLabel);
+    auto previewTitle = std::make_shared<NeoWPF::UI::TextBlock>(L"Preview is active"); previewTitle->SetFontSize(34); previewTitle->SetTextColor(0xFFF8FAFCu); previewTitle->SetMargin(0, 10, 0, 8); previewStack->AddChild(previewTitle);
+    auto previewDetail = std::make_shared<NeoWPF::UI::TextBlock>(L"This panel is driven by properties on the bound view model."); previewDetail->SetFontSize(17); previewDetail->SetTextColor(0xFFD7E2F2u); previewDetail->SetTextWrapping(NeoWPF::UI::TextWrapping::Wrap); previewStack->AddChild(previewDetail);
+    auto queryPreview = std::make_shared<NeoWPF::UI::TextBlock>(L"Hello from the view model"); queryPreview->SetFontSize(22); queryPreview->SetTextColor(0xFF5EEAD4u); queryPreview->SetMargin(0, 24, 0, 0); previewStack->AddChild(queryPreview);
+    auto status = std::make_shared<NeoWPF::UI::TextBlock>(L"Bindings are connected"); status->SetFontSize(14); status->SetTextColor(0xFF9FB0C7u); status->SetMargin(0, 8, 0, 0); previewStack->AddChild(status);
+    previewBorder->SetChild(previewStack); body->AddChild(previewBorder, 0, 1); content->AddChild(body, 1, 0);
+
+    auto footerGrid = std::make_shared<NeoWPF::UI::Grid>(); footerGrid->AddColumn(NeoWPF::UI::SizeMode::Star, 1); footerGrid->AddColumn(NeoWPF::UI::SizeMode::Auto); footerGrid->SetMargin(0, 24, 0, 0);
+    auto footer = std::make_shared<NeoWPF::UI::TextBlock>(L"TextBox and Checkbox use TwoWay bindings"); footer->SetFontSize(13); footer->SetTextColor(0xFF9FB0C7u); footerGrid->AddChild(footer, 0, 0);
+    auto lastUpdated = std::make_shared<NeoWPF::UI::TextBlock>(L"Initial snapshot"); lastUpdated->SetFontSize(13); lastUpdated->SetTextColor(0xFF7183A1u); footerGrid->AddChild(lastUpdated, 0, 1); content->AddChild(footerGrid, 2, 0);
+
+    auto* xamlGrid = dynamic_cast<NeoWPF::UI::Grid*>(xamlTree.get());
+    ASSERT_NE(xamlGrid, nullptr);
+    xamlGrid->Measure(1180, 760); xamlGrid->Arrange(1180, 760);
+    content->Measure(1180, 760); content->Arrange(1180, 760);
+
+    ExpectLayoutParity(*xamlGrid, *content);
+    ASSERT_EQ(xamlGrid->GetVisualChildren().size(), content->GetVisualChildren().size());
+    ASSERT_EQ(xamlGrid->GetVisualDescendants().size(), content->GetVisualDescendants().size());
+
+    const auto xamlChildren = xamlGrid->GetVisualChildren();
+    const auto cppChildren = content->GetVisualChildren();
+    for (std::size_t index = 0; index < xamlChildren.size(); ++index) {
+        EXPECT_EQ(xamlGrid->GetRow(xamlChildren[index]), content->GetRow(cppChildren[index]));
+        EXPECT_EQ(xamlGrid->GetColumn(xamlChildren[index]), content->GetColumn(cppChildren[index]));
+    }
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, XamlAndCppMatchBorderContent)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<Border Padding="4"><TextBlock Text="Inside" /></Border>)");
+    const auto xamlTree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(xamlTree, nullptr);
+    auto* xamlBorder = dynamic_cast<NeoWPF::UI::Border*>(xamlTree.get());
+    ASSERT_NE(xamlBorder, nullptr);
+    ASSERT_NE(xamlBorder->GetChild(), nullptr);
+
+    auto cppBorder = std::make_shared<NeoWPF::UI::Border>();
+    auto cppText = std::make_shared<NeoWPF::UI::TextBlock>(L"Inside");
+    cppBorder->SetPadding(4);
+    cppBorder->SetChild(cppText);
+
+    auto* xamlText = dynamic_cast<NeoWPF::UI::TextBlock*>(xamlBorder->GetChild().get());
+    ASSERT_NE(xamlText, nullptr);
+    EXPECT_EQ(xamlText->GetText(), dynamic_cast<NeoWPF::UI::TextBlock*>(cppBorder->GetChild().get())->GetText());
+    EXPECT_EQ(xamlBorder->GetPadding(), cppBorder->GetPadding());
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, XamlAndCppMatchTextBoxValues)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<TextBox Text="Query" PlaceholderText="Search" FontSize="15" />)");
+    const auto xamlTree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(xamlTree, nullptr);
+    auto* xamlTextBox = dynamic_cast<NeoWPF::UI::TextBox*>(xamlTree.get());
+    ASSERT_NE(xamlTextBox, nullptr);
+
+    auto cppTextBox = std::make_shared<NeoWPF::UI::TextBox>();
+    cppTextBox->SetText(L"Query");
+    cppTextBox->SetPlaceholderText(L"Search");
+    cppTextBox->SetFontSize(15);
+
+    EXPECT_EQ(xamlTextBox->GetText(), cppTextBox->GetText());
+    EXPECT_EQ(xamlTextBox->GetPlaceholderText(), cppTextBox->GetPlaceholderText());
+    EXPECT_EQ(xamlTextBox->GetFontSize(), cppTextBox->GetFontSize());
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, ReportsUnknownTypeAsDeveloperError)
+{
+    NeoWPF::Core::Application::Initialize();
+    NeoWPF::Diagnostics::ClearDeveloperWarnings();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml("<UnknownControl />");
+    EXPECT_EQ(NeoWPF::UI::Markup::Xaml::BuildXamlTree(root), nullptr);
+
+    const auto warning = NeoWPF::Diagnostics::GetLastWarning();
+    ASSERT_TRUE(warning.has_value());
+    EXPECT_EQ(warning->title, L"XAML_TYPE_NOT_FOUND");
+    EXPECT_EQ(warning->severity, NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, ReportsUnknownAttributeAsDeveloperError)
+{
+    NeoWPF::Core::Application::Initialize();
+    NeoWPF::Diagnostics::ClearDeveloperWarnings();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml("<TextBlock UnknownAttribute=\"value\" />");
+    ASSERT_NE(NeoWPF::UI::Markup::Xaml::BuildXamlTree(root), nullptr);
+
+    const auto warning = NeoWPF::Diagnostics::GetLastWarning();
+    ASSERT_TRUE(warning.has_value());
+    EXPECT_EQ(warning->title, L"XAML_PROPERTY_NOT_FOUND");
+    EXPECT_EQ(warning->severity, NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, ReportsUnboundPropertyElementAsDeveloperError)
+{
+    NeoWPF::Core::Application::Initialize();
+    NeoWPF::Diagnostics::ClearDeveloperWarnings();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <Grid>
+            <Grid.Width>
+                <TextBlock />
+            </Grid.Width>
+        </Grid>
+    )");
+    ASSERT_NE(NeoWPF::UI::Markup::Xaml::BuildXamlTree(root), nullptr);
+
+    const auto warning = NeoWPF::Diagnostics::GetLastWarning();
+    ASSERT_TRUE(warning.has_value());
+    EXPECT_EQ(warning->title, L"XAML_NO_BINDING");
+    EXPECT_EQ(warning->severity, NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
 
     NeoWPF::Core::Application::Shutdown();
 }

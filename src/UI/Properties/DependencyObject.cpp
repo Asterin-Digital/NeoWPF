@@ -156,6 +156,26 @@ const DependencyProperty* DependencyPropertyRegistry::FindProperty(const std::st
     return nullptr;
 }
 
+std::vector<const DependencyProperty*> DependencyPropertyRegistry::GetPropertiesFor(const DependencyObject& ownerInstance) const
+{
+    const std::type_index ownerType(typeid(ownerInstance));
+    std::vector<const DependencyProperty*> result;
+
+    for (const auto& property : m_properties) {
+        if (property->GetOwnerType() == ownerType) {
+            result.push_back(property.get());
+            continue;
+        }
+
+        const auto it = m_ownerTypeChecks.find(property->GetOwnerType());
+        if (it != m_ownerTypeChecks.end() && it->second(&ownerInstance)) {
+            result.push_back(property.get());
+        }
+    }
+
+    return result;
+}
+
 const DependencyProperty& DependencyPropertyRegistry::RegisterAttachedProperty(const std::string& name,
                                                                                const std::type_index& propertyType,
                                                                                const std::type_index& ownerType,

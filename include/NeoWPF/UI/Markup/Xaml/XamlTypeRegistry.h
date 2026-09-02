@@ -6,6 +6,7 @@
 #include <typeindex>
 #include <unordered_map>
 #include <functional>
+#include <vector>
 
 namespace NeoWPF::UI::Properties {
 class DependencyObject;
@@ -40,6 +41,11 @@ struct XamlTypeInfo {
         Default: false (eager build).
     */
     bool DeferContentBuild = false;
+};
+
+struct RegisteredXamlType {
+    std::string TagName;
+    XamlTypeInfo Info;
 };
 
 /*
@@ -99,11 +105,15 @@ public:
     */
     const XamlTypeInfo* FindByType(std::type_index type) const;
 
+    std::vector<RegisteredXamlType> GetRegisteredTypes() const;
+
 private:
     XamlTypeRegistry() = default;
 
     std::unordered_map<std::string, XamlTypeInfo> m_types;
 };
+
+bool ValidateXamlRegistrations();
 
 /*
     @summary

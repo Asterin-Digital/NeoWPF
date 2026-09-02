@@ -68,6 +68,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementSpacingMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::Spacing{});
+        metadata.Converter = NeoWPF::UI::Properties::GetSpacingConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }

@@ -175,7 +175,7 @@ private:
     NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFF000000u);
     NeoWPF::UI::Color m_bgColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
     NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0xFF202020u);
-    int m_padding = 8;
+    Thickness m_padding = Thickness(8);
     int m_fontSize = 14;
     std::shared_ptr<NeoWPF::UI::TextBlock> m_textContent;
 };

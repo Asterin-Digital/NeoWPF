@@ -158,6 +158,7 @@ void Visual::AddChild(const std::shared_ptr<Visual>& child)
     m_logicalChildren.push_back(child);
 
     MarkLayoutDirty();
+    OnAddChild(child.get());
 }
 
 void Visual::RemoveVisualChild(const std::shared_ptr<Visual>& child)
@@ -209,6 +210,26 @@ std::vector<Visual*> Visual::GetVisualChildren() const
         }
     }
     return children;
+}
+
+std::vector<Visual*> Visual::GetVisualDescendants() const
+{
+    std::vector<Visual*> descendants;
+    const auto visit = [&descendants](Visual* current, const auto& visit) -> void {
+        if (!current) {
+            return;
+        }
+        descendants.push_back(current);
+        const auto children = current->GetVisualChildren();
+        for (Visual* child : children) {
+            visit(child, visit);
+        }
+    };
+
+    for (Visual* child : GetVisualChildren()) {
+        visit(child, visit);
+    }
+    return descendants;
 }
 
 std::vector<Visual*> Visual::GetVisualChildrenInZOrder() const

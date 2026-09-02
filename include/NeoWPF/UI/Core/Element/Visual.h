@@ -66,6 +66,8 @@ public:
     */
     std::vector<Visual*> GetVisualChildren() const;
 
+    std::vector<Visual*> GetVisualDescendants() const;
+
     /*
         @summary
         Returns the logical children attached to this node.
@@ -154,6 +156,8 @@ public:
         @internal
     */
     virtual void OnRemoveVisualChild(Visual* child) {}
+
+    virtual void OnAddChild(Visual* child) {}
 
     /*
         @summary

@@ -9,8 +9,8 @@ std::shared_ptr<BindingExpression> BindingOperations::SetBinding(Properties::Dep
                                                                  const Binding& binding)
 {
     auto expression = std::make_shared<BindingExpression>(target, property, binding);
-    expression->Attach();
     target.SetBindingExpression(property, expression);
+    expression->Attach();
     return expression;
 }
 

@@ -88,6 +88,14 @@ Button::~Button()
 
 void Button::SetText(const std::wstring& text)
 {
+    if (!IsApplyingPropertyValue()) {
+        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Text", *this);
+        if (property) {
+            SetValue(*property, text);
+            return;
+        }
+    }
+
     m_text = text;
     if (m_textContent) {
         m_textContent->SetText(text);

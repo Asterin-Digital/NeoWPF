@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Data/BindingExpression.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Data/INotifyPropertyChanged.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
@@ -120,7 +121,10 @@ void BindingExpression::UpdatePocoTargetValue()
     if (currentValue.has_value()) {
         const bool previousApplying = m_isApplyingTargetValue;
         m_isApplyingTargetValue = true;
-        m_target.SetValueExpression(m_targetProperty, *currentValue);
+        std::any convertedValue;
+        if (Properties::TryConvertValue(m_targetProperty, *currentValue, convertedValue)) {
+            m_target.SetValueExpression(m_targetProperty, convertedValue);
+        }
         m_isApplyingTargetValue = previousApplying;
     }
 }
@@ -269,18 +273,45 @@ void BindingExpression::Attach()
 
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Subscribing to source property '%s' on %p", m_binding.GetPath().c_str(), m_source.get());
 
+        if (m_binding.GetMode() == BindingMode::TwoWay) {
+            m_targetChangeHandlerId = m_target.AddDependencyPropertyChangedHandler(m_targetProperty,
+                [this](const std::any&, const std::any& newValue) {
+                    if (m_isApplyingTargetValue || m_isApplyingSourceValue ||
+                        m_binding.GetMode() != BindingMode::TwoWay || !m_source || !m_sourceProperty) {
+                        return;
+                    }
+                    if (!m_target.GetBindingExpression(m_targetProperty)) {
+                        return;
+                    }
+
+                    const bool previousApplying = m_isApplyingSourceValue;
+                    m_isApplyingSourceValue = true;
+                    m_source->SetValue(*m_sourceProperty, newValue);
+                    m_isApplyingSourceValue = previousApplying;
+                });
+        }
+
         m_sourceChangeHandlerId = m_source->AddDependencyPropertyChangedHandler(*m_sourceProperty,
             [this](const std::any&, const std::any& newValue) {
                 if (!m_target.GetBindingExpression(m_targetProperty)) {
                     return;
                 }
                 NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Source property changed '%s' -> %s", m_binding.GetPath().c_str(), newValue.has_value() ? newValue.type().name() : "<empty>");
-                m_target.SetValueExpression(m_targetProperty, newValue);
+                const bool previousApplying = m_isApplyingTargetValue;
+                m_isApplyingTargetValue = true;
+                std::any convertedValue;
+                if (Properties::TryConvertValue(m_targetProperty, newValue, convertedValue)) {
+                    m_target.SetValueExpression(m_targetProperty, convertedValue);
+                }
+                m_isApplyingTargetValue = previousApplying;
             });
 
         const auto currentValue = m_source->GetRawValue(*m_sourceProperty);
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] Initial source value for '%s' is %s", m_binding.GetPath().c_str(), currentValue.has_value() ? currentValue.type().name() : "<empty>");
-        m_target.SetValueExpression(m_targetProperty, currentValue);
+        std::any convertedValue;
+        if (Properties::TryConvertValue(m_targetProperty, currentValue, convertedValue)) {
+            m_target.SetValueExpression(m_targetProperty, convertedValue);
+        }
         return;
     }
 
@@ -316,7 +347,10 @@ void BindingExpression::Attach()
         if (currentValue.has_value()) {
             const bool previousApplying = m_isApplyingTargetValue;
             m_isApplyingTargetValue = true;
-            m_target.SetValueExpression(m_targetProperty, *currentValue);
+            std::any convertedValue;
+            if (Properties::TryConvertValue(m_targetProperty, *currentValue, convertedValue)) {
+                m_target.SetValueExpression(m_targetProperty, convertedValue);
+            }
             m_isApplyingTargetValue = previousApplying;
         }
     }

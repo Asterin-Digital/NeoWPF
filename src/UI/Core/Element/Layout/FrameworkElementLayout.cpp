@@ -28,6 +28,15 @@ void RefreshBindingsRecursively(Visual* node) {
 
 }
 
+void FrameworkElement::OnAddChild(Visual* child)
+{
+    if (!child) {
+        return;
+    }
+
+    RefreshBindingsRecursively(child);
+}
+
 bool FrameworkElement::s_frameworkElementLogging = false;
 
 std::any FrameworkElement::GetDataContext() const noexcept
