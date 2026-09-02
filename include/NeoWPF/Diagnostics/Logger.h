@@ -10,6 +10,7 @@ namespace NeoWPF::Diagnostics {
 void LogInfo(const char* fmt, ...);
 void LogWarn(const char* fmt, ...);
 void LogError(const char* fmt, ...);
+void ShutdownLogger() noexcept;
 
 enum class Level : uint8_t {
 	Off = 0,

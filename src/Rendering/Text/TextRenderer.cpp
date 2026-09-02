@@ -11,10 +11,52 @@
 #include <algorithm>
 #include <filesystem>
 #include <mutex>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace NeoWPF::Rendering::Text {
 namespace {
+
+struct MetricsCacheKey {
+    std::wstring text;
+    std::wstring family;
+    int fontSize = 0;
+    int weight = 0;
+    NeoWPF::UI::FontStyle style = NeoWPF::UI::FontStyle::Normal;
+
+    bool operator==(const MetricsCacheKey& other) const noexcept
+    {
+        return fontSize == other.fontSize && weight == other.weight && style == other.style &&
+            text == other.text && family == other.family;
+    }
+};
+
+struct MetricsCacheKeyHash {
+    std::size_t operator()(const MetricsCacheKey& key) const noexcept
+    {
+        const auto combine = [](std::size_t seed, std::size_t value) {
+            return seed ^ (value + static_cast<std::size_t>(0x9e3779b9) + (seed << 6) + (seed >> 2));
+        };
+
+        auto hash = std::hash<std::wstring>{}(key.text);
+        hash = combine(hash, std::hash<std::wstring>{}(key.family));
+        hash = combine(hash, std::hash<int>{}(key.fontSize));
+        hash = combine(hash, std::hash<int>{}(key.weight));
+        return combine(hash, std::hash<int>{}(static_cast<int>(key.style)));
+    }
+};
+
+std::unordered_map<MetricsCacheKey, TextMetrics, MetricsCacheKeyHash>& MetricsCache()
+{
+    static std::unordered_map<MetricsCacheKey, TextMetrics, MetricsCacheKeyHash> cache;
+    return cache;
+}
+
+std::mutex& MetricsCacheMutex()
+{
+    static std::mutex mutex;
+    return mutex;
+}
 
 using NeoWPF::Platform::Utf8ToWide;
 using NeoWPF::Platform::WideToUtf8;
@@ -79,12 +121,30 @@ TextBitmap Rasterize(const std::wstring& text, int fontSize, const std::wstring&
 TextMetrics Measure(const std::wstring& text, int fontSize, const std::wstring& family,
                     int maxWidth, int maxHeight, int weight, NeoWPF::UI::FontStyle style)
 {
-    const auto bitmap = Rasterize(text, fontSize, family, weight, style);
+    const int effectiveFontSize = fontSize > 0 ? fontSize : 16;
+    const int effectiveWeight = weight > 0 ? weight : 400;
+    const MetricsCacheKey key{text, family, effectiveFontSize, effectiveWeight, style};
+
     TextMetrics metrics;
-    metrics.width = bitmap.width;
-    metrics.height = bitmap.height;
-    metrics.lineHeight = bitmap.height;
-    metrics.baseline = bitmap.inkTop < 0 ? -bitmap.inkTop : bitmap.inkTop;
+    {
+        std::lock_guard<std::mutex> lock(MetricsCacheMutex());
+        const auto cached = MetricsCache().find(key);
+        if (cached != MetricsCache().end()) {
+            metrics = cached->second;
+        }
+    }
+
+    if (metrics.width == 0 && metrics.height == 0 && !text.empty()) {
+        const auto bitmap = Rasterize(text, effectiveFontSize, family, effectiveWeight, style);
+        metrics.width = bitmap.width;
+        metrics.height = bitmap.height;
+        metrics.lineHeight = bitmap.height;
+        metrics.baseline = bitmap.inkTop < 0 ? -bitmap.inkTop : bitmap.inkTop;
+
+        std::lock_guard<std::mutex> lock(MetricsCacheMutex());
+        MetricsCache().emplace(key, metrics);
+    }
+
     if (maxWidth > 0) {
         metrics.width = (std::min)(metrics.width, maxWidth);
     }

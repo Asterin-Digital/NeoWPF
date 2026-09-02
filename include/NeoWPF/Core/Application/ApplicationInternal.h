@@ -49,6 +49,9 @@ struct AppState {
 
     std::mutex renderInitMutex;
     std::condition_variable renderInitCondition;
+    std::mutex renderRequestMutex;
+    std::condition_variable renderRequestCondition;
+    bool renderRequested = false;
 
     std::mutex windowsMutex;
     std::mutex commandListMutex;

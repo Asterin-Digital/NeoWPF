@@ -97,6 +97,11 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
         windowState.renderCommandList = windowState.buildCommandList;
     }
     windowState.commandListInitialized = true;
+    {
+        std::lock_guard<std::mutex> lock(s_appState.renderRequestMutex);
+        s_appState.renderRequested = true;
+    }
+    s_appState.renderRequestCondition.notify_one();
 }
 
 void StartRenderThread()
@@ -151,6 +156,17 @@ void StartRenderThread()
         }
 
         while (s_appState.running.load()) {
+            {
+                std::unique_lock<std::mutex> lock(s_appState.renderRequestMutex);
+                s_appState.renderRequestCondition.wait(lock, [] {
+                    return !s_appState.running.load() || s_appState.renderRequested;
+                });
+                if (!s_appState.running.load()) {
+                    break;
+                }
+                s_appState.renderRequested = false;
+            }
+
             std::vector<WindowState> windowsSnapshot;
             {
                 std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
@@ -189,7 +205,6 @@ void StartRenderThread()
                 }
             }
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(16));
         }
 
         {
@@ -204,6 +219,7 @@ void StartRenderThread()
 void ShutdownApplication()
 {
     s_appState.running = false;
+    s_appState.renderRequestCondition.notify_all();
     NeoWPF::Platform::CurrentPlatform()->Windowing().RequestQuit(0);
 }
 
@@ -372,6 +388,7 @@ int RunApplicationMessageLoop()
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application message loop exiting");
     s_appState.exitCode = windowing.ExitCode();
     s_appState.running = false;
+    s_appState.renderRequestCondition.notify_all();
     if (s_appState.renderThread.joinable()) {
         s_appState.renderThread.join();
     }

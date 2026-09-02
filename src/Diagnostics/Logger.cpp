@@ -4,10 +4,14 @@
 #include <cstring>
 #include <atomic>
 #include <array>
+#include <condition_variable>
+#include <cstdlib>
+#include <deque>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <algorithm>
 #include <cctype>
-#include <vector>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -20,75 +24,22 @@ static std::array<std::atomic<uint8_t>, static_cast<size_t>(Category::Count)> s_
 static std::array<std::atomic<bool>, static_cast<size_t>(Category::Count)> s_levelOverrides{};
 static std::atomic<uint8_t> s_globalLevel{static_cast<uint8_t>(Level::Off)};
 
-static void Output(const char* prefix, const char* fmt, va_list ap)
+struct LoggerState {
+    std::mutex mutex;
+    std::condition_variable condition;
+    std::deque<std::string> messages;
+    std::thread worker;
+    bool stopping = false;
+};
+
+static LoggerState& GetLoggerState()
 {
-    const uint64_t logId = ++s_logCounter;
+    static auto* state = new LoggerState();
+    return *state;
+}
 
-    va_list ap_copy;
-    va_copy(ap_copy, ap);
-    int msg_len = std::vsnprintf(nullptr, 0, fmt, ap_copy);
-    va_end(ap_copy);
-
-    if (msg_len < 0) {
-        fputs("Logger error: invalid format string\n", stderr);
-        return;
-    }
-
-    char idBuffer[32];
-    const int idLen = snprintf(idBuffer, sizeof(idBuffer), "[%llu] ",
-        static_cast<unsigned long long>(logId));
-
-    const size_t prefix_len = strlen(prefix);
-    const size_t total_len =
-        static_cast<size_t>(idLen) +
-        prefix_len +
-        2 +
-        static_cast<size_t>(msg_len) +
-        2;
-
-    std::vector<char> buffer(total_len);
-    if (buffer.empty()) {
-        fputs("Logger error: out of memory\n", stderr);
-        return;
-    }
-
-    char* p = buffer.data();
-
-    memcpy(p, idBuffer, idLen);
-    p += idLen;
-
-    memcpy(p, prefix, prefix_len);
-    p += prefix_len;
-
-    memcpy(p, ": ", 2);
-    p += 2;
-
-    int written = std::vsnprintf(
-        p,
-        static_cast<size_t>(msg_len) + 1,
-        fmt,
-        ap);
-
-    p += (written >= 0 ? written : msg_len);
-
-    *p++ = '\n';
-    *p = '\0';
-
-    constexpr size_t kDebugChunk = 4000;
-    const char* chunk_start = buffer.data();
-    size_t remaining = total_len - 1;
-
-    while (remaining > 0) {
-        size_t chunk_size = (remaining > kDebugChunk) ? kDebugChunk : remaining;
-
-        char chunk_buf[kDebugChunk + 1];
-        memcpy(chunk_buf, chunk_start, chunk_size);
-        chunk_buf[chunk_size] = '\0';
-
-        chunk_start += chunk_size;
-        remaining -= chunk_size;
-    }
-
+static void WriteOutput(std::string message)
+{
 #ifdef _WIN32
     const HANDLE consoleHandle = ::GetStdHandle(STD_ERROR_HANDLE);
     DWORD consoleMode = 0;
@@ -96,17 +47,101 @@ static void Output(const char* prefix, const char* fmt, va_list ap)
         consoleHandle != nullptr &&
         ::GetConsoleMode(consoleHandle, &consoleMode)) {
         DWORD written = 0;
-        ::WriteConsoleA(consoleHandle, buffer.data(), static_cast<DWORD>(total_len - 1), &written, nullptr);
+        ::WriteConsoleA(consoleHandle, message.data(), static_cast<DWORD>(message.size()), &written, nullptr);
     } else {
-        fputs(buffer.data(), stderr);
+        fputs(message.c_str(), stderr);
         fflush(stderr);
     }
-    ::OutputDebugStringA(buffer.data());
+    ::OutputDebugStringA(message.c_str());
 #else
-    fputs(buffer.data(), stderr);
+    fputs(message.c_str(), stderr);
     fflush(stderr);
 #endif
+}
 
+static void EnsureWorker()
+{
+    auto& state = GetLoggerState();
+    static std::once_flag startFlag;
+    std::call_once(startFlag, [&state] {
+        state.worker = std::thread([&state] {
+            for (;;) {
+                std::string message;
+                {
+                    std::unique_lock<std::mutex> lock(state.mutex);
+                    state.condition.wait(lock, [&state] {
+                        return state.stopping || !state.messages.empty();
+                    });
+                    if (state.messages.empty() && state.stopping) {
+                        return;
+                    }
+                    message = std::move(state.messages.front());
+                    state.messages.pop_front();
+                }
+                WriteOutput(std::move(message));
+            }
+        });
+        std::atexit([] { ShutdownLogger(); });
+    });
+}
+
+static void Output(const char* prefix, const char* fmt, va_list ap)
+{
+    va_list ap_copy;
+    va_copy(ap_copy, ap);
+    const int messageLength = std::vsnprintf(nullptr, 0, fmt, ap_copy);
+    va_end(ap_copy);
+
+    if (messageLength < 0) {
+        return;
+    }
+
+    const uint64_t logId = ++s_logCounter;
+    char idBuffer[32];
+    const int idLength = snprintf(idBuffer, sizeof(idBuffer), "[%llu] ",
+        static_cast<unsigned long long>(logId));
+
+    std::string message(static_cast<size_t>(idLength) + strlen(prefix) + 2 + static_cast<size_t>(messageLength) + 1, '\0');
+    int written = snprintf(message.data(), message.size(), "[%llu] %s: ",
+        static_cast<unsigned long long>(logId), prefix);
+    if (written < 0) {
+        return;
+    }
+
+    va_list formatArguments;
+    va_copy(formatArguments, ap);
+    const int bodyWritten = std::vsnprintf(message.data() + written,
+        message.size() - static_cast<size_t>(written), fmt, formatArguments);
+    va_end(formatArguments);
+    if (bodyWritten < 0) {
+        return;
+    }
+    message.resize(static_cast<size_t>(written) + static_cast<size_t>(bodyWritten));
+    message.push_back('\n');
+
+    EnsureWorker();
+    auto& state = GetLoggerState();
+    {
+        std::lock_guard<std::mutex> lock(state.mutex);
+        if (state.stopping) {
+            return;
+        }
+        state.messages.push_back(std::move(message));
+    }
+    state.condition.notify_one();
+}
+
+void ShutdownLogger() noexcept
+{
+    auto& state = GetLoggerState();
+    {
+        std::lock_guard<std::mutex> lock(state.mutex);
+        state.stopping = true;
+    }
+    state.condition.notify_all();
+    if (state.worker.joinable()) {
+        state.worker.join();
+    }
 }
 
 [[deprecated("Use the new logger, its better")]]

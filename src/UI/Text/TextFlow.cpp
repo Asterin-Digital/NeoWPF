@@ -184,11 +184,15 @@ FlowResult BreakText(const std::wstring& text, int fontSize, const std::wstring&
                     int availableWidth, TextWrapping wrapping, int fontWeight,
                     NeoWPF::UI::FontStyle fontStyle) {
     FlowResult flow;
+    const int effectiveFontSize = fontSize > 0 ? fontSize : 16;
+    const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(
+        L"W", effectiveFontSize, fontFamily, 0, 0, fontWeight, fontStyle);
+    const int baseLineHeight = std::max(baseMetrics.height, effectiveFontSize);
     const auto logicalLines = SplitLines(text);
 
     for (const auto& logical : logicalLines) {
         if (logical.text.empty() && logical.startOffset >= text.size()) {
-            const int lineHeight = std::max(1, MeasureLineHeight(L"W", fontSize, fontFamily, fontWeight, fontStyle));
+            const int lineHeight = std::max(1, baseLineHeight);
             flow.lines.push_back({std::wstring(), logical.startOffset, logical.startOffset, 0, lineHeight, lineHeight});
             flow.contentHeight += lineHeight;
             continue;
@@ -202,8 +206,8 @@ FlowResult BreakText(const std::wstring& text, int fontSize, const std::wstring&
 
         for (const auto& seg : segments) {
             const auto metrics = NeoWPF::Rendering::Text::MeasureText(
-                seg.text.empty() ? L"W" : seg.text, fontSize, fontFamily, 0, 0, fontWeight, fontStyle);
-            const int lineHeight = std::max(1, MeasureLineHeight(seg.text, fontSize, fontFamily, fontWeight, fontStyle));
+                seg.text.empty() ? L"W" : seg.text, effectiveFontSize, fontFamily, 0, 0, fontWeight, fontStyle);
+            const int lineHeight = std::max(1, std::max(baseLineHeight, metrics.height));
 
             flow.lines.push_back({seg.text, seg.startOffset, seg.endOffset, metrics.width, metrics.height, lineHeight});
             flow.contentWidth = std::max(flow.contentWidth, metrics.width);
