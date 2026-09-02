@@ -1,6 +1,8 @@
 #include <NeoWPF/UI/Markup/Xaml/XamlTreeBuilder.h>
 #include <NeoWPF/UI/Markup/Xaml/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Markup/Xaml/XamlPropertyBinding.h>
+#include <NeoWPF/UI/Markup/Xaml/XamlMarkupExtension.h>
+#include <NeoWPF/UI/Data/BindingOperations.h>
 
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
@@ -51,6 +53,30 @@ void ApplyAttributes(const XamlNode& node, NeoWPF::UI::Properties::DependencyObj
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
                 "[XamlTreeBuilder] Attribute property not found object=%p name='%s' value='%s'",
                 &target, name.c_str(), value.c_str());
+            continue;
+        }
+
+        const auto trimmedValue = [&value] {
+            const auto first = value.find_first_not_of(" \t\r\n");
+            if (first == std::string::npos) {
+                return std::string();
+            }
+            const auto last = value.find_last_not_of(" \t\r\n");
+            return value.substr(first, last - first + 1);
+        }();
+
+        if (!trimmedValue.empty() && trimmedValue.front() == '{') {
+            std::string error;
+            const XamlMarkupExtensionContext context{node.Line, node.Column};
+            const auto extension = ParseXamlMarkupExtension(trimmedValue, context, error);
+            if (!extension || !extension->Apply(target, *property, error)) {
+                NeoWPF::Diagnostics::QueueDeveloperWarning(
+                    L"XAML_MARKUP_EXTENSION",
+                    ToWideString(error.empty() ? "markup extension could not be applied" : error) +
+                        L" on property '" + ToWideString(name) + L"'",
+                    NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
+                continue;
+            }
             continue;
         }
 

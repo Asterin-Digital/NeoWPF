@@ -30,6 +30,34 @@ namespace NeoWPF::UI {
     std::unordered_map<Visual*, int> Grid::s_rowSpanMap;
     std::unordered_map<Visual*, int> Grid::s_colSpanMap;
 
+    void Grid::AddRow(SizeMode mode, int value)
+    {
+        auto rowDefinition = std::make_shared<RowDefinition>();
+        rowDefinition->SetHeight({mode, value});
+        AddRowDefinition(std::move(rowDefinition));
+    }
+
+    void Grid::AddRows(std::initializer_list<Definition> defs)
+    {
+        for (const auto& definition : defs) {
+            AddRow(definition.mode, definition.value);
+        }
+    }
+
+    void Grid::AddColumn(SizeMode mode, int value)
+    {
+        auto columnDefinition = std::make_shared<ColumnDefinition>();
+        columnDefinition->SetWidth({mode, value});
+        AddColumnDefinition(std::move(columnDefinition));
+    }
+
+    void Grid::AddColumns(std::initializer_list<Definition> defs)
+    {
+        for (const auto& definition : defs) {
+            AddColumn(definition.mode, definition.value);
+        }
+    }
+
     void Grid::SetRow(Visual* v, int r) noexcept
     {
         if (!v) return;
@@ -109,16 +137,16 @@ namespace NeoWPF::UI {
     {
         if (!rowDef) return;
 
-        int mode = rowDef->GetMode();
-        m_rowDefs.push_back({static_cast<SizeMode>(mode), 0});
+        const auto height = rowDef->GetHeight();
+        m_rowDefs.push_back({height.Mode, height.Value});
     }
 
     void Grid::AddColumnDefinition(std::shared_ptr<ColumnDefinition> colDef)
     {
         if (!colDef) return;
 
-        int mode = colDef->GetMode();
-        m_colDefs.push_back({static_cast<SizeMode>(mode), 0});
+        const auto width = colDef->GetWidth();
+        m_colDefs.push_back({width.Mode, width.Value});
     }
 
     void Grid::OnRemoveVisualChild(Visual* child)
@@ -232,6 +260,10 @@ namespace NeoWPF::UI {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
             "[Grid::Measure] Available: %dx%d", availableWidth, availableHeight);
 
+        const auto padding = GetPadding();
+        const int contentAvailableWidth = std::max(0, availableWidth - padding.Horizontal());
+        const int contentAvailableHeight = std::max(0, availableHeight - padding.Vertical());
+
         const int INF = 1000000;
         int numRows = std::max(1, static_cast<int>(m_rowDefs.size()));
         int numCols = std::max(1, static_cast<int>(m_colDefs.size()));
@@ -306,7 +338,8 @@ namespace NeoWPF::UI {
             bool measureHeight = (rspan == 1 && r < effectiveNumRows && r < static_cast<int>(effectiveRowDefs.size()) && effectiveRowDefs[r].mode == SizeMode::Auto);
 
             if (measureWidth || measureHeight)
-                fe->Measure(measureWidth ? INF : 0, measureHeight ? INF : 0);
+                fe->Measure(measureWidth ? INF : contentAvailableWidth,
+                            measureHeight ? INF : contentAvailableHeight);
         }
 
         const auto effectiveRowDefs = GridLayout::ResolveDefinitions(m_rowDefs);
@@ -320,8 +353,8 @@ namespace NeoWPF::UI {
             this,
             effectiveRowDefs,
             effectiveColDefs,
-            availableWidth,
-            availableHeight,
+            contentAvailableWidth,
+            contentAvailableHeight,
             children,
             gapX,
             gapY);
@@ -396,7 +429,7 @@ namespace NeoWPF::UI {
         if (metrics.rowHeights.size() > 1) {
             totalH += gapY * static_cast<int>(metrics.rowHeights.size() - 1);
         }
-        SetDesiredSize(totalW, totalH);
+        SetDesiredSize(totalW + padding.Horizontal(), totalH + padding.Vertical());
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
             "[Grid::Measure] Final desired size: %dx%d", totalW, totalH);
     }
@@ -506,13 +539,16 @@ namespace NeoWPF::UI {
 
         const int gapX = GetHorizontalSpacing();
         const int gapY = GetVerticalSpacing();
+        const auto padding = GetPadding();
+        const int contentWidth = std::max(0, finalWidth - padding.Horizontal());
+        const int contentHeight = std::max(0, finalHeight - padding.Vertical());
         auto children = GetVisualChildren();
         auto metrics = GridLayout::ComputeMetrics(
             this,
             effectiveRowDefs,
             effectiveColDefs,
-            finalWidth,
-            finalHeight,
+            contentWidth,
+            contentHeight,
             children,
             gapX,
             gapY);
@@ -571,8 +607,8 @@ namespace NeoWPF::UI {
 
             fe->Arrange(alignedW, alignedH);
 
-            const int targetX = x + alignedX + margin.Left;
-            const int targetY = y + alignedY + margin.Top;
+            const int targetX = padding.Left + x + alignedX + margin.Left;
+            const int targetY = padding.Top + y + alignedY + margin.Top;
             const int currentX = fe->GetLayoutOffsetX();
             const int currentY = fe->GetLayoutOffsetY();
             if (currentX != targetX || currentY != targetY) {

@@ -14,7 +14,7 @@ void XamlPropertyBindingRegistry::Register(
 {
     const auto key = reinterpret_cast<std::uintptr_t>(&property);
 
-    // Avoid duplicate registration (keep first one)
+    // keep the first one to avoid dupes
     if (m_bindings.find(key) != m_bindings.end()) {
         return;
     }

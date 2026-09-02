@@ -4,6 +4,7 @@
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <NeoWPF/UI/Markup/Xaml/XamlMarkupExtension.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/Diagnostics/CrashHandler.h>
 #include <NeoWPF/Diagnostics/Logger.h>
@@ -39,6 +40,7 @@ void Application::Initialize()
         s_current = new Application();
     }
     NeoWPF::UI::Properties::RegisterCoreControlProperties();
+    NeoWPF::UI::Markup::Xaml::RegisterXamlMarkupExtensions();
 
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application::Initialize complete");
 }

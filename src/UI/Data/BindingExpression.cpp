@@ -2,6 +2,7 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Data/INotifyPropertyChanged.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <typeinfo>
@@ -225,24 +226,27 @@ void BindingExpression::Attach()
     }
 
     if (!m_source) {
-        const auto* dataContextProperty = Properties::DependencyPropertyRegistry::Get().FindProperty("DataContext", m_target);
-        if (dataContextProperty) {
-            const auto dataContextValue = m_target.GetValue<std::any>(*dataContextProperty);
-            if (dataContextValue.has_value()) {
-                const auto& valueType = dataContextValue.type();
-                if (valueType == typeid(std::shared_ptr<Properties::DependencyObject>)) {
-                    if (auto source = std::any_cast<std::shared_ptr<Properties::DependencyObject>>(dataContextValue)) {
-                        m_source = source;
-                        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] DataContext resolved as DependencyObject=%p", m_source.get());
-                    }
-                } else if (valueType == typeid(std::shared_ptr<INotifyPropertyChanged>)) {
-                    if (auto sourcePoco = std::any_cast<std::shared_ptr<INotifyPropertyChanged>>(dataContextValue)) {
-                        m_sourcePoco = sourcePoco;
-                        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] DataContext resolved as INotifyPropertyChanged=%p", m_sourcePoco.get());
-                    }
-                } else {
-                    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] DataContext has unsupported type=%s", valueType.name());
+        std::any dataContextValue;
+        if (const auto* frameworkElement = dynamic_cast<const ::NeoWPF::UI::FrameworkElement*>(&m_target)) {
+            dataContextValue = frameworkElement->GetDataContext();
+        } else if (const auto* dataContextProperty = Properties::DependencyPropertyRegistry::Get().FindProperty("DataContext", m_target)) {
+            dataContextValue = m_target.GetRawValue(*dataContextProperty);
+        }
+
+        if (dataContextValue.has_value()) {
+            const auto& valueType = dataContextValue.type();
+            if (valueType == typeid(std::shared_ptr<Properties::DependencyObject>)) {
+                if (auto source = std::any_cast<std::shared_ptr<Properties::DependencyObject>>(dataContextValue)) {
+                    m_source = source;
+                    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] DataContext resolved as DependencyObject=%p", m_source.get());
                 }
+            } else if (valueType == typeid(std::shared_ptr<INotifyPropertyChanged>)) {
+                if (auto sourcePoco = std::any_cast<std::shared_ptr<INotifyPropertyChanged>>(dataContextValue)) {
+                    m_sourcePoco = sourcePoco;
+                    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] DataContext resolved as INotifyPropertyChanged=%p", m_sourcePoco.get());
+                }
+            } else {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "[Binding] DataContext has unsupported type=%s", valueType.name());
             }
         }
     }

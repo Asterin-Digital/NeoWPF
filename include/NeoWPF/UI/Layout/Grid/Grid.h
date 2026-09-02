@@ -82,7 +82,7 @@ public:
         @param value
         The pixel size for Fixed rows or the weight for Star rows. Auto rows ignore this.
     */
-    void AddRow(SizeMode mode = SizeMode::Auto, int value = 0) { m_rowDefs.push_back({mode, value}); }
+    void AddRow(SizeMode mode = SizeMode::Auto, int value = 0);
 
     /*
         @summary
@@ -91,7 +91,7 @@ public:
         @param defs
         The rows to add, in order.
     */
-    void AddRows(std::initializer_list<Definition> defs) { m_rowDefs.insert(m_rowDefs.end(), defs.begin(), defs.end()); }
+    void AddRows(std::initializer_list<Definition> defs);
 
     /*
         @summary
@@ -103,7 +103,7 @@ public:
         @param value
         The pixel size for Fixed columns or the weight for Star columns. Auto columns ignore this.
     */
-    void AddColumn(SizeMode mode = SizeMode::Auto, int value = 0) { m_colDefs.push_back({mode, value}); }
+    void AddColumn(SizeMode mode = SizeMode::Auto, int value = 0);
 
     /*
         @summary
@@ -112,7 +112,7 @@ public:
         @param defs
         The columns to add, in order.
     */
-    void AddColumns(std::initializer_list<Definition> defs) { m_colDefs.insert(m_colDefs.end(), defs.begin(), defs.end()); }
+    void AddColumns(std::initializer_list<Definition> defs);
 
     /*
         @summary

@@ -22,6 +22,7 @@ public:
         @summary
         Gets the Mode property, which defines the sizing behavior (Auto, Fixed, or Star).
     */
+    static const Properties::DependencyProperty& WidthProperty();
     static const Properties::DependencyProperty& ModeProperty();
 
     /*
@@ -31,6 +32,8 @@ public:
         @param mode
         The sizing mode.
     */
+    void SetWidth(Grid::GridLength width);
+    Grid::GridLength GetWidth() const;
     void SetMode(int mode);
 
     /*

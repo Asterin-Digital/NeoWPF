@@ -249,7 +249,7 @@ TEST(DependencyPropertyTests, BorderExposesStaticPropertyHandles)
     EXPECT_EQ(paddingProperty.GetOwnerType(), std::type_index(typeid(NeoWPF::UI::Border)));
     EXPECT_EQ(paddingProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::Thickness)));
     EXPECT_EQ(borderThicknessProperty.GetName(), "BorderThickness");
-    EXPECT_EQ(borderThicknessProperty.GetPropertyType(), std::type_index(typeid(int)));
+    EXPECT_EQ(borderThicknessProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::Thickness)));
     EXPECT_EQ(borderColorProperty.GetName(), "BorderBrush");
     EXPECT_EQ(borderColorProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::Color)));
     EXPECT_EQ(backgroundColorProperty.GetName(), "Background");

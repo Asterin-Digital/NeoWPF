@@ -6,9 +6,40 @@
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 #include <NeoWPF/UI/Markup/Xaml/XamlParser.h>
+#include <NeoWPF/UI/Markup/Xaml/XamlMarkupExtension.h>
 #include <NeoWPF/UI/Markup/Xaml/XamlTreeBuilder.h>
 
 #include <string>
+
+TEST(XamlMarkupExtensionTests, ParsesRegisteredBindingExtension)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    std::string error;
+    const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
+        "{Binding Name, Mode=TwoWay}",
+        {1, 1},
+        error);
+
+    EXPECT_NE(extension, nullptr);
+    EXPECT_TRUE(error.empty());
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlMarkupExtensionTests, RejectsInvalidBindingArguments)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    for (const auto& value : {"{Binding}", "{Binding Name, Mode=Invalid}", "{Binding Name, Unknown=Value}"}) {
+        std::string error;
+        const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(value, {1, 1}, error);
+        EXPECT_EQ(extension, nullptr) << value;
+        EXPECT_FALSE(error.empty()) << value;
+    }
+
+    NeoWPF::Core::Application::Shutdown();
+}
 
 TEST(XamlParserTests, ParsesSimpleElementTree)
 {

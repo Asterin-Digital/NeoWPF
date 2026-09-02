@@ -35,12 +35,14 @@ bool ParseGridLength(std::string value, NeoWPF::UI::Grid::GridLength& outLength)
         return true;
     }
 
-    if (lower == "*") {
-        outLength = NeoWPF::UI::Grid::GridLength::Star();
-        return true;
-    }
-
     try {
+        if (lower.back() == '*') {
+            const auto weightText = lower.substr(0, lower.size() - 1);
+            const int weight = weightText.empty() ? 1 : std::stoi(weightText);
+            outLength = NeoWPF::UI::Grid::GridLength::Star(weight);
+            return true;
+        }
+
         const int pixels = std::stoi(lower);
         outLength = NeoWPF::UI::Grid::GridLength::Fixed(pixels);
         return true;
