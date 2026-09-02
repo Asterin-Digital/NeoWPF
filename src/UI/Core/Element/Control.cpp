@@ -135,7 +135,11 @@ void Control::SetBorderThickness(int thickness) noexcept {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderThickness", *this);
     if (property) {
         if (GetBorderThickness() != thickness) {
-            SetValue(*property, thickness);
+            if (property->GetPropertyType() == typeid(Thickness)) {
+                SetValue(*property, Thickness(thickness));
+            } else {
+                SetValue(*property, thickness);
+            }
         }
         return;
     }

@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Markup/Xaml/XamlEntityDecoder.h>
 #include <NeoWPF/UI/Markup/Xaml/XamlNode.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 
 #include <cctype>
 #include <stdexcept>
@@ -274,6 +275,8 @@ XamlNode ParseNode(ParserState& state)
 
 std::vector<XamlNode> ParseXaml(const std::string& source)
 {
+    NEO_WPF_ACTION("Xaml.Parse");
+
     ParserState state{source};
     std::vector<XamlNode> roots;
 

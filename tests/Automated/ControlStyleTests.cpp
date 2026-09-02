@@ -1,0 +1,86 @@
+#include <gtest/gtest.h>
+
+#include <NeoWPF/Core/Application/Application.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
+#include <NeoWPF/UI/Controls/Button/Button.h>
+#include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
+#include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/UI/Controls/TextBox/TextBox.h>
+#include <NeoWPF/UI/Markup/Xaml/XamlParser.h>
+#include <NeoWPF/UI/Markup/Xaml/XamlTreeBuilder.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
+
+namespace NeoWPF::UI {
+void ApplyTextBlockThemeStyle(UIElement* element);
+}
+
+namespace {
+
+class ControlStyleTests : public testing::Test {
+protected:
+    void SetUp() override
+    {
+        NeoWPF::Core::Application::Initialize();
+        auto& themes = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance();
+        themes.RegisterBuiltInThemes();
+        ASSERT_TRUE(themes.SetActiveTheme("Light"));
+    }
+
+    void TearDown() override
+    {
+        NeoWPF::Core::Application::Shutdown();
+    }
+};
+
+}
+
+TEST_F(ControlStyleTests, LightThemeUsesBlackForegroundForControls)
+{
+    NeoWPF::UI::Button button;
+    NeoWPF::UI::Checkbox checkbox;
+    NeoWPF::UI::TextBlock textBlock;
+    NeoWPF::UI::TextBox textBox;
+
+    EXPECT_EQ(button.GetTextColor().ToArgb(), 0xFF000000u);
+    EXPECT_EQ(checkbox.GetTextColor().ToArgb(), 0xFF000000u);
+    EXPECT_EQ(textBlock.GetTextColor().ToArgb(), 0xFF000000u);
+    EXPECT_EQ(textBox.GetTextColor().ToArgb(), 0xFF000000u);
+}
+
+TEST_F(ControlStyleTests, TextBlockThemeStyleSetsRegisteredForegroundProperty)
+{
+    NeoWPF::UI::TextBlock textBlock;
+
+    NeoWPF::UI::ApplyTextBlockThemeStyle(&textBlock);
+
+    const auto* foreground = textBlock.FindDependencyProperty("Foreground");
+    ASSERT_NE(foreground, nullptr);
+    EXPECT_EQ(textBlock.GetValueSource(*foreground),
+              NeoWPF::UI::Properties::PropertyValueSource::Style);
+    EXPECT_EQ(textBlock.GetTextColor().ToArgb(), 0xFF000000u);
+}
+
+TEST_F(ControlStyleTests, CheckboxThemeStyleSetsBlackForeground)
+{
+    NeoWPF::UI::Checkbox checkbox;
+
+    NeoWPF::UI::ApplyCheckboxThemeStyle(&checkbox);
+
+    EXPECT_EQ(checkbox.GetTextColor().ToArgb(), 0xFF000000u);
+    const auto* foreground = checkbox.FindDependencyProperty("Foreground");
+    ASSERT_NE(foreground, nullptr);
+    EXPECT_EQ(checkbox.GetValueSource(*foreground),
+              NeoWPF::UI::Properties::PropertyValueSource::Style);
+}
+
+TEST_F(ControlStyleTests, XamlForegroundPreservesExplicitArgbColor)
+{
+    const auto roots = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<TextBlock Text="Label" Foreground="#FF102030" />)");
+    const auto textBlock = NeoWPF::UI::Markup::Xaml::BuildXamlTree(roots);
+
+    ASSERT_NE(textBlock, nullptr);
+    const auto* label = dynamic_cast<const NeoWPF::UI::TextBlock*>(textBlock.get());
+    ASSERT_NE(label, nullptr);
+    EXPECT_EQ(label->GetTextColor().ToArgb(), 0xFF102030u);
+}

@@ -22,6 +22,7 @@
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 
 #include <functional>
 #include <memory>
@@ -251,7 +252,7 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
     return obj;
 }
 
-std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTree(const XamlNode& root)
+std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTreeFromRoot(const XamlNode& root)
 {
     auto obj = BuildXamlObjectInternal(root);
     if (!obj) {
@@ -270,22 +271,30 @@ std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTree(const XamlNode& root)
 
 std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTree(const std::vector<XamlNode>& roots)
 {
+    NEO_WPF_ACTION("Xaml.BuildTree");
+
     if (roots.empty()) {
         return nullptr;
     }
 
     if (roots.size() == 1) {
-        return BuildXamlTree(roots.front());
+        return BuildXamlTreeFromRoot(roots.front());
     }
 
     auto rootContainer = std::make_shared<NeoWPF::UI::StackPanel>();
     for (const auto& root : roots) {
-        auto built = BuildXamlTree(root);
+        auto built = BuildXamlTreeFromRoot(root);
         if (built) {
             rootContainer->AddChild(built);
         }
     }
     return rootContainer;
+}
+
+std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTree(const XamlNode& root)
+{
+    NEO_WPF_ACTION("Xaml.BuildTree");
+    return BuildXamlTreeFromRoot(root);
 }
 
 }

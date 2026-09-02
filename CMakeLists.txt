@@ -547,6 +547,7 @@ if(BUILD_TESTING)
         tests/Automated/ResourceKeyTests.cpp
         tests/Automated/EventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
+        tests/Automated/ControlStyleTests.cpp
         tests/Automated/TransformTests.cpp
         tests/Automated/LayoutTests.cpp
         tests/Automated/TransformCompositionTests.cpp
