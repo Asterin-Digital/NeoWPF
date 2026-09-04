@@ -1,7 +1,7 @@
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlTypeRegistry.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 
 namespace NeoWPF::UI::Properties {
     namespace UI = ::NeoWPF::UI;

@@ -9,6 +9,7 @@ namespace NeoWPF {
 enum class ResourceType {
     Image,
     Font,
+    Xaml,
     Raw
 };
 

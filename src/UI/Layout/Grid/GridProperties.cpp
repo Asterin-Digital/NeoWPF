@@ -2,8 +2,8 @@
 #include <NeoWPF/UI/Layout/Grid/RowDefinition.h>
 #include <NeoWPF/UI/Layout/Grid/ColumnDefinition.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlTypeRegistry.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlPropertyBinding.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/TypeConverter.h>
 

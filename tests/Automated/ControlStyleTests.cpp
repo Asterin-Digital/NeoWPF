@@ -6,8 +6,8 @@
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlParser.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlTreeBuilder.h>
+#include <NeoWPF/UI/Markup/Xaml/Parsing/XamlParser.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTreeBuilder.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 
 namespace NeoWPF::UI {

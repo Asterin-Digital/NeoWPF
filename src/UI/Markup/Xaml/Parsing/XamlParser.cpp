@@ -1,5 +1,5 @@
-#include <NeoWPF/UI/Markup/Xaml/XamlEntityDecoder.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlNode.h>
+#include <NeoWPF/UI/Markup/Xaml/Parsing/XamlEntityDecoder.h>
+#include <NeoWPF/UI/Markup/Xaml/Parsing/XamlNode.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 

@@ -1,7 +1,7 @@
 #include <NeoWPF/UI/Layout/Grid/ColumnDefinition.h>
 #include <NeoWPF/UI/Layout/Grid/GridDefinitionConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlTypeRegistry.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 
 namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeColumnDefinitionWidthMetadata() {

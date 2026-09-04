@@ -1,4 +1,4 @@
-#include <NeoWPF/UI/Markup/Xaml/XamlMarkupExtension.h>
+#include <NeoWPF/UI/Markup/Xaml/Parsing/XamlMarkupExtension.h>
 #include <NeoWPF/UI/Data/Binding.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
 
@@ -26,6 +26,11 @@ public:
         }
         error = "binding could not be attached to the target property";
         return false;
+    }
+
+    const NeoWPF::UI::Data::Binding& GetBinding() const noexcept
+    {
+        return m_binding;
     }
 
 private:
@@ -127,6 +132,22 @@ std::shared_ptr<XamlMarkupExtension> ParseXamlMarkupExtension(
     }
 
     return (*factory)(separator == std::string::npos ? std::string_view() : body.substr(separator + 1), context, error);
+}
+
+bool TryGetXamlBinding(const XamlMarkupExtension& extension, XamlBindingInfo& outBinding)
+{
+    const auto* binding = dynamic_cast<const BindingMarkupExtension*>(&extension);
+    if (!binding) {
+        return false;
+    }
+
+    outBinding.Path = binding->GetBinding().GetPath();
+    switch (binding->GetBinding().GetMode()) {
+    case NeoWPF::UI::Data::BindingMode::OneWay: outBinding.Mode = "OneWay"; break;
+    case NeoWPF::UI::Data::BindingMode::TwoWay: outBinding.Mode = "TwoWay"; break;
+    case NeoWPF::UI::Data::BindingMode::OneTime: outBinding.Mode = "OneTime"; break;
+    }
+    return true;
 }
 
 void RegisterXamlMarkupExtensions()

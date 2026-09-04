@@ -1,4 +1,4 @@
-#include <NeoWPF/UI/Markup/Xaml/XamlEntityDecoder.h>
+#include <NeoWPF/UI/Markup/Xaml/Parsing/XamlEntityDecoder.h>
 
 #include <string>
 #include <string_view>

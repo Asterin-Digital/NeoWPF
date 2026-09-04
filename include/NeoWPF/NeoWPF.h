@@ -39,6 +39,7 @@ Review the project's README for details.
 #include <NeoWPF/Core/Application/Resources/EmbeddedResourceProvider.h>
 #include <NeoWPF/Core/Application/Resources/ExternalFileResourceProvider.h>
 #include <NeoWPF/Core/Application/Resources/ResourceManager.h>
+#include <NeoWPF/UI/Markup/Xaml/Loading/CompiledXaml.h>
 ///////////////////////////////////////////////////
 
 // We recommend not to include individual header files for public usage in your own code. 
@@ -91,7 +92,7 @@ namespace NeoWPF {
         Converts a numeric value to a wide string representation.
 
         @param value
-        The value to convert.
+        +The value to convert.
 
         @returns
         A wide string representation of the value.
@@ -311,7 +312,11 @@ namespace NeoWPF {
 }
 
 using NeoWPF::New;
+
 using NeoWPF::Ref;
+
 using NeoWPF::ToString;
+
 using NeoWPF::Cast;
+
 using NeoWPF::String;

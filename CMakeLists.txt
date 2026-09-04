@@ -218,6 +218,15 @@ option(NEOWPF_STATIC_DEPENDENCIES
     ON)
 
 include(cmake/NeoWPFSources.cmake)
+add_library(NeoNaml OBJECT
+    src/NeoNaml/NamlArtifact.cpp
+)
+add_library(NeoNaml::NeoNaml ALIAS NeoNaml)
+target_include_directories(NeoNaml
+    PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
 if(UNIX)
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_SHELL_HEADER}")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_DECORATION_HEADER}")
@@ -227,6 +236,7 @@ endif()
 
 add_library(NeoWPF STATIC ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})
 add_library(NeoWPF::NeoWPF ALIAS NeoWPF)
+target_sources(NeoWPF PRIVATE $<TARGET_OBJECTS:NeoNaml>)
 
 if(WIN32)
     set(NEOWPF_HARFBUZZ_DEBUG_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/debug/lib/harfbuzz.lib")
@@ -269,10 +279,13 @@ if(UNIX)
 endif()
 
 target_compile_definitions(NeoWPF
-    PRIVATE
+    PUBLIC
         $<$<CONFIG:Debug>:_DEBUG>
+        $<$<CONFIG:Debug>:NEOWPF_ENABLE_RUNTIME_XAML>
         $<$<CONFIG:Release>:NDEBUG>
         $<$<NOT:$<CONFIG:Debug>>:NDEBUG>
+    PRIVATE
+        NEOWPF_INTERNAL_BUILD
 )
 
 if(WIN32)
@@ -545,6 +558,7 @@ if(BUILD_TESTING)
 
     add_executable(NeoWPF.AutomatedTests
         tests/Automated/ResourceKeyTests.cpp
+        tests/Automated/NamlArtifactTests.cpp
         tests/Automated/EventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
         tests/Automated/ControlStyleTests.cpp
@@ -571,10 +585,13 @@ if(BUILD_TESTING)
             GTest::gtest_main
     )
 
+    target_compile_definitions(NeoWPF.AutomatedTests PRIVATE NEOWPF_INTERNAL_BUILD)
+
     include(GoogleTest)
     gtest_discover_tests(NeoWPF.AutomatedTests)
 endif()
 
 install(TARGETS NeoWPF ARCHIVE DESTINATION lib)
 install(DIRECTORY include/NeoWPF DESTINATION include)
+install(DIRECTORY include/NeoNaml DESTINATION include)
 install(FILES LICENSE DESTINATION .)

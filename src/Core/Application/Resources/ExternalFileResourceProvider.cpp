@@ -46,6 +46,12 @@ bool ExternalFileResourceProvider::TryGet(const ResourceKey& key, ResourceBlob& 
         return false;
     }
 
+    if (chosenCandidate.extension() == ".naml") {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
+            "[ExternalFileResourceProvider] External XAML resource is not allowed '%s'", key.Name());
+        return false;
+    }
+
     std::ifstream file(chosenCandidate, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,

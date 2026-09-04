@@ -13,10 +13,10 @@
 #include <NeoWPF/UI/Layout/Grid/RowDefinition.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlParser.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlMarkupExtension.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlTreeBuilder.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlTypeRegistry.h>
+#include <NeoWPF/UI/Markup/Xaml/Parsing/XamlParser.h>
+#include <NeoWPF/UI/Markup/Xaml/Parsing/XamlMarkupExtension.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTreeBuilder.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 
 #include <any>

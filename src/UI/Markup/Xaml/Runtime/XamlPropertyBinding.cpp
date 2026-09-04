@@ -1,4 +1,4 @@
-#include <NeoWPF/UI/Markup/Xaml/XamlPropertyBinding.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 
 namespace NeoWPF::UI::Markup::Xaml {

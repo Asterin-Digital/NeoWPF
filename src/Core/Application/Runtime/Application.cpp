@@ -4,8 +4,8 @@
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlMarkupExtension.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlTypeRegistry.h>
+#include <NeoWPF/UI/Markup/Xaml/Parsing/XamlMarkupExtension.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/Diagnostics/CrashHandler.h>
 #include <NeoWPF/Diagnostics/Logger.h>

@@ -18,6 +18,11 @@ struct XamlMarkupExtensionContext {
     std::size_t Column = 0;
 };
 
+struct XamlBindingInfo {
+    std::string Path;
+    std::string Mode;
+};
+
 class XamlMarkupExtension {
 public:
     virtual ~XamlMarkupExtension() = default;
@@ -49,6 +54,8 @@ std::shared_ptr<XamlMarkupExtension> ParseXamlMarkupExtension(
     std::string_view value,
     const XamlMarkupExtensionContext& context,
     std::string& error);
+
+bool TryGetXamlBinding(const XamlMarkupExtension& extension, XamlBindingInfo& outBinding);
 
 void RegisterXamlMarkupExtensions();
 

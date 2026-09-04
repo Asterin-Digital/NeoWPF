@@ -34,6 +34,10 @@ void FrameworkElement::OnAddChild(Visual* child)
         return;
     }
 
+    /* @note
+    / Refreshing bindings here is required,
+    / if we don't do this layout in XAML or C++ may look off or be missing entirely
+    */
     RefreshBindingsRecursively(child);
 }
 

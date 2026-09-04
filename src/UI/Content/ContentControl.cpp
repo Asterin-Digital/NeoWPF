@@ -1,7 +1,7 @@
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlPropertyBinding.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <unordered_map>

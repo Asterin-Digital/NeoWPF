@@ -5,7 +5,7 @@
 #include <NeoWPF/UI/Data/BindingOperations.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlPropertyBinding.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 #include <stdexcept>
 
 namespace NeoWPF::UI::Properties {

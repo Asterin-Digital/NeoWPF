@@ -1,7 +1,7 @@
-#include <NeoWPF/UI/Markup/Xaml/XamlTreeBuilder.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlTypeRegistry.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlPropertyBinding.h>
-#include <NeoWPF/UI/Markup/Xaml/XamlMarkupExtension.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTreeBuilder.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
+#include <NeoWPF/UI/Markup/Xaml/Parsing/XamlMarkupExtension.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
 
 #include <NeoWPF/UI/Controls/Button/Button.h>
