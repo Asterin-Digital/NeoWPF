@@ -21,7 +21,11 @@
 
 namespace NeoWPF::Platform::Windows {
 
-void* WWindowing::CreateWindow(const wchar_t* title, int width, int height)
+void* WWindowing::CreateWindow(
+    const wchar_t* title,
+    int width,
+    int height,
+    std::shared_ptr<NeoWPF::UI::Window> windowHost)
 {
     auto& app = NeoWPF::Core::GetAppState();
     if (!app.hInst) {
@@ -40,7 +44,7 @@ void* WWindowing::CreateWindow(const wchar_t* title, int width, int height)
     windowState.height = height;
     windowState.needsLayout = true;
     windowState.isPrimaryWindow = app.windows.empty();
-    windowState.windowHost = std::make_shared<NeoWPF::UI::Window>();
+    windowState.windowHost = windowHost ? std::move(windowHost) : std::make_shared<NeoWPF::UI::Window>();
     windowState.contentRoot = nullptr;
 
     {

@@ -10,6 +10,7 @@
 #include <NeoWPF/Core/Application/Resources/ResourceManager.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/IXamlResourceHost.h>
 
 #include <any>
 #include <memory>
@@ -60,10 +61,10 @@ public:
     {
     }
 
-    std::shared_ptr<NeoWPF::UI::Visual> Build()
+    std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> Build()
     {
         const auto root = BuildObject(m_artifact.rootObjectId);
-        return std::dynamic_pointer_cast<NeoWPF::UI::Visual>(root);
+        return root;
     }
 
 private:
@@ -108,7 +109,8 @@ private:
                 m_artifact.strings[child.propertyString] != "Resources") {
                 continue;
             }
-            if (!AttachResource(element, child)) {
+            auto* resourceHost = dynamic_cast<IXamlResourceHost*>(object.get());
+            if (!AttachResource(resourceHost, child)) {
                 if (element) m_scopes.pop_back();
                 return nullptr;
             }
@@ -135,10 +137,10 @@ private:
         return object;
     }
 
-    bool AttachResource(NeoWPF::UI::UIElement* owner, const NamlChildRecord& record)
+    bool AttachResource(IXamlResourceHost* owner, const NamlChildRecord& record)
     {
         if (!owner) {
-            m_error = "NAML resources owner is not a UIElement";
+            m_error = "NAML resources owner does not support XAML resources";
             return false;
         }
 
@@ -156,9 +158,9 @@ private:
         }
 
         if (auto resourceElement = std::dynamic_pointer_cast<NeoWPF::UI::UIElement>(resource)) {
-            owner->SetResource(key, resourceElement);
+            owner->SetXamlResource(key, resourceElement);
         } else {
-            owner->SetResource(key, resource);
+            owner->SetXamlResource(key, resource);
         }
         return true;
     }
@@ -295,14 +297,15 @@ private:
     std::string& m_error;
     std::unordered_map<std::uint32_t, std::shared_ptr<DependencyObject>> m_objects;
     std::vector<NeoWPF::UI::UIElement*> m_scopes;
-    std::set<std::pair<NeoWPF::UI::UIElement*, std::string>> m_resourceKeys;
+    std::set<std::pair<IXamlResourceHost*, std::string>> m_resourceKeys;
 };
 
 }
 
-std::shared_ptr<NeoWPF::UI::Visual> LoadCompiledXaml(const NeoWPF::ResourceKey& key,
-                                                     XamlNamescope* namescope,
-                                                     std::string* error)
+std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> LoadCompiledXaml(
+    const NeoWPF::ResourceKey& key,
+    XamlNamescope* namescope,
+    std::string* error)
 {
     std::string localError;
     auto& failure = error ? *error : localError;
@@ -332,8 +335,9 @@ std::shared_ptr<NeoWPF::UI::Visual> LoadCompiledXaml(const NeoWPF::ResourceKey& 
     return builder.Build();
 }
 
-std::shared_ptr<NeoWPF::UI::Visual> LoadCompiledXaml(const NeoWPF::ResourceKey& key,
-                                                     std::string* error)
+std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> LoadCompiledXaml(
+    const NeoWPF::ResourceKey& key,
+    std::string* error)
 {
     return LoadCompiledXaml(key, nullptr, error);
 }

@@ -6,6 +6,8 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
+#include <NeoWPF/UI/Controls/Window.h>
+#include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Markup/Xaml/Loading/CompiledXaml.h>
 #include <NeoNaml/NamlArtifact.h>
 
@@ -177,7 +179,9 @@ TEST(NamlArtifactTests, LoadsKeyedResourcesWithoutAddingThemToVisualChildren)
     std::string error;
     const auto root = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error);
     ASSERT_NE(root, nullptr) << error;
-    ASSERT_EQ(root->GetVisualChildren().size(), 0u);
+    const auto visualRoot = std::dynamic_pointer_cast<NeoWPF::UI::Visual>(root);
+    ASSERT_NE(visualRoot, nullptr);
+    ASSERT_EQ(visualRoot->GetVisualChildren().size(), 0u);
 
     const auto element = dynamic_cast<NeoWPF::UI::UIElement*>(root.get());
     ASSERT_NE(element, nullptr);
@@ -229,6 +233,77 @@ TEST(NamlArtifactTests, ResolvesStaticResourceIntoContentProperty)
     const auto contentText = std::dynamic_pointer_cast<NeoWPF::UI::TextBlock>(border->GetChild());
     ASSERT_NE(contentText, nullptr);
     EXPECT_EQ(contentText->GetText(), L"Resource text");
+
+    NeoWPF::EmbeddedResourceProvider::Instance().Unregister(key);
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(NamlRootTests, LoadsWindowRootWithoutDiscardingWindowState)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    NeoNaml::NamlArtifact artifact;
+    artifact.resourceKey = "CompiledWindowRoot";
+    artifact.sourcePath = "CompiledWindowRoot.xaml";
+    artifact.rootObjectId = 0;
+    artifact.strings = {"Window", "Title"};
+    artifact.objects = {{0, 0, "MainWindow", ""}};
+    artifact.properties = {{0, 1, {NeoNaml::NamlValueKind::String, "Compiled title"}}};
+
+    const auto key = NeoWPF::ResourceKey("CompiledWindowRoot");
+    const auto serialized = NeoNaml::SerializeNaml(artifact);
+    NeoWPF::ResourceManager::Instance().RegisterProviderReference(
+        NeoWPF::EmbeddedResourceProvider::Instance());
+    NeoWPF::EmbeddedResourceProvider::Instance().Register(
+        key, NeoWPF::ResourceType::Xaml,
+        reinterpret_cast<const unsigned char*>(serialized.data()), serialized.size());
+
+    std::string error;
+    NeoWPF::UI::Markup::Xaml::XamlNamescope namescope;
+    const auto root = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &namescope, &error);
+    const auto window = std::dynamic_pointer_cast<NeoWPF::UI::Window>(root);
+    ASSERT_NE(window, nullptr) << error;
+    EXPECT_STREQ(window->GetTitle(), L"Compiled title");
+    EXPECT_EQ(namescope.Find<NeoWPF::UI::Window>("MainWindow").get(), window.get());
+
+    NeoWPF::EmbeddedResourceProvider::Instance().Unregister(key);
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(NamlRootTests, LoadsApplicationResourcesIntoApplicationStore)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    NeoNaml::NamlArtifact artifact;
+    artifact.resourceKey = "CompiledApplicationRoot";
+    artifact.sourcePath = "CompiledApplicationRoot.xaml";
+    artifact.rootObjectId = 0;
+    artifact.strings = {"Application", "TextBlock", "Resources", "Text"};
+    artifact.objects = {
+        {0, 0, "App", ""},
+        {1, 1, "", "Accent"}
+    };
+    artifact.properties = {{1, 3, {NeoNaml::NamlValueKind::String, "Compiled application accent"}}};
+    artifact.children = {{0, 1, 2}};
+
+    const auto key = NeoWPF::ResourceKey("CompiledApplicationRoot");
+    const auto serialized = NeoNaml::SerializeNaml(artifact);
+    NeoWPF::ResourceManager::Instance().RegisterProviderReference(
+        NeoWPF::EmbeddedResourceProvider::Instance());
+    NeoWPF::EmbeddedResourceProvider::Instance().Register(
+        key, NeoWPF::ResourceType::Xaml,
+        reinterpret_cast<const unsigned char*>(serialized.data()), serialized.size());
+
+    std::string error;
+    const auto root = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error);
+    ASSERT_NE(std::dynamic_pointer_cast<NeoWPF::Core::Application>(root), nullptr) << error;
+
+    std::any resource;
+    ASSERT_TRUE(NeoWPF::Core::Application::TryFindResource("Accent", resource));
+    const auto accent = std::any_cast<std::shared_ptr<NeoWPF::UI::UIElement>>(resource);
+    ASSERT_NE(accent, nullptr);
+    EXPECT_EQ(std::dynamic_pointer_cast<NeoWPF::UI::TextBlock>(accent)->GetText(),
+              L"Compiled application accent");
 
     NeoWPF::EmbeddedResourceProvider::Instance().Unregister(key);
     NeoWPF::Core::Application::Shutdown();

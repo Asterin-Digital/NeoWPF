@@ -10,18 +10,26 @@
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <NeoWPF/Diagnostics/TextDumper.h>
 #include <NeoWPF/Platform/NativeWindow.h>
+#include <NeoWPF/UI/Properties/DependencyObject.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/IXamlResourceHost.h>
 
 #undef CreateWindow
 
 namespace NeoWPF::UI {
 class FrameworkElement;
 class Panel;
+class Window;
 }
 
 namespace NeoWPF::Core {
 
-class Application {
+class Application : public NeoWPF::UI::Properties::DependencyObject,
+                    public NeoWPF::UI::Markup::Xaml::IXamlResourceHost {
 public:
+    static const NeoWPF::UI::Properties::DependencyProperty& MainWindowProperty();
+
+    Application() = default;
+
     using DeveloperMessageSeverity = NeoWPF::Diagnostics::DeveloperWarningSeverity;
 
     struct DeveloperMessage {
@@ -83,6 +91,34 @@ public:
 
     /*
         @summary
+        Installs the application instance used by the runtime.
+
+        @param application
+        The application instance to make current. Passing an empty shared pointer
+        clears the current instance.
+    */
+    static void SetCurrent(std::shared_ptr<Application> application);
+
+    /*
+        @summary
+        Sets the application's main window.
+
+        @param window
+        The window associated with this application.
+    */
+    void SetMainWindow(const std::shared_ptr<NeoWPF::UI::Window>& window) { m_mainWindow = window; }
+
+    /*
+        @summary
+        Returns the application's main window.
+
+        @returns
+        A reference to the stored main-window shared pointer.
+    */
+    const std::shared_ptr<NeoWPF::UI::Window>& GetMainWindow() const noexcept { return m_mainWindow; }
+
+    /*
+        @summary
         Stores a resource value in the application resource dictionary.
 
         @param key
@@ -92,6 +128,7 @@ public:
         The resource value to store.
     */
     static void SetResource(const std::string& key, std::any value);
+    bool SetXamlResource(const std::string& key, const std::any& value) override;
 
     /*
         @summary
@@ -107,6 +144,7 @@ public:
         True if the resource was found, otherwise false.
     */
     static bool TryFindResource(const std::string& key, std::any& outValue);
+    bool TryFindXamlResource(const std::string& key, std::any& outValue) const override;
 
     /*
         @summary
@@ -194,6 +232,52 @@ public:
 
     /*
         @summary
+        Creates a native window using an existing UI window host.
+
+        @param title
+        The native window title.
+
+        @param width
+        The initial window width.
+
+        @param height
+        The initial window height.
+
+        @param windowHost
+        The UI window that owns the content and title-bar state.
+
+        @returns
+        The created native window.
+    */
+    NeoWPF::Platform::Window CreateWindow(
+        const wchar_t* title,
+        int width,
+        int height,
+        const std::shared_ptr<NeoWPF::UI::Window>& windowHost);
+
+    /*
+        @summary
+        Creates a native window from an existing UI window host.
+
+        @param windowHost
+        The UI window that owns the content and title-bar state.
+
+        @param width
+        The initial window width.
+
+        @param height
+        The initial window height.
+
+        @returns
+        The created native window.
+    */
+    NeoWPF::Platform::Window CreateWindow(
+        const std::shared_ptr<NeoWPF::UI::Window>& windowHost,
+        int width,
+        int height);
+
+    /*
+        @summary
         Enables or disables global layout inspection.
 
         @param enabled
@@ -266,11 +350,9 @@ public:
     */
     static void ClearDeveloperMessages();
 
-public:
-
 private:
-    Application() = default;
-    static Application* s_current;
+    std::shared_ptr<NeoWPF::UI::Window> m_mainWindow;
+    static std::shared_ptr<Application> s_current;
 };
 
 }

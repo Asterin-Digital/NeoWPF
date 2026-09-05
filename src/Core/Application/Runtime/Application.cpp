@@ -3,6 +3,7 @@
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/UI/Markup/Xaml/Parsing/XamlMarkupExtension.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
@@ -16,7 +17,7 @@
 
 namespace NeoWPF::Core {
 
-Application* Application::s_current = nullptr;
+std::shared_ptr<Application> Application::s_current = nullptr;
 
 void Application::Initialize()
 {
@@ -38,7 +39,7 @@ void Application::Initialize()
 #endif
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application::Initialize begin");
     if (!s_current) {
-        s_current = new Application();
+        s_current = std::make_shared<Application>();
     }
     NeoWPF::UI::Properties::RegisterCoreControlProperties();
     NeoWPF::UI::Markup::Xaml::ValidateXamlRegistrations();
@@ -49,6 +50,15 @@ void Application::Initialize()
 
 NeoWPF::Platform::Window Application::CreateWindow(const wchar_t* title, int width, int height)
 {
+    return CreateWindow(title, width, height, nullptr);
+}
+
+NeoWPF::Platform::Window Application::CreateWindow(
+    const wchar_t* title,
+    int width,
+    int height,
+    const std::shared_ptr<NeoWPF::UI::Window>& windowHost)
+{
     if (!title) {
         return NeoWPF::Platform::Window();
     }
@@ -57,8 +67,19 @@ NeoWPF::Platform::Window Application::CreateWindow(const wchar_t* title, int wid
         return NeoWPF::Platform::Window();
     }
     NEO_WPF_STARTUP_ACTION("Application.CreateWindow");    NeoWPF::Diagnostics::PerformanceMetrics::RecordWindowCreate();
-    void* nativeHandle = platform->Windowing().CreateWindow(title, width, height);
+    void* nativeHandle = platform->Windowing().CreateWindow(title, width, height, windowHost);
     return NeoWPF::Platform::Window(nativeHandle);
+}
+
+NeoWPF::Platform::Window Application::CreateWindow(
+    const std::shared_ptr<NeoWPF::UI::Window>& windowHost,
+    int width,
+    int height)
+{
+    if (!windowHost) {
+        return NeoWPF::Platform::Window();
+    }
+    return CreateWindow(windowHost->GetTitle(), width, height, windowHost);
 }
 
 void Application::ShowConsole(bool visible)
@@ -135,7 +156,21 @@ void Application::SetResource(const std::string& key, std::any value)
     NeoWPF::Core::ApplicationResources::Resources::SetResource(key, std::move(value));
 }
 
+bool Application::SetXamlResource(const std::string& key, const std::any& value)
+{
+    if (key.empty()) {
+        return false;
+    }
+    NeoWPF::Core::ApplicationResources::Resources::SetResource(key, value);
+    return true;
+}
+
 bool Application::TryFindResource(const std::string& key, std::any& outValue)
+{
+    return NeoWPF::Core::ApplicationResources::Resources::TryFindResource(key, outValue);
+}
+
+bool Application::TryFindXamlResource(const std::string& key, std::any& outValue) const
 {
     return NeoWPF::Core::ApplicationResources::Resources::TryFindResource(key, outValue);
 }
@@ -206,6 +241,11 @@ Application& Application::Current()
         std::abort();
     }
     return *s_current;
+}
+
+void Application::SetCurrent(std::shared_ptr<Application> application)
+{
+    s_current = std::move(application);
 }
 
 void Application::SetLayoutInspection(bool enabled)

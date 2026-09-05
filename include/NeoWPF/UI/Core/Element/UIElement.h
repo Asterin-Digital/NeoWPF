@@ -13,6 +13,7 @@
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
 #include <NeoWPF/UI/Styling/Triggers/EventTrigger.h>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/IXamlResourceHost.h>
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -67,7 +68,9 @@ class EventTrigger;
 
 namespace NeoWPF::UI {
 
-class UIElement : public Visual, public Properties::DependencyObject {
+class UIElement : public Visual,
+                  public Properties::DependencyObject,
+                  public NeoWPF::UI::Markup::Xaml::IXamlResourceHost {
 public:
     static const Properties::DependencyProperty& VisibilityProperty();
     static const Properties::DependencyProperty& IsEnabledProperty();
@@ -587,6 +590,9 @@ public:
         The resource value.
     */
     bool SetResource(const std::string& key, const std::any& value);
+    bool SetXamlResource(const std::string& key, const std::any& value) override {
+        return SetResource(key, value);
+    }
 
     /*
         @summary
@@ -602,6 +608,9 @@ public:
         True when a matching resource exists.
     */
     bool TryFindResource(const std::string& key, std::any& outValue) const;
+    bool TryFindXamlResource(const std::string& key, std::any& outValue) const override {
+        return TryFindResource(key, outValue);
+    }
 
     /*
         @summary

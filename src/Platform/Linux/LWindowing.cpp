@@ -102,7 +102,11 @@ bool LWindowing::Connect()
     return m_compositor != nullptr && m_hasXdgShell;
 }
 
-void* LWindowing::CreateWindow(const wchar_t* title, int width, int height)
+void* LWindowing::CreateWindow(
+    const wchar_t* title,
+    int width,
+    int height,
+    std::shared_ptr<NeoWPF::UI::Window> windowHost)
 {
     if (!Connect()) {
         NeoWPF::Diagnostics::LogError("Wayland connection or xdg-shell setup failed");
@@ -126,7 +130,7 @@ void* LWindowing::CreateWindow(const wchar_t* title, int width, int height)
     windowState.height = static_cast<unsigned int>(window->Height());
     windowState.needsLayout = true;
     windowState.isPrimaryWindow = app.windows.empty();
-    windowState.windowHost = std::make_shared<NeoWPF::UI::Window>();
+    windowState.windowHost = windowHost ? std::move(windowHost) : std::make_shared<NeoWPF::UI::Window>();
 
     {
         std::lock_guard<std::mutex> lock(app.windowsMutex);

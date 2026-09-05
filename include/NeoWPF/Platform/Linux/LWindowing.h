@@ -22,7 +22,11 @@ public:
     LWindowing(const LWindowing&) = delete;
     LWindowing& operator=(const LWindowing&) = delete;
 
-    void* CreateWindow(const wchar_t* title, int width, int height) override;
+    void* CreateWindow(
+        const wchar_t* title,
+        int width,
+        int height,
+        std::shared_ptr<NeoWPF::UI::Window> windowHost = nullptr) override;
     bool GetNativeWindowInfo(void* nativeWindowHandle, NeoWPF::Contracts::NativeWindowInfo& outInfo) const noexcept override;
     bool IsWindowAlive(void* nativeWindowHandle) const noexcept override;
     void GetWindowSize(void* nativeWindowHandle, unsigned int& outWidth, unsigned int& outHeight) const noexcept override;

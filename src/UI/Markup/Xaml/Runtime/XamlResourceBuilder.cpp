@@ -30,13 +30,13 @@ XamlResourceResolver CreateXamlResourceResolver(
     NeoWPF::UI::Properties::DependencyObject& target,
     const XamlBuildContext& context)
 {
-    const auto* current = dynamic_cast<const NeoWPF::UI::UIElement*>(&target);
+    const auto* current = dynamic_cast<const IXamlResourceHost*>(&target);
     if (!current) {
         return {};
     }
 
     return [current, &context](std::string_view key, std::any& value) {
-        if (current->TryFindResource(std::string(key), value)) {
+        if (current->TryFindXamlResource(std::string(key), value)) {
             return true;
         }
 
@@ -56,8 +56,8 @@ bool BuildXamlResourceDictionary(
     XamlBuildContext& context,
     const XamlObjectBuilder& buildObject)
 {
-    auto* ownerElement = dynamic_cast<NeoWPF::UI::UIElement*>(&owner);
-    if (!ownerElement || !buildObject) {
+    auto* ownerResourceHost = dynamic_cast<IXamlResourceHost*>(&owner);
+    if (!ownerResourceHost || !buildObject) {
         return false;
     }
 
@@ -89,7 +89,7 @@ bool BuildXamlResourceDictionary(
 
         auto value = buildObject(entry, namescope, context);
         if (value) {
-            ownerElement->SetResource(entry.XamlKey, value);
+            ownerResourceHost->SetXamlResource(entry.XamlKey, value);
         }
     }
     return true;

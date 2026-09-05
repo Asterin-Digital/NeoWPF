@@ -5,6 +5,10 @@
 #include <memory>
 #include <string>
 
+namespace NeoWPF::UI {
+class Window;
+}
+
 namespace NeoWPF::Contracts {
 
 enum class NativeWindowSystem {
@@ -34,7 +38,11 @@ class IWindowing {
 public:
     virtual ~IWindowing() = default;
 
-    virtual void* CreateWindow(const wchar_t* title, int width, int height) = 0;
+    virtual void* CreateWindow(
+        const wchar_t* title,
+        int width,
+        int height,
+        std::shared_ptr<NeoWPF::UI::Window> windowHost = nullptr) = 0;
     virtual bool GetNativeWindowInfo(void* nativeWindowHandle, NativeWindowInfo& outInfo) const noexcept = 0;
     virtual bool IsWindowAlive(void* nativeWindowHandle) const noexcept = 0;
     virtual void GetWindowSize(void* nativeWindowHandle, unsigned int& outWidth, unsigned int& outHeight) const noexcept = 0;

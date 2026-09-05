@@ -293,7 +293,7 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
     return obj;
 }
 
-std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTreeFromRoot(
+std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlTreeFromRoot(
     const XamlNode& root,
     XamlNamescope* namescope)
 {
@@ -304,16 +304,10 @@ std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTreeFromRoot(
     }
 
 
-    auto visual = std::dynamic_pointer_cast<NeoWPF::UI::Visual>(obj);
-    if (!visual) {
-
-        return nullptr;
-    }
-
-    return visual;
+    return obj;
 }
 
-std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTree(
+std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlTree(
     const std::vector<XamlNode>& roots,
     XamlNamescope* namescope)
 {
@@ -339,7 +333,7 @@ std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTree(
     return rootContainer;
 }
 
-std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTree(
+std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlTree(
     const XamlNode& root,
     XamlNamescope* namescope)
 {

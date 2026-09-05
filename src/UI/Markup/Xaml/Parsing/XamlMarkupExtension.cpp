@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Markup/Xaml/Parsing/XamlMarkupExtension.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 #include <NeoWPF/UI/Data/Binding.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
 
@@ -58,6 +59,14 @@ public:
         if (!m_resolver(m_key, value)) {
             error = "resource was not found: " + m_key;
             return false;
+        }
+
+        if (const auto* binding = property.GetXamlBinding()) {
+            if (const auto* resourceObject =
+                    std::any_cast<std::shared_ptr<NeoWPF::UI::Properties::DependencyObject>>(&value)) {
+                binding->Assign(target, *resourceObject);
+                return true;
+            }
         }
 
         target.SetValue(property, value);

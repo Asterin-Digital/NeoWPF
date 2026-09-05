@@ -5,6 +5,7 @@
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
+#include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/UI/Data/INotifyPropertyChanged.h>
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Layout/Border/Border.h>
@@ -53,6 +54,12 @@ void ExpectLayoutParity(const NeoWPF::UI::Visual& xamlRoot,
         EXPECT_EQ(xamlElement->GetLayoutOffsetX(), cppElement->GetLayoutOffsetX());
         EXPECT_EQ(xamlElement->GetLayoutOffsetY(), cppElement->GetLayoutOffsetY());
     }
+}
+
+std::shared_ptr<NeoWPF::UI::Visual> AsVisual(
+    const std::shared_ptr<NeoWPF::UI::Properties::DependencyObject>& root)
+{
+    return std::dynamic_pointer_cast<NeoWPF::UI::Visual>(root);
 }
 
 }
@@ -240,7 +247,7 @@ TEST(XamlParserTests, BuildsKeyedResourceDictionaryWithoutAddingVisualChildren)
     const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
 
     ASSERT_NE(tree, nullptr);
-    EXPECT_EQ(tree->GetVisualChildren().size(), 1u);
+    EXPECT_EQ(AsVisual(tree)->GetVisualChildren().size(), 1u);
 
     std::any resource;
     const auto* element = dynamic_cast<const NeoWPF::UI::UIElement*>(tree.get());
@@ -305,7 +312,7 @@ TEST(XamlParserTests, ResolvesResourcesThroughNestedScopesAndShadowsOuterValues)
     const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root, &namescope);
 
     ASSERT_NE(tree, nullptr);
-    const auto children = tree->GetVisualChildren();
+    const auto children = AsVisual(tree)->GetVisualChildren();
     ASSERT_EQ(children.size(), 2u);
 
     auto* outer = dynamic_cast<NeoWPF::UI::UIElement*>(children[1]);
@@ -376,6 +383,119 @@ TEST(XamlParserTests, PreservesResourceObjectIdentityAcrossNameAndKey)
     NeoWPF::Core::Application::Shutdown();
 }
 
+TEST(XamlRootTests, BuildsWindowWithOwnedTitleAndComposedContent)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <Window Title="Temporary title">
+            <Window.TitleBar>
+                <TextBlock Text="Title bar" />
+            </Window.TitleBar>
+            <Window.Content>
+                <Grid>
+                    <TextBlock Text="Content" />
+                </Grid>
+            </Window.Content>
+        </Window>
+    )");
+    const auto built = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+
+    const auto window = std::dynamic_pointer_cast<NeoWPF::UI::Window>(built);
+    ASSERT_NE(window, nullptr);
+    EXPECT_STREQ(window->GetTitle(), L"Temporary title");
+    ASSERT_NE(window->GetTitleBar(), nullptr);
+    ASSERT_NE(window->GetContent(), nullptr);
+    EXPECT_NE(std::dynamic_pointer_cast<NeoWPF::UI::Grid>(window->GetContent()), nullptr);
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlRootTests, BuildsApplicationResourcesAndResolvesThemFromWindow)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto applicationRoot = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <Application>
+            <Application.Resources>
+                <ResourceDictionary>
+                    <TextBlock x:Key="Accent" Text="Application accent" />
+                </ResourceDictionary>
+            </Application.Resources>
+        </Application>
+    )");
+    const auto applicationObject = NeoWPF::UI::Markup::Xaml::BuildXamlTree(applicationRoot);
+    ASSERT_NE(std::dynamic_pointer_cast<NeoWPF::Core::Application>(applicationObject), nullptr);
+
+    std::any resource;
+    ASSERT_TRUE(NeoWPF::Core::Application::TryFindResource("Accent", resource));
+    const auto accent = std::any_cast<std::shared_ptr<NeoWPF::UI::Properties::DependencyObject>>(resource);
+    ASSERT_NE(accent, nullptr);
+    EXPECT_EQ(std::dynamic_pointer_cast<NeoWPF::UI::TextBlock>(accent)->GetText(), L"Application accent");
+
+    const auto windowRoot = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <Window>
+            <Window.Content>
+                <ContentControl Content="{StaticResource Accent}" />
+            </Window.Content>
+        </Window>
+    )");
+    const auto windowObject = NeoWPF::UI::Markup::Xaml::BuildXamlTree(windowRoot);
+    const auto window = std::dynamic_pointer_cast<NeoWPF::UI::Window>(windowObject);
+    ASSERT_NE(window, nullptr);
+    const auto composedContent = window->GetContent();
+    ASSERT_NE(composedContent, nullptr);
+    ASSERT_EQ(composedContent->GetVisualChildren().size(), 1u);
+    const auto contentControl = dynamic_cast<NeoWPF::UI::Content::ContentControl*>(
+        composedContent->GetVisualChildren().front());
+    ASSERT_NE(contentControl, nullptr);
+    EXPECT_EQ(contentControl->GetContent().get(), accent.get());
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlRootTests, RegistersNamesInsideWindowRoot)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    NeoWPF::UI::Markup::Xaml::XamlNamescope namescope;
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<Window><Window.Content><TextBlock x:Name="NamedContent" Text="Named" /></Window.Content></Window>)");
+    const auto built = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root, &namescope);
+
+    ASSERT_NE(std::dynamic_pointer_cast<NeoWPF::UI::Window>(built), nullptr);
+    const auto named = namescope.Find<NeoWPF::UI::TextBlock>("NamedContent");
+    ASSERT_NE(named, nullptr);
+    EXPECT_EQ(named->GetText(), L"Named");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlRootTests, ReportsApplicationResourceKeyFailures)
+{
+    NeoWPF::Core::Application::Initialize();
+    NeoWPF::Diagnostics::ClearDeveloperWarnings();
+
+    const auto missingKeyRoot = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<Application><Application.Resources><ResourceDictionary><TextBlock /></ResourceDictionary></Application.Resources></Application>)");
+    ASSERT_NE(NeoWPF::UI::Markup::Xaml::BuildXamlTree(missingKeyRoot), nullptr);
+    ASSERT_TRUE(NeoWPF::Diagnostics::GetLastWarning().has_value());
+    EXPECT_EQ(NeoWPF::Diagnostics::GetLastWarning()->title, L"XAML_RESOURCE_KEY");
+
+    NeoWPF::Diagnostics::ClearDeveloperWarnings();
+    const auto duplicateKeyRoot = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <Application><Application.Resources><ResourceDictionary>
+            <TextBlock x:Key="Accent" />
+            <TextBlock x:Key="Accent" />
+        </ResourceDictionary></Application.Resources></Application>
+    )");
+    ASSERT_NE(NeoWPF::UI::Markup::Xaml::BuildXamlTree(duplicateKeyRoot), nullptr);
+    ASSERT_TRUE(NeoWPF::Diagnostics::GetLastWarning().has_value());
+    EXPECT_EQ(NeoWPF::Diagnostics::GetLastWarning()->title, L"XAML_RESOURCE_KEY");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
 TEST(XamlParserTests, BuildsLiveTreeFromXaml)
 {
     NeoWPF::Core::Application::Initialize();
@@ -395,7 +515,7 @@ TEST(XamlParserTests, BuildsLiveTreeFromXaml)
     const auto* panel = dynamic_cast<const NeoWPF::UI::StackPanel*>(liveTree.get());
     ASSERT_NE(panel, nullptr);
 
-    const auto children = liveTree->GetLogicalChildren();
+    const auto children = AsVisual(liveTree)->GetLogicalChildren();
     ASSERT_EQ(children.size(), 2u);
 
     auto* firstText = dynamic_cast<NeoWPF::UI::TextBlock*>(children[0]);
@@ -461,7 +581,7 @@ TEST(XamlParserTests, AppliesPocoBindingValuesToXamlTargets)
     ASSERT_NE(rootElement, nullptr);
     rootElement->SetDataContext(viewModel);
 
-    const auto children = tree->GetVisualChildren();
+    const auto children = AsVisual(tree)->GetVisualChildren();
     ASSERT_EQ(children.size(), 2u);
     ASSERT_EQ(dynamic_cast<NeoWPF::UI::TextBlock*>(children[0])->GetText(), L"Bound message");
     ASSERT_EQ(dynamic_cast<NeoWPF::UI::TextBox*>(children[1])->GetText(), L"Bound query");
@@ -527,11 +647,11 @@ TEST(XamlParserTests, XamlAndCppConstructionProduceEquivalentTreeState)
     cppTree->AddChild(cppText);
 
     EXPECT_EQ(typeid(*xamlTree), typeid(*cppTree));
-    EXPECT_EQ(xamlTree->GetVisualChildren().size(), cppTree->GetVisualChildren().size());
-    EXPECT_EQ(xamlTree->GetLogicalChildren().size(), cppTree->GetLogicalChildren().size());
-    EXPECT_EQ(xamlTree->GetLogicalChildren().size(), 2u);
+    EXPECT_EQ(AsVisual(xamlTree)->GetVisualChildren().size(), cppTree->GetVisualChildren().size());
+    EXPECT_EQ(AsVisual(xamlTree)->GetLogicalChildren().size(), cppTree->GetLogicalChildren().size());
+    EXPECT_EQ(AsVisual(xamlTree)->GetLogicalChildren().size(), 2u);
 
-    const auto xamlChildren = xamlTree->GetLogicalChildren();
+    const auto xamlChildren = AsVisual(xamlTree)->GetLogicalChildren();
     const auto cppChildren = cppTree->GetLogicalChildren();
     ASSERT_EQ(xamlChildren.size(), 2u);
     ASSERT_EQ(cppChildren.size(), 2u);
@@ -586,7 +706,7 @@ TEST(XamlParserTests, ParsesCommonScalarPropertiesViaPropertyMetadata)
     EXPECT_EQ(panel->GetHeight(), 40);
     EXPECT_EQ(panel->GetBackgroundColor().ToArgb(), 0xFF202020u);
 
-    const auto children = liveTree->GetLogicalChildren();
+    const auto children = AsVisual(liveTree)->GetLogicalChildren();
     ASSERT_EQ(children.size(), 1u);
 
     auto* text = dynamic_cast<NeoWPF::UI::TextBlock*>(children[0]);
@@ -909,7 +1029,7 @@ TEST(XamlParserTests, XamlAndCppMatchContentControlNesting)
     cppInner->SetChild(std::make_shared<NeoWPF::UI::TextBlock>(L"Nested"));
     cppOuter->SetChild(cppInner);
 
-    const auto xamlDescendants = xamlTree->GetVisualDescendants();
+    const auto xamlDescendants = AsVisual(xamlTree)->GetVisualDescendants();
     const auto cppDescendants = cppOuter->GetVisualDescendants();
     ASSERT_EQ(xamlDescendants.size(), cppDescendants.size());
     for (std::size_t index = 0; index < xamlDescendants.size(); ++index) {

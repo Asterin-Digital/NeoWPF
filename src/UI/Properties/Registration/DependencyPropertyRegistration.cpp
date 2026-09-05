@@ -7,6 +7,8 @@ void RegisterCoreControlProperties() {
     RegisterFrameworkElementProperties();
     RegisterControlProperties();
     RegisterContentControlProperties();
+    RegisterWindowProperties();
+    RegisterApplicationProperties();
     RegisterButtonProperties();
     RegisterRangeBaseProperties();
     RegisterThumbProperties();

@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <memory>
+#include <type_traits>
 #include <unordered_map>
 
 namespace NeoWPF::UI::Properties {
@@ -166,7 +167,16 @@ inline void RegisterXamlElementProperty(
         XamlPropertyKind::Element,
         [setter](NeoWPF::UI::Properties::DependencyObject& owner,
                  std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> item) {
-            auto typedItem = std::static_pointer_cast<TItem>(std::move(item));
+            std::shared_ptr<TItem> typedItem;
+            if constexpr (std::is_base_of_v<NeoWPF::UI::Properties::DependencyObject, TItem>) {
+                typedItem = std::static_pointer_cast<TItem>(std::move(item));
+            } else {
+                auto* typedItemPointer = dynamic_cast<TItem*>(item.get());
+                if (!typedItemPointer) {
+                    return;
+                }
+                typedItem = std::shared_ptr<TItem>(std::move(item), typedItemPointer);
+            }
             auto& typedOwner = static_cast<TOwner&>(owner);
             (typedOwner.*setter)(std::move(typedItem));
         }
