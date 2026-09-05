@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 namespace {
@@ -17,6 +18,8 @@ namespace NeoWPF::UI::Properties {
         RegisterProperty<UI::UIElement, int>("TabIndex", &UI::UIElement::GetTabIndex, &UI::UIElement::SetTabIndex);
         RegisterProperty<UI::UIElement, bool>("IsFocused", &UI::UIElement::IsFocused, &UI::UIElement::SetFocused);
         RegisterProperty<UI::UIElement, float>("Opacity", &UI::UIElement::GetOpacity, &UI::UIElement::SetOpacity, MakeUIElementOpacityMetadata());
+        NeoWPF::UI::Markup::Xaml::RegisterXamlType<UI::UIElement>(
+            "UIElement", "", "NeoWPF::UI::UIElement", "NeoWPF/UI/Core/Element/UIElement.h");
     }
 }
 

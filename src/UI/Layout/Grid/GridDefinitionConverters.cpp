@@ -55,6 +55,29 @@ public:
         convertedValue = length;
         return true;
     }
+
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override
+    {
+        NeoWPF::UI::Grid::GridLength length{};
+        if (!ParseGridLengthValue(rawValue, length)) {
+            return false;
+        }
+
+        switch (length.Mode) {
+        case NeoWPF::UI::SizeMode::Auto:
+            expression = "NeoWPF::UI::Grid::GridLength::Auto()";
+            return true;
+        case NeoWPF::UI::SizeMode::Star:
+            expression = "NeoWPF::UI::Grid::GridLength::Star(" +
+                         std::to_string(length.Value) + ")";
+            return true;
+        case NeoWPF::UI::SizeMode::Fixed:
+            expression = "NeoWPF::UI::Grid::GridLength::Fixed(" +
+                         std::to_string(length.Value) + ")";
+            return true;
+        }
+        return false;
+    }
 };
 
 }

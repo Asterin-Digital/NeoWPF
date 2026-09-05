@@ -12,6 +12,7 @@ struct XamlNode {
     std::string XamlName;
     std::string XamlKey;
     std::unordered_map<std::string, std::string> Attributes;
+    std::string XamlClass;
     std::vector<XamlNode> Children;
     std::string TextContent;
     std::size_t Line = 0;

@@ -91,7 +91,7 @@ bool WideStringConverter::ConvertFromString(const std::string& rawValue, std::an
 
 bool WideStringConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
 {
-    expression = EscapeLiteral(rawValue, true);
+    expression = "std::wstring(" + EscapeLiteral(rawValue, true) + ")";
     return true;
 }
 
@@ -211,6 +211,23 @@ bool ThicknessConverter::ConvertFromString(const std::string& rawValue, std::any
     } catch (...) {
         return false;
     }
+}
+
+bool ThicknessConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    std::any convertedValue;
+    if (!ConvertFromString(rawValue, convertedValue)) {
+        expression.clear();
+        return false;
+    }
+
+    const auto thickness = std::any_cast<NeoWPF::UI::Thickness>(convertedValue);
+    expression = "NeoWPF::UI::Thickness(" +
+        std::to_string(thickness.Left) + ", " +
+        std::to_string(thickness.Top) + ", " +
+        std::to_string(thickness.Right) + ", " +
+        std::to_string(thickness.Bottom) + ")";
+    return true;
 }
 
 bool SpacingConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const

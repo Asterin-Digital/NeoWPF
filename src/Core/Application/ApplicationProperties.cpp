@@ -24,7 +24,8 @@ void RegisterApplicationProperties()
         "Application",
         "",
         "NeoWPF::Core::Application",
-        "NeoWPF/Core/Application/Application.h");
+        "NeoWPF/Core/Application/Application.h",
+        NeoWPF::UI::Markup::Xaml::XamlTypeRole::ApplicationRoot);
 }
 
 }

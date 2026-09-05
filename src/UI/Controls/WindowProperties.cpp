@@ -62,7 +62,8 @@ void RegisterWindowProperties()
         "Window",
         "Content",
         "NeoWPF::UI::Window",
-        "NeoWPF/UI/Controls/Window.h");
+        "NeoWPF/UI/Controls/Window.h",
+        NeoWPF::UI::Markup::Xaml::XamlTypeRole::WindowRoot);
 }
 
 }

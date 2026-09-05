@@ -200,6 +200,9 @@ namespace NeoWPF::UI::Properties {
         */
         bool IsApplyingPropertyValue() const noexcept { return m_isApplyingPropertyValue; }
 
+        bool IsXamlComponentInitialized() const noexcept { return m_isXamlComponentInitialized; }
+        void MarkXamlComponentInitialized() noexcept { m_isXamlComponentInitialized = true; }
+
         /*
             @summary
             Returns the object to use as the inheritance parent for inherited property values.
@@ -273,6 +276,7 @@ namespace NeoWPF::UI::Properties {
                                                     std::size_t handlerId);
 
         bool m_isApplyingPropertyValue = false;
+        bool m_isXamlComponentInitialized = false;
         std::unordered_map<const DependencyProperty*, std::any> m_expressionValues;
         std::unordered_map<const DependencyProperty*, std::any> m_localValues;
         std::unordered_map<const DependencyProperty*, std::any> m_styleValues;

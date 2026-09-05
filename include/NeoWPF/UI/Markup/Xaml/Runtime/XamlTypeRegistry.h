@@ -15,6 +15,12 @@ class DependencyObject;
 
 namespace NeoWPF::UI::Markup::Xaml {
 
+enum class XamlTypeRole {
+    Element,
+    WindowRoot,
+    ApplicationRoot,
+};
+
 /*
     @summary
     Metadata for a type that can be constructed from XAML.
@@ -48,6 +54,9 @@ struct XamlTypeInfo {
 
     /* Public include path required to use CppTypeName in generated code. */
     std::string HeaderPath;
+
+    /* Identifies special document-root types for offline code generation. */
+    XamlTypeRole Role = XamlTypeRole::Element;
 };
 
 struct RegisteredXamlType {
@@ -144,7 +153,8 @@ template<typename T>
 inline void RegisterXamlType(std::string_view tagName,
                              std::string_view contentProperty = "",
                              std::string_view cppTypeName = "",
-                             std::string_view headerPath = "")
+                             std::string_view headerPath = "",
+                             XamlTypeRole role = XamlTypeRole::Element)
 {
     static_assert(std::is_base_of_v<NeoWPF::UI::Properties::DependencyObject, T>,
                   "Only DependencyObject-derived types can be registered for XAML.");
@@ -155,7 +165,8 @@ inline void RegisterXamlType(std::string_view tagName,
         std::string(contentProperty),
         false,
         std::string(cppTypeName),
-        std::string(headerPath)
+        std::string(headerPath),
+        role
     };
 
     XamlTypeRegistry::Get().Register(tagName, info);

@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 
 namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementWidthMetadata() {
@@ -134,6 +135,8 @@ namespace NeoWPF::UI::Properties {
             &UI::FrameworkElement::GetDataContext,
             static_cast<void (UI::FrameworkElement::*)(const std::any&)>(&UI::FrameworkElement::SetDataContext),
             MakeFrameworkElementDataContextMetadata());
+        NeoWPF::UI::Markup::Xaml::RegisterXamlType<UI::FrameworkElement>(
+            "FrameworkElement", "", "NeoWPF::UI::FrameworkElement", "NeoWPF/UI/Core/Element/FrameworkElement.h");
     }
 }
 

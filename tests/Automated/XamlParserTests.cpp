@@ -190,6 +190,16 @@ TEST(XamlParserTests, PreservesXamlNameAsElementIdentity)
     EXPECT_EQ(root[0].Children[0].Attributes.at("Text"), "Apply");
 }
 
+TEST(XamlParserTests, PreservesDocumentClassAsSpecialMetadata)
+{
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<Application x:Class="SampleApp.App" />)");
+
+    ASSERT_EQ(root.size(), 1u);
+    EXPECT_EQ(root[0].XamlClass, "SampleApp.App");
+    EXPECT_EQ(root[0].Attributes.count("x:Class"), 0u);
+}
+
 TEST(XamlParserTests, PreservesXamlKeyAsResourceIdentity)
 {
     const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(

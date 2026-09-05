@@ -111,12 +111,14 @@ struct ParsedAttributes {
     std::unordered_map<std::string, std::string> Values;
     std::string XamlName;
     std::string XamlKey;
+    std::string XamlClass;
 
     std::string* FindSpecialAttribute(std::string_view key)
     {
-        const std::array<std::pair<std::string_view, std::string*>, 2> specialAttributes = {{
+        const std::array<std::pair<std::string_view, std::string*>, 3> specialAttributes = {{
             {"x:Name", &XamlName},
             {"x:Key", &XamlKey},
+            {"x:Class", &XamlClass},
         }};
 
         for (const auto& [name, value] : specialAttributes) {
@@ -228,6 +230,7 @@ XamlNode ParseNode(ParserState& state)
         node.Attributes = attributes.Values;
         node.XamlName = attributes.XamlName;
         node.XamlKey = attributes.XamlKey;
+        node.XamlClass = attributes.XamlClass;
 
         if (state.Offset < state.Source.size() && state.Source[state.Offset] == '/') {
             ++state.Offset;
