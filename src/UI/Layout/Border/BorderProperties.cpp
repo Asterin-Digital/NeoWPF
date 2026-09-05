@@ -64,7 +64,8 @@ namespace NeoWPF::UI::Properties {
             &UI::Border::GetBackgroundColor,
             static_cast<void (UI::Border::*)(::NeoWPF::UI::Color)>(&UI::Border::SetBackgroundColor),
             MakeBorderBackgroundColorMetadata());
-        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Border>("Border", "Content");
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Border>(
+            "Border", "Content", "NeoWPF::UI::Border", "NeoWPF/UI/Layout/Border/Border.h");
     }
 }
 

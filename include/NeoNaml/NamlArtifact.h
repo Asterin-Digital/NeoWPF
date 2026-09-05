@@ -3,9 +3,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace NeoNaml {
+
+inline constexpr std::string_view ImplicitChildrenPropertyName = "Children";
 
 enum class NamlValueKind : std::uint8_t {
     String,
@@ -25,6 +28,7 @@ struct NamlObjectRecord {
     std::uint32_t id = 0;
     std::uint32_t typeString = 0;
     std::string name;
+    std::string resourceKey;
 };
 
 struct NamlPropertyRecord {

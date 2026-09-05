@@ -204,6 +204,8 @@ public:
     */
     bool TryParseValue(const std::string& rawValue, std::any& parsedValue) const;
 
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const;
+
     /*
         @summary
         Registers a dependency property for a specific owner type.

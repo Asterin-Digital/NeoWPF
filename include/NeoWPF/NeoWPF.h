@@ -28,6 +28,7 @@ Review the project's README for details.
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/UI.h>
 #include <NeoWPF/Input/Input.h>
+#include <NeoWPF/UI/Markup/Builder/Builder.h>
 ///////////////////////////////////////////////////
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/FailureHooks.h>

@@ -37,6 +37,43 @@ private:
     NeoWPF::UI::Data::Binding m_binding;
 };
 
+class StaticResourceMarkupExtension final : public XamlMarkupExtension {
+public:
+    StaticResourceMarkupExtension(std::string key, XamlResourceResolver resolver)
+        : m_key(std::move(key))
+        , m_resolver(std::move(resolver))
+    {
+    }
+
+    bool Apply(NeoWPF::UI::Properties::DependencyObject& target,
+               const NeoWPF::UI::Properties::DependencyProperty& property,
+               std::string& error) const override
+    {
+        if (!m_resolver) {
+            error = "StaticResource has no resource scope";
+            return false;
+        }
+
+        std::any value;
+        if (!m_resolver(m_key, value)) {
+            error = "resource was not found: " + m_key;
+            return false;
+        }
+
+        target.SetValue(property, value);
+        return true;
+    }
+
+    const std::string& GetKey() const noexcept
+    {
+        return m_key;
+    }
+
+private:
+    std::string m_key;
+    XamlResourceResolver m_resolver;
+};
+
 std::string Trim(std::string_view value)
 {
     std::size_t first = 0;
@@ -150,6 +187,17 @@ bool TryGetXamlBinding(const XamlMarkupExtension& extension, XamlBindingInfo& ou
     return true;
 }
 
+bool TryGetXamlStaticResource(const XamlMarkupExtension& extension, std::string& outKey)
+{
+    const auto* resource = dynamic_cast<const StaticResourceMarkupExtension*>(&extension);
+    if (!resource) {
+        return false;
+    }
+
+    outKey = resource->GetKey();
+    return true;
+}
+
 void RegisterXamlMarkupExtensions()
 {
     XamlMarkupExtensionRegistry::Get().Register("Binding",
@@ -203,6 +251,19 @@ void RegisterXamlMarkupExtensions()
 
             return std::shared_ptr<XamlMarkupExtension>(
                 std::make_shared<BindingMarkupExtension>(NeoWPF::UI::Data::Binding(path, mode)));
+        });
+
+    XamlMarkupExtensionRegistry::Get().Register("StaticResource",
+        [](std::string_view arguments,
+           const XamlMarkupExtensionContext& context,
+           std::string& error) {
+            const auto key = Trim(arguments);
+            if (key.empty()) {
+                error = "StaticResource key is required";
+                return std::shared_ptr<XamlMarkupExtension>();
+            }
+            return std::shared_ptr<XamlMarkupExtension>(
+                std::make_shared<StaticResourceMarkupExtension>(key, context.ResolveResource));
         });
 }
 

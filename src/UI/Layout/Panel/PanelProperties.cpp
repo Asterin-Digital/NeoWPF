@@ -23,8 +23,10 @@ namespace NeoWPF::UI::Properties {
             &UI::Panel::GetBackgroundColor,
             static_cast<void (UI::Panel::*)(::NeoWPF::UI::Color)>(&UI::Panel::SetBackgroundColor),
             MakePanelBackgroundColorMetadata());
-        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Panel>("Panel", "Children");
-        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::StackPanel>("StackPanel", "Children");
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Panel>(
+            "Panel", "Children", "NeoWPF::UI::Panel", "NeoWPF/UI/Layout/Panel/Panel.h");
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::StackPanel>(
+            "StackPanel", "Children", "NeoWPF::UI::StackPanel", "NeoWPF/UI/Layout/Panel/StackPanel.h");
     }
 }
 

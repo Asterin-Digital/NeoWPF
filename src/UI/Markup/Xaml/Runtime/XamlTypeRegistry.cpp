@@ -69,6 +69,17 @@ bool ValidateXamlRegistrations()
             continue;
         }
 
+        const bool hasCppTypeName = !registeredType.Info.CppTypeName.empty();
+        const bool hasHeaderPath = !registeredType.Info.HeaderPath.empty();
+        if (!hasCppTypeName || !hasHeaderPath) {
+            NeoWPF::Diagnostics::QueueDeveloperWarning(
+                L"XAML_REGISTRATION_INVALID",
+                L"XAML type '" + std::wstring(registeredType.TagName.begin(), registeredType.TagName.end()) +
+                    L"' must provide both C++ type and header metadata.",
+                NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
+            valid = false;
+        }
+
         const auto object = registeredType.Info.Factory();
         if (!object) {
             NeoWPF::Diagnostics::QueueDeveloperWarning(

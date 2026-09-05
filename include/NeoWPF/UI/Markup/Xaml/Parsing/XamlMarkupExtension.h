@@ -1,5 +1,6 @@
 #pragma once
 
+#include <any>
 #include <functional>
 #include <memory>
 #include <string>
@@ -13,9 +14,12 @@ class DependencyProperty;
 
 namespace NeoWPF::UI::Markup::Xaml {
 
+using XamlResourceResolver = std::function<bool(std::string_view, std::any&)>;
+
 struct XamlMarkupExtensionContext {
     std::size_t Line = 0;
     std::size_t Column = 0;
+    XamlResourceResolver ResolveResource;
 };
 
 struct XamlBindingInfo {
@@ -56,6 +60,8 @@ std::shared_ptr<XamlMarkupExtension> ParseXamlMarkupExtension(
     std::string& error);
 
 bool TryGetXamlBinding(const XamlMarkupExtension& extension, XamlBindingInfo& outBinding);
+
+bool TryGetXamlStaticResource(const XamlMarkupExtension& extension, std::string& outKey);
 
 void RegisterXamlMarkupExtensions();
 

@@ -13,9 +13,12 @@
 #include <NeoWPF/UI/Layout/Grid/RowDefinition.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
+#include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Markup/Xaml/Parsing/XamlParser.h>
 #include <NeoWPF/UI/Markup/Xaml/Parsing/XamlMarkupExtension.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTreeBuilder.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlNamescope.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 
@@ -65,6 +68,31 @@ TEST(XamlRegistrationTests, BuiltInRegistrationsValidate)
     NeoWPF::Core::Application::Shutdown();
 }
 
+TEST(XamlRegistrationTests, BuiltInTypesExposeCodeGenerationMetadata)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto& registry = NeoWPF::UI::Markup::Xaml::XamlTypeRegistry::Get();
+    const auto registeredTypes = registry.GetRegisteredTypes();
+    ASSERT_FALSE(registeredTypes.empty());
+    for (const auto& registeredType : registeredTypes) {
+        EXPECT_FALSE(registeredType.Info.CppTypeName.empty()) << registeredType.TagName;
+        EXPECT_FALSE(registeredType.Info.HeaderPath.empty()) << registeredType.TagName;
+    }
+
+    EXPECT_EQ(registry.Find("Button")->CppTypeName, "NeoWPF::UI::Button");
+    EXPECT_EQ(registry.Find("Button")->HeaderPath, "NeoWPF/UI/Controls/Button/Button.h");
+    EXPECT_EQ(registry.Find("Grid")->CppTypeName, "NeoWPF::UI::Grid");
+    EXPECT_EQ(registry.Find("Grid")->HeaderPath, "NeoWPF/UI/Layout/Grid/Grid.h");
+    ASSERT_NE(registry.Find("ContentControl"), nullptr);
+    EXPECT_EQ(registry.Find("ContentControl")->CppTypeName,
+              "NeoWPF::UI::Content::ContentControl");
+    EXPECT_EQ(registry.Find("ContentControl")->HeaderPath,
+              "NeoWPF/UI/Content/ContentControl.h");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
 TEST(XamlMarkupExtensionTests, ParsesRegisteredBindingExtension)
 {
     NeoWPF::Core::Application::Initialize();
@@ -91,6 +119,20 @@ TEST(XamlMarkupExtensionTests, RejectsInvalidBindingArguments)
         EXPECT_EQ(extension, nullptr) << value;
         EXPECT_FALSE(error.empty()) << value;
     }
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlMarkupExtensionTests, RejectsEmptyStaticResourceKey)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    std::string error;
+    const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
+        "{StaticResource}", {1, 1}, error);
+
+    EXPECT_EQ(extension, nullptr);
+    EXPECT_EQ(error, "StaticResource key is required");
 
     NeoWPF::Core::Application::Shutdown();
 }
@@ -128,6 +170,212 @@ TEST(XamlParserTests, DecodesXmlEntitiesInAttributesAndText)
     EXPECT_EQ(root[0].Children[0].TextContent, "A & B");
 }
 
+TEST(XamlParserTests, PreservesXamlNameAsElementIdentity)
+{
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<Grid x:Name="RootGrid"><Button x:Name="ApplyButton" Text="Apply" /></Grid>)");
+
+    ASSERT_EQ(root.size(), 1u);
+    EXPECT_EQ(root[0].XamlName, "RootGrid");
+    EXPECT_EQ(root[0].Attributes.count("x:Name"), 0u);
+    ASSERT_EQ(root[0].Children.size(), 1u);
+    EXPECT_EQ(root[0].Children[0].XamlName, "ApplyButton");
+    EXPECT_EQ(root[0].Children[0].Attributes.at("Text"), "Apply");
+}
+
+TEST(XamlParserTests, PreservesXamlKeyAsResourceIdentity)
+{
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<ResourceDictionary><TextBlock x:Key="Accent" Text="Hello" /></ResourceDictionary>)");
+
+    ASSERT_EQ(root.size(), 1u);
+    ASSERT_EQ(root[0].Children.size(), 1u);
+    EXPECT_EQ(root[0].Children[0].XamlKey, "Accent");
+    EXPECT_EQ(root[0].Children[0].Attributes.count("x:Key"), 0u);
+}
+
+TEST(XamlMarkupExtensionTests, ResolvesStaticResourceThroughContext)
+{
+    NeoWPF::Core::Application::Initialize();
+    NeoWPF::UI::Properties::RegisterCoreControlProperties();
+
+    auto button = std::make_shared<NeoWPF::UI::Button>();
+    std::string error;
+    const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
+        "{StaticResource Accent}",
+        {1, 1, [](std::string_view key, std::any& value) {
+            if (key != "Accent") {
+                return false;
+            }
+            value = std::wstring(L"Resolved accent");
+            return true;
+        }},
+        error);
+
+    ASSERT_NE(extension, nullptr);
+    ASSERT_TRUE(error.empty());
+    ASSERT_TRUE(extension->Apply(
+        *button,
+        NeoWPF::UI::Button::TextProperty(),
+        error)) << error;
+    EXPECT_EQ(button->GetText(), L"Resolved accent");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, BuildsKeyedResourceDictionaryWithoutAddingVisualChildren)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <StackPanel>
+            <StackPanel.Resources>
+                <ResourceDictionary>
+                    <TextBlock x:Key="Accent" Text="Resource text" />
+                </ResourceDictionary>
+            </StackPanel.Resources>
+            <Button Text="Action" />
+        </StackPanel>
+    )");
+    const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+
+    ASSERT_NE(tree, nullptr);
+    EXPECT_EQ(tree->GetVisualChildren().size(), 1u);
+
+    std::any resource;
+    const auto* element = dynamic_cast<const NeoWPF::UI::UIElement*>(tree.get());
+    ASSERT_NE(element, nullptr);
+    ASSERT_TRUE(element->TryFindResource("Accent", resource));
+    const auto resourceObject = std::any_cast<std::shared_ptr<NeoWPF::UI::Properties::DependencyObject>>(resource);
+    ASSERT_NE(resourceObject, nullptr);
+    const auto resourceText = std::dynamic_pointer_cast<NeoWPF::UI::TextBlock>(resourceObject);
+    ASSERT_NE(resourceText, nullptr);
+    EXPECT_EQ(resourceText->GetText(), L"Resource text");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, ReportsDuplicateResourceKeys)
+{
+    NeoWPF::Core::Application::Initialize();
+    NeoWPF::Diagnostics::ClearDeveloperWarnings();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <StackPanel>
+            <StackPanel.Resources>
+                <ResourceDictionary>
+                    <TextBlock x:Key="Accent" />
+                    <TextBlock x:Key="Accent" />
+                </ResourceDictionary>
+            </StackPanel.Resources>
+        </StackPanel>
+    )");
+    const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+
+    ASSERT_NE(tree, nullptr);
+    ASSERT_TRUE(NeoWPF::Diagnostics::GetLastWarning().has_value());
+    EXPECT_EQ(NeoWPF::Diagnostics::GetLastWarning()->title, L"XAML_RESOURCE_KEY");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, ResolvesResourcesThroughNestedScopesAndShadowsOuterValues)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <StackPanel>
+            <StackPanel.Resources>
+                <ResourceDictionary>
+                    <TextBlock x:Key="Accent" x:Name="OuterAccent" Text="Outer" />
+                </ResourceDictionary>
+            </StackPanel.Resources>
+            <StackPanel>
+                <StackPanel.Resources>
+                    <ResourceDictionary>
+                        <TextBlock x:Key="Accent" x:Name="InnerAccent" Text="Inner" />
+                    </ResourceDictionary>
+                </StackPanel.Resources>
+                <Button Text="Inner" />
+            </StackPanel>
+            <Button Text="Outer" />
+        </StackPanel>
+    )");
+    NeoWPF::UI::Markup::Xaml::XamlNamescope namescope;
+    const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root, &namescope);
+
+    ASSERT_NE(tree, nullptr);
+    const auto children = tree->GetVisualChildren();
+    ASSERT_EQ(children.size(), 2u);
+
+    auto* outer = dynamic_cast<NeoWPF::UI::UIElement*>(children[1]);
+    auto* inner = dynamic_cast<NeoWPF::UI::UIElement*>(children[0]);
+    ASSERT_NE(outer, nullptr);
+    ASSERT_NE(inner, nullptr);
+
+    std::any outerValue;
+    std::any innerValue;
+    ASSERT_TRUE(outer->TryFindResource("Accent", outerValue));
+    ASSERT_TRUE(inner->TryFindResource("Accent", innerValue));
+    const auto outerAccent = std::any_cast<std::shared_ptr<NeoWPF::UI::Properties::DependencyObject>>(outerValue);
+    const auto innerAccent = std::any_cast<std::shared_ptr<NeoWPF::UI::Properties::DependencyObject>>(innerValue);
+    ASSERT_NE(outerAccent, nullptr);
+    ASSERT_NE(innerAccent, nullptr);
+    EXPECT_NE(outerAccent.get(), innerAccent.get());
+    EXPECT_EQ(std::dynamic_pointer_cast<NeoWPF::UI::TextBlock>(outerAccent)->GetText(), L"Outer");
+    EXPECT_EQ(std::dynamic_pointer_cast<NeoWPF::UI::TextBlock>(innerAccent)->GetText(), L"Inner");
+    EXPECT_EQ(namescope.Find<NeoWPF::UI::TextBlock>("OuterAccent")->GetText(), L"Outer");
+    EXPECT_EQ(namescope.Find<NeoWPF::UI::TextBlock>("InnerAccent")->GetText(), L"Inner");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, FindsApplicationResourceAfterElementAndAncestorScopes)
+{
+    NeoWPF::Core::Application::Initialize();
+    NeoWPF::Core::Application::SetResource(
+        "ApplicationAccent",
+        std::make_shared<NeoWPF::UI::TextBlock>(L"Application"));
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        "<StackPanel><Button Text=\"Action\" /></StackPanel>");
+    const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(tree, nullptr);
+
+    std::any value;
+    const auto* element = dynamic_cast<const NeoWPF::UI::UIElement*>(tree.get());
+    ASSERT_NE(element, nullptr);
+    ASSERT_TRUE(element->TryFindResource("ApplicationAccent", value));
+    const auto resource = std::any_cast<std::shared_ptr<NeoWPF::UI::TextBlock>>(value);
+    ASSERT_NE(resource, nullptr);
+    EXPECT_EQ(resource->GetText(), L"Application");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, PreservesResourceObjectIdentityAcrossNameAndKey)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<StackPanel><StackPanel.Resources><ResourceDictionary><TextBlock x:Key="Accent" x:Name="AccentObject" /></ResourceDictionary></StackPanel.Resources></StackPanel>)");
+    NeoWPF::UI::Markup::Xaml::XamlNamescope namescope;
+    const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root, &namescope);
+
+    ASSERT_NE(tree, nullptr);
+    std::any value;
+    const auto* element = dynamic_cast<const NeoWPF::UI::UIElement*>(tree.get());
+    ASSERT_NE(element, nullptr);
+    ASSERT_TRUE(element->TryFindResource("Accent", value));
+    const auto keyed = std::any_cast<std::shared_ptr<NeoWPF::UI::Properties::DependencyObject>>(value);
+    const auto named = namescope.Find<NeoWPF::UI::TextBlock>("AccentObject");
+    ASSERT_NE(keyed, nullptr);
+    ASSERT_NE(named, nullptr);
+    EXPECT_EQ(keyed.get(), named.get());
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
 TEST(XamlParserTests, BuildsLiveTreeFromXaml)
 {
     NeoWPF::Core::Application::Initialize();
@@ -156,6 +404,43 @@ TEST(XamlParserTests, BuildsLiveTreeFromXaml)
     ASSERT_NE(secondButton, nullptr);
     EXPECT_EQ(firstText->GetText(), L"Hello");
     EXPECT_EQ(secondButton->GetText(), L"Click me");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, RegistersNamedElementsInNamescope)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<StackPanel x:Name="RootPanel"><Button x:Name="ApplyButton" Text="Apply" /></StackPanel>)");
+    NeoWPF::UI::Markup::Xaml::XamlNamescope namescope;
+    const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root, &namescope);
+
+    ASSERT_NE(tree, nullptr);
+    EXPECT_EQ(namescope.Find<NeoWPF::UI::StackPanel>("RootPanel").get(), tree.get());
+    const auto button = namescope.Find<NeoWPF::UI::Button>("ApplyButton");
+    ASSERT_NE(button, nullptr);
+    EXPECT_EQ(button->GetText(), L"Apply");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, ReportsDuplicateNamesInNamescope)
+{
+    NeoWPF::Core::Application::Initialize();
+    NeoWPF::Diagnostics::ClearDeveloperWarnings();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<StackPanel><Button x:Name="Action" /><TextBlock x:Name="Action" /></StackPanel>)");
+    NeoWPF::UI::Markup::Xaml::XamlNamescope namescope;
+    const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root, &namescope);
+
+    ASSERT_NE(tree, nullptr);
+    const auto action = namescope.Find<NeoWPF::UI::Button>("Action");
+    ASSERT_NE(action, nullptr);
+    ASSERT_TRUE(NeoWPF::Diagnostics::GetLastWarning().has_value());
+    EXPECT_EQ(NeoWPF::Diagnostics::GetLastWarning()->title, L"XAML_NAME_SCOPE");
 
     NeoWPF::Core::Application::Shutdown();
 }

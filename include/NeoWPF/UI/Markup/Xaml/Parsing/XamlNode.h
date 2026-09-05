@@ -9,6 +9,8 @@ namespace NeoWPF::UI::Markup::Xaml {
 
 struct XamlNode {
     std::string Name;
+    std::string XamlName;
+    std::string XamlKey;
     std::unordered_map<std::string, std::string> Attributes;
     std::vector<XamlNode> Children;
     std::string TextContent;

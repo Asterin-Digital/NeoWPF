@@ -12,26 +12,31 @@ class DependencyProperty;
 class StringConverter final : public TypeConverter {
 public:
     bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
 };
 
 class WideStringConverter final : public TypeConverter {
 public:
     bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
 };
 
 class IntConverter final : public TypeConverter {
 public:
     bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
 };
 
 class FloatConverter final : public TypeConverter {
 public:
     bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
 };
 
 class BoolConverter final : public TypeConverter {
 public:
     bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
 };
 
 class ColorConverter final : public TypeConverter {
@@ -52,11 +57,13 @@ public:
 class HorizontalAlignmentConverter final : public TypeConverter {
 public:
     bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
 };
 
 class VerticalAlignmentConverter final : public TypeConverter {
 public:
     bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
 };
 
 std::shared_ptr<const TypeConverter> GetStringConverter();

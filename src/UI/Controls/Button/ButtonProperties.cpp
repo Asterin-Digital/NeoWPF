@@ -48,7 +48,8 @@ namespace NeoWPF::UI::Properties {
             &UI::Button::GetFontSize,
             &UI::Button::SetFontSize,
             MakeButtonFontSizeMetadata());
-        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Button>("Button");
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Button>(
+            "Button", "", "NeoWPF::UI::Button", "NeoWPF/UI/Controls/Button/Button.h");
     }
 }
 

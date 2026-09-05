@@ -105,7 +105,8 @@ namespace NeoWPF::UI::Properties {
             &UI::TextBox::GetTextVerticalAlignment,
             static_cast<void (UI::TextBox::*)(TextVerticalAlignment)>(&UI::TextBox::SetTextVerticalAlignment),
             MakeTextBoxTextVerticalAlignmentMetadata());
-        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::TextBox>("TextBox");
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::TextBox>(
+            "TextBox", "", "NeoWPF::UI::TextBox", "NeoWPF/UI/Controls/TextBox/TextBox.h");
     }
 }
 

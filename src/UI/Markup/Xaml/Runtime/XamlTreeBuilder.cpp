@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTreeBuilder.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlResourceBuilder.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 #include <NeoWPF/UI/Markup/Xaml/Parsing/XamlMarkupExtension.h>
@@ -34,6 +35,12 @@
 #include <vector>
 
 namespace NeoWPF::UI::Markup::Xaml {
+
+std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInternal(
+    const XamlNode& node,
+    XamlNamescope* namescope,
+    XamlBuildContext& context);
+
 namespace {
 
 std::wstring ToWideString(std::string_view value)
@@ -46,7 +53,9 @@ std::wstring ToWideString(std::string_view value)
     return result;
 }
 
-void ApplyAttributes(const XamlNode& node, NeoWPF::UI::Properties::DependencyObject& target)
+void ApplyAttributes(const XamlNode& node,
+                     NeoWPF::UI::Properties::DependencyObject& target,
+                     const XamlBuildContext& context)
 {
     for (const auto& [name, value] : node.Attributes) {
         const auto* property = target.FindDependencyProperty(name);
@@ -71,8 +80,9 @@ void ApplyAttributes(const XamlNode& node, NeoWPF::UI::Properties::DependencyObj
 
         if (!trimmedValue.empty() && trimmedValue.front() == '{') {
             std::string error;
-            const XamlMarkupExtensionContext context{node.Line, node.Column};
-            const auto extension = ParseXamlMarkupExtension(trimmedValue, context, error);
+            XamlMarkupExtensionContext extensionContext{node.Line, node.Column,
+                CreateXamlResourceResolver(target, context)};
+            const auto extension = ParseXamlMarkupExtension(trimmedValue, extensionContext, error);
             if (!extension || !extension->Apply(target, *property, error)) {
                 NeoWPF::Diagnostics::QueueDeveloperWarning(
                     L"XAML_MARKUP_EXTENSION",
@@ -122,7 +132,10 @@ std::pair<std::string, std::string> SplitDottedName(const std::string& dottedNam
 
 }
 
-std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInternal(const XamlNode& node)
+std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInternal(
+    const XamlNode& node,
+    XamlNamescope* namescope,
+    XamlBuildContext& context)
 {
 
     const auto* typeInfo = XamlTypeRegistry::Get().Find(node.Name);
@@ -140,12 +153,30 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
         return nullptr;
     }
 
+    if (namescope && !node.XamlName.empty() && !namescope->Register(node.XamlName, obj)) {
+        NeoWPF::Diagnostics::QueueDeveloperWarning(
+            L"XAML_NAME_SCOPE",
+            L"Duplicate or invalid XAML name: " + ToWideString(node.XamlName),
+            NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
+    }
+
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
         "[XamlTreeBuilder] Created tag='%s' object=%p contentProperty='%s' attributes=%zu children=%zu",
         node.Name.c_str(), obj.get(), typeInfo->ContentPropertyName.c_str(), node.Attributes.size(), node.Children.size());
 
 
-    ApplyAttributes(node, *obj);
+    if (auto* element = dynamic_cast<NeoWPF::UI::UIElement*>(obj.get())) {
+        context.scopes.push_back(element);
+    }
+
+    for (const auto& childNode : node.Children) {
+        const auto [ownerName, propName] = SplitDottedName(childNode.Name);
+        if (!propName.empty() && IsXamlResourcesProperty(propName)) {
+            BuildXamlResourceDictionary(childNode, *obj, namescope, context, BuildXamlObjectInternal);
+        }
+    }
+
+    ApplyAttributes(node, *obj, context);
 
 
     ApplyTextContent(node, *obj);
@@ -159,6 +190,10 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
 
         const auto [ownerName, propName] = SplitDottedName(childNode.Name);
         if (!propName.empty()) {
+
+            if (IsXamlResourcesProperty(propName)) {
+                continue;
+            }
 
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
                 "[XamlTreeBuilder] Property element parent='%s' property='%s' children=%zu",
@@ -190,7 +225,7 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
             if (binding->Kind == XamlPropertyKind::Collection) {
 
                 for (const auto& grandChild : childNode.Children) {
-                    auto child = BuildXamlObjectInternal(grandChild);
+                    auto child = BuildXamlObjectInternal(grandChild, namescope, context);
                     if (child) {
                         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
                             "[XamlTreeBuilder] Assign collection parent='%s' property='%s' child=%p",
@@ -201,7 +236,7 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
             } else if (binding->Kind == XamlPropertyKind::Element) {
 
                 if (childNode.Children.size() == 1) {
-                    auto child = BuildXamlObjectInternal(childNode.Children[0]);
+                    auto child = BuildXamlObjectInternal(childNode.Children[0], namescope, context);
                     if (child) {
                         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Debug,
                             "[XamlTreeBuilder] Assign element parent='%s' property='%s' child=%p",
@@ -216,7 +251,7 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
                 }
             }
         } else {
-            auto child = BuildXamlObjectInternal(childNode);
+            auto child = BuildXamlObjectInternal(childNode, namescope, context);
             if (!child) {
                 continue;
             }
@@ -252,12 +287,18 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
         }
     }
 
+    if (dynamic_cast<NeoWPF::UI::UIElement*>(obj.get()) && !context.scopes.empty()) {
+        context.scopes.pop_back();
+    }
     return obj;
 }
 
-std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTreeFromRoot(const XamlNode& root)
+std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTreeFromRoot(
+    const XamlNode& root,
+    XamlNamescope* namescope)
 {
-    auto obj = BuildXamlObjectInternal(root);
+    XamlBuildContext context;
+    auto obj = BuildXamlObjectInternal(root, namescope, context);
     if (!obj) {
         return nullptr;
     }
@@ -272,7 +313,9 @@ std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTreeFromRoot(const XamlNode& root)
     return visual;
 }
 
-std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTree(const std::vector<XamlNode>& roots)
+std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTree(
+    const std::vector<XamlNode>& roots,
+    XamlNamescope* namescope)
 {
     NEO_WPF_ACTION("Xaml.BuildTree");
 
@@ -281,23 +324,27 @@ std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTree(const std::vector<XamlNode>& r
     }
 
     if (roots.size() == 1) {
-        return BuildXamlTreeFromRoot(roots.front());
+        return BuildXamlTreeFromRoot(roots.front(), namescope);
     }
 
     auto rootContainer = std::make_shared<NeoWPF::UI::StackPanel>();
+    XamlBuildContext context;
     for (const auto& root : roots) {
-        auto built = BuildXamlTreeFromRoot(root);
-        if (built) {
-            rootContainer->AddChild(built);
+        auto built = BuildXamlObjectInternal(root, namescope, context);
+        auto visual = std::dynamic_pointer_cast<NeoWPF::UI::Visual>(built);
+        if (visual) {
+            rootContainer->AddChild(visual);
         }
     }
     return rootContainer;
 }
 
-std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTree(const XamlNode& root)
+std::shared_ptr<NeoWPF::UI::Visual> BuildXamlTree(
+    const XamlNode& root,
+    XamlNamescope* namescope)
 {
     NEO_WPF_ACTION("Xaml.BuildTree");
-    return BuildXamlTreeFromRoot(root);
+    return BuildXamlTreeFromRoot(root, namescope);
 }
 
 }

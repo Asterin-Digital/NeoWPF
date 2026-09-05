@@ -66,6 +66,12 @@ bool DependencyProperty::TryParseValue(const std::string& rawValue, std::any& pa
     return false;
 }
 
+bool DependencyProperty::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    expression.clear();
+    return m_metadata.Converter && m_metadata.Converter->TryConvertToCode(rawValue, expression);
+}
+
 DependencyPropertyRegistry& DependencyPropertyRegistry::Get() {
     static DependencyPropertyRegistry registry;
     return registry;

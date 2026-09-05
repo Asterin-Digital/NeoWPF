@@ -105,7 +105,8 @@ namespace NeoWPF::UI::Properties {
             &UI::TextBlock::GetPadding,
             static_cast<void (UI::TextBlock::*)(UI::Thickness)>(&UI::TextBlock::SetPadding),
             MakeTextBlockPaddingMetadata());
-        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::TextBlock>("TextBlock");
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::TextBlock>(
+            "TextBlock", "", "NeoWPF::UI::TextBlock", "NeoWPF/UI/Controls/Text/TextBlock.h");
     }
 }
 

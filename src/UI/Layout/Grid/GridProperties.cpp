@@ -67,9 +67,12 @@ namespace NeoWPF::UI::Properties {
             ::NeoWPF::UI::Grid::ColumnDefinitionsProperty(),
             &::NeoWPF::UI::Grid::AddColumnDefinition);
 
-        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Grid>("Grid", "Children");
-        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::RowDefinition>("RowDefinition");
-        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::ColumnDefinition>("ColumnDefinition");
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Grid>(
+            "Grid", "Children", "NeoWPF::UI::Grid", "NeoWPF/UI/Layout/Grid/Grid.h");
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::RowDefinition>(
+            "RowDefinition", "", "NeoWPF::UI::RowDefinition", "NeoWPF/UI/Layout/Grid/RowDefinition.h");
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::ColumnDefinition>(
+            "ColumnDefinition", "", "NeoWPF::UI::ColumnDefinition", "NeoWPF/UI/Layout/Grid/ColumnDefinition.h");
     }
 }
 

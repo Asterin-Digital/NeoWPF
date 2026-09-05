@@ -6,6 +6,7 @@
 #include <typeindex>
 #include <unordered_map>
 #include <functional>
+#include <type_traits>
 #include <vector>
 
 namespace NeoWPF::UI::Properties {
@@ -41,6 +42,12 @@ struct XamlTypeInfo {
         Default: false (eager build).
     */
     bool DeferContentBuild = false;
+
+    /* Fully qualified C++ type name used by offline XAML code generation. */
+    std::string CppTypeName;
+
+    /* Public include path required to use CppTypeName in generated code. */
+    std::string HeaderPath;
 };
 
 struct RegisteredXamlType {
@@ -134,7 +141,10 @@ bool ValidateXamlRegistrations();
     Can be called multiple times from different *Properties.cpp files.
 */
 template<typename T>
-inline void RegisterXamlType(std::string_view tagName, std::string_view contentProperty = "")
+inline void RegisterXamlType(std::string_view tagName,
+                             std::string_view contentProperty = "",
+                             std::string_view cppTypeName = "",
+                             std::string_view headerPath = "")
 {
     static_assert(std::is_base_of_v<NeoWPF::UI::Properties::DependencyObject, T>,
                   "Only DependencyObject-derived types can be registered for XAML.");
@@ -142,7 +152,10 @@ inline void RegisterXamlType(std::string_view tagName, std::string_view contentP
     XamlTypeInfo info{
         std::type_index(typeid(T)),
         [] { return std::static_pointer_cast<NeoWPF::UI::Properties::DependencyObject>(std::make_shared<T>()); },
-        std::string(contentProperty)
+        std::string(contentProperty),
+        false,
+        std::string(cppTypeName),
+        std::string(headerPath)
     };
 
     XamlTypeRegistry::Get().Register(tagName, info);

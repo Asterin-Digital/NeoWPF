@@ -4,6 +4,7 @@
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 
 #include <cctype>
+#include <array>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -106,9 +107,30 @@ std::string ParseAttributeValue(ParserState& state)
     throw std::runtime_error("Unterminated attribute value at line " + std::to_string(state.Line) + ", column " + std::to_string(state.Column));
 }
 
-std::unordered_map<std::string, std::string> ParseAttributes(ParserState& state)
+struct ParsedAttributes {
+    std::unordered_map<std::string, std::string> Values;
+    std::string XamlName;
+    std::string XamlKey;
+
+    std::string* FindSpecialAttribute(std::string_view key)
+    {
+        const std::array<std::pair<std::string_view, std::string*>, 2> specialAttributes = {{
+            {"x:Name", &XamlName},
+            {"x:Key", &XamlKey},
+        }};
+
+        for (const auto& [name, value] : specialAttributes) {
+            if (name == key) {
+                return value;
+            }
+        }
+        return nullptr;
+    }
+};
+
+ParsedAttributes ParseAttributes(ParserState& state)
 {
-    std::unordered_map<std::string, std::string> attributes;
+    ParsedAttributes attributes;
     SkipWhitespace(state);
 
     while (state.Offset < state.Source.size()) {
@@ -125,7 +147,11 @@ std::unordered_map<std::string, std::string> ParseAttributes(ParserState& state)
         Expect(state, '=');
         SkipWhitespace(state);
         const std::string value = ParseAttributeValue(state);
-        attributes[key] = value;
+        if (auto* specialAttribute = attributes.FindSpecialAttribute(key)) {
+            *specialAttribute = value;
+        } else {
+            attributes.Values[key] = value;
+        }
         SkipWhitespace(state);
     }
 
@@ -198,7 +224,10 @@ XamlNode ParseNode(ParserState& state)
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::XamlParser, NeoWPF::Diagnostics::Level::Info,
             "[XamlParser] Parsing element '%s' at line %zu", node.Name.c_str(), nodeLine);
 
-        node.Attributes = ParseAttributes(state);
+        const auto attributes = ParseAttributes(state);
+        node.Attributes = attributes.Values;
+        node.XamlName = attributes.XamlName;
+        node.XamlKey = attributes.XamlKey;
 
         if (state.Offset < state.Source.size() && state.Source[state.Offset] == '/') {
             ++state.Offset;

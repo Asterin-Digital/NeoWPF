@@ -16,6 +16,7 @@
 #include <NeoWPF/UI/Markup/Builder/Builder.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 
 #include <any>
 #include <string>
@@ -412,4 +413,118 @@ TEST(DependencyPropertyTests, AnimationTakesPrecedenceAndCanBeCleared)
               NeoWPF::UI::Properties::PropertyValueSource::Local);
 }
 
+}
+
+TEST(TypeConverterTests, ConvertsWideStringsToEscapedCode)
+{
+    std::string expression;
+    const auto converter = NeoWPF::UI::Properties::GetWideStringConverter();
+
+    ASSERT_TRUE(converter->TryConvertToCode("Apply\"Now", expression));
+    EXPECT_EQ(expression, "L\"Apply\\\"Now\"");
+}
+
+TEST(TypeConverterTests, EscapesControlCharactersAndBackslashes)
+{
+    std::string expression;
+    const auto converter = NeoWPF::UI::Properties::GetWideStringConverter();
+
+    ASSERT_TRUE(converter->TryConvertToCode("A\\B\nC\tD\rE", expression));
+    EXPECT_EQ(expression, "L\"A\\\\B\\nC\\tD\\rE\"");
+}
+
+TEST(TypeConverterTests, ConvertsScalarValuesToCode)
+{
+    std::string expression;
+    EXPECT_TRUE(NeoWPF::UI::Properties::GetIntConverter()->TryConvertToCode("42", expression));
+    EXPECT_EQ(expression, "42");
+    EXPECT_TRUE(NeoWPF::UI::Properties::GetBoolConverter()->TryConvertToCode("TRUE", expression));
+    EXPECT_EQ(expression, "true");
+    EXPECT_TRUE(NeoWPF::UI::Properties::GetFloatConverter()->TryConvertToCode("1.5", expression));
+    EXPECT_EQ(expression, "1.500000f");
+}
+
+TEST(TypeConverterTests, AcceptsTrimmedScalarValuesAndRejectsMalformedValues)
+{
+    std::string expression;
+    EXPECT_TRUE(NeoWPF::UI::Properties::GetIntConverter()->TryConvertToCode("  -2147483648  ", expression));
+    EXPECT_EQ(expression, "-2147483648");
+    EXPECT_TRUE(NeoWPF::UI::Properties::GetFloatConverter()->TryConvertToCode("  -0.25  ", expression));
+    EXPECT_EQ(expression, "-0.250000f");
+
+    EXPECT_FALSE(NeoWPF::UI::Properties::GetIntConverter()->TryConvertToCode("12px", expression));
+    EXPECT_TRUE(expression.empty());
+    EXPECT_FALSE(NeoWPF::UI::Properties::GetFloatConverter()->TryConvertToCode("1.0f", expression));
+    EXPECT_TRUE(expression.empty());
+}
+
+TEST(TypeConverterTests, AcceptsBooleanCasingAndRejectsUnknownValues)
+{
+    std::string expression;
+    const auto converter = NeoWPF::UI::Properties::GetBoolConverter();
+
+    for (const auto& input : {"true", "TRUE", " True "}) {
+        ASSERT_TRUE(converter->TryConvertToCode(input, expression)) << input;
+        EXPECT_EQ(expression, "true");
+    }
+    for (const auto& input : {"false", "FALSE", " False "}) {
+        ASSERT_TRUE(converter->TryConvertToCode(input, expression)) << input;
+        EXPECT_EQ(expression, "false");
+    }
+
+    EXPECT_FALSE(converter->TryConvertToCode("yes", expression));
+    EXPECT_TRUE(expression.empty());
+}
+
+TEST(TypeConverterTests, ConvertsAlignmentNamesToEnumCode)
+{
+    std::string expression;
+    EXPECT_TRUE(NeoWPF::UI::Properties::GetHorizontalAlignmentConverter()->TryConvertToCode("center", expression));
+    EXPECT_EQ(expression, "NeoWPF::UI::HorizontalAlignment::Center");
+    EXPECT_TRUE(NeoWPF::UI::Properties::GetVerticalAlignmentConverter()->TryConvertToCode("BOTTOM", expression));
+    EXPECT_EQ(expression, "NeoWPF::UI::VerticalAlignment::Bottom");
+}
+
+TEST(TypeConverterTests, ConvertsAllAlignmentMembersCaseInsensitively)
+{
+    const auto horizontal = NeoWPF::UI::Properties::GetHorizontalAlignmentConverter();
+    const auto vertical = NeoWPF::UI::Properties::GetVerticalAlignmentConverter();
+    std::string expression;
+
+    for (const auto& input : {"LEFT", "center", "RiGhT", "stretch"}) {
+        EXPECT_TRUE(horizontal->TryConvertToCode(input, expression)) << input;
+        EXPECT_EQ(expression.rfind("NeoWPF::UI::HorizontalAlignment::", 0), 0u);
+    }
+    for (const auto& input : {"TOP", "center", "BoTtOm", "stretch"}) {
+        EXPECT_TRUE(vertical->TryConvertToCode(input, expression)) << input;
+        EXPECT_EQ(expression.rfind("NeoWPF::UI::VerticalAlignment::", 0), 0u);
+    }
+
+    EXPECT_FALSE(horizontal->TryConvertToCode("middle", expression));
+    EXPECT_TRUE(expression.empty());
+    EXPECT_FALSE(vertical->TryConvertToCode("middle", expression));
+    EXPECT_TRUE(expression.empty());
+}
+
+TEST(TypeConverterTests, LeavesUnsupportedComplexConvertersUnavailable)
+{
+    std::string expression = "stale code";
+    EXPECT_FALSE(NeoWPF::UI::Properties::GetColorConverter()->TryConvertToCode("#336699", expression));
+    EXPECT_TRUE(expression.empty());
+
+    expression = "stale code";
+    EXPECT_FALSE(NeoWPF::UI::Properties::GetThicknessConverter()->TryConvertToCode("1,2,3,4", expression));
+    EXPECT_TRUE(expression.empty());
+}
+
+TEST(TypeConverterTests, ClearsExpressionWhenConversionFails)
+{
+    std::string expression = "stale code";
+
+    EXPECT_FALSE(NeoWPF::UI::Properties::GetIntConverter()->TryConvertToCode("not-an-int", expression));
+    EXPECT_TRUE(expression.empty());
+
+    expression = "stale code";
+    EXPECT_FALSE(NeoWPF::UI::Properties::GetHorizontalAlignmentConverter()->TryConvertToCode("diagonal", expression));
+    EXPECT_TRUE(expression.empty());
 }

@@ -140,6 +140,8 @@ bool ParseRecord(std::string_view line, std::string_view section, NamlArtifact& 
         if (!ParseUnsigned(Field(trimmed.substr(colon + 1), "type"), type)) return false;
         NamlObjectRecord object{id, type, {}};
         if (trimmed.find("name=") != std::string_view::npos && !QuotedValue(trimmed, "name=", object.name)) return false;
+        if (trimmed.find("resourceKey=") != std::string_view::npos &&
+            !QuotedValue(trimmed, "resourceKey=", object.resourceKey)) return false;
         if (artifact.objects.size() <= id) artifact.objects.resize(id + 1);
         artifact.objects[id] = std::move(object);
         return true;
@@ -200,6 +202,7 @@ std::string SerializeNaml(const NamlArtifact& artifact)
     for (const auto& object : artifact.objects) {
         output << "  " << object.id << ": type=" << object.typeString;
         if (!object.name.empty()) output << " name=\"" << Escape(object.name) << "\"";
+        if (!object.resourceKey.empty()) output << " resourceKey=\"" << Escape(object.resourceKey) << "\"";
         output << "\n";
     }
     output << "}\n\nproperties {\n";

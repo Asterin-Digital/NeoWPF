@@ -6,11 +6,70 @@
 #include <NeoWPF/UI/Core/Media/Spacing.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
 
+#include <cctype>
 #include <cstdint>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <vector>
 
 namespace NeoWPF::UI::Properties {
+
+namespace {
+
+std::string EscapeLiteral(const std::string& value, bool wide)
+{
+    std::ostringstream result;
+    if (wide) {
+        result << 'L';
+    }
+    result << '"';
+    for (const char character : value) {
+        switch (character) {
+        case '\\': result << "\\\\"; break;
+        case '"': result << "\\\""; break;
+        case '\n': result << "\\n"; break;
+        case '\r': result << "\\r"; break;
+        case '\t': result << "\\t"; break;
+        default:
+            if (static_cast<unsigned char>(character) >= 0x20 &&
+                static_cast<unsigned char>(character) <= 0x7e) {
+                result << character;
+            } else {
+                result << "\\x" << std::hex << std::setw(2) << std::setfill('0')
+                       << static_cast<unsigned int>(static_cast<unsigned char>(character)) << std::dec;
+            }
+            break;
+        }
+    }
+    result << '"';
+    return result.str();
+}
+
+std::string UppercaseFirst(std::string value)
+{
+    if (!value.empty()) {
+        value.front() = static_cast<char>(std::toupper(static_cast<unsigned char>(value.front())));
+    }
+    return value;
+}
+
+template<typename Formatter>
+bool ParseAndFormat(const TypeConverter& converter,
+                    const std::string& rawValue,
+                    std::string& expression,
+                    Formatter formatter)
+{
+    expression.clear();
+    std::any parsedValue;
+    if (!converter.ConvertFromString(rawValue, parsedValue)) {
+        return false;
+    }
+    expression = formatter(parsedValue);
+    return !expression.empty();
+}
+
+}
 
 bool StringConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
@@ -18,9 +77,21 @@ bool StringConverter::ConvertFromString(const std::string& rawValue, std::any& c
     return true;
 }
 
+bool StringConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    expression = EscapeLiteral(rawValue, false);
+    return true;
+}
+
 bool WideStringConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
     convertedValue = std::wstring(rawValue.begin(), rawValue.end());
+    return true;
+}
+
+bool WideStringConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    expression = EscapeLiteral(rawValue, true);
     return true;
 }
 
@@ -40,6 +111,13 @@ bool IntConverter::ConvertFromString(const std::string& rawValue, std::any& conv
     }
 }
 
+bool IntConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    return ParseAndFormat(*this, rawValue, expression, [](const std::any& value) {
+        return std::to_string(std::any_cast<int>(value));
+    });
+}
+
 bool FloatConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
     try {
@@ -56,6 +134,13 @@ bool FloatConverter::ConvertFromString(const std::string& rawValue, std::any& co
     }
 }
 
+bool FloatConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    return ParseAndFormat(*this, rawValue, expression, [](const std::any& value) {
+        return std::to_string(std::any_cast<float>(value)) + "f";
+    });
+}
+
 bool BoolConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
     const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
@@ -68,6 +153,13 @@ bool BoolConverter::ConvertFromString(const std::string& rawValue, std::any& con
         return true;
     }
     return false;
+}
+
+bool BoolConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    return ParseAndFormat(*this, rawValue, expression, [](const std::any& value) {
+        return std::any_cast<bool>(value) ? std::string("true") : std::string("false");
+    });
 }
 
 bool ColorConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
@@ -159,6 +251,18 @@ bool HorizontalAlignmentConverter::ConvertFromString(const std::string& rawValue
     return true;
 }
 
+bool HorizontalAlignmentConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    expression.clear();
+    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
+    if (value != "left" && value != "center" && value != "right" && value != "stretch") {
+        return false;
+    }
+    expression = "NeoWPF::UI::HorizontalAlignment::";
+    expression += UppercaseFirst(value);
+    return true;
+}
+
 bool VerticalAlignmentConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
     const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
@@ -167,6 +271,18 @@ bool VerticalAlignmentConverter::ConvertFromString(const std::string& rawValue, 
     else if (value == "bottom") convertedValue = NeoWPF::UI::VerticalAlignment::Bottom;
     else if (value == "stretch") convertedValue = NeoWPF::UI::VerticalAlignment::Stretch;
     else return false;
+    return true;
+}
+
+bool VerticalAlignmentConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    expression.clear();
+    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
+    if (value != "top" && value != "center" && value != "bottom" && value != "stretch") {
+        return false;
+    }
+    expression = "NeoWPF::UI::VerticalAlignment::";
+    expression += UppercaseFirst(value);
     return true;
 }
 

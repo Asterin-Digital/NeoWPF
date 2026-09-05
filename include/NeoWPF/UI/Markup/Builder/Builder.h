@@ -2,6 +2,7 @@
 
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 
 #include <memory>
@@ -14,8 +15,8 @@ namespace NeoWPF::UI::Builder {
 template<typename T>
 class ElementBuilder {
 public:
-    static_assert(std::is_base_of_v<NeoWPF::UI::Visual, T>,
-        "ElementBuilder<T> requires T to derive from NeoWPF::UI::Visual.");
+    static_assert(std::is_base_of_v<NeoWPF::UI::Properties::DependencyObject, T>,
+        "ElementBuilder<T> requires T to derive from DependencyObject.");
 
     ElementBuilder()
         : m_element(std::make_shared<T>())
@@ -53,6 +54,22 @@ public:
 
         if (m_element && child) {
             m_element->AddChild(child);
+        }
+        return *this;
+    }
+
+    template<typename U>
+    ElementBuilder& Assign(const NeoWPF::UI::Properties::DependencyProperty& property,
+                           const std::shared_ptr<U>& child)
+    {
+        static_assert(std::is_base_of_v<NeoWPF::UI::Properties::DependencyObject, U>,
+            "Builder Assign requires a DependencyObject-derived object.");
+
+        if (m_element && child) {
+            const auto* binding = NeoWPF::UI::Markup::Xaml::XamlPropertyBindingRegistry::Get().Find(property);
+            if (binding && binding->Assign) {
+                binding->Assign(*m_element, child);
+            }
         }
         return *this;
     }

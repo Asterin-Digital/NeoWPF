@@ -96,7 +96,8 @@ namespace NeoWPF::UI::Properties {
             &UI::Checkbox::IsChecked,
             &UI::Checkbox::SetChecked,
             MakeCheckboxIsCheckedMetadata());
-        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Checkbox>("Checkbox");
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Checkbox>(
+            "Checkbox", "", "NeoWPF::UI::Checkbox", "NeoWPF/UI/Controls/Checkbox/Checkbox.h");
     }
 }
 
