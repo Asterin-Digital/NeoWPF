@@ -12,6 +12,7 @@
 #include <NeoWPF/Platform/NativeWindow.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/IXamlResourceHost.h>
+#include <typeindex>
 
 #undef CreateWindow
 
@@ -128,7 +129,42 @@ public:
         The resource value to store.
     */
     static void SetResource(const std::string& key, std::any value);
+
+    /*
+        @summary
+        Stores a keyed resource loaded from XAML.
+
+        @param key
+        The resource key.
+
+        @param value
+        The resource value.
+
+        @returns
+        True when the resource was stored.
+
+        @internal
+    */
     bool SetXamlResource(const std::string& key, const std::any& value) override;
+
+    /*
+        @summary
+        Stores an implicit style loaded from XAML for a target type.
+
+        @param targetType
+        The type the style targets.
+
+        @param value
+        The style value.
+
+        @returns
+        True when the style was stored.
+
+        @internal
+    */
+    bool SetImplicitXamlStyle(
+        const std::type_index& targetType,
+        const std::shared_ptr<NeoWPF::UI::Styling::Style>& style) override;
 
     /*
         @summary
@@ -144,7 +180,42 @@ public:
         True if the resource was found, otherwise false.
     */
     static bool TryFindResource(const std::string& key, std::any& outValue);
+
+    /*
+        @summary
+        Looks up a keyed resource loaded from XAML.
+
+        @param key
+        The resource key.
+
+        @param outValue
+        Receives the resource value when found.
+
+        @returns
+        True when the resource exists.
+
+        @internal
+    */
     bool TryFindXamlResource(const std::string& key, std::any& outValue) const override;
+
+    /*
+        @summary
+        Looks up an implicit style loaded from XAML for a target type.
+
+        @param targetType
+        The type the style targets.
+
+        @param outValue
+        Receives the style value when found.
+
+        @returns
+        True when a matching style exists.
+
+        @internal
+    */
+    bool TryFindImplicitStyle(
+        const std::type_index& targetType,
+        std::shared_ptr<NeoWPF::UI::Styling::Style>& outStyle) const override;
 
     /*
         @summary

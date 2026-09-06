@@ -11,6 +11,7 @@
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/IXamlResourceHost.h>
+#include <NeoWPF/UI/Styling/Style.h>
 
 #include <any>
 #include <memory>
@@ -149,8 +150,20 @@ private:
 
         const auto& key = m_artifact.objects[record.childId].resourceKey;
         if (key.empty()) {
-            m_error = "NAML resource object is missing a key";
-            return false;
+            const auto style = std::dynamic_pointer_cast<NeoWPF::UI::Styling::Style>(resource);
+            if (!style || style->GetTargetType() == std::type_index(typeid(void))) {
+                m_error = "NAML resource object is missing a key";
+                return false;
+            }
+            if (!m_implicitStyleTypes.insert(std::make_pair(owner, style->GetTargetType())).second) {
+                m_error = "duplicate NAML implicit style target type";
+                return false;
+            }
+            if (!owner->SetImplicitXamlStyle(style->GetTargetType(), style)) {
+                m_error = "NAML implicit style could not be stored";
+                return false;
+            }
+            return true;
         }
         if (!m_resourceKeys.insert(std::make_pair(owner, key)).second) {
             m_error = "duplicate NAML resource key: " + key;
@@ -298,6 +311,7 @@ private:
     std::unordered_map<std::uint32_t, std::shared_ptr<DependencyObject>> m_objects;
     std::vector<NeoWPF::UI::UIElement*> m_scopes;
     std::set<std::pair<IXamlResourceHost*, std::string>> m_resourceKeys;
+    std::set<std::pair<IXamlResourceHost*, std::type_index>> m_implicitStyleTypes;
 };
 
 }

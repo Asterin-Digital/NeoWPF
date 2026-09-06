@@ -1,10 +1,12 @@
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlResourceBuilder.h>
 
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
+#include <NeoWPF/UI/Styling/Style.h>
 
 #include <array>
 #include <string>
 #include <unordered_set>
+#include <typeindex>
 
 namespace NeoWPF::UI::Markup::Xaml {
 namespace {
@@ -67,11 +69,25 @@ bool BuildXamlResourceDictionary(
     }
 
     std::unordered_set<std::string> localKeys;
+    std::unordered_set<std::type_index> localImplicitTypes;
     for (const auto& entry : dictionary->Children) {
         if (entry.Name.empty()) {
             continue;
         }
         if (entry.XamlKey.empty()) {
+            auto value = buildObject(entry, namescope, context);
+            const auto style = std::dynamic_pointer_cast<NeoWPF::UI::Styling::Style>(value);
+            if (style && style->GetTargetType() != std::type_index(typeid(void))) {
+                if (!localImplicitTypes.insert(style->GetTargetType()).second) {
+                    NeoWPF::Diagnostics::QueueDeveloperWarning(
+                        L"XAML_RESOURCE_KEY",
+                        L"Duplicate implicit style target type",
+                        NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
+                    continue;
+                }
+                ownerResourceHost->SetImplicitXamlStyle(style->GetTargetType(), style);
+                continue;
+            }
             NeoWPF::Diagnostics::QueueDeveloperWarning(
                 L"XAML_RESOURCE_KEY",
                 L"Resource dictionary entry is missing x:Key",

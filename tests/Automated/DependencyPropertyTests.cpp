@@ -13,6 +13,7 @@
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 #include <NeoWPF/UI/Data/Binding.h>
+#include <NeoWPF/UI/Data/BindingOperations.h>
 #include <NeoWPF/UI/Markup/Builder/Builder.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
@@ -48,6 +49,15 @@ const auto& IntProperty()
     static const auto& property = DependencyProperty::Register<TestObject, int>(
         "Automated.IntProperty",
         PropertyMetadata{42});
+    return property;
+}
+
+const auto& StyleBindingProperty()
+{
+    using namespace NeoWPF::UI::Properties;
+    static const auto& property = DependencyProperty::Register<NeoWPF::UI::UIElement, int>(
+        "Automated.StyleBindingProperty",
+        PropertyMetadata{0});
     return property;
 }
 
@@ -196,6 +206,26 @@ TEST(DependencyPropertyTests, DoesNotWriteBackOneWayDependencyObjectBinding)
 
     target.SetValue(property, 13);
     EXPECT_EQ(source->GetValue<int>(property), 7);
+}
+
+TEST(DependencyPropertyTests, StyleApplicationPreservesBindingExpression)
+{
+    auto source = std::make_shared<NeoWPF::UI::UIElement>();
+    NeoWPF::UI::UIElement target;
+    const auto& property = StyleBindingProperty();
+    source->SetValue(property, 7);
+
+    target.SetBinding(property,
+        NeoWPF::UI::Data::Binding("Automated.StyleBindingProperty")
+            .WithSource(source));
+
+    ASSERT_NE(NeoWPF::UI::Data::BindingOperations::GetBindingExpression(target, property), nullptr);
+    EXPECT_EQ(target.GetValue<int>(property), 7);
+
+    ASSERT_TRUE(target.SetStylePropertyValue("Automated.StyleBindingProperty", 13));
+
+    EXPECT_NE(NeoWPF::UI::Data::BindingOperations::GetBindingExpression(target, property), nullptr);
+    EXPECT_EQ(target.GetValue<int>(property), 7);
 }
 
 TEST(DependencyPropertyTests, TextBlockExposesStaticPropertyHandles)
@@ -421,7 +451,7 @@ TEST(TypeConverterTests, ConvertsWideStringsToEscapedCode)
     const auto converter = NeoWPF::UI::Properties::GetWideStringConverter();
 
     ASSERT_TRUE(converter->TryConvertToCode("Apply\"Now", expression));
-    EXPECT_EQ(expression, "L\"Apply\\\"Now\"");
+    EXPECT_EQ(expression, "std::wstring(L\"Apply\\\"Now\")");
 }
 
 TEST(TypeConverterTests, EscapesControlCharactersAndBackslashes)
@@ -430,7 +460,7 @@ TEST(TypeConverterTests, EscapesControlCharactersAndBackslashes)
     const auto converter = NeoWPF::UI::Properties::GetWideStringConverter();
 
     ASSERT_TRUE(converter->TryConvertToCode("A\\B\nC\tD\rE", expression));
-    EXPECT_EQ(expression, "L\"A\\\\B\\nC\\tD\\rE\"");
+    EXPECT_EQ(expression, "std::wstring(L\"A\\\\B\\nC\\tD\\rE\")");
 }
 
 TEST(TypeConverterTests, ConvertsScalarValuesToCode)
@@ -513,8 +543,8 @@ TEST(TypeConverterTests, LeavesUnsupportedComplexConvertersUnavailable)
     EXPECT_TRUE(expression.empty());
 
     expression = "stale code";
-    EXPECT_FALSE(NeoWPF::UI::Properties::GetThicknessConverter()->TryConvertToCode("1,2,3,4", expression));
-    EXPECT_TRUE(expression.empty());
+    EXPECT_TRUE(NeoWPF::UI::Properties::GetThicknessConverter()->TryConvertToCode("1,2,3,4", expression));
+    EXPECT_EQ(expression, "NeoWPF::UI::Thickness(1, 2, 3, 4)");
 }
 
 TEST(TypeConverterTests, ClearsExpressionWhenConversionFails)

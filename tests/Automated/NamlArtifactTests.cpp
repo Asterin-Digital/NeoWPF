@@ -4,6 +4,7 @@
 #include <NeoWPF/Core/Application/Resources/EmbeddedResourceProvider.h>
 #include <NeoWPF/Core/Application/Resources/ResourceManager.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Controls/Window.h>
@@ -190,6 +191,62 @@ TEST(NamlArtifactTests, LoadsKeyedResourcesWithoutAddingThemToVisualChildren)
     const auto resourceText = std::any_cast<std::shared_ptr<NeoWPF::UI::UIElement>>(resource);
     ASSERT_NE(resourceText, nullptr);
     EXPECT_EQ(std::dynamic_pointer_cast<NeoWPF::UI::TextBlock>(resourceText)->GetText(), L"Resource text");
+
+    NeoWPF::EmbeddedResourceProvider::Instance().Unregister(key);
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(NamlArtifactTests, LoadsImplicitStylesWithoutAResourceKey)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    NeoNaml::NamlArtifact artifact;
+    artifact.resourceKey = "CompiledImplicitStyleTest";
+    artifact.sourcePath = "CompiledImplicitStyleTest.xaml";
+    artifact.rootObjectId = 0;
+    artifact.strings = {
+        "Grid", "Style", "TargetType", "Button", "Setters", "Setter",
+        "Property", "Text", "Value", "Resources", "Children"
+    };
+    artifact.objects = {
+        {0, 0, "", ""},
+        {1, 1, "", ""},
+        {2, 5, "", ""},
+        {3, 3, "", ""}
+    };
+    artifact.properties = {
+        {1, 2, {NeoNaml::NamlValueKind::String, "Button"}},
+        {2, 6, {NeoNaml::NamlValueKind::String, "Text"}},
+        {2, 8, {NeoNaml::NamlValueKind::String, "Compiled implicit"}}
+    };
+    artifact.children = {
+        {0, 1, 9},
+        {1, 2, 4},
+        {0, 3, 10}
+    };
+
+    const auto key = NeoWPF::ResourceKey("CompiledImplicitStyleTest");
+    const auto serialized = NeoNaml::SerializeNaml(artifact);
+    NeoWPF::ResourceManager::Instance().RegisterProviderReference(
+        NeoWPF::EmbeddedResourceProvider::Instance());
+    NeoWPF::EmbeddedResourceProvider::Instance().Register(
+        key, NeoWPF::ResourceType::Xaml,
+        reinterpret_cast<const unsigned char*>(serialized.data()), serialized.size());
+
+    std::string error;
+    const auto root = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error);
+    ASSERT_NE(root, nullptr) << error;
+    const auto grid = std::dynamic_pointer_cast<NeoWPF::UI::Grid>(root);
+    ASSERT_NE(grid, nullptr);
+    ASSERT_EQ(grid->GetVisualChildren().size(), 1u);
+    const auto button = dynamic_cast<NeoWPF::UI::Button*>(grid->GetVisualChildren()[0]);
+    ASSERT_NE(button, nullptr);
+
+    grid->Initialize();
+
+    EXPECT_EQ(button->GetText(), L"Compiled implicit");
+    EXPECT_EQ(button->GetValueSource(NeoWPF::UI::Button::TextProperty()),
+              NeoWPF::UI::Properties::PropertyValueSource::Style);
 
     NeoWPF::EmbeddedResourceProvider::Instance().Unregister(key);
     NeoWPF::Core::Application::Shutdown();

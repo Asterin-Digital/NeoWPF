@@ -6,6 +6,7 @@
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
+#include <NeoWPF/UI/Styling/Style.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <cmath>
@@ -35,6 +36,28 @@ namespace NeoWPF::UI {
 
 void UIElement::OnInitialize()
 {
+    const auto styleValue = GetRawValue(StyleProperty());
+    const auto* style = std::any_cast<std::shared_ptr<NeoWPF::UI::Styling::Style>>(&styleValue);
+    if (style && *style) {
+        (*style)->ApplyTo(*this);
+    } else {
+        std::shared_ptr<NeoWPF::UI::Styling::Style> implicitStyle;
+        const auto targetType = std::type_index(typeid(*this));
+        const UIElement* current = this;
+        while (current && !current->TryFindImplicitStyle(targetType, implicitStyle)) {
+            current = dynamic_cast<const UIElement*>(current->GetParent());
+        }
+
+        if (!implicitStyle) {
+            NeoWPF::Core::ApplicationResources::Resources::TryFindImplicitStyle(
+                targetType, implicitStyle);
+        }
+
+        if (implicitStyle) {
+            implicitStyle->ApplyTo(*this);
+        }
+    }
+
     if (!m_hasTemplateApplied && m_template) {
         ApplyTemplate();
     }
@@ -244,20 +267,22 @@ void UIElement::ClearTemplateChildren() noexcept {
 
 bool UIElement::SetStyleProperty(const std::string& name, uint32_t value)
 {
-    if (name.empty()) {
-        return false;
-    }
-
-    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, *this);
-    if (!property) {
-        return false;
-    }
-
-    SetValueInternal(*property, std::any(value), Properties::PropertyValueSource::Style);
-    return true;
+    return SetNamedPropertyValue(name, std::any(value), Properties::PropertyValueSource::Style);
 }
 
 bool UIElement::SetStylePropertyValue(const std::string& name, const std::any& value)
+{
+    return SetNamedPropertyValue(name, value, Properties::PropertyValueSource::Style);
+}
+
+bool UIElement::SetTriggerPropertyValue(const std::string& name, const std::any& value)
+{
+    return SetNamedPropertyValue(name, value, Properties::PropertyValueSource::Trigger);
+}
+
+bool UIElement::SetNamedPropertyValue(const std::string& name,
+                                      const std::any& value,
+                                      Properties::PropertyValueSource source)
 {
     if (name.empty()) {
         return false;
@@ -268,22 +293,16 @@ bool UIElement::SetStylePropertyValue(const std::string& name, const std::any& v
         return false;
     }
 
-    SetValueInternal(*property, value, Properties::PropertyValueSource::Style);
+    SetValueInternal(*property, value, source);
     return true;
 }
 
 bool UIElement::SetPropertyValue(const std::string& name, const std::any& value)
 {
-    if (name.empty()) {
+    if (!SetNamedPropertyValue(name, value, Properties::PropertyValueSource::Local)) {
         return false;
     }
 
-    auto property = Properties::DependencyPropertyRegistry::Get().FindProperty(name, *this);
-    if (!property) {
-        return false;
-    }
-
-    SetValueInternal(*property, value, Properties::PropertyValueSource::Local);
     PropertyChanged.Invoke(name, value);
     return true;
 }
@@ -295,6 +314,29 @@ bool UIElement::SetResource(const std::string& key, const std::any& value)
     }
 
     m_resources[key] = value;
+    return true;
+}
+
+bool UIElement::SetImplicitXamlStyle(
+    const std::type_index& targetType,
+    const std::shared_ptr<NeoWPF::UI::Styling::Style>& style)
+{
+    if (targetType == std::type_index(typeid(void)) || !style) {
+        return false;
+    }
+    m_implicitStyles[targetType] = style;
+    return true;
+}
+
+bool UIElement::TryFindImplicitStyle(
+    const std::type_index& targetType,
+    std::shared_ptr<NeoWPF::UI::Styling::Style>& outStyle) const
+{
+    const auto it = m_implicitStyles.find(targetType);
+    if (it == m_implicitStyles.end()) {
+        return false;
+    }
+    outStyle = it->second;
     return true;
 }
 

@@ -11,7 +11,7 @@
 WPF-Inspired UI framework for Modern C++
 Love from Envy!! :3
 
-Review the project's README for details.
+Review the project's README.md, and AI.md for details.
 
 ============================================================
 */
@@ -49,7 +49,7 @@ Review the project's README for details.
 // you will get shims, facades, etc for API stability.
 
 // Public API changes will happen, but they are gradual with deprecation warnings.
-// NeoWPF reverses the right to update or otherwise remove a public API if we deem
+// NeoWPF reserves the right to update or otherwise remove a public API if we deem
 // it doesn't fit NeoWPF's architecture or design.
 
 namespace NeoWPF {

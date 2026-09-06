@@ -234,7 +234,10 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
 
     if (source == PropertyValueSource::Expression) {
         m_localValues.erase(&property);
-    } else if (source != PropertyValueSource::Local && source != PropertyValueSource::Animation && source != PropertyValueSource::Trigger) {
+    } else if (source != PropertyValueSource::Local &&
+               source != PropertyValueSource::Animation &&
+               source != PropertyValueSource::Trigger &&
+               source != PropertyValueSource::Style) {
         ClearBindingExpression(property);
     }
 

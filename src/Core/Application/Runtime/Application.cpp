@@ -165,6 +165,17 @@ bool Application::SetXamlResource(const std::string& key, const std::any& value)
     return true;
 }
 
+bool Application::SetImplicitXamlStyle(
+    const std::type_index& targetType,
+    const std::shared_ptr<NeoWPF::UI::Styling::Style>& style)
+{
+    if (targetType == std::type_index(typeid(void)) || !style) {
+        return false;
+    }
+    NeoWPF::Core::ApplicationResources::Resources::SetImplicitStyle(targetType, style);
+    return true;
+}
+
 bool Application::TryFindResource(const std::string& key, std::any& outValue)
 {
     return NeoWPF::Core::ApplicationResources::Resources::TryFindResource(key, outValue);
@@ -173,6 +184,13 @@ bool Application::TryFindResource(const std::string& key, std::any& outValue)
 bool Application::TryFindXamlResource(const std::string& key, std::any& outValue) const
 {
     return NeoWPF::Core::ApplicationResources::Resources::TryFindResource(key, outValue);
+}
+
+bool Application::TryFindImplicitStyle(
+    const std::type_index& targetType,
+    std::shared_ptr<NeoWPF::UI::Styling::Style>& outStyle) const
+{
+    return NeoWPF::Core::ApplicationResources::Resources::TryFindImplicitStyle(targetType, outStyle);
 }
 
 std::any Application::FindResource(const std::string& key)

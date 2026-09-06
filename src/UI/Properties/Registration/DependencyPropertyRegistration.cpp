@@ -24,6 +24,7 @@ void RegisterCoreControlProperties() {
     RegisterRowDefinitionProperties();
     RegisterColumnDefinitionProperties();
     RegisterScrollViewerProperties();
+    RegisterStyleProperties();
 }
 
 } // namespace NeoWPF::UI::Properties

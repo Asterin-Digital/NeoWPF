@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <NeoWPF/UI/Styling/Style.h>
 
 namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeUIElementOpacityMetadata() {
@@ -18,6 +19,7 @@ namespace NeoWPF::UI::Properties {
         RegisterProperty<UI::UIElement, int>("TabIndex", &UI::UIElement::GetTabIndex, &UI::UIElement::SetTabIndex);
         RegisterProperty<UI::UIElement, bool>("IsFocused", &UI::UIElement::IsFocused, &UI::UIElement::SetFocused);
         RegisterProperty<UI::UIElement, float>("Opacity", &UI::UIElement::GetOpacity, &UI::UIElement::SetOpacity, MakeUIElementOpacityMetadata());
+        UI::UIElement::StyleProperty();
         NeoWPF::UI::Markup::Xaml::RegisterXamlType<UI::UIElement>(
             "UIElement", "", "NeoWPF::UI::UIElement", "NeoWPF/UI/Core/Element/UIElement.h");
     }
@@ -59,3 +61,10 @@ DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::UIElement,
                              &NeoWPF::UI::UIElement::GetOpacity,
                              &NeoWPF::UI::UIElement::SetOpacity,
                              MakeUIElementOpacityMetadata)
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::UIElement::StyleProperty()
+{
+    static const auto& property = NeoWPF::UI::Properties::DependencyProperty::Register<
+        NeoWPF::UI::UIElement, std::shared_ptr<NeoWPF::UI::Styling::Style>>("Style");
+    return property;
+}

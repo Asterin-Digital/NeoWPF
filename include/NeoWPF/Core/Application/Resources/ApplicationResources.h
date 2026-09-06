@@ -1,8 +1,14 @@
 #pragma once
 
 #include <any>
+#include <memory>
 #include <string>
 #include <unordered_map>
+#include <typeindex>
+
+namespace NeoWPF::UI::Styling {
+class Style;
+}
 
 namespace NeoWPF::Core::ApplicationResources {
 
@@ -11,12 +17,18 @@ public:
     bool Contains(const std::string& key) const;
     bool TryGet(const std::string& key, std::any& outValue) const;
     void Set(const std::string& key, std::any value);
+    void SetImplicitStyle(const std::type_index& targetType,
+                          std::shared_ptr<NeoWPF::UI::Styling::Style> style);
+    bool TryGetImplicitStyle(
+        const std::type_index& targetType,
+        std::shared_ptr<NeoWPF::UI::Styling::Style>& outStyle) const;
     std::any Get(const std::string& key) const;
     void Merge(const ResourceDictionary& dictionary);
     void Clear();
 
 private:
     std::unordered_map<std::string, std::any> m_resources;
+    std::unordered_map<std::type_index, std::shared_ptr<NeoWPF::UI::Styling::Style>> m_implicitStyles;
 };
 
 class Resources {
@@ -28,6 +40,12 @@ public:
     static bool TryFindResource(const std::string& key, std::any& outValue);
     static std::any FindResource(const std::string& key);
     static void SetResource(const std::string& key, std::any value);
+    static void SetImplicitStyle(
+        const std::type_index& targetType,
+        std::shared_ptr<NeoWPF::UI::Styling::Style> style);
+    static bool TryFindImplicitStyle(
+        const std::type_index& targetType,
+        std::shared_ptr<NeoWPF::UI::Styling::Style>& outStyle);
     static bool TryGetResource(const std::string& key, std::any& outValue);
 
 private:

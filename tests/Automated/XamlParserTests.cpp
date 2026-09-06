@@ -13,6 +13,8 @@
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Layout/Grid/RowDefinition.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
+#include <NeoWPF/UI/Styling/Style.h>
+#include <NeoWPF/UI/Styling/Triggers/Setter.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
@@ -20,6 +22,7 @@
 #include <NeoWPF/UI/Markup/Xaml/Parsing/XamlMarkupExtension.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTreeBuilder.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlNamescope.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/IXamlResourceHost.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 
@@ -163,6 +166,32 @@ TEST(XamlParserTests, ParsesSimpleElementTree)
     EXPECT_EQ(root[0].Children[1].Attributes.at("Text"), "World");
 }
 
+TEST(XamlParserTests, BuildsStyleTargetTypeAndSetterCollection)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <Style TargetType="Button">
+            <Setter Property="Text" Value="Styled" />
+        </Style>
+    )");
+    ASSERT_EQ(root.size(), 1u);
+    ASSERT_EQ(root[0].Attributes.at("TargetType"), "Button");
+    ASSERT_NE(NeoWPF::UI::Markup::Xaml::XamlTypeRegistry::Get().Find("Button"), nullptr);
+    const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+
+    ASSERT_NE(tree, nullptr);
+    const auto style = std::dynamic_pointer_cast<NeoWPF::UI::Styling::Style>(tree);
+    ASSERT_NE(style, nullptr);
+    EXPECT_EQ(style->GetTargetType(), std::type_index(typeid(NeoWPF::UI::Button)));
+    ASSERT_EQ(style->GetSetters().size(), 1u);
+    ASSERT_NE(style->GetSetters()[0], nullptr);
+    EXPECT_EQ(style->GetSetters()[0]->GetProperty(), "Text");
+    EXPECT_EQ(std::any_cast<std::string>(style->GetSetters()[0]->GetValue()), "Styled");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
 TEST(XamlParserTests, DecodesXmlEntitiesInAttributesAndText)
 {
     const std::string xml = R"(
@@ -268,6 +297,34 @@ TEST(XamlParserTests, BuildsKeyedResourceDictionaryWithoutAddingVisualChildren)
     const auto resourceText = std::dynamic_pointer_cast<NeoWPF::UI::TextBlock>(resourceObject);
     ASSERT_NE(resourceText, nullptr);
     EXPECT_EQ(resourceText->GetText(), L"Resource text");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlParserTests, StoresKeylessStyleByTargetType)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <StackPanel>
+            <StackPanel.Resources>
+                <ResourceDictionary>
+                    <Style TargetType="Button">
+                        <Setter Property="Text" Value="Implicit" />
+                    </Style>
+                </ResourceDictionary>
+            </StackPanel.Resources>
+        </StackPanel>
+    )");
+    const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+
+    ASSERT_NE(tree, nullptr);
+    const auto* resourceHost = dynamic_cast<const NeoWPF::UI::Markup::Xaml::IXamlResourceHost*>(tree.get());
+    ASSERT_NE(resourceHost, nullptr);
+
+    std::shared_ptr<NeoWPF::UI::Styling::Style> style;
+    ASSERT_TRUE(resourceHost->TryFindImplicitStyle(typeid(NeoWPF::UI::Button), style));
+    ASSERT_NE(style, nullptr);
 
     NeoWPF::Core::Application::Shutdown();
 }

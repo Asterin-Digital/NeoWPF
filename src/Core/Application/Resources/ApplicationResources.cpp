@@ -1,5 +1,6 @@
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/UI/Styling/Style.h>
 
 namespace NeoWPF::Core::ApplicationResources {
 
@@ -25,6 +26,25 @@ void ResourceDictionary::Set(const std::string& key, std::any value)
     m_resources[key] = std::move(value);
 }
 
+void ResourceDictionary::SetImplicitStyle(
+    const std::type_index& targetType,
+    std::shared_ptr<NeoWPF::UI::Styling::Style> style)
+{
+    m_implicitStyles[targetType] = std::move(style);
+}
+
+bool ResourceDictionary::TryGetImplicitStyle(
+    const std::type_index& targetType,
+    std::shared_ptr<NeoWPF::UI::Styling::Style>& outStyle) const
+{
+    const auto it = m_implicitStyles.find(targetType);
+    if (it == m_implicitStyles.end()) {
+        return false;
+    }
+    outStyle = it->second;
+    return true;
+}
+
 std::any ResourceDictionary::Get(const std::string& key) const
 {
     const auto it = m_resources.find(key);
@@ -44,6 +64,7 @@ void ResourceDictionary::Merge(const ResourceDictionary& dictionary)
 void ResourceDictionary::Clear()
 {
     m_resources.clear();
+    m_implicitStyles.clear();
 }
 
 void Resources::Initialize()
@@ -80,6 +101,20 @@ std::any Resources::FindResource(const std::string& key)
 void Resources::SetResource(const std::string& key, std::any value)
 {
     s_applicationResources.Set(key, std::move(value));
+}
+
+void Resources::SetImplicitStyle(
+    const std::type_index& targetType,
+    std::shared_ptr<NeoWPF::UI::Styling::Style> style)
+{
+    s_applicationResources.SetImplicitStyle(targetType, std::move(style));
+}
+
+bool Resources::TryFindImplicitStyle(
+    const std::type_index& targetType,
+    std::shared_ptr<NeoWPF::UI::Styling::Style>& outStyle)
+{
+    return s_applicationResources.TryGetImplicitStyle(targetType, outStyle);
 }
 
 bool Resources::TryGetResource(const std::string& key, std::any& outValue)

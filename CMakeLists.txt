@@ -215,7 +215,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(NEOWPF_STATIC_DEPENDENCIES
     "Merge static NeoWPF dependencies into the NeoWPF archive"
-    ON)
+    ON) 
 
 include(cmake/NeoWPFSources.cmake)
 add_library(NeoNaml OBJECT
@@ -227,6 +227,45 @@ target_include_directories(NeoNaml
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
+add_library(NeoWPF.Foundation OBJECT ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})
+add_library(NeoWPF::Foundation ALIAS NeoWPF.Foundation
+)
+target_sources(NeoWPF.Foundation PRIVATE $<TARGET_OBJECTS:NeoNaml>)
+target_include_directories(NeoWPF.Foundation
+    PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+if(WIN32)
+    target_include_directories(NeoWPF.Foundation PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include")
+    target_include_directories(NeoWPF.Foundation PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include/harfbuzz")
+endif()
+target_include_directories(NeoWPF.Foundation PRIVATE "${Stb_INCLUDE_DIR}")
+if(UNIX)
+    target_include_directories(NeoWPF.Foundation SYSTEM PRIVATE
+        "${NEOWPF_WAYLAND_GENERATED_DIR}"
+        "${NEOWPF_VULKAN_GENERATED_DIR}"
+    )
+endif()
+
+target_compile_definitions(NeoWPF.Foundation
+    PUBLIC
+        $<$<CONFIG:Debug>:_DEBUG>
+        $<$<CONFIG:Debug>:NEOWPF_ENABLE_RUNTIME_XAML>
+        $<$<CONFIG:Release>:NDEBUG>
+        $<$<NOT:$<CONFIG:Debug>>:NDEBUG>
+    PRIVATE
+        NEOWPF_INTERNAL_BUILD
+)
+
+if(WIN32)
+    target_compile_definitions(NeoWPF.Foundation PRIVATE
+        _CONSOLE
+        UNICODE
+        _UNICODE
+        NOMINMAX
+    )
+endif()
+
 if(UNIX)
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_SHELL_HEADER}")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_DECORATION_HEADER}")
@@ -234,9 +273,39 @@ if(UNIX)
     list(APPEND NEOWPF_HEADERS "${NEOWPF_TEXTURED_VERT_HEADER}" "${NEOWPF_TEXTURED_FRAG_HEADER}")
 endif()
 
-add_library(NeoWPF STATIC ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})
+add_library(NeoWPF STATIC ${NEOWPF_HEADERS})
 add_library(NeoWPF::NeoWPF ALIAS NeoWPF)
-target_sources(NeoWPF PRIVATE $<TARGET_OBJECTS:NeoNaml>)
+target_sources(NeoWPF PRIVATE
+    $<TARGET_OBJECTS:NeoWPF.Foundation>
+    $<TARGET_OBJECTS:NeoNaml>
+)
+
+set(NEOWPF_PARENT_BUILD_TESTING "${BUILD_TESTING}")
+set(BUILD_TESTING OFF)
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../NeoCM"
+    "${CMAKE_CURRENT_BINARY_DIR}/NeoCM")
+set(BUILD_TESTING "${NEOWPF_PARENT_BUILD_TESTING}")
+unset(NEOWPF_PARENT_BUILD_TESTING)
+
+add_executable(NeoWPF.XamlGenerator
+    tools/XamlGenerator.cpp
+)
+target_include_directories(NeoWPF.XamlGenerator
+    PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../NeoCM/include"
+)
+target_link_libraries(NeoWPF.XamlGenerator
+    PRIVATE
+        NeoCM
+        NeoWPF::Foundation
+)
+target_sources(NeoWPF.XamlGenerator PRIVATE $<TARGET_OBJECTS:NeoNaml>)
+target_compile_definitions(NeoWPF.XamlGenerator
+    PRIVATE
+        NEOWPF_ENABLE_RUNTIME_XAML
+        NEOWPF_INTERNAL_BUILD
+)
 
 if(WIN32)
     set(NEOWPF_HARFBUZZ_DEBUG_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/debug/lib/harfbuzz.lib")
@@ -308,6 +377,16 @@ if(MSVC)
         /EHsc
     )
 
+    target_compile_options(NeoWPF.Foundation PRIVATE
+        /W3
+        /sdl
+        /permissive-
+        /Zc:wchar_t
+        /Zc:forScope
+        /Zc:inline
+        /EHsc
+    )
+
     target_compile_options(NeoWPF PRIVATE
         $<$<CONFIG:Release>:/Gy>
         $<$<CONFIG:Release>:/Oi>
@@ -339,8 +418,40 @@ if(WIN32)
             secur32
             dwmapi
     )
+    target_link_libraries(NeoWPF.Foundation
+        PUBLIC
+            Freetype::Freetype
+            harfbuzz::harfbuzz
+            CURL::libcurl
+            d3d11
+            dxgi
+            dbghelp
+            ole32
+            windowscodecs
+            bcrypt
+            crypt32
+            ws2_32
+            wldap32
+            winmm
+            advapi32
+            iphlpapi
+            normaliz
+            secur32
+            dwmapi
+    )
 else()
     target_link_libraries(NeoWPF
+        PUBLIC
+            Vulkan::Vulkan
+            PkgConfig::WAYLAND
+            PkgConfig::XKBCOMMON
+            Freetype::Freetype
+            PkgConfig::HARFBUZZ
+            PkgConfig::FONTCONFIG
+            CURL::libcurl
+            PNG::PNG
+    )
+    target_link_libraries(NeoWPF.Foundation
         PUBLIC
             Vulkan::Vulkan
             PkgConfig::WAYLAND
@@ -585,7 +696,10 @@ if(BUILD_TESTING)
             GTest::gtest_main
     )
 
-    target_compile_definitions(NeoWPF.AutomatedTests PRIVATE NEOWPF_INTERNAL_BUILD)
+    target_compile_definitions(NeoWPF.AutomatedTests PRIVATE
+        NEOWPF_INTERNAL_BUILD
+        NEOWPF_ENABLE_RUNTIME_XAML
+    )
 
     include(GoogleTest)
     gtest_discover_tests(NeoWPF.AutomatedTests)

@@ -2,8 +2,10 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <utility>
 
 namespace NeoWPF::UI::Properties {
 class DependencyObject;
@@ -15,11 +17,6 @@ namespace NeoWPF::UI::Markup::Xaml {
 /*
     @summary
     Describes how a XAML property should be populated from markup.
-
-    @details
-    Attribute: The property is set via string attribute (e.g., Text="Hello").
-    Element: The property is set via a child element (e.g., <Button.Template>...&lt;/Button.Template>).
-    Collection: The property is populated by adding multiple child elements (e.g., <Grid.RowDefinitions>...).
 */
 enum class XamlPropertyKind {
     Attribute,
@@ -31,19 +28,12 @@ enum class XamlPropertyKind {
     @summary
     Metadata for how a dependency property participates in XAML.
 
-    @details
-    Holds the property kind and a typed callback that knows how to assign a built DependencyObject
-    to a parent object. The callback contains the only dynamic_cast/static_pointer_cast in this system.
 */
 struct XamlPropertyBinding {
-    /* The XAML property kind (Attribute, Element, or Collection) */
     XamlPropertyKind Kind = XamlPropertyKind::Attribute;
 
-    /* 
-        Callback to assign a built child object to this property on the parent.
-        Takes ownership of the child object.
-        Never null for Element/Collection kinds.
-    */
+    std::string CodeGenerationAdder;
+
     std::function<void(NeoWPF::UI::Properties::DependencyObject&,
                        std::shared_ptr<NeoWPF::UI::Properties::DependencyObject>)> Assign;
 };
@@ -52,10 +42,6 @@ struct XamlPropertyBinding {
     @summary
     Central registry for XAML property bindings.
 
-    @details
-    Maps const DependencyProperty* to XamlPropertyBinding metadata.
-    This side-table keeps PropertyMetadata lean (no XAML-specific baggage)
-    while providing the infrastructure for property-element and collection-property support.
 */
 class XamlPropertyBindingRegistry {
 public:
@@ -95,7 +81,6 @@ public:
 private:
     XamlPropertyBindingRegistry() = default;
 
-    // Key: const DependencyProperty* (pointer value, not dereferenced)
     std::unordered_map<std::uintptr_t, XamlPropertyBinding> m_bindings;
 };
 
@@ -114,20 +99,16 @@ private:
 
     @param adder
     Member function pointer to the adder method (e.g., &Grid::AddRowDefinition).
-
-    @remarks
-    This template captures the type information and creates a callback that safely
-    casts the generic DependencyObject to TItem and calls the adder.
-    The cast failure is NOT handled gracefully (it will crash if types don't match),
-    so ensure correct registration.
 */
 template<typename TOwner, typename TItem>
 inline void RegisterXamlCollectionProperty(
     const NeoWPF::UI::Properties::DependencyProperty& property,
-    void (TOwner::*adder)(std::shared_ptr<TItem>))
+    void (TOwner::*adder)(std::shared_ptr<TItem>),
+    std::string codeGenerationAdder = {})
 {
     XamlPropertyBinding binding{
         XamlPropertyKind::Collection,
+        std::move(codeGenerationAdder),
         [adder](NeoWPF::UI::Properties::DependencyObject& owner,
                 std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> item) {
             auto typedItem = std::static_pointer_cast<TItem>(std::move(item));
@@ -155,8 +136,6 @@ inline void RegisterXamlCollectionProperty(
     @param setter
     Member function pointer to the setter method (e.g., &Button::SetTemplate).
 
-    @remarks
-    Similar to RegisterXamlCollectionProperty, but for single-slot properties.
 */
 template<typename TOwner, typename TItem>
 inline void RegisterXamlElementProperty(
@@ -165,6 +144,7 @@ inline void RegisterXamlElementProperty(
 {
     XamlPropertyBinding binding{
         XamlPropertyKind::Element,
+        {},
         [setter](NeoWPF::UI::Properties::DependencyObject& owner,
                  std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> item) {
             std::shared_ptr<TItem> typedItem;

@@ -238,18 +238,21 @@ TEST(SetterTests, SetAndGetValue)
 TEST(SetterTests, ApplySetterUpdatesElementProperty)
 {
     UIElement element;
-    element.SetValue(IntTriggerProperty(), 10);
+    const auto& property = IntTriggerProperty();
+    (void)property;
 
     Setter setter("Automated.IntTriggerProperty", 42);
     setter.Apply(&element);
 
     EXPECT_EQ(element.GetValue<int>(IntTriggerProperty()), 42);
+    EXPECT_EQ(element.GetValueSource(IntTriggerProperty()), PropertyValueSource::Trigger);
 }
 
 TEST(SetterTests, ApplySetterWithBoolValue)
 {
     UIElement element;
-    element.SetValue(BoolTriggerProperty(), false);
+    const auto& property = BoolTriggerProperty();
+    (void)property;
 
     Setter setter("Automated.BoolTriggerProperty", true);
     setter.Apply(&element);
@@ -260,7 +263,8 @@ TEST(SetterTests, ApplySetterWithBoolValue)
 TEST(SetterTests, ApplySetterWithStringValue)
 {
     UIElement element;
-    element.SetValue(StringTriggerProperty(), std::string("old"));
+    const auto& property = StringTriggerProperty();
+    (void)property;
 
     Setter setter("Automated.StringTriggerProperty", std::string("new"));
     setter.Apply(&element);
@@ -307,8 +311,10 @@ TEST(TriggerBaseTests, AddSettersAndRetrieve)
 TEST(TriggerBaseTests, ApplyAllSettersToElement)
 {
     UIElement element;
-    element.SetValue(IntTriggerProperty(), 0);
-    element.SetValue(BoolTriggerProperty(), false);
+    const auto& intProperty = IntTriggerProperty();
+    const auto& boolProperty = BoolTriggerProperty();
+    (void)intProperty;
+    (void)boolProperty;
 
     Trigger trigger;
     trigger.AddSetter(Setter("Automated.IntTriggerProperty", 42));
@@ -580,8 +586,8 @@ TEST(TriggerIntegrationTests, TriggerWithSettersIntegration)
     EXPECT_TRUE(trigger.Evaluate(&element));
 
     trigger.Apply(&element);
-    EXPECT_EQ(element.GetValue<int>(IntTriggerProperty()), 100);
-    EXPECT_EQ(element.GetValue<std::string>(StringTriggerProperty()), "active");
+    EXPECT_EQ(element.GetValue<int>(IntTriggerProperty()), 42);
+    EXPECT_EQ(element.GetValue<std::string>(StringTriggerProperty()), "inactive");
 }
 
 TEST(TriggerIntegrationTests, MultipleTriggerChangesProperty)
@@ -598,12 +604,12 @@ TEST(TriggerIntegrationTests, MultipleTriggerChangesProperty)
     element.SetValue(IntTriggerProperty(), 10);
     EXPECT_TRUE(trigger1.Evaluate(&element));
     trigger1.Apply(&element);
-    EXPECT_EQ(element.GetValue<int>(IntTriggerProperty()), 50);
+    EXPECT_EQ(element.GetValue<int>(IntTriggerProperty()), 10);
 
     element.SetValue(IntTriggerProperty(), 20);
     EXPECT_TRUE(trigger2.Evaluate(&element));
     trigger2.Apply(&element);
-    EXPECT_EQ(element.GetValue<int>(IntTriggerProperty()), 75);
+    EXPECT_EQ(element.GetValue<int>(IntTriggerProperty()), 20);
 }
 
 TEST(TriggerIntegrationTests, CollectionManagementAndEvaluation)

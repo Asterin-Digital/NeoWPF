@@ -175,6 +175,7 @@ namespace NeoWPF::UI::Properties {
     void RegisterRowDefinitionProperties();
     void RegisterColumnDefinitionProperties();
     void RegisterScrollViewerProperties();
+    void RegisterStyleProperties();
 
     void RegisterCoreControlProperties();
 

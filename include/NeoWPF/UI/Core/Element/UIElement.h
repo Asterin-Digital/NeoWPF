@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <typeindex>
 #include <vector>
 #include <any>
 #include <type_traits>
@@ -54,6 +55,7 @@ class ControlTemplateBase;
 
 namespace NeoWPF::UI::Styling {
 class VisualStateManager;
+class Style;
 }
 
 namespace NeoWPF::UI::Properties {
@@ -78,6 +80,7 @@ public:
     static const Properties::DependencyProperty& TabIndexProperty();
     static const Properties::DependencyProperty& IsFocusedProperty();
     static const Properties::DependencyProperty& OpacityProperty();
+    static const Properties::DependencyProperty& StyleProperty();
 
     /*
         @summary
@@ -557,6 +560,18 @@ public:
 
     /*
         @summary
+        Sets a trigger property by name to an arbitrary value.
+
+        @param name
+        The property name.
+
+        @param value
+        The property value.
+    */
+    bool SetTriggerPropertyValue(const std::string& name, const std::any& value);
+
+    /*
+        @summary
         Sets a property value by name.
 
         @param name
@@ -608,9 +623,63 @@ public:
         True when a matching resource exists.
     */
     bool TryFindResource(const std::string& key, std::any& outValue) const;
+
+    /*
+        @summary
+        Looks up a keyed resource produced by the XAML loader.
+
+        @param key
+        The resource key.
+
+        @param outValue
+        Receives the resource value when found.
+
+        @returns
+        True when the resource exists.
+
+        @internal
+    */
     bool TryFindXamlResource(const std::string& key, std::any& outValue) const override {
         return TryFindResource(key, outValue);
     }
+
+    /*
+        @summary
+        Stores an implicit style loaded from XAML for a target type.
+
+        @param targetType
+        The type the style targets.
+
+        @param value
+        The style value.
+
+        @returns
+        True when the style was stored.
+
+        @internal
+    */
+    bool SetImplicitXamlStyle(
+        const std::type_index& targetType,
+        const std::shared_ptr<NeoWPF::UI::Styling::Style>& style) override;
+
+    /*
+        @summary
+        Looks up an implicit style loaded from XAML for a target type.
+
+        @param targetType
+        The type the style targets.
+
+        @param outValue
+        Receives the style value when found.
+
+        @returns
+        True when a matching style exists.
+
+        @internal
+    */
+    bool TryFindImplicitStyle(
+        const std::type_index& targetType,
+        std::shared_ptr<NeoWPF::UI::Styling::Style>& outStyle) const override;
 
     /*
         @summary
@@ -837,6 +906,10 @@ protected:
     bool m_isFocused = false;
 
 private:
+    bool SetNamedPropertyValue(const std::string& name,
+                               const std::any& value,
+                               Properties::PropertyValueSource source);
+
     bool m_isVisible = true;
     bool m_isDirty = true;
     float m_opacity = 1.0f;
@@ -852,6 +925,7 @@ private:
     mutable NeoWPF::UI::Core::Matrix4 m_cachedLocalTransform;
     mutable NeoWPF::UI::Core::Matrix4 m_cachedWorldTransform;
     std::unordered_map<std::string, std::any> m_resources;
+    std::unordered_map<std::type_index, std::shared_ptr<NeoWPF::UI::Styling::Style>> m_implicitStyles;
     std::vector<std::shared_ptr<NeoWPF::UI::Styling::Triggers::EventTrigger>> m_eventTriggers;
 };
 
