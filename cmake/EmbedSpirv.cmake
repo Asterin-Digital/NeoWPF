@@ -1,0 +1,18 @@
+if(NOT INPUT OR NOT OUTPUT OR NOT SYMBOL)
+    message(FATAL_ERROR "INPUT, OUTPUT, and SYMBOL are required")
+endif()
+
+file(READ "${INPUT}" SPIRV_HEX HEX)
+string(LENGTH "${SPIRV_HEX}" HEX_LENGTH)
+math(EXPR WORD_COUNT "${HEX_LENGTH} / 8")
+
+file(WRITE "${OUTPUT}" "#pragma once\n#include <cstdint>\n\nstatic constexpr std::uint32_t ${SYMBOL}[] = {\n")
+foreach(INDEX RANGE 0 ${WORD_COUNT})
+    if(INDEX LESS WORD_COUNT)
+        math(EXPR OFFSET "${INDEX} * 8")
+        string(SUBSTRING "${SPIRV_HEX}" ${OFFSET} 8 WORD_HEX)
+        string(REGEX REPLACE "(..)(..)(..)(..)" "0x\\4\\3\\2\\1" WORD "${WORD_HEX}")
+        file(APPEND "${OUTPUT}" "    ${WORD}u,\n")
+    endif()
+endforeach()
+file(APPEND "${OUTPUT}" "};\n")
