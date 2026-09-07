@@ -18,7 +18,6 @@ namespace NeoWPF::UI {
 class UIElement;
 class ButtonStyle;  
 void RegisterButtonStyles();
-void ApplyButtonThemeStyle(UIElement* element);
 
 /*
     @summary

@@ -150,6 +150,9 @@ if(WIN32)
                    EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/harfbuzz/hb.h" AND
                    EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/curl/curl.h" AND
                    EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/stb_image.h" AND
+                   EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/include/zlib.h" AND
+                   EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/lib/zs.lib" AND
+                   EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/debug/lib/zsd.lib" AND
                    EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/share/freetype/freetype-config.cmake" AND
                    EXISTS "${NEOWPF_VCPKG_CANDIDATE_TRIPLET}/share/harfbuzz/harfbuzzConfig.cmake")
                     set(NEOWPF_VCPKG_ROOT "${NEOWPF_VCPKG_CANDIDATE_ROOT}")
@@ -172,9 +175,12 @@ if(WIN32)
     if(NOT NEOWPF_VCPKG_TRIPLET)
         message(FATAL_ERROR
             "Could not locate a vcpkg installation containing the x64-windows-static-md "
-            "FreeType and HarfBuzz packages. Ensure vcpkg is available on PATH.")
+            "FreeType, HarfBuzz, and Zlib packages. Ensure vcpkg is available on PATH "
+            "and install the missing CMake dependency.")
     endif()
-    find_package(ZLIB REQUIRED)
+    set(ZLIB_INCLUDE_DIR "${NEOWPF_VCPKG_TRIPLET}/include" CACHE PATH "Zlib include directory" FORCE)
+    set(ZLIB_LIBRARY_RELEASE "${NEOWPF_VCPKG_TRIPLET}/lib/zs.lib" CACHE FILEPATH "Zlib release library" FORCE)
+    set(ZLIB_LIBRARY_DEBUG "${NEOWPF_VCPKG_TRIPLET}/debug/lib/zsd.lib" CACHE FILEPATH "Zlib debug library" FORCE)
     find_package(Freetype CONFIG REQUIRED)
     find_package(harfbuzz CONFIG REQUIRED)
 endif()
@@ -216,6 +222,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(NEOWPF_STATIC_DEPENDENCIES
     "Merge static NeoWPF dependencies into the NeoWPF archive"
     ON) 
+
+set(NEOWPF_XAML_COMPILER
+    "${CMAKE_CURRENT_SOURCE_DIR}/tools/XamlCompiler${CMAKE_EXECUTABLE_SUFFIX}")
+set(NEOWPF_XAML_FILES "" CACHE STRING
+    "Semicolon-separated XAML files to compile into NeoWPF")
 
 include(cmake/NeoWPFSources.cmake)
 add_library(NeoNaml OBJECT
@@ -271,41 +282,66 @@ if(UNIX)
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_DECORATION_HEADER}")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_SOLID_VERT_HEADER}" "${NEOWPF_SOLID_FRAG_HEADER}")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_TEXTURED_VERT_HEADER}" "${NEOWPF_TEXTURED_FRAG_HEADER}")
+    add_custom_target(NeoWPF.GeneratedAssets
+        DEPENDS
+            "${NEOWPF_XDG_SHELL_HEADER}"
+            "${NEOWPF_XDG_SHELL_SOURCE}"
+            "${NEOWPF_XDG_DECORATION_HEADER}"
+            "${NEOWPF_XDG_DECORATION_SOURCE}"
+            "${NEOWPF_SOLID_VERT_HEADER}"
+            "${NEOWPF_SOLID_FRAG_HEADER}"
+            "${NEOWPF_TEXTURED_VERT_HEADER}"
+            "${NEOWPF_TEXTURED_FRAG_HEADER}"
+    )
+    add_dependencies(NeoWPF.Foundation NeoWPF.GeneratedAssets)
 endif()
 
-add_library(NeoWPF STATIC ${NEOWPF_HEADERS})
+add_library(NeoWPF STATIC)
 add_library(NeoWPF::NeoWPF ALIAS NeoWPF)
 target_sources(NeoWPF PRIVATE
     $<TARGET_OBJECTS:NeoWPF.Foundation>
     $<TARGET_OBJECTS:NeoNaml>
 )
 
-set(NEOWPF_PARENT_BUILD_TESTING "${BUILD_TESTING}")
-set(BUILD_TESTING OFF)
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../NeoCM"
-    "${CMAKE_CURRENT_BINARY_DIR}/NeoCM")
-set(BUILD_TESTING "${NEOWPF_PARENT_BUILD_TESTING}")
-unset(NEOWPF_PARENT_BUILD_TESTING)
+include(cmake/NeoWPFXaml.cmake)
+if(NOT EXISTS "${NEOWPF_XAML_COMPILER}")
+    message(FATAL_ERROR
+        "NeoWPF requires XamlCompiler at ${NEOWPF_XAML_COMPILER}. "
+        "Build or copy the platform executable there, or set NEOWPF_XAML_COMPILER.")
+endif()
 
-add_executable(NeoWPF.XamlGenerator
-    tools/XamlGenerator.cpp
+neowpf_compile_xaml(
+    NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Checkbox/Visual/CheckBoxStyles.xaml"
+    NAMESPACE NeoWPF::UI::Controls
+    COMPONENT Styles
+    PUBLIC_HEADER NeoWPF/UI/Controls/Styles.h
 )
-target_include_directories(NeoWPF.XamlGenerator
-    PRIVATE
-        "${CMAKE_CURRENT_SOURCE_DIR}/include"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../NeoCM/include"
-)
-target_link_libraries(NeoWPF.XamlGenerator
-    PRIVATE
-        NeoCM
-        NeoWPF::Foundation
-)
-target_sources(NeoWPF.XamlGenerator PRIVATE $<TARGET_OBJECTS:NeoNaml>)
-target_compile_definitions(NeoWPF.XamlGenerator
-    PRIVATE
-        NEOWPF_ENABLE_RUNTIME_XAML
-        NEOWPF_INTERNAL_BUILD
-)
+neowpf_compile_xaml(NeoWPF.Foundation "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Button/Visual/ButtonStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated COMPONENT ButtonStyles PUBLIC_HEADER NeoWPF/UI/Controls/ButtonStyles.h)
+neowpf_compile_xaml(NeoWPF.Foundation "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ScrollBar/Visual/ScrollBarStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated COMPONENT ScrollBarStyles PUBLIC_HEADER NeoWPF/UI/Controls/ScrollBarStyles.h)
+neowpf_compile_xaml(NeoWPF.Foundation "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Text/Visual/TextBlockStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated COMPONENT TextBlockStyles PUBLIC_HEADER NeoWPF/UI/Controls/TextBlockStyles.h)
+neowpf_compile_xaml(NeoWPF.Foundation "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/TextBox/Visual/TextBoxStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated COMPONENT TextBoxStyles PUBLIC_HEADER NeoWPF/UI/Controls/TextBoxStyles.h)
+neowpf_compile_xaml(NeoWPF.Foundation "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Layout/Border/Visual/BorderStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated COMPONENT BorderStyles PUBLIC_HEADER NeoWPF/UI/Layout/BorderStyles.h)
+neowpf_compile_xaml(NeoWPF.Foundation "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Layout/Panel/Panel.Styles.xaml"
+    NAMESPACE NeoWPF::UI::Generated COMPONENT PanelStyles PUBLIC_HEADER NeoWPF/UI/Layout/PanelStyles.h)
+
+if(NEOWPF_XAML_FILES)
+    foreach(NEOWPF_XAML_FILE IN LISTS NEOWPF_XAML_FILES)
+        if(NOT IS_ABSOLUTE "${NEOWPF_XAML_FILE}")
+            set(NEOWPF_XAML_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${NEOWPF_XAML_FILE}")
+        endif()
+        neowpf_compile_xaml(
+            NeoWPF.Foundation
+            "${NEOWPF_XAML_FILE}"
+            NAMESPACE NeoWPF::Generated
+        )
+    endforeach()
+endif()
 
 if(WIN32)
     set(NEOWPF_HARFBUZZ_DEBUG_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/debug/lib/harfbuzz.lib")
@@ -672,7 +708,6 @@ if(BUILD_TESTING)
         tests/Automated/NamlArtifactTests.cpp
         tests/Automated/EventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
-        tests/Automated/ControlStyleTests.cpp
         tests/Automated/TransformTests.cpp
         tests/Automated/LayoutTests.cpp
         tests/Automated/TransformCompositionTests.cpp

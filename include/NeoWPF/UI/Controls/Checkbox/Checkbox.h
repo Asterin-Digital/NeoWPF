@@ -15,9 +15,6 @@ namespace NeoWPF::UI::Styling {
 namespace NeoWPF::UI {
 
 class UIElement;
-class CheckboxStyle;
-void RegisterCheckboxStyles();
-void ApplyCheckboxThemeStyle(UIElement* element);
 
 class CheckboxTemplate;
 

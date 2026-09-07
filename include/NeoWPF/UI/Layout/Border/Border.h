@@ -7,7 +7,6 @@
 namespace NeoWPF::UI {
 
 class UIElement;
-void ApplyBorderThemeStyle(UIElement* element);
 
 /*
     @summary

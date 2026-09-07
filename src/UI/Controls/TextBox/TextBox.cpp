@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
+#include <NeoWPF/UI/Controls/TextBoxStyles.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
@@ -51,7 +52,9 @@ TextBox::TextBox()
     presenter->SetPadding(GetPadding());
     SetPresenter(presenter);
 
-    ApplyTextBoxThemeStyle(this);
+    NeoWPF::UI::Generated::TextBoxStyles styles;
+    styles.InitializeComponent();
+    NEOWPF_APPLY_STYLES(styles, *this);
 
     InitializeVisualStates();
 }

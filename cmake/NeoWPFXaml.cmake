@@ -1,6 +1,6 @@
 function(neowpf_compile_xaml TARGET_NAME INPUT_XAML)
     set(options)
-    set(oneValueArgs NAMESPACE COMPONENT)
+    set(oneValueArgs NAMESPACE COMPONENT PUBLIC_HEADER)
     set(multiValueArgs)
     cmake_parse_arguments(
         NEOWPF_XAML
@@ -18,12 +18,13 @@ function(neowpf_compile_xaml TARGET_NAME INPUT_XAML)
         message(FATAL_ERROR
             "neowpf_compile_xaml: XAML input does not exist: ${INPUT_XAML}")
     endif()
-    if(NOT TARGET NeoWPF.XamlGenerator)
+    if(NOT NEOWPF_XAML_COMPILER)
         message(FATAL_ERROR
-            "neowpf_compile_xaml: NeoWPF.XamlGenerator target is required")
+            "neowpf_compile_xaml: NEOWPF_XAML_COMPILER must point to XamlCompiler")
     endif()
 
-    get_filename_component(_xaml_name "${INPUT_XAML}" NAME_WE)
+    get_filename_component(_xaml_filename "${INPUT_XAML}" NAME)
+    string(REGEX REPLACE "\\.xaml$" "" _xaml_name "${_xaml_filename}")
     if(NOT NEOWPF_XAML_NAMESPACE)
         set(NEOWPF_XAML_NAMESPACE "NeoWPF::Generated")
     endif()
@@ -37,20 +38,28 @@ function(neowpf_compile_xaml TARGET_NAME INPUT_XAML)
     set(_generated_header "${_output_directory}/${_generated_name}.h")
     set(_generated_source "${_output_directory}/${_generated_name}.cpp")
     set(_generated_artifact "${_output_directory}/${_generated_name}.naml")
+    if(NEOWPF_XAML_PUBLIC_HEADER)
+        set(_public_header "${CMAKE_CURRENT_BINARY_DIR}/generated/xaml/${NEOWPF_XAML_PUBLIC_HEADER}")
+        get_filename_component(_public_header_directory "${_public_header}" DIRECTORY)
+    endif()
 
     add_custom_command(
         OUTPUT
             "${_generated_header}"
             "${_generated_source}"
             "${_generated_artifact}"
+            ${_public_header}
         COMMAND ${CMAKE_COMMAND} -E make_directory "${_output_directory}"
-        COMMAND "$<TARGET_FILE:NeoWPF.XamlGenerator>"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${_public_header_directory}"
+        COMMAND "${NEOWPF_XAML_COMPILER}"
             "${INPUT_XAML}"
             "${_output_directory}"
-            "${NEOWPF_XAML_NAMESPACE}"
-            "${NEOWPF_XAML_COMPONENT}"
+            --namespace "${NEOWPF_XAML_NAMESPACE}"
+            --component "${NEOWPF_XAML_COMPONENT}"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${_generated_header}"
+            "${_public_header}"
         DEPENDS
-            NeoWPF.XamlGenerator
             "${INPUT_XAML}"
         COMMENT "Compiling NeoWPF XAML: ${INPUT_XAML}"
         VERBATIM
@@ -64,4 +73,8 @@ function(neowpf_compile_xaml TARGET_NAME INPUT_XAML)
     )
     target_sources("${TARGET_NAME}" PRIVATE "${_generated_source}")
     target_include_directories("${TARGET_NAME}" PRIVATE "${_output_directory}")
+    if(NEOWPF_XAML_PUBLIC_HEADER)
+        target_include_directories("${TARGET_NAME}" PRIVATE
+            "${CMAKE_CURRENT_BINARY_DIR}/generated/xaml")
+    endif()
 endfunction()

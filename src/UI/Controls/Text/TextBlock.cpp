@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/UI/Controls/TextBlockStyles.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
@@ -15,6 +16,10 @@ TextBlock::TextBlock()
 {
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
+
+    NeoWPF::UI::Generated::TextBlockStyles styles;
+    styles.InitializeComponent();
+    NEOWPF_APPLY_STYLES(styles, *this);
 }
 
 TextBlock::TextBlock(const std::wstring& text) : TextBlock()

@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
+#include <NeoWPF/UI/Controls/Styles.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
@@ -29,7 +30,9 @@ Checkbox::Checkbox()
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
 
-    ApplyCheckboxThemeStyle(this);
+    NeoWPF::UI::Controls::Styles styles;
+    styles.InitializeComponent();
+    NEOWPF_APPLY_STYLES(styles, *this);
 }
 
 Checkbox::~Checkbox()

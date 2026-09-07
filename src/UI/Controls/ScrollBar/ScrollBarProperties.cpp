@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 namespace NeoWPF::UI::Properties {
@@ -17,6 +18,9 @@ namespace NeoWPF::UI::Properties {
             "ThumbSize",
             &UI::ScrollBar::GetThumbSize,
             &UI::ScrollBar::SetThumbSize);
+
+        ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::ScrollBar>(
+            "ScrollBar", "", "NeoWPF::UI::ScrollBar", "NeoWPF/UI/Controls/ScrollBar/ScrollBar.h");
 
         PropertyMetadata orientationMetadata;
         orientationMetadata.DefaultValue = std::any(static_cast<int>(UI::Orientation::Vertical));

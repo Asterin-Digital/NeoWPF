@@ -1,0 +1,6 @@
+<Style TargetType="TextBox">
+    <Setter Property="Foreground" Value="#FF000000" />
+    <Setter Property="CaretBrush" Value="#FF000000" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="Padding" Value="4" />
+</Style>

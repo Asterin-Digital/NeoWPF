@@ -103,7 +103,8 @@ bool Style::ApplyTo(NeoWPF::UI::UIElement& element) const
             continue;
         }
 
-        const auto* property = element.FindDependencyProperty(setter->GetProperty());
+        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty(
+            setter->GetProperty(), GetTargetType());
         if (!property) {
             continue;
         }

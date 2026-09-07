@@ -20,7 +20,6 @@
 namespace NeoWPF::UI {
 
 class UIElement;
-void ApplyTextBoxThemeStyle(UIElement* element);
 
 enum class CaretScrollBehavior {
     Disabled,

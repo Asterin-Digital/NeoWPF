@@ -17,6 +17,8 @@ void RegisterPanelStyles();
 
 class Panel : public Control {
 public:
+    Panel();
+
     static const NeoWPF::UI::Properties::DependencyProperty& BackgroundColorProperty();
 
     void Measure(int availableWidth, int availableHeight) override;
