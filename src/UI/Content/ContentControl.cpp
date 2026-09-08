@@ -20,29 +20,68 @@ ContentControl::ContentControl()
 const NeoWPF::UI::Properties::DependencyProperty& ContentControl::ContentProperty()
 {
     static const auto& property = NeoWPF::UI::Properties::DependencyProperty::Register<
-        ContentControl, std::shared_ptr<NeoWPF::UI::UIElement>>(
-            "Content");
-    static const bool bindingRegistered = (NeoWPF::UI::Markup::Xaml::RegisterXamlElementProperty<
-        ContentControl, NeoWPF::UI::UIElement>(property, &ContentControl::SetContent), true);
+        ContentControl, std::any>("Content", [] {
+            NeoWPF::UI::Properties::PropertyMetadata metadata;
+            metadata.DefaultValue = std::any{};
+            metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure |
+                NeoWPF::UI::Properties::PropertyFlags::AffectsArrange |
+                NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+            metadata.PropertyChangedCallback = [](NeoWPF::UI::Properties::DependencyObject* sender,
+                                                  const NeoWPF::UI::Properties::DependencyPropertyChangedEventArgs& args) {
+                if (auto owner = dynamic_cast<ContentControl*>(sender)) {
+                    owner->SetContentData(args.NewValue);
+                }
+            };
+            return metadata;
+        }());
+    static const bool bindingRegistered = (NeoWPF::UI::Markup::Xaml::RegisterXamlElementPropertyCallback<
+        ContentControl, NeoWPF::UI::UIElement>(property,
+            [](ContentControl& owner, const std::shared_ptr<NeoWPF::UI::UIElement>& content) {
+                owner.SetContent(content);
+            }), true);
     (void)bindingRegistered;
     return property;
 }
 
 void ContentControl::SetContent(const std::shared_ptr<NeoWPF::UI::UIElement>& content)
 {
+    SetContentData(std::any(content));
+}
+
+void ContentControl::SetContentData(const std::any& content)
+{
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Info,
-        "[ContentControl] SetContent: content=%p presenter=%p", content.get(), m_presenter.get());
+        "[ContentControl] SetContent: contentType=%s presenter=%p",
+        content.has_value() ? content.type().name() : "null", m_presenter.get());
+
+    if (!IsApplyingPropertyValue()) {
+        SetValue(ContentProperty(), content);
+        return;
+    }
 
     m_content = content;
     if (m_presenter) {
-        m_presenter->SetContent(content);
+        m_presenter->SetContentData(content);
     }
     InvalidateVisual();
 }
 
+std::shared_ptr<NeoWPF::UI::UIElement> ContentControl::GetContentElement() const noexcept
+{
+    if (!m_content.has_value()) {
+        return nullptr;
+    }
+
+    try {
+        return std::any_cast<std::shared_ptr<NeoWPF::UI::UIElement>>(m_content);
+    } catch (const std::bad_any_cast&) {
+        return nullptr;
+    }
+}
+
 void ContentControl::ClearContent()
 {
-    m_content.reset();
+    SetContentData(std::any{});
     if (m_presenter) {
         m_presenter->ClearContent();
     }
@@ -52,7 +91,8 @@ void ContentControl::ClearContent()
 void ContentControl::SetPresenter(const std::shared_ptr<ContentPresenter>& presenter)
 {
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Info,
-        "[ContentControl] SetPresenter: oldPresenter=%p newPresenter=%p content=%p", m_presenter.get(), presenter.get(), m_content.get());
+        "[ContentControl] SetPresenter: oldPresenter=%p newPresenter=%p contentType=%s",
+        m_presenter.get(), presenter.get(), m_content.has_value() ? m_content.type().name() : "null");
 
     if (m_presenter == presenter) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
@@ -87,7 +127,7 @@ void ContentControl::SetPresenter(const std::shared_ptr<ContentPresenter>& prese
         s_presenterOwners[static_cast<const void*>(m_presenter.get())] = this;
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
             "[ContentControl] SetPresenter: using new presenter %p", m_presenter.get());
-        m_presenter->SetContent(m_content);
+        m_presenter->SetContentData(m_content);
     }
     InvalidateVisual();
 }

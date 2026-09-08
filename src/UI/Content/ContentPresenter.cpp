@@ -4,6 +4,7 @@
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
+#include <utility>
 
 #ifdef max
 #undef max
@@ -15,54 +16,82 @@ namespace NeoWPF::UI::Content {
 
 ContentPresenter::ContentPresenter()
     : m_content(nullptr)
+    , m_contentElement(nullptr)
+    , m_contentTemplate()
     , m_padding(0)
 {
 }
 
 void ContentPresenter::SetContent(const std::shared_ptr<NeoWPF::UI::UIElement>& content)
 {
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter, NeoWPF::Diagnostics::Level::Info,
-        "[ContentPresenter] SetContent: oldContent=%p newContent=%p", m_content.get(), content.get());
+    SetContentData(std::any(content));
+}
 
-    if (m_content && m_content != content) {
-        if (auto existingChild = std::dynamic_pointer_cast<Visual>(m_content)) {
-            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter, NeoWPF::Diagnostics::Level::Debug,
-                "[ContentPresenter] SetContent: removing old content %p from parent %p", existingChild.get(), existingChild->GetParent());
-            existingChild->RemoveFromParent();
-        }
-    }
-
-    if (content) {
-        if (auto visualContent = std::dynamic_pointer_cast<Visual>(content)) {
-            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter, NeoWPF::Diagnostics::Level::Debug,
-                "[ContentPresenter] SetContent: removing new content %p from existing parent %p", visualContent.get(), visualContent->GetParent());
-            visualContent->RemoveFromParent();
-        }
-    }
-
+void ContentPresenter::SetContentData(const std::any& content)
+{
     m_content = content;
+    RebuildContentElement();
+    InvalidateMeasure();
+    InvalidateArrange();
     InvalidateVisual();
+}
+
+void ContentPresenter::SetContentTemplate(ContentTemplate contentTemplate)
+{
+    m_contentTemplate = std::move(contentTemplate);
+    RebuildContentElement();
+    InvalidateMeasure();
+    InvalidateArrange();
+    InvalidateVisual();
+}
+
+void ContentPresenter::RebuildContentElement()
+{
+    if (m_contentElement) {
+        m_contentElement->RemoveFromParent();
+        m_contentElement.reset();
+    }
+
+    if (!m_content.has_value()) {
+        return;
+    }
+
+    if (m_contentTemplate) {
+        m_contentElement = m_contentTemplate(m_content);
+        return;
+    }
+
+    try {
+        m_contentElement = std::any_cast<std::shared_ptr<NeoWPF::UI::UIElement>>(m_content);
+        return;
+    } catch (const std::bad_any_cast&) {
+    }
+
 }
 
 void ContentPresenter::ClearContent()
 {
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter, NeoWPF::Diagnostics::Level::Info,
-        "[ContentPresenter] ClearContent: content=%p", m_content.get());
-
-    if (m_content) {
-        if (auto existingChild = std::dynamic_pointer_cast<Visual>(m_content)) {
+    if (m_contentElement) {
+        if (auto existingChild = std::dynamic_pointer_cast<Visual>(m_contentElement)) {
             existingChild->RemoveFromParent();
         }
-        m_content.reset();
     }
+    m_content.reset();
+    m_contentElement.reset();
+    InvalidateMeasure();
+    InvalidateArrange();
     InvalidateVisual();
 }
 
 void ContentPresenter::Measure(int availableWidth, int availableHeight)
 {
-    if (m_content && !m_content->GetParent()) {
+    if (!m_contentElement) {
+        RebuildContentElement();
+    }
+
+    if (m_contentElement && !m_contentElement->GetParent()) {
         try {
-            auto visualContent = std::dynamic_pointer_cast<Visual>(m_content);
+            auto visualContent = std::dynamic_pointer_cast<Visual>(m_contentElement);
             if (visualContent) {
                 AddChild(visualContent);
             }
@@ -76,11 +105,11 @@ void ContentPresenter::Measure(int availableWidth, int availableHeight)
     int desiredWidth = horizontalPadding;
     int desiredHeight = verticalPadding;
 
-    if (m_content) {
+    if (m_contentElement) {
         const int contentAvailableWidth = availableWidth > 0 ? std::max(0, availableWidth - horizontalPadding) : 0;
         const int contentAvailableHeight = availableHeight > 0 ? std::max(0, availableHeight - verticalPadding) : 0;
-        m_content->Measure(contentAvailableWidth, contentAvailableHeight);
-        if (auto* frameworkContent = dynamic_cast<FrameworkElement*>(m_content.get())) {
+        m_contentElement->Measure(contentAvailableWidth, contentAvailableHeight);
+        if (auto* frameworkContent = dynamic_cast<FrameworkElement*>(m_contentElement.get())) {
             desiredWidth = std::max(desiredWidth, frameworkContent->GetDesiredWidth() + horizontalPadding);
             desiredHeight = std::max(desiredHeight, frameworkContent->GetDesiredHeight() + verticalPadding);
         }
@@ -96,14 +125,14 @@ void ContentPresenter::Arrange(int finalWidth, int finalHeight)
         "[ContentPresenter] Arrange: this=%p final=(%d,%d) padding=(%d,%d,%d,%d)", this, finalWidth, finalHeight,
         m_padding.Left, m_padding.Top, m_padding.Right, m_padding.Bottom);
 
-    if (m_content) {
+    if (m_contentElement) {
         const int contentWidth = std::max(0, finalWidth - (m_padding.Left + m_padding.Right));
         const int contentHeight = std::max(0, finalHeight - (m_padding.Top + m_padding.Bottom));
 
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter, NeoWPF::Diagnostics::Level::Debug,
             "[ContentPresenter] Arrange: contentArea=(%d,%d)", contentWidth, contentHeight);
 
-        if (auto* childFe = dynamic_cast<FrameworkElement*>(m_content.get())) {
+        if (auto* childFe = dynamic_cast<FrameworkElement*>(m_contentElement.get())) {
             childFe->Arrange(contentWidth, contentHeight);
 
             int offsetX = 0;
@@ -147,19 +176,19 @@ void ContentPresenter::Arrange(int finalWidth, int finalHeight)
                 "[ContentPresenter] Arrange: child=%p actual=(%d,%d) offset=(%d,%d) layoutOffset=(%d,%d)",
                 childFe, actualW, actualH, offsetX, offsetY, childFe->GetLayoutOffsetX(), childFe->GetLayoutOffsetY());
         } else {
-            m_content->Arrange(contentWidth, contentHeight);
+            m_contentElement->Arrange(contentWidth, contentHeight);
         }
     }
 }
 
 void ContentPresenter::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
-    if (!m_content) {
+    if (!m_contentElement) {
         return;
     }
 
-    if (m_content->IsVisible()) {
-        m_content->BuildRenderCommands(commands);
+    if (m_contentElement->IsVisible()) {
+        m_contentElement->BuildRenderCommands(commands);
     }
 }
 

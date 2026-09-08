@@ -22,8 +22,9 @@ Button::Button()
     : ButtonBase()
 {
     /* @note 
-    * Keep this as is, in WPF the button defaults to center
-    * which matches the intended behavior we want
+    /  WPFLayout1.cpp matches WPF layout behavior 
+    /  not defaulting to center, center makes the button
+    /  sit awkwardly next to the textbox on the left unlike WPF which is to the right (middle)
     */
     SetHorizontalAlignment(HorizontalAlignment::Center);
     SetVerticalAlignment(VerticalAlignment::Center);

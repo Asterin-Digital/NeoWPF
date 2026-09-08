@@ -19,54 +19,39 @@ ItemsControl::ItemsControl()
 
 void ItemsControl::SetItemsSource(const std::vector<std::any>& source)
 {
-
     for (const auto& oldItem : m_items) {
-        if (oldItem && oldItem->GetParent() == this) RemoveVisualChild(oldItem);
+        if (oldItem && oldItem->GetParent() == this) {
+            RemoveVisualChild(oldItem);
+        }
     }
     m_items.clear();
-
-
-    for (auto& kv : m_realizedItems) {
-        if (kv.second && kv.second->GetParent() == this) RemoveVisualChild(kv.second);
-    }
-    m_realizedItems.clear();
+    ClearRealizedItems();
 
     m_itemsSource = source;
+    m_hasItemsSource = true;
     if (m_virtualization) {
+        m_virtualization->SetHorizontalOffset(0);
+        m_virtualization->SetVerticalOffset(0);
         m_virtualization->RecomputeRealizedRange();
     } else {
-
-        for (auto& kv : m_realizedItems) {
-            if (kv.second && kv.second->GetParent() == this) RemoveVisualChild(kv.second);
-        }
-        m_realizedItems.clear();
-
-        const int count = static_cast<int>(m_itemsSource.size());
-        for (int i = 0; i < count; ++i) {
-            std::shared_ptr<FrameworkElement> element;
-            if (m_generator) {
-                element = m_generator->Acquire(m_itemsSource[i], i, m_itemTemplate);
-            } else if (m_itemTemplate) {
-                element = m_itemTemplate(m_itemsSource[i], i);
-            }
-
-            if (element) {
-                m_realizedItems[i] = element;
-                if (element->GetParent() != this) AddVisualChild(element);
-            }
-        }
+        RealizeSourceItems();
     }
+    InvalidateMeasure();
+    InvalidateArrange();
     InvalidateVisual();
 }
 
 void ItemsControl::SetItemTemplate(const Controls::ItemsControl::Virtualization::ItemTemplate& templ)
 {
     m_itemTemplate = templ;
-
-    for (auto& kv : m_realizedItems) {
-        if (kv.second && kv.second->GetParent() == this) RemoveVisualChild(kv.second);
+    ClearRealizedItems();
+    if (m_hasItemsSource && !m_virtualization) {
+        RealizeSourceItems();
+    } else if (m_virtualization) {
+        m_virtualization->RecomputeRealizedRange();
     }
-    m_realizedItems.clear();
+    InvalidateMeasure();
+    InvalidateArrange();
     InvalidateVisual();
 }
 
@@ -76,12 +61,15 @@ ItemsControl::~ItemsControl()
 
 void ItemsControl::SetItems(const std::vector<std::shared_ptr<FrameworkElement>>& items)
 {
+    ClearRealizedItems();
     for (const auto& oldItem : m_items) {
         if (oldItem && oldItem->GetParent() == this) {
             RemoveVisualChild(oldItem);
         }
     }
 
+    m_itemsSource.clear();
+    m_hasItemsSource = false;
     m_items = items;
     for (const auto& item : m_items) {
         if (item && item->GetParent() != this) {
@@ -89,22 +77,27 @@ void ItemsControl::SetItems(const std::vector<std::shared_ptr<FrameworkElement>>
         }
     }
 
+    InvalidateMeasure();
+    InvalidateArrange();
     InvalidateVisual();
 }
 
 void ItemsControl::AddItem(const std::shared_ptr<FrameworkElement>& item)
 {
-    if (item) {
+    if (item && !m_hasItemsSource) {
         m_items.push_back(item);
         if (item->GetParent() != this) {
             AddVisualChild(item);
         }
+        InvalidateMeasure();
+        InvalidateArrange();
         InvalidateVisual();
     }
 }
 
 void ItemsControl::ClearItems()
 {
+    ClearRealizedItems();
     for (const auto& item : m_items) {
         if (item && item->GetParent() == this) {
             RemoveVisualChild(item);
@@ -112,7 +105,47 @@ void ItemsControl::ClearItems()
     }
 
     m_items.clear();
+    m_itemsSource.clear();
+    m_hasItemsSource = false;
+    InvalidateMeasure();
+    InvalidateArrange();
     InvalidateVisual();
+}
+
+void ItemsControl::ClearRealizedItems() noexcept
+{
+    for (auto& entry : m_realizedItems) {
+        if (!entry.second) {
+            continue;
+        }
+        if (entry.second->GetParent() == this) {
+            RemoveVisualChild(entry.second);
+        }
+        if (m_generator) {
+            m_generator->Recycle(entry.first, entry.second);
+        }
+    }
+    m_realizedItems.clear();
+}
+
+void ItemsControl::RealizeSourceItems()
+{
+    if (!m_hasItemsSource || !m_itemTemplate) {
+        return;
+    }
+
+    const int count = static_cast<int>(m_itemsSource.size());
+    for (int i = 0; i < count; ++i) {
+        auto element = m_generator
+            ? m_generator->Acquire(m_itemsSource[i], i, m_itemTemplate)
+            : std::shared_ptr<FrameworkElement>{};
+        if (element) {
+            m_realizedItems[i] = element;
+            if (element->GetParent() != this) {
+                AddVisualChild(element);
+            }
+        }
+    }
 }
 
 void ItemsControl::Measure(int availableWidth, int availableHeight)
@@ -128,7 +161,7 @@ void ItemsControl::Measure(int availableWidth, int availableHeight)
         int first = m_virtualization->GetFirstRealizedIndex();
         int last = m_virtualization->GetLastRealizedIndex();
 
-        if (!m_itemsSource.empty()) {
+        if (m_hasItemsSource) {
             RealizeRange(first, last);
             for (int i = first; i <= last; ++i) {
                 auto it = m_realizedItems.find(i);
@@ -157,7 +190,7 @@ void ItemsControl::Measure(int availableWidth, int availableHeight)
     int totalHeight = m_padding * 2;
     int totalWidth = 0;
 
-    if (!m_itemsSource.empty()) {
+    if (m_hasItemsSource) {
         const int count = static_cast<int>(m_itemsSource.size());
         for (int i = 0; i < count; ++i) {
             auto it = m_realizedItems.find(i);
@@ -208,7 +241,7 @@ void ItemsControl::Arrange(int finalWidth, int finalHeight)
         const int vOffset = m_virtualization->GetVerticalOffset();
 
 
-        if (!m_itemsSource.empty()) {
+        if (m_hasItemsSource) {
             RealizeRange(first, last);
             for (int i = first; i <= last; ++i) {
                 auto it = m_realizedItems.find(i);
@@ -240,7 +273,7 @@ void ItemsControl::Arrange(int finalWidth, int finalHeight)
 
     int currentY = m_padding;
 
-    if (!m_itemsSource.empty()) {
+    if (m_hasItemsSource) {
         const int count = static_cast<int>(m_itemsSource.size());
         for (int i = 0; i < count; ++i) {
             auto it = m_realizedItems.find(i);
@@ -273,7 +306,7 @@ void ItemsControl::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const int first = m_virtualization->GetFirstRealizedIndex();
         const int last = m_virtualization->GetLastRealizedIndex();
 
-        if (!m_itemsSource.empty()) {
+        if (m_hasItemsSource) {
             for (int i = first; i <= last; ++i) {
                 auto it = m_realizedItems.find(i);
                 if (it != m_realizedItems.end() && it->second) it->second->BuildRenderCommands(commands);
@@ -288,7 +321,7 @@ void ItemsControl::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         return;
     }
 
-    if (!m_itemsSource.empty()) {
+    if (m_hasItemsSource) {
         const int count = static_cast<int>(m_itemsSource.size());
         for (int i = 0; i < count; ++i) {
             auto it = m_realizedItems.find(i);
@@ -307,7 +340,7 @@ void ItemsControl::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
 void ItemsControl::RealizeRange(int first, int last)
 {
-    if (m_itemsSource.empty() || !m_itemTemplate) return;
+    if (!m_hasItemsSource || !m_itemTemplate) return;
     const int count = static_cast<int>(m_itemsSource.size());
     first = std::clamp(first, 0, std::max(0, count - 1));
     last = std::clamp(last, 0, std::max(0, count - 1));
@@ -421,33 +454,17 @@ void ItemsControl::SetVirtualization(bool enabled) noexcept
         if (!m_virtualization) {
             m_virtualization = std::make_shared<Controls::ItemsControl::Virtualization::ItemsControlVirtualizer>(this);
         }
-        if (!m_itemsSource.empty()) m_virtualization->RecomputeRealizedRange();
+        m_virtualization->RecomputeRealizedRange();
     } else {
-
+        ClearRealizedItems();
         m_virtualization = nullptr;
-        if (!m_itemsSource.empty()) {
-            for (auto& kv : m_realizedItems) {
-                if (kv.second && kv.second->GetParent() == this) RemoveVisualChild(kv.second);
-            }
-            m_realizedItems.clear();
-
-            const int count = static_cast<int>(m_itemsSource.size());
-            for (int i = 0; i < count; ++i) {
-                std::shared_ptr<FrameworkElement> element;
-                if (m_generator) {
-                    element = m_generator->Acquire(m_itemsSource[i], i, m_itemTemplate);
-                } else if (m_itemTemplate) {
-                    element = m_itemTemplate(m_itemsSource[i], i);
-                }
-
-                if (element) {
-                    m_realizedItems[i] = element;
-                    if (element->GetParent() != this) AddVisualChild(element);
-                }
-            }
+        if (m_hasItemsSource) {
+            RealizeSourceItems();
         }
     }
 
+    InvalidateMeasure();
+    InvalidateArrange();
     InvalidateVisual();
 }
 

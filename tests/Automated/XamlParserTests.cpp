@@ -516,7 +516,7 @@ TEST(XamlRootTests, BuildsApplicationResourcesAndResolvesThemFromWindow)
     const auto contentControl = dynamic_cast<NeoWPF::UI::Content::ContentControl*>(
         composedContent->GetVisualChildren().front());
     ASSERT_NE(contentControl, nullptr);
-    EXPECT_EQ(contentControl->GetContent().get(), accent.get());
+    EXPECT_EQ(contentControl->GetContentElement().get(), accent.get());
 
     NeoWPF::Core::Application::Shutdown();
 }

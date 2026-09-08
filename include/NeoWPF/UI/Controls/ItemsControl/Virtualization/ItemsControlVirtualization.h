@@ -111,6 +111,7 @@ private:
 
     void EnsureMeasuredAll() noexcept;
     void EnsureMeasuredRange(int first, int last) noexcept;
+    int MeasureItem(int index) noexcept;
     int GetTotalMeasuredHeight() const noexcept;
     int IndexFromOffset(int offset) const noexcept;
 };

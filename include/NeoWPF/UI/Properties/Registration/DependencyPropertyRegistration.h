@@ -97,6 +97,22 @@ namespace NeoWPF::UI::Properties {
 
     inline std::wstring CoerceToWString(const std::any& value)
     {
+        if (value.type() == typeid(bool)) {
+            return std::any_cast<bool>(value) ? L"True" : L"False";
+        }
+
+        if (value.type() == typeid(int)) {
+            return std::to_wstring(std::any_cast<int>(value));
+        }
+
+        if (value.type() == typeid(float)) {
+            return std::to_wstring(std::any_cast<float>(value));
+        }
+
+        if (value.type() == typeid(double)) {
+            return std::to_wstring(std::any_cast<double>(value));
+        }
+
         if (value.type() == typeid(std::wstring)) {
             return std::any_cast<std::wstring>(value);
         }

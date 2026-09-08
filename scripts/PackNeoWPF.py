@@ -3,6 +3,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(r"C:\Users\Katsu\source\repos\NeoWPF")
+VERSION = (ROOT / "NeoWPFVersion.txt").read_text(encoding="ascii").strip()
 
 INCLUDE_DIR = ROOT / "include" / "NeoWPF"
 LICENSE = ROOT / "LICENSE"
@@ -14,7 +15,9 @@ if len(sys.argv) > 2 or (len(sys.argv) == 2 and sys.argv[1] != "--release"):
     print("Usage: PackNeoWPF.py [--release]")
     sys.exit(1)
 
-LIB = ROOT / "x64" / mode / "NeoWPF.lib"
+platform = "Windows" if sys.platform == "win32" else "Linux"
+extension = "lib" if platform == "Windows" else "a"
+LIB = ROOT / "NWpfBuild" / platform / f"NeoWPF.{platform}.{mode}.{VERSION}.{extension}"
 OUTPUT = OUTPUT_DIR / mode
 ZIP = OUTPUT / f"NeoWPF-{mode}.zip"
 

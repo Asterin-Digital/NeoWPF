@@ -79,7 +79,7 @@ public:
     */
     const std::vector<std::shared_ptr<FrameworkElement>>& GetItems() const noexcept { return m_items; }
 
-    int GetItemCount() const noexcept { return static_cast<int>(m_itemsSource.empty() ? m_items.size() : m_itemsSource.size()); }
+    int GetItemCount() const noexcept { return static_cast<int>(m_hasItemsSource ? m_itemsSource.size() : m_items.size()); }
 
     /*
         @summary
@@ -88,7 +88,12 @@ public:
         @param spacing
         The spacing in pixels.
     */
-    void SetSpacing(int spacing) noexcept { SetVerticalSpacing(spacing); }
+    void SetSpacing(int spacing) noexcept {
+        SetVerticalSpacing(spacing);
+        InvalidateMeasure();
+        InvalidateArrange();
+        InvalidateVisual();
+    }
 
     /*
         @summary
@@ -103,7 +108,12 @@ public:
         @param padding
         The padding in pixels.
     */
-    void SetPadding(Thickness padding) noexcept { m_padding = padding.Left; InvalidateVisual(); }
+    void SetPadding(Thickness padding) noexcept {
+        m_padding = padding.Left;
+        InvalidateMeasure();
+        InvalidateArrange();
+        InvalidateVisual();
+    }
 
     /*
         @summary
@@ -192,9 +202,12 @@ private:
     int m_padding = 0;
     std::shared_ptr<Controls::ItemsControl::Virtualization::ItemsControlVirtualizer> m_virtualization;
     std::vector<std::any> m_itemsSource;
+    bool m_hasItemsSource = false;
     Controls::ItemsControl::Virtualization::ItemTemplate m_itemTemplate;
     std::unordered_map<int, std::shared_ptr<FrameworkElement>> m_realizedItems;
     std::shared_ptr<Controls::ItemsControl::Virtualization::ItemContainerGenerator> m_generator;
+    void ClearRealizedItems() noexcept;
+    void RealizeSourceItems();
     /*
         @summary
         Ensure visual containers exist for the half-open index range [first, last].

@@ -127,19 +127,9 @@ void ItemsControlVirtualizer::RecomputeRealizedRange() noexcept
         int first = std::clamp(m_verticalIndexOffset, 0, count - 1);
         int last = first;
         int usedHeight = 0;
-        auto gen = m_owner->GetGenerator();
-        const auto& realItems = m_owner->GetItems();
-        const auto& src = m_owner->GetItemsSource();
         while (usedHeight < m_viewportHeight && last < count) {
             if (m_measuredHeights[last] < 0) {
-                std::shared_ptr<NeoWPF::UI::FrameworkElement> container;
-                if (last < static_cast<int>(realItems.size())) container = realItems[last];
-                else if (gen && last < static_cast<int>(src.size())) container = gen->Acquire(src[last], last, m_owner->GetItemTemplate());
-                if (container) {
-                    container->Measure(m_viewportWidth, 0);
-                    UpdateMeasuredHeight(last, std::max(1, container->GetDesiredHeight()));
-                    if (last >= static_cast<int>(realItems.size()) && gen) gen->Recycle(last, container);
-                }
+                MeasureItem(last);
             }
             usedHeight += GetMeasuredHeight(last);
             ++last;
@@ -181,21 +171,9 @@ void ItemsControlVirtualizer::RecomputeRealizedRange() noexcept
 
     int cur = first;
     int prefix = startPrefix;
-    auto gen = m_owner->GetGenerator();
-    const auto& realItems = m_owner->GetItems();
-    const auto& src = m_owner->GetItemsSource();
     while (prefix < need && cur < count) {
         if (m_measuredHeights[cur] < 0) {
-            std::shared_ptr<NeoWPF::UI::FrameworkElement> container;
-            if (cur < static_cast<int>(realItems.size())) container = realItems[cur];
-            else if (gen && cur < static_cast<int>(src.size())) container = gen->Acquire(src[cur], cur, m_owner->GetItemTemplate());
-            if (container) {
-                container->Measure(m_viewportWidth, 0);
-                int h = std::max(1, container->GetDesiredHeight());
-                UpdateMeasuredHeight(cur, h);
-                if (cur >= static_cast<int>(realItems.size()) && gen) gen->Recycle(cur, container);
-            } else {
-
+            if (MeasureItem(cur) <= 0) {
                 break;
             }
         }
@@ -224,21 +202,9 @@ void ItemsControlVirtualizer::EnsureMeasuredAll() noexcept
         m_sampleCount = 0;
         m_estimatedItemHeight = m_itemHeight;
     }
-    auto gen = m_owner->GetGenerator();
-    if (!gen) return;
-    const auto& realItems = m_owner->GetItems();
-    const auto& src = m_owner->GetItemsSource();
     for (int i = 0; i < count; ++i) {
         if (m_measuredHeights[i] < 0) {
-            std::shared_ptr<NeoWPF::UI::FrameworkElement> container;
-            if (i < static_cast<int>(realItems.size())) container = realItems[i];
-            else if (i < static_cast<int>(src.size())) container = gen->Acquire(src[i], i, m_owner->GetItemTemplate());
-            if (container) {
-                container->Measure(m_viewportWidth, 0);
-                int h = std::max(1, container->GetDesiredHeight());
-                UpdateMeasuredHeight(i, h);
-                if (i >= static_cast<int>(realItems.size())) gen->Recycle(i, container);
-            }
+            MeasureItem(i);
         }
     }
 }
@@ -259,23 +225,49 @@ void ItemsControlVirtualizer::EnsureMeasuredRange(int first, int last) noexcept
         m_sampleCount = 0;
         m_estimatedItemHeight = m_itemHeight;
     }
-    auto gen = m_owner->GetGenerator();
-    if (!gen) return;
-    const auto& realItems = m_owner->GetItems();
-    const auto& src = m_owner->GetItemsSource();
     for (int i = first; i <= last; ++i) {
         if (m_measuredHeights[i] < 0) {
-            std::shared_ptr<NeoWPF::UI::FrameworkElement> container;
-            if (i < static_cast<int>(realItems.size())) container = realItems[i];
-            else if (i < static_cast<int>(src.size())) container = gen->Acquire(src[i], i, m_owner->GetItemTemplate());
-            if (container) {
-                container->Measure(m_viewportWidth, 0);
-                int h = std::max(1, container->GetDesiredHeight());
-                UpdateMeasuredHeight(i, h);
-                if (i >= static_cast<int>(realItems.size())) gen->Recycle(i, container);
-            }
+            MeasureItem(i);
         }
     }
+}
+
+int ItemsControlVirtualizer::MeasureItem(int index) noexcept
+{
+    if (!m_owner || index < 0 || index >= m_owner->GetItemCount()) {
+        return 0;
+    }
+
+    const auto& realItems = m_owner->GetItems();
+    std::shared_ptr<NeoWPF::UI::FrameworkElement> container;
+    bool temporaryContainer = false;
+
+    if (index < static_cast<int>(realItems.size())) {
+        container = realItems[index];
+    } else {
+        const auto& source = m_owner->GetItemsSource();
+        auto generator = m_owner->GetGenerator();
+        if (generator && index < static_cast<int>(source.size())) {
+            container = generator->Acquire(source[index], index, m_owner->GetItemTemplate());
+            temporaryContainer = true;
+        }
+    }
+
+    if (!container) {
+        return 0;
+    }
+
+    container->Measure(m_viewportWidth, 0);
+    const int height = std::max(1, container->GetDesiredHeight());
+    UpdateMeasuredHeight(index, height);
+
+    if (temporaryContainer) {
+        if (auto generator = m_owner->GetGenerator()) {
+            generator->Recycle(index, container);
+        }
+    }
+
+    return height;
 }
 
 void ItemsControlVirtualizer::UpdateMeasuredHeight(int index, int height) noexcept

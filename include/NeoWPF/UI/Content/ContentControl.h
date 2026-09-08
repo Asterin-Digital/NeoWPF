@@ -2,6 +2,7 @@
 
 #include <NeoWPF/UI/Core/Element/Control.h>
 #include <NeoWPF/UI/Core/Element/IContentAware.h>
+#include <any>
 #include <memory>
 
 namespace NeoWPF::UI {
@@ -19,7 +20,9 @@ public:
     ContentControl();
 
     void SetContent(const std::shared_ptr<NeoWPF::UI::UIElement>& content);
-    const std::shared_ptr<NeoWPF::UI::UIElement>& GetContent() const noexcept { return m_content; }
+    void SetContentData(const std::any& content);
+    const std::any& GetContent() const noexcept { return m_content; }
+    std::shared_ptr<NeoWPF::UI::UIElement> GetContentElement() const noexcept;
     void ClearContent();
 
     void SetPresenter(const std::shared_ptr<ContentPresenter>& presenter);
@@ -32,7 +35,7 @@ public:
     ContentBounds GetContentBounds() const noexcept override;
 
 private:
-    std::shared_ptr<NeoWPF::UI::UIElement> m_content;
+    std::any m_content;
     std::shared_ptr<ContentPresenter> m_presenter;
 };
 

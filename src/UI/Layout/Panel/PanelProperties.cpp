@@ -23,6 +23,15 @@ namespace NeoWPF::UI::Properties {
             &UI::Panel::GetBackgroundColor,
             static_cast<void (UI::Panel::*)(::NeoWPF::UI::Color)>(&UI::Panel::SetBackgroundColor),
             MakePanelBackgroundColorMetadata());
+        PropertyMetadata orientationMetadata;
+        orientationMetadata.DefaultValue = std::any(static_cast<int>(UI::Orientation::Vertical));
+        orientationMetadata.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsArrange | PropertyFlags::AffectsRender;
+        orientationMetadata.PropertyChangedCallback = [](DependencyObject* sender, const DependencyPropertyChangedEventArgs& args) {
+            if (auto* stackPanel = dynamic_cast<UI::StackPanel*>(sender)) {
+                stackPanel->SetOrientation(static_cast<UI::Orientation>(std::any_cast<int>(args.NewValue)));
+            }
+        };
+        RegisterProperty<UI::StackPanel, int>("Orientation", orientationMetadata);
         ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Panel>(
             "Panel", "Children", "NeoWPF::UI::Panel", "NeoWPF/UI/Layout/Panel/Panel.h");
         ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::StackPanel>(

@@ -19,7 +19,7 @@ public:
 
 private:
     NeoWPF::UI::ItemsControl* m_owner;
-    std::vector<std::shared_ptr<NeoWPF::UI::FrameworkElement>> m_pool;
+    std::unordered_map<int, std::weak_ptr<NeoWPF::UI::FrameworkElement>> m_activeContainers;
 };
 
 }

@@ -1,6 +1,8 @@
-## NeoWPF Development Guidelines & More Things
+Here is the original text with **only the section headers numbered** (1 through 8 at the top level). The existing numbered list inside the Inheritance Tree section remains untouched:
 
-## Inheritance Tree
+---
+
+1. ## Inheritance Tree
 
 Controls usually follow this inheritance tree (depending on whether they also have a base class or not):
 1. Visual (the base class of everything)
@@ -18,7 +20,7 @@ Controls may also inherit other things on the side, like IContentAware (TextBloc
 A few things to keep in mind:
 Visual is not allowed to use or know about the deeper tree (UIElement, FrameworkElement, etc.). This applies to UIElement and FrameworkElement as well. This is done to keep things clean and predictable, and to also not blow up compile times.
 
-## Creating A New Control
+2. ## Creating A New Control
 
 It can be a layout or UI control:
 - Grid (layout control)
@@ -45,7 +47,11 @@ The API surface for your new control must match the general pattern instead of r
 
 For example, Set/Get are very common; use those for setters or getters instead of plain names, as this keeps the API surface similar between other controls and pleasant to use. But if a method in the API isn't a setter nor a getter, you should not force it into that naming - use the plain name instead.
 
-## Code Cleanliness
+3. ## Creating A Big New Control
+
+You should not make the full control for the first base implementation. In NeoWPF, we want a first good base implementation that's stable, and well architected so it can later be extended without any problems or huge rewrites.
+
+4. ## Code Cleanliness
 
 You're not required to have god-level coding skills, but it's expected that you at least write decent and maintainable code. For example, with if chains, you're not immediately forced to clean that up into a switch, a method, or whatever your operation requires, but it is recommended that if a developer will later benefit from that refactor, you should clean it up.
 
@@ -53,18 +59,18 @@ Do not duplicate code. If you need utilities, use the existing ones. If there is
 
 Keep files lean and modularize your code. It's not necessary to create a new module out of a file if it's small - it would only annoy the future developer working on that part if they have to browse many other files just to understand one thing. A monolithic file should get split, while a small but focused one shouldn't, unless you expect it to grow a lot.
 
-## Documentation
+5. ## Documentation
 
 Do not document source files or internal details. If you need documentation, do it inside the header file for your source file. Follow CommentFormatting.md and CommentingRules.md for more information. In source files, only notes and warnings are allowed - like one simple note telling a developer not to do something, or after you fix a bug, you can leave a note there for the future developer working on that part to know what not to do.
 
-## Stable Header Files
+6. ## Stable Header Files
 
 Keep Visual.h, UIElement.h, and FrameworkElement.h stable. Do not constantly modify them unless you have a good reason to do so.
 
-## Legacy Code
+7. ## Legacy Code
 
 NeoWPF is still young; we recommend not leaving any legacy code or preserving an old way of doing something unless lots of things use that API. That also depends - if it's internal code using that API, do not preserve it; simply do a refactor. If it's user code instead, you should gradually deprecate that API and in the end remove it.
 
-## NeoWPF Dependencies
+8. ## NeoWPF Dependencies
 
 Do not add huge libraries to NeoWPF unless we really need them, but even then, if it's not difficult to make, don't bring that in and instead make our own version of it.

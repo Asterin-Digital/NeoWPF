@@ -165,4 +165,22 @@ inline void RegisterXamlElementProperty(
     XamlPropertyBindingRegistry::Get().Register(property, binding);
 }
 
+template<typename TOwner, typename TItem>
+inline void RegisterXamlElementPropertyCallback(
+    const NeoWPF::UI::Properties::DependencyProperty& property,
+    const std::function<void(TOwner&, const std::shared_ptr<TItem>&)>& setter)
+{
+    XamlPropertyBinding binding{
+        XamlPropertyKind::Element,
+        {},
+        [setter](NeoWPF::UI::Properties::DependencyObject& owner,
+                 std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> item) {
+            auto typedItem = std::static_pointer_cast<TItem>(std::move(item));
+            setter(static_cast<TOwner&>(owner), typedItem);
+        }
+    };
+
+    XamlPropertyBindingRegistry::Get().Register(property, binding);
+}
+
 }

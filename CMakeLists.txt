@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(NeoWPF LANGUAGES CXX)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/NeoWPFVersion.txt" NEOWPF_VERSION)
+string(STRIP "${NEOWPF_VERSION}" NEOWPF_VERSION)
+if(NOT NEOWPF_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+    message(FATAL_ERROR "NeoWPFVersion.txt must contain a semantic version")
+endif()
+project(NeoWPF VERSION "${NEOWPF_VERSION}" LANGUAGES CXX)
 
 include(CTest)
 
@@ -366,6 +371,13 @@ set_target_properties(NeoWPF PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_SOURCE_DIR}/x64/RelWithDebInfo"
     ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_SOURCE_DIR}/x64/MinSizeRel"
 )
+
+if(WIN32)
+    set(NEOWPF_RELEASE_EXTENSION "lib")
+else()
+    set(NEOWPF_RELEASE_EXTENSION "a")
+endif()
+set(NEOWPF_RELEASE_DIRECTORY "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}")
 if(UNIX)
     set_target_properties(NeoWPF PROPERTIES OUTPUT_NAME "NeoWPF.objects")
 endif()
@@ -686,6 +698,14 @@ if(NEOWPF_STATIC_DEPENDENCIES)
     endif()
 endif()
 
+add_custom_command(TARGET NeoWPF POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_RELEASE_DIRECTORY}"
+    COMMAND ${CMAKE_COMMAND} -E copy
+        "$<TARGET_FILE:NeoWPF>"
+        "${NEOWPF_RELEASE_DIRECTORY}/NeoWPF.${NEOWPF_PLATFORM}.$<CONFIG>.${PROJECT_VERSION}.${NEOWPF_RELEASE_EXTENSION}"
+    VERBATIM
+)
+
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})
 
 if(BUILD_TESTING)
@@ -713,6 +733,7 @@ if(BUILD_TESTING)
         tests/Automated/TransformCompositionTests.cpp
         tests/Automated/RenderCommandTests.cpp
         tests/Automated/GridTests.cpp
+        tests/Automated/ItemsControlTests.cpp
         tests/Automated/LImageDecodingTests.cpp
         tests/Automated/TriggerTests.cpp
         tests/Automated/XamlParserTests.cpp

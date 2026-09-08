@@ -47,7 +47,7 @@ public:
         @summary
         Gets the child currently hosted by the border.
     */
-    const std::shared_ptr<NeoWPF::UI::UIElement>& GetChild() const noexcept { return GetContent(); }
+    std::shared_ptr<NeoWPF::UI::UIElement> GetChild() const noexcept { return GetContentElement(); }
 
     /*
         @summary
