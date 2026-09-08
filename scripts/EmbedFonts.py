@@ -99,7 +99,7 @@ def main():
     source_lines.append("};")
     source_lines.append("}")
     source_lines.append("")
-    source_lines.append("namespace NeoWPF::Core::Application::Resources::Embedded {")
+    source_lines.append("namespace NeoWPF::Core::ApplicationResources::Embedded {")
     source_lines.append("std::size_t GetEmbeddedFallbackFontCount() noexcept")
     source_lines.append("{")
     source_lines.append("    return sizeof(kEmbeddedFallbackFonts) / sizeof(kEmbeddedFallbackFonts[0]);")
@@ -133,7 +133,7 @@ def main():
         "",
         "#include <cstddef>",
         "",
-        "namespace NeoWPF::Core::Application::Resources::Embedded {",
+        "namespace NeoWPF::Core::ApplicationResources::Embedded {",
         "",
         "struct FontRecord {",
         "    const char* name = nullptr;",

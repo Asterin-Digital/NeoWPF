@@ -66,9 +66,9 @@ std::wstring NormalizeFamily(std::wstring family)
 
 bool LoadEmbeddedFallbackFont()
 {
-    using NeoWPF::Core::Application::Resources::Embedded::FontRecord;
-    using NeoWPF::Core::Application::Resources::Embedded::TryGetEmbeddedFallbackFont;
-    using NeoWPF::Core::Application::Resources::Embedded::GetEmbeddedFallbackFontCount;
+    using NeoWPF::Core::ApplicationResources::Embedded::FontRecord;
+    using NeoWPF::Core::ApplicationResources::Embedded::TryGetEmbeddedFallbackFont;
+    using NeoWPF::Core::ApplicationResources::Embedded::GetEmbeddedFallbackFontCount;
 
     for (std::size_t index = 0; index < GetEmbeddedFallbackFontCount(); ++index) {
         FontRecord record{};
@@ -230,9 +230,9 @@ std::wstring WPlatform::ResolveFontFamily(const std::wstring& requestedFontFamil
     }
 
     if (LoadEmbeddedFallbackFont()) {
-        using NeoWPF::Core::Application::Resources::Embedded::GetEmbeddedFallbackFontCount;
-        using NeoWPF::Core::Application::Resources::Embedded::TryGetEmbeddedFallbackFont;
-        using NeoWPF::Core::Application::Resources::Embedded::FontRecord;
+        using NeoWPF::Core::ApplicationResources::Embedded::GetEmbeddedFallbackFontCount;
+        using NeoWPF::Core::ApplicationResources::Embedded::TryGetEmbeddedFallbackFont;
+        using NeoWPF::Core::ApplicationResources::Embedded::FontRecord;
 
         for (std::size_t index = 0; index < GetEmbeddedFallbackFontCount(); ++index) {
             FontRecord record{};

@@ -1,5 +1,4 @@
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
-#include <NeoWPF/UI/Controls/Styles.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
@@ -17,6 +16,8 @@ Checkbox::Checkbox()
     SetVerticalAlignment(VerticalAlignment::Top);
     SetTemplate(std::make_shared<CheckboxTemplate>());
 
+    APPLY_CONTROL_STYLES(NeoWPF::UI::Controls::Styles, *this);
+
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
     SetPresenter(presenter);
 
@@ -30,9 +31,6 @@ Checkbox::Checkbox()
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
 
-    NeoWPF::UI::Controls::Styles styles;
-    styles.InitializeComponent();
-    NEOWPF_APPLY_STYLES(styles, *this);
 }
 
 Checkbox::~Checkbox()

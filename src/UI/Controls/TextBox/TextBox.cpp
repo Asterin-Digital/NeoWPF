@@ -1,5 +1,4 @@
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
-#include <NeoWPF/UI/Controls/TextBoxStyles.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
@@ -48,13 +47,12 @@ TextBox::TextBox()
     SetClipToBounds(true);
     SetTemplate(std::make_shared<TextBoxTemplate>());
 
+    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::TextBoxStyles, *this);
+
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
     presenter->SetPadding(GetPadding());
     SetPresenter(presenter);
 
-    NeoWPF::UI::Generated::TextBoxStyles styles;
-    styles.InitializeComponent();
-    NEOWPF_APPLY_STYLES(styles, *this);
 
     InitializeVisualStates();
 }

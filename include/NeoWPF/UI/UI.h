@@ -51,6 +51,7 @@
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
 #include <NeoWPF/UI/Controls/ItemsControl/ItemsControl.h>
+#include <NeoWPF/UI/Controls/ListBox/ListBox.h>
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
 #include <NeoWPF/UI/Controls/ScrollViewer/ScrollViewer.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>

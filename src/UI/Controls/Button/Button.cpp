@@ -1,5 +1,4 @@
 #include <NeoWPF/UI/Controls/Button/Button.h>
-#include <NeoWPF/UI/Controls/ButtonStyles.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
@@ -44,9 +43,7 @@ Button::Button()
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
 
-    NeoWPF::UI::Generated::ButtonStyles styles;
-    styles.InitializeComponent();
-    NEOWPF_APPLY_STYLES(styles, *this);
+    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::ButtonStyles, *this);
 
     SetPadding(8);
     SetBackgroundColor(m_backgroundColor);
@@ -56,10 +53,6 @@ Button::Button()
 Button::Button(const std::wstring& text)
     : ButtonBase()
 {
-    /* @note 
-    * Keep this as is, in WPF the button defaults to center
-    * which matches the intended behavior we want
-    */
     SetHorizontalAlignment(HorizontalAlignment::Center);
     SetVerticalAlignment(VerticalAlignment::Center);
     SetTemplate(std::make_shared<ButtonTemplate>());
@@ -78,9 +71,7 @@ Button::Button(const std::wstring& text)
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
 
-    NeoWPF::UI::Generated::ButtonStyles styles;
-    styles.InitializeComponent();
-    NEOWPF_APPLY_STYLES(styles, *this);
+    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::ButtonStyles, *this);
 
     SetPadding(8);
     SetBackgroundColor(m_backgroundColor);

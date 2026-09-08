@@ -21,6 +21,8 @@ endif()
 
 set(NEOWPF_RENDERER_BACKEND "${NEOWPF_DEFAULT_RENDERER_BACKEND}" CACHE STRING
     "Renderer backend to compile (D3D11 or Vulkan)")
+set(NEOWPF_IGNORE_BAD_XAML OFF CACHE BOOL # turn this on when compiling new XAML types so the compiler will not stop builds due to stable build of pre-built NeoWPF library 
+    "Warn and omit generated outputs when XAML compilation fails")
 set_property(CACHE NEOWPF_RENDERER_BACKEND PROPERTY STRINGS D3D11 Vulkan)
 string(TOLOWER "${NEOWPF_RENDERER_BACKEND}" NEOWPF_RENDERER_BACKEND_LOWER)
 if(NOT NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "d3d11" AND
@@ -227,11 +229,17 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(NEOWPF_STATIC_DEPENDENCIES
     "Merge static NeoWPF dependencies into the NeoWPF archive"
     ON) 
+option(APPLY_CONTROL_STYLES
+    "Apply generated XAML styles from control constructors"
+    ON)
 
-set(NEOWPF_XAML_COMPILER
-    "${CMAKE_CURRENT_SOURCE_DIR}/tools/XamlCompiler${CMAKE_EXECUTABLE_SUFFIX}")
-set(NEOWPF_XAML_FILES "" CACHE STRING
-    "Semicolon-separated XAML files to compile into NeoWPF")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tools/XamlCompiler${CMAKE_EXECUTABLE_SUFFIX}")
+    set(NEOWPF_XAML_COMPILER
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/XamlCompiler${CMAKE_EXECUTABLE_SUFFIX}")
+else()
+    set(NEOWPF_XAML_COMPILER
+        "${CMAKE_CURRENT_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/$<CONFIG>/tools/XamlCompiler${CMAKE_EXECUTABLE_SUFFIX}")
+endif()
 
 include(cmake/NeoWPFSources.cmake)
 add_library(NeoNaml OBJECT
@@ -243,6 +251,8 @@ target_include_directories(NeoNaml
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
+include(cmake/NeoWPFXamlCommands.cmake)
+
 add_library(NeoWPF.Foundation OBJECT ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})
 add_library(NeoWPF::Foundation ALIAS NeoWPF.Foundation
 )
@@ -250,7 +260,105 @@ target_sources(NeoWPF.Foundation PRIVATE $<TARGET_OBJECTS:NeoNaml>)
 target_include_directories(NeoWPF.Foundation
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${CMAKE_CURRENT_BINARY_DIR}/generated/xaml"
 )
+target_compile_definitions(NeoWPF.Foundation
+    PUBLIC
+        NEOWPF_ENABLE_CONTROL_STYLES=$<BOOL:${APPLY_CONTROL_STYLES}>
+)
+
+neowpf_add_xaml(
+    NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Checkbox/Visual/CheckBoxStyles.xaml"
+    NAMESPACE NeoWPF::UI::Controls
+    COMPONENT Styles
+    PUBLIC_HEADER NeoWPF/UI/Controls/Styles.h
+)
+neowpf_add_xaml(
+    NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Button/Visual/ButtonStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated
+    COMPONENT ButtonStyles
+    PUBLIC_HEADER NeoWPF/UI/Controls/ButtonStyles.h
+)
+neowpf_add_xaml(
+    NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ScrollBar/Visual/ScrollBarStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated
+    COMPONENT ScrollBarStyles
+    PUBLIC_HEADER NeoWPF/UI/Controls/ScrollBarStyles.h
+)
+neowpf_add_xaml(
+    NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Text/Visual/TextBlockStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated
+    COMPONENT TextBlockStyles
+    PUBLIC_HEADER NeoWPF/UI/Controls/TextBlockStyles.h
+)
+neowpf_add_xaml(
+    NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/TextBox/Visual/TextBoxStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated
+    COMPONENT TextBoxStyles
+    PUBLIC_HEADER NeoWPF/UI/Controls/TextBoxStyles.h
+)
+neowpf_add_xaml(
+    NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Layout/Border/Visual/BorderStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated
+    COMPONENT BorderStyles
+    PUBLIC_HEADER NeoWPF/UI/Layout/BorderStyles.h
+)
+neowpf_add_xaml(
+    NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Layout/Panel/Panel.Styles.xaml"
+    NAMESPACE NeoWPF::UI::Generated
+    COMPONENT PanelStyles
+    PUBLIC_HEADER NeoWPF/UI/Layout/PanelStyles.h
+)
+set(NEOWPF_STYLE_UMBRELLA "${CMAKE_CURRENT_BINARY_DIR}/generated/xaml/NeoWPF/ControlStyles.h")
+file(GENERATE OUTPUT "${NEOWPF_STYLE_UMBRELLA}" CONTENT [=[
+#pragma once
+
+#if defined(NEOWPF_ENABLE_CONTROL_STYLES) && NEOWPF_ENABLE_CONTROL_STYLES
+#if __has_include(<NeoWPF/UI/Controls/Styles.h>)
+#include <NeoWPF/UI/Controls/Styles.h>
+#endif
+#if __has_include(<NeoWPF/UI/Controls/ButtonStyles.h>)
+#include <NeoWPF/UI/Controls/ButtonStyles.h>
+#endif
+#if __has_include(<NeoWPF/UI/Controls/ScrollBarStyles.h>)
+#include <NeoWPF/UI/Controls/ScrollBarStyles.h>
+#endif
+#if __has_include(<NeoWPF/UI/Controls/TextBlockStyles.h>)
+#include <NeoWPF/UI/Controls/TextBlockStyles.h>
+#endif
+#if __has_include(<NeoWPF/UI/Controls/TextBoxStyles.h>)
+#include <NeoWPF/UI/Controls/TextBoxStyles.h>
+#endif
+#if __has_include(<NeoWPF/UI/Layout/BorderStyles.h>)
+#include <NeoWPF/UI/Layout/BorderStyles.h>
+#endif
+#if __has_include(<NeoWPF/UI/Layout/PanelStyles.h>)
+#include <NeoWPF/UI/Layout/PanelStyles.h>
+#endif
+#define APPLY_CONTROL_STYLES(style_type, element) \
+do { \
+    style_type generated_styles; \
+    generated_styles.InitializeComponent(); \
+    if (generated_styles.Root) { \
+        generated_styles.Root->ApplyTo(element); \
+    } \
+} while (false)
+#else
+#define APPLY_CONTROL_STYLES(...) do { } while (false)
+#endif
+]=])
+if(MSVC)
+    target_compile_options(NeoWPF.Foundation PRIVATE "/FI${NEOWPF_STYLE_UMBRELLA}")
+else()
+    target_compile_options(NeoWPF.Foundation PRIVATE "-include${NEOWPF_STYLE_UMBRELLA}")
+endif()
 if(WIN32)
     target_include_directories(NeoWPF.Foundation PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include")
     target_include_directories(NeoWPF.Foundation PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include/harfbuzz")
@@ -308,46 +416,6 @@ target_sources(NeoWPF PRIVATE
     $<TARGET_OBJECTS:NeoNaml>
 )
 
-include(cmake/NeoWPFXaml.cmake)
-if(NOT EXISTS "${NEOWPF_XAML_COMPILER}")
-    message(FATAL_ERROR
-        "NeoWPF requires XamlCompiler at ${NEOWPF_XAML_COMPILER}. "
-        "Build or copy the platform executable there, or set NEOWPF_XAML_COMPILER.")
-endif()
-
-neowpf_compile_xaml(
-    NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Checkbox/Visual/CheckBoxStyles.xaml"
-    NAMESPACE NeoWPF::UI::Controls
-    COMPONENT Styles
-    PUBLIC_HEADER NeoWPF/UI/Controls/Styles.h
-)
-neowpf_compile_xaml(NeoWPF.Foundation "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Button/Visual/ButtonStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated COMPONENT ButtonStyles PUBLIC_HEADER NeoWPF/UI/Controls/ButtonStyles.h)
-neowpf_compile_xaml(NeoWPF.Foundation "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ScrollBar/Visual/ScrollBarStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated COMPONENT ScrollBarStyles PUBLIC_HEADER NeoWPF/UI/Controls/ScrollBarStyles.h)
-neowpf_compile_xaml(NeoWPF.Foundation "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Text/Visual/TextBlockStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated COMPONENT TextBlockStyles PUBLIC_HEADER NeoWPF/UI/Controls/TextBlockStyles.h)
-neowpf_compile_xaml(NeoWPF.Foundation "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/TextBox/Visual/TextBoxStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated COMPONENT TextBoxStyles PUBLIC_HEADER NeoWPF/UI/Controls/TextBoxStyles.h)
-neowpf_compile_xaml(NeoWPF.Foundation "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Layout/Border/Visual/BorderStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated COMPONENT BorderStyles PUBLIC_HEADER NeoWPF/UI/Layout/BorderStyles.h)
-neowpf_compile_xaml(NeoWPF.Foundation "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Layout/Panel/Panel.Styles.xaml"
-    NAMESPACE NeoWPF::UI::Generated COMPONENT PanelStyles PUBLIC_HEADER NeoWPF/UI/Layout/PanelStyles.h)
-
-if(NEOWPF_XAML_FILES)
-    foreach(NEOWPF_XAML_FILE IN LISTS NEOWPF_XAML_FILES)
-        if(NOT IS_ABSOLUTE "${NEOWPF_XAML_FILE}")
-            set(NEOWPF_XAML_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${NEOWPF_XAML_FILE}")
-        endif()
-        neowpf_compile_xaml(
-            NeoWPF.Foundation
-            "${NEOWPF_XAML_FILE}"
-            NAMESPACE NeoWPF::Generated
-        )
-    endforeach()
-endif()
-
 if(WIN32)
     set(NEOWPF_HARFBUZZ_DEBUG_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/debug/lib/harfbuzz.lib")
     set(NEOWPF_FREETYPE_DEBUG_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/debug/lib/freetyped.lib")
@@ -364,22 +432,44 @@ if(WIN32)
     endforeach()
 endif()
 
-set_target_properties(NeoWPF PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/x64"
-    ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/x64/Debug"
-    ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/x64/Release"
-    ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_SOURCE_DIR}/x64/RelWithDebInfo"
-    ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_SOURCE_DIR}/x64/MinSizeRel"
-)
-
 if(WIN32)
     set(NEOWPF_RELEASE_EXTENSION "lib")
 else()
     set(NEOWPF_RELEASE_EXTENSION "a")
 endif()
-set(NEOWPF_RELEASE_DIRECTORY "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}")
+
 if(UNIX)
-    set_target_properties(NeoWPF PROPERTIES OUTPUT_NAME "NeoWPF.objects")
+    set(_neowpf_windows_repo_root "/mnt/c/Users/Katsu/source/repos/NeoWPF")
+    if(EXISTS "${_neowpf_windows_repo_root}")
+        set(NEOWPF_RELEASE_DIRECTORY "${_neowpf_windows_repo_root}/NWpfBuild/${NEOWPF_PLATFORM}/$<CONFIG>")
+        set(NEOWPF_RELEASE_DIRECTORY_DEBUG "${_neowpf_windows_repo_root}/NWpfBuild/${NEOWPF_PLATFORM}/Debug")
+        set(NEOWPF_RELEASE_DIRECTORY_RELEASE "${_neowpf_windows_repo_root}/NWpfBuild/${NEOWPF_PLATFORM}/Release")
+        set(NEOWPF_RELEASE_DIRECTORY_RELWITHDEBINFO "${_neowpf_windows_repo_root}/NWpfBuild/${NEOWPF_PLATFORM}/RelWithDebInfo")
+        set(NEOWPF_RELEASE_DIRECTORY_MINSIZEREL "${_neowpf_windows_repo_root}/NWpfBuild/${NEOWPF_PLATFORM}/MinSizeRel")
+    else()
+        set(NEOWPF_RELEASE_DIRECTORY "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/$<CONFIG>")
+        set(NEOWPF_RELEASE_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/Debug")
+        set(NEOWPF_RELEASE_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/Release")
+        set(NEOWPF_RELEASE_DIRECTORY_RELWITHDEBINFO "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/RelWithDebInfo")
+        set(NEOWPF_RELEASE_DIRECTORY_MINSIZEREL "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/MinSizeRel")
+    endif()
+else()
+    set(NEOWPF_RELEASE_DIRECTORY "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/$<CONFIG>")
+    set(NEOWPF_RELEASE_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/Debug")
+    set(NEOWPF_RELEASE_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/Release")
+    set(NEOWPF_RELEASE_DIRECTORY_RELWITHDEBINFO "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/RelWithDebInfo")
+    set(NEOWPF_RELEASE_DIRECTORY_MINSIZEREL "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/MinSizeRel")
+endif()
+set_target_properties(NeoWPF PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${NEOWPF_RELEASE_DIRECTORY}"
+    ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${NEOWPF_RELEASE_DIRECTORY_DEBUG}"
+    ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${NEOWPF_RELEASE_DIRECTORY_RELEASE}"
+    ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${NEOWPF_RELEASE_DIRECTORY_RELWITHDEBINFO}"
+    ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${NEOWPF_RELEASE_DIRECTORY_MINSIZEREL}"
+)
+set(NEOWPF_RELEASE_SOURCE "$<TARGET_FILE:NeoWPF>")
+if(UNIX)
+    set_target_properties(NeoWPF PROPERTIES OUTPUT_NAME "NeoWPF")
 endif()
 
 target_include_directories(NeoWPF
@@ -659,21 +749,12 @@ if(NEOWPF_STATIC_DEPENDENCIES)
             VERBATIM
         )
     elseif(UNIX)
+        set(NEOWPF_RELEASE_ARCHIVE
+            "${NEOWPF_RELEASE_DIRECTORY}/NeoWPF.${NEOWPF_PLATFORM}.$<CONFIG>.${PROJECT_VERSION}.a")
         set(NEOWPF_ARCHIVE_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/merge-neowpf-archives-$<CONFIG>.mri")
-        set(NEOWPF_LINKER_SCRIPT "$<TARGET_FILE_DIR:NeoWPF>/libNeoWPF.a")
-        get_target_property(NEOWPF_CURL_DEBUG CURL::libcurl IMPORTED_LOCATION_DEBUG)
-        get_target_property(NEOWPF_CURL_RELEASE CURL::libcurl IMPORTED_LOCATION_RELEASE)
-        if(NOT NEOWPF_CURL_DEBUG)
-            set(NEOWPF_CURL_DEBUG "${NEOWPF_CURL_RELEASE}")
-        endif()
-        if(NOT NEOWPF_CURL_RELEASE)
-            set(NEOWPF_CURL_RELEASE "${NEOWPF_CURL_DEBUG}")
-        endif()
-        if(NOT NEOWPF_CURL_DEBUG OR NOT NEOWPF_CURL_RELEASE)
-            message(FATAL_ERROR "Could not determine the vcpkg curl archive for the Linux linker wrapper.")
-        endif()
+
         string(CONCAT NEOWPF_ARCHIVE_SCRIPT_CONTENT
-            "create $<TARGET_FILE:NeoWPF>.merged\n"
+            "create ${NEOWPF_RELEASE_ARCHIVE}\n"
             "addlib $<TARGET_FILE:NeoWPF>\n"
         )
         foreach(NEOWPF_STATIC_ARCHIVE IN LISTS NEOWPF_STATIC_ARCHIVES_RELEASE)
@@ -684,27 +765,24 @@ if(NEOWPF_STATIC_DEPENDENCIES)
         file(GENERATE OUTPUT "${NEOWPF_ARCHIVE_SCRIPT}" CONTENT
             "${NEOWPF_ARCHIVE_SCRIPT_CONTENT}"
         )
-        file(GENERATE OUTPUT "${NEOWPF_LINKER_SCRIPT}" CONTENT
-            "GROUP ( $<TARGET_FILE:NeoWPF> -lvulkan -lwayland-client -lxkbcommon -lharfbuzz -lfontconfig -lfreetype -lpng16 -lz -lbrotlidec -lbrotlicommon -lbz2 -lexpat $<IF:$<CONFIG:Debug>,${NEOWPF_CURL_DEBUG},${NEOWPF_CURL_RELEASE}> -ldl -lpthread )\n"
-        )
+
         add_custom_command(TARGET NeoWPF POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_RELEASE_DIRECTORY}"
             COMMAND sh -c "\"${CMAKE_AR}\" -M < \"${NEOWPF_ARCHIVE_SCRIPT}\""
-            COMMAND "${CMAKE_COMMAND}" -E copy
-                "$<TARGET_FILE:NeoWPF>.merged"
-                "$<TARGET_FILE:NeoWPF>"
-            COMMAND "${CMAKE_COMMAND}" -E rm -f "$<TARGET_FILE:NeoWPF>.merged"
             VERBATIM
         )
     endif()
 endif()
 
-add_custom_command(TARGET NeoWPF POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_RELEASE_DIRECTORY}"
-    COMMAND ${CMAKE_COMMAND} -E copy
-        "$<TARGET_FILE:NeoWPF>"
-        "${NEOWPF_RELEASE_DIRECTORY}/NeoWPF.${NEOWPF_PLATFORM}.$<CONFIG>.${PROJECT_VERSION}.${NEOWPF_RELEASE_EXTENSION}"
-    VERBATIM
-)
+if(WIN32)
+    add_custom_command(TARGET NeoWPF POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_RELEASE_DIRECTORY}"
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "${NEOWPF_RELEASE_SOURCE}"
+            "${NEOWPF_RELEASE_DIRECTORY}/NeoWPF.${NEOWPF_PLATFORM}.$<CONFIG>.${PROJECT_VERSION}.${NEOWPF_RELEASE_EXTENSION}"
+        VERBATIM
+    )
+endif()
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})
 
@@ -734,6 +812,7 @@ if(BUILD_TESTING)
         tests/Automated/RenderCommandTests.cpp
         tests/Automated/GridTests.cpp
         tests/Automated/ItemsControlTests.cpp
+        tests/Automated/ListBoxTests.cpp
         tests/Automated/LImageDecodingTests.cpp
         tests/Automated/TriggerTests.cpp
         tests/Automated/XamlParserTests.cpp

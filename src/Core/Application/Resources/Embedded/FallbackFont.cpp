@@ -52435,7 +52435,7 @@ constexpr EmbeddedFontRecord kEmbeddedFallbackFonts[] = {
 };
 }
 
-namespace NeoWPF::Core::Application::Resources::Embedded {
+namespace NeoWPF::Core::ApplicationResources::Embedded {
 std::size_t GetEmbeddedFallbackFontCount() noexcept
 {
     return sizeof(kEmbeddedFallbackFonts) / sizeof(kEmbeddedFallbackFonts[0]);

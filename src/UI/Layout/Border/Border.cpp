@@ -1,5 +1,4 @@
 #include <NeoWPF/UI/Layout/Border/Border.h>
-#include <NeoWPF/UI/Layout/BorderStyles.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Diagnostics/Logger.h>
@@ -11,12 +10,10 @@ namespace NeoWPF::UI {
 
 Border::Border()
 {
+    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::BorderStyles, *this);
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
     SetPresenter(presenter);
     SetClipToBounds(true);
-    NeoWPF::UI::Generated::BorderStyles styles;
-    styles.InitializeComponent();
-    NEOWPF_APPLY_STYLES(styles, *this);
 }
 
 void Border::Measure(int availableWidth, int availableHeight)

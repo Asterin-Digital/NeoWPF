@@ -1,5 +1,4 @@
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
-#include <NeoWPF/UI/Layout/PanelStyles.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
 #include <algorithm>
@@ -16,9 +15,7 @@ namespace NeoWPF::UI {
 
 Panel::Panel()
 {
-    NeoWPF::UI::Generated::PanelStyles styles;
-    styles.InitializeComponent();
-    NEOWPF_APPLY_STYLES(styles, *this);
+    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::PanelStyles, *this);
 }
 
 namespace {

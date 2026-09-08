@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-namespace NeoWPF::Core::Application::Resources::Embedded {
+namespace NeoWPF::Core::ApplicationResources::Embedded {
 
 struct FontRecord {
     const char* name = nullptr;
