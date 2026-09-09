@@ -87,6 +87,21 @@ namespace NeoWPF::Input
         m_rootElement = root;
     }
 
+    void InputManager::ClickAt(NeoWPF::UI::UIElement* target, int x, int y, std::uint32_t buttonState)
+    {
+        if (!target) {
+            return;
+        }
+
+        RouteMouseEvent(target, Core::PreviewMouseDownEvent(), x, y, buttonState, 0);
+        target->OnMouseDown(x, y, buttonState);
+        RouteMouseEvent(target, Core::MouseDownEvent(), x, y, buttonState, 0);
+
+        RouteMouseEvent(target, Core::PreviewMouseUpEvent(), x, y, buttonState, 0);
+        target->OnMouseUp(x, y, buttonState);
+        RouteMouseEvent(target, Core::MouseUpEvent(), x, y, buttonState, 0);
+    }
+
     void InputManager::ProcessMouseInput(int x, int y, std::uint32_t buttonState, int wheelDelta)
     {
         NEO_WPF_ACTION("Input.ProcessMouseInput");

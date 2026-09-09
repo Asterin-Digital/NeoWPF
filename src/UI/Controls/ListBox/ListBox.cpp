@@ -1,76 +1,110 @@
 #include <NeoWPF/UI/Controls/ListBox/ListBox.h>
-#include <NeoWPF/Rendering/Renderer.h>
-#include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
-
-#include <algorithm>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 
 namespace NeoWPF::UI {
 
-ListBoxItem::ListBoxItem()
+namespace {
+void AddSelectionHandlerToItem(ListBox* owner, const std::shared_ptr<FrameworkElement>& element)
 {
+    if (!owner || !element) {
+        return;
+    }
+
+    auto listBoxItem = std::dynamic_pointer_cast<ListBoxItem>(element);
+    if (!listBoxItem) {
+        return;
+    }
+
+    listBoxItem->SetOwner(owner);
+    if (listBoxItem->HasRoutedEventHandler(NeoWPF::Input::Core::MouseUpEvent())) {
+        return;
+    }
+
+    listBoxItem->AddHandler(NeoWPF::Input::Core::MouseUpEvent(), [owner](UIElement* sender, NeoWPF::Input::Core::RoutedEventArgs* args) {
+        if (!sender || !args) {
+            return;
+        }
+
+        auto* item = dynamic_cast<ListBoxItem*>(sender);
+        if (!item) {
+            return;
+        }
+
+        const auto data = item->GetDataContext();
+        if (data.has_value()) {
+            owner->SetSelectedItem(data);
+            args->SetHandled(true);
+        }
+    });
+}
 }
 
-ListBoxItem::~ListBoxItem() = default;
+ListBox::ListBox() = default;
 
-void ListBoxItem::SetIsSelected(bool selected) noexcept
+ListBox::~ListBox() = default;
+
+void ListBox::AddItem(const std::shared_ptr<FrameworkElement>& item)
 {
-	if (IsApplyingPropertyValue()) {
-		InvalidateVisual();
-		return;
-	}
-
-	SetValue(IsSelectedProperty(), selected);
+    AddSelectionHandlerToItem(this, item);
+    ItemsControl::AddItem(item);
 }
 
-bool ListBoxItem::GetIsSelected() const noexcept
+void ListBox::SetItems(const std::vector<std::shared_ptr<FrameworkElement>>& items)
 {
-	try {
-		return GetValue<bool>(IsSelectedProperty());
-	} catch (const std::bad_any_cast&) {
-		return false;
-	}
+    for (const auto& item : items) {
+        AddSelectionHandlerToItem(this, item);
+    }
+    ItemsControl::SetItems(items);
 }
 
-void ListBoxItem::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
+std::shared_ptr<FrameworkElement> ListBox::GetContainerForItem(const std::any& data, int index)
 {
-	if (GetIsSelected()) {
-		int absoluteX = 0;
-		int absoluteY = 0;
-		GetAbsolutePosition(absoluteX, absoluteY);
-		const float width = static_cast<float>(std::max(0, GetFinalWidth()));
-		const float height = static_cast<float>(std::max(0, GetFinalHeight()));
+    (void)index;
+    auto container = std::make_shared<ListBoxItem>();
+    container->SetDataContext(data);
+    AddSelectionHandlerToItem(this, container);
+    return container;
+}
 
-		if (width > 0.0f && height > 0.0f) {
-			commands.DrawRoundedRect(
-				static_cast<float>(absoluteX),
-				static_cast<float>(absoluteY),
-				width,
-				height,
-				0.0f,
-				0.0f,
-				0.0f,
-				0.0f,
-				GetBorderColor().ToArgb(),
-				GetOpacity(),
-				GetClipRect(),
-				GetWorldRotationRadians());
-			commands.DrawRoundedRect(
-				static_cast<float>(absoluteX + 1),
-				static_cast<float>(absoluteY + 1),
-				std::max(0.0f, width - 2.0f),
-				std::max(0.0f, height - 2.0f),
-				0.0f,
-				0.0f,
-				0.0f,
-				0.0f,
-				GetBackgroundColor().ToArgb(),
-				GetOpacity(),
-				GetClipRect(),
-				GetWorldRotationRadians());
-		}
-	}
+void ListBox::PrepareContainer(const std::shared_ptr<FrameworkElement>& container,
+                               const std::any& data,
+                               int index)
+{
+    if (!container) {
+        return;
+    }
 
-	Content::ContentControl::BuildRenderCommands(commands);
+    container->SetDataContext(data);
+
+    if (auto listBoxItem = std::dynamic_pointer_cast<ListBoxItem>(container)) {
+        listBoxItem->SetOwner(this);
+        listBoxItem->SetIsSelected(IsSelected(data));
+        AddSelectionHandlerToItem(this, container);
+        (void)index;
+    }
+}
+
+void ListBox::OnSelectionChanged(int oldIndex, int newIndex, const std::any& oldItem, const std::any& newItem)
+{
+    (void)oldIndex;
+    (void)newIndex;
+    (void)oldItem;
+    (void)newItem;
+
+    const auto items = GetItems();
+    for (const auto& itemVisual : items) {
+        if (!itemVisual) {
+            continue;
+        }
+
+        auto listBoxItem = std::dynamic_pointer_cast<ListBoxItem>(itemVisual);
+        if (!listBoxItem) {
+            continue;
+        }
+
+        const auto data = listBoxItem->GetDataContext();
+        listBoxItem->SetIsSelected(IsSelected(data));
+    }
 }
 
 }

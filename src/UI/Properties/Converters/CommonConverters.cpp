@@ -303,6 +303,41 @@ bool VerticalAlignmentConverter::TryConvertToCode(const std::string& rawValue, s
     return true;
 }
 
+bool SelectionModeConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+{
+    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
+    if (value == "single") {
+        convertedValue = NeoWPF::UI::SelectionMode::Single;
+        return true;
+    }
+    if (value == "multiple") {
+        convertedValue = NeoWPF::UI::SelectionMode::Multiple;
+        return true;
+    }
+    if (value == "extended") {
+        convertedValue = NeoWPF::UI::SelectionMode::Extended;
+        return true;
+    }
+    return false;
+}
+
+bool SelectionModeConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    std::any convertedValue;
+    if (!ConvertFromString(rawValue, convertedValue)) {
+        expression.clear();
+        return false;
+    }
+
+    const auto mode = std::any_cast<NeoWPF::UI::SelectionMode>(convertedValue);
+    switch (mode) {
+    case NeoWPF::UI::SelectionMode::Single: expression = "NeoWPF::UI::SelectionMode::Single"; break;
+    case NeoWPF::UI::SelectionMode::Multiple: expression = "NeoWPF::UI::SelectionMode::Multiple"; break;
+    case NeoWPF::UI::SelectionMode::Extended: expression = "NeoWPF::UI::SelectionMode::Extended"; break;
+    }
+    return true;
+}
+
 #define DEFINE_CONVERTER_FACTORY(Name, Type) \
 std::shared_ptr<const TypeConverter> Get##Name##Converter() \
 { \
@@ -320,6 +355,7 @@ DEFINE_CONVERTER_FACTORY(Thickness, ThicknessConverter)
 DEFINE_CONVERTER_FACTORY(Spacing, SpacingConverter)
 DEFINE_CONVERTER_FACTORY(HorizontalAlignment, HorizontalAlignmentConverter)
 DEFINE_CONVERTER_FACTORY(VerticalAlignment, VerticalAlignmentConverter)
+DEFINE_CONVERTER_FACTORY(SelectionMode, SelectionModeConverter)
 
 #undef DEFINE_CONVERTER_FACTORY
 

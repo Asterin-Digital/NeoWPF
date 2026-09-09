@@ -75,6 +75,37 @@ public:
 
     /*
         @summary
+        Requests a custom item container for a source item.
+
+        @param data
+        The source object for the item.
+
+        @param index
+        The index of the item in the source collection.
+
+        @returns A custom container instance, or nullptr to use the item template.
+    */
+    virtual std::shared_ptr<FrameworkElement> GetContainerForItem(const std::any& data, int index);
+
+    /*
+        @summary
+        Prepares a container for display using the source item data.
+
+        @param container
+        The container to prepare.
+
+        @param data
+        The source object for the item.
+
+        @param index
+        The index of the item in the source collection.
+    */
+    virtual void PrepareContainer(const std::shared_ptr<FrameworkElement>& container,
+                                  const std::any& data,
+                                  int index);
+
+    /*
+        @summary
         Returns the current collection of items.
     */
     const std::vector<std::shared_ptr<FrameworkElement>>& GetItems() const noexcept { return m_items; }

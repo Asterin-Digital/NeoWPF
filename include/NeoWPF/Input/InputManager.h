@@ -19,6 +19,7 @@ namespace NeoWPF::Input
         static InputManager& GetInstance();
 
         void ProcessMouseInput(int x, int y, std::uint32_t buttonState, int wheelDelta = 0);
+        void ClickAt(NeoWPF::UI::UIElement* target, int x, int y, std::uint32_t buttonState = 0x01);
         void ProcessKeyboardInput(int keyCode, bool isKeyDown, wchar_t charCode = 0, int repeatCount = 1);
 
         NeoWPF::UI::UIElement* HitTest(int x, int y);

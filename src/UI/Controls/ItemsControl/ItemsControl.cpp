@@ -55,6 +55,22 @@ void ItemsControl::SetItemTemplate(const Controls::ItemsControl::Virtualization:
     InvalidateVisual();
 }
 
+std::shared_ptr<FrameworkElement> ItemsControl::GetContainerForItem(const std::any& data, int index)
+{
+    (void)data;
+    (void)index;
+    return nullptr;
+}
+
+void ItemsControl::PrepareContainer(const std::shared_ptr<FrameworkElement>& container,
+                                    const std::any& data,
+                                    int index)
+{
+    (void)container;
+    (void)data;
+    (void)index;
+}
+
 ItemsControl::~ItemsControl()
 {
 }

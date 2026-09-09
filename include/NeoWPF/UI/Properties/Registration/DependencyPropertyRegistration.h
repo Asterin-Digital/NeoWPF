@@ -181,6 +181,8 @@ namespace NeoWPF::UI::Properties {
     void RegisterThumbProperties();
     void RegisterCheckboxProperties();
     void RegisterItemsControlProperties();
+    void RegisterSelectorProperties();
+    void RegisterListBoxProperties();
     void RegisterListBoxItemProperties();
     void RegisterScrollBarProperties();
     void RegisterTextBlockProperties();

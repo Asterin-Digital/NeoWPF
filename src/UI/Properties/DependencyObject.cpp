@@ -10,6 +10,49 @@
 
 namespace NeoWPF::UI::Properties {
 
+bool ValuesEqual(const std::any& left, const std::any& right) noexcept
+{
+    if (left.has_value() != right.has_value()) {
+        return false;
+    }
+
+    if (!left.has_value()) {
+        return true;
+    }
+
+    if (left.type() != right.type()) {
+        return false;
+    }
+
+    if (left.type() == typeid(bool)) {
+        return std::any_cast<bool>(left) == std::any_cast<bool>(right);
+    }
+    if (left.type() == typeid(int)) {
+        return std::any_cast<int>(left) == std::any_cast<int>(right);
+    }
+    if (left.type() == typeid(float)) {
+        return std::any_cast<float>(left) == std::any_cast<float>(right);
+    }
+    if (left.type() == typeid(double)) {
+        return std::any_cast<double>(left) == std::any_cast<double>(right);
+    }
+    if (left.type() == typeid(std::string)) {
+        return std::any_cast<std::string>(left) == std::any_cast<std::string>(right);
+    }
+    if (left.type() == typeid(std::wstring)) {
+        return std::any_cast<std::wstring>(left) == std::any_cast<std::wstring>(right);
+    }
+
+    return false;
+}
+
+bool ValuesEqual(const DependencyObject& owner,
+                const DependencyProperty& property,
+                const std::any& expectedValue)
+{
+    return ValuesEqual(owner.GetRawValue(property), expectedValue);
+}
+
 DependencyProperty::DependencyProperty(const std::string& name,
                                        const std::type_index& propertyType,
                                        const std::type_index& ownerType,
@@ -230,6 +273,10 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
                                        std::any value,
                                        PropertyValueSource source)
 {
+    if (m_isApplyingPropertyValue) {
+        return;
+    }
+
     std::any oldValue = GetRawValue(property);
 
     if (source == PropertyValueSource::Expression) {
@@ -297,6 +344,7 @@ void DependencyObject::ClearBindingExpression(const DependencyProperty& property
 {
     m_bindingExpressions.erase(&property);
     m_expressionValues.erase(&property);
+    m_localValues.erase(&property);
 }
 
 void DependencyObject::RefreshBindingExpressions()

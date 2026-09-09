@@ -236,6 +236,28 @@ void RecordStartup()
     EmitStartupActionSummary();
 }
 
+bool HasStartupRecorded() noexcept
+{
+    return GetCounters().startupRecorded.load(std::memory_order_relaxed);
+}
+
+double GetStartupElapsedSeconds() noexcept
+{
+    return GetCounters().startupElapsedSeconds.load(std::memory_order_relaxed);
+}
+
+double GetStartupActionTotalSeconds(const char* actionName)
+{
+    if (!actionName) {
+        return 0.0;
+    }
+
+    auto& counters = GetCounters();
+    std::lock_guard<std::mutex> lock(counters.startupActionMutex);
+    const auto it = counters.startupActionDurations.find(actionName);
+    return it == counters.startupActionDurations.end() ? 0.0 : it->second;
+}
+
 void RecordFrameSample(double elapsedSeconds)
 {
     auto& counters = GetCounters();

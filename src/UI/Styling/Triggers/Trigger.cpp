@@ -46,8 +46,7 @@ bool Trigger::Evaluate(UIElement* element) const {
         return false;
     }
 
-    const auto currentValue = element->GetRawValue(*property);
-    return Detail::AnyEquals(currentValue, m_value);
+    return Detail::AnyEquals(*element, *property, m_value);
 }
 
 }

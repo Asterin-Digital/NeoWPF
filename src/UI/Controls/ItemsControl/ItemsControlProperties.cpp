@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/ItemsControl/ItemsControl.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 namespace NeoWPF::UI::Properties {
@@ -15,5 +16,11 @@ namespace NeoWPF::UI::Properties {
                 }
             },
             paddingMetadata);
+
+        NeoWPF::UI::Markup::Xaml::RegisterXamlType<UI::ItemsControl>(
+            "ItemsControl",
+            "",
+            "NeoWPF::UI::ItemsControl",
+            "NeoWPF/UI/Controls/ItemsControl/ItemsControl.h");
     }
 }

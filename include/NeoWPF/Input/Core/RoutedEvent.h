@@ -11,6 +11,8 @@ namespace NeoWPF::UI
 
 namespace NeoWPF::Input::Core
 {
+    struct RoutedEvent;
+
     enum class RoutingStrategy
     {
         Tunnel,

@@ -21,6 +21,9 @@ bool IsActionTimingEnabled() noexcept;
 void RecordAction(const char* actionName, double elapsedSeconds);
 
 void RecordStartup();
+bool HasStartupRecorded() noexcept;
+double GetStartupElapsedSeconds() noexcept;
+double GetStartupActionTotalSeconds(const char* actionName);
 void RecordFrameSample(double elapsedSeconds);
 void RecordLayoutPass(double elapsedSeconds);
 void RecordRenderPass(double elapsedSeconds);

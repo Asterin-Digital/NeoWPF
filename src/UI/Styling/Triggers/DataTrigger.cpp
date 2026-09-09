@@ -46,7 +46,7 @@ bool DataTrigger::Evaluate(UIElement* element) const {
         return false;
     }
 
-    return Detail::AnyEquals(element->GetRawValue(*property), m_value);
+    return Detail::AnyEquals(*element, *property, m_value);
 }
 
 }

@@ -3,6 +3,7 @@
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
 #include <NeoWPF/UI/Controls/ScrollViewer/ScrollViewer.h>
+#include <NeoWPF/UI/Controls/Selector/Selector.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
 #include <NeoWPF/UI/Core/Element/Control.h>
@@ -122,6 +123,18 @@ TEST(DependencyPropertyTests, InvokesChangedCallbackWithOldAndNewValues)
     EXPECT_EQ(callbackOldValue, 0);
     EXPECT_EQ(callbackNewValue, 7);
     EXPECT_EQ(object.GetValue<int>(property), 7);
+}
+
+TEST(DependencyPropertyTests, ValuesEqualSharesTheDependencyPropertyComparisonRules)
+{
+    EXPECT_TRUE(NeoWPF::UI::Properties::ValuesEqual(std::any(true), std::any(true)));
+    EXPECT_FALSE(NeoWPF::UI::Properties::ValuesEqual(std::any(true), std::any(false)));
+    EXPECT_TRUE(NeoWPF::UI::Properties::ValuesEqual(std::any(42), std::any(42)));
+    EXPECT_FALSE(NeoWPF::UI::Properties::ValuesEqual(std::any(42), std::any(7)));
+    EXPECT_TRUE(NeoWPF::UI::Properties::ValuesEqual(std::any(std::wstring(L"item")), std::any(std::wstring(L"item"))));
+    EXPECT_FALSE(NeoWPF::UI::Properties::ValuesEqual(std::any(std::string("item")), std::any(std::wstring(L"item"))));
+    EXPECT_FALSE(NeoWPF::UI::Properties::ValuesEqual(std::any{}, std::any(42)));
+    EXPECT_FALSE(NeoWPF::UI::Properties::ValuesEqual(std::any(42), std::any{}));
 }
 
 TEST(DependencyPropertyTests, FindsPropertiesByExactAndDerivedOwner)
@@ -425,6 +438,39 @@ TEST(DependencyPropertyTests, ScrollViewerExposesStaticPropertyHandles)
     EXPECT_EQ(NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("HorizontalOffset", typeid(NeoWPF::UI::ScrollViewer)), &horizontalOffsetProperty);
 }
 
+TEST(DependencyPropertyTests, SelectorExposesStaticPropertyHandles)
+{
+    const auto& selectedIndexProperty = NeoWPF::UI::Selector::SelectedIndexProperty();
+    const auto& selectedItemProperty = NeoWPF::UI::Selector::SelectedItemProperty();
+    const auto& selectionModeProperty = NeoWPF::UI::Selector::SelectionModeProperty();
+
+    EXPECT_EQ(selectedIndexProperty.GetName(), "SelectedIndex");
+    EXPECT_EQ(selectedIndexProperty.GetOwnerType(), std::type_index(typeid(NeoWPF::UI::Selector)));
+    EXPECT_EQ(selectedIndexProperty.GetPropertyType(), std::type_index(typeid(int)));
+    EXPECT_EQ(selectedItemProperty.GetName(), "SelectedItem");
+    EXPECT_EQ(selectedItemProperty.GetPropertyType(), std::type_index(typeid(std::any)));
+    EXPECT_EQ(selectionModeProperty.GetName(), "SelectionMode");
+    EXPECT_EQ(selectionModeProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::SelectionMode)));
+    EXPECT_EQ(NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("SelectionMode", typeid(NeoWPF::UI::Selector)), &selectionModeProperty);
+}
+
+TEST(DependencyPropertyTests, SelectorSelectionModeRejectsInvalidStrings)
+{
+    NeoWPF::UI::Selector selector;
+    const auto& selectionModeProperty = NeoWPF::UI::Selector::SelectionModeProperty();
+
+    std::any parsed;
+    EXPECT_TRUE(selectionModeProperty.TryParseValue("multiple", parsed));
+    EXPECT_EQ(std::any_cast<NeoWPF::UI::SelectionMode>(parsed), NeoWPF::UI::SelectionMode::Multiple);
+
+    selector.SetValue(selectionModeProperty, NeoWPF::UI::SelectionMode::Extended);
+    EXPECT_EQ(selector.GetSelectionMode(), NeoWPF::UI::SelectionMode::Extended);
+
+    EXPECT_FALSE(selectionModeProperty.TryParseValue("not-a-mode", parsed));
+    EXPECT_FALSE(selectionModeProperty.TryParseValue("", parsed));
+    EXPECT_FALSE(selectionModeProperty.TryParseValue("single,extended", parsed));
+}
+
 TEST(DependencyPropertyTests, AnimationTakesPrecedenceAndCanBeCleared)
 {
     TestObject object;
@@ -513,6 +559,22 @@ TEST(TypeConverterTests, ConvertsAlignmentNamesToEnumCode)
     EXPECT_EQ(expression, "NeoWPF::UI::HorizontalAlignment::Center");
     EXPECT_TRUE(NeoWPF::UI::Properties::GetVerticalAlignmentConverter()->TryConvertToCode("BOTTOM", expression));
     EXPECT_EQ(expression, "NeoWPF::UI::VerticalAlignment::Bottom");
+}
+
+TEST(TypeConverterTests, ConvertsSelectionModeNamesToEnumCode)
+{
+    std::string expression;
+    EXPECT_TRUE(NeoWPF::UI::Properties::GetSelectionModeConverter()->TryConvertToCode("single", expression));
+    EXPECT_EQ(expression, "NeoWPF::UI::SelectionMode::Single");
+    EXPECT_TRUE(NeoWPF::UI::Properties::GetSelectionModeConverter()->TryConvertToCode("MULTIPLE", expression));
+    EXPECT_EQ(expression, "NeoWPF::UI::SelectionMode::Multiple");
+    EXPECT_TRUE(NeoWPF::UI::Properties::GetSelectionModeConverter()->TryConvertToCode(" Extended ", expression));
+    EXPECT_EQ(expression, "NeoWPF::UI::SelectionMode::Extended");
+
+    EXPECT_FALSE(NeoWPF::UI::Properties::GetSelectionModeConverter()->TryConvertToCode("radial", expression));
+    EXPECT_TRUE(expression.empty());
+    EXPECT_FALSE(NeoWPF::UI::Properties::GetSelectionModeConverter()->TryConvertToCode("single,multiple", expression));
+    EXPECT_TRUE(expression.empty());
 }
 
 TEST(TypeConverterTests, ConvertsAllAlignmentMembersCaseInsensitively)

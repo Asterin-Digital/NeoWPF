@@ -115,6 +115,11 @@ struct PropertyMetadata {
     std::shared_ptr<const TypeConverter> Converter;
 };
 
+bool ValuesEqual(const std::any& left, const std::any& right) noexcept;
+bool ValuesEqual(const DependencyObject& owner,
+                 const DependencyProperty& property,
+                 const std::any& expectedValue);
+
 /*
     @summary
     Represents a dependency property definition registered with the property system.

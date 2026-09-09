@@ -231,4 +231,62 @@ TEST(ItemsControlTests, DisablingVirtualizationMaterializesAllSourceItems)
     EXPECT_EQ(itemsControl.GetVisualChildren().size(), source.size());
 }
 
+class CustomContainer final : public NeoWPF::UI::FrameworkElement {
+public:
+    explicit CustomContainer(int marker)
+        : m_marker(marker)
+    {
+    }
+
+    void Measure(int, int) override
+    {
+        SetDesiredSize(40, 12);
+    }
+
+    int GetMarker() const noexcept
+    {
+        return m_marker;
+    }
+
+private:
+    int m_marker;
+};
+
+class CustomContainerItemsControl final : public NeoWPF::UI::ItemsControl {
+public:
+    std::shared_ptr<NeoWPF::UI::FrameworkElement> GetContainerForItem(const std::any& data, int index) override
+    {
+        const int value = std::any_cast<int>(data);
+        return std::make_shared<CustomContainer>(value + index + 100);
+    }
+
+    void PrepareContainer(const std::shared_ptr<NeoWPF::UI::FrameworkElement>& container, const std::any& data, int index) override
+    {
+        container->SetDataContext(data);
+        if (auto custom = dynamic_cast<CustomContainer*>(container.get())) {
+            (void)custom;
+            (void)index;
+        }
+    }
+};
+
+TEST(ItemsControlTests, OwnerProvidesContainerForSourceItems)
+{
+    CustomContainerItemsControl itemsControl;
+    itemsControl.SetItemsSource({std::any(2), std::any(5)});
+    itemsControl.SetItemTemplate([](const std::any&, int) {
+        return std::make_shared<FixedItem>(15, 9, -1);
+    });
+
+    ASSERT_EQ(itemsControl.GetVisualChildren().size(), 2u);
+    auto* first = dynamic_cast<CustomContainer*>(itemsControl.GetVisualChildren()[0]);
+    ASSERT_NE(first, nullptr);
+    EXPECT_EQ(first->GetMarker(), 102);
+
+    auto* firstFramework = dynamic_cast<NeoWPF::UI::FrameworkElement*>(itemsControl.GetVisualChildren()[0]);
+    ASSERT_NE(firstFramework, nullptr);
+    ASSERT_TRUE(firstFramework->GetDataContext().has_value());
+    EXPECT_EQ(std::any_cast<int>(firstFramework->GetDataContext()), 2);
+}
+
 } 
