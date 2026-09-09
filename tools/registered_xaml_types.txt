@@ -1,0 +1,224 @@
+NeoWPF registered XAML types
+Output file: "C:\\Users\\Katsu\\source\\repos\\NeoWPF\\tools\\registered_xaml_types.txt"
+Total registered types: 22
+
+[1]
+  TagName: Application
+  CppTypeName: NeoWPF::Core::Application
+  HeaderPath: NeoWPF/Core/Application/Application.h
+  TypeHash: 7493023181989056871
+  ContentPropertyName: <empty>
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 2
+
+[2]
+  TagName: Border
+  CppTypeName: NeoWPF::UI::Border
+  HeaderPath: NeoWPF/UI/Layout/Border/Border.h
+  TypeHash: 16530632322003105091
+  ContentPropertyName: Content
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[3]
+  TagName: Button
+  CppTypeName: NeoWPF::UI::Button
+  HeaderPath: NeoWPF/UI/Controls/Button/Button.h
+  TypeHash: 2735622737902686416
+  ContentPropertyName: <empty>
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[4]
+  TagName: Checkbox
+  CppTypeName: NeoWPF::UI::Checkbox
+  HeaderPath: NeoWPF/UI/Controls/Checkbox/Checkbox.h
+  TypeHash: 7022265358413616796
+  ContentPropertyName: <empty>
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[5]
+  TagName: ColumnDefinition
+  CppTypeName: NeoWPF::UI::ColumnDefinition
+  HeaderPath: NeoWPF/UI/Layout/Grid/ColumnDefinition.h
+  TypeHash: 1780070387015645308
+  ContentPropertyName: <empty>
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[6]
+  TagName: ContentControl
+  CppTypeName: NeoWPF::UI::Content::ContentControl
+  HeaderPath: NeoWPF/UI/Content/ContentControl.h
+  TypeHash: 12657854056185590922
+  ContentPropertyName: Content
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[7]
+  TagName: FrameworkElement
+  CppTypeName: NeoWPF::UI::FrameworkElement
+  HeaderPath: NeoWPF/UI/Core/Element/FrameworkElement.h
+  TypeHash: 9958377916880798898
+  ContentPropertyName: <empty>
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[8]
+  TagName: Grid
+  CppTypeName: NeoWPF::UI::Grid
+  HeaderPath: NeoWPF/UI/Layout/Grid/Grid.h
+  TypeHash: 6723724267216169202
+  ContentPropertyName: Children
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[9]
+  TagName: ItemsControl
+  CppTypeName: NeoWPF::UI::ItemsControl
+  HeaderPath: NeoWPF/UI/Controls/ItemsControl/ItemsControl.h
+  TypeHash: 4069316293890196028
+  ContentPropertyName: <empty>
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[10]
+  TagName: ListBox
+  CppTypeName: NeoWPF::UI::ListBox
+  HeaderPath: NeoWPF/UI/Controls/ListBox/ListBox.h
+  TypeHash: 967961460743711788
+  ContentPropertyName: <empty>
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[11]
+  TagName: ListBoxItem
+  CppTypeName: NeoWPF::UI::ListBoxItem
+  HeaderPath: NeoWPF/UI/Controls/ListBox/ListBox.h
+  TypeHash: 11988201208174890949
+  ContentPropertyName: Content
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[12]
+  TagName: Panel
+  CppTypeName: NeoWPF::UI::Panel
+  HeaderPath: NeoWPF/UI/Layout/Panel/Panel.h
+  TypeHash: 15538744416886645654
+  ContentPropertyName: Children
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[13]
+  TagName: RowDefinition
+  CppTypeName: NeoWPF::UI::RowDefinition
+  HeaderPath: NeoWPF/UI/Layout/Grid/RowDefinition.h
+  TypeHash: 77157344455196583
+  ContentPropertyName: <empty>
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[14]
+  TagName: ScrollBar
+  CppTypeName: NeoWPF::UI::ScrollBar
+  HeaderPath: NeoWPF/UI/Controls/ScrollBar/ScrollBar.h
+  TypeHash: 7243401812455564720
+  ContentPropertyName: <empty>
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[15]
+  TagName: Selector
+  CppTypeName: NeoWPF::UI::Selector
+  HeaderPath: NeoWPF/UI/Controls/Selector/Selector.h
+  TypeHash: 11841085956517809019
+  ContentPropertyName: <empty>
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[16]
+  TagName: Setter
+  CppTypeName: NeoWPF::UI::Styling::Triggers::Setter
+  HeaderPath: NeoWPF/UI/Styling/Triggers/Setter.h
+  TypeHash: 8988420624200848721
+  ContentPropertyName: <empty>
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[17]
+  TagName: StackPanel
+  CppTypeName: NeoWPF::UI::StackPanel
+  HeaderPath: NeoWPF/UI/Layout/Panel/StackPanel.h
+  TypeHash: 2413695147203667530
+  ContentPropertyName: Children
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[18]
+  TagName: Style
+  CppTypeName: NeoWPF::UI::Styling::Style
+  HeaderPath: NeoWPF/UI/Styling/Style.h
+  TypeHash: 16449517433821478532
+  ContentPropertyName: Setters
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[19]
+  TagName: TextBlock
+  CppTypeName: NeoWPF::UI::TextBlock
+  HeaderPath: NeoWPF/UI/Controls/Text/TextBlock.h
+  TypeHash: 14012908991156745287
+  ContentPropertyName: <empty>
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[20]
+  TagName: TextBox
+  CppTypeName: NeoWPF::UI::TextBox
+  HeaderPath: NeoWPF/UI/Controls/TextBox/TextBox.h
+  TypeHash: 9017979327838287439
+  ContentPropertyName: <empty>
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[21]
+  TagName: UIElement
+  CppTypeName: NeoWPF::UI::UIElement
+  HeaderPath: NeoWPF/UI/Core/Element/UIElement.h
+  TypeHash: 4765680038067941872
+  ContentPropertyName: <empty>
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 0
+
+[22]
+  TagName: Window
+  CppTypeName: NeoWPF::UI::Window
+  HeaderPath: NeoWPF/UI/Controls/Window.h
+  TypeHash: 4911241223408293217
+  ContentPropertyName: Content
+  DeferContentBuild: false
+  FactoryPresent: true
+  Role: 1
+

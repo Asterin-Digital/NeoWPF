@@ -10,7 +10,7 @@ public:
     ListBox();
     ~ListBox() override;
 
-    void AddItem(const std::shared_ptr<FrameworkElement>& item);
+    void AddItem(std::shared_ptr<FrameworkElement> item) override;
     void SetItems(const std::vector<std::shared_ptr<FrameworkElement>>& items);
 
     std::shared_ptr<FrameworkElement> GetContainerForItem(const std::any& data, int index) override;

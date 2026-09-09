@@ -103,6 +103,24 @@ TEST(XamlRegistrationTests, BuiltInTypesExposeCodeGenerationMetadata)
     NeoWPF::Core::Application::Shutdown();
 }
 
+TEST(XamlParserTests, ParsesTextContentOnListBoxItem)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
+        <ListBox>
+            <ListBoxItem Content="Alpha" />
+            <ListBoxItem Content="Bravo" />
+        </ListBox>
+    )");
+    ASSERT_EQ(root.size(), 1u);
+
+    const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
+    ASSERT_NE(tree, nullptr);
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
 TEST(XamlMarkupExtensionTests, ParsesRegisteredBindingExtension)
 {
     NeoWPF::Core::Application::Initialize();

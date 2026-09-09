@@ -5,6 +5,7 @@
 #include <NeoWPF/UI/Data/BindingOperations.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 #include <stdexcept>
 
@@ -98,6 +99,11 @@ const NeoWPF::UI::Markup::Xaml::XamlPropertyBinding* DependencyProperty::GetXaml
 
 bool DependencyProperty::TryParseValue(const std::string& rawValue, std::any& parsedValue) const
 {
+    if (m_propertyType == typeid(std::any) && !m_metadata.Converter) {
+        parsedValue = rawValue;
+        return true;
+    } /////////////////////////
+
     if (m_metadata.Converter) {
         return m_metadata.Converter->ConvertFromString(rawValue, parsedValue);
     }
@@ -435,6 +441,11 @@ std::any DependencyObject::GetRawValue(const DependencyProperty& property) const
 
 void DependencyObject::SetValue(const DependencyProperty& property, const std::any& value)
 {
+    std::any convertedValue;
+    if (Properties::TryConvertValue(property, value, convertedValue)) {
+        SetValueInternal(property, std::move(convertedValue), PropertyValueSource::Local);
+        return;
+    }
     SetValueInternal(property, value, PropertyValueSource::Local);
 }
 

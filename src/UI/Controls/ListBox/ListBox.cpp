@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Controls/ListBox/ListBox.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 
 namespace NeoWPF::UI {
 
@@ -39,18 +40,37 @@ void AddSelectionHandlerToItem(ListBox* owner, const std::shared_ptr<FrameworkEl
 }
 }
 
-ListBox::ListBox() = default;
-
-ListBox::~ListBox() = default;
-
-void ListBox::AddItem(const std::shared_ptr<FrameworkElement>& item)
+ListBox::ListBox()
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,
+        NeoWPF::Diagnostics::Level::Trace, "[ListBox] Constructed listBox=%p", this);
+}
+
+ListBox::~ListBox()
+{
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,
+        NeoWPF::Diagnostics::Level::Trace, "[ListBox] Destroyed listBox=%p", this);
+}
+
+void ListBox::AddItem(std::shared_ptr<FrameworkElement> item)
+{
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ListBox] AddItem listBox=%p item=%p beforeCount=%zu parent=%p",
+        this, item.get(), GetItems().size(), item ? item->GetParent() : nullptr);
     AddSelectionHandlerToItem(this, item);
     ItemsControl::AddItem(item);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ListBox] AddItem complete listBox=%p item=%p afterCount=%zu parent=%p",
+        this, item.get(), GetItems().size(), item ? item->GetParent() : nullptr);
 }
 
 void ListBox::SetItems(const std::vector<std::shared_ptr<FrameworkElement>>& items)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ListBox] SetItems listBox=%p count=%zu", this, items.size());
     for (const auto& item : items) {
         AddSelectionHandlerToItem(this, item);
     }
@@ -59,7 +79,10 @@ void ListBox::SetItems(const std::vector<std::shared_ptr<FrameworkElement>>& ite
 
 std::shared_ptr<FrameworkElement> ListBox::GetContainerForItem(const std::any& data, int index)
 {
-    (void)index;
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ListBox] GetContainerForItem listBox=%p index=%d dataType=%s",
+        this, index, data.has_value() ? data.type().name() : "null");
     auto container = std::make_shared<ListBoxItem>();
     container->SetDataContext(data);
     AddSelectionHandlerToItem(this, container);
@@ -70,6 +93,10 @@ void ListBox::PrepareContainer(const std::shared_ptr<FrameworkElement>& containe
                                const std::any& data,
                                int index)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ListBox] PrepareContainer listBox=%p index=%d container=%p dataType=%s",
+        this, index, container.get(), data.has_value() ? data.type().name() : "null");
     if (!container) {
         return;
     }
@@ -86,6 +113,10 @@ void ListBox::PrepareContainer(const std::shared_ptr<FrameworkElement>& containe
 
 void ListBox::OnSelectionChanged(int oldIndex, int newIndex, const std::any& oldItem, const std::any& newItem)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ListBox] OnSelectionChanged listBox=%p oldIndex=%d newIndex=%d itemCount=%zu",
+        this, oldIndex, newIndex, GetItems().size());
     (void)oldIndex;
     (void)newIndex;
     (void)oldItem;

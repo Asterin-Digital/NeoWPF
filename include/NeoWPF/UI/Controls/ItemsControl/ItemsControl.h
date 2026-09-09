@@ -24,6 +24,10 @@ namespace NeoWPF::UI {
 */
 class ItemsControl : public NeoWPF::UI::Content::ContentControl, public Layout::Scrolling::IScrollInfo {
 public:
+    using ItemCollection = std::vector<std::shared_ptr<FrameworkElement>>;
+
+    static const Properties::DependencyProperty& ItemsProperty();
+
     ItemsControl();
 
     ~ItemsControl();
@@ -44,7 +48,7 @@ public:
         @param item
         The item to add.
     */
-    void AddItem(const std::shared_ptr<FrameworkElement>& item);
+    virtual void AddItem(std::shared_ptr<FrameworkElement> item);
 
     /*
         @summary
@@ -109,6 +113,8 @@ public:
         Returns the current collection of items.
     */
     const std::vector<std::shared_ptr<FrameworkElement>>& GetItems() const noexcept { return m_items; }
+    const ItemCollection& GetItemsValue() const noexcept { return m_items; }
+    void SetItemsValue(const ItemCollection& items) { SetItems(items); }
 
     int GetItemCount() const noexcept { return static_cast<int>(m_hasItemsSource ? m_itemsSource.size() : m_items.size()); }
 

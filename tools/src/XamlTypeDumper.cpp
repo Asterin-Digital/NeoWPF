@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
+#include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 #include <algorithm>
 #include <filesystem>
@@ -19,6 +20,8 @@ int main(int argc, char** argv) {
             return 0;
         }
     }
+
+    NeoWPF::UI::Properties::RegisterCoreControlProperties();
 
     auto registeredTypes = NeoWPF::UI::Markup::Xaml::XamlTypeRegistry::Get().GetRegisteredTypes();
     std::sort(registeredTypes.begin(), registeredTypes.end(),

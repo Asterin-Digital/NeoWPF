@@ -5,6 +5,7 @@ string(STRIP "${NEOWPF_VERSION}" NEOWPF_VERSION)
 if(NOT NEOWPF_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
     message(FATAL_ERROR "NeoWPFVersion.txt must contain a semantic version")
 endif()
+string(TIMESTAMP NEOWPF_BUILD_TIME "%Y-%m-%d %H:%M:%S UTC" UTC)
 project(NeoWPF VERSION "${NEOWPF_VERSION}" LANGUAGES CXX)
 
 include(CTest)
@@ -265,6 +266,9 @@ target_include_directories(NeoWPF.Foundation
 target_compile_definitions(NeoWPF.Foundation
     PUBLIC
         NEOWPF_ENABLE_CONTROL_STYLES=$<BOOL:${APPLY_CONTROL_STYLES}>
+    NEOWPF_VERSION_STRING="${PROJECT_VERSION}"
+    NEOWPF_BUILD_TIME="${NEOWPF_BUILD_TIME}"
+    NEOWPF_BUILD_CONFIGURATION="$<CONFIG>"
 )
 
 neowpf_add_xaml(
@@ -304,6 +308,20 @@ neowpf_add_xaml(
 )
 neowpf_add_xaml(
     NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ListBox/Visual/ListBoxStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated
+    COMPONENT ListBoxStyles
+    PUBLIC_HEADER NeoWPF/UI/Controls/ListBoxStyles.h
+)
+neowpf_add_xaml(
+    NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ListBox/Visual/ListBoxItemStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated
+    COMPONENT ListBoxItemStyles
+    PUBLIC_HEADER NeoWPF/UI/Controls/ListBoxItemStyles.h
+)
+neowpf_add_xaml(
+    NeoWPF.Foundation
     "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Layout/Border/Visual/BorderStyles.xaml"
     NAMESPACE NeoWPF::UI::Generated
     COMPONENT BorderStyles
@@ -335,6 +353,12 @@ file(GENERATE OUTPUT "${NEOWPF_STYLE_UMBRELLA}" CONTENT [=[
 #endif
 #if __has_include(<NeoWPF/UI/Controls/TextBoxStyles.h>)
 #include <NeoWPF/UI/Controls/TextBoxStyles.h>
+#endif
+#if __has_include(<NeoWPF/UI/Controls/ListBoxStyles.h>)
+#include <NeoWPF/UI/Controls/ListBoxStyles.h>
+#endif
+#if __has_include(<NeoWPF/UI/Controls/ListBoxItemStyles.h>)
+#include <NeoWPF/UI/Controls/ListBoxItemStyles.h>
 #endif
 #if __has_include(<NeoWPF/UI/Layout/BorderStyles.h>)
 #include <NeoWPF/UI/Layout/BorderStyles.h>

@@ -63,8 +63,16 @@ void ContentPresenter::RebuildContentElement()
 
     try {
         m_contentElement = std::any_cast<std::shared_ptr<NeoWPF::UI::UIElement>>(m_content);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[ContentPresenter] Resolved content to UIElement=%p",
+            m_contentElement.get());
         return;
     } catch (const std::bad_any_cast&) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[ContentPresenter] Content has no UIElement representation type=%s",
+            m_content.type().name());
     }
 
 }

@@ -2,6 +2,7 @@
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <unordered_map>
@@ -23,13 +24,20 @@ const NeoWPF::UI::Properties::DependencyProperty& ContentControl::ContentPropert
         ContentControl, std::any>("Content", [] {
             NeoWPF::UI::Properties::PropertyMetadata metadata;
             metadata.DefaultValue = std::any{};
+            metadata.Converter = NeoWPF::UI::Properties::GetContentConverter();
             metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure |
                 NeoWPF::UI::Properties::PropertyFlags::AffectsArrange |
                 NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
             metadata.PropertyChangedCallback = [](NeoWPF::UI::Properties::DependencyObject* sender,
                                                   const NeoWPF::UI::Properties::DependencyPropertyChangedEventArgs& args) {
                 if (auto owner = dynamic_cast<ContentControl*>(sender)) {
-                    owner->SetContentData(args.NewValue);
+                    std::any convertedValue;
+                    if (NeoWPF::UI::Properties::TryConvertValue(
+                            ContentProperty(), args.NewValue, convertedValue)) {
+                        owner->SetContentData(convertedValue);
+                    } else {
+                        owner->SetContentData(args.NewValue);
+                    }
                 }
             };
             return metadata;

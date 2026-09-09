@@ -22,6 +22,13 @@ std::shared_ptr<Application> Application::s_current = nullptr;
 void Application::Initialize()
 {
     NEO_WPF_STARTUP_ACTION("Application.Initialize");
+    NeoWPF::Diagnostics::Log(
+        NeoWPF::Diagnostics::Category::Application,
+        NeoWPF::Diagnostics::Level::Info,
+        "NeoWPF\nVersion: %s\nBuilt at: %s\nConfiguration: %s",
+        NEOWPF_VERSION_STRING,
+        NEOWPF_BUILD_TIME,
+        NEOWPF_BUILD_CONFIGURATION);
     if (!NeoWPF::Platform::HasPlatform()) {
         NeoWPF::Platform::RegisterPlatform(NeoWPF::Platform::CreateDefaultPlatform());
     }

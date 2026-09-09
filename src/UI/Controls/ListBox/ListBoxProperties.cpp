@@ -21,7 +21,7 @@ namespace NeoWPF::UI::Properties {
 void RegisterListBoxProperties()
 {
     NeoWPF::UI::Markup::Xaml::RegisterXamlType<UI::ListBox>(
-        "ListBox", "", "NeoWPF::UI::ListBox", "NeoWPF/UI/Controls/ListBox/ListBox.h");
+        "ListBox", "Items", "NeoWPF::UI::ListBox", "NeoWPF/UI/Controls/ListBox/ListBox.h");
 }
 
 void RegisterListBoxItemProperties()
@@ -32,7 +32,7 @@ void RegisterListBoxItemProperties()
         &UI::ListBoxItem::SetIsSelected,
         MakeListBoxItemIsSelectedMetadata());
     NeoWPF::UI::Markup::Xaml::RegisterXamlType<UI::ListBoxItem>(
-        "ListBoxItem", "", "NeoWPF::UI::ListBoxItem", "NeoWPF/UI/Controls/ListBox/ListBox.h");
+        "ListBoxItem", "Content", "NeoWPF::UI::ListBoxItem", "NeoWPF/UI/Controls/ListBox/ListBox.h");
 }
 
 }

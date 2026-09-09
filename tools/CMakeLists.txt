@@ -14,22 +14,25 @@ set_property(CACHE NEOWPF_PLATFORM PROPERTY STRINGS Windows Linux)
 set(NEOWPF_CONFIG "Debug" CACHE STRING "NeoWPF build config to link against")
 set_property(CACHE NEOWPF_CONFIG PROPERTY STRINGS Debug Release RelWithDebInfo MinSizeRel)
 
+file(READ "${NEOWPF_ROOT}/NeoWPFVersion.txt" NEOWPF_VERSION_RAW)
+string(STRIP "${NEOWPF_VERSION_RAW}" NEOWPF_VERSION)
+
 if(NEOWPF_PLATFORM STREQUAL "Windows")
-    set(NEOWPF_LIBRARY_PATH "${NEOWPF_ROOT}/NWpfBuild/Windows/${NEOWPF_CONFIG}/NeoWPF.lib")
+    set(NEOWPF_LIBRARY_PATH "${NEOWPF_ROOT}/NWpfBuild/Windows/${NEOWPF_CONFIG}/NeoWPF.${NEOWPF_PLATFORM}.${NEOWPF_CONFIG}.${NEOWPF_VERSION}.lib")
 elseif(NEOWPF_PLATFORM STREQUAL "Linux")
-    set(NEOWPF_LIBRARY_PATH "${NEOWPF_ROOT}/NWpfBuild/Linux/${NEOWPF_CONFIG}/libNeoWPF.a")
+    set(NEOWPF_LIBRARY_PATH "${NEOWPF_ROOT}/NWpfBuild/Linux/${NEOWPF_CONFIG}/NeoWPF.${NEOWPF_PLATFORM}.${NEOWPF_CONFIG}.${NEOWPF_VERSION}.a")
 else()
     message(FATAL_ERROR "Unsupported NEOWPF_PLATFORM value: ${NEOWPF_PLATFORM}. Use Windows or Linux.")
 endif()
 
 if(NOT EXISTS "${NEOWPF_LIBRARY_PATH}")
     message(FATAL_ERROR
-        "NeoWPF prebuilt library not found for ${NEOWPF_PLATFORM}/${NEOWPF_CONFIG}: ${NEOWPF_LIBRARY_PATH}. "
+        "NeoWPF versioned library not found for ${NEOWPF_PLATFORM}/${NEOWPF_CONFIG}: ${NEOWPF_LIBRARY_PATH}. "
         "Build NeoWPF first or point NEOWPF_CONFIG to an existing config."
     )
 endif()
 
-message(STATUS "Linking NeoWpfXamlTypeDumper against ${NEOWPF_LIBRARY_PATH}")
+message(STATUS "Linking NeoWpfXamlTypeDumper against versioned artifact: ${NEOWPF_LIBRARY_PATH}")
 
 add_executable(NeoWpfXamlTypeDumper src/XamlTypeDumper.cpp)
 target_include_directories(NeoWpfXamlTypeDumper PRIVATE

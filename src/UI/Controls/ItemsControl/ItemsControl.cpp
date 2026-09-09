@@ -98,7 +98,7 @@ void ItemsControl::SetItems(const std::vector<std::shared_ptr<FrameworkElement>>
     InvalidateVisual();
 }
 
-void ItemsControl::AddItem(const std::shared_ptr<FrameworkElement>& item)
+void ItemsControl::AddItem(std::shared_ptr<FrameworkElement> item)
 {
     if (item && !m_hasItemsSource) {
         m_items.push_back(item);

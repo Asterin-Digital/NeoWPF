@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
+#include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Core/Media/Thickness.h>
 #include <NeoWPF/UI/Core/Media/Spacing.h>
@@ -80,6 +81,20 @@ bool StringConverter::ConvertFromString(const std::string& rawValue, std::any& c
 bool StringConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
 {
     expression = EscapeLiteral(rawValue, false);
+    return true;
+}
+
+bool ContentConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+{
+    std::shared_ptr<NeoWPF::UI::UIElement> textElement =
+        std::make_shared<NeoWPF::UI::TextBlock>(NeoWPF::Platform::Utf8ToWide(rawValue));
+    convertedValue = std::move(textElement);
+    return true;
+}
+
+bool ContentConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    expression = "std::string(" + EscapeLiteral(rawValue, false) + ")";
     return true;
 }
 
@@ -346,6 +361,7 @@ std::shared_ptr<const TypeConverter> Get##Name##Converter() \
 }
 
 DEFINE_CONVERTER_FACTORY(String, StringConverter)
+DEFINE_CONVERTER_FACTORY(Content, ContentConverter)
 DEFINE_CONVERTER_FACTORY(WideString, WideStringConverter)
 DEFINE_CONVERTER_FACTORY(Int, IntConverter)
 DEFINE_CONVERTER_FACTORY(Float, FloatConverter)
@@ -373,6 +389,13 @@ bool TryConvertValue(const DependencyProperty& property,
         return true;
     }
 
+    if (property.GetPropertyType() == typeid(std::any) &&
+        value.type() != typeid(std::wstring) &&
+        value.type() != typeid(std::string)) {
+        convertedValue = value;
+        return true;
+    }
+
     std::string text;
     if (value.type() == typeid(std::wstring)) {
         text = NeoWPF::Platform::WideToUtf8(std::any_cast<std::wstring>(value));
@@ -383,7 +406,8 @@ bool TryConvertValue(const DependencyProperty& property,
     }
 
     if (!property.TryParseValue(text, convertedValue) ||
-        convertedValue.type() != property.GetPropertyType()) {
+        (property.GetPropertyType() != typeid(std::any) &&
+         convertedValue.type() != property.GetPropertyType())) {
         convertedValue.reset();
         return false;
     }

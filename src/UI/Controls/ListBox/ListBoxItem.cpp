@@ -1,5 +1,7 @@
 #include <NeoWPF/UI/Controls/ListBox/ListBox.h>
+#include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 #include <algorithm>
@@ -8,6 +10,10 @@ namespace NeoWPF::UI {
 
 ListBoxItem::ListBoxItem()
 {
+    SetPresenter(std::make_shared<NeoWPF::UI::Content::ContentPresenter>());
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ListBoxItem] Constructed item=%p presenter=%p", this, GetPresenter().get());
 }
 
 ListBoxItem::~ListBoxItem() = default;
@@ -15,6 +21,9 @@ ListBoxItem::~ListBoxItem() = default;
 void ListBoxItem::SetOwner(ListBox* owner) noexcept
 {
     m_owner = owner;
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ListBoxItem] SetOwner item=%p owner=%p parent=%p", this, owner, GetParent());
 }
 
 ListBox* ListBoxItem::GetOwner() const noexcept
@@ -48,6 +57,14 @@ void ListBoxItem::OnMouseUp(int x, int y, std::uint32_t buttonState)
 
 void ListBoxItem::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
+    const auto before = commands.commands.size();
+    const auto content = GetContentElement();
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ListBoxItem] BuildRenderCommands item=%p parent=%p presenter=%p presenterParent=%p content=%p contentParent=%p bounds=%dx%d selected=%d commandsBefore=%zu",
+        this, GetParent(), GetPresenter().get(), GetPresenter() ? GetPresenter()->GetParent() : nullptr,
+        content.get(), content ? content->GetParent() : nullptr,
+        GetFinalWidth(), GetFinalHeight(), GetIsSelected(), before);
     if (GetIsSelected()) {
         int absoluteX = 0;
         int absoluteY = 0;
@@ -86,6 +103,10 @@ void ListBoxItem::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
 
     Content::ContentControl::BuildRenderCommands(commands);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ListBoxItem] BuildRenderCommands complete item=%p commandsAfter=%zu added=%zu",
+        this, commands.commands.size(), commands.commands.size() - before);
 }
 
 }
