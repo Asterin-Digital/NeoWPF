@@ -60,6 +60,20 @@ public:
 
     /*
         @summary
+        Sets the parent of this visual.
+
+        @param parent
+        The new parent to assign, or nullptr to detach this visual from its current parent.
+
+        @internal
+    */
+    void SetParent(Visual* parent) noexcept {
+        std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
+        m_parent = parent;
+    }
+
+    /*
+        @summary
         Returns the visual children attached to this node.
 
         @internal

@@ -80,7 +80,7 @@ bool BuildXamlResourceDictionary(
             if (style && style->GetTargetType() != std::type_index(typeid(void))) {
                 if (!localImplicitTypes.insert(style->GetTargetType()).second) {
                     NeoWPF::Diagnostics::QueueDeveloperWarning(
-                        L"XAML_RESOURCE_KEY",
+                        NeoWPF::Diagnostics::DeveloperWarnings::kXamlResourceKeyCode,
                         L"Duplicate implicit style target type",
                         NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
                     continue;
@@ -89,7 +89,7 @@ bool BuildXamlResourceDictionary(
                 continue;
             }
             NeoWPF::Diagnostics::QueueDeveloperWarning(
-                L"XAML_RESOURCE_KEY",
+                NeoWPF::Diagnostics::DeveloperWarnings::kXamlResourceKeyCode,
                 L"Resource dictionary entry is missing x:Key",
                 NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
             continue;
@@ -97,7 +97,7 @@ bool BuildXamlResourceDictionary(
 
         if (!localKeys.insert(entry.XamlKey).second) {
             NeoWPF::Diagnostics::QueueDeveloperWarning(
-                L"XAML_RESOURCE_KEY",
+                NeoWPF::Diagnostics::DeveloperWarnings::kXamlResourceKeyCode,
                 L"Duplicate resource key: " + ToWideString(entry.XamlKey),
                 NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
             continue;

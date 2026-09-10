@@ -16,6 +16,10 @@ namespace NeoWPF::UI {
         class BindingExpression;
         class BindingOperations;
     }
+    namespace Localization {
+        class LocaleExpression;
+        class LocaleOperations;
+    }
 }
 
 namespace NeoWPF::UI::Properties {
@@ -261,6 +265,7 @@ namespace NeoWPF::UI::Properties {
         std::any GetRawValueNoLock(const DependencyProperty& property) const;
         friend class ::NeoWPF::UI::Data::BindingOperations;
         friend class ::NeoWPF::UI::Data::BindingExpression;
+        friend class ::NeoWPF::UI::Localization::LocaleOperations;
 
         static std::optional<std::any> FindRawValue(const DependencyObject* obj,
                                                     const DependencyProperty& property);
@@ -269,6 +274,19 @@ namespace NeoWPF::UI::Properties {
                                   std::shared_ptr<::NeoWPF::UI::Data::BindingExpression> expression);
         std::shared_ptr<::NeoWPF::UI::Data::BindingExpression> GetBindingExpression(const DependencyProperty& property) const;
         void ClearBindingExpression(const DependencyProperty& property);
+
+        void SetLocaleExpression(
+            const DependencyProperty& property,
+            std::shared_ptr<::NeoWPF::UI::Localization::LocaleExpression> expression);
+        std::shared_ptr<::NeoWPF::UI::Localization::LocaleExpression> GetLocaleExpression(
+            const DependencyProperty& property) const;
+        void ClearLocaleExpression(const DependencyProperty& property);
+        void ClearLocaleExpressionValue(const DependencyProperty& property);
+
+        void NotifyDependencyPropertyChanged(const DependencyProperty& property,
+                              const std::any& oldValue,
+                              const std::any& newValue,
+                              PropertyValueSource source);
 
         std::size_t AddDependencyPropertyChangedHandler(const DependencyProperty& property,
                                                         std::function<void(const std::any&, const std::any&)> handler);
@@ -285,6 +303,7 @@ namespace NeoWPF::UI::Properties {
         std::unordered_map<const DependencyProperty*, std::unordered_map<std::size_t, std::function<void(const std::any&, const std::any&)>>> m_dependencyPropertyChangedHandlers;
         std::size_t m_nextDependencyPropertyChangedHandlerId = 1;
         std::unordered_map<const DependencyProperty*, std::shared_ptr<::NeoWPF::UI::Data::BindingExpression>> m_bindingExpressions;
+        std::unordered_map<const DependencyProperty*, std::shared_ptr<::NeoWPF::UI::Localization::LocaleExpression>> m_localeExpressions;
     };
 
     template<typename T>

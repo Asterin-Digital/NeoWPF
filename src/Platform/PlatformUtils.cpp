@@ -1,6 +1,7 @@
 #include <NeoWPF/Platform/PlatformUtils.h>
 
 #include <algorithm>
+#include <cwctype>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -33,6 +34,33 @@ std::string ToLower(std::string value)
         return static_cast<char>(std::tolower(ch));
     });
     return value;
+}
+
+std::wstring ToLower(std::wstring value)
+{
+    std::transform(value.begin(), value.end(), value.begin(), [](wchar_t character) {
+        return static_cast<wchar_t>(std::towlower(character));
+    });
+    return value;
+}
+
+std::wstring ToUpper(std::wstring value)
+{
+    std::transform(value.begin(), value.end(), value.begin(), [](wchar_t character) {
+        return static_cast<wchar_t>(std::towupper(character));
+    });
+    return value;
+}
+
+bool IsAsciiAlpha(wchar_t character) noexcept
+{
+    return (character >= L'a' && character <= L'z') ||
+           (character >= L'A' && character <= L'Z');
+}
+
+bool IsAsciiDigit(wchar_t character) noexcept
+{
+    return character >= L'0' && character <= L'9';
 }
 
 std::vector<std::string> Split(const std::string& value, char delimiter)

@@ -17,6 +17,7 @@ const char* ToString(NamlValueKind kind)
     case NamlValueKind::Boolean: return "boolean";
     case NamlValueKind::Null: return "null";
     case NamlValueKind::MarkupExtension: return "markup-extension";
+    case NamlValueKind::LocaleReference: return "locale-reference";
     }
     return "unknown";
 }
@@ -101,6 +102,7 @@ bool ParseKind(std::string_view value, NamlValueKind& kind)
     else if (value == "boolean") kind = NamlValueKind::Boolean;
     else if (value == "null") kind = NamlValueKind::Null;
     else if (value == "markup-extension") kind = NamlValueKind::MarkupExtension;
+    else if (value == "locale-reference") kind = NamlValueKind::LocaleReference;
     else return false;
     return true;
 }
@@ -112,7 +114,9 @@ bool ParseRecord(std::string_view line, std::string_view section, NamlArtifact& 
 
     if (section.empty() && trimmed.rfind("version=", 0) == 0) {
         std::uint32_t version = 0;
-        if (!ParseUnsigned(trimmed.substr(8), version) || version != NamlArtifact::CurrentVersion) {
+        if (!ParseUnsigned(trimmed.substr(8), version) ||
+            version < NamlArtifact::MinimumSupportedVersion ||
+            version > NamlArtifact::CurrentVersion) {
             error = "unsupported NAML version";
             return false;
         }
@@ -179,6 +183,43 @@ bool ParseRecord(std::string_view line, std::string_view section, NamlArtifact& 
         return true;
     }
 
+    if (section == "locale-references") {
+        NamlLocaleReferenceRecord reference;
+        if (!ParseUnsigned(Field(trimmed, "object"), reference.objectId) ||
+            !ParseUnsigned(Field(trimmed, "property"), reference.propertyString) ||
+            !QuotedValue(trimmed, "key=", reference.key) || reference.key.empty()) {
+            error = "malformed NAML locale reference record";
+            return false;
+        }
+        artifact.localeReferences.push_back(std::move(reference));
+        return true;
+    }
+
+    if (section == "locale-tables") {
+        NamlLocaleTableRecord table;
+        if (!ParseUnsigned(Field(trimmed, "id"), table.id) ||
+            !ParseUnsigned(Field(trimmed, "object"), table.objectId) ||
+            !QuotedValue(trimmed, "culture=", table.culture) || table.culture.empty()) {
+            error = "malformed NAML locale table record";
+            return false;
+        }
+        if (artifact.localeTables.size() <= table.id) artifact.localeTables.resize(table.id + 1);
+        artifact.localeTables[table.id] = std::move(table);
+        return true;
+    }
+
+    if (section == "locale-strings") {
+        NamlLocaleStringRecord string;
+        if (!ParseUnsigned(Field(trimmed, "table"), string.tableId) ||
+            !QuotedValue(trimmed, "key=", string.key) || string.key.empty() ||
+            !QuotedValue(trimmed, "value=", string.value)) {
+            error = "malformed NAML locale string record";
+            return false;
+        }
+        artifact.localeStrings.push_back(std::move(string));
+        return true;
+    }
+
     error = "malformed NAML record in section: " + std::string(section);
     return false;
 }
@@ -220,6 +261,21 @@ std::string SerializeNaml(const NamlArtifact& artifact)
     for (const auto& binding : artifact.bindings) {
         output << "  object=" << binding.objectId << " property=" << binding.propertyString
                << " mode=\"" << Escape(binding.mode) << "\" path=\"" << Escape(binding.path) << "\"\n";
+    }
+    output << "}\n\nlocale-references {\n";
+    for (const auto& reference : artifact.localeReferences) {
+        output << "  object=" << reference.objectId << " property=" << reference.propertyString
+               << " key=\"" << Escape(reference.key) << "\"\n";
+    }
+    output << "}\n\nlocale-tables {\n";
+    for (const auto& table : artifact.localeTables) {
+        output << "  id=" << table.id << " object=" << table.objectId
+               << " culture=\"" << Escape(table.culture) << "\"\n";
+    }
+    output << "}\n\nlocale-strings {\n";
+    for (const auto& string : artifact.localeStrings) {
+        output << "  table=" << string.tableId << " key=\"" << Escape(string.key)
+               << "\" value=\"" << Escape(string.value) << "\"\n";
     }
     output << "}\n\nend\n";
     return output.str();

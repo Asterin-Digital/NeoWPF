@@ -61,7 +61,7 @@ bool ValidateXamlRegistrations()
     for (const auto& registeredType : registeredTypes) {
         if (!registeredType.Info.Factory) {
             NeoWPF::Diagnostics::QueueDeveloperWarning(
-                L"XAML_REGISTRATION_INVALID",
+                NeoWPF::Diagnostics::DeveloperWarnings::kXamlRegistrationInvalidCode,
                 L"XAML type '" + std::wstring(registeredType.TagName.begin(), registeredType.TagName.end()) +
                     L"' has no factory.",
                 NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
@@ -73,7 +73,7 @@ bool ValidateXamlRegistrations()
         const bool hasHeaderPath = !registeredType.Info.HeaderPath.empty();
         if (!hasCppTypeName || !hasHeaderPath) {
             NeoWPF::Diagnostics::QueueDeveloperWarning(
-                L"XAML_REGISTRATION_INVALID",
+                NeoWPF::Diagnostics::DeveloperWarnings::kXamlRegistrationInvalidCode,
                 L"XAML type '" + std::wstring(registeredType.TagName.begin(), registeredType.TagName.end()) +
                     L"' must provide both C++ type and header metadata.",
                 NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
@@ -83,7 +83,7 @@ bool ValidateXamlRegistrations()
         const auto object = registeredType.Info.Factory();
         if (!object) {
             NeoWPF::Diagnostics::QueueDeveloperWarning(
-                L"XAML_REGISTRATION_INVALID",
+                NeoWPF::Diagnostics::DeveloperWarnings::kXamlRegistrationInvalidCode,
                 L"XAML type '" + std::wstring(registeredType.TagName.begin(), registeredType.TagName.end()) +
                     L"' factory returned null.",
                 NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
@@ -93,7 +93,7 @@ bool ValidateXamlRegistrations()
 
         if (propertyRegistry.GetPropertiesFor(*object).empty()) {
             NeoWPF::Diagnostics::QueueDeveloperWarning(
-                L"XAML_REGISTRATION_INVALID",
+                NeoWPF::Diagnostics::DeveloperWarnings::kXamlRegistrationInvalidCode,
                 L"XAML type '" + std::wstring(registeredType.TagName.begin(), registeredType.TagName.end()) +
                     L"' has no registered dependency properties.",
                 NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
@@ -109,7 +109,7 @@ bool ValidateXamlRegistrations()
                 (!binding || (binding->Kind != XamlPropertyKind::Element &&
                               binding->Kind != XamlPropertyKind::Collection))) {
                 NeoWPF::Diagnostics::QueueDeveloperWarning(
-                    L"XAML_REGISTRATION_INVALID",
+                    NeoWPF::Diagnostics::DeveloperWarnings::kXamlRegistrationInvalidCode,
                     L"XAML type '" + std::wstring(registeredType.TagName.begin(), registeredType.TagName.end()) +
                         L"' content property '" +
                         std::wstring(registeredType.Info.ContentPropertyName.begin(), registeredType.Info.ContentPropertyName.end()) +

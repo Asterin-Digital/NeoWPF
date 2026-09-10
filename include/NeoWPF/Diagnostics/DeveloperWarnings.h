@@ -106,6 +106,78 @@ struct DeveloperWarnings {
         Triggered when a grid child cannot be measured because it is not a FrameworkElement.
     */
     static constexpr const wchar_t* kGridChildTypeMismatchCode = L"NEO-UI207";
+
+    /*
+        @summary
+        XAML property not found warning code.
+
+        @devwarn NEO-XAML101 XAML property not found.
+        Triggered when XAML names an attribute or property element that the object does not expose.
+    */
+    static constexpr const wchar_t* kXamlPropertyNotFoundCode = L"NEO-XAML101";
+
+    /*
+        @summary
+        XAML markup extension warning code.
+
+        @devwarn NEO-XAML102 XAML markup extension could not be applied.
+        Triggered when a binding or other markup extension cannot be parsed or applied.
+    */
+    static constexpr const wchar_t* kXamlMarkupExtensionCode = L"NEO-XAML102";
+
+    /*
+        @summary
+        XAML type not found warning code.
+
+        @devwarn NEO-XAML103 XAML type not found.
+        Triggered when an XAML element name is not registered with the runtime type registry.
+    */
+    static constexpr const wchar_t* kXamlTypeNotFoundCode = L"NEO-XAML103";
+
+    /*
+        @summary
+        XAML namescope warning code.
+
+        @devwarn NEO-XAML104 Invalid XAML namescope entry.
+        Triggered when an x:Name value is duplicated or cannot be registered.
+    */
+    static constexpr const wchar_t* kXamlNameScopeCode = L"NEO-XAML104";
+
+    /*
+        @summary
+        XAML property binding warning code.
+
+        @devwarn NEO-XAML105 XAML property has no binding metadata.
+        Triggered when a property element has no XAML binding metadata.
+    */
+    static constexpr const wchar_t* kXamlNoBindingCode = L"NEO-XAML105";
+
+    /*
+        @summary
+        Empty XAML element property warning code.
+
+        @devwarn NEO-XAML106 Empty XAML element property.
+        Triggered when an element property does not contain its required child.
+    */
+    static constexpr const wchar_t* kXamlElementEmptyCode = L"NEO-XAML106";
+
+    /*
+        @summary
+        XAML resource key warning code.
+
+        @devwarn NEO-XAML107 Invalid XAML resource key.
+        Triggered when a resource key is missing, duplicated, or conflicts with an implicit style.
+    */
+    static constexpr const wchar_t* kXamlResourceKeyCode = L"NEO-XAML107";
+
+    /*
+        @summary
+        XAML registration warning code.
+
+        @devwarn NEO-XAML108 Invalid XAML registration.
+        Triggered when a registered XAML type is missing required factory or metadata.
+    */
+    static constexpr const wchar_t* kXamlRegistrationInvalidCode = L"NEO-XAML108";
 };
 
 enum class DeveloperWarningSeverity {

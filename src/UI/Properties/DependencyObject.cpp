@@ -3,6 +3,7 @@
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Data/BindingExpression.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
+#include <NeoWPF/UI/Localization/LocaleExpression.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
@@ -301,6 +302,7 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
     } else if (source == PropertyValueSource::Style) {
         m_styleValues[&property] = std::move(value);
     } else if (source == PropertyValueSource::Local) {
+        ClearLocaleExpression(property);
         m_localValues[&property] = std::move(value);
     } else if (source == PropertyValueSource::Expression) {
         m_expressionValues[&property] = std::move(value);
@@ -308,25 +310,8 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
         m_localValues[&property] = std::move(value);
     }
 
-    const auto& metadata = property.GetMetadata();
     const std::any newValue = GetRawValue(property);
-
-    const bool previousApplying = m_isApplyingPropertyValue;
-    m_isApplyingPropertyValue = true;
-    if (metadata.PropertyChangedCallback) {
-        DependencyPropertyChangedEventArgs args{&property, std::move(oldValue), newValue, source};
-        metadata.PropertyChangedCallback(this, args);
-    }
-    if (auto handlers = m_dependencyPropertyChangedHandlers.find(&property); handlers != m_dependencyPropertyChangedHandlers.end()) {
-        for (const auto& [id, handler] : handlers->second) {
-            if (handler) {
-                handler(oldValue, newValue);
-            }
-        }
-    }
-    m_isApplyingPropertyValue = previousApplying;
-
-    OnDependencyPropertyChanged(property, metadata, oldValue, newValue, source);
+    NotifyDependencyPropertyChanged(property, oldValue, newValue, source);
 }
 
 void DependencyObject::SetBindingExpression(const DependencyProperty& property,
@@ -351,6 +336,72 @@ void DependencyObject::ClearBindingExpression(const DependencyProperty& property
     m_bindingExpressions.erase(&property);
     m_expressionValues.erase(&property);
     m_localValues.erase(&property);
+}
+
+void DependencyObject::SetLocaleExpression(
+    const DependencyProperty& property,
+    std::shared_ptr<::NeoWPF::UI::Localization::LocaleExpression> expression)
+{
+    ClearLocaleExpression(property);
+    m_localeExpressions[&property] = std::move(expression);
+}
+
+std::shared_ptr<::NeoWPF::UI::Localization::LocaleExpression>
+DependencyObject::GetLocaleExpression(const DependencyProperty& property) const
+{
+    if (auto it = m_localeExpressions.find(&property); it != m_localeExpressions.end()) {
+        return it->second;
+    }
+    return nullptr;
+}
+
+void DependencyObject::ClearLocaleExpression(const DependencyProperty& property)
+{
+    if (auto it = m_localeExpressions.find(&property); it != m_localeExpressions.end()) {
+        if (it->second) {
+            it->second->Detach();
+        }
+        m_localeExpressions.erase(it);
+    }
+    m_expressionValues.erase(&property);
+}
+
+void DependencyObject::ClearLocaleExpressionValue(const DependencyProperty& property)
+{
+    const std::any oldValue = GetRawValue(property);
+    const bool hadExpression = m_localeExpressions.find(&property) != m_localeExpressions.end() ||
+                               m_expressionValues.find(&property) != m_expressionValues.end();
+    ClearLocaleExpression(property);
+    if (hadExpression) {
+        NotifyDependencyPropertyChanged(property,
+                                        oldValue,
+                                        GetRawValue(property),
+                                        PropertyValueSource::Expression);
+    }
+}
+
+void DependencyObject::NotifyDependencyPropertyChanged(const DependencyProperty& property,
+                                                       const std::any& oldValue,
+                                                       const std::any& newValue,
+                                                       PropertyValueSource source)
+{
+    const auto& metadata = property.GetMetadata();
+    const bool previousApplying = m_isApplyingPropertyValue;
+    m_isApplyingPropertyValue = true;
+    if (metadata.PropertyChangedCallback) {
+        DependencyPropertyChangedEventArgs args{&property, oldValue, newValue, source};
+        metadata.PropertyChangedCallback(this, args);
+    }
+    if (auto handlers = m_dependencyPropertyChangedHandlers.find(&property); handlers != m_dependencyPropertyChangedHandlers.end()) {
+        for (const auto& [id, handler] : handlers->second) {
+            (void)id;
+            if (handler) {
+                handler(oldValue, newValue);
+            }
+        }
+    }
+    m_isApplyingPropertyValue = previousApplying;
+    OnDependencyPropertyChanged(property, metadata, oldValue, newValue, source);
 }
 
 void DependencyObject::RefreshBindingExpressions()

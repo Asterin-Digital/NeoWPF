@@ -2,6 +2,8 @@
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 #include <NeoWPF/UI/Data/Binding.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
+#include <NeoWPF/UI/Localization/LocaleOperations.h>
+#include <NeoWPF/Platform/PlatformUtils.h>
 
 #include <algorithm>
 #include <cctype>
@@ -81,6 +83,33 @@ public:
 private:
     std::string m_key;
     XamlResourceResolver m_resolver;
+};
+
+class LocaleMarkupExtension final : public XamlMarkupExtension {
+public:
+    explicit LocaleMarkupExtension(std::wstring key)
+        : m_key(std::move(key))
+    {
+    }
+
+    bool Apply(NeoWPF::UI::Properties::DependencyObject& target,
+               const NeoWPF::UI::Properties::DependencyProperty& property,
+               std::string& error) const override
+    {
+        if (!NeoWPF::UI::Localization::LocaleOperations::SetLocale(target, property, m_key)) {
+            error = "Locale could not be attached to the target property";
+            return false;
+        }
+        return true;
+    }
+
+    const std::wstring& GetKey() const noexcept
+    {
+        return m_key;
+    }
+
+private:
+    std::wstring m_key;
 };
 
 std::string Trim(std::string_view value)
@@ -207,6 +236,17 @@ bool TryGetXamlStaticResource(const XamlMarkupExtension& extension, std::string&
     return true;
 }
 
+bool TryGetXamlLocaleKey(const XamlMarkupExtension& extension, std::string& outKey)
+{
+    const auto* locale = dynamic_cast<const LocaleMarkupExtension*>(&extension);
+    if (!locale) {
+        return false;
+    }
+
+    outKey = NeoWPF::Platform::WideToUtf8(locale->GetKey());
+    return !outKey.empty();
+}
+
 void RegisterXamlMarkupExtensions()
 {
     XamlMarkupExtensionRegistry::Get().Register("Binding",
@@ -273,6 +313,56 @@ void RegisterXamlMarkupExtensions()
             }
             return std::shared_ptr<XamlMarkupExtension>(
                 std::make_shared<StaticResourceMarkupExtension>(key, context.ResolveResource));
+        });
+
+    XamlMarkupExtensionRegistry::Get().Register("Locale",
+        [](std::string_view arguments,
+           const XamlMarkupExtensionContext&,
+           std::string& error) {
+            const auto trimmedArguments = Trim(arguments);
+            if (trimmedArguments.empty()) {
+                error = "Locale key is required";
+                return std::shared_ptr<XamlMarkupExtension>();
+            }
+
+            std::string key;
+            for (const auto& argument : SplitArguments(trimmedArguments)) {
+                if (argument.empty()) {
+                    error = "Locale contains an empty argument";
+                    return std::shared_ptr<XamlMarkupExtension>();
+                }
+
+                const auto equals = argument.find('=');
+                if (equals == std::string::npos) {
+                    if (!key.empty()) {
+                        error = "Locale key was specified more than once";
+                        return std::shared_ptr<XamlMarkupExtension>();
+                    }
+                    key = Trim(argument);
+                    continue;
+                }
+
+                const auto name = Trim(std::string_view(argument).substr(0, equals));
+                const auto value = Trim(std::string_view(argument).substr(equals + 1));
+                if (name != "Key" || value.empty() || !key.empty()) {
+                    error = "Locale Key is invalid or duplicated";
+                    return std::shared_ptr<XamlMarkupExtension>();
+                }
+                key = value;
+            }
+
+            if (key.empty()) {
+                error = "Locale key is required";
+                return std::shared_ptr<XamlMarkupExtension>();
+            }
+
+            const auto wideKey = NeoWPF::Platform::Utf8ToWide(key);
+            if (wideKey.empty()) {
+                error = "Locale key is not valid UTF-8";
+                return std::shared_ptr<XamlMarkupExtension>();
+            }
+            return std::shared_ptr<XamlMarkupExtension>(
+                std::make_shared<LocaleMarkupExtension>(wideKey));
         });
 }
 

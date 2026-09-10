@@ -16,6 +16,9 @@
 #include <NeoWPF/UI/Styling/Style.h>
 #include <NeoWPF/UI/Styling/Triggers/Setter.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
+#include <NeoWPF/UI/Localization/LocaleTable.h>
+#include <NeoWPF/UI/Localization/LocalizationManager.h>
+#include <NeoWPF/UI/Localization/LocaleOperations.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Markup/Xaml/Parsing/XamlParser.h>
@@ -148,6 +151,108 @@ TEST(XamlMarkupExtensionTests, RejectsInvalidBindingArguments)
         EXPECT_FALSE(error.empty()) << value;
     }
 
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlMarkupExtensionTests, ParsesLocaleExtension)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    for (const auto& value : {"{Locale Greeting}", "{Locale Key=Greeting}"}) {
+        std::string error;
+        const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
+            value, {1, 1}, error);
+
+        ASSERT_NE(extension, nullptr) << value << ": " << error;
+        std::string key;
+        ASSERT_TRUE(NeoWPF::UI::Markup::Xaml::TryGetXamlLocaleKey(*extension, key));
+        EXPECT_EQ(key, "Greeting");
+    }
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlMarkupExtensionTests, RejectsInvalidLocaleArguments)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    for (const auto& value : {
+             "{Locale}",
+             "{Locale Key=}",
+             "{Locale Key=Greeting, Key=Other}",
+             "{Locale Greeting, Other}",
+             "{Locale Unknown=Greeting}"}) {
+        std::string error;
+        const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
+            value, {1, 1}, error);
+
+        EXPECT_EQ(extension, nullptr) << value;
+        EXPECT_FALSE(error.empty()) << value;
+    }
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlRuntimeTests, LocaleExtensionUpdatesTextBlock)
+{
+    NeoWPF::Core::Application::Initialize();
+    auto& manager = NeoWPF::UI::Localization::LocalizationManager::Get();
+    manager.Clear();
+
+    NeoWPF::UI::Localization::LocaleTable english(L"en-US");
+    NeoWPF::UI::Localization::LocaleTable romanian(L"ro-RO");
+    ASSERT_TRUE(english.Add(L"Greeting", L"Hello"));
+    ASSERT_TRUE(romanian.Add(L"Greeting", L"Salut"));
+    ASSERT_TRUE(manager.RegisterTable(english));
+    ASSERT_TRUE(manager.RegisterTable(romanian));
+    ASSERT_TRUE(manager.SetActiveLocale(L"en-US"));
+
+    const auto roots = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<TextBlock Text="{Locale Greeting}" />)");
+    const auto object = NeoWPF::UI::Markup::Xaml::BuildXamlTree(roots);
+    const auto textBlock = std::dynamic_pointer_cast<NeoWPF::UI::TextBlock>(object);
+
+    ASSERT_NE(textBlock, nullptr);
+    EXPECT_EQ(textBlock->GetText(), L"Hello");
+    ASSERT_TRUE(manager.SetActiveLocale(L"ro-RO"));
+    EXPECT_EQ(textBlock->GetText(), L"Salut");
+
+    manager.Clear();
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(XamlRuntimeTests, LocaleExtensionUpdatesTextBoxAndDirectTextWins)
+{
+    NeoWPF::Core::Application::Initialize();
+    auto& manager = NeoWPF::UI::Localization::LocalizationManager::Get();
+    manager.Clear();
+
+    NeoWPF::UI::Localization::LocaleTable english(L"en-US");
+    NeoWPF::UI::Localization::LocaleTable romanian(L"ro-RO");
+    ASSERT_TRUE(english.Add(L"Greeting", L"Hello"));
+    ASSERT_TRUE(romanian.Add(L"Greeting", L"Salut"));
+    ASSERT_TRUE(manager.RegisterTable(english));
+    ASSERT_TRUE(manager.RegisterTable(romanian));
+    ASSERT_TRUE(manager.SetActiveLocale(L"en-US"));
+
+    const auto roots = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<TextBox Text="{Locale Key=Greeting}" />)");
+    const auto object = NeoWPF::UI::Markup::Xaml::BuildXamlTree(roots);
+    const auto textBox = std::dynamic_pointer_cast<NeoWPF::UI::TextBox>(object);
+
+    ASSERT_NE(textBox, nullptr);
+    EXPECT_EQ(textBox->GetText(), L"Hello");
+    ASSERT_TRUE(manager.SetActiveLocale(L"ro-RO"));
+    EXPECT_EQ(textBox->GetText(), L"Salut");
+
+    textBox->SetText(L"Custom");
+    ASSERT_TRUE(manager.SetActiveLocale(L"en-US"));
+    EXPECT_EQ(textBox->GetText(), L"Custom");
+    EXPECT_EQ(NeoWPF::UI::Localization::LocaleOperations::GetLocaleExpression(
+                  *textBox,
+                  NeoWPF::UI::TextBox::TextProperty()), nullptr);
+
+    manager.Clear();
     NeoWPF::Core::Application::Shutdown();
 }
 
@@ -366,7 +471,7 @@ TEST(XamlParserTests, ReportsDuplicateResourceKeys)
 
     ASSERT_NE(tree, nullptr);
     ASSERT_TRUE(NeoWPF::Diagnostics::GetLastWarning().has_value());
-    EXPECT_EQ(NeoWPF::Diagnostics::GetLastWarning()->title, L"XAML_RESOURCE_KEY");
+    EXPECT_EQ(NeoWPF::Diagnostics::GetLastWarning()->title, L"NEO-XAML107");
 
     NeoWPF::Core::Application::Shutdown();
 }
@@ -565,7 +670,7 @@ TEST(XamlRootTests, ReportsApplicationResourceKeyFailures)
         R"(<Application><Application.Resources><ResourceDictionary><TextBlock /></ResourceDictionary></Application.Resources></Application>)");
     ASSERT_NE(NeoWPF::UI::Markup::Xaml::BuildXamlTree(missingKeyRoot), nullptr);
     ASSERT_TRUE(NeoWPF::Diagnostics::GetLastWarning().has_value());
-    EXPECT_EQ(NeoWPF::Diagnostics::GetLastWarning()->title, L"XAML_RESOURCE_KEY");
+    EXPECT_EQ(NeoWPF::Diagnostics::GetLastWarning()->title, L"NEO-XAML107");
 
     NeoWPF::Diagnostics::ClearDeveloperWarnings();
     const auto duplicateKeyRoot = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
@@ -576,7 +681,7 @@ TEST(XamlRootTests, ReportsApplicationResourceKeyFailures)
     )");
     ASSERT_NE(NeoWPF::UI::Markup::Xaml::BuildXamlTree(duplicateKeyRoot), nullptr);
     ASSERT_TRUE(NeoWPF::Diagnostics::GetLastWarning().has_value());
-    EXPECT_EQ(NeoWPF::Diagnostics::GetLastWarning()->title, L"XAML_RESOURCE_KEY");
+    EXPECT_EQ(NeoWPF::Diagnostics::GetLastWarning()->title, L"NEO-XAML107");
 
     NeoWPF::Core::Application::Shutdown();
 }
@@ -645,7 +750,7 @@ TEST(XamlParserTests, ReportsDuplicateNamesInNamescope)
     const auto action = namescope.Find<NeoWPF::UI::Button>("Action");
     ASSERT_NE(action, nullptr);
     ASSERT_TRUE(NeoWPF::Diagnostics::GetLastWarning().has_value());
-    EXPECT_EQ(NeoWPF::Diagnostics::GetLastWarning()->title, L"XAML_NAME_SCOPE");
+    EXPECT_EQ(NeoWPF::Diagnostics::GetLastWarning()->title, L"NEO-XAML104");
 
     NeoWPF::Core::Application::Shutdown();
 }
@@ -1430,7 +1535,7 @@ TEST(XamlParserTests, ReportsUnknownTypeAsDeveloperError)
 
     const auto warning = NeoWPF::Diagnostics::GetLastWarning();
     ASSERT_TRUE(warning.has_value());
-    EXPECT_EQ(warning->title, L"XAML_TYPE_NOT_FOUND");
+    EXPECT_EQ(warning->title, L"NEO-XAML103");
     EXPECT_EQ(warning->severity, NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
 
     NeoWPF::Core::Application::Shutdown();
@@ -1446,7 +1551,7 @@ TEST(XamlParserTests, ReportsUnknownAttributeAsDeveloperError)
 
     const auto warning = NeoWPF::Diagnostics::GetLastWarning();
     ASSERT_TRUE(warning.has_value());
-    EXPECT_EQ(warning->title, L"XAML_PROPERTY_NOT_FOUND");
+    EXPECT_EQ(warning->title, L"NEO-XAML101");
     EXPECT_EQ(warning->severity, NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
 
     NeoWPF::Core::Application::Shutdown();
@@ -1468,7 +1573,7 @@ TEST(XamlParserTests, ReportsUnboundPropertyElementAsDeveloperError)
 
     const auto warning = NeoWPF::Diagnostics::GetLastWarning();
     ASSERT_TRUE(warning.has_value());
-    EXPECT_EQ(warning->title, L"XAML_NO_BINDING");
+    EXPECT_EQ(warning->title, L"NEO-XAML105");
     EXPECT_EQ(warning->severity, NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
 
     NeoWPF::Core::Application::Shutdown();

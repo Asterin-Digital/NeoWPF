@@ -683,6 +683,7 @@ if(BUILD_TESTING)
         tests/Automated/ApplicationTests.cpp
         tests/Automated/ResourceKeyTests.cpp
         tests/Automated/NamlArtifactTests.cpp
+        tests/Automated/LocalizationTests.cpp
         tests/Automated/EventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
         tests/Automated/TransformTests.cpp
@@ -694,6 +695,7 @@ if(BUILD_TESTING)
         tests/Automated/ListBoxTests.cpp
         tests/Automated/LImageDecodingTests.cpp
         tests/Automated/TriggerTests.cpp
+        tests/Automated/VisualTests.cpp
         tests/Automated/XamlParserTests.cpp
     )
 

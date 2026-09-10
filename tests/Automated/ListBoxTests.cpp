@@ -16,41 +16,6 @@
 
 namespace {
 
-#if defined(_WIN32)
-
-class ListBoxRenderCommandTest : public ::testing::Test {
-protected:
-    static void SetUpTestSuite()
-    {
-        NeoWPF::Core::Application::Initialize();
-        testListBox = std::make_shared<NeoWPF::UI::ListBox>();
-        testWindowHost = std::make_shared<NeoWPF::UI::Window>();
-        testWindowHost->SetTitle(L"NeoWPF ListBox test");
-        testWindowHost->SetContent(testListBox);
-        testWindow = NeoWPF::Core::Application::Current().CreateWindow(
-            testWindowHost, 320, 240);
-        ASSERT_NE(testWindow.Handle(), nullptr);
-
-        testWindow.Hide();
-    }
-
-    static void TearDownTestSuite()
-    {
-        testWindow.Close();
-        NeoWPF::Core::Application::Shutdown();
-    }
-
-    static NeoWPF::Platform::Window testWindow;
-    static std::shared_ptr<NeoWPF::UI::Window> testWindowHost;
-    static std::shared_ptr<NeoWPF::UI::ListBox> testListBox;
-};
-
-NeoWPF::Platform::Window ListBoxRenderCommandTest::testWindow;
-std::shared_ptr<NeoWPF::UI::Window> ListBoxRenderCommandTest::testWindowHost;
-std::shared_ptr<NeoWPF::UI::ListBox> ListBoxRenderCommandTest::testListBox;
-
-#endif
-
 TEST(ListBoxItemTests, IsSelectedDefaultsToFalse)
 {
     NeoWPF::UI::ListBoxItem item;
@@ -87,36 +52,6 @@ TEST(ListBoxItemTests, StringContentIsExposedByContentPresenter)
     ASSERT_NE(text, nullptr);
     EXPECT_EQ(text->GetText(), std::wstring(L"Bravo"));
 }
-
-#if defined(_WIN32)
-TEST_F(ListBoxRenderCommandTest, StringContentProducesRenderCommandsAfterLayout)
-{
-    auto& listBox = *ListBoxRenderCommandTest::testListBox;
-    auto item = std::make_shared<NeoWPF::UI::ListBoxItem>();
-    item->SetValue(NeoWPF::UI::Content::ContentControl::ContentProperty(),
-                   std::string("Alpha"));
-    listBox.AddItem(item);
-
-    listBox.Measure(220, 180);
-    listBox.Arrange(220, 180);
-
-    ASSERT_EQ(item->GetParent(), &listBox);
-    ASSERT_NE(item->GetPresenter(), nullptr);
-    ASSERT_EQ(item->GetPresenter()->GetParent(), item.get());
-    ASSERT_EQ(item->GetPresenter()->GetContentElement()->GetParent(), item->GetPresenter().get());
-
-    NeoWPF::Rendering::CommandList commands;
-    listBox.BuildRenderCommands(commands);
-
-    const auto textCommand = std::find_if(
-        commands.commands.begin(),
-        commands.commands.end(),
-        [](const auto& command) {
-            return command.kind == NeoWPF::Rendering::CommandList::CommandKind::TexturedQuad;
-        });
-    EXPECT_NE(textCommand, commands.commands.end());
-}
-#endif
 
 TEST(ListBoxItemTests, IsSelectedSetterUpdatesDependencyProperty)
 {

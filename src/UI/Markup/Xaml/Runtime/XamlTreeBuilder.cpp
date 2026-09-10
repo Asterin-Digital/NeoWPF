@@ -61,7 +61,7 @@ void ApplyAttributes(const XamlNode& node,
         const auto* property = target.FindDependencyProperty(name);
         if (!property) {
             NeoWPF::Diagnostics::QueueDeveloperWarning(
-                L"XAML_PROPERTY_NOT_FOUND",
+                NeoWPF::Diagnostics::DeveloperWarnings::kXamlPropertyNotFoundCode,
                 L"Unknown attribute property '" + ToWideString(name) + L"' on XAML object at " +
                     ToWideString(std::to_string(node.Line)) + L":" + ToWideString(std::to_string(node.Column)) +
                     L" (value='" + ToWideString(value) + L"')",
@@ -85,7 +85,7 @@ void ApplyAttributes(const XamlNode& node,
             const auto extension = ParseXamlMarkupExtension(trimmedValue, extensionContext, error);
             if (!extension || !extension->Apply(target, *property, error)) {
                 NeoWPF::Diagnostics::QueueDeveloperWarning(
-                    L"XAML_MARKUP_EXTENSION",
+                    NeoWPF::Diagnostics::DeveloperWarnings::kXamlMarkupExtensionCode,
                     ToWideString(error.empty() ? "markup extension could not be applied" : error) +
                         L" on property '" + ToWideString(name) + L"'",
                     NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
@@ -141,7 +141,7 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
     const auto* typeInfo = XamlTypeRegistry::Get().Find(node.Name);
     if (!typeInfo) {
         NeoWPF::Diagnostics::QueueDeveloperWarning(
-            L"XAML_TYPE_NOT_FOUND",
+            NeoWPF::Diagnostics::DeveloperWarnings::kXamlTypeNotFoundCode,
             L"Unknown XAML type: " + ToWideString(node.Name),
             NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
         return nullptr;
@@ -155,7 +155,7 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
 
     if (namescope && !node.XamlName.empty() && !namescope->Register(node.XamlName, obj)) {
         NeoWPF::Diagnostics::QueueDeveloperWarning(
-            L"XAML_NAME_SCOPE",
+            NeoWPF::Diagnostics::DeveloperWarnings::kXamlNameScopeCode,
             L"Duplicate or invalid XAML name: " + ToWideString(node.XamlName),
             NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
     }
@@ -202,7 +202,7 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
             const auto* prop = obj->FindDependencyProperty(propName);
             if (!prop) {
                 NeoWPF::Diagnostics::QueueDeveloperWarning(
-                    L"XAML_PROPERTY_NOT_FOUND",
+                    NeoWPF::Diagnostics::DeveloperWarnings::kXamlPropertyNotFoundCode,
                     L"Unknown property: " + ToWideString(propName),
                     NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
                 continue;
@@ -211,7 +211,7 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
             const auto* binding = prop->GetXamlBinding();
             if (!binding) {
                 NeoWPF::Diagnostics::QueueDeveloperWarning(
-                    L"XAML_NO_BINDING",
+                    NeoWPF::Diagnostics::DeveloperWarnings::kXamlNoBindingCode,
                     L"Property not registered for XAML: " + ToWideString(propName),
                     NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
                 continue;
@@ -245,7 +245,7 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
                     }
                 } else if (childNode.Children.empty()) {
                     NeoWPF::Diagnostics::QueueDeveloperWarning(
-                        L"XAML_ELEMENT_EMPTY",
+                        NeoWPF::Diagnostics::DeveloperWarnings::kXamlElementEmptyCode,
                         L"Element property must have exactly one child: " + ToWideString(propName),
                         NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
                 }

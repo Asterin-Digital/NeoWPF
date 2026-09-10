@@ -63,6 +63,8 @@ bool TryGetXamlBinding(const XamlMarkupExtension& extension, XamlBindingInfo& ou
 
 bool TryGetXamlStaticResource(const XamlMarkupExtension& extension, std::string& outKey);
 
+bool TryGetXamlLocaleKey(const XamlMarkupExtension& extension, std::string& outKey);
+
 void RegisterXamlMarkupExtensions();
 
 }

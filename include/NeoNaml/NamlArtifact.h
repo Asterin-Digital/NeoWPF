@@ -16,7 +16,8 @@ enum class NamlValueKind : std::uint8_t {
     FloatingPoint,
     Boolean,
     Null,
-    MarkupExtension
+    MarkupExtension,
+    LocaleReference
 };
 
 struct NamlValue {
@@ -50,8 +51,27 @@ struct NamlBindingRecord {
     std::string mode;
 };
 
+struct NamlLocaleReferenceRecord {
+    std::uint32_t objectId = 0;
+    std::uint32_t propertyString = 0;
+    std::string key;
+};
+
+struct NamlLocaleTableRecord {
+    std::uint32_t id = 0;
+    std::uint32_t objectId = 0;
+    std::string culture;
+};
+
+struct NamlLocaleStringRecord {
+    std::uint32_t tableId = 0;
+    std::string key;
+    std::string value;
+};
+
 struct NamlArtifact {
     static constexpr std::uint32_t CurrentVersion = 1;
+    static constexpr std::uint32_t MinimumSupportedVersion = 1;
 
     std::string resourceKey;
     std::string sourcePath;
@@ -61,6 +81,9 @@ struct NamlArtifact {
     std::vector<NamlPropertyRecord> properties;
     std::vector<NamlChildRecord> children;
     std::vector<NamlBindingRecord> bindings;
+    std::vector<NamlLocaleReferenceRecord> localeReferences;
+    std::vector<NamlLocaleTableRecord> localeTables;
+    std::vector<NamlLocaleStringRecord> localeStrings;
 };
 
 std::string SerializeNaml(const NamlArtifact& artifact);

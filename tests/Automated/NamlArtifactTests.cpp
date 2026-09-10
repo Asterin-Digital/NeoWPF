@@ -37,6 +37,9 @@ TEST(NamlArtifactTests, RoundTripsArtifactThroughSharedImplementation)
     };
     expected.children = {{0, 1, 1}};
     expected.bindings = {{1, 2, "Query.Path", "TwoWay"}};
+    expected.localeReferences = {{1, 2, "Greeting"}};
+    expected.localeTables = {{0, 0, "en-US"}};
+    expected.localeStrings = {{0, "Greeting", "Hello"}};
 
     const auto serialized = NeoNaml::SerializeNaml(expected);
     NeoNaml::NamlArtifact actual;
@@ -73,6 +76,45 @@ TEST(NamlArtifactTests, RoundTripsArtifactThroughSharedImplementation)
     EXPECT_EQ(actual.bindings[0].propertyString, 2u);
     EXPECT_EQ(actual.bindings[0].path, "Query.Path");
     EXPECT_EQ(actual.bindings[0].mode, "TwoWay");
+    ASSERT_EQ(actual.localeReferences.size(), 1u);
+    EXPECT_EQ(actual.localeReferences[0].objectId, 1u);
+    EXPECT_EQ(actual.localeReferences[0].propertyString, 2u);
+    EXPECT_EQ(actual.localeReferences[0].key, "Greeting");
+    ASSERT_EQ(actual.localeTables.size(), 1u);
+    EXPECT_EQ(actual.localeTables[0].id, 0u);
+    EXPECT_EQ(actual.localeTables[0].objectId, 0u);
+    EXPECT_EQ(actual.localeTables[0].culture, "en-US");
+    ASSERT_EQ(actual.localeStrings.size(), 1u);
+    EXPECT_EQ(actual.localeStrings[0].tableId, 0u);
+    EXPECT_EQ(actual.localeStrings[0].key, "Greeting");
+    EXPECT_EQ(actual.localeStrings[0].value, "Hello");
+}
+
+TEST(NamlArtifactTests, LoadsVersionOneArtifactWithoutLocaleSections)
+{
+    const std::string input =
+        "NAML1\n"
+        "version=1\n"
+        "resourceKey=\"Legacy\"\n"
+        "source=\"Legacy.xaml\"\n"
+        "root=0\n\n"
+        "objects {\n"
+        "  0: type=0\n"
+        "}\n\n"
+        "end\n";
+
+    NeoNaml::NamlArtifact artifact;
+    std::string error;
+
+    ASSERT_TRUE(NeoNaml::DeserializeNaml(
+        reinterpret_cast<const unsigned char*>(input.data()),
+        input.size(),
+        artifact,
+        error)) << error;
+    EXPECT_EQ(artifact.sourcePath, "Legacy.xaml");
+    EXPECT_TRUE(artifact.localeReferences.empty());
+    EXPECT_TRUE(artifact.localeTables.empty());
+    EXPECT_TRUE(artifact.localeStrings.empty());
 }
 
 TEST(NamlArtifactTests, RejectsUnsupportedValueKind)
