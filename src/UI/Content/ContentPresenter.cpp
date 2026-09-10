@@ -58,23 +58,30 @@ void ContentPresenter::RebuildContentElement()
 
     if (m_contentTemplate) {
         m_contentElement = m_contentTemplate(m_content);
-        return;
+    } else {
+        try {
+            m_contentElement = std::any_cast<std::shared_ptr<NeoWPF::UI::UIElement>>(m_content);
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter,
+                NeoWPF::Diagnostics::Level::Debug,
+                "[ContentPresenter] Resolved content to UIElement=%p",
+                m_contentElement.get());
+        } catch (const std::bad_any_cast&) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter,
+                NeoWPF::Diagnostics::Level::Debug,
+                "[ContentPresenter] Content has no UIElement representation type=%s",
+                m_content.type().name());
+            return;
+        }
     }
 
-    try {
-        m_contentElement = std::any_cast<std::shared_ptr<NeoWPF::UI::UIElement>>(m_content);
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter,
-            NeoWPF::Diagnostics::Level::Debug,
-            "[ContentPresenter] Resolved content to UIElement=%p",
-            m_contentElement.get());
-        return;
-    } catch (const std::bad_any_cast&) {
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter,
-            NeoWPF::Diagnostics::Level::Debug,
-            "[ContentPresenter] Content has no UIElement representation type=%s",
-            m_content.type().name());
+    if (m_contentElement) {
+        if (auto visualContent = std::dynamic_pointer_cast<Visual>(m_contentElement)) {
+            try {
+                AddChild(visualContent);
+            } catch (const std::bad_weak_ptr&) {
+            }
+        }
     }
-
 }
 
 void ContentPresenter::ClearContent()

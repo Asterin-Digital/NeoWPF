@@ -14,10 +14,21 @@
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <NeoWPF/Diagnostics/TextDumper.h>
 #include <NeoWPF/Platform/PlatformRegistry.h>
+#include <NeoWPF/UI/Localization/LocalizationManager.h>
 
 namespace NeoWPF::Core {
 
 std::shared_ptr<Application> Application::s_current = nullptr;
+
+void Application::AddLocale(std::shared_ptr<NeoWPF::UI::Localization::LocaleTable> table)
+{
+    if (!table || !table->IsValid()) {
+        return;
+    }
+    if (NeoWPF::UI::Localization::LocalizationManager::Get().ReplaceTable(*table)) {
+        m_locales.push_back(std::move(table));
+    }
+}
 
 void Application::Initialize()
 {

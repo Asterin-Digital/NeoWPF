@@ -6,9 +6,22 @@
 #include <NeoWPF/UI/Localization/LocaleExpression.h>
 #include <NeoWPF/UI/Localization/LocaleOperations.h>
 #include <NeoWPF/UI/Localization/LocalizationManager.h>
+#include <NeoWPF/UI/Controls/Button/Button.h>
+#include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
+#include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/UI/Markup/Xaml/Parsing/XamlParser.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTreeBuilder.h>
+#include <NeoWPF/Core/Application/Application.h>
+
+#include <atomic>
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+#include <vector>
 
 namespace {
 
@@ -122,6 +135,43 @@ TEST(LocaleTableTests, MissingEntryDoesNotChangeOutput)
 
     EXPECT_FALSE(table.TryGet(L"Missing", value));
     EXPECT_EQ(value, L"unchanged");
+}
+
+TEST(LocaleXamlTests, BuildsLocaleTableAndStrings)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto roots = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<LocaleTable Culture="en-US"><LocaleString Key="Greeting" Value="Hello" /><LocaleString Key="Farewell" Value="Goodbye" /></LocaleTable>)");
+    const auto object = NeoWPF::UI::Markup::Xaml::BuildXamlTree(roots);
+    const auto table = std::dynamic_pointer_cast<LocaleTable>(object);
+
+    ASSERT_NE(table, nullptr);
+    EXPECT_EQ(table->GetCulture().GetName(), L"en-US");
+    ASSERT_EQ(table->GetLocaleStrings().size(), 2u);
+
+    std::wstring value;
+    EXPECT_TRUE(table->TryGet(L"Greeting", value));
+    EXPECT_EQ(value, L"Hello");
+    EXPECT_TRUE(table->TryGet(L"Farewell", value));
+    EXPECT_EQ(value, L"Goodbye");
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(LocaleXamlTests, ApplicationLocalesRegisterTables)
+{
+    NeoWPF::Core::Application::Initialize();
+    auto application = std::make_shared<NeoWPF::Core::Application>();
+    auto table = std::make_shared<LocaleTable>(L"en-US");
+    ASSERT_TRUE(table->Add(L"Greeting", L"Hello from application"));
+
+    application->AddLocale(table);
+    auto& manager = LocalizationManager::Get();
+    ASSERT_TRUE(manager.SetActiveLocale(L"en-US"));
+    EXPECT_EQ(manager.Resolve(L"Greeting"), L"Hello from application");
+
+    NeoWPF::Core::Application::Shutdown();
 }
 
 TEST_F(LocalizationManagerTests, RegistersAndResolvesExactLocale)
@@ -254,6 +304,232 @@ TEST_F(LocalizationManagerTests, ClearResetsTablesConfigurationAndPolicy)
     EXPECT_EQ(manager().Resolve(L"Greeting"), L"[[Greeting]]");
 }
 
+TEST_F(LocalizationManagerTests, SupportsConcurrentLocaleReadsAndWrites)
+{
+    LocaleTable english(L"en-US");
+    LocaleTable romanian(L"ro-RO");
+    ASSERT_TRUE(english.Add(L"Greeting", L"Hello"));
+    ASSERT_TRUE(romanian.Add(L"Greeting", L"Salut"));
+    ASSERT_TRUE(manager().RegisterTable(english));
+    ASSERT_TRUE(manager().RegisterTable(romanian));
+    ASSERT_TRUE(manager().SetActiveLocale(L"en-US"));
+
+    std::atomic<bool> failed{false};
+    std::atomic<int> notificationCount{0};
+    const auto subscriptionId = manager().Subscribe([&notificationCount] {
+        notificationCount.fetch_add(1, std::memory_order_relaxed);
+    });
+    ASSERT_NE(subscriptionId, 0u);
+
+    std::vector<std::thread> workers;
+    workers.emplace_back([&] {
+        for (int index = 0; index < 200; ++index) {
+            if (!manager().SetActiveLocale(index % 2 == 0 ? L"en-US" : L"ro-RO")) {
+                failed.store(true, std::memory_order_relaxed);
+            }
+        }
+    });
+    workers.emplace_back([&] {
+        for (int index = 0; index < 200; ++index) {
+            std::wstring value;
+            if (!manager().TryResolve(L"Greeting", value) ||
+                (value != L"Hello" && value != L"Salut" && value != L"Welcome")) {
+                failed.store(true, std::memory_order_relaxed);
+            }
+        }
+    });
+    workers.emplace_back([&] {
+        for (int index = 0; index < 100; ++index) {
+            LocaleTable replacement(L"en-US");
+            if (!replacement.Add(L"Greeting", index % 2 == 0 ? L"Hello" : L"Welcome") ||
+                !manager().ReplaceTable(replacement)) {
+                failed.store(true, std::memory_order_relaxed);
+            }
+        }
+    });
+
+    for (auto& worker : workers) {
+        worker.join();
+    }
+
+    manager().Unsubscribe(subscriptionId);
+
+    EXPECT_FALSE(failed.load(std::memory_order_relaxed));
+    EXPECT_GT(notificationCount.load(std::memory_order_relaxed), 0);
+}
+
+TEST_F(LocalizationManagerTests, SurvivesConcurrentConfigurationStress)
+{
+    auto registerTable = [this](const wchar_t* cultureName, const wchar_t* value) {
+        LocaleTable table(cultureName);
+        return table.Add(L"Greeting", value) && manager().ReplaceTable(table);
+    };
+
+    ASSERT_TRUE(registerTable(L"en-US", L"Hello"));
+    ASSERT_TRUE(registerTable(L"ro-RO", L"Salut"));
+    ASSERT_TRUE(manager().SetActiveLocale(L"en-US"));
+    ASSERT_TRUE(manager().SetFallbackLocale(L"en-US"));
+
+    std::atomic<bool> failed{false};
+    std::atomic<int> callbackCount{0};
+    const auto subscriptionId = manager().Subscribe([&callbackCount] {
+        callbackCount.fetch_add(1, std::memory_order_relaxed);
+    });
+    ASSERT_NE(subscriptionId, 0u);
+
+    std::vector<std::thread> workers;
+    workers.emplace_back([&] {
+        for (int index = 0; index < 1000; ++index) {
+            if (!manager().SetActiveLocale(index % 2 == 0 ? L"en-US" : L"ro-RO")) {
+                failed.store(true, std::memory_order_relaxed);
+            }
+        }
+    });
+    workers.emplace_back([&] {
+        for (int index = 0; index < 1000; ++index) {
+            if (index % 3 == 0) {
+                manager().ClearFallbackLocale();
+            } else if (!manager().SetFallbackLocale(index % 2 == 0 ? L"en-US" : L"ro-RO")) {
+                failed.store(true, std::memory_order_relaxed);
+            }
+        }
+    });
+    workers.emplace_back([&] {
+        for (int index = 0; index < 1000; ++index) {
+            if (!registerTable(L"en-US", index % 2 == 0 ? L"Hello" : L"Welcome")) {
+                failed.store(true, std::memory_order_relaxed);
+            }
+        }
+    });
+    workers.emplace_back([&] {
+        for (int index = 0; index < 1000; ++index) {
+            if (index % 5 == 0) {
+                manager().RemoveTable(Culture(L"ro-RO"));
+            } else if (!registerTable(L"ro-RO", L"Salut")) {
+                failed.store(true, std::memory_order_relaxed);
+            }
+        }
+    });
+    workers.emplace_back([&] {
+        for (int index = 0; index < 2000; ++index) {
+            std::wstring value;
+            manager().TryResolve(L"Greeting", value);
+            const auto resolved = manager().Resolve(L"Greeting");
+            if (resolved.empty()) {
+                failed.store(true, std::memory_order_relaxed);
+            }
+        }
+    });
+    workers.emplace_back([&] {
+        for (int index = 0; index < 1000; ++index) {
+            manager().SetMissingKeyPolicy(index % 2 == 0
+                                              ? MissingKeyPolicy::Marker
+                                              : MissingKeyPolicy::Key);
+            (void)manager().GetMissingKeyPolicy();
+        }
+    });
+
+    for (auto& worker : workers) {
+        worker.join();
+    }
+
+    manager().Unsubscribe(subscriptionId);
+
+    EXPECT_FALSE(failed.load(std::memory_order_relaxed));
+    EXPECT_GT(callbackCount.load(std::memory_order_relaxed), 0);
+}
+
+TEST_F(LocalizationManagerTests, SupportsConcurrentSubscriptionChurn)
+{
+    LocaleTable table(L"en-US");
+    ASSERT_TRUE(table.Add(L"Greeting", L"Hello"));
+    ASSERT_TRUE(manager().RegisterTable(table));
+    ASSERT_TRUE(manager().SetActiveLocale(L"en-US"));
+
+    std::atomic<int> callbackCount{0};
+    std::atomic<bool> failed{false};
+    std::vector<std::thread> workers;
+    for (int workerIndex = 0; workerIndex < 4; ++workerIndex) {
+        workers.emplace_back([&] {
+            for (int index = 0; index < 500; ++index) {
+                const auto subscriptionId = manager().Subscribe([&callbackCount] {
+                    callbackCount.fetch_add(1, std::memory_order_relaxed);
+                });
+                if (subscriptionId == 0) {
+                    failed.store(true, std::memory_order_relaxed);
+                    continue;
+                }
+                manager().SetActiveLocale(index % 2 == 0 ? L"en-US" : L"ro-RO");
+                manager().Unsubscribe(subscriptionId);
+            }
+        });
+    }
+
+    for (auto& worker : workers) {
+        worker.join();
+    }
+
+    EXPECT_FALSE(failed.load(std::memory_order_relaxed));
+    EXPECT_GT(callbackCount.load(std::memory_order_relaxed), 0);
+}
+
+TEST_F(LocalizationManagerTests, UnsubscribeStopsFutureCallbacksDuringConcurrentNotification)
+{
+    std::mutex callbackMutex;
+    std::condition_variable callbackEntered;
+    std::condition_variable releaseCallback;
+    bool callbackIsRunning = false;
+    bool release = false;
+    std::atomic<int> callbackCount{0};
+    std::atomic<bool> notificationFailed{false};
+
+    const auto subscriptionId = manager().Subscribe([&] {
+        callbackCount.fetch_add(1, std::memory_order_relaxed);
+        {
+            std::lock_guard lock(callbackMutex);
+            callbackIsRunning = true;
+        }
+        callbackEntered.notify_one();
+
+        std::unique_lock lock(callbackMutex);
+        releaseCallback.wait(lock, [&release] {
+            return release;
+        });
+    });
+    ASSERT_NE(subscriptionId, 0u);
+
+    std::thread notificationThread([this, &notificationFailed] {
+        if (!manager().SetActiveLocale(L"en-US")) {
+            notificationFailed.store(true, std::memory_order_relaxed);
+        }
+    });
+
+    {
+        std::unique_lock lock(callbackMutex);
+        ASSERT_TRUE(callbackEntered.wait_for(
+            lock,
+            std::chrono::seconds(5),
+            [&callbackIsRunning] {
+                return callbackIsRunning;
+            }));
+    }
+
+    manager().Unsubscribe(subscriptionId);
+
+    {
+        std::lock_guard lock(callbackMutex);
+        release = true;
+    }
+    releaseCallback.notify_one();
+    notificationThread.join();
+
+    EXPECT_FALSE(notificationFailed.load(std::memory_order_relaxed));
+    ASSERT_EQ(callbackCount.load(std::memory_order_relaxed), 1);
+
+    ASSERT_TRUE(manager().SetActiveLocale(L"ro-RO"));
+    EXPECT_EQ(callbackCount.load(std::memory_order_relaxed), 1);
+}
+
 class LocaleExpressionTests : public ::testing::Test {
 protected:
     void SetUp() override
@@ -298,6 +574,103 @@ TEST_F(LocaleExpressionTests, ResolvesImmediatelyAndReportsExpressionSource)
                   textBlock,
                   NeoWPF::UI::TextBlock::TextProperty()).get(),
               expression.get());
+}
+
+TEST_F(LocaleExpressionTests, ControlSetLocaleHelpersAttachLiveExpressions)
+{
+    NeoWPF::UI::TextBlock textBlock;
+    NeoWPF::UI::TextBox textBox;
+    NeoWPF::UI::Button button;
+    NeoWPF::UI::Checkbox checkbox;
+
+    textBlock.SetLocale(L"Greeting");
+    textBox.SetLocale(L"Greeting");
+    button.SetLocale(L"Greeting");
+    checkbox.SetLocale(L"Greeting");
+
+    EXPECT_EQ(textBlock.GetText(), L"Hello");
+    EXPECT_EQ(textBox.GetText(), L"Hello");
+    EXPECT_EQ(button.GetText(), L"Hello");
+    EXPECT_EQ(checkbox.GetText(), L"Hello");
+
+    ASSERT_TRUE(manager().SetActiveLocale(L"ro-RO"));
+
+    EXPECT_EQ(textBlock.GetText(), L"Salut");
+    EXPECT_EQ(textBox.GetText(), L"Salut");
+    EXPECT_EQ(button.GetText(), L"Salut");
+    EXPECT_EQ(checkbox.GetText(), L"Salut");
+}
+
+TEST_F(LocaleExpressionTests, WindowLocaleOverridesGlobalLocaleForDescendants)
+{
+    auto window = std::make_shared<NeoWPF::UI::Window>();
+    auto textBlock = std::make_shared<NeoWPF::UI::TextBlock>();
+    auto windowTable = std::make_shared<LocaleTable>(L"en-US");
+    ASSERT_TRUE(windowTable->Add(L"Greeting", L"Hello from window"));
+    window->AddLocale(windowTable);
+    window->SetContent(textBlock);
+
+    textBlock->SetLocale(L"Greeting");
+    EXPECT_EQ(textBlock->GetText(), L"Hello from window");
+
+    ASSERT_TRUE(manager().SetActiveLocale(L"ro-RO"));
+    EXPECT_EQ(textBlock->GetText(), L"Salut");
+}
+
+TEST_F(LocaleExpressionTests, WindowLocaleDoesNotAffectOtherWindows)
+{
+    auto localizedWindow = std::make_shared<NeoWPF::UI::Window>();
+    auto localizedText = std::make_shared<NeoWPF::UI::TextBlock>();
+    auto windowTable = std::make_shared<LocaleTable>(L"en-US");
+    ASSERT_TRUE(windowTable->Add(L"Greeting", L"Hello from window"));
+    localizedWindow->AddLocale(windowTable);
+    localizedWindow->SetContent(localizedText);
+
+    auto globalWindow = std::make_shared<NeoWPF::UI::Window>();
+    auto globalText = std::make_shared<NeoWPF::UI::TextBlock>();
+    globalWindow->SetContent(globalText);
+
+    localizedText->SetLocale(L"Greeting");
+    globalText->SetLocale(L"Greeting");
+
+    EXPECT_EQ(localizedText->GetText(), L"Hello from window");
+    EXPECT_EQ(globalText->GetText(), L"Hello");
+}
+
+TEST_F(LocaleExpressionTests, DestroyingLocalizedControlRemovesItsSubscription)
+{
+    {
+        auto textBlock = std::make_unique<NeoWPF::UI::TextBlock>();
+        textBlock->SetLocale(L"Greeting");
+        EXPECT_EQ(textBlock->GetText(), L"Hello");
+    }
+
+    ASSERT_TRUE(manager().SetActiveLocale(L"ro-RO"));
+    EXPECT_EQ(manager().Resolve(L"Greeting"), L"Salut");
+}
+
+TEST_F(LocaleExpressionTests, RepeatedlyDestroysLocalizedControls)
+{
+    for (int index = 0; index < 2000; ++index) {
+        auto textBlock = std::make_unique<NeoWPF::UI::TextBlock>();
+        textBlock->SetLocale(L"Greeting");
+        ASSERT_EQ(textBlock->GetText(), L"Hello");
+    }
+
+    ASSERT_TRUE(manager().SetActiveLocale(L"en-US"));
+    EXPECT_EQ(manager().Resolve(L"Greeting"), L"Hello");
+}
+
+TEST_F(LocaleExpressionTests, TextBoxTextPropertyAffectsMeasureAndRender)
+{
+    const auto flags = NeoWPF::UI::TextBox::TextProperty().GetMetadata().Flags;
+
+    EXPECT_TRUE(NeoWPF::UI::Properties::HasFlag(
+        flags,
+        NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure));
+    EXPECT_TRUE(NeoWPF::UI::Properties::HasFlag(
+        flags,
+        NeoWPF::UI::Properties::PropertyFlags::AffectsRender));
 }
 
 TEST_F(LocaleExpressionTests, RefreshesWhenActiveLocaleChanges)

@@ -13,7 +13,7 @@ namespace {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(std::wstring());
         metadata.Converter = NeoWPF::UI::Properties::GetWideStringConverter();
-        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::None;
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
 

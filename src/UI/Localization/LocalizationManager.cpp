@@ -203,6 +203,11 @@ std::wstring LocalizationManager::Resolve(const std::wstring& key) const
     }
 }
 
+void LocalizationManager::NotifyLocaleChanged()
+{
+    NotifySubscribers();
+}
+
 std::size_t LocalizationManager::Subscribe(std::function<void()> handler)
 {
     if (!handler) {

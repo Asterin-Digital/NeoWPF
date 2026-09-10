@@ -1,6 +1,8 @@
 #include <NeoWPF/UI/Localization/LocaleExpression.h>
 
 #include <NeoWPF/UI/Localization/LocalizationManager.h>
+#include <NeoWPF/UI/Controls/Window.h>
+#include <NeoWPF/UI/Core/Element/UIElement.h>
 
 namespace NeoWPF::UI::Localization {
 
@@ -16,7 +18,6 @@ LocaleExpression::LocaleExpression(Properties::DependencyObject& target,
 LocaleExpression::~LocaleExpression()
 {
     Detach();
-    m_lifetimeState->active.store(false);
 }
 
 void LocaleExpression::Attach()
@@ -32,9 +33,11 @@ void LocaleExpression::Attach()
 
     const auto lifetimeState = m_lifetimeState;
     m_subscriptionId = LocalizationManager::Get().Subscribe([this, lifetimeState] {
-        if (lifetimeState->active.load()) {
-            Refresh();
+        std::lock_guard lock(lifetimeState->mutex);
+        if (!lifetimeState->active) {
+            return;
         }
+        Refresh();
     });
     m_isAttached = m_subscriptionId != 0;
     if (m_isAttached) {
@@ -48,7 +51,8 @@ void LocaleExpression::Detach()
         return;
     }
 
-    m_lifetimeState->active.store(false);
+    std::lock_guard lock(m_lifetimeState->mutex);
+    m_lifetimeState->active = false;
     LocalizationManager::Get().Unsubscribe(m_subscriptionId);
     m_subscriptionId = 0;
     m_isAttached = false;
@@ -60,8 +64,18 @@ void LocaleExpression::Refresh()
         return;
     }
 
-    m_target.SetValueExpression(m_targetProperty,
-                                LocalizationManager::Get().Resolve(m_key));
+    std::wstring value;
+    auto* element = dynamic_cast<NeoWPF::UI::UIElement*>(&m_target);
+    while (element) {
+        if (const auto* window = dynamic_cast<const NeoWPF::UI::Window*>(element);
+            window && window->TryResolveLocale(m_key, value)) {
+            m_target.SetValueExpression(m_targetProperty, value);
+            return;
+        }
+        element = dynamic_cast<NeoWPF::UI::UIElement*>(element->GetParent());
+    }
+
+    m_target.SetValueExpression(m_targetProperty, LocalizationManager::Get().Resolve(m_key));
 }
 
 } // namespace NeoWPF::UI::Localization

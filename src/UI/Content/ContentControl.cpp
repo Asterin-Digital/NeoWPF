@@ -9,6 +9,11 @@
 
 namespace NeoWPF::UI::Content {
 
+namespace {
+
+std::unordered_map<const void*, ContentControl*> s_presenterOwners;
+
+}
 
 
 ContentControl::ContentControl()
@@ -16,6 +21,13 @@ ContentControl::ContentControl()
     , m_presenter(nullptr)
 {
     ContentProperty();
+}
+
+ContentControl::~ContentControl()
+{
+    if (m_presenter) {
+        s_presenterOwners.erase(static_cast<const void*>(m_presenter.get()));
+    }
 }
 
 const NeoWPF::UI::Properties::DependencyProperty& ContentControl::ContentProperty()
@@ -108,8 +120,6 @@ void ContentControl::SetPresenter(const std::shared_ptr<ContentPresenter>& prese
         return;
     }
 
-    static std::unordered_map<const void*, ContentControl*> s_presenterOwners;
-
     if (m_presenter) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
             "[ContentControl] SetPresenter: removing old presenter %p", m_presenter.get());
@@ -135,6 +145,17 @@ void ContentControl::SetPresenter(const std::shared_ptr<ContentPresenter>& prese
         s_presenterOwners[static_cast<const void*>(m_presenter.get())] = this;
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
             "[ContentControl] SetPresenter: using new presenter %p", m_presenter.get());
+        if (!m_presenter->GetParent()) {
+            try {
+                AddChild(m_presenter);
+            } catch (const std::bad_weak_ptr&) {
+                NeoWPF::Diagnostics::Log(
+                    NeoWPF::Diagnostics::Category::Control,
+                    NeoWPF::Diagnostics::Level::Info,
+                    "[ContentControl] SetPresenter: failed to AddChild presenter=%p - bad_weak_ptr",
+                    m_presenter.get());
+            }
+        }
         m_presenter->SetContentData(m_content);
     }
     InvalidateVisual();

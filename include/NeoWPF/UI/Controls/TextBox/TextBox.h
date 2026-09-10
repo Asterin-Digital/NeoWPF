@@ -88,6 +88,18 @@ public:
 
     /*
         @summary
+        Attaches a live localization expression to the text property.
+
+        @param key
+        The application-owned localization key to resolve.
+
+        @details
+        The text updates when localization changes. Calling SetText replaces the locale value.
+    */
+    void SetLocale(const std::wstring& key);
+
+    /*
+        @summary
         Sets the caret-following policy for this TextBox.
 
         @internal

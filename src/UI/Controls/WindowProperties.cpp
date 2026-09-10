@@ -49,6 +49,18 @@ const NeoWPF::UI::Properties::DependencyProperty& Window::TitleProperty()
     return property;
 }
 
+const NeoWPF::UI::Properties::DependencyProperty& Window::LocalesProperty()
+{
+    static const auto& property = NeoWPF::UI::Properties::DependencyProperty::Register<
+        Window,
+        std::vector<std::shared_ptr<NeoWPF::UI::Localization::LocaleTable>>>("Locales");
+    static const bool bindingRegistered = (NeoWPF::UI::Markup::Xaml::RegisterXamlCollectionProperty(
+        property,
+        &Window::AddLocale), true);
+    (void)bindingRegistered;
+    return property;
+}
+
 }
 
 namespace NeoWPF::UI::Properties {
@@ -58,6 +70,7 @@ void RegisterWindowProperties()
     (void)NeoWPF::UI::Window::ContentProperty();
     (void)NeoWPF::UI::Window::TitleBarProperty();
     (void)NeoWPF::UI::Window::TitleProperty();
+    (void)NeoWPF::UI::Window::LocalesProperty();
     NeoWPF::UI::Markup::Xaml::RegisterXamlType<NeoWPF::UI::Window>(
         "Window",
         "Content",

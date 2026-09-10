@@ -11,7 +11,7 @@ if(NOT NEOWPF_BACKEND_SOURCES)
         "No sources found for NEOWPF_RENDERER_BACKEND='${NEOWPF_RENDERER_BACKEND}'.")
 endif()
 
-list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/Rendering/(D3D11|Vulkan|OpenGL)/")
+list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/Rendering/(D3D11|Vulkan)/")
 list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/NeoNaml/")
 if(NOT WIN32)
     list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/Platform/Windows/")
@@ -20,13 +20,7 @@ else()
 endif()
 list(APPEND NEOWPF_SOURCES ${NEOWPF_BACKEND_SOURCES})
 
-file(GLOB_RECURSE NEOWPF_HEADERS CONFIGURE_DEPENDS
+file(GLOB_RECURSE NEOWPF_HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/include/NeoWPF/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/NeoNaml/*.h"
 )
-
-foreach(NEOWPF_SOURCE IN LISTS NEOWPF_SOURCES NEOWPF_HEADERS)
-    if(NOT EXISTS "${NEOWPF_SOURCE}")
-        message(FATAL_ERROR "NeoWPF build input does not exist: ${NEOWPF_SOURCE}")
-    endif()
-endforeach()

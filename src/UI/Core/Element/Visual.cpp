@@ -123,7 +123,10 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
         "[Visual::AddVisualChild] After push_back");
 
-    MarkLayoutDirty();
+    if (IsInitialized()) {
+        MarkLayoutDirty();
+    } // @note not sure if this will cause any issues (previosuly it double marked layout dirty unconditionally)
+     // so if anything breaks, just do it unconditionally in here, but unless it causes problems keep it
 }
 
 

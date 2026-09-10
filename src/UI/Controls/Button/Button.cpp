@@ -6,6 +6,7 @@
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/UI/Localization/LocaleOperations.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 #include <memory>
@@ -81,6 +82,7 @@ Button::Button(const std::wstring& text)
 
 Button::~Button()
 {
+    NeoWPF::UI::Localization::LocaleOperations::ClearLocale(*this, TextProperty());
 }
 
 void Button::SetText(const std::wstring& text)
@@ -98,6 +100,11 @@ void Button::SetText(const std::wstring& text)
         m_textContent->SetText(text);
     }
     InvalidateVisual();
+}
+
+void Button::SetLocale(const std::wstring& key)
+{
+    NeoWPF::UI::Localization::LocaleOperations::SetLocale(*this, TextProperty(), key);
 }
 
 void Button::SetTextHorizontalAlignment(TextHorizontalAlignment alignment) noexcept

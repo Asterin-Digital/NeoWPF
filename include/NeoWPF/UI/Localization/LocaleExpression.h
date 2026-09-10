@@ -5,6 +5,7 @@
 
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <string>
 
 namespace NeoWPF::UI::Localization {
@@ -26,7 +27,8 @@ public:
 
 private:
     struct LifetimeState {
-        std::atomic<bool> active{true};
+        std::recursive_mutex mutex;
+        bool active = true;
     };
 
     Properties::DependencyObject& m_target;
@@ -34,7 +36,7 @@ private:
     std::wstring m_key;
     std::shared_ptr<LifetimeState> m_lifetimeState = std::make_shared<LifetimeState>();
     std::size_t m_subscriptionId = 0;
-    bool m_isAttached = false;
+    std::atomic<bool> m_isAttached{false};
 };
 
 } // namespace NeoWPF::UI::Localization

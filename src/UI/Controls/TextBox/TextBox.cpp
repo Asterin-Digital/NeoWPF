@@ -2,6 +2,7 @@
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <NeoWPF/UI/Localization/LocaleOperations.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
@@ -71,6 +72,7 @@ void TextBox::SetCaretScroll(CaretScrollBehavior value) noexcept
 
 TextBox::~TextBox()
 {
+    NeoWPF::UI::Localization::LocaleOperations::ClearLocale(*this, TextProperty());
     ReleaseCaretTextureId();
 }
 
@@ -98,6 +100,11 @@ void TextBox::ApplyVisualState(const std::string& stateName, bool useTransitions
 void TextBox::SetText(const std::wstring& text)
 {
     SetText(text, true);
+}
+
+void TextBox::SetLocale(const std::wstring& key)
+{
+    NeoWPF::UI::Localization::LocaleOperations::SetLocale(*this, TextProperty(), key);
 }
 
 void TextBox::SetText(const std::wstring& text, bool resetScrollOffset)

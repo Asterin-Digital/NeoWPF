@@ -18,6 +18,7 @@ public:
     static const Properties::DependencyProperty& ContentProperty();
 
     ContentControl();
+    ~ContentControl() override;
 
     void SetContent(const std::shared_ptr<NeoWPF::UI::UIElement>& content);
     void SetContentData(const std::any& content);

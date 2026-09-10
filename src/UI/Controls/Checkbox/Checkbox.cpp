@@ -2,6 +2,7 @@
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/UI/Localization/LocaleOperations.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <algorithm>
@@ -35,6 +36,7 @@ Checkbox::Checkbox()
 
 Checkbox::~Checkbox()
 {
+    NeoWPF::UI::Localization::LocaleOperations::ClearLocale(*this, TextProperty());
 }
 
 void Checkbox::SetChecked(bool value) noexcept
@@ -63,6 +65,11 @@ void Checkbox::SetText(const std::wstring& text)
         m_textContent->SetText(text);
     }
     InvalidateVisual();
+}
+
+void Checkbox::SetLocale(const std::wstring& key)
+{
+    NeoWPF::UI::Localization::LocaleOperations::SetLocale(*this, TextProperty(), key);
 }
 
 void Checkbox::SetTextHorizontalAlignment(TextHorizontalAlignment alignment) noexcept

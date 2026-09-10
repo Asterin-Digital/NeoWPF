@@ -195,6 +195,8 @@ namespace NeoWPF::UI::Properties {
     void RegisterColumnDefinitionProperties();
     void RegisterScrollViewerProperties();
     void RegisterStyleProperties();
+    void RegisterLocaleStringProperties();
+    void RegisterLocaleTableProperties();
 
     void RegisterCoreControlProperties();
 

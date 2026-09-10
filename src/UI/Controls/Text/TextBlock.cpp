@@ -8,6 +8,7 @@
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <NeoWPF/UI/Localization/LocaleOperations.h>
 
 namespace NeoWPF::UI {
 
@@ -25,6 +26,7 @@ TextBlock::TextBlock(const std::wstring& text) : TextBlock()
 
 TextBlock::~TextBlock()
 {
+    NeoWPF::UI::Localization::LocaleOperations::ClearLocale(*this, TextProperty());
     // TextRasterCache destructor already handles cleanup
 }
 
@@ -45,6 +47,11 @@ void TextBlock::SetText(const std::wstring& text)
     m_text = text;
     m_textDirty = true;
     InvalidateVisual();
+}
+
+void TextBlock::SetLocale(const std::wstring& key)
+{
+    NeoWPF::UI::Localization::LocaleOperations::SetLocale(*this, TextProperty(), key);
 }
 
 void TextBlock::SetFontFamily(const std::wstring& fontFamily) noexcept

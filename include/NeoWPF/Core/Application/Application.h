@@ -11,6 +11,7 @@
 #include <NeoWPF/Diagnostics/TextDumper.h>
 #include <NeoWPF/Platform/NativeWindow.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
+#include <NeoWPF/UI/Localization/LocaleTable.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/IXamlResourceHost.h>
 #include <typeindex>
 
@@ -28,6 +29,7 @@ class Application : public NeoWPF::UI::Properties::DependencyObject,
                     public NeoWPF::UI::Markup::Xaml::IXamlResourceHost {
 public:
     static const NeoWPF::UI::Properties::DependencyProperty& MainWindowProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& LocalesProperty();
 
     Application() = default;
 
@@ -117,6 +119,9 @@ public:
         A reference to the stored main-window shared pointer.
     */
     const std::shared_ptr<NeoWPF::UI::Window>& GetMainWindow() const noexcept { return m_mainWindow; }
+
+    void AddLocale(std::shared_ptr<NeoWPF::UI::Localization::LocaleTable> table);
+    const std::vector<std::shared_ptr<NeoWPF::UI::Localization::LocaleTable>>& GetLocales() const noexcept { return m_locales; }
 
     /*
         @summary
@@ -423,6 +428,7 @@ public:
 
 private:
     std::shared_ptr<NeoWPF::UI::Window> m_mainWindow;
+    std::vector<std::shared_ptr<NeoWPF::UI::Localization::LocaleTable>> m_locales;
     static std::shared_ptr<Application> s_current;
 };
 

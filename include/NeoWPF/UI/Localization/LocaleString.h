@@ -1,11 +1,14 @@
 #pragma once
 
+#include <NeoWPF/UI/Properties/DependencyObject.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
+
 #include <string>
 #include <utility>
 
 namespace NeoWPF::UI::Localization {
 
-class LocaleString {
+class LocaleString : public Properties::DependencyObject {
 public:
     LocaleString() = default;
     LocaleString(std::wstring key, std::wstring value)
@@ -13,6 +16,25 @@ public:
         , m_value(std::move(value))
     {
     }
+
+    LocaleString(const LocaleString& other)
+        : m_key(other.m_key)
+        , m_value(other.m_value)
+    {
+    }
+
+    LocaleString& operator=(const LocaleString& other)
+    {
+        m_key = other.m_key;
+        m_value = other.m_value;
+        return *this;
+    }
+
+    static const Properties::DependencyProperty& KeyProperty();
+    static const Properties::DependencyProperty& ValueProperty();
+
+    void SetKey(const std::wstring& key);
+    void SetValue(const std::wstring& value);
 
     const std::wstring& GetKey() const noexcept { return m_key; }
     const std::wstring& GetValue() const noexcept { return m_value; }

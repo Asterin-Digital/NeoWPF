@@ -28,6 +28,8 @@ void RegisterCoreControlProperties() {
     RegisterColumnDefinitionProperties();
     RegisterScrollViewerProperties();
     RegisterStyleProperties();
+    RegisterLocaleStringProperties();
+    RegisterLocaleTableProperties();
 }
 
 } // namespace NeoWPF::UI::Properties
