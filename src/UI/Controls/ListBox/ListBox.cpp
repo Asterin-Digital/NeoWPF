@@ -78,6 +78,11 @@ void ListBox::SetItems(const std::vector<std::shared_ptr<FrameworkElement>>& ite
     ItemsControl::SetItems(items);
 }
 
+void ListBox::SyncSelection(const std::any& item)
+{
+    SetSelectedItem(item);
+}
+
 std::shared_ptr<FrameworkElement> ListBox::GetContainerForItem(const std::any& data, int index)
 {
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,

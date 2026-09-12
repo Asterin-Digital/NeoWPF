@@ -23,6 +23,7 @@ class ContentConverter final : public TypeConverter {
 public:
     bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
     bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
+    static bool TryConvertToText(const std::any& value, std::wstring& text);
 };
 
 class WideStringConverter final : public TypeConverter {

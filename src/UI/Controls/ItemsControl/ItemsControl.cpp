@@ -71,6 +71,17 @@ void ItemsControl::PrepareContainer(const std::shared_ptr<FrameworkElement>& con
     (void)index;
 }
 
+void ItemsControl::ApplyItemTemplate(const std::shared_ptr<FrameworkElement>& container,
+                                     const std::any& data,
+                                     int index,
+                                     const Controls::ItemsControl::Virtualization::ItemTemplate& templ)
+{
+    (void)container;
+    (void)data;
+    (void)index;
+    (void)templ;
+}
+
 ItemsControl::~ItemsControl()
 {
 }

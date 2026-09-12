@@ -10,8 +10,8 @@
 #include <NeoWPF/UI/Controls/Popup/Popup.h>
 #include <NeoWPF/UI/Text/FontStyle.h>
 
-#include <cctype>
 #include <cstdint>
+#include <array>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -50,14 +50,6 @@ std::string EscapeLiteral(const std::string& value, bool wide)
     return result.str();
 }
 
-std::string UppercaseFirst(std::string value)
-{
-    if (!value.empty()) {
-        value.front() = static_cast<char>(std::toupper(static_cast<unsigned char>(value.front())));
-    }
-    return value;
-}
-
 template<typename Formatter>
 bool ParseAndFormat(const TypeConverter& converter,
                     const std::string& rawValue,
@@ -72,6 +64,97 @@ bool ParseAndFormat(const TypeConverter& converter,
     expression = formatter(parsedValue);
     return !expression.empty();
 }
+
+template<typename T>
+struct ConversionEntry {
+    const char* name;
+    T value;
+    const char* code;
+};
+
+template<typename T, std::size_t Count>
+bool ConvertMappedValue(const std::string& rawValue,
+                        const std::array<ConversionEntry<T>, Count>& entries,
+                        std::any& convertedValue)
+{
+    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
+    for (const auto& entry : entries) {
+        if (value == entry.name) {
+            convertedValue = entry.value;
+            return true;
+        }
+    }
+    return false;
+}
+
+template<typename T, std::size_t Count>
+bool ConvertMappedValueToCode(const TypeConverter& converter,
+                              const std::string& rawValue,
+                              const std::array<ConversionEntry<T>, Count>& entries,
+                              std::string& expression)
+{
+    std::any convertedValue;
+    if (!converter.ConvertFromString(rawValue, convertedValue)) {
+        expression.clear();
+        return false;
+    }
+
+    const auto value = std::any_cast<T>(convertedValue);
+    for (const auto& entry : entries) {
+        if (value == entry.value) {
+            expression = entry.code;
+            return true;
+        }
+    }
+
+    expression.clear();
+    return false;
+}
+
+constexpr std::array<ConversionEntry<NeoWPF::UI::HorizontalAlignment>, 4> HorizontalAlignmentEntries {{
+    {"left", NeoWPF::UI::HorizontalAlignment::Left, "NeoWPF::UI::HorizontalAlignment::Left"},
+    {"center", NeoWPF::UI::HorizontalAlignment::Center, "NeoWPF::UI::HorizontalAlignment::Center"},
+    {"right", NeoWPF::UI::HorizontalAlignment::Right, "NeoWPF::UI::HorizontalAlignment::Right"},
+    {"stretch", NeoWPF::UI::HorizontalAlignment::Stretch, "NeoWPF::UI::HorizontalAlignment::Stretch"},
+}};
+
+constexpr std::array<ConversionEntry<NeoWPF::UI::VerticalAlignment>, 4> VerticalAlignmentEntries {{
+    {"top", NeoWPF::UI::VerticalAlignment::Top, "NeoWPF::UI::VerticalAlignment::Top"},
+    {"center", NeoWPF::UI::VerticalAlignment::Center, "NeoWPF::UI::VerticalAlignment::Center"},
+    {"bottom", NeoWPF::UI::VerticalAlignment::Bottom, "NeoWPF::UI::VerticalAlignment::Bottom"},
+    {"stretch", NeoWPF::UI::VerticalAlignment::Stretch, "NeoWPF::UI::VerticalAlignment::Stretch"},
+}};
+
+constexpr std::array<ConversionEntry<NeoWPF::UI::SelectionMode>, 3> SelectionModeEntries {{
+    {"single", NeoWPF::UI::SelectionMode::Single, "NeoWPF::UI::SelectionMode::Single"},
+    {"multiple", NeoWPF::UI::SelectionMode::Multiple, "NeoWPF::UI::SelectionMode::Multiple"},
+    {"extended", NeoWPF::UI::SelectionMode::Extended, "NeoWPF::UI::SelectionMode::Extended"},
+}};
+
+constexpr std::array<ConversionEntry<NeoWPF::UI::PopupPlacement>, 4> PopupPlacementEntries {{
+    {"bottom", NeoWPF::UI::PopupPlacement::Bottom, "NeoWPF::UI::PopupPlacement::Bottom"},
+    {"top", NeoWPF::UI::PopupPlacement::Top, "NeoWPF::UI::PopupPlacement::Top"},
+    {"left", NeoWPF::UI::PopupPlacement::Left, "NeoWPF::UI::PopupPlacement::Left"},
+    {"right", NeoWPF::UI::PopupPlacement::Right, "NeoWPF::UI::PopupPlacement::Right"},
+}};
+
+constexpr std::array<ConversionEntry<NeoWPF::UI::FontStyle>, 3> FontStyleEntries {{
+    {"normal", NeoWPF::UI::FontStyle::Normal, "NeoWPF::UI::FontStyle::Normal"},
+    {"italic", NeoWPF::UI::FontStyle::Italic, "NeoWPF::UI::FontStyle::Italic"},
+    {"oblique", NeoWPF::UI::FontStyle::Oblique, "NeoWPF::UI::FontStyle::Oblique"},
+}};
+
+constexpr std::array<ConversionEntry<int>, 9> FontWeightEntries {{
+    {"thin", 100, "100"},
+    {"extralight", 200, "200"},
+    {"light", 300, "300"},
+    {"normal", 400, "400"},
+    {"medium", 500, "500"},
+    {"semibold", 600, "600"},
+    {"bold", 700, "700"},
+    {"extrabold", 800, "800"},
+    {"black", 900, "900"},
+}};
 
 }
 
@@ -99,6 +182,31 @@ bool ContentConverter::TryConvertToCode(const std::string& rawValue, std::string
 {
     expression = "std::string(" + EscapeLiteral(rawValue, false) + ")";
     return true;
+}
+
+bool ContentConverter::TryConvertToText(const std::any& value, std::wstring& text)
+{
+    if (const auto* stringValue = std::any_cast<std::wstring>(&value)) {
+        text = *stringValue;
+        return true;
+    }
+    if (const auto* stringValue = std::any_cast<std::string>(&value)) {
+        text = NeoWPF::Platform::Utf8ToWide(*stringValue);
+        return true;
+    }
+    if (const auto* number = std::any_cast<int>(&value)) {
+        text = std::to_wstring(*number);
+        return true;
+    }
+    if (const auto* number = std::any_cast<double>(&value)) {
+        text = std::to_wstring(*number);
+        return true;
+    }
+    if (const auto* boolean = std::any_cast<bool>(&value)) {
+        text = *boolean ? L"True" : L"False";
+        return true;
+    }
+    return false;
 }
 
 bool WideStringConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
@@ -277,168 +385,62 @@ bool SpacingConverter::ConvertFromString(const std::string& rawValue, std::any& 
 
 bool HorizontalAlignmentConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
-    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
-    if (value == "left") convertedValue = NeoWPF::UI::HorizontalAlignment::Left;
-    else if (value == "center") convertedValue = NeoWPF::UI::HorizontalAlignment::Center;
-    else if (value == "right") convertedValue = NeoWPF::UI::HorizontalAlignment::Right;
-    else if (value == "stretch") convertedValue = NeoWPF::UI::HorizontalAlignment::Stretch;
-    else return false;
-    return true;
+    return ConvertMappedValue(rawValue, HorizontalAlignmentEntries, convertedValue);
 }
 
 bool HorizontalAlignmentConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
 {
-    expression.clear();
-    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
-    if (value != "left" && value != "center" && value != "right" && value != "stretch") {
-        return false;
-    }
-    expression = "NeoWPF::UI::HorizontalAlignment::";
-    expression += UppercaseFirst(value);
-    return true;
+    return ConvertMappedValueToCode(*this, rawValue, HorizontalAlignmentEntries, expression);
 }
 
 bool VerticalAlignmentConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
-    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
-    if (value == "top") convertedValue = NeoWPF::UI::VerticalAlignment::Top;
-    else if (value == "center") convertedValue = NeoWPF::UI::VerticalAlignment::Center;
-    else if (value == "bottom") convertedValue = NeoWPF::UI::VerticalAlignment::Bottom;
-    else if (value == "stretch") convertedValue = NeoWPF::UI::VerticalAlignment::Stretch;
-    else return false;
-    return true;
+    return ConvertMappedValue(rawValue, VerticalAlignmentEntries, convertedValue);
 }
 
 bool VerticalAlignmentConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
 {
-    expression.clear();
-    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
-    if (value != "top" && value != "center" && value != "bottom" && value != "stretch") {
-        return false;
-    }
-    expression = "NeoWPF::UI::VerticalAlignment::";
-    expression += UppercaseFirst(value);
-    return true;
+    return ConvertMappedValueToCode(*this, rawValue, VerticalAlignmentEntries, expression);
 }
 
 bool SelectionModeConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
-    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
-    if (value == "single") {
-        convertedValue = NeoWPF::UI::SelectionMode::Single;
-        return true;
-    }
-    if (value == "multiple") {
-        convertedValue = NeoWPF::UI::SelectionMode::Multiple;
-        return true;
-    }
-    if (value == "extended") {
-        convertedValue = NeoWPF::UI::SelectionMode::Extended;
-        return true;
-    }
-    return false;
+    return ConvertMappedValue(rawValue, SelectionModeEntries, convertedValue);
 }
 
 bool SelectionModeConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
 {
-    std::any convertedValue;
-    if (!ConvertFromString(rawValue, convertedValue)) {
-        expression.clear();
-        return false;
-    }
-
-    const auto mode = std::any_cast<NeoWPF::UI::SelectionMode>(convertedValue);
-    switch (mode) {
-    case NeoWPF::UI::SelectionMode::Single: expression = "NeoWPF::UI::SelectionMode::Single"; break;
-    case NeoWPF::UI::SelectionMode::Multiple: expression = "NeoWPF::UI::SelectionMode::Multiple"; break;
-    case NeoWPF::UI::SelectionMode::Extended: expression = "NeoWPF::UI::SelectionMode::Extended"; break;
-    }
-    return true;
+    return ConvertMappedValueToCode(*this, rawValue, SelectionModeEntries, expression);
 }
 
 bool PopupPlacementConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
-    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
-    if (value == "bottom") convertedValue = NeoWPF::UI::PopupPlacement::Bottom;
-    else if (value == "top") convertedValue = NeoWPF::UI::PopupPlacement::Top;
-    else if (value == "left") convertedValue = NeoWPF::UI::PopupPlacement::Left;
-    else if (value == "right") convertedValue = NeoWPF::UI::PopupPlacement::Right;
-    else return false;
-    return true;
+    return ConvertMappedValue(rawValue, PopupPlacementEntries, convertedValue);
 }
 
 bool PopupPlacementConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
 {
-    std::any convertedValue;
-    if (!ConvertFromString(rawValue, convertedValue)) {
-        expression.clear();
-        return false;
-    }
-
-    switch (std::any_cast<NeoWPF::UI::PopupPlacement>(convertedValue)) {
-    case NeoWPF::UI::PopupPlacement::Bottom: expression = "NeoWPF::UI::PopupPlacement::Bottom"; break;
-    case NeoWPF::UI::PopupPlacement::Top: expression = "NeoWPF::UI::PopupPlacement::Top"; break;
-    case NeoWPF::UI::PopupPlacement::Left: expression = "NeoWPF::UI::PopupPlacement::Left"; break;
-    case NeoWPF::UI::PopupPlacement::Right: expression = "NeoWPF::UI::PopupPlacement::Right"; break;
-    }
-    return true;
+    return ConvertMappedValueToCode(*this, rawValue, PopupPlacementEntries, expression);
 }
 
 bool FontWeightConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
-    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
-    
-    if (value == "thin") convertedValue = 100;
-    else if (value == "extralight") convertedValue = 200;
-    else if (value == "light") convertedValue = 300;
-    else if (value == "normal") convertedValue = 400;
-    else if (value == "medium") convertedValue = 500;
-    else if (value == "semibold") convertedValue = 600;
-    else if (value == "bold") convertedValue = 700;
-    else if (value == "extrabold") convertedValue = 800;
-    else if (value == "black") convertedValue = 900;
-    else return false;
-    return true;
+    return ConvertMappedValue(rawValue, FontWeightEntries, convertedValue);
 }
 
 bool FontWeightConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
 {
-    std::any convertedValue;
-    if (!ConvertFromString(rawValue, convertedValue)) {
-        expression.clear();
-        return false;
-    }
-
-    const auto weight = std::any_cast<int>(convertedValue);
-    expression = std::to_string(weight);
-    return true;
+    return ConvertMappedValueToCode(*this, rawValue, FontWeightEntries, expression);
 }
 
 bool FontStyleConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
-    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
-    if (value == "normal") convertedValue = NeoWPF::UI::FontStyle::Normal;
-    else if (value == "italic") convertedValue = NeoWPF::UI::FontStyle::Italic;
-    else if (value == "oblique") convertedValue = NeoWPF::UI::FontStyle::Oblique;
-    else return false;
-    return true;
+    return ConvertMappedValue(rawValue, FontStyleEntries, convertedValue);
 }
 
 bool FontStyleConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
 {
-    std::any convertedValue;
-    if (!ConvertFromString(rawValue, convertedValue)) {
-        expression.clear();
-        return false;
-    }
-
-    const auto style = std::any_cast<NeoWPF::UI::FontStyle>(convertedValue);
-    switch (style) {
-    case NeoWPF::UI::FontStyle::Normal: expression = "NeoWPF::UI::FontStyle::Normal"; break;
-    case NeoWPF::UI::FontStyle::Italic: expression = "NeoWPF::UI::FontStyle::Italic"; break;
-    case NeoWPF::UI::FontStyle::Oblique: expression = "NeoWPF::UI::FontStyle::Oblique"; break;
-    }
-    return true;
+    return ConvertMappedValueToCode(*this, rawValue, FontStyleEntries, expression);
 }
 
 #define DEFINE_CONVERTER_FACTORY(Name, Type) \

@@ -68,6 +68,27 @@ namespace NeoWPF::UI::Properties {
         return &DependencyProperty::Register<TOwner, TProperty>(name, registrationMetadata);
     }
 
+    template<typename TOwner, typename TProperty, typename TGetter>
+    const DependencyProperty* RegisterStaticPropertyHandle(const char* name,
+                                                          TGetter getter,
+                                                          std::nullptr_t,
+                                                          const PropertyMetadata& metadata = {})
+    {
+        static_assert(std::is_member_function_pointer_v<TGetter> || std::is_function_v<TGetter>,
+                      "getter must be a member function pointer or function pointer");
+        static_assert(std::is_same_v<
+                          std::remove_cvref_t<std::invoke_result_t<TGetter, TOwner&>>,
+                          std::remove_cvref_t<TProperty>>,
+                      "getter return type must match the property value type");
+
+        if (const auto* existing = DependencyPropertyRegistry::Get().FindProperty(name, typeid(TOwner))) {
+            return existing;
+        }
+
+        (void)getter;
+        return &DependencyProperty::Register<TOwner, TProperty>(name, metadata);
+    }
+
     template<typename TOwner, typename TProperty, typename TGetter, typename TSetter>
     const DependencyProperty& RegisterProperty(const std::string& name,
                                                TGetter getter,
@@ -93,6 +114,16 @@ namespace NeoWPF::UI::Properties {
         }
         (void)getter;
         return RegisterProperty<TOwner, TProperty>(name, registrationMetadata);
+    }
+
+    template<typename TOwner, typename TProperty, typename TGetter>
+    const DependencyProperty& RegisterProperty(const std::string& name,
+                                               TGetter getter,
+                                               std::nullptr_t,
+                                               const PropertyMetadata& metadata = {})
+    {
+        (void)getter;
+        return RegisterProperty<TOwner, TProperty>(name, metadata);
     }
 
     inline std::wstring CoerceToWString(const std::any& value)
@@ -182,6 +213,8 @@ namespace NeoWPF::UI::Properties {
     void RegisterCheckboxProperties();
     void RegisterItemsControlProperties();
     void RegisterSelectorProperties();
+    void RegisterComboBoxProperties();
+    void RegisterComboBoxItemProperties();
     void RegisterPopupProperties();
     void RegisterListBoxProperties();
     void RegisterListBoxItemProperties();

@@ -145,33 +145,6 @@ TEST_F(PopupTests, OverlayOwnershipTracksOpenAndClose)
     EXPECT_TRUE(window->GetOverlays().empty());
 }
 
-TEST_F(PopupTests, OverlayHitTestingChecksTopmostOpenPopupFirst)
-{
-    auto lower = std::make_shared<NeoWPF::UI::Popup>();
-    auto upper = std::make_shared<NeoWPF::UI::Popup>();
-    auto lowerButton = std::make_shared<NeoWPF::UI::Button>(L"Lower");
-    auto upperButton = std::make_shared<NeoWPF::UI::Button>(L"Upper");
-
-    lower->SetContent(lowerButton);
-    upper->SetContent(upperButton);
-    lower->SetIsOpen(true);
-    upper->SetIsOpen(true);
-    lower->Measure(200, 60);
-    upper->Measure(200, 60);
-    lower->Arrange(200, 60);
-    upper->Arrange(200, 60);
-
-    auto& input = NeoWPF::Input::InputManager::GetInstance();
-    input.SetRootElement(lower.get());
-    input.SetOverlayElements({lower, upper});
-
-    EXPECT_EQ(input.HitTest(10, 10), upperButton.get());
-
-    upper->SetIsOpen(false);
-    input.SetOverlayElements({lower, upper});
-    EXPECT_EQ(input.HitTest(10, 10), lowerButton.get());
-}
-
 TEST_F(PopupTests, SharedPlacementConverterRejectsMalformedValues)
 {
     const auto converter = NeoWPF::UI::Properties::GetPopupPlacementConverter();

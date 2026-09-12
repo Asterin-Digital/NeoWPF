@@ -12,6 +12,7 @@ public:
 
     void AddItem(std::shared_ptr<FrameworkElement> item) override;
     void SetItems(const std::vector<std::shared_ptr<FrameworkElement>>& items);
+    virtual void SyncSelection(const std::any& item);
 
     std::shared_ptr<FrameworkElement> GetContainerForItem(const std::any& data, int index) override;
     void PrepareContainer(const std::shared_ptr<FrameworkElement>& container,
@@ -43,6 +44,9 @@ public:
 
     void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
+
+protected:
+    virtual void OnSelectionStateChanged() {}
 
 private:
     ListBox* m_owner = nullptr;

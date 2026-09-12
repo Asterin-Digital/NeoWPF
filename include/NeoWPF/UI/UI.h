@@ -62,6 +62,7 @@
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
 #include <NeoWPF/UI/Controls/ScrollViewer/ScrollViewer.h>
 #include <NeoWPF/UI/Controls/Selector/Selector.h>
+#include <NeoWPF/UI/Controls/ComboBox/ComboBox.h>
 #include <NeoWPF/UI/Controls/Popup/Popup.h>
 #include <NeoWPF/UI/Controls/Thumb/Thumb.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>

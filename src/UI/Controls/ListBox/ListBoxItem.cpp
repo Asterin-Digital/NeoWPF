@@ -35,10 +35,12 @@ void ListBoxItem::SetIsSelected(bool selected) noexcept
 {
     if (IsApplyingPropertyValue()) {
         InvalidateVisual();
+        OnSelectionStateChanged();
         return;
     }
 
     SetValue(IsSelectedProperty(), selected);
+    OnSelectionStateChanged();
 }
 
 bool ListBoxItem::GetIsSelected() const noexcept

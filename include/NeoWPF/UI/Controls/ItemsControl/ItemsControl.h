@@ -108,6 +108,11 @@ public:
                                   const std::any& data,
                                   int index);
 
+    virtual void ApplyItemTemplate(const std::shared_ptr<FrameworkElement>& container,
+                                   const std::any& data,
+                                   int index,
+                                   const Controls::ItemsControl::Virtualization::ItemTemplate& templ);
+
     /*
         @summary
         Returns the current collection of items.

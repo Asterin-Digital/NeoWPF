@@ -324,6 +324,20 @@ neowpf_add_xaml(
 )
 neowpf_add_xaml(
     NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ComboBox/Visual/ComboBoxItemStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated
+    COMPONENT ComboBoxItemStyles
+    PUBLIC_HEADER NeoWPF/UI/Controls/ComboBoxItemStyles.h
+)
+neowpf_add_xaml(
+    NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ComboBox/Visual/ComboBoxStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated
+    COMPONENT ComboBoxStyles
+    PUBLIC_HEADER NeoWPF/UI/Controls/ComboBoxStyles.h
+)
+neowpf_add_xaml(
+    NeoWPF.Foundation
     "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Layout/Border/Visual/BorderStyles.xaml"
     NAMESPACE NeoWPF::UI::Generated
     COMPONENT BorderStyles
@@ -656,6 +670,7 @@ if(BUILD_TESTING)
         tests/Automated/LocalizationTests.cpp
         tests/Automated/EventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
+        tests/Automated/CommonConvertersTests.cpp
         tests/Automated/TransformTests.cpp
         tests/Automated/LayoutTests.cpp
         tests/Automated/TransformCompositionTests.cpp

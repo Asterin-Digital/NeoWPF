@@ -15,6 +15,8 @@ void RegisterCoreControlProperties() {
     RegisterCheckboxProperties();
     RegisterItemsControlProperties();
     RegisterSelectorProperties();
+    RegisterComboBoxProperties();
+    RegisterComboBoxItemProperties();
     RegisterPopupProperties();
     RegisterListBoxProperties();
     RegisterListBoxItemProperties();

@@ -1,6 +1,8 @@
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
@@ -11,8 +13,6 @@
 #endif
 
 namespace NeoWPF::UI::Content {
-
-
 
 ContentPresenter::ContentPresenter()
     : m_content(nullptr)
@@ -66,11 +66,15 @@ void ContentPresenter::RebuildContentElement()
                 "[ContentPresenter] Resolved content to UIElement=%p",
                 m_contentElement.get());
         } catch (const std::bad_any_cast&) {
-            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter,
-                NeoWPF::Diagnostics::Level::Debug,
-                "[ContentPresenter] Content has no UIElement representation type=%s",
-                m_content.type().name());
-            return;
+            std::wstring text;
+            if (!NeoWPF::UI::Properties::ContentConverter::TryConvertToText(m_content, text)) {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ContentPresenter,
+                    NeoWPF::Diagnostics::Level::Debug,
+                    "[ContentPresenter] Content has no visual representation type=%s",
+                    m_content.type().name());
+                return;
+            }
+            m_contentElement = std::make_shared<NeoWPF::UI::TextBlock>(text);
         }
     }
 

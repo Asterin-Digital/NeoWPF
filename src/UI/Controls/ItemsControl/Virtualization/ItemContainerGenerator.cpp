@@ -13,8 +13,9 @@ std::shared_ptr<NeoWPF::UI::FrameworkElement> ItemContainerGenerator::Acquire(co
 {
     if (m_owner) {
         if (auto container = m_owner->GetContainerForItem(data, index)) {
-            m_owner->PrepareContainer(container, data, index);
             container->SetDataContext(data);
+            m_owner->PrepareContainer(container, data, index);
+            m_owner->ApplyItemTemplate(container, data, index, templ);
             m_activeContainers[index] = container;
             return container;
         }
