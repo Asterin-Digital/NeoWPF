@@ -155,6 +155,47 @@ void Checkbox::SetFontSize(int fontSize) noexcept
     InvalidateVisual();
 }
 
+void Checkbox::SetFontWeight(int fontWeight) noexcept
+{
+    if (fontWeight < 100) {
+        fontWeight = 100;
+    }
+    if (fontWeight > 1000) {
+        fontWeight = 1000;
+    }
+
+    if (IsApplyingPropertyValue()) { m_fontWeight = fontWeight; if (m_textContent) { m_textContent->SetFontWeight(fontWeight); } InvalidateVisual(); return; }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("FontWeight", *this);
+    if (property) { SetValue(*property, fontWeight); return; }
+    m_fontWeight = fontWeight;
+    if (m_textContent) {
+        m_textContent->SetFontWeight(fontWeight);
+    }
+    InvalidateVisual();
+}
+
+int Checkbox::GetFontWeight() const noexcept
+{
+    return m_fontWeight;
+}
+
+void Checkbox::SetFontStyle(NeoWPF::UI::FontStyle fontStyle) noexcept
+{
+    if (IsApplyingPropertyValue()) { m_fontStyle = fontStyle; if (m_textContent) { m_textContent->SetFontStyle(fontStyle); } InvalidateVisual(); return; }
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("FontStyle", *this);
+    if (property) { SetValue(*property, fontStyle); return; }
+    m_fontStyle = fontStyle;
+    if (m_textContent) {
+        m_textContent->SetFontStyle(fontStyle);
+    }
+    InvalidateVisual();
+}
+
+NeoWPF::UI::FontStyle Checkbox::GetFontStyle() const noexcept
+{
+    return m_fontStyle;
+}
+
 NeoWPF::UI::Color Checkbox::GetTextColor() const noexcept
 {
     return m_textColor;

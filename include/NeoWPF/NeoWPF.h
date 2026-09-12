@@ -24,11 +24,11 @@ Review the project's README.md, and AI.md for details.
 ///////////////////////////////////////////////////
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Platform/PlatformRegistry.h>
+#include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/Platform/NativeWindow.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/UI.h>
 #include <NeoWPF/Input/Input.h>
-#include <NeoWPF/UI/Markup/Builder/Builder.h>
 ///////////////////////////////////////////////////
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/FailureHooks.h>
@@ -197,6 +197,15 @@ namespace NeoWPF {
     using UI::Image;
 
     namespace UI {
+        namespace Locales {
+            using ::NeoWPF::UI::Localization::Culture;
+            using ::NeoWPF::UI::Localization::LocaleExpression;
+            using ::NeoWPF::UI::Localization::LocaleOperations;
+            using ::NeoWPF::UI::Localization::LocaleString;
+            using ::NeoWPF::UI::Localization::LocaleTable;
+            using ::NeoWPF::UI::Localization::LocalizationManager;
+        }
+
         namespace Media {
             using BitmapImage = ::NeoWPF::UI::Core::Media::BitmapImage;
 

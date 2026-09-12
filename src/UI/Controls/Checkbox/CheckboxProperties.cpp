@@ -64,6 +64,22 @@ namespace {
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::None;
         return metadata;
     }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxFontWeightMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(400);
+        metadata.Converter = NeoWPF::UI::Properties::GetFontWeightConverter();
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxFontStyleMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(::NeoWPF::UI::FontStyle::Normal);
+        metadata.Converter = NeoWPF::UI::Properties::GetFontStyleConverter();
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 }
 
 namespace NeoWPF::UI::Properties {
@@ -92,6 +108,14 @@ namespace NeoWPF::UI::Properties {
             &UI::Checkbox::GetFontSize,
             &UI::Checkbox::SetFontSize,
             MakeCheckboxFontSizeMetadata());
+        RegisterProperty<UI::Checkbox, int>("FontWeight",
+            &UI::Checkbox::GetFontWeight,
+            &UI::Checkbox::SetFontWeight,
+            MakeCheckboxFontWeightMetadata());
+        RegisterProperty<UI::Checkbox, UI::FontStyle>("FontStyle",
+            &UI::Checkbox::GetFontStyle,
+            &UI::Checkbox::SetFontStyle,
+            MakeCheckboxFontStyleMetadata());
         RegisterProperty<UI::Checkbox, bool>("IsChecked",
             &UI::Checkbox::IsChecked,
             &UI::Checkbox::SetChecked,
@@ -152,6 +176,24 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::FontSize
         &NeoWPF::UI::Checkbox::GetFontSize,
         &NeoWPF::UI::Checkbox::SetFontSize,
         MakeCheckboxFontSizeMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::FontWeightProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Checkbox, int>(
+        "FontWeight",
+        &NeoWPF::UI::Checkbox::GetFontWeight,
+        &NeoWPF::UI::Checkbox::SetFontWeight,
+        MakeCheckboxFontWeightMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::FontStyleProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Checkbox, NeoWPF::UI::FontStyle>(
+        "FontStyle",
+        &NeoWPF::UI::Checkbox::GetFontStyle,
+        &NeoWPF::UI::Checkbox::SetFontStyle,
+        MakeCheckboxFontStyleMetadata());
     return *property;
 }
 

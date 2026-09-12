@@ -69,6 +69,22 @@ namespace {
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxFontWeightMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(400);
+        metadata.Converter = NeoWPF::UI::Properties::GetFontWeightConverter();
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxFontStyleMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(::NeoWPF::UI::FontStyle::Normal);
+        metadata.Converter = NeoWPF::UI::Properties::GetFontStyleConverter();
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 }
 
 namespace NeoWPF::UI::Properties {
@@ -105,6 +121,14 @@ namespace NeoWPF::UI::Properties {
             &UI::TextBox::GetTextVerticalAlignment,
             static_cast<void (UI::TextBox::*)(TextVerticalAlignment)>(&UI::TextBox::SetTextVerticalAlignment),
             MakeTextBoxTextVerticalAlignmentMetadata());
+        RegisterProperty<UI::TextBox, int>("FontWeight",
+            &UI::TextBox::GetFontWeight,
+            &UI::TextBox::SetFontWeight,
+            MakeTextBoxFontWeightMetadata());
+        RegisterProperty<UI::TextBox, UI::FontStyle>("FontStyle",
+            &UI::TextBox::GetFontStyle,
+            &UI::TextBox::SetFontStyle,
+            MakeTextBoxFontStyleMetadata());
         ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::TextBox>(
             "TextBox", "", "NeoWPF::UI::TextBox", "NeoWPF/UI/Controls/TextBox/TextBox.h");
     }
@@ -179,5 +203,23 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBox::TextVerti
         &NeoWPF::UI::TextBox::GetTextVerticalAlignment,
         static_cast<void (NeoWPF::UI::TextBox::*)(TextVerticalAlignment)>(&NeoWPF::UI::TextBox::SetTextVerticalAlignment),
         MakeTextBoxTextVerticalAlignmentMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBox::FontWeightProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::TextBox, int>(
+        "FontWeight",
+        &NeoWPF::UI::TextBox::GetFontWeight,
+        &NeoWPF::UI::TextBox::SetFontWeight,
+        MakeTextBoxFontWeightMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBox::FontStyleProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::TextBox, NeoWPF::UI::FontStyle>(
+        "FontStyle",
+        &NeoWPF::UI::TextBox::GetFontStyle,
+        &NeoWPF::UI::TextBox::SetFontStyle,
+        MakeTextBoxFontStyleMetadata());
     return *property;
 }

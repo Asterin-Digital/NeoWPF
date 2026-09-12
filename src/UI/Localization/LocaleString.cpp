@@ -22,12 +22,14 @@ void RegisterLocaleStringProperties()
     RegisterProperty<UI::Localization::LocaleString, std::wstring>(
         "Key",
         &UI::Localization::LocaleString::GetKey,
-        &UI::Localization::LocaleString::SetKey,
+        static_cast<void (UI::Localization::LocaleString::*)(const std::wstring&)>(
+            &UI::Localization::LocaleString::SetKey),
         MakeStringMetadata());
     RegisterProperty<UI::Localization::LocaleString, std::wstring>(
         "Value",
         &UI::Localization::LocaleString::GetValue,
-        &UI::Localization::LocaleString::SetValue,
+        static_cast<void (UI::Localization::LocaleString::*)(const std::wstring&)>(
+            &UI::Localization::LocaleString::SetValue),
         MakeStringMetadata());
     UI::Markup::Xaml::RegisterXamlType<UI::Localization::LocaleString>(
         "LocaleString", "", "NeoWPF::UI::Localization::LocaleString",
@@ -43,7 +45,8 @@ NeoWPF::UI::Localization::LocaleString::KeyProperty()
         NeoWPF::UI::Localization::LocaleString, std::wstring>(
         "Key",
         &NeoWPF::UI::Localization::LocaleString::GetKey,
-        &NeoWPF::UI::Localization::LocaleString::SetKey,
+        static_cast<void (NeoWPF::UI::Localization::LocaleString::*)(const std::wstring&)>(
+            &NeoWPF::UI::Localization::LocaleString::SetKey),
         MakeStringMetadata());
     return *property;
 }
@@ -55,7 +58,8 @@ NeoWPF::UI::Localization::LocaleString::ValueProperty()
         NeoWPF::UI::Localization::LocaleString, std::wstring>(
         "Value",
         &NeoWPF::UI::Localization::LocaleString::GetValue,
-        &NeoWPF::UI::Localization::LocaleString::SetValue,
+        static_cast<void (NeoWPF::UI::Localization::LocaleString::*)(const std::wstring&)>(
+            &NeoWPF::UI::Localization::LocaleString::SetValue),
         MakeStringMetadata());
     return *property;
 }

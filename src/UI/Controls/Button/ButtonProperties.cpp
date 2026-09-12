@@ -32,6 +32,22 @@ namespace {
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeButtonFontWeightMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(400);
+        metadata.Converter = NeoWPF::UI::Properties::GetFontWeightConverter();
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeButtonFontStyleMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(::NeoWPF::UI::FontStyle::Normal);
+        metadata.Converter = NeoWPF::UI::Properties::GetFontStyleConverter();
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 }
 
 namespace NeoWPF::UI::Properties {
@@ -48,6 +64,14 @@ namespace NeoWPF::UI::Properties {
             &UI::Button::GetFontSize,
             &UI::Button::SetFontSize,
             MakeButtonFontSizeMetadata());
+        RegisterProperty<UI::Button, int>("FontWeight",
+            &UI::Button::GetFontWeight,
+            &UI::Button::SetFontWeight,
+            MakeButtonFontWeightMetadata());
+        RegisterProperty<UI::Button, UI::FontStyle>("FontStyle",
+            &UI::Button::GetFontStyle,
+            &UI::Button::SetFontStyle,
+            MakeButtonFontStyleMetadata());
         ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Button>(
             "Button", "", "NeoWPF::UI::Button", "NeoWPF/UI/Controls/Button/Button.h");
     }
@@ -77,5 +101,23 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::FontSizePr
         &NeoWPF::UI::Button::GetFontSize,
         &NeoWPF::UI::Button::SetFontSize,
         MakeButtonFontSizeMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::FontWeightProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Button, int>(
+        "FontWeight",
+        &NeoWPF::UI::Button::GetFontWeight,
+        &NeoWPF::UI::Button::SetFontWeight,
+        MakeButtonFontWeightMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::FontStyleProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Button, NeoWPF::UI::FontStyle>(
+        "FontStyle",
+        &NeoWPF::UI::Button::GetFontStyle,
+        &NeoWPF::UI::Button::SetFontStyle,
+        MakeButtonFontStyleMetadata());
     return *property;
 }

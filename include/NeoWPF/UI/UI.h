@@ -8,6 +8,13 @@
 */
 
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <NeoWPF/UI/Markup/Builder/Builder.h>
+#include <NeoWPF/UI/Localization/Culture.h>
+#include <NeoWPF/UI/Localization/LocaleExpression.h>
+#include <NeoWPF/UI/Localization/LocaleOperations.h>
+#include <NeoWPF/UI/Localization/LocaleString.h>
+#include <NeoWPF/UI/Localization/LocaleTable.h>
+#include <NeoWPF/UI/Localization/LocalizationManager.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>

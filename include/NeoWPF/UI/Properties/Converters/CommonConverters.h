@@ -79,6 +79,18 @@ public:
     bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
 };
 
+class FontWeightConverter final : public TypeConverter {
+public:
+    bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
+};
+
+class FontStyleConverter final : public TypeConverter {
+public:
+    bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
+};
+
 std::shared_ptr<const TypeConverter> GetStringConverter();
 std::shared_ptr<const TypeConverter> GetContentConverter();
 std::shared_ptr<const TypeConverter> GetWideStringConverter();
@@ -91,6 +103,8 @@ std::shared_ptr<const TypeConverter> GetSpacingConverter();
 std::shared_ptr<const TypeConverter> GetHorizontalAlignmentConverter();
 std::shared_ptr<const TypeConverter> GetVerticalAlignmentConverter();
 std::shared_ptr<const TypeConverter> GetSelectionModeConverter();
+std::shared_ptr<const TypeConverter> GetFontWeightConverter();
+std::shared_ptr<const TypeConverter> GetFontStyleConverter();
 
 bool TryConvertValue(const DependencyProperty& property,
                      const std::any& value,

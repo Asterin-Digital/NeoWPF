@@ -44,6 +44,8 @@ else()
     find_program(NEOWPF_GLSLANG_VALIDATOR glslangValidator REQUIRED)
 endif()
 
+message(STATUS "NeoWPF renderer backend selected: ${NEOWPF_RENDERER_BACKEND}")
+
 if(UNIX)
     set(NEOWPF_VULKAN_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/Vulkan/Shaders")
     set(NEOWPF_VULKAN_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/vulkan")

@@ -7,6 +7,7 @@
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Text/FontStyle.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 
 namespace NeoWPF::UI::Styling {
@@ -32,6 +33,8 @@ public:
     static const Properties::DependencyProperty& TextProperty();
     static const Properties::DependencyProperty& TextColorProperty();
     static const Properties::DependencyProperty& FontSizeProperty();
+    static const Properties::DependencyProperty& FontWeightProperty();
+    static const Properties::DependencyProperty& FontStyleProperty();
 
     Button();
 
@@ -140,6 +143,30 @@ public:
 
     /*
         @summary
+        Sets the font weight used to measure and render text.
+    */
+    void SetFontWeight(int fontWeight) noexcept { m_fontWeight = fontWeight; if (m_textContent) { m_textContent->SetFontWeight(fontWeight); } InvalidateVisual(); }
+
+    /*
+        @summary
+        Returns the current font weight used to measure and render text.
+    */
+    int GetFontWeight() const noexcept { return m_fontWeight; }
+
+    /*
+        @summary
+        Sets the font style used to measure and render text.
+    */
+    void SetFontStyle(NeoWPF::UI::FontStyle fontStyle) noexcept { m_fontStyle = fontStyle; if (m_textContent) { m_textContent->SetFontStyle(fontStyle); } InvalidateVisual(); }
+
+    /*
+        @summary
+        Returns the current font style used to measure and render text.
+    */
+    NeoWPF::UI::FontStyle GetFontStyle() const noexcept { return m_fontStyle; }
+
+    /*
+        @summary
         Sets the padding around the text inside the button.
 
         @param padding
@@ -238,6 +265,8 @@ private:
     NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0xFF333333u);
     int m_fontSize = 16;
     std::wstring m_fontFamily;
+    int m_fontWeight = 400;
+    NeoWPF::UI::FontStyle m_fontStyle = NeoWPF::UI::FontStyle::Normal;
 
 private:
     int m_padding = 8;

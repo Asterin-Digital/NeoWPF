@@ -3,8 +3,12 @@
 #include <NeoWPF/UI/Markup/Xaml/Artifacts/NamlArtifact.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
+#include <NeoWPF/UI/Markup/Xaml/Parsing/XamlMarkupExtension.h>
+#include <NeoWPF/Core/Application/Application.h>
+#include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/UI/Data/Binding.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
+#include <NeoWPF/UI/Localization/LocaleOperations.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/Core/Application/Resources/ResourceManager.h>
@@ -12,6 +16,7 @@
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/IXamlResourceHost.h>
 #include <NeoWPF/UI/Styling/Style.h>
+#include <NeoWPF/Platform/PlatformUtils.h>
 
 #include <any>
 #include <memory>
@@ -99,6 +104,10 @@ private:
             return nullptr;
         }
 
+        if (!AttachLocaleTables(*object, objectId)) {
+            return nullptr;
+        }
+
         auto* element = dynamic_cast<NeoWPF::UI::UIElement*>(object.get());
         if (element) {
             m_scopes.push_back(element);
@@ -124,6 +133,10 @@ private:
         for (const auto& binding : m_artifact.bindings) {
             if (binding.objectId != objectId) continue;
             if (!ApplyBinding(*object, binding)) return nullptr;
+        }
+        for (const auto& locale : m_artifact.localeReferences) {
+            if (locale.objectId != objectId) continue;
+            if (!ApplyLocaleReference(*object, locale)) return nullptr;
         }
         for (const auto& child : m_artifact.children) {
             if (child.parentId != objectId ||
@@ -190,14 +203,51 @@ private:
             m_error = "NAML property is not registered: " + propertyName;
             return false;
         }
+        if (record.value.kind == NeoNaml::NamlValueKind::LocaleReference) {
+            if (!NeoWPF::UI::Localization::LocaleOperations::SetLocale(
+                    object,
+                    *property,
+                    NeoWPF::Platform::Utf8ToWide(record.value.text))) {
+                m_error = "compiled Locale could not be attached: " + record.value.text;
+                return false;
+            }
+            return true;
+        }
         std::any parsedValue;
         if (record.value.kind == NeoNaml::NamlValueKind::MarkupExtension &&
-            !record.value.text.empty() &&
-            record.value.text.rfind("{StaticResource ", 0) == 0 &&
-            record.value.text.back() == '}') {
-            const auto key = record.value.text.substr(16, record.value.text.size() - 17);
-            if (!ResolveResource(key, parsedValue)) {
-                m_error = "compiled StaticResource was not found: " + key;
+            !record.value.text.empty()) {
+            std::string extensionError;
+            const auto extension = ParseXamlMarkupExtension(
+                record.value.text,
+                {},
+                extensionError);
+            if (!extension) {
+                m_error = extensionError.empty()
+                    ? "compiled markup extension could not be parsed"
+                    : extensionError;
+                return false;
+            }
+
+            std::string localeKey;
+            if (TryGetXamlLocaleKey(*extension, localeKey)) {
+                if (!NeoWPF::UI::Localization::LocaleOperations::SetLocale(
+                        object,
+                        *property,
+                        NeoWPF::Platform::Utf8ToWide(localeKey))) {
+                    m_error = "compiled Locale could not be attached: " + localeKey;
+                    return false;
+                }
+                return true;
+            }
+
+            std::string resourceKey;
+            if (!TryGetXamlStaticResource(*extension, resourceKey)) {
+                m_error = "unsupported compiled markup extension: " + record.value.text;
+                return false;
+            }
+
+            if (!ResolveResource(resourceKey, parsedValue)) {
+                m_error = "compiled StaticResource was not found: " + resourceKey;
                 return false;
             }
 
@@ -222,6 +272,65 @@ private:
             return false;
         }
         object.SetValue(*property, parsedValue);
+        return true;
+    }
+
+    bool ApplyLocaleReference(DependencyObject& object,
+                              const NamlLocaleReferenceRecord& record)
+    {
+        if (record.propertyString >= m_artifact.strings.size()) {
+            m_error = "NAML locale property reference is invalid";
+            return false;
+        }
+        const auto& propertyName = m_artifact.strings[record.propertyString];
+        const auto* property = object.FindDependencyProperty(propertyName);
+        if (!property) {
+            m_error = "NAML locale property is not registered: " + propertyName;
+            return false;
+        }
+        if (!NeoWPF::UI::Localization::LocaleOperations::SetLocale(
+                object,
+                *property,
+                NeoWPF::Platform::Utf8ToWide(record.key))) {
+            m_error = "NAML Locale could not be attached: " + propertyName;
+            return false;
+        }
+        return true;
+    }
+
+    bool AttachLocaleTables(DependencyObject& object, std::uint32_t objectId)
+    {
+        auto* application = dynamic_cast<NeoWPF::Core::Application*>(&object);
+        auto* window = dynamic_cast<NeoWPF::UI::Window*>(&object);
+        for (const auto& tableRecord : m_artifact.localeTables) {
+            if (tableRecord.objectId != objectId) {
+                continue;
+            }
+            NeoWPF::UI::Localization::LocaleTable table{
+                NeoWPF::UI::Localization::Culture(std::wstring(tableRecord.culture.begin(), tableRecord.culture.end()))};
+            if (!table.IsValid()) {
+                m_error = "NAML locale table has an invalid culture: " + tableRecord.culture;
+                return false;
+            }
+            for (const auto& stringRecord : m_artifact.localeStrings) {
+                if (stringRecord.tableId != tableRecord.id ||
+                    !table.Add(NeoWPF::Platform::Utf8ToWide(stringRecord.key),
+                               NeoWPF::Platform::Utf8ToWide(stringRecord.value))) {
+                    if (stringRecord.tableId == tableRecord.id) {
+                        m_error = "NAML locale table contains an invalid or duplicate string";
+                        return false;
+                    }
+                }
+            }
+            if (application) {
+                application->AddLocale(std::make_shared<NeoWPF::UI::Localization::LocaleTable>(table));
+            } else if (window) {
+                window->AddLocale(std::make_shared<NeoWPF::UI::Localization::LocaleTable>(table));
+            } else {
+                m_error = "NAML locale table owner is not an Application or Window";
+                return false;
+            }
+        }
         return true;
     }
 

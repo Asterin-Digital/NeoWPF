@@ -12,6 +12,7 @@
 #include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
 #include <NeoWPF/UI/Layout/Placement/TextWrapping.h>
 #include <NeoWPF/UI/Text/TextRasterCache.h>
+#include <NeoWPF/UI/Text/FontStyle.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
@@ -58,6 +59,8 @@ public:
     static const Properties::DependencyProperty& CaretColorProperty();
     static const Properties::DependencyProperty& FontSizeProperty();
     static const Properties::DependencyProperty& FontFamilyProperty();
+    static const Properties::DependencyProperty& FontWeightProperty();
+    static const Properties::DependencyProperty& FontStyleProperty();
     static const Properties::DependencyProperty& TextHorizontalAlignmentProperty();
     static const Properties::DependencyProperty& TextVerticalAlignmentProperty();
 

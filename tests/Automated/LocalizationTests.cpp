@@ -617,6 +617,70 @@ TEST_F(LocaleExpressionTests, WindowLocaleOverridesGlobalLocaleForDescendants)
     EXPECT_EQ(textBlock->GetText(), L"Salut");
 }
 
+TEST_F(LocaleExpressionTests, AppScopePrecedence)
+{
+    NeoWPF::Core::Application::Initialize();
+    auto& app = NeoWPF::Core::Application::Current();
+
+    auto globalTable = std::make_shared<LocaleTable>(L"en-US");
+    ASSERT_TRUE(globalTable->Add(L"Greeting", L"Hello from global"));
+    ASSERT_TRUE(manager().ReplaceTable(*globalTable));
+
+    auto appTable = std::make_shared<LocaleTable>(L"en-US");
+    ASSERT_TRUE(appTable->Add(L"Greeting", L"Hello from app"));
+    app.AddLocale(appTable);
+
+    auto appText = std::make_shared<NeoWPF::UI::TextBlock>();
+    appText->SetLocale(L"Greeting");
+    EXPECT_EQ(appText->GetText(), L"Hello from app");
+
+    auto window = std::make_shared<NeoWPF::UI::Window>();
+    auto windowTable = std::make_shared<LocaleTable>(L"en-US");
+    ASSERT_TRUE(windowTable->Add(L"Greeting", L"Hello from window"));
+    window->AddLocale(windowTable);
+
+    auto windowText = std::make_shared<NeoWPF::UI::TextBlock>();
+    window->SetContent(windowText);
+    windowText->SetLocale(L"Greeting");
+    EXPECT_EQ(windowText->GetText(), L"Hello from window");
+
+    manager().Clear();
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST_F(LocaleExpressionTests, LocaleScopePrecedence)
+{
+    NeoWPF::Core::Application::Initialize();
+    auto& app = NeoWPF::Core::Application::Current();
+
+    auto appTable = std::make_shared<LocaleTable>(L"en-US");
+    ASSERT_TRUE(appTable->Add(L"Greeting", L"Hello from app"));
+    app.AddLocale(appTable);
+
+    std::wstring appValue;
+    ASSERT_TRUE(manager().TryResolve(L"Greeting", appValue));
+    EXPECT_EQ(appValue, L"Hello from app");
+
+    auto fallbackWindow = std::make_shared<NeoWPF::UI::Window>();
+    auto fallbackText = std::make_shared<NeoWPF::UI::TextBlock>();
+    fallbackWindow->SetContent(fallbackText);
+    fallbackText->SetLocale(L"Greeting");
+    EXPECT_EQ(fallbackText->GetText(), L"Hello from app");
+
+    auto window = std::make_shared<NeoWPF::UI::Window>();
+    auto windowTable = std::make_shared<LocaleTable>(L"en-US");
+    ASSERT_TRUE(windowTable->Add(L"Greeting", L"Hello from window"));
+    window->AddLocale(windowTable);
+
+    auto windowText = std::make_shared<NeoWPF::UI::TextBlock>();
+    window->SetContent(windowText);
+    windowText->SetLocale(L"Greeting");
+    EXPECT_EQ(windowText->GetText(), L"Hello from window");
+
+    manager().Clear();
+    NeoWPF::Core::Application::Shutdown();
+}
+
 TEST_F(LocaleExpressionTests, WindowLocaleDoesNotAffectOtherWindows)
 {
     auto localizedWindow = std::make_shared<NeoWPF::UI::Window>();

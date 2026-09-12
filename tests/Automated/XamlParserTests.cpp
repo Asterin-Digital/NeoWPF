@@ -221,6 +221,32 @@ TEST(XamlRuntimeTests, LocaleExtensionUpdatesTextBlock)
     NeoWPF::Core::Application::Shutdown();
 }
 
+TEST(XamlRuntimeTests, LocaleExtensionSupportsNamedKey)
+{
+    NeoWPF::Core::Application::Initialize();
+    auto& manager = NeoWPF::UI::Localization::LocalizationManager::Get();
+    manager.Clear();
+
+    NeoWPF::UI::Localization::LocaleTable english(L"en-US");
+    ASSERT_TRUE(english.Add(L"Greeting", L"Hello"));
+    ASSERT_TRUE(manager.RegisterTable(english));
+    ASSERT_TRUE(manager.SetActiveLocale(L"en-US"));
+
+    const auto roots = NeoWPF::UI::Markup::Xaml::ParseXaml(
+        R"(<TextBlock Text="{Locale Key=Greeting}" />)");
+    const auto object = NeoWPF::UI::Markup::Xaml::BuildXamlTree(roots);
+    const auto textBlock = std::dynamic_pointer_cast<NeoWPF::UI::TextBlock>(object);
+
+    ASSERT_NE(textBlock, nullptr);
+    EXPECT_EQ(textBlock->GetText(), L"Hello");
+    EXPECT_NE(NeoWPF::UI::Localization::LocaleOperations::GetLocaleExpression(
+                  *textBlock,
+                  NeoWPF::UI::TextBlock::TextProperty()), nullptr);
+
+    manager.Clear();
+    NeoWPF::Core::Application::Shutdown();
+}
+
 TEST(XamlRuntimeTests, LocaleExtensionUpdatesTextBoxAndDirectTextWins)
 {
     NeoWPF::Core::Application::Initialize();

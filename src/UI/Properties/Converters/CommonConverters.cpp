@@ -6,6 +6,7 @@
 #include <NeoWPF/UI/Core/Media/Thickness.h>
 #include <NeoWPF/UI/Core/Media/Spacing.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
+#include <NeoWPF/UI/Text/FontStyle.h>
 
 #include <cctype>
 #include <cstdint>
@@ -353,6 +354,63 @@ bool SelectionModeConverter::TryConvertToCode(const std::string& rawValue, std::
     return true;
 }
 
+bool FontWeightConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+{
+    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
+    
+    if (value == "thin") convertedValue = 100;
+    else if (value == "extralight") convertedValue = 200;
+    else if (value == "light") convertedValue = 300;
+    else if (value == "normal") convertedValue = 400;
+    else if (value == "medium") convertedValue = 500;
+    else if (value == "semibold") convertedValue = 600;
+    else if (value == "bold") convertedValue = 700;
+    else if (value == "extrabold") convertedValue = 800;
+    else if (value == "black") convertedValue = 900;
+    else return false;
+    return true;
+}
+
+bool FontWeightConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    std::any convertedValue;
+    if (!ConvertFromString(rawValue, convertedValue)) {
+        expression.clear();
+        return false;
+    }
+
+    const auto weight = std::any_cast<int>(convertedValue);
+    expression = std::to_string(weight);
+    return true;
+}
+
+bool FontStyleConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+{
+    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
+    if (value == "normal") convertedValue = NeoWPF::UI::FontStyle::Normal;
+    else if (value == "italic") convertedValue = NeoWPF::UI::FontStyle::Italic;
+    else if (value == "oblique") convertedValue = NeoWPF::UI::FontStyle::Oblique;
+    else return false;
+    return true;
+}
+
+bool FontStyleConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    std::any convertedValue;
+    if (!ConvertFromString(rawValue, convertedValue)) {
+        expression.clear();
+        return false;
+    }
+
+    const auto style = std::any_cast<NeoWPF::UI::FontStyle>(convertedValue);
+    switch (style) {
+    case NeoWPF::UI::FontStyle::Normal: expression = "NeoWPF::UI::FontStyle::Normal"; break;
+    case NeoWPF::UI::FontStyle::Italic: expression = "NeoWPF::UI::FontStyle::Italic"; break;
+    case NeoWPF::UI::FontStyle::Oblique: expression = "NeoWPF::UI::FontStyle::Oblique"; break;
+    }
+    return true;
+}
+
 #define DEFINE_CONVERTER_FACTORY(Name, Type) \
 std::shared_ptr<const TypeConverter> Get##Name##Converter() \
 { \
@@ -372,6 +430,8 @@ DEFINE_CONVERTER_FACTORY(Spacing, SpacingConverter)
 DEFINE_CONVERTER_FACTORY(HorizontalAlignment, HorizontalAlignmentConverter)
 DEFINE_CONVERTER_FACTORY(VerticalAlignment, VerticalAlignmentConverter)
 DEFINE_CONVERTER_FACTORY(SelectionMode, SelectionModeConverter)
+DEFINE_CONVERTER_FACTORY(FontWeight, FontWeightConverter)
+DEFINE_CONVERTER_FACTORY(FontStyle, FontStyleConverter)
 
 #undef DEFINE_CONVERTER_FACTORY
 

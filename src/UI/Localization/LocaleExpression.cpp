@@ -75,7 +75,12 @@ void LocaleExpression::Refresh()
         element = dynamic_cast<NeoWPF::UI::UIElement*>(element->GetParent());
     }
 
+    if (LocalizationManager::Get().TryResolve(m_key, value)) {
+        m_target.SetValueExpression(m_targetProperty, value);
+        return;
+    }
+
     m_target.SetValueExpression(m_targetProperty, LocalizationManager::Get().Resolve(m_key));
 }
 
-} // namespace NeoWPF::UI::Localization
+}

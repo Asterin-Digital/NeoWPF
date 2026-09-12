@@ -69,6 +69,22 @@ namespace {
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockFontWeightMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(400);
+        metadata.Converter = NeoWPF::UI::Properties::GetFontWeightConverter();
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockFontStyleMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(::NeoWPF::UI::FontStyle::Normal);
+        metadata.Converter = NeoWPF::UI::Properties::GetFontStyleConverter();
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 }
 
 namespace NeoWPF::UI::Properties {
@@ -105,6 +121,14 @@ namespace NeoWPF::UI::Properties {
             &UI::TextBlock::GetPadding,
             static_cast<void (UI::TextBlock::*)(UI::Thickness)>(&UI::TextBlock::SetPadding),
             MakeTextBlockPaddingMetadata());
+        RegisterProperty<UI::TextBlock, int>("FontWeight",
+            &UI::TextBlock::GetFontWeight,
+            &UI::TextBlock::SetFontWeight,
+            MakeTextBlockFontWeightMetadata());
+        RegisterProperty<UI::TextBlock, UI::FontStyle>("FontStyle",
+            &UI::TextBlock::GetFontStyle,
+            &UI::TextBlock::SetFontStyle,
+            MakeTextBlockFontStyleMetadata());
         ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::TextBlock>(
             "TextBlock", "", "NeoWPF::UI::TextBlock", "NeoWPF/UI/Controls/Text/TextBlock.h");
     }
@@ -179,5 +203,23 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBlock::Padding
         &NeoWPF::UI::TextBlock::GetPadding,
         static_cast<void (NeoWPF::UI::TextBlock::*)(NeoWPF::UI::Thickness)>(&NeoWPF::UI::TextBlock::SetPadding),
         MakeTextBlockPaddingMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBlock::FontWeightProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::TextBlock, int>(
+        "FontWeight",
+        &NeoWPF::UI::TextBlock::GetFontWeight,
+        &NeoWPF::UI::TextBlock::SetFontWeight,
+        MakeTextBlockFontWeightMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBlock::FontStyleProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::TextBlock, NeoWPF::UI::FontStyle>(
+        "FontStyle",
+        &NeoWPF::UI::TextBlock::GetFontStyle,
+        &NeoWPF::UI::TextBlock::SetFontStyle,
+        MakeTextBlockFontStyleMetadata());
     return *property;
 }

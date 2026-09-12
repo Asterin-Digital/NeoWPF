@@ -9,6 +9,8 @@
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/UI/Localization/LocaleTable.h>
+#include <NeoWPF/UI/Localization/LocalizationManager.h>
 #include <NeoWPF/UI/Markup/Xaml/Loading/CompiledXaml.h>
 #include <NeoNaml/NamlArtifact.h>
 
@@ -142,6 +144,88 @@ TEST(NamlArtifactTests, RejectsUnsupportedValueKind)
         artifact,
         error));
     EXPECT_EQ(error, "malformed NAML property record");
+}
+
+TEST(NamlArtifactTests, LoadsLocaleReferenceAndUpdates)
+{
+    NeoWPF::Core::Application::Initialize();
+    auto& manager = NeoWPF::UI::Localization::LocalizationManager::Get();
+    manager.Clear();
+
+    NeoWPF::UI::Localization::LocaleTable english(L"en-US");
+    NeoWPF::UI::Localization::LocaleTable romanian(L"ro-RO");
+    ASSERT_TRUE(english.Add(L"Greeting", L"Hello"));
+    ASSERT_TRUE(romanian.Add(L"Greeting", L"Salut"));
+    ASSERT_TRUE(manager.RegisterTable(english));
+    ASSERT_TRUE(manager.RegisterTable(romanian));
+    ASSERT_TRUE(manager.SetActiveLocale(L"en-US"));
+
+    NeoNaml::NamlArtifact artifact;
+    artifact.resourceKey = "CompiledLocaleTest";
+    artifact.sourcePath = "CompiledLocaleTest.xaml";
+    artifact.rootObjectId = 0;
+    artifact.strings = {"TextBlock", "Text"};
+    artifact.objects = {{0, 0, ""}};
+    artifact.localeReferences = {{0, 1, "Greeting"}};
+
+    const auto key = NeoWPF::ResourceKey("CompiledLocaleTest");
+    const auto serialized = NeoNaml::SerializeNaml(artifact);
+    NeoWPF::ResourceManager::Instance().RegisterProviderReference(
+        NeoWPF::EmbeddedResourceProvider::Instance());
+    NeoWPF::EmbeddedResourceProvider::Instance().Register(
+        key,
+        NeoWPF::ResourceType::Xaml,
+        reinterpret_cast<const unsigned char*>(serialized.data()),
+        serialized.size());
+
+    std::string error;
+    const auto root = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error);
+    ASSERT_NE(root, nullptr) << error;
+    const auto textBlock = std::dynamic_pointer_cast<NeoWPF::UI::TextBlock>(root);
+    ASSERT_NE(textBlock, nullptr);
+    EXPECT_EQ(textBlock->GetText(), L"Hello");
+
+    ASSERT_TRUE(manager.SetActiveLocale(L"ro-RO"));
+    EXPECT_EQ(textBlock->GetText(), L"Salut");
+
+    NeoWPF::EmbeddedResourceProvider::Instance().Unregister(key);
+    manager.Clear();
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(NamlArtifactTests, LoadsApplicationLocaleTable)
+{
+    NeoWPF::Core::Application::Initialize();
+    auto& manager = NeoWPF::UI::Localization::LocalizationManager::Get();
+    manager.Clear();
+
+    NeoNaml::NamlArtifact artifact;
+    artifact.resourceKey = "CompiledApplicationLocaleTest";
+    artifact.sourcePath = "CompiledApplicationLocaleTest.xaml";
+    artifact.rootObjectId = 0;
+    artifact.strings = {"Application"};
+    artifact.objects = {{0, 0, ""}};
+    artifact.localeTables = {{0, 0, "en-US"}};
+    artifact.localeStrings = {{0, "Greeting", "Hello from compiled XAML"}};
+
+    const auto key = NeoWPF::ResourceKey("CompiledApplicationLocaleTest");
+    const auto serialized = NeoNaml::SerializeNaml(artifact);
+    NeoWPF::ResourceManager::Instance().RegisterProviderReference(
+        NeoWPF::EmbeddedResourceProvider::Instance());
+    NeoWPF::EmbeddedResourceProvider::Instance().Register(
+        key,
+        NeoWPF::ResourceType::Xaml,
+        reinterpret_cast<const unsigned char*>(serialized.data()),
+        serialized.size());
+
+    std::string error;
+    ASSERT_NE(NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error), nullptr) << error;
+    ASSERT_TRUE(manager.SetActiveLocale(L"en-US"));
+    EXPECT_EQ(manager.Resolve(L"Greeting"), L"Hello from compiled XAML");
+
+    NeoWPF::EmbeddedResourceProvider::Instance().Unregister(key);
+    manager.Clear();
+    NeoWPF::Core::Application::Shutdown();
 }
 
 TEST(NamlArtifactTests, LoadsImplicitContentThroughRegisteredContentProperty)

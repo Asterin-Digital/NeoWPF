@@ -10,6 +10,8 @@ namespace NeoWPF::UI::Localization {
 
 class LocaleString : public Properties::DependencyObject {
 public:
+    using Properties::DependencyObject::SetValue;
+
     LocaleString() = default;
     LocaleString(std::wstring key, std::wstring value)
         : m_key(std::move(key))

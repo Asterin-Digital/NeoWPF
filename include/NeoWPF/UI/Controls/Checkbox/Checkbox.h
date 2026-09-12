@@ -6,6 +6,7 @@
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Text/FontStyle.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 
 namespace NeoWPF::UI::Styling {
@@ -30,6 +31,8 @@ public:
     static const Properties::DependencyProperty& BorderColorProperty();
     static const Properties::DependencyProperty& PaddingProperty();
     static const Properties::DependencyProperty& FontSizeProperty();
+    static const Properties::DependencyProperty& FontWeightProperty();
+    static const Properties::DependencyProperty& FontStyleProperty();
     static const Properties::DependencyProperty& IsCheckedProperty();
 
     Checkbox();
@@ -148,6 +151,30 @@ public:
 
     /*
         @summary
+        Sets the font weight used to measure and render text.
+    */
+    void SetFontWeight(int fontWeight) noexcept;
+
+    /*
+        @summary
+        Returns the current font weight used to measure and render text.
+    */
+    int GetFontWeight() const noexcept;
+
+    /*
+        @summary
+        Sets the font style used to measure and render text.
+    */
+    void SetFontStyle(NeoWPF::UI::FontStyle fontStyle) noexcept;
+
+    /*
+        @summary
+        Returns the current font style used to measure and render text.
+    */
+    NeoWPF::UI::FontStyle GetFontStyle() const noexcept;
+
+    /*
+        @summary
         Measures the checkbox for layout.
 
         @internal
@@ -186,6 +213,8 @@ private:
     NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0xFF202020u);
     Thickness m_padding = Thickness(8);
     int m_fontSize = 14;
+    int m_fontWeight = 400;
+    NeoWPF::UI::FontStyle m_fontStyle = NeoWPF::UI::FontStyle::Normal;
     std::shared_ptr<NeoWPF::UI::TextBlock> m_textContent;
 };
 
