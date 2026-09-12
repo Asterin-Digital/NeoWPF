@@ -87,6 +87,11 @@ namespace NeoWPF::Input
         m_rootElement = root;
     }
 
+    void InputManager::SetOverlayElements(const std::vector<std::shared_ptr<NeoWPF::UI::Visual>>& overlays)
+    {
+        m_overlayElements = overlays;
+    }
+
     void InputManager::ClickAt(NeoWPF::UI::UIElement* target, int x, int y, std::uint32_t buttonState)
     {
         if (!target) {

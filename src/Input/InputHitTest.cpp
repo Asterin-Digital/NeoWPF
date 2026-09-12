@@ -12,13 +12,23 @@ namespace NeoWPF::Input
     {
         NEO_WPF_ACTION("Input.HitTest");
 
-        if (!m_rootElement)
-        {
-            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Debug, "[HitTest] No root element set");
-            return nullptr;
+        NeoWPF::UI::UIElement* result = nullptr;
+        for (auto it = m_overlayElements.rbegin(); it != m_overlayElements.rend(); ++it) {
+            if (!*it) {
+                continue;
+            }
+            result = HitTestVisual(it->get(), x, y, 0);
+            if (result) {
+                break;
+            }
         }
-
-        NeoWPF::UI::UIElement* result = HitTestElement(m_rootElement, x, y, 0);
+        if (!result) {
+            if (m_rootElement) {
+                result = HitTestElement(m_rootElement, x, y, 0);
+            } else {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Debug, "[HitTest] No root element set");
+            }
+        }
         if ((m_lastHitTestResult == nullptr) != (result == nullptr))
         {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Debug,

@@ -1,44 +1,80 @@
 import os
 import sys
 
-IGNORED = {".git", "__pycache__", ".DS_Store", "Library", "Temp", "obj", "Build",
-           "Logs", "UserSettings", "*.meta", "*.cs.meta", "*.unity.meta", "x64", ".vs", "out", "cmake", "vcpkg_installed", "build"}
+IGNORED_NAMES = {
+    ".git", "__pycache__", ".DS_Store", "Library", "Temp", "obj", "Build",
+    "Logs", "UserSettings", "x64", ".vs", "out", "cmake", "vcpkg_installed", "build", ".vscode", "Testing", "Debug", "NWpfBuild"
+}
 
-def should_ignore(name):
-    if name.endswith(".meta"):
-        return True
-    if name in IGNORED:
-        return True
-    return False
+IGNORED_PATHS = {
+    "NeoWPF",
+}
+
+IGNORED_EXTENSIONS = {".meta"}
+
+
+def normalize_relpath(relpath):
+    return relpath.replace("\\", "/").strip("/")
+
+
+def make_ignore_checker(root_dir):
+    ignored_paths_norm = {normalize_relpath(p) for p in IGNORED_PATHS}
+
+    def is_ignored(relpath):
+        relpath = normalize_relpath(relpath)
+        name = relpath.rsplit("/", 1)[-1]
+
+        if name in IGNORED_NAMES:
+            return True
+
+        for ext in IGNORED_EXTENSIONS:
+            if name.endswith(ext):
+                return True
+
+        if relpath in ignored_paths_norm:
+            return True
+
+        return False
+
+    return is_ignored
+
 
 def count_lines_in_file(filepath):
-    """Count total lines and non-empty lines in a file."""
     try:
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             lines = f.readlines()
             total_lines = len(lines)
             non_empty_lines = sum(1 for line in lines if line.strip())
             return total_lines, non_empty_lines
-    except:
+    except Exception:
         return 0, 0
 
-def count_lines_in_directory(root_dir):
-    """Count all lines of code in the directory recursively."""
+
+def count_lines_in_directory(root_dir, is_ignored):
     total_lines = 0
     non_empty_lines = 0
 
-    for dirpath, dirnames, filenames in os.walk(root_dir):
+    code_extensions = {'.py', '.cs', '.java', '.cpp', '.c', '.h', '.hpp',
+                       '.js', '.ts', '.html', '.css', '.txt', '.md', '.json',
+                       '.xml', '.yaml', '.yml', '.sh', '.bat', '.ps1', '.dat'}
 
-        dirnames[:] = [d for d in dirnames if not should_ignore(d)]
+    for dirpath, dirnames, filenames in os.walk(root_dir):
+        rel_dir = os.path.relpath(dirpath, root_dir)
+        if rel_dir == ".":
+            rel_dir = ""
+
+        kept = []
+        for d in dirnames:
+            child_rel = normalize_relpath(os.path.join(rel_dir, d))
+            if is_ignored(child_rel):
+                continue
+            kept.append(d)
+        dirnames[:] = kept
 
         for filename in filenames:
-            if should_ignore(filename):
+            child_rel = normalize_relpath(os.path.join(rel_dir, filename))
+            if is_ignored(child_rel):
                 continue
-
-
-            code_extensions = {'.py', '.cs', '.java', '.cpp', '.c', '.h', '.hpp',
-                             '.js', '.ts', '.html', '.css', '.txt', '.md', '.json',
-                             '.xml', '.yaml', '.yml', '.sh', '.bat', '.ps1', ".dat"}
 
             if any(filename.endswith(ext) for ext in code_extensions):
                 filepath = os.path.join(dirpath, filename)
@@ -48,25 +84,34 @@ def count_lines_in_directory(root_dir):
 
     return total_lines, non_empty_lines
 
-def build_tree(root_dir, prefix=""):
-    if not os.path.isdir(root_dir):
+
+def build_tree(root_dir, is_ignored, rel_dir="", prefix=""):
+    abs_dir = os.path.join(root_dir, rel_dir) if rel_dir else root_dir
+    if not os.path.isdir(abs_dir):
         return
 
-    items = [item for item in sorted(os.listdir(root_dir)) if not should_ignore(item)]
+    items = []
+    for item in sorted(os.listdir(abs_dir)):
+        child_rel = normalize_relpath(os.path.join(rel_dir, item))
+        if is_ignored(child_rel):
+            continue
+        items.append(item)
 
     for index, item in enumerate(items):
-        path = os.path.join(root_dir, item)
+        path = os.path.join(abs_dir, item)
+        child_rel = normalize_relpath(os.path.join(rel_dir, item))
         is_last = index == len(items) - 1
 
         if is_last:
-            print(prefix + "└── " + item)
+            print(prefix + "â””â”€â”€ " + item)
             new_prefix = prefix + "    "
         else:
-            print(prefix + "├── " + item)
-            new_prefix = prefix + "│   "
+            print(prefix + "â”œâ”€â”€ " + item)
+            new_prefix = prefix + "â”‚   "
 
         if os.path.isdir(path):
-            build_tree(path, new_prefix)
+            build_tree(root_dir, is_ignored, child_rel, new_prefix)
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -78,16 +123,18 @@ if __name__ == "__main__":
         print(f"Error: {root} does not exist")
         sys.exit(1)
 
+    is_ignored = make_ignore_checker(root)
 
     print(f"Scanning: {root}")
     print("-" * 60)
-    total, non_empty = count_lines_in_directory(root)
-    print(f"   Code Statistics:")
+    total, non_empty = count_lines_in_directory(root, is_ignored)
+    print("   Code Statistics:")
     print(f"   Total lines (including whitespace): {total:,}")
     print(f"   Lines of code (excluding whitespace): {non_empty:,}")
     print("-" * 60)
     print()
 
-
     print(root)
-    build_tree(root)
+    build_tree(root, is_ignored)
+
+# python "C:\Users\Katsu\source\repos\Winux\private\DirTree.py" "C:\Users\Katsu\source\repos\NeoWPF"

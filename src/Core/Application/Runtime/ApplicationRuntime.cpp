@@ -36,6 +36,7 @@ void SetInputRootForWindow(void* nativeWindowHandle)
         if (windowState.nativeWindowHandle == nativeWindowHandle) {
             auto rootVisual = windowState.windowHost->GetContent();
             NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual.get()));
+            NeoWPF::Input::InputManager::GetInstance().SetOverlayElements(windowState.windowHost->GetOverlays());
             return;
         }
     }
@@ -85,6 +86,26 @@ void BuildVisualTreeCommands(NeoWPF::UI::Visual* rootVisual, NeoWPF::Rendering::
     }
 }
 
+bool OverlayDirty(const NeoWPF::UI::Window& window)
+{
+    for (const auto& overlay : window.GetOverlays()) {
+        if (overlay && overlay->IsTreeDirty()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool OverlayLayoutDirty(const NeoWPF::UI::Window& window)
+{
+    for (const auto& overlay : window.GetOverlays()) {
+        if (overlay && overlay->IsLayoutDirty()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 }
 
 void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigned int height, bool layoutRequired)
@@ -103,12 +124,25 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
     if (layoutRequired) {
         NEO_WPF_ACTION("BuildWindowVisualTree.MeasureArrange");
         LayoutVisualTree(rootVisual.get(), width, height);
+        for (const auto& overlay : windowState.windowHost->GetOverlays()) {
+            if (!overlay) {
+                continue;
+            }
+            overlay->Initialize();
+            if (auto* element = dynamic_cast<NeoWPF::UI::FrameworkElement*>(overlay.get())) {
+                element->Measure(static_cast<int>(width), static_cast<int>(height));
+                element->Arrange(element->GetDesiredWidth(), element->GetDesiredHeight());
+            }
+        }
     } else {
         NEO_WPF_ACTION("BuildWindowVisualTree.MeasureArrangeSkipped");
     }
     {
         NEO_WPF_ACTION("BuildWindowVisualTree.BuildRenderCommands");
         BuildVisualTreeCommands(rootVisual.get(), windowState.buildCommandList);
+        for (const auto& overlay : windowState.windowHost->GetOverlays()) {
+            BuildVisualTreeCommands(overlay.get(), windowState.buildCommandList);
+        }
     }
     const auto layoutElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - layoutStart).count();
     NeoWPF::Diagnostics::PerformanceMetrics::RecordLayoutPass(layoutElapsed);
@@ -342,7 +376,8 @@ int RunApplicationMessageLoop()
         bool needsUpdate = false;
         bool anyTopLevelDirty = false;
         for (const auto& windowState : s_appState.windows) {
-            if (windowState.windowHost && windowState.windowHost->GetContent() && windowState.windowHost->GetContent()->IsTreeDirty()) {
+            if (windowState.windowHost &&
+                (windowState.windowHost->IsTreeDirty() || OverlayDirty(*windowState.windowHost))) {
                 anyTopLevelDirty = true;
                 break;
             }
@@ -397,14 +432,18 @@ int RunApplicationMessageLoop()
                 auto rootVisual = windowState.windowHost ? windowState.windowHost->GetContent() : nullptr;
                 const bool layoutRequired = sizeChanged ||
                     !windowState.commandListInitialized ||
-                    (rootVisual && rootVisual->IsLayoutDirty());
+                    (rootVisual && rootVisual->IsLayoutDirty()) ||
+                    OverlayLayoutDirty(*windowState.windowHost);
                 BuildWindowVisualTree(windowState, windowWidth, windowHeight, layoutRequired);
                 windowState.width = windowWidth;
                 windowState.height = windowHeight;
             }
             for (auto& windowState : s_appState.windows) {
-                if (windowState.windowHost && windowState.windowHost->GetContent()) {
-                    ClearVisualTreeDirtyForRoot(windowState.windowHost->GetContent().get());
+                if (windowState.windowHost) {
+                    ClearVisualTreeDirtyForRoot(windowState.windowHost.get());
+                    for (const auto& overlay : windowState.windowHost->GetOverlays()) {
+                        ClearVisualTreeDirtyForRoot(overlay.get());
+                    }
                 }
             }
         }

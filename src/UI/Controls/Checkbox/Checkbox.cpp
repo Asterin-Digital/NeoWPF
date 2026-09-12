@@ -1,4 +1,6 @@
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
+#include <NeoWPF/UI/Controls/Styles.h>
+#include <NeoWPF/ControlStyles.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>

@@ -1,4 +1,6 @@
 #include <NeoWPF/UI/Layout/Border/Border.h>
+#include <NeoWPF/UI/Layout/BorderStyles.h>
+#include <NeoWPF/ControlStyles.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Diagnostics/Logger.h>

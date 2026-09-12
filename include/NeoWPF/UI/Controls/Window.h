@@ -8,6 +8,7 @@
 
 namespace NeoWPF::UI {
 class Visual;
+class Popup;
 
 class Window : public FrameworkElement {
 public:
@@ -39,6 +40,12 @@ public:
     }
     std::shared_ptr<Visual> GetTitleBar() const noexcept { return m_titleBar; }
 
+    void AddOverlay(const std::shared_ptr<Visual>& overlay);
+
+    void RemoveOverlay(const std::shared_ptr<Visual>& overlay);
+    
+    const std::vector<std::shared_ptr<Visual>>& GetOverlays() const noexcept { return m_overlays; }
+
 private:
     void RebuildVisualTree() noexcept;
 
@@ -47,6 +54,7 @@ private:
     std::shared_ptr<Visual> m_content;
     std::shared_ptr<Visual> m_titleBar;
     std::shared_ptr<Visual> m_visualRoot;
+    std::vector<std::shared_ptr<Visual>> m_overlays;
     std::vector<std::shared_ptr<NeoWPF::UI::Localization::LocaleTable>> m_locales;
 };
 

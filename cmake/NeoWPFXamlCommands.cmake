@@ -13,9 +13,11 @@ function(neowpf_add_xaml TARGET_NAME INPUT_XAML)
         set(_public_header "${CMAKE_CURRENT_BINARY_DIR}/generated/xaml/${NEOWPF_XAML_PUBLIC_HEADER}")
         get_filename_component(_public_header_directory "${_public_header}" DIRECTORY)
         file(MAKE_DIRECTORY "${_public_header_directory}")
-        file(WRITE "${_public_header}"
-            "#pragma once\n"
-            "#include <${_xaml_name}.xaml.g.h>\n"
+        set(_public_header_content
+            "#pragma once\n#include <${_xaml_name}.xaml.g.h>\n"
+        )
+        file(GENERATE OUTPUT "${_public_header}" CONTENT
+            "${_public_header_content}"
         )
     endif()
 

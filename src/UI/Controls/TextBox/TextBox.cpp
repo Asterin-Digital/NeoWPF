@@ -1,4 +1,6 @@
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
+#include <NeoWPF/UI/Controls/TextBoxStyles.h>
+#include <NeoWPF/ControlStyles.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>

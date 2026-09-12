@@ -341,33 +341,6 @@ file(GENERATE OUTPUT "${NEOWPF_STYLE_UMBRELLA}" CONTENT [=[
 #pragma once
 
 #if defined(NEOWPF_ENABLE_CONTROL_STYLES) && NEOWPF_ENABLE_CONTROL_STYLES
-#if __has_include(<NeoWPF/UI/Controls/Styles.h>)
-#include <NeoWPF/UI/Controls/Styles.h>
-#endif
-#if __has_include(<NeoWPF/UI/Controls/ButtonStyles.h>)
-#include <NeoWPF/UI/Controls/ButtonStyles.h>
-#endif
-#if __has_include(<NeoWPF/UI/Controls/ScrollBarStyles.h>)
-#include <NeoWPF/UI/Controls/ScrollBarStyles.h>
-#endif
-#if __has_include(<NeoWPF/UI/Controls/TextBlockStyles.h>)
-#include <NeoWPF/UI/Controls/TextBlockStyles.h>
-#endif
-#if __has_include(<NeoWPF/UI/Controls/TextBoxStyles.h>)
-#include <NeoWPF/UI/Controls/TextBoxStyles.h>
-#endif
-#if __has_include(<NeoWPF/UI/Controls/ListBoxStyles.h>)
-#include <NeoWPF/UI/Controls/ListBoxStyles.h>
-#endif
-#if __has_include(<NeoWPF/UI/Controls/ListBoxItemStyles.h>)
-#include <NeoWPF/UI/Controls/ListBoxItemStyles.h>
-#endif
-#if __has_include(<NeoWPF/UI/Layout/BorderStyles.h>)
-#include <NeoWPF/UI/Layout/BorderStyles.h>
-#endif
-#if __has_include(<NeoWPF/UI/Layout/PanelStyles.h>)
-#include <NeoWPF/UI/Layout/PanelStyles.h>
-#endif
 #define APPLY_CONTROL_STYLES(style_type, element) \
 do { \
     style_type generated_styles; \
@@ -380,11 +353,6 @@ do { \
 #define APPLY_CONTROL_STYLES(...) do { } while (false)
 #endif
 ]=])
-if(MSVC)
-    target_compile_options(NeoWPF.Foundation PRIVATE "/FI${NEOWPF_STYLE_UMBRELLA}")
-else()
-    target_compile_options(NeoWPF.Foundation PRIVATE "-include${NEOWPF_STYLE_UMBRELLA}")
-endif()
 if(WIN32)
     target_include_directories(NeoWPF.Foundation PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include")
     target_include_directories(NeoWPF.Foundation PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include/harfbuzz")
@@ -695,6 +663,7 @@ if(BUILD_TESTING)
         tests/Automated/GridTests.cpp
         tests/Automated/ItemsControlTests.cpp
         tests/Automated/ListBoxTests.cpp
+        tests/Automated/PopupTests.cpp
         tests/Automated/LImageDecodingTests.cpp
         tests/Automated/TriggerTests.cpp
         tests/Automated/VisualTests.cpp

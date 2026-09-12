@@ -38,6 +38,7 @@ namespace NeoWPF::Input
         bool IsKeyUp(int keyCode) const;
 
         void SetRootElement(NeoWPF::UI::UIElement* root);
+        void SetOverlayElements(const std::vector<std::shared_ptr<NeoWPF::UI::Visual>>& overlays);
         bool TryMoveFocus(bool forward = true);
 
     private:
@@ -57,6 +58,7 @@ namespace NeoWPF::Input
                                      std::vector<NeoWPF::UI::UIElement*>& elements) const;
 
         NeoWPF::UI::UIElement* m_rootElement = nullptr;
+        std::vector<std::shared_ptr<NeoWPF::UI::Visual>> m_overlayElements;
         NeoWPF::UI::UIElement* m_focusedElement = nullptr;
         NeoWPF::UI::UIElement* m_captureElement = nullptr;
         NeoWPF::UI::UIElement* m_mouseOverElement = nullptr;

@@ -495,9 +495,9 @@ void DependencyObject::SetValue(const DependencyProperty& property, const std::a
     std::any convertedValue;
     if (Properties::TryConvertValue(property, value, convertedValue)) {
         SetValueInternal(property, std::move(convertedValue), PropertyValueSource::Local);
-        return;
+    } else if (value.type() == property.GetPropertyType()) {
+        SetValueInternal(property, value, PropertyValueSource::Local);
     }
-    SetValueInternal(property, value, PropertyValueSource::Local);
 }
 
 void DependencyObject::SetValue(const DependencyProperty* property, const std::any& value)
@@ -505,7 +505,7 @@ void DependencyObject::SetValue(const DependencyProperty* property, const std::a
     if (!property) {
         return;
     }
-    SetValueInternal(*property, value, PropertyValueSource::Local);
+    SetValue(*property, value);
 }
 
 const DependencyProperty* DependencyObject::FindDependencyProperty(const std::string& propertyName) const
@@ -671,6 +671,8 @@ template void DependencyObject::SetValue<Spacing>(const DependencyProperty&, con
 template void DependencyObject::SetValue<Thickness>(const DependencyProperty&, const Thickness&);
 template void DependencyObject::SetValue<HorizontalAlignment>(const DependencyProperty&, const HorizontalAlignment&);
 template void DependencyObject::SetValue<VerticalAlignment>(const DependencyProperty&, const VerticalAlignment&);
+template NeoWPF::UI::FrameworkElement* DependencyObject::GetValue<NeoWPF::UI::FrameworkElement*>(const DependencyProperty&) const;
+template void DependencyObject::SetValue<NeoWPF::UI::FrameworkElement*>(const DependencyProperty&, NeoWPF::UI::FrameworkElement* const&);
 template NeoWPF::UI::Color DependencyObject::GetValue<NeoWPF::UI::Color>(const DependencyProperty&) const;
 template void DependencyObject::SetValue<NeoWPF::UI::Color>(const DependencyProperty&, const NeoWPF::UI::Color&);
 

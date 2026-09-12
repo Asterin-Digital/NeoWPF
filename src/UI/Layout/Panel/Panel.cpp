@@ -1,4 +1,6 @@
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
+#include <NeoWPF/UI/Layout/PanelStyles.h>
+#include <NeoWPF/ControlStyles.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
 #include <algorithm>

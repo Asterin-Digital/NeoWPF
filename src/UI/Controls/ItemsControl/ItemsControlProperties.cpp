@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/ItemsControl/ItemsControl.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 

@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/ListBox/ListBox.h>
+#include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 

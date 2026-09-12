@@ -6,6 +6,8 @@
 #include <NeoWPF/UI/Core/Media/Thickness.h>
 #include <NeoWPF/UI/Core/Media/Spacing.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
+#include <NeoWPF/UI/Controls/Selector/Selector.h>
+#include <NeoWPF/UI/Controls/Popup/Popup.h>
 #include <NeoWPF/UI/Text/FontStyle.h>
 
 #include <cctype>
@@ -354,6 +356,34 @@ bool SelectionModeConverter::TryConvertToCode(const std::string& rawValue, std::
     return true;
 }
 
+bool PopupPlacementConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+{
+    const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
+    if (value == "bottom") convertedValue = NeoWPF::UI::PopupPlacement::Bottom;
+    else if (value == "top") convertedValue = NeoWPF::UI::PopupPlacement::Top;
+    else if (value == "left") convertedValue = NeoWPF::UI::PopupPlacement::Left;
+    else if (value == "right") convertedValue = NeoWPF::UI::PopupPlacement::Right;
+    else return false;
+    return true;
+}
+
+bool PopupPlacementConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    std::any convertedValue;
+    if (!ConvertFromString(rawValue, convertedValue)) {
+        expression.clear();
+        return false;
+    }
+
+    switch (std::any_cast<NeoWPF::UI::PopupPlacement>(convertedValue)) {
+    case NeoWPF::UI::PopupPlacement::Bottom: expression = "NeoWPF::UI::PopupPlacement::Bottom"; break;
+    case NeoWPF::UI::PopupPlacement::Top: expression = "NeoWPF::UI::PopupPlacement::Top"; break;
+    case NeoWPF::UI::PopupPlacement::Left: expression = "NeoWPF::UI::PopupPlacement::Left"; break;
+    case NeoWPF::UI::PopupPlacement::Right: expression = "NeoWPF::UI::PopupPlacement::Right"; break;
+    }
+    return true;
+}
+
 bool FontWeightConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
     const auto value = NeoWPF::Platform::ToLower(NeoWPF::Platform::Trim(rawValue));
@@ -430,6 +460,7 @@ DEFINE_CONVERTER_FACTORY(Spacing, SpacingConverter)
 DEFINE_CONVERTER_FACTORY(HorizontalAlignment, HorizontalAlignmentConverter)
 DEFINE_CONVERTER_FACTORY(VerticalAlignment, VerticalAlignmentConverter)
 DEFINE_CONVERTER_FACTORY(SelectionMode, SelectionModeConverter)
+DEFINE_CONVERTER_FACTORY(PopupPlacement, PopupPlacementConverter)
 DEFINE_CONVERTER_FACTORY(FontWeight, FontWeightConverter)
 DEFINE_CONVERTER_FACTORY(FontStyle, FontStyleConverter)
 

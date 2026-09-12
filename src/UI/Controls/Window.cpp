@@ -1,7 +1,27 @@
 #include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/UI/Localization/LocalizationManager.h>
+#include <algorithm>
 
 namespace NeoWPF::UI {
+
+void Window::AddOverlay(const std::shared_ptr<Visual>& overlay)
+{
+    if (!overlay || std::find(m_overlays.begin(), m_overlays.end(), overlay) != m_overlays.end()) {
+        return;
+    }
+    m_overlays.push_back(overlay);
+    MarkTreeDirty();
+}
+
+void Window::RemoveOverlay(const std::shared_ptr<Visual>& overlay)
+{
+    const auto it = std::remove(m_overlays.begin(), m_overlays.end(), overlay);
+    if (it == m_overlays.end()) {
+        return;
+    }
+    m_overlays.erase(it, m_overlays.end());
+    MarkTreeDirty();
+}
 
 void Window::AddLocale(std::shared_ptr<NeoWPF::UI::Localization::LocaleTable> table)
 {
