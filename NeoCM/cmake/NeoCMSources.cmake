@@ -1,0 +1,29 @@
+file(GLOB_RECURSE NEOCM_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+)
+
+file(GLOB_RECURSE NEOCM_COMPILER_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/Core/Compiler/*.cpp"
+)
+
+file(GLOB_RECURSE NEOCM_UTILS_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/Utils/*.cpp"
+)
+
+list(REMOVE_ITEM NEOCM_SOURCES
+    ${NEOCM_COMPILER_SOURCES}
+    ${NEOCM_UTILS_SOURCES}
+)
+
+file(GLOB_RECURSE NEOCM_HEADERS CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp"
+)
+
+set(NEOCM_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+if(NOT NEOCM_SOURCES)
+    message(WARNING "NeoCM: no source files found under src/. Add .cpp files to begin building the tool.")
+endif()

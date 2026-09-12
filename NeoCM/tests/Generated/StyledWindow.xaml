@@ -1,0 +1,1 @@
+<Grid x:Name="Root"><Grid.Resources><ResourceDictionary><Style TargetType="Button"><Setter Property="Text" Value="Compiled implicit" /></Style></ResourceDictionary></Grid.Resources><Button x:Name="StyledButton" /></Grid>

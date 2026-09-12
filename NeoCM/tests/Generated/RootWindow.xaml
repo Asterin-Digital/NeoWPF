@@ -1,0 +1,1 @@
+<Window x:Class="NeoCM.Tests.RootWindow" Title="Generated Window"><Window.Content><Grid x:Name="RootGrid"><TextBlock x:Name="Label" Text="Generated content" /></Grid></Window.Content></Window>
