@@ -56,6 +56,8 @@ struct CommandList {
     };
 
     std::vector<Command> commands;
+    std::uint32_t clearColor = 0xFFFFFFFFu;
+    bool hasClearColor = false;
 
     /*
         @summary

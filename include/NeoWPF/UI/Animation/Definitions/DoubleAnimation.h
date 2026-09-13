@@ -4,9 +4,21 @@
 
 namespace NeoWPF::UI::Animation {
 
+/*
+    @summary
+    Animates a floating point value.
+*/
 class DoubleAnimation final : public AnimationTimeline {
 public:
+    /*
+        @summary
+        Sets the starting value.
+    */
     void SetFrom(float value) noexcept { m_from = value; }
+    /*
+        @summary
+        Sets the ending value.
+    */
     void SetTo(float value) noexcept { m_to = value; }
     float GetFrom() const noexcept { return m_from; }
     float GetTo() const noexcept { return m_to; }

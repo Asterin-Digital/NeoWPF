@@ -6,12 +6,20 @@
 
 namespace NeoWPF::UI {
 
+/*
+    @summary
+    Defines how a selector stores selected items.
+*/
 enum class SelectionMode {
     Single,
     Multiple,
     Extended
 };
 
+/*
+    @summary
+    Adds selection state to an items control.
+*/
 class Selector : public ItemsControl {
 public:
     static const Properties::DependencyProperty& SelectedIndexProperty();
@@ -22,12 +30,36 @@ public:
     ~Selector() override;
 
     int GetSelectedIndex() const noexcept;
+
+    /*
+        @summary
+        Selects an item by index.
+
+        @param index
+        Index of the item to select.
+    */
     void SetSelectedIndex(int index);
 
     std::any GetSelectedItem() const noexcept;
+
+    /*
+        @summary
+        Selects an item by value.
+
+        @param item
+        Item to select.
+    */
     void SetSelectedItem(const std::any& item);
 
     SelectionMode GetSelectionMode() const noexcept;
+
+    /*
+        @summary
+        Sets the selection mode.
+
+        @param mode
+        Selection mode to use.
+    */
     void SetSelectionMode(SelectionMode mode) noexcept;
 
     bool IsSelected(const std::any& item) const;

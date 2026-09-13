@@ -13,6 +13,10 @@ namespace NeoWPF::Input::Core
 {
     struct RoutedEvent;
 
+    /*
+        @summary
+        Defines how a routed event travels through the visual tree.
+    */
     enum class RoutingStrategy
     {
         Tunnel,
@@ -20,6 +24,10 @@ namespace NeoWPF::Input::Core
         Direct
     };
 
+    /*
+        @summary
+        Carries routing state for an input event.
+    */
     class RoutedEventArgs
     {
     public:
@@ -48,6 +56,10 @@ namespace NeoWPF::Input::Core
         bool m_handled = false;
     };
 
+    /*
+        @summary
+        Describes a routed event type.
+    */
     struct RoutedEvent
     {
         std::string Name;

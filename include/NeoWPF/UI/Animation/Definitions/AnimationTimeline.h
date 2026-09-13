@@ -7,19 +7,77 @@
 
 namespace NeoWPF::UI::Animation {
 
+/*
+    @summary
+    Defines common timing for an animation.
+*/
 enum class RepeatBehavior { Once, Loop, Count };
 enum class FillBehavior { Stop, HoldEnd };
 
+/*
+    @summary
+    Base class for value animations.
+*/
 class AnimationTimeline {
 public:
     virtual ~AnimationTimeline() = default;
     virtual std::any GetCurrentValue(double progress) const = 0;
 
+    /*
+        @summary
+        Sets the animation duration.
+
+        @param seconds
+        Duration in seconds.
+    */
     void SetDuration(float seconds) noexcept { m_duration = seconds < 0.0f ? 0.0f : seconds; }
+
+    /*
+        @summary
+        Sets the animation start delay.
+
+        @param seconds
+        Delay in seconds.
+    */
     void SetBeginTime(float seconds) noexcept { m_beginTime = seconds < 0.0f ? 0.0f : seconds; }
+
+    /*
+        @summary
+        Sets whether the animation reverses after each pass.
+
+        @param value
+        True to reverse automatically.
+    */
     void SetAutoReverse(bool value) noexcept { m_autoReverse = value; }
+
+    /*
+        @summary
+        Sets the animation repeat behavior.
+
+        @param behavior
+        Repeat behavior.
+
+        @param count
+        Repeat count when Count is selected.
+    */
     void SetRepeatBehavior(RepeatBehavior behavior, int count = 1) noexcept;
+
+    /*
+        @summary
+        Sets the behavior after the animation completes.
+
+        @param behavior
+        Fill behavior.
+    */
     void SetFillBehavior(FillBehavior behavior) noexcept { m_fillBehavior = behavior; }
+
+    /*
+        @summary
+        Sets the easing function.
+
+        @param easing
+        Easing function to use.
+    */
     void SetEasingFunction(std::shared_ptr<Easing::EasingFunctionBase> easing) noexcept { m_easingFunction = std::move(easing); }
 
     float GetDuration() const noexcept { return m_duration; }

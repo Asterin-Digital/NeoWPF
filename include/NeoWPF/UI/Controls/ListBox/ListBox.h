@@ -5,13 +5,40 @@
 
 namespace NeoWPF::UI {
 
+/*
+    @summary
+    Displays a selectable list of items.
+*/
 class ListBox : public Selector {
 public:
     ListBox();
     ~ListBox() override;
 
+    /*
+        @summary
+        Adds an item to the list.
+
+        @param item
+        Item to add.
+    */
     void AddItem(std::shared_ptr<FrameworkElement> item) override;
+
+    /*
+        @summary
+        Replaces the list items.
+
+        @param items
+        Items to display.
+    */
     void SetItems(const std::vector<std::shared_ptr<FrameworkElement>>& items);
+
+    /*
+        @summary
+        Synchronizes the list selection with an item value.
+
+        @param item
+        Item to select.
+    */
     virtual void SyncSelection(const std::any& item);
 
     std::shared_ptr<FrameworkElement> GetContainerForItem(const std::any& data, int index) override;
@@ -36,9 +63,23 @@ public:
     ListBoxItem();
     ~ListBoxItem() override;
 
+    /*
+        @summary
+        Associates the item with its owning list.
+
+        @param owner
+        Owning list.
+    */
     void SetOwner(ListBox* owner) noexcept;
     ListBox* GetOwner() const noexcept;
 
+    /*
+        @summary
+        Sets the selected state of the item.
+
+        @param selected
+        Selection state.
+    */
     void SetIsSelected(bool selected) noexcept;
     bool GetIsSelected() const noexcept;
 

@@ -2,12 +2,20 @@
 
 namespace NeoWPF::UI::Animation::Easing {
 
+/*
+    @summary
+    Defines how an animation progresses over time.
+*/
 enum class EasingMode {
     In,
     Out,
     InOut,
 };
 
+/*
+    @summary
+    Base class for easing functions.
+*/
 class EasingFunctionBase {
 public:
     explicit EasingFunctionBase(EasingMode mode = EasingMode::In) noexcept

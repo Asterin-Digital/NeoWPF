@@ -14,6 +14,15 @@ NeoWPF::UI::Properties::PropertyMetadata MakeWindowTitleMetadata()
     return metadata;
 }
 
+NeoWPF::UI::Properties::PropertyMetadata MakeWindowBackgroundMetadata()
+{
+    NeoWPF::UI::Properties::PropertyMetadata metadata;
+    metadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu));
+    metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
+    metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+    return metadata;
+}
+
 }
 
 namespace NeoWPF::UI {
@@ -61,6 +70,17 @@ const NeoWPF::UI::Properties::DependencyProperty& Window::LocalesProperty()
     return property;
 }
 
+const NeoWPF::UI::Properties::DependencyProperty& Window::BackgroundColorProperty()
+{
+    static const auto& property = NeoWPF::UI::Properties::RegisterProperty<
+        Window, NeoWPF::UI::Color>(
+            "Background",
+            &Window::GetBackgroundColor,
+            static_cast<void (Window::*)(NeoWPF::UI::Color)>(&Window::SetBackgroundColor),
+            MakeWindowBackgroundMetadata());
+    return property;
+}
+
 }
 
 namespace NeoWPF::UI::Properties {
@@ -71,6 +91,7 @@ void RegisterWindowProperties()
     (void)NeoWPF::UI::Window::TitleBarProperty();
     (void)NeoWPF::UI::Window::TitleProperty();
     (void)NeoWPF::UI::Window::LocalesProperty();
+    (void)NeoWPF::UI::Window::BackgroundColorProperty();
     NeoWPF::UI::Markup::Xaml::RegisterXamlType<NeoWPF::UI::Window>(
         "Window",
         "Content",

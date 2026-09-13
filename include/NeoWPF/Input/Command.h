@@ -13,6 +13,10 @@ namespace NeoWPF::UI
 
 namespace NeoWPF::Input
 {
+    /*
+        @summary
+        Represents an executable command.
+    */
     class ICommand
     {
     public:
@@ -26,6 +30,10 @@ namespace NeoWPF::Input
         virtual void RaiseCanExecuteChanged() = 0;
     };
 
+    /*
+        @summary
+        Provides a command and its target to a control.
+    */
     class ICommandSource
     {
     public:
@@ -41,12 +49,26 @@ namespace NeoWPF::Input
         virtual void SetCommandTarget(NeoWPF::UI::UIElement* target) = 0;
     };
 
+    /*
+        @summary
+        Implements a command from callback functions.
+    */
     class DelegateCommand : public ICommand
     {
     public:
         using ExecuteHandler = std::function<void(const std::any&)>;
         using CanExecuteHandler = std::function<bool(const std::any&)>;
 
+        /*
+            @summary
+            Creates a callback-based command.
+
+            @param executeHandler
+            Command execution callback.
+
+            @param canExecuteHandler
+            Optional availability callback.
+        */
         explicit DelegateCommand(ExecuteHandler executeHandler,
                                  CanExecuteHandler canExecuteHandler = {});
 
@@ -63,6 +85,10 @@ namespace NeoWPF::Input
         std::vector<std::function<void()>> m_canExecuteChangedHandlers;
     };
 
+    /*
+        @summary
+        Binds command behavior to a UI element.
+    */
     class CommandBinding
     {
     public:
@@ -84,6 +110,10 @@ namespace NeoWPF::Input
         CanExecuteHandler m_canExecuteHandler;
     };
 
+    /*
+        @summary
+        Routes command execution to the nearest matching binding.
+    */
     class RoutedCommand : public ICommand
     {
     public:

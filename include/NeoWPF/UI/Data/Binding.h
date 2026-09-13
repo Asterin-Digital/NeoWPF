@@ -13,9 +13,22 @@ class INotifyPropertyChanged;
 
 namespace NeoWPF::UI::Data {
 
+/*
+    @summary
+    Describes a property path and its binding source.
+*/
 class Binding : public BindingBase {
 public:
+    /*
+        @summary
+        Creates a binding for a property path.
 
+        @param path
+        Source property path.
+
+        @param mode
+        Binding update mode.
+    */
     Binding(std::string path,
             BindingMode mode = BindingMode::OneWay)
         : BindingBase(mode)
@@ -27,6 +40,13 @@ public:
         return m_path;
     }
 
+    /*
+        @summary
+        Sets the binding update mode.
+
+        @param mode
+        Binding update mode.
+    */
     Binding& WithMode(BindingMode mode) noexcept {
         m_mode = mode;
         return *this;
@@ -36,6 +56,13 @@ public:
         return m_sourceObject;
     }
 
+    /*
+        @summary
+        Sets a dependency object as the binding source.
+
+        @param source
+        Binding source.
+    */
     Binding& WithSource(const std::shared_ptr<Properties::DependencyObject>& source) noexcept {
         m_sourceObject = source;
         return *this;
@@ -45,6 +72,13 @@ public:
         return m_sourcePoco;
     }
 
+    /*
+        @summary
+        Sets a property-notifying object as the binding source.
+
+        @param source
+        Binding source.
+    */
     Binding& WithSource(const std::shared_ptr<INotifyPropertyChanged>& source) noexcept {
         m_sourcePoco = source;
         return *this;

@@ -305,16 +305,14 @@ void VulkanRendering::BeginFrame()
             VkResultName(result), static_cast<int>(result));
         return;
     }
-    std::any backgroundResource;
     std::uint32_t backgroundColor = 0xFFFFFFFFu;
-    if (NeoWPF::Core::ApplicationResources::Resources::TryGetResource(
-            "Window.BackgroundColor", backgroundResource)) {
-        if (backgroundResource.type() == typeid(std::uint32_t)) {
-            backgroundColor = std::any_cast<std::uint32_t>(backgroundResource);
-        } else if (backgroundResource.type() == typeid(unsigned int)) {
-            backgroundColor = std::any_cast<unsigned int>(backgroundResource);
-        } else if (backgroundResource.type() == typeid(int)) {
-            backgroundColor = static_cast<std::uint32_t>(std::any_cast<int>(backgroundResource));
+    if (cmd.hasClearColor) {
+        backgroundColor = cmd.clearColor;
+    } else {
+        NeoWPF::UI::Color resourceColor;
+        if (NeoWPF::Core::ApplicationResources::Resources::TryGetColor(
+                "Window.BackgroundColor", resourceColor)) {
+            backgroundColor = resourceColor.ToArgb();
         }
     }
     const VkClearValue clearValue{{

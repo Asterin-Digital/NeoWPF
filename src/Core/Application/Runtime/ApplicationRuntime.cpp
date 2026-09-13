@@ -113,6 +113,8 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
     NEO_WPF_STARTUP_ACTION("BuildWindowVisualTree");
     const auto layoutStart = std::chrono::steady_clock::now();
     windowState.buildCommandList.Clear();
+    windowState.buildCommandList.clearColor = windowState.windowHost->GetBackgroundColor().ToArgb();
+    windowState.buildCommandList.hasClearColor = true;
 
     auto rootVisual = windowState.windowHost->GetContent();
     {

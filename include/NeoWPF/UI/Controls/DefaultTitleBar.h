@@ -14,22 +14,70 @@
 
 namespace NeoWPF::UI {
 
+/*
+    @summary
+    Provides a default title bar with window controls.
+*/
 class DefaultTitleBar : public Border {
 public:
     DefaultTitleBar();
     ~DefaultTitleBar() override = default;
 
+    /*
+        @summary
+        Sets the title bar text.
+
+        @param title
+        Title text.
+    */
     void SetTitle(const std::wstring& title);
     const std::wstring& GetTitle() const noexcept;
 
+    /*
+        @summary
+        Sets the title bar background color.
+
+        @param argbColor
+        ARGB color value.
+    */
     void SetBackgroundColor(std::uint32_t argbColor) noexcept;
     std::uint32_t GetBackgroundColor() const noexcept;
 
+    /*
+        @summary
+        Sets the title text color.
+
+        @param argbColor
+        ARGB color value.
+    */
     void SetTextColor(std::uint32_t argbColor) noexcept;
     std::uint32_t GetTextColor() const noexcept;
 
+    /*
+        @summary
+        Sets the callback for the minimize button.
+
+        @param handler
+        Callback invoked when the button is clicked.
+    */
     void SetOnMinimizeClicked(std::function<void()> handler);
+
+    /*
+        @summary
+        Sets the callback for the maximize button.
+
+        @param handler
+        Callback invoked when the button is clicked.
+    */
     void SetOnMaximizeClicked(std::function<void()> handler);
+
+    /*
+        @summary
+        Sets the callback for the close button.
+
+        @param handler
+        Callback invoked when the button is clicked.
+    */
     void SetOnCloseClicked(std::function<void()> handler);
 
 private:

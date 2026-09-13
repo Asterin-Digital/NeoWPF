@@ -9,12 +9,20 @@ namespace NeoWPF::UI::Properties {
 
 namespace NeoWPF::UI::Data {
 
+/*
+    @summary
+    Defines the update direction for a binding.
+*/
 enum class BindingMode {
     OneWay,
     TwoWay,
     OneTime,
 };
 
+/*
+    @summary
+    Stores common binding configuration.
+*/
 class BindingBase {
 public:
     virtual ~BindingBase() = default;

@@ -5,9 +5,21 @@
 
 namespace NeoWPF::UI::Animation {
 
+/*
+    @summary
+    Animates a color value.
+*/
 class ColorAnimation final : public AnimationTimeline {
 public:
+    /*
+        @summary
+        Sets the starting color.
+    */
     void SetFrom(const NeoWPF::UI::Color& value) noexcept { m_from = value; }
+    /*
+        @summary
+        Sets the ending color.
+    */
     void SetTo(const NeoWPF::UI::Color& value) noexcept { m_to = value; }
     const NeoWPF::UI::Color& GetFrom() const noexcept { return m_from; }
     const NeoWPF::UI::Color& GetTo() const noexcept { return m_to; }

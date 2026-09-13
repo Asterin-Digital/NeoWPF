@@ -33,6 +33,7 @@ enum class Category : uint8_t {
 	Http,
 	XamlParser,
 	ListBox,
+	ComboBox,
 	Count,
 };
 

@@ -8,11 +8,26 @@
 
 namespace NeoWPF::UI::Localization {
 
+/*
+    @summary
+    Stores one localized key and value pair.
+*/
 class LocaleString : public Properties::DependencyObject {
 public:
     using Properties::DependencyObject::SetValue;
 
     LocaleString() = default;
+
+    /*
+        @summary
+        Creates a locale string.
+
+        @param key
+        Localization key.
+
+        @param value
+        Localized text.
+    */
     LocaleString(std::wstring key, std::wstring value)
         : m_key(std::move(key))
         , m_value(std::move(value))
@@ -35,7 +50,22 @@ public:
     static const Properties::DependencyProperty& KeyProperty();
     static const Properties::DependencyProperty& ValueProperty();
 
+    /*
+        @summary
+        Sets the localization key.
+
+        @param key
+        Localization key.
+    */
     void SetKey(const std::wstring& key);
+
+    /*
+        @summary
+        Sets the localized text.
+
+        @param value
+        Localized text.
+    */
     void SetValue(const std::wstring& value);
 
     const std::wstring& GetKey() const noexcept { return m_key; }

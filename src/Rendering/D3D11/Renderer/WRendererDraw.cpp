@@ -66,15 +66,14 @@ void ExecuteRendererDraw(const CommandList& cmd)
     D3D11_VIEWPORT vp = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
     g_context->RSSetViewports(1, &vp);
 
-    std::any res;
     uint32_t bgColor = 0xFFFFFFFFu;
-    if (NeoWPF::Core::ApplicationResources::Resources::TryGetResource("Window.BackgroundColor", res)) {
-        if (res.type() == typeid(uint32_t)) {
-            bgColor = std::any_cast<uint32_t>(res);
-        } else if (res.type() == typeid(unsigned int)) {
-            bgColor = std::any_cast<unsigned int>(res);
-        } else if (res.type() == typeid(int)) {
-            bgColor = static_cast<uint32_t>(std::any_cast<int>(res));
+    if (cmd.hasClearColor) {
+        bgColor = cmd.clearColor;
+    } else {
+        NeoWPF::UI::Color resourceColor;
+        if (NeoWPF::Core::ApplicationResources::Resources::TryGetColor(
+                "Window.BackgroundColor", resourceColor)) {
+            bgColor = resourceColor.ToArgb();
         }
     }
 
@@ -478,14 +477,6 @@ void ExecuteRendererDraw(const CommandList& cmd)
             hasPendingKind = true;
             break;
         }
-        }
-    }
-
-    if (hasPendingKind) {
-        if (lastKind == CommandList::CommandKind::TexturedQuad) {
-            flushTextBatch();
-        } else {
-            flushSolidBatch();
         }
     }
 

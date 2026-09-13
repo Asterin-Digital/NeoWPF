@@ -16,16 +16,47 @@ class INotifyPropertyChanged;
 
 namespace NeoWPF::UI::Data {
 
+/*
+    @summary
+    Applies a binding to a dependency property.
+*/
 class BindingExpression {
 public:
+    /*
+        @summary
+        Creates a binding expression.
+
+        @param target
+        Object whose property is updated.
+
+        @param property
+        Property to update.
+
+        @param binding
+        Binding configuration.
+    */
     BindingExpression(Properties::DependencyObject& target,
                       const Properties::DependencyProperty& property,
                       const Binding& binding);
 
     ~BindingExpression();
 
+    /*
+        @summary
+        Starts applying the binding.
+    */
     void Attach();
+
+    /*
+        @summary
+        Stops applying the binding.
+    */
     void Detach();
+
+    /*
+        @summary
+        Applies the current source value to the target.
+    */
     void Refresh();
 
     const Properties::DependencyProperty& GetTargetProperty() const noexcept {

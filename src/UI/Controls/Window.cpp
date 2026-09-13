@@ -1,8 +1,34 @@
 #include <NeoWPF/UI/Controls/Window.h>
+#include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/UI/Localization/LocalizationManager.h>
 #include <algorithm>
 
 namespace NeoWPF::UI {
+
+NeoWPF::UI::Color Window::GetBackgroundColor() const noexcept
+{
+    if (m_backgroundColor.has_value()) {
+        return *m_backgroundColor;
+    }
+
+    NeoWPF::UI::Color resourceColor;
+    if (NeoWPF::Core::ApplicationResources::Resources::TryGetColor(
+            "Window.BackgroundColor", resourceColor)) {
+        return resourceColor;
+    }
+
+    return NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
+}
+
+void Window::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
+{
+    if (IsApplyingPropertyValue()) {
+        m_backgroundColor = color;
+        return;
+    }
+
+    SetValue(BackgroundColorProperty(), color);
+}
 
 void Window::AddOverlay(const std::shared_ptr<Visual>& overlay)
 {

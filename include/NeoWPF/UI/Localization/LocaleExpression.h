@@ -10,15 +10,49 @@
 
 namespace NeoWPF::UI::Localization {
 
+/*
+    @summary
+    Binds a dependency property to a localized string.
+
+    @details
+    The property is refreshed when the active locale changes.
+*/
 class LocaleExpression {
 public:
+    /*
+        @summary
+        Creates a locale expression for a dependency property.
+
+        @param target
+        Object whose property is updated.
+
+        @param property
+        Property to update.
+
+        @param key
+        Localization key.
+    */
     LocaleExpression(Properties::DependencyObject& target,
                      const Properties::DependencyProperty& property,
                      std::wstring key);
     ~LocaleExpression();
 
+    /*
+        @summary
+        Starts updating the target property.
+    */
     void Attach();
+
+    /*
+        @summary
+        Stops updating the target property.
+    */
     void Detach();
+
+    /*
+        @summary
+        Applies the current localized value to the target property.
+    */
     void Refresh();
 
     const std::wstring& GetKey() const noexcept { return m_key; }
@@ -39,4 +73,4 @@ private:
     std::atomic<bool> m_isAttached{false};
 };
 
-} // namespace NeoWPF::UI::Localization
+}

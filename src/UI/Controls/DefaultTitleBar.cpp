@@ -87,16 +87,14 @@ DefaultTitleBar::DefaultTitleBar()
 
 void DefaultTitleBar::ApplyThemeResources()
 {
-    std::any value;
-    if (NeoWPF::Core::Application::TryFindResource("Chrome.BackgroundColor", value)) {
-        if (const auto* color = std::any_cast<std::uint32_t>(&value)) {
-            m_backgroundColor = *color;
-        }
+    NeoWPF::UI::Color resourceColor;
+    if (NeoWPF::Core::ApplicationResources::Resources::TryGetColor(
+            "Chrome.BackgroundColor", resourceColor)) {
+        m_backgroundColor = resourceColor.ToArgb();
     }
-    if (NeoWPF::Core::Application::TryFindResource("Chrome.ForegroundColor", value)) {
-        if (const auto* color = std::any_cast<std::uint32_t>(&value)) {
-            m_textColor = *color;
-        }
+    if (NeoWPF::Core::ApplicationResources::Resources::TryGetColor(
+            "Chrome.ForegroundColor", resourceColor)) {
+        m_textColor = resourceColor.ToArgb();
     }
 }
 

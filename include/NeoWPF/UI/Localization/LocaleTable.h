@@ -12,9 +12,21 @@
 
 namespace NeoWPF::UI::Localization {
 
+/*
+    @summary
+    Stores localized strings for one culture.
+*/
 class LocaleTable : public Properties::DependencyObject {
 public:
     LocaleTable() = default;
+
+    /*
+        @summary
+        Creates a locale table for a culture.
+
+        @param culture
+        Culture represented by the table.
+    */
     explicit LocaleTable(const Culture& culture)
         : m_culture(culture)
     {
@@ -36,9 +48,18 @@ public:
     static const Properties::DependencyProperty& CultureProperty();
     static const Properties::DependencyProperty& StringsProperty();
 
+    /*
+        @summary
+        Sets the culture represented by the table.
+
+        @param culture
+        Culture name.
+    */
     void SetCulture(const std::wstring& culture);
     const std::vector<std::shared_ptr<LocaleString>>& GetLocaleStrings() const noexcept { return m_localeStrings; }
+
     void AddLocaleString(std::shared_ptr<LocaleString> value);
+    
     explicit LocaleTable(const std::wstring& culture)
         : m_culture(culture)
     {
@@ -47,8 +68,46 @@ public:
     bool IsValid() const noexcept { return m_culture.IsValid(); }
     const Culture& GetCulture() const noexcept { return m_culture; }
 
+    /*
+        @summary
+        Adds a locale string to the table.
+
+        @param value
+        Locale string to add.
+
+        @returns
+        True when the key was added.
+    */
     bool Add(const LocaleString& value);
+
+    /*
+        @summary
+        Adds a key and value to the table.
+
+        @param key
+        Localization key.
+
+        @param value
+        Localized text.
+
+        @returns
+        True when the key was added.
+    */
     bool Add(const std::wstring& key, const std::wstring& value);
+
+    /*
+        @summary
+        Looks up a localized value.
+
+        @param key
+        Localization key.
+
+        @param value
+        Receives the localized text.
+
+        @returns
+        True when the key exists.
+    */
     bool TryGet(const std::wstring& key, std::wstring& value) const;
     const std::unordered_map<std::wstring, LocaleString>& GetStrings() const noexcept { return m_strings; }
 

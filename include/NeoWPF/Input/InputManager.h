@@ -13,6 +13,10 @@ namespace NeoWPF::Input
 {
     void FocusElement(NeoWPF::UI::UIElement* element);
 
+    /*
+        @summary
+        Processes mouse, keyboard, focus, and hit-test input.
+    */
     class InputManager
     {
     public:

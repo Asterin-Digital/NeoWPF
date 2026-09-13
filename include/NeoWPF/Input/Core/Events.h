@@ -5,6 +5,10 @@
 
 namespace NeoWPF::Input::Core
 {
+    /*
+        @summary
+        Base arguments for input events.
+    */
     class InputEventArgs
     {
     public:
@@ -21,6 +25,10 @@ namespace NeoWPF::Input::Core
         std::uint64_t m_timestamp;
     };
 
+    /*
+        @summary
+        Carries mouse position and button state.
+    */
     class MouseEventArgs : public InputEventArgs
     {
     public:
@@ -42,6 +50,10 @@ namespace NeoWPF::Input::Core
         int m_wheelDelta;
     };
 
+    /*
+        @summary
+        Carries keyboard state and character information.
+    */
     class KeyboardEventArgs : public InputEventArgs
     {
     public:

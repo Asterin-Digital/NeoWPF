@@ -14,6 +14,10 @@ class ListBox;
 class ComboBoxItemTemplate;
 class ComboBoxTemplate;
 
+/*
+    @summary
+    Represents an item displayed in a ComboBox drop-down.
+*/
 class ComboBoxItem : public ListBoxItem {
 public:
     static const Properties::DependencyProperty& IsHighlightedProperty();
@@ -21,6 +25,13 @@ public:
     ComboBoxItem();
     ~ComboBoxItem() override;
 
+    /*
+        @summary
+        Sets whether the item is highlighted.
+
+        @param highlighted
+        Highlight state.
+    */
     void SetIsHighlighted(bool highlighted) noexcept;
     bool GetIsHighlighted() const noexcept;
 
@@ -42,6 +53,14 @@ public:
     ComboBoxTemplate();
 };
 
+/*
+    @summary
+    Provides a drop-down control for selecting one item.
+
+    @details
+    Items can be supplied directly or through an item source. The selected
+    item is displayed when the drop-down is closed.
+*/
 class ComboBox : public Selector {
 public:
     static const Properties::DependencyProperty& IsDropDownOpenProperty();
@@ -51,18 +70,71 @@ public:
     ComboBox();
     ~ComboBox() override;
 
-    bool GetIsDropDownOpen() const noexcept;
-    void SetIsDropDownOpen(bool isOpen);
+    bool IsHitTestVisible() const noexcept override { return true; }
+    bool IsInteractable() const noexcept override { return IsEnabled(); }
 
-    PopupPlacement GetPlacement() const noexcept;
+    /*
+        @summary
+        Opens or closes the drop-down.
+
+        @param isOpen
+        True to open the drop-down.
+    */
+    void SetIsDropDownOpen(bool isOpen);
+    bool GetIsDropDownOpen() const noexcept;
+
+    /*
+        @summary
+        Sets the drop-down placement relative to the ComboBox.
+
+        @param placement
+        Placement direction.
+    */
     void SetPlacement(PopupPlacement placement);
+    PopupPlacement GetPlacement() const noexcept;
 
     std::any GetSelectionBoxItem() const noexcept;
 
+    /*
+        @summary
+        Replaces the ComboBox items.
+
+        @param items
+        Items to display in the drop-down.
+    */
     void SetItems(const std::vector<std::shared_ptr<FrameworkElement>>& items);
+
+    /*
+        @summary
+        Adds an item to the ComboBox.
+
+        @param item
+        Item to add.
+    */
     void AddItem(std::shared_ptr<FrameworkElement> item) override;
+
+    /*
+        @summary
+        Removes all ComboBox items and clears the selection.
+    */
     void ClearItems();
+
+    /*
+        @summary
+        Replaces the ComboBox item source.
+
+        @param source
+        Values to display in the drop-down.
+    */
     void SetItemsSource(const std::vector<std::any>& source);
+
+    /*
+        @summary
+        Sets the template used to create item content.
+
+        @param templ
+        Item template callback.
+    */
     void SetItemTemplate(const Controls::ItemsControl::Virtualization::ItemTemplate& templ);
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 

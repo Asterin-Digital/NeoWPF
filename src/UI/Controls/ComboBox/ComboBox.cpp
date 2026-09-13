@@ -6,6 +6,7 @@
 #include <NeoWPF/UI/Controls/ComboBoxItemStyles.h>
 #include <NeoWPF/UI/Controls/ComboBoxStyles.h>
 #include <NeoWPF/ControlStyles.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <algorithm>
 #include <cmath>
@@ -18,6 +19,9 @@ public:
     explicit ComboBoxDropDown(ComboBox* owner)
         : m_owner(owner)
     {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[ComboBox] DropDown constructed dropDown=%p owner=%p", this, owner);
         SetItemTemplate([](const std::any&, int) {
             return std::shared_ptr<FrameworkElement>{};
         });
@@ -25,6 +29,10 @@ public:
 
     void SyncSelection(const std::any& item) override
     {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+            NeoWPF::Diagnostics::Level::Trace,
+            "[ComboBox] DropDown sync selection dropDown=%p hasItem=%d type=%s",
+            this, item.has_value() ? 1 : 0, item.has_value() ? item.type().name() : "none");
         m_syncingFromOwner = true;
         SetSelectedItem(item);
         m_syncingFromOwner = false;
@@ -67,6 +75,10 @@ public:
 
     void OnSelectionChanged(int oldIndex, int newIndex, const std::any& oldItem, const std::any& newItem) override
     {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[ComboBox] DropDown selection changed dropDown=%p oldIndex=%d newIndex=%d hasNewItem=%d syncing=%d",
+            this, oldIndex, newIndex, newItem.has_value() ? 1 : 0, m_syncingFromOwner ? 1 : 0);
         ListBox::OnSelectionChanged(oldIndex, newIndex, oldItem, newItem);
         if (m_owner && !m_syncingFromOwner && newItem.has_value()) {
             m_owner->SetSelectedItem(newItem);
@@ -140,6 +152,8 @@ void ComboBoxItem::ApplyVisualStates(bool useTransitions)
 
 ComboBox::ComboBox()
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Debug, "[ComboBox] Constructing comboBox=%p", this);
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
     SetTemplate(std::make_shared<ComboBoxTemplate>());
@@ -159,17 +173,28 @@ ComboBox::ComboBox()
     m_dropDown = std::make_shared<ComboBoxDropDown>(this);
     m_dropDown->SetPadding(4);
     m_popup->SetContent(m_dropDown);
-    AddVisualChild(m_popup);
 
-    m_display->AddHandler(NeoWPF::Input::Core::MouseUpEvent(), [this](UIElement*, NeoWPF::Input::Core::RoutedEventArgs* args) {
-        SetIsDropDownOpen(!GetIsDropDownOpen());
+    AddHandler(NeoWPF::Input::Core::MouseUpEvent(), [this](UIElement*, NeoWPF::Input::Core::RoutedEventArgs* args) {
+        const bool wasOpen = GetIsDropDownOpen();
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+            NeoWPF::Diagnostics::Level::Info,
+            "[ComboBox] MouseUp toggle comboBox=%p wasOpen=%d", this, wasOpen ? 1 : 0);
+        SetIsDropDownOpen(!wasOpen);
         if (args) {
             args->SetHandled(true);
         }
     });
+
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Debug,
+        "[ComboBox] Constructed comboBox=%p popup=%p dropDown=%p", this, m_popup.get(), m_dropDown.get());
 }
 
-ComboBox::~ComboBox() = default;
+ComboBox::~ComboBox()
+{
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Debug, "[ComboBox] Destroyed comboBox=%p", this);
+}
 
 bool ComboBox::GetIsDropDownOpen() const noexcept
 {
@@ -182,11 +207,19 @@ bool ComboBox::GetIsDropDownOpen() const noexcept
 
 void ComboBox::SetIsDropDownOpen(bool isOpen)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Info,
+        "[ComboBox] SetIsDropDownOpen comboBox=%p requested=%d current=%d applying=%d popupOpen=%d",
+        this, isOpen ? 1 : 0, GetIsDropDownOpen() ? 1 : 0,
+        IsApplyingPropertyValue() ? 1 : 0, m_popup && m_popup->GetIsOpen() ? 1 : 0);
     if (!IsApplyingPropertyValue()) {
         SetValue(IsDropDownOpenProperty(), isOpen);
         return;
     }
     m_popup->SetIsOpen(isOpen);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Debug,
+        "[ComboBox] Popup state applied comboBox=%p popupOpen=%d", this, m_popup->GetIsOpen() ? 1 : 0);
 }
 
 PopupPlacement ComboBox::GetPlacement() const noexcept
@@ -200,6 +233,10 @@ PopupPlacement ComboBox::GetPlacement() const noexcept
 
 void ComboBox::SetPlacement(PopupPlacement placement)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Debug,
+        "[ComboBox] SetPlacement comboBox=%p placement=%d applying=%d",
+        this, static_cast<int>(placement), IsApplyingPropertyValue() ? 1 : 0);
     if (!IsApplyingPropertyValue()) {
         SetValue(PlacementProperty(), placement);
         return;
@@ -209,6 +246,9 @@ void ComboBox::SetPlacement(PopupPlacement placement)
 
 void ComboBox::SetItems(const std::vector<std::shared_ptr<FrameworkElement>>& items)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Debug,
+        "[ComboBox] SetItems comboBox=%p count=%zu", this, items.size());
     SetSelectedItem(std::any{});
     Selector::ClearItems();
     m_dropDown->SetItems(items);
@@ -216,11 +256,16 @@ void ComboBox::SetItems(const std::vector<std::shared_ptr<FrameworkElement>>& it
 
 void ComboBox::AddItem(std::shared_ptr<FrameworkElement> item)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ComboBox] AddItem comboBox=%p item=%p", this, item.get());
     m_dropDown->AddItem(std::move(item));
 }
 
 void ComboBox::ClearItems()
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Debug, "[ComboBox] ClearItems comboBox=%p", this);
     SetSelectedItem(std::any{});
     Selector::ClearItems();
     m_dropDown->ClearItems();
@@ -228,6 +273,9 @@ void ComboBox::ClearItems()
 
 void ComboBox::SetItemsSource(const std::vector<std::any>& source)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Debug,
+        "[ComboBox] SetItemsSource comboBox=%p count=%zu", this, source.size());
     SetSelectedItem(std::any{});
     Selector::SetItemsSource(source);
     m_dropDown->SetItemsSource(source);
@@ -235,12 +283,19 @@ void ComboBox::SetItemsSource(const std::vector<std::any>& source)
 
 void ComboBox::SetItemTemplate(const Controls::ItemsControl::Virtualization::ItemTemplate& templ)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ComboBox] SetItemTemplate comboBox=%p hasTemplate=%d", this, templ ? 1 : 0);
     Selector::SetItemTemplate(templ);
     m_dropDown->SetItemTemplate(templ);
 }
 
 void ComboBox::OnSelectionChanged(int oldIndex, int newIndex, const std::any& oldItem, const std::any& newItem)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Debug,
+        "[ComboBox] Selection changed comboBox=%p oldIndex=%d newIndex=%d hasNewItem=%d",
+        this, oldIndex, newIndex, newItem.has_value() ? 1 : 0);
     (void)oldIndex;
     (void)newIndex;
     (void)oldItem;
@@ -262,6 +317,10 @@ std::any ComboBox::GetSelectionBoxItem() const noexcept
 
 void ComboBox::UpdateDisplayedItem(const std::any& item)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ComboBox] UpdateDisplayedItem comboBox=%p hasItem=%d type=%s",
+        this, item.has_value() ? 1 : 0, item.has_value() ? item.type().name() : "none");
     if (m_display) {
         m_display->SetContentData(item);
     }
@@ -269,6 +328,11 @@ void ComboBox::UpdateDisplayedItem(const std::any& item)
 
 void ComboBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ComboBox] BuildRenderCommands comboBox=%p open=%d final=%dx%d popupOpen=%d",
+        this, GetIsDropDownOpen() ? 1 : 0, GetFinalWidth(), GetFinalHeight(),
+        m_popup && m_popup->GetIsOpen() ? 1 : 0);
     int absoluteX = 0;
     int absoluteY = 0;
     GetAbsolutePosition(absoluteX, absoluteY);

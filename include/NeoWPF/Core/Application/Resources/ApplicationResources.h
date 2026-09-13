@@ -2,6 +2,7 @@
 
 #include <any>
 #include <memory>
+#include <NeoWPF/UI/Core/Media/Color.h>
 #include <string>
 #include <unordered_map>
 #include <typeindex>
@@ -38,6 +39,7 @@ public:
 
     static ResourceDictionary& ApplicationResources();
     static bool TryFindResource(const std::string& key, std::any& outValue);
+    static bool TryGetColor(const std::string& key, NeoWPF::UI::Color& outColor);
     static std::any FindResource(const std::string& key);
     static void SetResource(const std::string& key, std::any value);
     static void SetImplicitStyle(
