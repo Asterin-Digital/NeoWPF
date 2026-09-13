@@ -11,7 +11,7 @@
 WPF-Inspired UI framework for Modern C++
 Love from Envy!! :3
 
-Review the project's README.md, and AI.md for details.
+Review the project's README.md, and AI.md for details related to AI usage, and other information
 
 ============================================================
 */
@@ -42,6 +42,9 @@ Review the project's README.md, and AI.md for details.
 #include <NeoWPF/Core/Application/Resources/ResourceManager.h>
 #include <NeoWPF/UI/Markup/Xaml/Loading/CompiledXaml.h>
 ///////////////////////////////////////////////////
+#if defined(NEOWPF_ENABLE_MEDIA) && NEOWPF_ENABLE_MEDIA
+#include <NeoWPF/Media/Media.h>
+#endif
 
 // We recommend not to include individual header files for public usage in your own code. 
 // NeoWPF reserves the right to update paths or method signature's for any implementation.
@@ -51,6 +54,14 @@ Review the project's README.md, and AI.md for details.
 // Public API changes will happen, but they are gradual with deprecation warnings.
 // NeoWPF reserves the right to update or otherwise remove a public API if we deem
 // it doesn't fit NeoWPF's architecture or design.
+
+/*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+// If you need NeoWPF.Media, but this this NeoWPF build does not have it, ensure you're using one that's 
+// compiled with NeoWPF.Media turned on. If not, clone NeoWPF locally (Compile.md) and build it.
+
+// For the project's actual documentation please review docs/README.md and go to the website with documentation in it.
+// you can still read local header files for documentation, though they may be minimal in some places.
 
 namespace NeoWPF {
 

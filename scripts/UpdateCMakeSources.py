@@ -45,6 +45,7 @@ def main():
         format_list("NEOWPF_HEADERS", headers, ROOT),
         "",
         'list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/NeoNaml/")',
+        'list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/Media/")',
         "",
         "if(NOT WIN32)",
         '    list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/Platform/Windows/")',

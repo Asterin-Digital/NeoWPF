@@ -229,12 +229,36 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(NEOWPF_BUILD_MEDIA
+    "Build the optional NeoWPF.Media target and fetch LuAudio"
+    ON)
+set(NEOWPF_LUAUDIO_GIT_REPOSITORY "https://github.com/Past-Horizon/LuAudio.git" CACHE STRING
+    "LuAudio Git repository used by NeoWPF.Media")
+set(NEOWPF_LUAUDIO_GIT_TAG "main" CACHE STRING
+    "LuAudio Git tag, branch, or commit used by NeoWPF.Media")
+
 option(NEOWPF_STATIC_DEPENDENCIES
     "Merge static NeoWPF dependencies into the NeoWPF archive"
     ON) 
 option(APPLY_CONTROL_STYLES
     "Apply generated XAML styles from control constructors"
     ON)
+
+if(NEOWPF_BUILD_MEDIA)
+    include(FetchContent)
+
+    FetchContent_Declare(
+        LuAudio
+        GIT_REPOSITORY "${NEOWPF_LUAUDIO_GIT_REPOSITORY}"
+        GIT_TAG "${NEOWPF_LUAUDIO_GIT_TAG}"
+        GIT_SHALLOW TRUE
+    )
+
+    set(NEOWPF_MEDIA_BUILD_TESTING "${BUILD_TESTING}")
+    set(BUILD_TESTING OFF)
+    FetchContent_MakeAvailable(LuAudio)
+    set(BUILD_TESTING "${NEOWPF_MEDIA_BUILD_TESTING}")
+endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tools/XamlCompiler${CMAKE_EXECUTABLE_SUFFIX}")
     set(NEOWPF_XAML_COMPILER
@@ -518,6 +542,7 @@ endif()
 
 target_compile_definitions(NeoWPF
     PUBLIC
+        NEOWPF_ENABLE_MEDIA=$<BOOL:${NEOWPF_BUILD_MEDIA}>
         $<$<CONFIG:Debug>:_DEBUG>
         $<$<CONFIG:Debug>:NEOWPF_ENABLE_RUNTIME_XAML>
         $<$<CONFIG:Release>:NDEBUG>
@@ -643,6 +668,51 @@ if(WIN32)
             "${NEOWPF_RELEASE_SOURCE}"
             "${NEOWPF_RELEASE_DIRECTORY}/NeoWPF.${NEOWPF_PLATFORM}.$<CONFIG>.${PROJECT_VERSION}.${NEOWPF_RELEASE_EXTENSION}"
         VERBATIM
+    )
+endif()
+
+if(NEOWPF_BUILD_MEDIA)
+    add_library(NeoWPF.Media.Contracts INTERFACE)
+    add_library(NeoWPF::Media::Contracts ALIAS NeoWPF.Media.Contracts)
+    target_include_directories(NeoWPF.Media.Contracts
+        INTERFACE
+            "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    )
+
+    add_library(NeoWPF.Media.Core INTERFACE)
+    add_library(NeoWPF::Media::Core ALIAS NeoWPF.Media.Core)
+    target_link_libraries(NeoWPF.Media.Core
+        INTERFACE
+            NeoWPF::Media::Contracts
+    )
+
+    add_library(NeoWPF.Media.LuAudio INTERFACE)
+    add_library(NeoWPF::Media::LuAudio ALIAS NeoWPF.Media.LuAudio)
+    target_link_libraries(NeoWPF.Media.LuAudio
+        INTERFACE
+            NeoWPF::Media::Contracts
+            LuAudio
+    )
+
+    add_library(NeoWPF.Media STATIC
+        ${NEOWPF_MEDIA_SOURCES}
+        ${NEOWPF_MEDIA_HEADERS}
+    )
+    add_library(NeoWPF::Media ALIAS NeoWPF.Media)
+    target_include_directories(NeoWPF.Media
+        PUBLIC
+            "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    )
+    target_compile_definitions(NeoWPF.Media
+        PUBLIC
+            NEOWPF_ENABLE_MEDIA=1
+    )
+    target_link_libraries(NeoWPF.Media
+        PUBLIC
+            NeoWPF::Media::Core
+            NeoWPF::Media::LuAudio
     )
 endif()
 
