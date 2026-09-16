@@ -11,9 +11,9 @@ namespace NeoPM::Utils {
         }
 
         std::optional<std::filesystem::path> ReadEnvironmentPath(
-            Winux::Contracts::IFileSystem& fileSystem,
+            Winux::Contracts::IEnvironment& environment,
             const wchar_t* name) {
-            const auto value = fileSystem.get_env(name);
+            const auto value = environment.get_env(name);
             if (value.failed() || value.value().empty()) {
                 return std::nullopt;
             }
@@ -38,8 +38,7 @@ namespace NeoPM::Utils {
 
     std::optional<std::filesystem::path> FileSystem::GetUserDocumentsPath() {
         const auto platform = CreatePlatform();
-        auto& fileSystem = platform->file_system();
-        if (const auto documents = ReadEnvironmentPath(fileSystem, L"XDG_DOCUMENTS_DIR")) {
+        if (const auto documents = ReadEnvironmentPath(platform->environment(), L"XDG_DOCUMENTS_DIR")) {
             if (DirectoryExists(*documents)) return documents;
         }
         if (const auto home = GetUserHomePath()) {
@@ -69,11 +68,10 @@ namespace NeoPM::Utils {
 
     std::optional<std::filesystem::path> FileSystem::GetUserConfigPath() {
         const auto platform = CreatePlatform();
-        auto& fileSystem = platform->file_system();
-        if (const auto config = ReadEnvironmentPath(fileSystem, L"APPDATA")) {
+        if (const auto config = ReadEnvironmentPath(platform->environment(), L"APPDATA")) {
             return config;
         }
-        if (const auto config = ReadEnvironmentPath(fileSystem, L"XDG_CONFIG_HOME")) {
+        if (const auto config = ReadEnvironmentPath(platform->environment(), L"XDG_CONFIG_HOME")) {
             return config;
         }
         if (const auto home = GetUserHomePath()) {

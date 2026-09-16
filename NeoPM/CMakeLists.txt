@@ -5,16 +5,31 @@ project(NeoPM LANGUAGES CXX)
 include(CTest)
 include(FetchContent)
 
+option(NEOPM_USE_LOCAL_WINUX "Use the local sibling Winux project" ON)
+
 set(NEOPM_WINUX_GIT_TAG "main" CACHE STRING
     "Winux Git tag, branch, or commit to fetch")
 set(WINUX_BUILD_TESTS OFF CACHE BOOL "Build Winux tests" FORCE)
-FetchContent_Declare(
-    Winux
-    GIT_REPOSITORY https://github.com/Past-Horizon/Winux.git
-    GIT_TAG ${NEOPM_WINUX_GIT_TAG}
-    GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(Winux)
+if(NEOPM_USE_LOCAL_WINUX)
+    set(NEOPM_LOCAL_WINUX_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../Winux")
+    if(NOT EXISTS "${NEOPM_LOCAL_WINUX_ROOT}")
+        message(FATAL_ERROR
+            "Could not find local version of Winux at ${NEOPM_LOCAL_WINUX_ROOT}")
+    endif()
+    if(NOT EXISTS "${NEOPM_LOCAL_WINUX_ROOT}/include")
+        message(FATAL_ERROR
+            "Could not find local Winux include directory at ${NEOPM_LOCAL_WINUX_ROOT}/include")
+    endif()
+    add_subdirectory("${NEOPM_LOCAL_WINUX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/Winux")
+else()
+    FetchContent_Declare(
+        Winux
+        GIT_REPOSITORY https://github.com/Past-Horizon/Winux.git
+        GIT_TAG ${NEOPM_WINUX_GIT_TAG}
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(Winux)
+endif()
 
 if(WIN32)
     set(VCPKG_TARGET_TRIPLET "x64-windows-static-md" CACHE STRING
@@ -136,6 +151,7 @@ target_link_libraries(
         Boost::process
         Winux
         NeoCM
+        "${NEOWPF_LIBRARY}"
 )
 
 if(WIN32)

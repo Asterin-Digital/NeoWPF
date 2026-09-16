@@ -1,6 +1,6 @@
 .vs
 private
 x64
-NeoPM/
+/NeoPM/
 out
 vcpkg_Installed
