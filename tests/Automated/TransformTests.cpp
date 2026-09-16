@@ -12,6 +12,7 @@
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
+#include <cmath>
 #include <utility>
 
 namespace {
@@ -65,6 +66,28 @@ const RoundedRectData* FindRoundedRect(
         }
     }
     return nullptr;
+}
+
+float SmoothStep(float progress)
+{
+    return progress * progress * (3.0f - 2.0f * progress);
+}
+
+void RotatePointAroundPivot(
+    float x,
+    float y,
+    float pivotX,
+    float pivotY,
+    float angle,
+    float& outX,
+    float& outY)
+{
+    const float cosAngle = std::cos(angle);
+    const float sinAngle = std::sin(angle);
+    const float offsetX = x - pivotX;
+    const float offsetY = y - pivotY;
+    outX = pivotX + offsetX * cosAngle - offsetY * sinAngle;
+    outY = pivotY + offsetX * sinAngle + offsetY * cosAngle;
 }
 
 TEST_F(TextBlockRenderCommandTest, ScaleTransformsBitmapQuadAroundArrangedCenter)
@@ -156,6 +179,81 @@ TEST_F(TextBlockRenderCommandTest, ButtonBackgroundAndBitmapTextShareScaleTransf
     EXPECT_FLOAT_EQ(scaledText->h, unscaledText->h * 2.0f);
     EXPECT_FLOAT_EQ(scaledTextCenterX, 50.0f + (unscaledTextCenterX - 50.0f) * 2.0f);
     EXPECT_FLOAT_EQ(scaledTextCenterY, 20.0f + (unscaledTextCenterY - 20.0f) * 2.0f);
+}
+
+TEST_F(TextBlockRenderCommandTest, ButtonRotationKeepsTextCenteredThroughEasedLoop)
+{
+    NeoWPF::UI::Button button(L"Spin me");
+    button.Measure(160, 60);
+    button.Arrange(160, 60);
+
+    auto rotation = std::make_shared<NeoWPF::UI::RotateTransform>();
+    button.SetRenderTransformOrigin({0.5f, 0.5f});
+    button.SetRenderTransform(rotation);
+
+    constexpr float pi = 3.14159265358979323846f;
+    constexpr float centerX = 80.0f;
+    constexpr float centerY = 30.0f;
+    for (int frame = 0; frame <= 120; ++frame) {
+        const float progress = static_cast<float>(frame) / 120.0f;
+        const float angle = SmoothStep(progress) * 2.0f * pi;
+        rotation->SetAngle(angle);
+
+        NeoWPF::Rendering::CommandList commands;
+        button.BuildRenderCommands(commands);
+        const auto* background = FindRoundedRect(commands);
+        const auto* text = FindTextQuad(commands);
+        ASSERT_NE(background, nullptr);
+        ASSERT_NE(text, nullptr);
+        ASSERT_GT(text->textureId, 0u);
+
+        EXPECT_NEAR(background->x + background->w * 0.5f, centerX, 0.51f);
+        EXPECT_NEAR(background->y + background->h * 0.5f, centerY, 0.51f);
+        EXPECT_NEAR(text->pivotX, centerX, 0.01f);
+        EXPECT_NEAR(text->pivotY, centerY, 0.01f);
+        EXPECT_NEAR(text->rotationRadians, angle, 0.0001f);
+    }
+}
+
+TEST_F(TextBlockRenderCommandTest, TextBlockRotationDoesNotDriftThroughEasedLoop)
+{
+    NeoWPF::UI::TextBlock textBlock(L"Spin me");
+    textBlock.Measure(160, 60);
+    textBlock.Arrange(160, 60);
+
+    auto rotation = std::make_shared<NeoWPF::UI::RotateTransform>();
+    textBlock.SetRenderTransformOrigin({0.5f, 0.5f});
+    textBlock.SetRenderTransform(rotation);
+
+    constexpr float pi = 3.14159265358979323846f;
+    constexpr float centerX = 80.0f;
+    constexpr float centerY = 30.0f;
+    for (int frame = 0; frame <= 120; ++frame) {
+        const float progress = static_cast<float>(frame) / 120.0f;
+        const float angle = SmoothStep(progress) * 2.0f * pi;
+        rotation->SetAngle(angle);
+
+        NeoWPF::Rendering::CommandList commands;
+        textBlock.BuildRenderCommands(commands);
+        const auto* text = FindTextQuad(commands);
+        ASSERT_NE(text, nullptr);
+        ASSERT_GT(text->textureId, 0u);
+
+        float transformedCenterX = 0.0f;
+        float transformedCenterY = 0.0f;
+        RotatePointAroundPivot(
+            text->x + text->w * 0.5f,
+            text->y + text->h * 0.5f,
+            text->pivotX,
+            text->pivotY,
+            text->rotationRadians,
+            transformedCenterX,
+            transformedCenterY);
+        EXPECT_NEAR(transformedCenterX, centerX, 0.01f);
+        EXPECT_NEAR(transformedCenterY, centerY, 0.01f);
+        EXPECT_NEAR(text->pivotX, centerX, 0.01f);
+        EXPECT_NEAR(text->pivotY, centerY, 0.01f);
+    }
 }
 
 #endif

@@ -1,213 +1,313 @@
-if(UNIX)
-    set(NEOWPF_RELEASE_DIRECTORY "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/$<CONFIG>")
-    set(NEOWPF_RELEASE_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/Debug")
-    set(NEOWPF_RELEASE_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/Release")
-    set(NEOWPF_RELEASE_DIRECTORY_RELWITHDEBINFO "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/RelWithDebInfo")
-    set(NEOWPF_RELEASE_DIRECTORY_MINSIZEREL "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/MinSizeRel")
-
-    set(NEOWPF_WINDOWS_RELEASE_DIRECTORY "${NEOWPF_RELEASE_DIRECTORY}")
-    set(NEOWPF_WINDOWS_RELEASE_DIRECTORY_DEBUG "${NEOWPF_RELEASE_DIRECTORY_DEBUG}")
-    set(NEOWPF_WINDOWS_RELEASE_DIRECTORY_RELEASE "${NEOWPF_RELEASE_DIRECTORY_RELEASE}")
-    set(NEOWPF_WINDOWS_RELEASE_DIRECTORY_RELWITHDEBINFO "${NEOWPF_RELEASE_DIRECTORY_RELWITHDEBINFO}")
-    set(NEOWPF_WINDOWS_RELEASE_DIRECTORY_MINSIZEREL "${NEOWPF_RELEASE_DIRECTORY_MINSIZEREL}")
-
-    get_filename_component(_neowpf_parent_dir "${CMAKE_SOURCE_DIR}" DIRECTORY)
-    file(GLOB _neowpf_mirror_candidates
-        LIST_DIRECTORIES true
-        "${_neowpf_parent_dir}/*/NeoWPF"
-        "${_neowpf_parent_dir}/NeoWPF"
-    )
-    foreach(_neowpf_mirror_candidate IN LISTS _neowpf_mirror_candidates)
-        if(NOT "${_neowpf_mirror_candidate}" STREQUAL "${CMAKE_SOURCE_DIR}" AND
-           EXISTS "${_neowpf_mirror_candidate}/NeoWPFVersion.txt")
-            set(NEOWPF_WINDOWS_RELEASE_DIRECTORY "${_neowpf_mirror_candidate}/NWpfBuild/${NEOWPF_PLATFORM}/$<CONFIG>")
-            set(NEOWPF_WINDOWS_RELEASE_DIRECTORY_DEBUG "${_neowpf_mirror_candidate}/NWpfBuild/${NEOWPF_PLATFORM}/Debug")
-            set(NEOWPF_WINDOWS_RELEASE_DIRECTORY_RELEASE "${_neowpf_mirror_candidate}/NWpfBuild/${NEOWPF_PLATFORM}/Release")
-            set(NEOWPF_WINDOWS_RELEASE_DIRECTORY_RELWITHDEBINFO "${_neowpf_mirror_candidate}/NWpfBuild/${NEOWPF_PLATFORM}/RelWithDebInfo")
-            set(NEOWPF_WINDOWS_RELEASE_DIRECTORY_MINSIZEREL "${_neowpf_mirror_candidate}/NWpfBuild/${NEOWPF_PLATFORM}/MinSizeRel")
-            break()
-        endif()
-    endforeach()
-    unset(_neowpf_parent_dir)
-    unset(_neowpf_mirror_candidates)
-    unset(_neowpf_mirror_candidate)
-endif()
+## Dear CMake devs
+## I hate all of you!!! i went through 5 hours of debugging just for static lib merging D:
 
 if(NEOWPF_STATIC_DEPENDENCIES)
-    set(NEOWPF_STATIC_DEPENDENCY_TARGETS
-        CURL::libcurl
-        MbedTLS::mbedcrypto
-        MbedTLS::mbedx509
-        MbedTLS::mbedtls
-        OpenSSL::Crypto
-        OpenSSL::SSL
-        ZLIB::ZLIB
-        PNG::PNG
-        Vulkan::Vulkan
-        PkgConfig::WAYLAND
-        PkgConfig::XKBCOMMON
-        Freetype::Freetype
-        PkgConfig::HARFBUZZ
-        PkgConfig::FONTCONFIG
-    )
+    if(WIN32)
+        find_program(NEOWPF_LIB_TOOL NAMES lib.exe lib)
+        if(NOT NEOWPF_LIB_TOOL)
+            message(FATAL_ERROR "Could not find Microsoft lib.exe for static archive merging.")
+        endif()
+        message(STATUS "[NeoWPF static deps] Using archive merger: ${NEOWPF_LIB_TOOL}")
+    else()
+        if(CMAKE_AR AND EXISTS "${CMAKE_AR}")
+            set(NEOWPF_AR_TOOL "${CMAKE_AR}")
+        else()
+            find_program(NEOWPF_AR_TOOL NAMES ar llvm-ar)
+        endif()
+        if(NOT NEOWPF_AR_TOOL)
+            message(FATAL_ERROR "Could not find ar or llvm-ar for static archive merging.")
+        endif()
+        message(STATUS "[NeoWPF static deps] Using archive merger: ${NEOWPF_AR_TOOL}")
+    endif()
+
     set(NEOWPF_STATIC_ARCHIVES_DEBUG)
     set(NEOWPF_STATIC_ARCHIVES_RELEASE)
-    foreach(NEOWPF_DEPENDENCY_TARGET IN LISTS NEOWPF_STATIC_DEPENDENCY_TARGETS)
-        if(NOT TARGET "${NEOWPF_DEPENDENCY_TARGET}")
+
+    function(neowpf_resolve_linked_archive _link_name _out_var)
+        set(_resolved "")
+
+        if(TARGET "${_link_name}")
+            get_target_property(_target_debug_location "${_link_name}" IMPORTED_LOCATION_DEBUG)
+            get_target_property(_target_release_location "${_link_name}" IMPORTED_LOCATION_RELEASE)
+            get_target_property(_target_default_location "${_link_name}" IMPORTED_LOCATION)
+
+            if(_target_debug_location AND _target_debug_location MATCHES "\\.(a|lib)$")
+                set(_resolved "${_target_debug_location}")
+            elseif(_target_release_location AND _target_release_location MATCHES "\\.(a|lib)$")
+                set(_resolved "${_target_release_location}")
+            elseif(_target_default_location AND _target_default_location MATCHES "\\.(a|lib)$")
+                set(_resolved "${_target_default_location}")
+            endif()
+        elseif(_link_name MATCHES "[/\\]")
+            set(_resolved "${_link_name}")
+        else()
+            set(_candidate_names "${_link_name}")
+            if(NOT _link_name MATCHES "\\.(a|lib)$")
+                if(WIN32)
+                    list(APPEND _candidate_names "${_link_name}.lib")
+                else()
+                    list(APPEND _candidate_names "${_link_name}.a")
+                endif()
+            endif()
+
+            unset(_resolved_path CACHE)
+            find_library(_resolved_path NAMES ${_candidate_names})
+            if(_resolved_path)
+                set(_resolved "${_resolved_path}")
+            endif()
+            unset(_resolved_path CACHE)
+
+            if(NOT _resolved AND WIN32)
+                set(_neowpf_windows_sdk_dirs)
+                if(DEFINED ENV{WindowsSdkDir})
+                    list(APPEND _neowpf_windows_sdk_dirs
+                        "$ENV{WindowsSdkDir}/Lib"
+                    )
+                endif()
+
+                if(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION)
+                    foreach(_sdk_ver IN ITEMS "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+                        if(DEFINED ENV{WindowsSdkDir})
+                            list(APPEND _neowpf_windows_sdk_dirs
+                                "$ENV{WindowsSdkDir}/Lib/${_sdk_ver}/um/x64"
+                                "$ENV{WindowsSdkDir}/Lib/${_sdk_ver}/um/x86"
+                            )
+                        endif()
+                    endforeach()
+                endif()
+
+                if(CMAKE_SYSTEM_VERSION)
+                    foreach(_sdk_ver IN ITEMS "${CMAKE_SYSTEM_VERSION}")
+                        if(DEFINED ENV{WindowsSdkDir})
+                            list(APPEND _neowpf_windows_sdk_dirs
+                                "$ENV{WindowsSdkDir}/Lib/${_sdk_ver}/um/x64"
+                                "$ENV{WindowsSdkDir}/Lib/${_sdk_ver}/um/x86"
+                            )
+                        endif()
+                    endforeach()
+                endif()
+
+                list(REMOVE_DUPLICATES _neowpf_windows_sdk_dirs)
+                foreach(_sdk_lib_name IN ITEMS
+                    d3d11 dxgi dbghelp ole32 windowscodecs bcrypt crypt32 ws2_32 wldap32 winmm advapi32 iphlpapi normaliz secur32 dwmapi)
+                    if("${_link_name}" STREQUAL "${_sdk_lib_name}")
+                        foreach(_sdk_dir IN LISTS _neowpf_windows_sdk_dirs)
+                            if(EXISTS "${_sdk_dir}/${_sdk_lib_name}.lib")
+                                set(_resolved "${_sdk_dir}/${_sdk_lib_name}.lib")
+                                break()
+                            endif()
+                        endforeach()
+                    endif()
+                endforeach()
+            endif()
+        endif()
+
+        if(_resolved AND _resolved MATCHES "\\.(a|lib)$")
+            set(${_out_var} "${_resolved}" PARENT_SCOPE)
+        else()
+            unset(${_out_var} PARENT_SCOPE)
+        endif()
+    endfunction()
+
+    function(neowpf_collect_static_archives _root_target _output_var)
+        set(_visited)
+        set(_queue "${_root_target}")
+        set(_archives_debug)
+        set(_archives_release)
+
+        while(_queue)
+            list(POP_FRONT _queue _current_target)
+            if(NOT _current_target)
+                continue()
+            endif()
+
+            list(FIND _visited "${_current_target}" _visited_index)
+            if(NOT _visited_index EQUAL -1)
+                continue()
+            endif()
+            list(APPEND _visited "${_current_target}")
+
+            get_target_property(_current_type "${_current_target}" TYPE)
+            if(_current_type STREQUAL "STATIC_LIBRARY" OR _current_type STREQUAL "UNKNOWN_LIBRARY")
+                get_target_property(_current_debug_location "${_current_target}" IMPORTED_LOCATION_DEBUG)
+                get_target_property(_current_release_location "${_current_target}" IMPORTED_LOCATION_RELEASE)
+                get_target_property(_current_default_location "${_current_target}" IMPORTED_LOCATION)
+
+                if(NOT _current_debug_location)
+                    set(_current_debug_location "${_current_default_location}")
+                endif()
+                if(NOT _current_release_location)
+                    set(_current_release_location "${_current_default_location}")
+                endif()
+
+                if(_current_debug_location AND _current_debug_location MATCHES "\\.(a|lib)$")
+                    list(APPEND _archives_debug "${_current_debug_location}")
+                endif()
+                if(_current_release_location AND _current_release_location MATCHES "\\.(a|lib)$")
+                    list(APPEND _archives_release "${_current_release_location}")
+                endif()
+            endif()
+
+            get_target_property(_current_link_libraries "${_current_target}" LINK_LIBRARIES)
+            get_target_property(_current_interface_link_libraries "${_current_target}" INTERFACE_LINK_LIBRARIES)
+            get_target_property(_current_imported_dependent_libraries "${_current_target}" IMPORTED_LINK_DEPENDENT_LIBRARIES)
+
+            foreach(_linked_target IN LISTS
+                    _current_link_libraries
+                    _current_interface_link_libraries
+                    _current_imported_dependent_libraries)
+                if(NOT _linked_target)
+                    continue()
+                endif()
+
+                string(REPLACE "$<LINK_ONLY:" "" _linked_target "${_linked_target}")
+                string(REPLACE ">" "" _linked_target "${_linked_target}")
+                string(STRIP "${_linked_target}" _linked_target)
+
+                if(TARGET "${_linked_target}")
+                    list(APPEND _queue "${_linked_target}")
+                    continue()
+                endif()
+
+                neowpf_resolve_linked_archive("${_linked_target}" _linked_archive)
+                if(_linked_archive)
+                    message(STATUS "[NeoWPF static deps] Resolved linked archive for ${_linked_target}: ${_linked_archive}")
+                    list(APPEND _archives_release "${_linked_archive}")
+                    list(APPEND _archives_debug "${_linked_archive}")
+                endif()
+            endforeach()
+        endwhile()
+
+        list(REMOVE_DUPLICATES _archives_debug)
+        list(REMOVE_DUPLICATES _archives_release)
+        set(${_output_var}_DEBUG "${_archives_debug}" PARENT_SCOPE)
+        set(${_output_var}_RELEASE "${_archives_release}" PARENT_SCOPE)
+    endfunction()
+
+    foreach(_neowpf_target_name IN ITEMS NeoWPF NeoWPF.Foundation)
+        if(NOT TARGET "${_neowpf_target_name}")
             continue()
         endif()
 
-        get_target_property(NEOWPF_DEPENDENCY_DEBUG
-            "${NEOWPF_DEPENDENCY_TARGET}" IMPORTED_LOCATION_DEBUG)
-        get_target_property(NEOWPF_DEPENDENCY_RELEASE
-            "${NEOWPF_DEPENDENCY_TARGET}" IMPORTED_LOCATION_RELEASE)
-        get_target_property(NEOWPF_DEPENDENCY_LOCATION
-            "${NEOWPF_DEPENDENCY_TARGET}" IMPORTED_LOCATION)
-        if(NOT NEOWPF_DEPENDENCY_DEBUG)
-            set(NEOWPF_DEPENDENCY_DEBUG "${NEOWPF_DEPENDENCY_LOCATION}")
-        endif()
-        if(NOT NEOWPF_DEPENDENCY_RELEASE)
-            set(NEOWPF_DEPENDENCY_RELEASE "${NEOWPF_DEPENDENCY_LOCATION}")
-        endif()
-
-        if(NEOWPF_DEPENDENCY_DEBUG MATCHES "\\.(a|lib)$")
-            list(APPEND NEOWPF_STATIC_ARCHIVES_DEBUG "${NEOWPF_DEPENDENCY_DEBUG}")
-        endif()
-        if(NEOWPF_DEPENDENCY_RELEASE MATCHES "\\.(a|lib)$")
-            list(APPEND NEOWPF_STATIC_ARCHIVES_RELEASE "${NEOWPF_DEPENDENCY_RELEASE}")
-        endif()
+        neowpf_collect_static_archives("${_neowpf_target_name}" _neowpf_archives)
+        list(APPEND NEOWPF_STATIC_ARCHIVES_DEBUG ${_neowpf_archives_DEBUG})
+        list(APPEND NEOWPF_STATIC_ARCHIVES_RELEASE ${_neowpf_archives_RELEASE})
     endforeach()
-
-    list(REMOVE_DUPLICATES NEOWPF_STATIC_ARCHIVES_DEBUG)
-    list(REMOVE_DUPLICATES NEOWPF_STATIC_ARCHIVES_RELEASE)
-
-    foreach(NEOWPF_STATIC_LIBRARY_SPEC IN ITEMS
-        "wayland-client;${WAYLAND_LIBRARY_DIRS}"
-        "xkbcommon;${XKBCOMMON_LIBRARY_DIRS}"
-        "freetype;${FREETYPE_LIBRARY_DIRS}"
-        "harfbuzz;${HARFBUZZ_LIBRARY_DIRS}"
-        "fontconfig;${FONTCONFIG_LIBRARY_DIRS}")
-        list(GET NEOWPF_STATIC_LIBRARY_SPEC 0 NEOWPF_STATIC_LIBRARY_NAME)
-        list(REMOVE_AT NEOWPF_STATIC_LIBRARY_SPEC 0)
-        find_file(NEOWPF_STATIC_LIBRARY
-            "lib${NEOWPF_STATIC_LIBRARY_NAME}.a"
-            PATHS ${NEOWPF_STATIC_LIBRARY_SPEC}
-            NO_DEFAULT_PATH)
-        if(NEOWPF_STATIC_LIBRARY)
-            list(APPEND NEOWPF_STATIC_ARCHIVES_DEBUG "${NEOWPF_STATIC_LIBRARY}")
-            list(APPEND NEOWPF_STATIC_ARCHIVES_RELEASE "${NEOWPF_STATIC_LIBRARY}")
-        endif()
-        unset(NEOWPF_STATIC_LIBRARY CACHE)
-    endforeach()
-
-    set(NEOWPF_FIND_LIBRARY_SUFFIXES "${CMAKE_FIND_LIBRARY_SUFFIXES}")
-    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-    foreach(NEOWPF_TRANSITIVE_LIBRARY_NAME IN ITEMS
-        bz2
-        z
-        png16
-        brotlidec
-        brotlicommon
-        expat)
-        find_library(NEOWPF_TRANSITIVE_LIBRARY
-            NAMES "${NEOWPF_TRANSITIVE_LIBRARY_NAME}")
-        if(NEOWPF_TRANSITIVE_LIBRARY)
-            list(APPEND NEOWPF_STATIC_ARCHIVES_DEBUG "${NEOWPF_TRANSITIVE_LIBRARY}")
-            list(APPEND NEOWPF_STATIC_ARCHIVES_RELEASE "${NEOWPF_TRANSITIVE_LIBRARY}")
-        endif()
-        unset(NEOWPF_TRANSITIVE_LIBRARY CACHE)
-    endforeach()
-    set(CMAKE_FIND_LIBRARY_SUFFIXES "${NEOWPF_FIND_LIBRARY_SUFFIXES}")
-    unset(NEOWPF_FIND_LIBRARY_SUFFIXES)
-
-    list(REMOVE_DUPLICATES NEOWPF_STATIC_ARCHIVES_DEBUG)
-    list(REMOVE_DUPLICATES NEOWPF_STATIC_ARCHIVES_RELEASE)
 
     if(WIN32)
-        set(NEOWPF_WINDOWS_SYSTEM_LIBRARIES "")
-        foreach(NEOWPF_SYSTEM_LIBRARY_NAME IN ITEMS
-            d3d11
-            dxgi
-            dbghelp
-            ole32
-            windowscodecs
-            bcrypt
-            crypt32
-            ws2_32
-            wldap32
-            winmm
-            advapi32
-            iphlpapi
-            normaliz
-            secur32
-            dwmapi)
-            find_library(NEOWPF_SYSTEM_LIBRARY
-                NAMES "${NEOWPF_SYSTEM_LIBRARY_NAME}")
-            if(NEOWPF_SYSTEM_LIBRARY)
-                list(APPEND NEOWPF_WINDOWS_SYSTEM_LIBRARIES "${NEOWPF_SYSTEM_LIBRARY}")
+        set(NEOWPF_WINDOWS_SDK_STATIC_LIBS
+            d3d11 dxgi dbghelp ole32 windowscodecs bcrypt crypt32 ws2_32
+            wldap32 winmm advapi32 iphlpapi normaliz secur32 dwmapi)
+
+        set(_neowpf_windows_sdk_dirs)
+        if(DEFINED ENV{NEOWPF_WINDOWS_SDK_ROOT})
+            list(APPEND _neowpf_windows_sdk_dirs "$ENV{NEOWPF_WINDOWS_SDK_ROOT}")
+            list(APPEND _neowpf_windows_sdk_dirs "$ENV{NEOWPF_WINDOWS_SDK_ROOT}/um/x64")
+            list(APPEND _neowpf_windows_sdk_dirs "$ENV{NEOWPF_WINDOWS_SDK_ROOT}/um/x86")
+            list(APPEND _neowpf_windows_sdk_dirs "$ENV{NEOWPF_WINDOWS_SDK_ROOT}/../")
+            message(STATUS "[NeoWPF static deps] Using NEOWPF_WINDOWS_SDK_ROOT: $ENV{NEOWPF_WINDOWS_SDK_ROOT}")
+        else()
+            message(FATAL_ERROR "NEOWPF_WINDOWS_SDK_ROOT is required when NEOWPF_STATIC_DEPENDENCIES=ON.")
+        endif()
+        list(REMOVE_DUPLICATES _neowpf_windows_sdk_dirs)
+
+        foreach(_neowpf_sdk_lib IN LISTS NEOWPF_WINDOWS_SDK_STATIC_LIBS)
+            set(_neowpf_sdk_archive "")
+            foreach(_neowpf_sdk_dir IN LISTS _neowpf_windows_sdk_dirs)
+                if(EXISTS "${_neowpf_sdk_dir}/${_neowpf_sdk_lib}.lib")
+                    set(_neowpf_sdk_archive "${_neowpf_sdk_dir}/${_neowpf_sdk_lib}.lib")
+                    break()
+                endif()
+            endforeach()
+            if(_neowpf_sdk_archive)
+                message(STATUS "[NeoWPF static deps] Added Windows SDK archive: ${_neowpf_sdk_lib} -> ${_neowpf_sdk_archive}")
+                list(APPEND NEOWPF_STATIC_ARCHIVES_DEBUG "${_neowpf_sdk_archive}")
+                list(APPEND NEOWPF_STATIC_ARCHIVES_RELEASE "${_neowpf_sdk_archive}")
+            else()
+                message(STATUS "[NeoWPF static deps] Windows SDK archive not found: ${_neowpf_sdk_lib}")
             endif()
-            unset(NEOWPF_SYSTEM_LIBRARY CACHE)
         endforeach()
+    endif()
 
-        set(NEOWPF_WINDOWS_MERGE_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/merge-neowpf-libraries-$<CONFIG>.cmake")
-        string(CONCAT NEOWPF_WINDOWS_MERGE_SCRIPT_CONTENT
-            "set(NEOWPF_ARCHIVER [==[${CMAKE_AR}]==])\n"
-            "set(NEOWPF_TARGET [==[$<TARGET_FILE:NeoWPF>]==])\n"
-            "set(NEOWPF_TARGET_DIR [==[$<TARGET_FILE_DIR:NeoWPF>]==])\n"
-            "set(NEOWPF_MERGED_TARGET \"\${NEOWPF_TARGET_DIR}/NeoWPF.$<CONFIG>.merged.lib\")\n"
-            "set(NEOWPF_STAGING_TARGET \"\${NEOWPF_TARGET_DIR}/NeoWPF.$<CONFIG>.staging.lib\")\n"
-            "set(NEOWPF_SYSTEM_LIBRARIES [==[${NEOWPF_WINDOWS_SYSTEM_LIBRARIES}]==])\n"
+    list(REMOVE_DUPLICATES NEOWPF_STATIC_ARCHIVES_DEBUG)
+    list(REMOVE_DUPLICATES NEOWPF_STATIC_ARCHIVES_RELEASE)
+    message(STATUS "[NeoWPF static deps] Final debug archive set: ${NEOWPF_STATIC_ARCHIVES_DEBUG}")
+    message(STATUS "[NeoWPF static deps] Final release archive set: ${NEOWPF_STATIC_ARCHIVES_RELEASE}")
+
+    if(NOT NEOWPF_STATIC_ARCHIVES_DEBUG AND NOT NEOWPF_STATIC_ARCHIVES_RELEASE)
+        message(FATAL_ERROR "NEOWPF_STATIC_DEPENDENCIES is enabled but no static archive dependencies were found in the actual NeoWPF link graph.")
+    endif()
+
+    function(neowpf_add_static_dependency_merge _target_name)
+        set(_extra_static_archives ${ARGN})
+
+        set(_merge_script "${CMAKE_CURRENT_BINARY_DIR}/merge-${_target_name}-$<CONFIG>.cmake")
+        set(_merge_stamp "${CMAKE_CURRENT_BINARY_DIR}/.merge-${_target_name}-$<CONFIG>.stamp")
+        string(CONCAT _merge_script_content
+            "set(NEOWPF_TARGET [==[$<TARGET_FILE:${_target_name}>]==])\n"
+            "set(NEOWPF_STATIC_ARCHIVES_DEBUG [==[${NEOWPF_STATIC_ARCHIVES_DEBUG}]==])\n"
+            "set(NEOWPF_STATIC_ARCHIVES_RELEASE [==[${NEOWPF_STATIC_ARCHIVES_RELEASE}]==])\n"
+            "set(NEOWPF_EXTRA_ARCHIVES [==[${_extra_static_archives}]==])\n"
+            "set(NEOWPF_STAGED_TARGET \"\${NEOWPF_TARGET}.base\")\n"
             "if(\"$<CONFIG>\" STREQUAL \"Debug\")\n"
-            "    set(NEOWPF_DEPENDENCY_LIBRARIES [==[${NEOWPF_STATIC_ARCHIVES_DEBUG}]==])\n"
+            "    set(NEOWPF_INPUT_ARCHIVES \"\${NEOWPF_STATIC_ARCHIVES_DEBUG}\")\n"
             "else()\n"
-            "    set(NEOWPF_DEPENDENCY_LIBRARIES [==[${NEOWPF_STATIC_ARCHIVES_RELEASE}]==])\n"
+            "    set(NEOWPF_INPUT_ARCHIVES \"\${NEOWPF_STATIC_ARCHIVES_RELEASE}\")\n"
             "endif()\n"
-            "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E copy \"\${NEOWPF_TARGET}\" \"\${NEOWPF_STAGING_TARGET}\" RESULT_VARIABLE NEOWPF_COPY_RESULT)\n"
+            "if(NOT NEOWPF_INPUT_ARCHIVES)\n"
+            "    message(FATAL_ERROR \"No static archives were available for ${_target_name} in configuration $<CONFIG>.\")\n"
+            "endif()\n"
+            "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E copy \"\${NEOWPF_TARGET}\" \"\${NEOWPF_STAGED_TARGET}\" RESULT_VARIABLE NEOWPF_COPY_RESULT)\n"
             "if(NEOWPF_COPY_RESULT)\n"
-            "    message(FATAL_ERROR \"NeoWPF archive staging failed with exit code \${NEOWPF_COPY_RESULT}\")\n"
+            "    message(FATAL_ERROR \"${_target_name} archive staging failed with exit code \${NEOWPF_COPY_RESULT}\")\n"
             "endif()\n"
-            "execute_process(COMMAND \"\${NEOWPF_ARCHIVER}\" \"/OUT:\${NEOWPF_MERGED_TARGET}\" \"/IGNORE:4006\" \"\${NEOWPF_STAGING_TARGET}\" \${NEOWPF_DEPENDENCY_LIBRARIES} \${NEOWPF_SYSTEM_LIBRARIES} RESULT_VARIABLE NEOWPF_ARCHIVE_RESULT)\n"
+            "set(NEOWPF_ARCHIVE_INPUTS \"\${NEOWPF_STAGED_TARGET};\${NEOWPF_INPUT_ARCHIVES};\${NEOWPF_EXTRA_ARCHIVES}\")\n"
+        )
+        if(WIN32)
+            string(APPEND _merge_script_content
+                "execute_process(COMMAND \"${NEOWPF_LIB_TOOL}\" /NOLOGO /IGNORE:4006 \"/OUT:\${NEOWPF_TARGET}\" \${NEOWPF_ARCHIVE_INPUTS} RESULT_VARIABLE NEOWPF_ARCHIVE_RESULT)\n"
+            )
+        else()
+            string(APPEND _merge_script_content
+                "set(NEOWPF_AR_SCRIPT \"\${NEOWPF_TARGET}.mri\")\n"
+                "file(WRITE \"\${NEOWPF_AR_SCRIPT}\" \"CREATE \\\"\${NEOWPF_TARGET}\\\"\\n\")\n"
+                "foreach(NEOWPF_ARCHIVE IN LISTS NEOWPF_ARCHIVE_INPUTS)\n"
+                "    file(APPEND \"\${NEOWPF_AR_SCRIPT}\" \"ADDLIB \\\"\${NEOWPF_ARCHIVE}\\\"\\n\")\n"
+                "endforeach()\n"
+                "file(APPEND \"\${NEOWPF_AR_SCRIPT}\" \"SAVE\\nEND\\n\")\n"
+                "execute_process(COMMAND \"${NEOWPF_AR_TOOL}\" -M INPUT_FILE \"\${NEOWPF_AR_SCRIPT}\" RESULT_VARIABLE NEOWPF_ARCHIVE_RESULT)\n"
+                "file(REMOVE \"\${NEOWPF_AR_SCRIPT}\")\n"
+            )
+        endif()
+        string(APPEND _merge_script_content
+            "file(REMOVE \"\${NEOWPF_STAGED_TARGET}\")\n"
             "if(NEOWPF_ARCHIVE_RESULT)\n"
-            "    message(FATAL_ERROR \"NeoWPF dependency merge failed with exit code \${NEOWPF_ARCHIVE_RESULT}\")\n"
+            "    message(FATAL_ERROR \"${_target_name} static dependency merge failed with exit code \${NEOWPF_ARCHIVE_RESULT}\")\n"
             "endif()\n"
-            "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E copy_if_different \"\${NEOWPF_MERGED_TARGET}\" \"\${NEOWPF_TARGET}\" RESULT_VARIABLE NEOWPF_COPY_BACK_RESULT)\n"
-            "if(NEOWPF_COPY_BACK_RESULT)\n"
-            "    message(FATAL_ERROR \"NeoWPF archive replacement failed with exit code \${NEOWPF_COPY_BACK_RESULT}\")\n"
-            "endif()\n"
-            "file(REMOVE \"\${NEOWPF_STAGING_TARGET}\" \"\${NEOWPF_MERGED_TARGET}\")\n"
+            "file(WRITE \"${_merge_stamp}\" \"${_target_name}:$<CONFIG>\\n\")\n"
         )
-        file(GENERATE OUTPUT "${NEOWPF_WINDOWS_MERGE_SCRIPT}" CONTENT
-            "${NEOWPF_WINDOWS_MERGE_SCRIPT_CONTENT}"
-        )
-        add_custom_command(TARGET NeoWPF POST_BUILD
-            COMMAND "${CMAKE_COMMAND}" -P "${NEOWPF_WINDOWS_MERGE_SCRIPT}"
-            VERBATIM
-        )
-    elseif(UNIX)
-        set(NEOWPF_RELEASE_ARCHIVE
-            "${NEOWPF_RELEASE_DIRECTORY}/NeoWPF.${NEOWPF_PLATFORM}.$<CONFIG>.${PROJECT_VERSION}.a")
-        set(NEOWPF_WINDOWS_RELEASE_ARCHIVE
-            "${NEOWPF_WINDOWS_RELEASE_DIRECTORY}/NeoWPF.${NEOWPF_PLATFORM}.$<CONFIG>.${PROJECT_VERSION}.a")
-        set(NEOWPF_ARCHIVE_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/merge-neowpf-archives-$<CONFIG>.mri")
-        set(NEOWPF_ARCHIVE_SCRIPT_CONTENT
-            "create ${NEOWPF_RELEASE_ARCHIVE}\n"
-            "addlib $<TARGET_FILE:NeoWPF>\n"
-        )
-        foreach(NEOWPF_STATIC_ARCHIVE IN LISTS NEOWPF_STATIC_ARCHIVES_RELEASE)
-            string(APPEND NEOWPF_ARCHIVE_SCRIPT_CONTENT "addlib ${NEOWPF_STATIC_ARCHIVE}\n")
-        endforeach()
-        string(APPEND NEOWPF_ARCHIVE_SCRIPT_CONTENT "save\nend\n")
+        file(GENERATE OUTPUT "${_merge_script}" CONTENT "${_merge_script_content}")
 
-        file(GENERATE OUTPUT "${NEOWPF_ARCHIVE_SCRIPT}" CONTENT "${NEOWPF_ARCHIVE_SCRIPT_CONTENT}")
-
-        add_custom_command(TARGET NeoWPF POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_RELEASE_DIRECTORY}"
-            COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_WINDOWS_RELEASE_DIRECTORY}"
-            COMMAND sh -c "\"${CMAKE_AR}\" -M < \"${NEOWPF_ARCHIVE_SCRIPT}\""
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${NEOWPF_RELEASE_ARCHIVE}"
-                "${NEOWPF_WINDOWS_RELEASE_ARCHIVE}"
+        add_custom_command(
+            OUTPUT "${_merge_stamp}"
+            COMMAND "${CMAKE_COMMAND}" -P "${_merge_script}"
+            DEPENDS "${_merge_script}" "${CMAKE_CURRENT_LIST_FILE}" "${CMAKE_SOURCE_DIR}/CMakeLists.txt" "${_target_name}"
             VERBATIM
+            COMMENT "Merging static dependencies for ${_target_name}"
         )
+
+        add_custom_command(TARGET ${_target_name} POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -P "${_merge_script}"
+            VERBATIM
+            COMMENT "Merging static dependencies for ${_target_name}"
+        )
+    endfunction()
+
+    if(TARGET NeoWPF)
+        neowpf_add_static_dependency_merge(NeoWPF)
+    endif()
+
+    if(NEOWPF_BUILD_MEDIA AND TARGET NeoWPF.Media)
+        neowpf_add_static_dependency_merge(NeoWPF.Media $<TARGET_FILE:LuAudio>)
     endif()
 endif()

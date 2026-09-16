@@ -28,6 +28,7 @@ Review the project's README.md, and AI.md for details related to AI usage, and o
 
 ///////////////////////////////////////////////////
 #include <NeoWPF/Core/Application/Application.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/Platform/NativeWindow.h>
@@ -47,31 +48,33 @@ Review the project's README.md, and AI.md for details related to AI usage, and o
 #include <NeoWPF/Core/Application/Resources/ResourceManager.h>
 #include <NeoWPF/UI/Markup/Xaml/Loading/CompiledXaml.h>
 ///////////////////////////////////////////////////
+// Media is not merged inside NeoWPF.Foundation. If you want to use media compile NeoWPF from scratch to get the library file
+// or use NeoPM to turn NeoWPF.Media on for your project so you can use it.
+//////////
+// NeoWPF.Foundation media (like where bitmap image, colors) live in are separate from NeoWPF.Media
+// This is to keep NeoWPF.Media (may contain heavy dependencies/features) that other people might not use
 #if defined(NEOWPF_ENABLE_MEDIA) && NEOWPF_ENABLE_MEDIA
 #include <NeoWPF/Media/Media.h>
 #endif
 
-// We recommend not to include individual header files for public usage in your own code. 
-// NeoWPF reserves the right to update paths or method signature's for any implementation.
-// Using this header file for public usage ensure's that even if method signatures change, or the API changes
-// you will get shims, facades, etc for API stability.
+// We recommend not including individual header files for public usage in your own code.
+// NeoWPF reserves the right to update paths or method signatures for any implementation.
+// Using this header file for public usage ensures that even if method signatures or the API
+// change, you will receive shims, facades, etc. for API stability.
 
-// Public API changes will happen, but they are gradual with deprecation warnings.
-// NeoWPF reserves the right to update or otherwise remove a public API if we deem
-// it doesn't fit NeoWPF's architecture or design.
+// Public API changes will happen, but they are gradual and will include deprecation warnings.
+// NeoWPF reserves the right to update or otherwise remove a public API if we determine
+// that it doesn't fit NeoWPF's architecture or design.
 
 /*///////////////////////////////////////////////////////////////////////////////////////////*/
 
-// If you need NeoWPF.Media, but this this NeoWPF build does not have it, ensure you're using one that's 
-// compiled with NeoWPF.Media turned on. If not, clone NeoWPF locally (Compile.md) and build it.
-
-// For the project's actual documentation please review docs/README.md and go to the website with documentation in it.
-// you can still read local header files for documentation, though they may be minimal in some places.
+// For the project's actual documentation, please review docs/README.md and visit the website
+// containing the full documentation.
+// You can still read local header files for documentation, though they may be minimal in some places.
 
 namespace NeoWPF {
 
-    // If you don't want to use these wrapper's you can just comment out the using's at the end of the file!! :>
-    // These are only here to make code less verbose and cleaner
+    // These STD wrapper's aren't needed, if you don't need them comment out the export's at the bottom of the file.
 
     /*
         @summary
@@ -196,6 +199,10 @@ namespace NeoWPF {
     }
     using Core::Application;
 
+    using Core::ApplicationThemes::ThemeDefinition;
+
+    using Core::ApplicationThemes::ThemeManager;
+
     using Platform::Window;
 
     using UI::Panel;
@@ -215,10 +222,15 @@ namespace NeoWPF {
     namespace UI {
         namespace Locales {
             using ::NeoWPF::UI::Localization::Culture;
+
             using ::NeoWPF::UI::Localization::LocaleExpression;
+
             using ::NeoWPF::UI::Localization::LocaleOperations;
+
             using ::NeoWPF::UI::Localization::LocaleString;
+
             using ::NeoWPF::UI::Localization::LocaleTable;
+
             using ::NeoWPF::UI::Localization::LocalizationManager;
         }
 
@@ -252,6 +264,8 @@ namespace NeoWPF {
     }
 
     using UI::Button;
+
+    using UI::FilePicker;
 
     using UI::Checkbox;
 
@@ -337,6 +351,8 @@ namespace NeoWPF {
 
 }
 
+////////////////////////
+
 using NeoWPF::New;
 
 using NeoWPF::Ref;
@@ -346,3 +362,5 @@ using NeoWPF::ToString;
 using NeoWPF::Cast;
 
 using NeoWPF::String;
+
+////////////////////////

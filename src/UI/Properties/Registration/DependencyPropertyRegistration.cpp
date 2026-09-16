@@ -10,6 +10,7 @@ void RegisterCoreControlProperties() {
     RegisterWindowProperties();
     RegisterApplicationProperties();
     RegisterButtonProperties();
+    RegisterFilePickerProperties();
     RegisterRangeBaseProperties();
     RegisterThumbProperties();
     RegisterCheckboxProperties();

@@ -231,6 +231,7 @@ bool SetLevelByName(std::string_view name, Level level) noexcept {
     if (n == "xamlparser") { SetLevel(Category::XamlParser, level); return true; }
     if (n == "listbox") { SetLevel(Category::ListBox, level); return true; }
     if (n == "combobox") { SetLevel(Category::ComboBox, level); return true; }
+    if (n == "files") { SetLevel(Category::Files, level); return true; }
     return false;
 }
 

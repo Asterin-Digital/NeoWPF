@@ -1,6 +1,7 @@
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/UI/Controls/Window.h>
 #include <algorithm>
@@ -15,6 +16,8 @@ AppState& App() { return GetAppState(); }
 
 bool CloseApplicationWindow(void* nativeWindowHandle)
 {
+    NEO_WPF_ACTION("Application.CloseWindow");
+
     if (!nativeWindowHandle) {
         return false;
     }

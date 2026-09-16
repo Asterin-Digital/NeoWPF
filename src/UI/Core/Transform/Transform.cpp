@@ -55,6 +55,10 @@ Matrix4 Matrix4::Rotation(float angleRadians) {
     return m;
 }
 
+std::optional<float> Transform::TryGetRotation() const noexcept {
+    return std::nullopt;
+}
+
 void Matrix4::TransformPoint(float x, float y, float& outX, float& outY) const noexcept {
     outX = x * m[0][0] + y * m[1][0] + m[3][0];
     outY = x * m[0][1] + y * m[1][1] + m[3][1];
@@ -137,6 +141,10 @@ Matrix4 RotateTransform::GetMatrix() const {
     return toCenter * rotation * fromCenter;
 }
 
+std::optional<float> RotateTransform::TryGetRotation() const noexcept {
+    return m_angle;
+}
+
 std::shared_ptr<Transform> RotateTransform::Clone() const {
     return std::make_shared<RotateTransform>(m_angle, m_centerX, m_centerY);
 }
@@ -186,6 +194,22 @@ Matrix4 TransformGroup::GetMatrix() const {
         }
     }
     return result;
+}
+
+std::optional<float> TransformGroup::TryGetRotation() const noexcept {
+    float rotation = 0.0f;
+    for (const auto& child : m_children) {
+        if (!child) {
+            continue;
+        }
+
+        const auto childRotation = child->TryGetRotation();
+        if (!childRotation) {
+            return std::nullopt;
+        }
+        rotation += *childRotation;
+    }
+    return rotation;
 }
 
 std::shared_ptr<Transform> TransformGroup::Clone() const {

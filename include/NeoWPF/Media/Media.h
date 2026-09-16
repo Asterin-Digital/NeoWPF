@@ -3,6 +3,8 @@ MIT License — Copyright (c) 2026 NeoWPF
 See LICENSE file in the project root for full license text.
 */
 
+// See NeoWPF.h, don't include this header file manually in your project
+
 #pragma once
 
 #include <NeoWPF/Media/Audio/IAudioBackend.h>

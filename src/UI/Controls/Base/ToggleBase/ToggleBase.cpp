@@ -107,6 +107,7 @@ void ToggleBase::OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args)
 
 void ToggleBase::OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args)
 {
+    m_isPressed = false;
     if (IsEnabled()) {
         ApplyVisualState(m_isChecked ? "Checked" : "Unchecked", false);
     }
@@ -115,6 +116,7 @@ void ToggleBase::OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args)
 void ToggleBase::OnMouseDown(int x, int y, std::uint32_t buttonState)
 {
     if (IsEnabled()) {
+        m_isPressed = (buttonState & 0x01) != 0;
         ApplyVisualState(m_isChecked ? "CheckedPressed" : "Pressed", false);
     }
 }
@@ -122,11 +124,16 @@ void ToggleBase::OnMouseDown(int x, int y, std::uint32_t buttonState)
 void ToggleBase::OnMouseUp(int x, int y, std::uint32_t buttonState)
 {
     if (IsEnabled()) {
-        Toggle();
-        RaiseClick();
+        const bool shouldToggle = m_isPressed && ((buttonState & 0x01) == 0);
+        m_isPressed = false;
+        if (shouldToggle) {
+            Toggle();
+            RaiseClick();
+        }
         ApplyVisualState(m_isChecked ? "CheckedMouseOver" : "MouseOver", false);
     }
     else {
+        m_isPressed = false;
         ApplyVisualState("Disabled", false);
     }
 }

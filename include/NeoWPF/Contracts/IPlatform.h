@@ -11,6 +11,7 @@ See LICENSE file in the project root for full license text.
 #include <string>
 #include <vector>
 
+#include <NeoWPF/Contracts/IFileDialog.h>
 #include <NeoWPF/Contracts/IWindowChrome.h>
 #include <NeoWPF/Contracts/IRendering.h>
 #include <NeoWPF/Contracts/IWindowing.h>
@@ -34,6 +35,17 @@ public:
     virtual std::filesystem::path GetExecutableDirectory() const = 0;
 
     virtual bool FetchHttpResource(const std::wstring& url, std::vector<std::uint8_t>& outData) = 0;
+
+    virtual NeoWPF::Contracts::FileDialogResult ShowOpenFileDialog(
+        const std::wstring& title,
+        const std::wstring& initialDirectory,
+        const std::vector<NeoWPF::Contracts::FileDialogFilter>& filters,
+        bool allowMultiSelect = false) = 0;
+    virtual NeoWPF::Contracts::FileDialogResult ShowSaveFileDialog(
+        const std::wstring& title,
+        const std::wstring& initialDirectory,
+        const std::wstring& defaultFileName,
+        const std::vector<NeoWPF::Contracts::FileDialogFilter>& filters) = 0;
 
     virtual bool DecodeImageFromMemory(const std::vector<std::uint8_t>& data,
                                        std::vector<std::uint8_t>& outPixels,

@@ -1,7 +1,7 @@
 #include <Media/Backends/Audio/LuAudio/LASource.h>
 
-#include <algorithm>
-#include <cctype>
+#include <NeoWPF/Platform/PlatformUtils.h>
+
 #include <filesystem>
 #include <unordered_map>
 
@@ -22,14 +22,6 @@ enum class SourceType {
     Mp3,
     Ogg,
 };
-
-std::string LowercaseExtension(const std::string& uri)
-{
-    std::string extension = std::filesystem::path(uri).extension().string();
-    std::transform(extension.begin(), extension.end(), extension.begin(),
-        [](unsigned char character) { return static_cast<char>(std::tolower(character)); });
-    return extension;
-}
 
 bool TryGetSourceType(const std::string& extension, SourceType& type)
 {
@@ -128,7 +120,8 @@ MediaResult LASource::Open(const MediaSource& source)
     }
 
     SourceType sourceType;
-    if (!TryGetSourceType(LowercaseExtension(uri), sourceType)) {
+    const auto normalizedExtension = NeoWPF::Platform::ToLower(std::filesystem::path(uri).extension().string());
+    if (!TryGetSourceType(normalizedExtension, sourceType)) {
         return MediaResult::Failure(
             MediaResultCode::Unsupported,
             "Audio file extension is not supported");

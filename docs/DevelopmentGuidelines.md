@@ -1,7 +1,3 @@
-Here is the original text with **only the section headers numbered** (1 through 8 at the top level). The existing numbered list inside the Inheritance Tree section remains untouched:
-
----
-
 1. ## Inheritance Tree
 
 Controls usually follow this inheritance tree (depending on whether they also have a base class or not):

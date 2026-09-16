@@ -9,6 +9,7 @@ See LICENSE file in the project root for full license text.
 #include <vector>
 #include <functional>
 #include <cstdint>
+#include <optional>
 
 namespace NeoWPF::UI {
 class UIElement;
@@ -33,6 +34,7 @@ class Transform {
 public:
     virtual ~Transform() = default;
     virtual Matrix4 GetMatrix() const = 0;
+    virtual std::optional<float> TryGetRotation() const noexcept;
     virtual std::shared_ptr<Transform> Clone() const = 0;
 };
 
@@ -106,6 +108,7 @@ public:
     void SetInvalidateCallback(std::function<void()> callback);
 
     Matrix4 GetMatrix() const override;
+    std::optional<float> TryGetRotation() const noexcept override;
     std::shared_ptr<Transform> Clone() const override;
 
 private:
@@ -140,6 +143,7 @@ public:
     std::shared_ptr<Transform> GetChild(size_t index) const;
 
     Matrix4 GetMatrix() const override;
+    std::optional<float> TryGetRotation() const noexcept override;
     std::shared_ptr<Transform> Clone() const override;
 
 private:

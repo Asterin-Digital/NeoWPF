@@ -129,6 +129,28 @@ NeoWPF::UI::Core::Matrix4 UIElement::GetWorldTransformMatrix() const noexcept {
 
 float UIElement::GetWorldRotationRadians() const noexcept {
     const auto matrix = GetWorldTransformMatrix();
+    std::optional<float> authoredRotation;
+    const UIElement* current = this;
+    while (current) {
+        const auto transform = current->GetRenderTransform();
+        if (transform) {
+            const auto transformRotation = transform->TryGetRotation();
+            if (!transformRotation) {
+                return std::atan2(matrix.m[1][0], matrix.m[0][0]);
+            }
+
+            if (!authoredRotation) {
+                authoredRotation = 0.0f;
+            }
+            *authoredRotation += *transformRotation;
+        }
+        current = dynamic_cast<const UIElement*>(current->GetParent());
+    }
+
+    if (authoredRotation) {
+        return *authoredRotation;
+    }
+
     return std::atan2(matrix.m[1][0], matrix.m[0][0]);
 }
 

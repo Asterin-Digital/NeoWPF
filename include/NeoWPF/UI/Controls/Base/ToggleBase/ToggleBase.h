@@ -56,6 +56,7 @@ protected:
     std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> m_visualStateManager;
     std::string m_currentVisualState;
     bool m_isChecked = false;
+    bool m_isPressed = false;
     std::wstring m_contentText;
 };
 

@@ -7,6 +7,7 @@ See LICENSE file in the project root for full license text.
 
 #include <NeoWPF/Contracts/IPlatform.h>
 #include <NeoWPF/Platform/CurlHttp.h>
+#include <NeoWPF/Platform/Windows/WFileDialog.h>
 #include <NeoWPF/Platform/Windows/WWindowChrome.h>
 #include <NeoWPF/Platform/Windows/WWindowing.h>
 #include <NeoWPF/Rendering/D3D11/WRendering.h>
@@ -25,6 +26,16 @@ public:
     bool LoadResourceData(const std::wstring& resourcePath, std::vector<std::uint8_t>& outData) override;
     std::filesystem::path GetExecutableDirectory() const override;
     bool FetchHttpResource(const std::wstring& url, std::vector<std::uint8_t>& outData) override;
+    NeoWPF::Contracts::FileDialogResult ShowOpenFileDialog(
+        const std::wstring& title,
+        const std::wstring& initialDirectory,
+        const std::vector<NeoWPF::Contracts::FileDialogFilter>& filters,
+        bool allowMultiSelect = false) override;
+    NeoWPF::Contracts::FileDialogResult ShowSaveFileDialog(
+        const std::wstring& title,
+        const std::wstring& initialDirectory,
+        const std::wstring& defaultFileName,
+        const std::vector<NeoWPF::Contracts::FileDialogFilter>& filters) override;
     bool DecodeImageFromMemory(const std::vector<std::uint8_t>& data, std::vector<std::uint8_t>& outPixels,
                                int& outWidth, int& outHeight, int decodeWidth, int decodeHeight) override;
     bool DecodeImageFile(const std::wstring& filePath, std::vector<std::uint8_t>& outPixels,

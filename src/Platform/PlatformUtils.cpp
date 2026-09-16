@@ -28,6 +28,22 @@ std::string Trim(const std::string& value)
     return std::string(begin, end);
 }
 
+std::wstring Trim(const std::wstring& value)
+{
+    const auto begin = std::find_if_not(value.begin(), value.end(), [](wchar_t ch) {
+        return std::iswspace(static_cast<unsigned short>(ch)) != 0;
+    });
+    const auto end = std::find_if_not(value.rbegin(), value.rend(), [](wchar_t ch) {
+        return std::iswspace(static_cast<unsigned short>(ch)) != 0;
+    }).base();
+
+    if (begin >= end) {
+        return {};
+    }
+
+    return std::wstring(begin, end);
+}
+
 std::string ToLower(std::string value)
 {
     std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
@@ -50,6 +66,24 @@ std::wstring ToUpper(std::wstring value)
         return static_cast<wchar_t>(std::towupper(character));
     });
     return value;
+}
+
+std::wstring NormalizeFileExtension(const std::wstring& extension)
+{
+    std::wstring normalized = Trim(extension);
+    if (normalized.empty()) {
+        return {};
+    }
+
+    while (!normalized.empty() && (normalized.front() == L'.' || normalized.front() == L'*')) {
+        normalized.erase(normalized.begin());
+    }
+
+    if (normalized.empty() || normalized == L"*") {
+        return L"*";
+    }
+
+    return L"." + normalized;
 }
 
 bool IsAsciiAlpha(wchar_t character) noexcept

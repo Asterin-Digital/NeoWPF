@@ -61,6 +61,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Controls/Base/ButtonBase/ButtonBase.h>
 #include <NeoWPF/UI/Controls/Base/ToggleBase/ToggleBase.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
+#include <NeoWPF/UI/Controls/FilePicker/FilePicker.h>
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
 #include <NeoWPF/UI/Controls/ItemsControl/ItemsControl.h>
 #include <NeoWPF/UI/Controls/ListBox/ListBox.h>

@@ -17,7 +17,7 @@ choco install git -y
 Clone repo:
 
 ```powershell
-git clone https://github.com/Past-Horizon/NeoWPF.git
+git clone https://github.com/NeoWPF/NeoWPF.git
 cd NeoWPF
 ```
 
@@ -71,7 +71,7 @@ sudo apt install -y git
 Clone repo:
 
 ```bash
-git clone https://github.com/Past-Horizon/NeoWPF.git
+git clone https://github.com/NeoWPF/NeoWPF.git
 cd NeoWPF
 ```
 
@@ -117,16 +117,19 @@ cmake -S . -B build -G Ninja \
 
 Open the generated project in Qt Creator or CLion and build it in Release.
 
-## Rule
+## Required env var
+
+Set `NEOWPF_WINDOWS_SDK_ROOT` when building with static dependencies on Windows:
+
+```powershell
+$env:NEOWPF_WINDOWS_SDK_ROOT = 'C:\Program Files (x86)\Windows Kits\10\Lib\10.0.26100.0\um\x64'
+```
+
+If it is missing, NeoWPF stops during configure.
+
+## Info
 
 - Windows: `x64-windows-static-md` + `D3D11`
 - Linux: `x64-linux` + `Vulkan`
 
 If `vcpkg` is missing or not on PATH, configure will fail.
-
-## Linux IDE
-
-Use a proper C++ IDE for this project: Qt Creator or CLion.
-
-- Qt Creator: good for CMake and native C++ projects
-- CLion: good if you want a heavier full IDE

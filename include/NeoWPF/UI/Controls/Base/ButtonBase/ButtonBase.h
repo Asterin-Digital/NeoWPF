@@ -54,6 +54,7 @@ protected:
 protected:
     std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> m_visualStateManager;
     std::string m_currentVisualState;
+    bool m_isPressed = false;
     std::shared_ptr<NeoWPF::Input::ICommand> m_command;
     std::any m_commandParameter;
     NeoWPF::UI::UIElement* m_commandTarget = nullptr;

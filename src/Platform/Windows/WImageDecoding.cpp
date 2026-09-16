@@ -18,7 +18,7 @@ bool DecodeImageFromMemory(const std::vector<uint8_t>& data, std::vector<uint8_t
     }
 
     const HRESULT coResult = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-    const bool shouldUninitialize = coResult == S_OK;
+    const bool shouldUninitialize = SUCCEEDED(coResult);
     if (!SUCCEEDED(coResult)) {
         NeoWPF::Diagnostics::LogError("DecodeImageFromMemory: CoInitializeEx failed, HRESULT: 0x%08X", coResult);
         return false;
@@ -174,7 +174,7 @@ bool DecodeImageFromMemory(const std::vector<uint8_t>& data, std::vector<uint8_t
 bool DecodeImageFile(const std::wstring& filePath, std::vector<uint8_t>& outPixels,
                      int& outWidth, int& outHeight, int decodeWidth, int decodeHeight) {
     const HRESULT coResult = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-    const bool shouldUninitialize = coResult == S_OK;
+    const bool shouldUninitialize = SUCCEEDED(coResult);
     if (!SUCCEEDED(coResult)) return false;
 
     bool success = false;

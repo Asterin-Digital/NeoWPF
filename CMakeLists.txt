@@ -231,7 +231,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(NEOWPF_BUILD_MEDIA
     "Build the optional NeoWPF.Media target and fetch LuAudio"
-    ON)
+    OFF)
 set(NEOWPF_LUAUDIO_GIT_REPOSITORY "https://github.com/Past-Horizon/LuAudio.git" CACHE STRING
     "LuAudio Git repository used by NeoWPF.Media")
 set(NEOWPF_LUAUDIO_GIT_TAG "main" CACHE STRING
@@ -240,6 +240,7 @@ set(NEOWPF_LUAUDIO_GIT_TAG "main" CACHE STRING
 option(NEOWPF_STATIC_DEPENDENCIES
     "Merge static NeoWPF dependencies into the NeoWPF archive"
     ON) 
+message(STATUS "Using the platform archive merger")
 option(APPLY_CONTROL_STYLES
     "Apply generated XAML styles from control constructors"
     ON)
@@ -741,6 +742,7 @@ if(BUILD_TESTING)
         tests/Automated/EventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
         tests/Automated/CommonConvertersTests.cpp
+        tests/Automated/FileDialogTests.cpp
         tests/Automated/TransformTests.cpp
         tests/Automated/LayoutTests.cpp
         tests/Automated/TransformCompositionTests.cpp

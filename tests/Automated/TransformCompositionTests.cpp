@@ -60,4 +60,35 @@ TEST(TransformCompositionTests, CenterOriginScaleKeepsCenterFixed)
     EXPECT_FLOAT_EQ(y, 20.0f);
 }
 
+TEST(TransformCompositionTests, TryGetRotationReportsSupportedTransformValues)
+{
+    NeoWPF::UI::ScaleTransform scale(2.0f, 2.0f);
+    EXPECT_FALSE(scale.TryGetRotation().has_value());
+
+    NeoWPF::UI::RotateTransform rotation(3.5f);
+    const auto rotationValue = rotation.TryGetRotation();
+    ASSERT_TRUE(rotationValue.has_value());
+    EXPECT_FLOAT_EQ(*rotationValue, 3.5f);
+}
+
+TEST(TransformCompositionTests, TryGetRotationSumsRotationGroup)
+{
+    NeoWPF::UI::TransformGroup rotations;
+    rotations.AddChild(std::make_shared<NeoWPF::UI::RotateTransform>(1.25f));
+    rotations.AddChild(std::make_shared<NeoWPF::UI::RotateTransform>(2.25f));
+
+    const auto rotationValue = rotations.TryGetRotation();
+    ASSERT_TRUE(rotationValue.has_value());
+    EXPECT_FLOAT_EQ(*rotationValue, 3.5f);
+}
+
+TEST(TransformCompositionTests, TryGetRotationRejectsMixedTransformGroup)
+{
+    NeoWPF::UI::TransformGroup mixed;
+    mixed.AddChild(std::make_shared<NeoWPF::UI::RotateTransform>(1.25f));
+    mixed.AddChild(std::make_shared<NeoWPF::UI::ScaleTransform>(2.0f, 2.0f));
+
+    EXPECT_FALSE(mixed.TryGetRotation().has_value());
+}
+
 }

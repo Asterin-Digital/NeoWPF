@@ -14,7 +14,6 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::UI {
 
-// Forward declarations
 class RowDefinition;
 class ColumnDefinition;
 
@@ -38,6 +37,7 @@ enum class SizeMode {
 
     @details
     Rows and columns must be added before children can be placed. Row and column indices are zero-based
+    Tip: don't set explicit w/h on grid, it will not scale to new window size
 
     @example
     auto grid = std::make_shared<NeoWPF::UI::Grid>();

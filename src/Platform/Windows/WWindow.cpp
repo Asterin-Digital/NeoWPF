@@ -103,8 +103,18 @@ LRESULT CALLBACK NeoWPFWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
         return 0;
 
     case WM_CLOSE:
-        NeoWPF::Core::CloseApplicationWindow(hwnd);
+    {
+        auto* platform = NeoWPF::Platform::CurrentPlatform();
+        if (platform) {
+            platform->Windowing().CloseWindow(hwnd);
+        } else {
+            NeoWPF::Core::CloseApplicationWindow(hwnd);
+            if (IsWindow(hwnd)) {
+                ::DestroyWindow(hwnd);
+            }
+        }
         return 0;
+    }
 
     case WM_ERASEBKGND:
         return TRUE;

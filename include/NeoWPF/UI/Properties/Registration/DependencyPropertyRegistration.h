@@ -213,6 +213,7 @@ namespace NeoWPF::UI::Properties {
     void RegisterWindowProperties();
     void RegisterApplicationProperties();
     void RegisterButtonProperties();
+    void RegisterFilePickerProperties();
     void RegisterRangeBaseProperties();
     void RegisterThumbProperties();
     void RegisterCheckboxProperties();

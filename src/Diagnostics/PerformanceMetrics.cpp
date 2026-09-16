@@ -129,6 +129,8 @@ void Initialize()
     GetStartupStartTime() = now;
     counters.startupRecorded.store(false, std::memory_order_relaxed);
     counters.startupElapsedSeconds.store(0.0, std::memory_order_relaxed);
+    counters.actionTimingEnabled.store(true, std::memory_order_relaxed);
+    counters.startupActionTrackingEnabled.store(true, std::memory_order_relaxed);
 }
 
 void Shutdown()
