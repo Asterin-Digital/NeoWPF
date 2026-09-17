@@ -1,0 +1,1 @@
+<Grid x:Name="RootGrid"><Grid.RowDefinitions><RowDefinition /></Grid.RowDefinitions><Button x:Name="ApplyButton" Grid.Row="2" Text="Apply" /><TextBlock x:Name="BoundText" Text="{Binding Title, Mode=TwoWay}" /></Grid>

@@ -1,0 +1,1 @@
+<Border x:Name="Root"><Border.Resources><ResourceDictionary><TextBlock x:Key="Accent" Text="Outer" /></ResourceDictionary></Border.Resources><Border x:Name="Nested"><Border.Resources><ResourceDictionary><TextBlock x:Key="Accent" Text="Inner" /></ResourceDictionary></Border.Resources><Border x:Name="Consumer" Content="{StaticResource Accent}" /></Border></Border>
