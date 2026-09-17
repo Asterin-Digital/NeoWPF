@@ -1,0 +1,15 @@
+file(GLOB_RECURSE NEOPM_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+)
+
+file(GLOB_RECURSE NEOPM_HEADERS CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+)
+
+set(NEOPM_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+if(NOT NEOPM_SOURCES)
+    message(WARNING "NeoPM: no source files found under src/.")
+endif()
