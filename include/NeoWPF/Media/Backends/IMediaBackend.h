@@ -14,6 +14,18 @@ public:
     virtual ~IMediaBackend() = default;
 
     virtual std::string_view GetName() const noexcept = 0;
+
+    template<typename T>
+    T* TryGetNativeBackend() noexcept
+    {
+        return dynamic_cast<T*>(this);
+    }
+
+    template<typename T>
+    const T* TryGetNativeBackend() const noexcept
+    {
+        return dynamic_cast<const T*>(this);
+    }
 };
 
 }

@@ -261,7 +261,9 @@ if(NEOWPF_STATIC_DEPENDENCIES)
             "if(NEOWPF_COPY_RESULT)\n"
             "    message(FATAL_ERROR \"${_target_name} archive staging failed with exit code \${NEOWPF_COPY_RESULT}\")\n"
             "endif()\n"
-            "set(NEOWPF_ARCHIVE_INPUTS \"\${NEOWPF_STAGED_TARGET};\${NEOWPF_INPUT_ARCHIVES};\${NEOWPF_EXTRA_ARCHIVES}\")\n"
+            "set(NEOWPF_ARCHIVE_INPUTS \"\${NEOWPF_STAGED_TARGET}\")\n"
+            "list(APPEND NEOWPF_ARCHIVE_INPUTS \${NEOWPF_INPUT_ARCHIVES})\n"
+            "list(APPEND NEOWPF_ARCHIVE_INPUTS \${NEOWPF_EXTRA_ARCHIVES})\n"
         )
         if(WIN32)
             string(APPEND _merge_script_content
@@ -270,9 +272,9 @@ if(NEOWPF_STATIC_DEPENDENCIES)
         else()
             string(APPEND _merge_script_content
                 "set(NEOWPF_AR_SCRIPT \"\${NEOWPF_TARGET}.mri\")\n"
-                "file(WRITE \"\${NEOWPF_AR_SCRIPT}\" \"CREATE \\\"\${NEOWPF_TARGET}\\\"\\n\")\n"
+                "file(WRITE \"\${NEOWPF_AR_SCRIPT}\" \"CREATE \${NEOWPF_TARGET}\\n\")\n"
                 "foreach(NEOWPF_ARCHIVE IN LISTS NEOWPF_ARCHIVE_INPUTS)\n"
-                "    file(APPEND \"\${NEOWPF_AR_SCRIPT}\" \"ADDLIB \\\"\${NEOWPF_ARCHIVE}\\\"\\n\")\n"
+                "    file(APPEND \"\${NEOWPF_AR_SCRIPT}\" \"ADDLIB \${NEOWPF_ARCHIVE}\\n\")\n"
                 "endforeach()\n"
                 "file(APPEND \"\${NEOWPF_AR_SCRIPT}\" \"SAVE\\nEND\\n\")\n"
                 "execute_process(COMMAND \"${NEOWPF_AR_TOOL}\" -M INPUT_FILE \"\${NEOWPF_AR_SCRIPT}\" RESULT_VARIABLE NEOWPF_ARCHIVE_RESULT)\n"

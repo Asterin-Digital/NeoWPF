@@ -2,7 +2,6 @@
 
 #include <NeoWPF/Contracts/IWindowing.h>
 #include <NeoWPF/Diagnostics/Logger.h>
-#include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/Rendering/Clipping.h>
 #include <NeoWPF/Rendering/Renderer.h>
@@ -305,21 +304,7 @@ void VulkanRendering::BeginFrame()
             VkResultName(result), static_cast<int>(result));
         return;
     }
-    std::uint32_t backgroundColor = 0xFFFFFFFFu;
-    if (cmd.hasClearColor) {
-        backgroundColor = cmd.clearColor;
-    } else {
-        NeoWPF::UI::Color resourceColor;
-        if (NeoWPF::Core::ApplicationResources::Resources::TryGetColor(
-                "Window.BackgroundColor", resourceColor)) {
-            backgroundColor = resourceColor.ToArgb();
-        }
-    }
-    const VkClearValue clearValue{{
-        ((backgroundColor >> 16) & 0xFF) / 255.0f,
-        ((backgroundColor >> 8) & 0xFF) / 255.0f,
-        (backgroundColor & 0xFF) / 255.0f,
-        ((backgroundColor >> 24) & 0xFF) / 255.0f}};
+    const VkClearValue clearValue{{0.0f, 0.0f, 0.0f, 1.0f}};
     const VkRenderPassBeginInfo renderPassInfo{
         VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO, nullptr, context->renderPass,
         context->framebuffers[context->currentImage], {{0, 0}, context->swapchainExtent}, 1, &clearValue};

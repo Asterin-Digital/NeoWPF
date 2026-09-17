@@ -1,4 +1,5 @@
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/Rendering/Clipping.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/Vulkan/VulkanRendering.h>
@@ -15,7 +16,31 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
 {
     std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
     auto* context = CurrentWindowContext();
-    if (!context || !context->frameActive || m_solidPipeline == VK_NULL_HANDLE || m_solidVertexBuffer == VK_NULL_HANDLE) {
+    if (!context || !context->frameActive) {
+        return;
+    }
+
+    std::uint32_t backgroundColor = 0xFFFFFFFFu;
+    if (commands.hasClearColor) {
+        backgroundColor = commands.clearColor;
+    } else {
+        NeoWPF::UI::Color resourceColor;
+        if (NeoWPF::Core::ApplicationResources::Resources::TryGetColor(
+                "Window.BackgroundColor", resourceColor)) {
+            backgroundColor = resourceColor.ToArgb();
+        }
+    }
+    const VkClearAttachment clearAttachment{
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        0,
+        {{((backgroundColor >> 16) & 0xFF) / 255.0f,
+          ((backgroundColor >> 8) & 0xFF) / 255.0f,
+          (backgroundColor & 0xFF) / 255.0f,
+          ((backgroundColor >> 24) & 0xFF) / 255.0f}}};
+    const VkClearRect clearRect{{{0, 0}, context->swapchainExtent}, 0, 1};
+    vkCmdClearAttachments(context->commandBuffers[context->currentImage], 1, &clearAttachment, 1, &clearRect);
+
+    if (m_solidPipeline == VK_NULL_HANDLE || m_solidVertexBuffer == VK_NULL_HANDLE) {
         return;
     }
 

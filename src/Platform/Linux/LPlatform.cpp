@@ -111,6 +111,24 @@ bool LPlatform::FetchHttpResource(const std::wstring& url, std::vector<std::uint
     return m_http.Fetch(url, outData);
 }
 
+NeoWPF::Contracts::FileDialogResult LPlatform::ShowOpenFileDialog(
+    const std::wstring& title,
+    const std::wstring& initialDirectory,
+    const std::vector<NeoWPF::Contracts::FileDialogFilter>& filters,
+    bool allowMultiSelect)
+{
+    return NeoWPF::Platform::Linux::LFileDialog::ShowOpenFileDialog(title, initialDirectory, filters, allowMultiSelect);
+}
+
+NeoWPF::Contracts::FileDialogResult LPlatform::ShowSaveFileDialog(
+    const std::wstring& title,
+    const std::wstring& initialDirectory,
+    const std::wstring& defaultFileName,
+    const std::vector<NeoWPF::Contracts::FileDialogFilter>& filters)
+{
+    return NeoWPF::Platform::Linux::LFileDialog::ShowSaveFileDialog(title, initialDirectory, defaultFileName, filters);
+}
+
 bool LPlatform::DecodeImageFromMemory(const std::vector<std::uint8_t>& data,
                                       std::vector<std::uint8_t>& outPixels,
                                       int& outWidth, int& outHeight,

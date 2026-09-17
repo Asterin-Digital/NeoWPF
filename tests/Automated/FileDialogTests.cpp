@@ -1,12 +1,22 @@
 #include <gtest/gtest.h>
 
 #include <NeoWPF/Contracts/IFileDialog.h>
+#if defined(_WIN32)
 #include <NeoWPF/Platform/Windows/WFileDialog.h>
+#else
+#include <NeoWPF/Platform/Linux/LFileDialog.h>
+#endif
 
 #include <string>
 #include <vector>
 
 namespace {
+
+#if defined(_WIN32)
+using FileDialog = NeoWPF::Platform::Windows::WFileDialog;
+#else
+using FileDialog = NeoWPF::Platform::Linux::LFileDialog;
+#endif
 
 TEST(FileDialogTests, BuildsFilterSpecsFromExtensions)
 {
@@ -15,7 +25,7 @@ TEST(FileDialogTests, BuildsFilterSpecsFromExtensions)
         {L"Text", {L".txt"}},
     };
 
-    const auto specs = NeoWPF::Platform::Windows::WFileDialog::BuildFilterSpecs(filters);
+    const auto specs = FileDialog::BuildFilterSpecs(filters);
 
     ASSERT_EQ(specs.size(), 2u);
     EXPECT_EQ(specs[0].Name, L"Images");
@@ -30,7 +40,7 @@ TEST(FileDialogTests, BuildsFilterSpecsFromExtensions)
 
 TEST(FileDialogTests, BuildsAllFilesFallbackWhenNoFiltersAreProvided)
 {
-    const auto specs = NeoWPF::Platform::Windows::WFileDialog::BuildFilterSpecs({});
+    const auto specs = FileDialog::BuildFilterSpecs({});
 
     ASSERT_EQ(specs.size(), 1u);
     EXPECT_EQ(specs[0].Name, L"All Files");

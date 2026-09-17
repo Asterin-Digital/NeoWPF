@@ -21,6 +21,22 @@ public:
 
     MediaResult UnregisterBackend(const std::string& name);
 
+    std::shared_ptr<IMediaBackend> GetBackend(const std::string& name) const;
+
+    template<typename T>
+    T* TryGetNativeBackend(const std::string& name) noexcept
+    {
+        const auto backend = GetBackend(name);
+        return backend ? backend->TryGetNativeBackend<T>() : nullptr;
+    }
+
+    template<typename T>
+    const T* TryGetNativeBackend(const std::string& name) const noexcept
+    {
+        const auto backend = GetBackend(name);
+        return backend ? backend->TryGetNativeBackend<T>() : nullptr;
+    }
+
     std::unique_ptr<IAudioMixer> CreateAudioMixer(
         const std::string& backendName,
         MediaResult& result) const;

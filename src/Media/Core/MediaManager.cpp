@@ -46,6 +46,20 @@ MediaResult MediaManager::UnregisterBackend(const std::string& name)
     return MediaResult::Success();
 }
 
+std::shared_ptr<IMediaBackend> MediaManager::GetBackend(const std::string& name) const
+{
+    if (name.empty()) {
+        return nullptr;
+    }
+
+    const auto iterator = backends_.find(name);
+    if (iterator == backends_.end()) {
+        return nullptr;
+    }
+
+    return iterator->second;
+}
+
 std::unique_ptr<IAudioMixer> MediaManager::CreateAudioMixer(
     const std::string& backendName,
     MediaResult& result) const

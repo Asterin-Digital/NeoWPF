@@ -21,3 +21,6 @@ vcpkg_installed
 paths.neo
 NWpfBuild
 Testing
+tools
+ToDo.md
+__pycache__

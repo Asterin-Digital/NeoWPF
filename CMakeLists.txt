@@ -662,7 +662,7 @@ endif()
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoWPFStaticDependencies.cmake")
 
-if(WIN32)
+if(WIN32 OR UNIX)
     add_custom_command(TARGET NeoWPF POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_RELEASE_DIRECTORY}"
         COMMAND ${CMAKE_COMMAND} -E copy
