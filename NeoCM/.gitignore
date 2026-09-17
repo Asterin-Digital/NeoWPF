@@ -1,5 +1,8 @@
 .vs
+.vscode
 out
 build
 x64
 x86
+artifacts
+scripts
