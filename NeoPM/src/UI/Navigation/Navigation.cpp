@@ -1,6 +1,7 @@
 #include <NeoPM/UI/Navigation/Navigation.h>
 #include <NeoPM/UI/Components/MakeButton.h>
 #include <NeoPM/UI/Components/Theme.h>
+#include <NeoPM/UI/Project/ProjectDialog.h>
 #include <NeoPM/Utils/User.h>
 
 #include <NeoWPF/NeoWPF.h>
@@ -66,6 +67,11 @@ Ref<Visual> CreateMainContent()
     newProjectButton->SetMargin(Thickness(16, 0, 0, 0));
     newProjectButton->SetHorizontalAlignment(HorizontalAlignment::Right);
     newProjectButton->SetVerticalAlignment(VerticalAlignment::Top);
+    newProjectButton->Click += [newProjectButton]() {
+        Project::ShowProjectDialog(
+            newProjectButton.get(),
+            PopupPlacement::Left);
+    };
 
     header->AddChild(status, 0, 0);
     header->AddChild(newProjectButton, 0, 1);
