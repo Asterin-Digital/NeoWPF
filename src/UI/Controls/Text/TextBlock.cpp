@@ -29,7 +29,7 @@ TextBlock::TextBlock(const std::wstring& text) : TextBlock()
 TextBlock::~TextBlock()
 {
     NeoWPF::UI::Localization::LocaleOperations::ClearLocale(*this, TextProperty());
-    // TextRasterCache destructor already handles cleanup
+
 }
 
 void TextBlock::SetText(const std::wstring& text)
@@ -257,25 +257,22 @@ void TextBlock::Arrange(int finalWidth, int finalHeight)
 
 void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
-    const auto& lines = m_textCache.GetLines();
-    if (m_text.empty() || lines.empty()) return;
-
-    const auto clip = GetClipRect();
     const auto padding = GetPadding();
     const int innerWidth = std::max(0, GetFinalWidth() - padding.Horizontal());
     const int innerHeight = std::max(0, GetFinalHeight() - padding.Vertical());
 
-    const int blockOffsetY = TextAlignment::GetBlockVerticalOffset(
+    const auto& lines = m_textCache.GetLines();
+    if (m_text.empty() || lines.empty()) return;
+
+    const auto clip = GetClipRect();
+
+    const float blockOffsetY = TextAlignment::GetBlockVerticalOffsetF(
     m_textCache.GetContentWidth(), m_textCache.GetContentHeight(), innerHeight, m_textVerticalAlignment);
-    const float origBlockW = static_cast<float>(GetFinalWidth());
-    const float origBlockH = static_cast<float>(GetFinalHeight());
-    const auto worldTransform = GetWorldTransformMatrix();
-    const float rotationRadians = GetWorldRotationRadians();
-    const auto origin = GetRenderTransformOrigin();
-    float pivotX = 0.0f;
-    float pivotY = 0.0f;
-    worldTransform.TransformPoint(origBlockW * origin.X, origBlockH * origin.Y, pivotX, pivotY);
-    int currentY = blockOffsetY;
+    const auto worldRenderTransform = GetWorldRenderTransform();
+    const float rotationRadians = worldRenderTransform.rotationRadians;
+    const float pivotX = worldRenderTransform.pivot.X;
+    const float pivotY = worldRenderTransform.pivot.Y;
+    float currentY = blockOffsetY;
 
     for (std::size_t i = 0; i < lines.size(); ++i) {
         const auto& line = lines[i];
@@ -290,27 +287,20 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             continue;
         }
 
-        const int lineOffsetX = TextAlignment::GetLineHorizontalOffset(
+        const float lineOffsetX = TextAlignment::GetLineHorizontalOffsetF(
             line.width, innerWidth, m_textHorizontalAlignment);
 
-        const float localX = static_cast<float>(padding.Left + lineOffsetX);
-        const float localY = static_cast<float>(padding.Top + currentY);
+        const float localX = static_cast<float>(padding.Left) + lineOffsetX;
+        const float localY = static_cast<float>(padding.Top) + currentY;
 
-        /* @note 
-        do not use ink top here. it's not needed and only breaks text positioning 
-        for example if you use it, the text may position at the bottom or at the top slightly outside
-        even if you use - or +, so do not use it.*/
-        float drawX = 0.0f;
-        float drawY = 0.0f;
-        float rightX = 0.0f;
-        float rightY = 0.0f;
-        float bottomX = 0.0f;
-        float bottomY = 0.0f;
-        worldTransform.TransformPoint(localX, localY, drawX, drawY);
-        worldTransform.TransformPoint(localX + static_cast<float>(line.width), localY, rightX, rightY);
-        worldTransform.TransformPoint(localX, localY + static_cast<float>(line.height), bottomX, bottomY);
-        const float drawWidth = std::hypot(rightX - drawX, rightY - drawY);
-        const float drawHeight = std::hypot(bottomX - drawX, bottomY - drawY);
+        float drawX = localX;
+        float drawY = localY;
+        worldRenderTransform.positionMatrix.TransformPoint(drawX, drawY, drawX, drawY);
+        float right = localX + static_cast<float>(line.width);
+        float bottom = localY + static_cast<float>(line.height);
+        worldRenderTransform.positionMatrix.TransformPoint(right, bottom, right, bottom);
+        const float drawWidth = std::abs(right - drawX);
+        const float drawHeight = std::abs(bottom - drawY);
 
         commands.DrawTexturedQuad(drawX, drawY, drawWidth, drawHeight,
                                    0.0f, 0.0f, 1.0f, 1.0f,
@@ -320,11 +310,11 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             "[TextBlock] draw line=%zu textureId=%u pos=%.1f,%.1f size=%.1fx%.1f opacity=%.2f",
             i, textureId, drawX, drawY, drawWidth, drawHeight, GetOpacity());
 
-        currentY += lineHeight;
+        currentY += static_cast<float>(lineHeight);
     }
 }
 
-void TextBlock::EnsureTextTexture(int availableWidth, int /*availableHeight*/)
+void TextBlock::EnsureTextTexture(int availableWidth, int)
 {
     if (!m_textDirty && availableWidth == m_lastArrangeWidth) {
         return;

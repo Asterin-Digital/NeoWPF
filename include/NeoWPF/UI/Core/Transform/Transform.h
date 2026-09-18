@@ -1,7 +1,7 @@
-/*
-MIT License — Copyright (c) 2026 NeoWPF
-See LICENSE file in the project root for full license text.
-*/
+
+
+
+
 
 #pragma once
 
@@ -34,6 +34,20 @@ class Transform {
 public:
     virtual ~Transform() = default;
     virtual Matrix4 GetMatrix() const = 0;
+
+
+
+
+
+
+    virtual Matrix4 GetPositionMatrix() const;
+
+
+
+
+
+
+    virtual bool HasRotation() const noexcept;
     virtual std::optional<float> TryGetRotation() const noexcept;
     virtual std::shared_ptr<Transform> Clone() const = 0;
 };
@@ -108,6 +122,8 @@ public:
     void SetInvalidateCallback(std::function<void()> callback);
 
     Matrix4 GetMatrix() const override;
+    Matrix4 GetPositionMatrix() const override;
+    bool HasRotation() const noexcept override;
     std::optional<float> TryGetRotation() const noexcept override;
     std::shared_ptr<Transform> Clone() const override;
 
@@ -143,6 +159,8 @@ public:
     std::shared_ptr<Transform> GetChild(size_t index) const;
 
     Matrix4 GetMatrix() const override;
+    Matrix4 GetPositionMatrix() const override;
+    bool HasRotation() const noexcept override;
     std::optional<float> TryGetRotation() const noexcept override;
     std::shared_ptr<Transform> Clone() const override;
 
@@ -150,7 +168,7 @@ private:
     std::vector<std::shared_ptr<Transform>> m_children;
 };
 
-} // namespace Core
+}
 
 using Core::Matrix4;
 using Core::Transform;
@@ -161,4 +179,4 @@ using Core::RotateTransform;
 using Core::MatrixTransform;
 using Core::TransformGroup;
 
-} // namespace NeoWPF::UI
+}

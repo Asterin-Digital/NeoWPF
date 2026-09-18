@@ -68,39 +68,44 @@ void ListBoxItem::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         content.get(), content ? content->GetParent() : nullptr,
         GetFinalWidth(), GetFinalHeight(), GetIsSelected(), before);
     if (GetIsSelected()) {
-        int absoluteX = 0;
-        int absoluteY = 0;
-        GetAbsolutePosition(absoluteX, absoluteY);
+            const auto renderTransform = GetWorldRenderTransform();
+            float absoluteX = 0.0f;
+            float absoluteY = 0.0f;
+            renderTransform.positionMatrix.TransformPoint(0.0f, 0.0f, absoluteX, absoluteY);
         const float width = static_cast<float>(std::max(0, GetFinalWidth()));
         const float height = static_cast<float>(std::max(0, GetFinalHeight()));
 
         if (width > 0.0f && height > 0.0f) {
-            commands.DrawRoundedRect(
-                static_cast<float>(absoluteX),
-                static_cast<float>(absoluteY),
-                width,
-                height,
-                0.0f,
-                0.0f,
-                0.0f,
-                0.0f,
-                GetBorderColor().ToArgb(),
-                GetOpacity(),
-                GetClipRect(),
-                GetWorldRotationRadians());
-            commands.DrawRoundedRect(
-                static_cast<float>(absoluteX + 1),
-                static_cast<float>(absoluteY + 1),
-                std::max(0.0f, width - 2.0f),
-                std::max(0.0f, height - 2.0f),
-                0.0f,
-                0.0f,
-                0.0f,
-                0.0f,
-                GetBackgroundColor().ToArgb(),
-                GetOpacity(),
-                GetClipRect(),
-                GetWorldRotationRadians());
+                commands.DrawRoundedRect(
+                    static_cast<float>(absoluteX),
+                    static_cast<float>(absoluteY),
+                    width,
+                    height,
+                    0.0f,
+                    0.0f,
+                    0.0f,
+                    0.0f,
+                    GetBorderColor().ToArgb(),
+                    GetOpacity(),
+                    GetClipRect(),
+                    renderTransform.rotationRadians,
+                    renderTransform.pivot.X,
+                    renderTransform.pivot.Y);
+                commands.DrawRoundedRect(
+                    static_cast<float>(absoluteX + 1),
+                    static_cast<float>(absoluteY + 1),
+                    std::max(0.0f, width - 2.0f),
+                    std::max(0.0f, height - 2.0f),
+                    0.0f,
+                    0.0f,
+                    0.0f,
+                    0.0f,
+                    GetBackgroundColor().ToArgb(),
+                    GetOpacity(),
+                    GetClipRect(),
+                    renderTransform.rotationRadians,
+                    renderTransform.pivot.X,
+                    renderTransform.pivot.Y);
         }
     }
 

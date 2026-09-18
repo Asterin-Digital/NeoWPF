@@ -99,15 +99,16 @@ void Thumb::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         return;
     }
 
-    int absX = 0;
-    int absY = 0;
-    GetAbsolutePosition(absX, absY);
+    const auto renderTransform = GetWorldRenderTransform();
+    float absX = 0.0f;
+    float absY = 0.0f;
+    renderTransform.positionMatrix.TransformPoint(0.0f, 0.0f, absX, absY);
 
     const auto clip = GetClipRect();
     const auto cornerRadius = GetCornerRadius();
     commands.DrawRoundedRect(
-        static_cast<float>(absX),
-        static_cast<float>(absY),
+        absX,
+        absY,
         static_cast<float>(width),
         static_cast<float>(height),
         cornerRadius.TopLeft,
@@ -116,7 +117,10 @@ void Thumb::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         cornerRadius.BottomLeft,
         GetBackgroundColor().ToArgb(),
         GetOpacity(),
-        clip);
+        clip,
+        renderTransform.rotationRadians,
+        renderTransform.pivot.X,
+        renderTransform.pivot.Y);
 }
 
 }

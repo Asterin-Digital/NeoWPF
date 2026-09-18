@@ -233,4 +233,20 @@ NeoWPF::UI::Core::Matrix4 FrameworkElement::GetLocalTransformMatrix() const noex
     return local;
 }
 
+NeoWPF::UI::Core::Matrix4 FrameworkElement::GetLocalPositionMatrix() const noexcept
+{
+    const auto origin = GetRenderTransformOrigin();
+    const float originX = static_cast<float>(GetFinalWidth()) * origin.X;
+    const float originY = static_cast<float>(GetFinalHeight()) * origin.Y;
+    const auto transform = GetRenderTransform();
+    const auto positionTransform = transform ? transform->GetPositionMatrix()
+                                              : NeoWPF::UI::Core::Matrix4::Identity();
+    return NeoWPF::UI::Core::Matrix4::Translation(-originX, -originY)
+        * positionTransform
+        * NeoWPF::UI::Core::Matrix4::Translation(originX, originY)
+        * NeoWPF::UI::Core::Matrix4::Translation(
+            static_cast<float>(m_offsetX + m_renderOffsetX),
+            static_cast<float>(m_offsetY + m_renderOffsetY));
+}
+
 }

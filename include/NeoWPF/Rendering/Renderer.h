@@ -35,7 +35,7 @@ struct CommandList {
 
         @internal
     */
-    struct DrawRect { float x; float y; float w; float h; uint32_t color; float opacity; ClipRect clip; float rotationRadians = 0.0f; };
+    struct DrawRect { float x; float y; float w; float h; uint32_t color; float opacity; ClipRect clip; float rotationRadians = 0.0f; float pivotX = 0.0f; float pivotY = 0.0f; };
 
     /*
         @summary
@@ -43,7 +43,7 @@ struct CommandList {
 
         @internal
     */
-    struct DrawRoundedRect { float x; float y; float w; float h; float topLeft; float topRight; float bottomRight; float bottomLeft; uint32_t color; float opacity; ClipRect clip; float rotationRadians = 0.0f; };
+    struct DrawRoundedRect { float x; float y; float w; float h; float topLeft; float topRight; float bottomRight; float bottomLeft; uint32_t color; float opacity; ClipRect clip; float rotationRadians = 0.0f; float pivotX = 0.0f; float pivotY = 0.0f; };
 
     /*
         @summary
@@ -100,10 +100,16 @@ struct CommandList {
         @param rotationRadians
         The optional rotation applied to the rectangle.
 
+        @param pivotX
+        The world-space X coordinate of the rotation pivot.
+
+        @param pivotY
+        The world-space Y coordinate of the rotation pivot.
+
         @internal
     */
-    void DrawRect(float x, float y, float w, float h, uint32_t color, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f) {
-        commands.push_back({CommandKind::Rect, {x, y, w, h, color, opacity, clip, rotationRadians}, {}, {}});
+    void DrawRect(float x, float y, float w, float h, uint32_t color, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f, float pivotX = 0.0f, float pivotY = 0.0f) {
+        commands.push_back({CommandKind::Rect, {x, y, w, h, color, opacity, clip, rotationRadians, pivotX, pivotY}, {}, {}});
     }
 
     /*
@@ -146,10 +152,16 @@ struct CommandList {
         @param rotationRadians
         The optional rotation applied to the rectangle.
 
+        @param pivotX
+        The world-space X coordinate of the rotation pivot.
+
+        @param pivotY
+        The world-space Y coordinate of the rotation pivot.
+
         @internal
     */
-    void DrawRoundedRect(float x, float y, float w, float h, float topLeft, float topRight, float bottomRight, float bottomLeft, uint32_t color, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f) {
-        commands.push_back({CommandKind::RoundedRect, {}, {x, y, w, h, topLeft, topRight, bottomRight, bottomLeft, color, opacity, clip, rotationRadians}, {}});
+    void DrawRoundedRect(float x, float y, float w, float h, float topLeft, float topRight, float bottomRight, float bottomLeft, uint32_t color, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f, float pivotX = 0.0f, float pivotY = 0.0f) {
+        commands.push_back({CommandKind::RoundedRect, {}, {x, y, w, h, topLeft, topRight, bottomRight, bottomLeft, color, opacity, clip, rotationRadians, pivotX, pivotY}, {}});
     }
 
     /*

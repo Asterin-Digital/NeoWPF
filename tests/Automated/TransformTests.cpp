@@ -218,6 +218,8 @@ TEST_F(TextBlockRenderCommandTest, ButtonRotationKeepsTextCenteredThroughEasedLo
 TEST_F(TextBlockRenderCommandTest, TextBlockRotationDoesNotDriftThroughEasedLoop)
 {
     NeoWPF::UI::TextBlock textBlock(L"Spin me");
+    textBlock.SetTextHorizontalAlignment(NeoWPF::UI::TextHorizontalAlignment::Center);
+    textBlock.SetTextVerticalAlignment(NeoWPF::UI::TextVerticalAlignment::Center);
     textBlock.Measure(160, 60);
     textBlock.Arrange(160, 60);
 

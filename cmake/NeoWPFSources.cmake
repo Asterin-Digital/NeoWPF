@@ -38,3 +38,19 @@ file(GLOB_RECURSE NEOWPF_HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/include/NeoWPF/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/NeoNaml/*.h"
 )
+
+set(NEOWPF_DOTNET_SOURCES)
+set(NEOWPF_DOTNET_HEADERS)
+if(NEOWPF_BUILD_DOTNET)
+    file(GLOB_RECURSE NEOWPF_DOTNET_SOURCES CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/DotNet/*.cpp"
+    )
+    file(GLOB_RECURSE NEOWPF_DOTNET_HEADERS CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/NeoWPF/DotNet/*.h"
+    )
+    if(NOT NEOWPF_DOTNET_SOURCES)
+        message(FATAL_ERROR
+            "NEOWPF_BUILD_DOTNET is enabled, but no sources were found under "
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/DotNet.")
+    endif()
+endif()

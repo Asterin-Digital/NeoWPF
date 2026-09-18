@@ -226,20 +226,17 @@ void Image::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
 
     const auto clip = GetClipRect();
-    int absX = 0;
-    int absY = 0;
-    GetAbsolutePosition(absX, absY);
-
-    float drawX = static_cast<float>(absX + std::max(0, (GetFinalWidth() - drawWidth) / 2));
-    float drawY = static_cast<float>(absY + std::max(0, (GetFinalHeight() - drawHeight) / 2));
+    const auto renderTransform = GetWorldRenderTransform();
+    float drawX = static_cast<float>(std::max(0, (GetFinalWidth() - drawWidth) / 2));
+    float drawY = static_cast<float>(std::max(0, (GetFinalHeight() - drawHeight) / 2));
     float drawWidthF = static_cast<float>(drawWidth);
     float drawHeightF = static_cast<float>(drawHeight);
-
-    ApplyRenderTransform(drawX, drawY, drawWidthF, drawHeightF);
-    float rotationRadians = 0.0f;
-    if (auto transform = GetRenderTransform()) {
-        rotationRadians = 0.0f;
-    }
+    renderTransform.positionMatrix.TransformPoint(drawX, drawY, drawX, drawY);
+    float right = drawX + drawWidthF;
+    float bottom = drawY + drawHeightF;
+    renderTransform.positionMatrix.TransformPoint(right, bottom, right, bottom);
+    drawWidthF = std::abs(right - drawX);
+    drawHeightF = std::abs(bottom - drawY);
 
     commands.DrawTexturedQuad(
         drawX,
@@ -254,7 +251,9 @@ void Image::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         0xFFFFFFFFu,
         GetOpacity(),
         clip,
-        rotationRadians);
+        renderTransform.rotationRadians,
+        renderTransform.pivot.X,
+        renderTransform.pivot.Y);
 }
 
 void Image::OnDependencyPropertyChanged(const Properties::DependencyProperty& property,

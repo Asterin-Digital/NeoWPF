@@ -113,13 +113,13 @@ void ExecuteRendererDraw(const CommandList& cmd)
         return Point2{centerX + dx * cosA - dy * sinA, centerY + dx * sinA + dy * cosA};
     };
 
-    auto pushRect = [&](float x, float y, float w, float h, float r, float g, float b, float a, float rotationRadians) {
+    auto pushRect = [&](float x, float y, float w, float h, float r, float g, float b, float a, float rotationRadians, float pivotX, float pivotY) {
         if (w <= 0.0f || h <= 0.0f) {
             return;
         }
 
-        const float centerX = x + w * 0.5f;
-        const float centerY = y + h * 0.5f;
+        const float centerX = pivotX;
+        const float centerY = pivotY;
         const auto emitVertex = [&](float px, float py) {
             rectVerts.push_back({px, py, r, g, b, a});
         };
@@ -149,7 +149,7 @@ void ExecuteRendererDraw(const CommandList& cmd)
 
     auto pushRoundedRect = [&](float x, float y, float w, float h,
         float topLeft, float topRight, float bottomRight, float bottomLeft,
-        float r, float g, float b, float a, float rotationRadians) {
+        float r, float g, float b, float a, float rotationRadians, float pivotX, float pivotY) {
         if (w <= 0.0f || h <= 0.0f) {
             return;
         }
@@ -191,8 +191,8 @@ void ExecuteRendererDraw(const CommandList& cmd)
             return;
         }
 
-        const float centerX = x + w * 0.5f;
-        const float centerY = y + h * 0.5f;
+        const float centerX = pivotX;
+        const float centerY = pivotY;
         std::vector<Point2> transformedPoints;
         transformedPoints.reserve(points.size());
 
@@ -404,13 +404,13 @@ void ExecuteRendererDraw(const CommandList& cmd)
                 const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
                 if (clipped) {
                     if (clippedW > 0.0f && clippedH > 0.0f) {
-                        pushRect(clippedX, clippedY, clippedW, clippedH, red, green, blue, alpha, r.rotationRadians);
+                        pushRect(clippedX, clippedY, clippedW, clippedH, red, green, blue, alpha, r.rotationRadians, r.pivotX, r.pivotY);
                     }
                 } else {
-                    pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha, r.rotationRadians);
+                    pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha, r.rotationRadians, r.pivotX, r.pivotY);
                 }
             } else {
-                pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha, r.rotationRadians);
+                pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha, r.rotationRadians, r.pivotX, r.pivotY);
             }
             lastKind = command.kind;
             hasPendingKind = true;
@@ -432,13 +432,13 @@ void ExecuteRendererDraw(const CommandList& cmd)
                 const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
                 if (clipped) {
                     if (clippedW > 0.0f && clippedH > 0.0f) {
-                        pushRoundedRect(clippedX, clippedY, clippedW, clippedH, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians);
+                        pushRoundedRect(clippedX, clippedY, clippedW, clippedH, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians, r.pivotX, r.pivotY);
                     }
                 } else {
-                    pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians);
+                    pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians, r.pivotX, r.pivotY);
                 }
             } else {
-                pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians);
+                pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians, r.pivotX, r.pivotY);
             }
             lastKind = command.kind;
             hasPendingKind = true;

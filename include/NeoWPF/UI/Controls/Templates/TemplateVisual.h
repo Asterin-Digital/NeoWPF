@@ -11,6 +11,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
+#include <NeoWPF/UI/Core/Transform/Transform.h>
 
 namespace NeoWPF::UI::Templates {
 
@@ -157,8 +158,14 @@ public:
 
         @param rotationRadians
         The rotation in radians.
+
+        @param pivotX
+        The world-space X coordinate of the rotation pivot.
+
+        @param pivotY
+        The world-space Y coordinate of the rotation pivot.
     */
-    void SetRotation(float rotationRadians) noexcept;
+    void SetRotation(float rotationRadians, float pivotX = 0.0f, float pivotY = 0.0f) noexcept;
 
     /*
         @summary
@@ -193,6 +200,8 @@ private:
     float m_opacity = 1.0f;
     NeoWPF::Rendering::ClipRect m_clip{};
     float m_rotation = 0.0f;
+    float m_rotationPivotX = 0.0f;
+    float m_rotationPivotY = 0.0f;
 };
 
-} // namespace NeoWPF::UI::Templates
+} 

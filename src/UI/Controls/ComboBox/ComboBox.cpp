@@ -333,9 +333,10 @@ void ComboBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         "[ComboBox] BuildRenderCommands comboBox=%p open=%d final=%dx%d popupOpen=%d",
         this, GetIsDropDownOpen() ? 1 : 0, GetFinalWidth(), GetFinalHeight(),
         m_popup && m_popup->GetIsOpen() ? 1 : 0);
-    int absoluteX = 0;
-    int absoluteY = 0;
-    GetAbsolutePosition(absoluteX, absoluteY);
+    const auto renderTransform = GetWorldRenderTransform();
+    float absoluteX = 0.0f;
+    float absoluteY = 0.0f;
+    renderTransform.positionMatrix.TransformPoint(0.0f, 0.0f, absoluteX, absoluteY);
 
     const float x = static_cast<float>(absoluteX);
     const float y = static_cast<float>(absoluteY);
@@ -344,7 +345,7 @@ void ComboBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"));
     if (background) {
-        background->SetRect(absoluteX, absoluteY, static_cast<int>(width), static_cast<int>(height));
+        background->SetRect(static_cast<int>(std::lround(absoluteX)), static_cast<int>(std::lround(absoluteY)), static_cast<int>(width), static_cast<int>(height));
         background->SetOpacity(GetOpacity());
         background->BuildRenderCommands(commands);
     }
@@ -353,8 +354,8 @@ void ComboBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     if (contentHost) {
         const auto padding = GetPadding();
         contentHost->SetRect(
-            absoluteX + padding.Left,
-            absoluteY + padding.Top,
+            static_cast<int>(std::lround(absoluteX)) + padding.Left,
+            static_cast<int>(std::lround(absoluteY)) + padding.Top,
             std::max(0, static_cast<int>(width) - padding.Horizontal()),
             std::max(0, static_cast<int>(height) - padding.Vertical()));
         contentHost->SetOpacity(GetOpacity());

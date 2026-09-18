@@ -117,6 +117,8 @@ public:
     */
     void Arrange(int finalWidth, int finalHeight) override;
 
+    NeoWPF::UI::Core::Matrix4 GetLocalPositionMatrix() const noexcept override;
+
     /*
         @summary
         Returns the width assigned during arrange.

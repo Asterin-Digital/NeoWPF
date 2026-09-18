@@ -13,10 +13,10 @@ See LICENSE file in the project root for full license text.
 ██║ ╚████║███████╗╚██████╔╝╚███╔███╔╝██║     ██║
 ╚═╝  ╚═══╝╚══════╝ ╚═════╝  ╚══╝╚══╝ ╚═╝     ╚═╝
 
-WPF-Inspired UI framework for Modern C++
-Love from Envy!! :3
+A C++ UI framework meant to bring WPF familiarity to a fast, native and portable language.
 
-Review the project's README.md, and AI.md for details related to AI usage, and other information
+Review the project's README.md, DevelopmentGuidelines.md and AI.md 
+for details related to AI usage, contributing, and other information
 
 ============================================================
 */
@@ -38,6 +38,7 @@ Review the project's README.md, and AI.md for details related to AI usage, and o
 ///////////////////////////////////////////////////
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/FailureHooks.h>
+#include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Diagnostics/TextDumper.h>
 ///////////////////////////////////////////////////
@@ -74,7 +75,9 @@ Review the project's README.md, and AI.md for details related to AI usage, and o
 
 namespace NeoWPF {
 
-    // These STD wrapper's aren't needed, if you don't need them comment out the export's at the bottom of the file.
+    // These STD wrapper's aren't needed, if you don't need them use the macro (NEOWPF_NO_GLOBAL_USINGS) to turn them off
+    // or comment them out inside the header file (NeoWPF.h). You should remember that updating NeoWPF.h (or the entire include folder)
+    // will bring back the usings at the bottom, so you may need to re-comment them out again if you used this method.
 
     /*
         @summary
@@ -349,10 +352,14 @@ namespace NeoWPF {
 
     }
 
+    // shorter name, you may use Diagnostics as well but it's more verbose
+    namespace Dev = ::NeoWPF::Diagnostics;
+
 }
 
-////////////////////////
-
+#ifndef NEOWPF_NO_GLOBAL_USINGS
+//////////////////////////////////////////////////
+// See details at the top if you don't need these
 using NeoWPF::New;
 
 using NeoWPF::Ref;
@@ -363,4 +370,5 @@ using NeoWPF::Cast;
 
 using NeoWPF::String;
 
-////////////////////////
+//////////////////////////////////////////////////
+#endif

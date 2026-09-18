@@ -224,7 +224,7 @@ void TextBox::SetTextColor(NeoWPF::UI::Color color) noexcept
 }
 
 void TextBox::SetFontFamily(const std::wstring& fontFamily) noexcept
-{   
+{
     if (IsApplyingPropertyValue()) {
         m_fontFamily = fontFamily;
         m_textDirty = true;
@@ -249,7 +249,7 @@ void TextBox::SetFontFamily(const std::wstring& fontFamily) noexcept
 
 std::wstring TextBox::GetFontFamily() const noexcept
 {
-    // dependency props can override the local field, so we check them first
+
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("FontFamily", *this);
     if (property) {
         try {
@@ -503,13 +503,14 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         return;
     }
 
-    int absX = 0;
-    int absY = 0;
-    GetAbsolutePosition(absX, absY);
+    const auto renderTransform = GetWorldRenderTransform();
+    float absX = 0.0f;
+    float absY = 0.0f;
+    renderTransform.positionMatrix.TransformPoint(0.0f, 0.0f, absX, absY);
 
     auto border = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Border"));
     if (border) {
-        border->SetRect(absX, absY, GetFinalWidth(), GetFinalHeight());
+        border->SetRect(static_cast<int>(std::lround(absX)), static_cast<int>(std::lround(absY)), GetFinalWidth(), GetFinalHeight());
         border->SetBorderThickness(1);
         border->SetCornerRadius(GetCornerRadius());
         border->SetOpacity(GetOpacity());
@@ -519,8 +520,8 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const auto cornerRadius = GetCornerRadius();
         if (GetBorderColor().ToArgb() != 0x00000000u) {
             commands.DrawRoundedRect(
-                static_cast<float>(absX),
-                static_cast<float>(absY),
+                absX,
+                absY,
                 static_cast<float>(GetFinalWidth()),
                 static_cast<float>(GetFinalHeight()),
                 cornerRadius.TopLeft,
@@ -528,13 +529,16 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 cornerRadius.BottomRight,
                 cornerRadius.BottomLeft,
                 m_borderColor.ToArgb(),
-                GetOpacity());
-        }
-
+                GetOpacity(),
+                NeoWPF::Rendering::ClipRect{},
+                renderTransform.rotationRadians,
+                renderTransform.pivot.X,
+                renderTransform.pivot.Y);
+            }
         if (GetBackgroundColor().ToArgb() != 0x00000000u) {
             commands.DrawRoundedRect(
-                static_cast<float>(absX + 1),
-                static_cast<float>(absY + 1),
+                absX + 1.0f,
+                absY + 1.0f,
                 static_cast<float>(std::max(0, GetFinalWidth() - 2)),
                 static_cast<float>(std::max(0, GetFinalHeight() - 2)),
                 std::max(0.0f, cornerRadius.TopLeft - 1.0f),
@@ -542,13 +546,17 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 std::max(0.0f, cornerRadius.BottomRight - 1.0f),
                 std::max(0.0f, cornerRadius.BottomLeft - 1.0f),
                 m_backgroundColor.ToArgb(),
-                GetOpacity());
+                GetOpacity(),
+                NeoWPF::Rendering::ClipRect{},
+                renderTransform.rotationRadians,
+                renderTransform.pivot.X,
+                renderTransform.pivot.Y);
         }
     }
 
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
-    const int contentHostX = absX + GetPadding().Left;
-    const int contentHostY = absY + GetPadding().Top;
+    const int contentHostX = static_cast<int>(std::lround(absX)) + GetPadding().Left;
+    const int contentHostY = static_cast<int>(std::lround(absY)) + GetPadding().Top;
     const int contentHostWidth = std::max(0, GetFinalWidth() - GetPadding().Horizontal());
     const int contentHostHeight = std::max(0, GetFinalHeight() - GetPadding().Vertical());
 
@@ -558,7 +566,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     if (contentHost) {
         const int inset = std::max(0, GetPadding().Left);
-        contentHost->SetRect(absX + inset, absY + inset, contentHostWidth, contentHostHeight);
+        contentHost->SetRect(static_cast<int>(std::lround(absX)) + inset, static_cast<int>(std::lround(absY)) + inset, contentHostWidth, contentHostHeight);
         contentHost->SetBorderThickness(0);
         contentHost->SetOpacity(GetOpacity());
         contentHost->BuildRenderCommands(commands);

@@ -258,10 +258,6 @@ void ScrollBar::UpdateThumbVisualState() noexcept
         const int thumbLength = GetThumbLength(effectiveTrackLength);
         const int thumbPosition = GetThumbPosition(effectiveTrackLength, thumbLength);
 
-        int absX = 0;
-        int absY = 0;
-        GetAbsolutePosition(absX, absY);
-
         thumbControl->SetVisible(GetScrollRange() > 0);
         thumbControl->SetBounds(
             isVertical ? 0 : thumbPosition,
@@ -284,8 +280,10 @@ void ScrollBar::UpdateScrollState() noexcept
 
 void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
-    int absX, absY;
-    GetAbsolutePosition(absX, absY);
+    const auto renderTransform = GetWorldRenderTransform();
+    float absX = 0.0f;
+    float absY = 0.0f;
+    renderTransform.positionMatrix.TransformPoint(0.0f, 0.0f, absX, absY);
     const auto clip = GetClipRect();
 
     auto track = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Track"));
@@ -318,9 +316,9 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     if (track) {
         if (isVertical) {
-            track->SetRect(absX, absY, trackThickness, trackLength);
+            track->SetRect(static_cast<int>(std::lround(absX)), static_cast<int>(std::lround(absY)), trackThickness, trackLength);
         } else {
-            track->SetRect(absX, absY, trackLength, trackThickness);
+            track->SetRect(static_cast<int>(std::lround(absX)), static_cast<int>(std::lround(absY)), trackLength, trackThickness);
         }
         track->SetFillColor(m_trackColor.ToArgb());
         track->SetBorderColor(0x00000000u);
@@ -337,9 +335,9 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     if (thumb) {
         if (isVertical) {
-            thumb->SetRect(absX, absY + thumbPosition, trackThickness, thumbLength);
+            thumb->SetRect(static_cast<int>(std::lround(absX)), static_cast<int>(std::lround(absY)) + thumbPosition, trackThickness, thumbLength);
         } else {
-            thumb->SetRect(absX + thumbPosition, absY, thumbLength, trackThickness);
+            thumb->SetRect(static_cast<int>(std::lround(absX)) + thumbPosition, static_cast<int>(std::lround(absY)), thumbLength, trackThickness);
         }
         thumb->SetFillColor(m_thumbColor.ToArgb());
         thumb->SetBorderColor(0x00000000u);

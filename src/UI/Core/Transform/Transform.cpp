@@ -59,6 +59,14 @@ std::optional<float> Transform::TryGetRotation() const noexcept {
     return std::nullopt;
 }
 
+Matrix4 Transform::GetPositionMatrix() const {
+    return GetMatrix();
+}
+
+bool Transform::HasRotation() const noexcept {
+    return false;
+}
+
 void Matrix4::TransformPoint(float x, float y, float& outX, float& outY) const noexcept {
     outX = x * m[0][0] + y * m[1][0] + m[3][0];
     outY = x * m[0][1] + y * m[1][1] + m[3][1];
@@ -145,6 +153,14 @@ std::optional<float> RotateTransform::TryGetRotation() const noexcept {
     return m_angle;
 }
 
+bool RotateTransform::HasRotation() const noexcept {
+    return true;
+}
+
+Matrix4 RotateTransform::GetPositionMatrix() const {
+    return Matrix4::Identity();
+}
+
 std::shared_ptr<Transform> RotateTransform::Clone() const {
     return std::make_shared<RotateTransform>(m_angle, m_centerX, m_centerY);
 }
@@ -210,6 +226,25 @@ std::optional<float> TransformGroup::TryGetRotation() const noexcept {
         rotation += *childRotation;
     }
     return rotation;
+}
+
+bool TransformGroup::HasRotation() const noexcept {
+    for (const auto& child : m_children) {
+        if (child && child->HasRotation()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+Matrix4 TransformGroup::GetPositionMatrix() const {
+    Matrix4 result = Matrix4::Identity();
+    for (const auto& child : m_children) {
+        if (child) {
+            result = result * child->GetPositionMatrix();
+        }
+    }
+    return result;
 }
 
 std::shared_ptr<Transform> TransformGroup::Clone() const {

@@ -232,6 +232,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(NEOWPF_BUILD_MEDIA
     "Build the optional NeoWPF.Media target and fetch LuAudio"
     OFF)
+option(NEOWPF_BUILD_DOTNET
+    "Build the .NET interop layer"
+    OFF)
 set(NEOWPF_LUAUDIO_GIT_REPOSITORY "https://github.com/Past-Horizon/LuAudio.git" CACHE STRING
     "LuAudio Git repository used by NeoWPF.Media")
 set(NEOWPF_LUAUDIO_GIT_TAG "main" CACHE STRING
@@ -660,6 +663,31 @@ else()
     message(STATUS "NeoWPF Linux configuration selected with Vulkan renderer backend.")
 endif()
 
+if(NEOWPF_BUILD_DOTNET)
+    add_library(NeoWPF.DotNet STATIC
+        ${NEOWPF_DOTNET_SOURCES}
+        ${NEOWPF_DOTNET_HEADERS}
+    )
+    add_library(NeoWPF::DotNet ALIAS NeoWPF.DotNet)
+    target_include_directories(NeoWPF.DotNet
+        PUBLIC
+            "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    )
+    target_link_libraries(NeoWPF.DotNet
+        PUBLIC
+            NeoWPF::NeoWPF
+    )
+    set_target_properties(NeoWPF.DotNet PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${NEOWPF_RELEASE_DIRECTORY}"
+        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${NEOWPF_RELEASE_DIRECTORY_DEBUG}"
+        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${NEOWPF_RELEASE_DIRECTORY_RELEASE}"
+        ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${NEOWPF_RELEASE_DIRECTORY_RELWITHDEBINFO}"
+        ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${NEOWPF_RELEASE_DIRECTORY_MINSIZEREL}"
+    )
+endif()
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoWPFStaticDependencies.cmake")
 
 if(WIN32 OR UNIX)
@@ -717,7 +745,12 @@ if(NEOWPF_BUILD_MEDIA)
     )
 endif()
 
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES
+    ${NEOWPF_SOURCES}
+    ${NEOWPF_HEADERS}
+    ${NEOWPF_DOTNET_SOURCES}
+    ${NEOWPF_DOTNET_HEADERS}
+)
 
 if(BUILD_TESTING)
     include(FetchContent)

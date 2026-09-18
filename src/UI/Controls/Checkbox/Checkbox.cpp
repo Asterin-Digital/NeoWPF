@@ -269,14 +269,17 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
     const int boxSize = 18;
 
-    int absX, absY;
-    GetAbsolutePosition(absX, absY);
-
-    float fAbsX = static_cast<float>(absX);
-    float fAbsY = static_cast<float>(absY);
+    const auto renderTransform = GetWorldRenderTransform();
+    float fAbsX = 0.0f;
+    float fAbsY = 0.0f;
     float drawWidth = static_cast<float>(GetFinalWidth());
     float drawHeight = static_cast<float>(GetFinalHeight());
-    ApplyRenderTransform(fAbsX, fAbsY, drawWidth, drawHeight);
+    renderTransform.positionMatrix.TransformPoint(fAbsX, fAbsY, fAbsX, fAbsY);
+    float right = drawWidth;
+    float bottom = drawHeight;
+    renderTransform.positionMatrix.TransformPoint(right, bottom, right, bottom);
+    drawWidth = std::abs(right - fAbsX);
+    drawHeight = std::abs(bottom - fAbsY);
 
     const float boxTop = fAbsY + (drawHeight - static_cast<float>(boxSize)) / 2.0f;
     const float boxLeft = fAbsX;
@@ -291,8 +294,8 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         box->BuildRenderCommands(commands);
     }
     else {
-        commands.DrawRoundedRect(boxLeft, boxTop, static_cast<float>(boxSize), static_cast<float>(boxSize), 0.0f, 0.0f, 0.0f, 0.0f, m_bgColor.ToArgb(), GetOpacity());
-        commands.DrawRoundedRect(boxLeft, boxTop, static_cast<float>(boxSize), static_cast<float>(boxSize), 0.0f, 0.0f, 0.0f, 0.0f, m_borderColor.ToArgb(), GetOpacity());
+        commands.DrawRoundedRect(boxLeft, boxTop, static_cast<float>(boxSize), static_cast<float>(boxSize), 0.0f, 0.0f, 0.0f, 0.0f, m_bgColor.ToArgb(), GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
+        commands.DrawRoundedRect(boxLeft, boxTop, static_cast<float>(boxSize), static_cast<float>(boxSize), 0.0f, 0.0f, 0.0f, 0.0f, m_borderColor.ToArgb(), GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
     }
 
     if (IsChecked()) {
@@ -306,7 +309,8 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const float y = checkCenterY + offsetY - height * 0.5f;
         commands.DrawRoundedRect(x, y, width, height, 0.0f, 0.0f, 0.0f, 0.0f,
                                 checkColor.ToArgb(), GetOpacity(),
-                                NeoWPF::Rendering::ClipRect{}, rotationRadians);
+                                NeoWPF::Rendering::ClipRect{}, rotationRadians,
+                                renderTransform.pivot.X, renderTransform.pivot.Y);
     };
 
     // left shape

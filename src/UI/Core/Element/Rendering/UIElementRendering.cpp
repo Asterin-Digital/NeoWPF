@@ -34,6 +34,10 @@ void NeoWPF::UI::UIElement::OnLostFocus()
 
 namespace NeoWPF::UI {
 
+namespace {
+
+}
+
 void UIElement::OnInitialize()
 {
     const auto styleValue = GetRawValue(StyleProperty());
@@ -111,6 +115,17 @@ NeoWPF::UI::Core::Matrix4 UIElement::GetLocalTransformMatrix() const noexcept {
     return m_cachedLocalTransform;
 }
 
+NeoWPF::UI::Core::Matrix4 UIElement::GetLocalPositionMatrix() const noexcept {
+    const auto origin = GetRenderTransformOrigin();
+    const auto transform = GetRenderTransform();
+    if (!transform) {
+        return NeoWPF::UI::Core::Matrix4::Identity();
+    }
+    return NeoWPF::UI::Core::Matrix4::Translation(-origin.X, -origin.Y)
+        * transform->GetPositionMatrix()
+        * NeoWPF::UI::Core::Matrix4::Translation(origin.X, origin.Y);
+}
+
 NeoWPF::UI::Core::Matrix4 UIElement::GetWorldTransformMatrix() const noexcept {
     if (m_worldTransformDirty) {
         if (auto parentVisual = GetParent()) {
@@ -125,6 +140,37 @@ NeoWPF::UI::Core::Matrix4 UIElement::GetWorldTransformMatrix() const noexcept {
         m_worldTransformDirty = false;
     }
     return m_cachedWorldTransform;
+}
+
+WorldRenderTransform UIElement::GetWorldRenderTransform() const noexcept {
+    WorldRenderTransform result;
+    result.positionMatrix = NeoWPF::UI::Core::Matrix4::Identity();
+    result.rotationRadians = GetWorldRotationRadians();
+
+    std::vector<const UIElement*> ancestors;
+    for (auto current = this; current; current = dynamic_cast<const UIElement*>(current->GetParent())) {
+        ancestors.push_back(current);
+    }
+
+    bool pivotFound = false;
+    for (auto current = ancestors.rbegin(); current != ancestors.rend(); ++current) {
+        const auto* element = *current;
+        const auto transform = element->GetRenderTransform();
+        if (transform && transform->HasRotation() && !pivotFound) {
+            const auto origin = element->GetRenderTransformOrigin();
+            float originX = origin.X;
+            float originY = origin.Y;
+            if (const auto* frameworkElement = dynamic_cast<const FrameworkElement*>(element)) {
+                originX *= static_cast<float>(frameworkElement->GetFinalWidth());
+                originY *= static_cast<float>(frameworkElement->GetFinalHeight());
+            }
+            element->GetLocalPositionMatrix().TransformPoint(originX, originY, originX, originY);
+            result.positionMatrix.TransformPoint(originX, originY, result.pivot.X, result.pivot.Y);
+            pivotFound = true;
+        }
+        result.positionMatrix = element->GetLocalPositionMatrix() * result.positionMatrix;
+    }
+    return result;
 }
 
 float UIElement::GetWorldRotationRadians() const noexcept {
@@ -193,7 +239,7 @@ void SetTransformInvalidateCallbacks(const std::shared_ptr<NeoWPF::UI::Core::Tra
     }
 }
 
-} // namespace
+}
 
 void UIElement::SetRenderTransform(std::shared_ptr<NeoWPF::UI::Core::Transform> transform) noexcept {
     ClearTransformInvalidateCallbacks(m_renderTransform);

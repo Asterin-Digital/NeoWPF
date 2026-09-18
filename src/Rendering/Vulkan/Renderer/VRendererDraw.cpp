@@ -89,7 +89,7 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
         addArc({rect.x + rect.w - bottomRight, rect.y + rect.h - bottomRight}, 0.0f, pi * 0.5f, bottomRight);
         addArc({rect.x + bottomLeft, rect.y + rect.h - bottomLeft}, pi * 0.5f, pi, bottomLeft);
         addArc({rect.x + topLeft, rect.y + topLeft}, pi, pi * 1.5f, topLeft);
-        const Point center{rect.x + rect.w * 0.5f, rect.y + rect.h * 0.5f};
+        const Point center{rect.pivotX, rect.pivotY};
         for (std::size_t index = 1; index + 1 < outline.size(); ++index) {
             const Point p0 = rotatePoint(outline[0], center, rect.rotationRadians);
             const Point p1 = rotatePoint(outline[index], center, rect.rotationRadians);
@@ -116,9 +116,9 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
         float y = yValue;
         float width = widthValue;
         float height = heightValue;
-        if (NeoWPF::Rendering::ClipRectToBounds(
-                xValue, yValue, widthValue, heightValue,
-                rounded ? command.roundedRect.clip : command.rect.clip, x, y, width, height) &&
+        if (std::fabs(rotation) <= 1e-6f && NeoWPF::Rendering::ClipRectToBounds(
+            xValue, yValue, widthValue, heightValue,
+            rounded ? command.roundedRect.clip : command.rect.clip, x, y, width, height) &&
             (width <= 0.0f || height <= 0.0f)) {
             continue;
         }
@@ -130,11 +130,16 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
         const float green = ((color >> 8) & 0xFF) / 255.0f;
         const float blue = (color & 0xFF) / 255.0f;
         if (rounded) {
-            appendRoundedRect(command.roundedRect, red, green, blue, alpha);
+            auto roundedRect = command.roundedRect;
+            roundedRect.x = x;
+            roundedRect.y = y;
+            roundedRect.w = width;
+            roundedRect.h = height;
+            appendRoundedRect(roundedRect, red, green, blue, alpha);
             continue;
         }
         if (std::fabs(rotation) > 1e-6f) {
-            const Point center{x + width * 0.5f, y + height * 0.5f};
+            const Point center{command.rect.pivotX, command.rect.pivotY};
             const Point points[] = {{x, y}, {x + width, y}, {x + width, y + height},
                                     {x + width, y + height}, {x, y + height}, {x, y}};
             for (const auto& point : points) {
@@ -206,8 +211,8 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
         float v0 = quad.v0;
         float u1 = quad.u1;
         float v1 = quad.v1;
-        if (NeoWPF::Rendering::ClipRectToBounds(
-                quad.x, quad.y, quad.w, quad.h, quad.clip, x, y, width, height)) {
+        if (std::fabs(quad.rotationRadians) <= 1e-6f && NeoWPF::Rendering::ClipRectToBounds(
+            quad.x, quad.y, quad.w, quad.h, quad.clip, x, y, width, height)) {
             if (width <= 0.0f || height <= 0.0f || quad.w == 0.0f || quad.h == 0.0f) {
                 continue;
             }

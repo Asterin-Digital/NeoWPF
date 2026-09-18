@@ -51,6 +51,13 @@ namespace NeoWPF::Input {
 }
 
 namespace NeoWPF::UI {
+
+struct WorldRenderTransform {
+    NeoWPF::UI::Core::Matrix4 positionMatrix;
+    float rotationRadians = 0.0f;
+    NeoWPF::UI::Core::Point pivot;
+};
+
 class UIElement;
 }
 
@@ -315,9 +322,26 @@ public:
 
     /*
         @summary
+        Returns the local transform with rotation excluded.
+
+        @internal
+    */
+    virtual NeoWPF::UI::Core::Matrix4 GetLocalPositionMatrix() const noexcept;
+
+    /*
+        @summary
         Returns the transform of the element in world coordinates.
     */
     NeoWPF::UI::Core::Matrix4 GetWorldTransformMatrix() const noexcept;
+
+    /*
+        @summary
+        Returns the element's decomposed world render transform.
+
+        @returns
+        Translation and scale position data, accumulated rotation, and rotation pivot.
+    */
+    WorldRenderTransform GetWorldRenderTransform() const noexcept;
 
     /*
         @summary

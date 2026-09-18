@@ -38,6 +38,22 @@ public:
 
     static int GetLineHorizontalOffset(int lineWidth, int viewportWidth,
                                       TextHorizontalAlignment alignment) noexcept;
+
+    static void ApplyTextAlignmentF(
+        int contentWidth,
+        int contentHeight,
+        int availableWidth,
+        int availableHeight,
+        TextHorizontalAlignment horizontalAlignment,
+        TextVerticalAlignment verticalAlignment,
+        float& outX,
+        float& outY) noexcept;
+
+    static float GetBlockVerticalOffsetF(int contentWidth, int contentHeight, int viewportHeight,
+                                         TextVerticalAlignment alignment) noexcept;
+
+    static float GetLineHorizontalOffsetF(int lineWidth, int viewportWidth,
+                                          TextHorizontalAlignment alignment) noexcept;
 };
 
 }

@@ -71,9 +71,11 @@ void TemplateVisual::SetClipRect(const NeoWPF::Rendering::ClipRect& clip) noexce
     m_clip = clip;
 }
 
-void TemplateVisual::SetRotation(float rotationRadians) noexcept
+void TemplateVisual::SetRotation(float rotationRadians, float pivotX, float pivotY) noexcept
 {
     m_rotation = rotationRadians;
+    m_rotationPivotX = pivotX;
+    m_rotationPivotY = pivotY;
 }
 
 float TemplateVisual::GetRotation() const noexcept
@@ -105,7 +107,9 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
             m_borderColor,
             m_opacity,
             m_clip,
-            m_rotation);
+            m_rotation,
+            m_rotationPivotX,
+            m_rotationPivotY);
     }
 
     if (m_fillColor != 0x00000000u) {
@@ -127,7 +131,9 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
                 m_fillColor,
                 m_opacity,
                 m_clip,
-                m_rotation);
+                m_rotation,
+                m_rotationPivotX,
+                m_rotationPivotY);
         }
     }
 }
