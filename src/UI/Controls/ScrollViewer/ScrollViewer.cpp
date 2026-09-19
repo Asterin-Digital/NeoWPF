@@ -297,14 +297,14 @@ void ScrollViewer::UpdateScrollBarVisibility() noexcept
         const bool shouldShow =
             m_horizontalScrollBarVisibility == ScrollBarVisibility::Visible ||
             (m_horizontalScrollBarVisibility == ScrollBarVisibility::Auto && m_contentWidth > m_viewportWidth);
-        m_horizontalScrollBar->SetVisible(shouldShow);
+        m_horizontalScrollBar->SetVisibility(shouldShow);
     }
 
     if (m_verticalScrollBar) {
         const bool shouldShow =
             m_verticalScrollBarVisibility == ScrollBarVisibility::Visible ||
             (m_verticalScrollBarVisibility == ScrollBarVisibility::Auto && m_contentHeight > m_viewportHeight);
-        m_verticalScrollBar->SetVisible(shouldShow);
+        m_verticalScrollBar->SetVisibility(shouldShow);
     }
 }
 

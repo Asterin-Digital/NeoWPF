@@ -25,8 +25,6 @@ public:
     bool IsDragging() const noexcept { return m_isDragging; }
     void SetDragging(bool dragging) noexcept { m_isDragging = dragging; }
     void SetBounds(int x, int y, int width, int height) noexcept;
-    void SetVisible(bool visible) noexcept { m_isVisible = visible; InvalidateVisual(); }
-
     bool IsInteractable() const noexcept override;
     void OnMouseDown(int x, int y, std::uint32_t buttonState) override;
     void OnMouseUp(int x, int y, std::uint32_t buttonState) override;

@@ -258,7 +258,7 @@ void ScrollBar::UpdateThumbVisualState() noexcept
         const double thumbLength = GetThumbLength(effectiveTrackLength);
         const double thumbPosition = GetThumbPosition(effectiveTrackLength, thumbLength);
 
-        thumbControl->SetVisible(GetScrollRange() > 0);
+        thumbControl->SetVisibility(GetScrollRange() > 0);
         thumbControl->SetBounds(
             static_cast<int>(std::lround(isVertical ? 0.0 : thumbPosition)),
             static_cast<int>(std::lround(isVertical ? thumbPosition : 0.0)),

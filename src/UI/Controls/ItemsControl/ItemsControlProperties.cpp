@@ -37,7 +37,7 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::ItemsControl::Item
     static const auto& property = NeoWPF::UI::Properties::RegisterProperty<
         NeoWPF::UI::ItemsControl, ItemCollection>(
             "Items",
-            &NeoWPF::UI::ItemsControl::GetItemsValue,
+            &NeoWPF::UI::ItemsControl::GetItems,
             &NeoWPF::UI::ItemsControl::SetItemsValue,
             [] {
                 NeoWPF::UI::Properties::PropertyMetadata metadata;

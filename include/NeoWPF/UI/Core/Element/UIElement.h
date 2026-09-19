@@ -116,12 +116,6 @@ public:
 
     /*
         @summary
-        Convenience alias for SetVisibility.
-    */
-    void SetVisible(bool visible) noexcept { SetVisibility(visible); }
-
-    /*
-        @summary
         Returns whether the element currently accepts user interaction.
     */
     bool IsEnabled() const noexcept { return m_isEnabled; }

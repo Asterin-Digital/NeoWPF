@@ -123,7 +123,6 @@ public:
         Returns the current collection of items.
     */
     const std::vector<std::shared_ptr<FrameworkElement>>& GetItems() const noexcept { return m_items; }
-    const ItemCollection& GetItemsValue() const noexcept { return m_items; }
     void SetItemsValue(const ItemCollection& items) { SetItems(items); }
 
     int GetItemCount() const noexcept { return static_cast<int>(m_hasItemsSource ? m_itemsSource.size() : m_items.size()); }

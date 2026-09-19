@@ -217,22 +217,3 @@ Not part of the public contract.
 
 Don't expose implementation APIs just because generated XAML or registration code needs them. Make a small extension boundary instead.
 
-
-## Current Violations and Required Review
-
-These are existing declarations that conflict with the rules above. They are recorded here to prevent new code from copying them. This document does not silently change them; each should be handled as a deliberate compatibility decision.
-
-| Severity | Existing API | Problem | Preferred direction |
-| --- | --- | --- | --- |
-| High | `Core::Event::operator-=` in `include/NeoWPF/Core/Events/Event.h` | Removal compares the address of the incoming `std::function`; a copied or temporary equivalent callback cannot be reliably removed. | Return a connection/token from subscription and remove by token, or use a stable handler id. |
-| High | `RegisterProperty`, `RegisterAttachedProperty`, and `RegisterStaticPropertyHandle` in `include/NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h` | Several overlapping registration vocabularies expose implementation details and make the canonical registration path unclear. | Keep one internal registration path and one explicit attached-property path; hide static-handle plumbing from application API. |
-| High | `SetValue(const std::string&, ...)` and `GetValue<T>(const std::string&)` in `include/NeoWPF/UI/Properties/DependencyObject.h` | String lookup can silently do nothing or return `T{}` for a missing property, hiding registration errors. | Keep descriptor-based access canonical; make name-based access explicit `TryGetValue`/`TrySetValue` or return a diagnostic result. |
-| Medium | `UIElement::SetVisibility` and `UIElement::SetVisible` in `include/NeoWPF/UI/Core/Element/UIElement.h` | `SetVisible` is a redundant alias and violates the one canonical accessor rule. | Retain `SetVisibility`; deprecate and remove the alias when compatibility permits. |
-| Medium | `ItemsControl::GetItems()` and `GetItemsValue()` in `include/NeoWPF/UI/Controls/ItemsControl/ItemsControl.h` | Two getters expose the same collection under different names without a documented semantic distinction. | Keep `GetItems()` for the public meaning; make any binding adapter internal or name it for its actual role. |
-| Medium | `INotifyPropertyChanged::AddPropertyChangedHandler` and `RemovePropertyChangedHandler` in `include/NeoWPF/UI/Data/INotifyPropertyChanged.h` | The pair is token-shaped (`size_t`) but does not establish whether ids are stable, reusable, or thread-safe. | Document token lifetime and invalidation, or return a connection object. |
-| Medium | `ICommand::AddCanExecuteChangedHandler` and `RemoveCanExecuteChangedHandler` in `include/NeoWPF/Input/Command.h` | Removal accepts a function object instead of a stable subscription identity and repeats the event-removal problem. | Use a handler token/connection. |
-| Low | `PropertyChangedCallback` and `PropertyChangedCallbackFunction` in `include/NeoWPF/UI/Properties/DependencyProperty.h` | The alias adds a `Function` suffix without changing semantics. | Keep the shorter callback type name and avoid copying this alias pattern. |
-| Low | `CoerceToWString` in `include/NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h` | A public-looking conversion helper is located in registration plumbing and returns an empty string for unsupported values, conflating failure with a valid result. | Move it to an internal conversion utility or return an explicit conversion result. |
-| Low | `DoubleCollection::GetCount()` and `IsEmpty()` in `include/NeoWPF/UI/Core/Collections/DoubleCollection.h` | These are reasonable framework names but diverge from standard container composition (`size`, `empty`). | Keep for compatibility if widely used; use standard names for new collection types. |
-| Low | `Binding::WithMode` and `Binding::WithSource` in `include/NeoWPF/UI/Data/Binding.h` | These are appropriate builder names, but the same `With` pattern must not spread to live controls where it would obscure mutation. | Restrict `With...` to immutable/configuration-style construction. |
-| Low | `Button::SetFontFamily` in `include/NeoWPF/UI/Controls/Button/Button.h` | The setter silently ignores an empty value, so callers cannot clear the property and the setter is not a total assignment. | Define empty-value semantics explicitly or reject with a result/error policy. |
