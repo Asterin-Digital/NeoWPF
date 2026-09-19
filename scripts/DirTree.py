@@ -3,11 +3,11 @@ import sys
 
 IGNORED_NAMES = {
     ".git", "__pycache__", ".DS_Store", "Library", "Temp", "obj", "Build",
-    "Logs", "UserSettings", "x64", ".vs", "out", "cmake", "vcpkg_installed", "build", ".vscode", "Testing", "Debug", "NWpfBuild"
+    "Logs", "UserSettings", "x64", ".vs", "out", "cmake", "vcpkg_installed", "build", ".vscode", "Testing", "Debug", "NWpfBuild", "tools", "reports"
 }
 
 IGNORED_PATHS = {
-    "NeoWPF",
+    "NeoWPF", "private/WPF"
 }
 
 IGNORED_EXTENSIONS = {".meta"}

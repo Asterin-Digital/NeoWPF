@@ -194,6 +194,20 @@ bool ContentConverter::TryConvertToCode(const std::string& rawValue, std::string
 
 bool ContentConverter::TryConvertToText(const std::any& value, std::wstring& text)
 {
+    if (const auto* stringValue = std::any_cast<const wchar_t*>(&value)) {
+        if (*stringValue) {
+            text = *stringValue;
+            return true;
+        }
+        return false;
+    }
+    if (const auto* stringValue = std::any_cast<wchar_t*>(&value)) {
+        if (*stringValue) {
+            text = *stringValue;
+            return true;
+        }
+        return false;
+    }
     if (const auto* stringValue = std::any_cast<std::wstring>(&value)) {
         text = *stringValue;
         return true;

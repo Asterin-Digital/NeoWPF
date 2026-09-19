@@ -38,6 +38,19 @@ TEST(ListBoxItemTests, StringContentBecomesTextBlockContent)
     EXPECT_EQ(text->GetText(), std::wstring(L"Alpha"));
 }
 
+TEST(ListBoxItemTests, WideCStringContentBecomesTextBlockContent)
+{
+    NeoWPF::UI::ListBoxItem item;
+
+    item.SetValue(NeoWPF::UI::Content::ContentControl::ContentProperty(), L"Alpha");
+
+    const auto content = item.GetContentElement();
+    ASSERT_NE(content, nullptr);
+    const auto text = std::dynamic_pointer_cast<NeoWPF::UI::TextBlock>(content);
+    ASSERT_NE(text, nullptr);
+    EXPECT_EQ(text->GetText(), std::wstring(L"Alpha"));
+}
+
 TEST(ListBoxItemTests, StringContentIsExposedByContentPresenter)
 {
     NeoWPF::UI::ListBoxItem item;

@@ -19,6 +19,10 @@ ItemsControl::ItemsControl()
 
 void ItemsControl::SetItemsSource(const std::vector<std::any>& source)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ItemsControl,
+        NeoWPF::Diagnostics::Level::Debug,
+        "[ItemsControl] SetItemsSource control=%p count=%zu hasTemplate=%d virtualization=%d",
+        this, source.size(), m_itemTemplate ? 1 : 0, m_virtualization ? 1 : 0);
     for (const auto& oldItem : m_items) {
         if (oldItem && oldItem->GetParent() == this) {
             RemoveVisualChild(oldItem);
@@ -36,6 +40,10 @@ void ItemsControl::SetItemsSource(const std::vector<std::any>& source)
     } else {
         RealizeSourceItems();
     }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ItemsControl,
+        NeoWPF::Diagnostics::Level::Debug,
+        "[ItemsControl] SetItemsSource complete control=%p sourceCount=%zu realizedCount=%zu visualChildren=%zu",
+        this, m_itemsSource.size(), m_realizedItems.size(), GetVisualChildren().size());
     InvalidateMeasure();
     InvalidateArrange();
     InvalidateVisual();
@@ -158,6 +166,10 @@ void ItemsControl::ClearRealizedItems() noexcept
 void ItemsControl::RealizeSourceItems()
 {
     if (!m_hasItemsSource || !m_itemTemplate) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ItemsControl,
+            NeoWPF::Diagnostics::Level::Trace,
+            "[ItemsControl] RealizeSourceItems skipped control=%p hasSource=%d hasTemplate=%d",
+            this, m_hasItemsSource ? 1 : 0, m_itemTemplate ? 1 : 0);
         return;
     }
 
@@ -173,10 +185,19 @@ void ItemsControl::RealizeSourceItems()
             }
         }
     }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ItemsControl,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ItemsControl] RealizeSourceItems complete control=%p sourceCount=%d realizedCount=%zu visualChildren=%zu",
+        this, count, m_realizedItems.size(), GetVisualChildren().size());
 }
 
 void ItemsControl::Measure(double availableWidth, double availableHeight)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ItemsControl,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ItemsControl] Measure control=%p available=%.1fx%.1f source=%d itemCount=%d realized=%zu padding=%.1f spacing=%.1f",
+        this, availableWidth, availableHeight, m_hasItemsSource ? 1 : 0,
+        GetItemCount(), m_realizedItems.size(), m_padding, GetVerticalSpacing());
     const double itemSpacing = GetVerticalSpacing();
 
     const double contentWidth = availableWidth > 0.0 ? (std::max)(0.0, availableWidth - (m_padding * 2)) : 0.0;
@@ -211,6 +232,10 @@ void ItemsControl::Measure(double availableWidth, double availableHeight)
         const double desiredWidth = (std::max)(totalWidth, contentWidth) + m_padding * 2;
         const double desiredHeight = (std::max)(0.0, m_virtualization->GetExtentHeight());
         SetDesiredSize(ResolveWidth(availableWidth, desiredWidth), ResolveHeight(availableHeight, desiredHeight));
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ItemsControl,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[ItemsControl] Measure complete control=%p desired=%.1fx%.1f totalWidth=%.1f extentHeight=%.1f virtualization=1",
+            this, GetDesiredWidth(), GetDesiredHeight(), totalWidth, desiredHeight);
         return;
     }
 
@@ -252,10 +277,19 @@ void ItemsControl::Measure(double availableWidth, double availableHeight)
     const double desiredWidth = (std::max)(totalWidth, contentWidth) + m_padding * 2;
     const double desiredHeight = (std::max)(0.0, totalHeight);
     SetDesiredSize(ResolveWidth(availableWidth, desiredWidth), ResolveHeight(availableHeight, desiredHeight));
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ItemsControl,
+        NeoWPF::Diagnostics::Level::Debug,
+        "[ItemsControl] Measure complete control=%p desired=%.1fx%.1f total=%.1fx%.1f virtualization=0",
+        this, GetDesiredWidth(), GetDesiredHeight(), totalWidth, totalHeight);
 }
 
 void ItemsControl::Arrange(double finalWidth, double finalHeight)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ItemsControl,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[ItemsControl] Arrange control=%p final=%.1fx%.1f desired=%.1fx%.1f source=%d itemCount=%d realized=%zu",
+        this, finalWidth, finalHeight, GetDesiredWidth(), GetDesiredHeight(),
+        m_hasItemsSource ? 1 : 0, GetItemCount(), m_realizedItems.size());
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
     const double itemSpacing = GetVerticalSpacing();
@@ -280,7 +314,7 @@ void ItemsControl::Arrange(double finalWidth, double finalHeight)
                 it->second->SetLayoutOffset(m_padding, y);
                 auto dataCtx = it->second->GetDataContext();
                 std::string dataStr = dataCtx.has_value() ? dataCtx.type().name() : "null";
-                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ItemsControl, NeoWPF::Diagnostics::Level::Debug,
                     "[ItemsControl.Arrange] index=%d y=%d h=%d dataCtx=%s", i, y, h, dataStr.c_str());
             }
         } else {
@@ -325,6 +359,11 @@ void ItemsControl::Arrange(double finalWidth, double finalHeight)
             currentY += itemHeight + itemSpacing;
         }
     }
+
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ItemsControl,
+        NeoWPF::Diagnostics::Level::Debug,
+        "[ItemsControl] Arrange complete control=%p final=%.1fx%.1f contentWidth=%.1f",
+        this, GetFinalWidth(), GetFinalHeight(), contentWidth);
 }
 
 void ItemsControl::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
@@ -418,13 +457,13 @@ double ItemsControl::GetExtentHeight() const noexcept
     if (m_virtualization) {
         double result = m_virtualization->GetExtentHeight();
         int count = GetItemCount();
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ItemsControl, NeoWPF::Diagnostics::Level::Debug,
             "[ItemsControl] GetExtentHeight count=%d virt=%d", count, result);
         return result;
     }
     double result = GetDesiredHeight();
     int count = GetItemCount();
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ItemsControl, NeoWPF::Diagnostics::Level::Debug,
         "[ItemsControl] GetExtentHeight count=%d (no virt)=%d", count, result);
     return result;
 }

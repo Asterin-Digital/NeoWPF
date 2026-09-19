@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Controls/Popup/Popup.h>
 #include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Input/InputManager.h>
 
 namespace NeoWPF::UI {
@@ -8,8 +9,16 @@ namespace NeoWPF::UI {
 Popup::Popup()
 {
     SetPresenter(std::make_shared<Content::ContentPresenter>());
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Popup,
+        NeoWPF::Diagnostics::Level::Debug,
+        "Constructed popup=%p", this);
 }
-Popup::~Popup() = default;
+Popup::~Popup()
+{
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Popup,
+        NeoWPF::Diagnostics::Level::Debug,
+        "Destroyed popup=%p hostWindow=%p", this, m_hostWindow);
+}
 
 bool Popup::GetIsOpen() const noexcept
 {
@@ -22,6 +31,11 @@ bool Popup::GetIsOpen() const noexcept
 
 void Popup::SetIsOpen(bool isOpen)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Popup,
+        NeoWPF::Diagnostics::Level::Info,
+        "SetIsOpen popup=%p requested=%d current=%d applying=%d target=%p",
+        this, isOpen ? 1 : 0, GetIsOpen() ? 1 : 0,
+        IsApplyingPropertyValue() ? 1 : 0, GetPlacementTarget());
     if (!IsApplyingPropertyValue()) {
         SetValue(IsOpenProperty(), isOpen);
         return;
@@ -32,14 +46,24 @@ void Popup::SetIsOpen(bool isOpen)
         target = dynamic_cast<FrameworkElement*>(target->GetParent());
         window = dynamic_cast<Window*>(target);
     }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Popup,
+        NeoWPF::Diagnostics::Level::Debug,
+        "Resolved host popup=%p target=%p window=%p opening=%d",
+        this, target, window, isOpen ? 1 : 0);
     const auto self = weak_from_this().lock();
     if (self && window && isOpen) {
         window->AddOverlay(self);
         m_hostWindow = window;
         NeoWPF::Input::InputManager::GetInstance().SetOverlayElements(window->GetOverlays());
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Popup,
+            NeoWPF::Diagnostics::Level::Info,
+            "Opened popup=%p overlays=%zu", this, window->GetOverlays().size());
     } else if (self && m_hostWindow && !isOpen) {
         m_hostWindow->RemoveOverlay(self);
         NeoWPF::Input::InputManager::GetInstance().SetOverlayElements(m_hostWindow->GetOverlays());
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Popup,
+            NeoWPF::Diagnostics::Level::Info,
+            "Closed popup=%p overlays=%zu", this, m_hostWindow->GetOverlays().size());
     }
     InvalidateMeasure();
     InvalidateArrange();
@@ -57,6 +81,10 @@ FrameworkElement* Popup::GetPlacementTarget() const noexcept
 
 void Popup::SetPlacementTarget(FrameworkElement* target)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Popup,
+        NeoWPF::Diagnostics::Level::Debug,
+        "SetPlacementTarget popup=%p target=%p currentOpen=%d",
+        this, target, GetIsOpen() ? 1 : 0);
     if (!IsApplyingPropertyValue()) {
         SetValue(PlacementTargetProperty(), target);
         return;
@@ -138,6 +166,10 @@ bool Popup::IsHitTestVisible() const noexcept
 
 void Popup::Measure(double availableWidth, double availableHeight)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Popup,
+        NeoWPF::Diagnostics::Level::Trace,
+        "Measure popup=%p open=%d available=%.1fx%.1f",
+        this, GetIsOpen() ? 1 : 0, availableWidth, availableHeight);
     if (!GetIsOpen()) {
         SetDesiredSize(0, 0);
         return;
@@ -147,6 +179,12 @@ void Popup::Measure(double availableWidth, double availableHeight)
 
 void Popup::Arrange(double finalWidth, double finalHeight)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Popup,
+        NeoWPF::Diagnostics::Level::Trace,
+        "Arrange popup=%p open=%d final=%.1fx%.1f target=%p placement=%d offset=%.1f,%.1f",
+        this, GetIsOpen() ? 1 : 0, finalWidth, finalHeight,
+        GetPlacementTarget(), static_cast<int>(GetPlacement()),
+        GetHorizontalOffset(), GetVerticalOffset());
     if (!GetIsOpen()) {
         return;
     }
@@ -176,6 +214,12 @@ void Popup::Arrange(double finalWidth, double finalHeight)
         }
     }
     SetLayoutOffset(x, y);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Popup,
+        NeoWPF::Diagnostics::Level::Debug,
+        "Arranged popup=%p position=%.1f,%.1f targetFinal=%.1fx%.1f",
+        this, x, y,
+        GetPlacementTarget() ? GetPlacementTarget()->GetFinalWidth() : 0.0,
+        GetPlacementTarget() ? GetPlacementTarget()->GetFinalHeight() : 0.0);
     Content::ContentControl::Arrange(finalWidth, finalHeight);
 }
 

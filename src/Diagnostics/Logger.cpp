@@ -218,20 +218,31 @@ static bool ParseLevel(std::string_view v, Level& out) noexcept {
 }
 
 bool SetLevelByName(std::string_view name, Level level) noexcept {
+    static constexpr std::pair<std::string_view, Category> kMap[] = {
+        {"visual",          Category::Visual},
+        {"gridlayout",      Category::GridLayout},
+        {"contentpresenter",Category::ContentPresenter},
+        {"control",         Category::Control},
+        {"application",     Category::Application},
+        {"hittest",         Category::HitTest},
+        {"virtualization",  Category::Virtualization},
+        {"textbox",         Category::TextBox},
+        {"textrendering",   Category::TextRendering},
+        {"xamlparser",      Category::XamlParser},
+        {"listbox",         Category::ListBox},
+        {"combobox",        Category::ComboBox},
+        {"popup",           Category::Popup},
+        {"itemscontrol",    Category::ItemsControl},
+        {"files",           Category::Files},
+    };
+
     const auto n = ToLower(name);
-    if (n == "visual") { SetLevel(Category::Visual, level); return true; }
-    if (n == "gridlayout") { SetLevel(Category::GridLayout, level); return true; }
-    if (n == "contentpresenter") { SetLevel(Category::ContentPresenter, level); return true; }
-    if (n == "control") { SetLevel(Category::Control, level); return true; }
-    if (n == "application") { SetLevel(Category::Application, level); return true; }
-    if (n == "hittest") { SetLevel(Category::HitTest, level); return true; }
-    if (n == "virtualization") { SetLevel(Category::Virtualization, level); return true; }
-    if (n == "textbox") { SetLevel(Category::TextBox, level); return true; }
-    if (n == "textrendering") { SetLevel(Category::TextRendering, level); return true; }
-    if (n == "xamlparser") { SetLevel(Category::XamlParser, level); return true; }
-    if (n == "listbox") { SetLevel(Category::ListBox, level); return true; }
-    if (n == "combobox") { SetLevel(Category::ComboBox, level); return true; }
-    if (n == "files") { SetLevel(Category::Files, level); return true; }
+    for (const auto& [key, cat] : kMap) {
+        if (n == key) {
+            SetLevel(cat, level);
+            return true;
+        }
+    }
     return false;
 }
 

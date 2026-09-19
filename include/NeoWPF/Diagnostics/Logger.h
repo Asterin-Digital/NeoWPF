@@ -39,6 +39,8 @@ enum class Category : uint8_t {
 	XamlParser,
 	ListBox,
 	ComboBox,
+	Popup,
+	ItemsControl,
 	Files,
 	Count,
 };

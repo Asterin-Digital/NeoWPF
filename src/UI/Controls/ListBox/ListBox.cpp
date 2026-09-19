@@ -121,8 +121,8 @@ void ListBox::OnSelectionChanged(int oldIndex, int newIndex, const std::any& old
 {
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,
         NeoWPF::Diagnostics::Level::Trace,
-        "[ListBox] OnSelectionChanged listBox=%p oldIndex=%d newIndex=%d itemCount=%zu",
-        this, oldIndex, newIndex, GetItems().size());
+        "[ListBox] OnSelectionChanged listBox=%p oldIndex=%d newIndex=%d itemCount=%d",
+        this, oldIndex, newIndex, GetItemCount());
     (void)oldIndex;
     (void)newIndex;
     (void)oldItem;
