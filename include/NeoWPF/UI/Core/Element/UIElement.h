@@ -336,6 +336,30 @@ public:
 
     /*
         @summary
+        Returns the nearest UIElement parent in the visual ancestry.
+
+        @details
+        Non-UIElement visual nodes, such as control template roots, are skipped.
+
+        @return
+        The nearest mutable UIElement parent, or nullptr when none exists.
+    */
+    UIElement* GetParentElement() noexcept;
+
+    /*
+        @summary
+        Returns the nearest UIElement parent in the visual ancestry.
+
+        @details
+        Non-UIElement visual nodes, such as control template roots, are skipped.
+
+        @return
+        The nearest const UIElement parent, or nullptr when none exists.
+    */
+    const UIElement* GetParentElement() const noexcept;
+
+    /*
+        @summary
         Returns the element's decomposed world render transform.
 
         @returns

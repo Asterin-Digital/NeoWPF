@@ -22,6 +22,7 @@ void RegisterCoreControlProperties() {
     RegisterListBoxProperties();
     RegisterListBoxItemProperties();
     RegisterScrollBarProperties();
+    RegisterSliderProperties();
     RegisterTextBlockProperties();
     RegisterTextBoxProperties();
     RegisterImageProperties();

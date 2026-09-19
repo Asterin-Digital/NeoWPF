@@ -52,6 +52,10 @@ void Thumb::OnMouseDown(int x, int y, std::uint32_t buttonState)
         return;
     }
 
+    if (auto parent = GetParentElement()) {
+        parent->Focus();
+    }
+
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Info,
         "[Thumb] OnMouseDown: x=%d y=%d buttonState=0x%X",
         x,
@@ -102,7 +106,7 @@ void Thumb::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     const auto renderTransform = GetWorldRenderTransform();
     double absX = 0.0;
     double absY = 0.0;
-    renderTransform.positionMatrix.TransformPoint(0.0f, 0.0f, absX, absY);
+    GetAbsolutePosition(absX, absY);
 
     const auto clip = GetClipRect();
     const auto cornerRadius = GetCornerRadius();

@@ -24,7 +24,10 @@ NeoWPF::Rendering::ClipRect FrameworkElement::GetClipRect() const noexcept {
             "[GetClipRect] Element clip ACTIVE: (%g, %g, %g, %g)", clip.x, clip.y, clip.w, clip.h);
     }
 
-    auto parent = dynamic_cast<FrameworkElement*>(GetParent());
+    FrameworkElement* parent = nullptr;
+    for (auto* current = GetParent(); current && !parent; current = current->GetParent()) {
+        parent = dynamic_cast<FrameworkElement*>(current);
+    }
     if (parent) {
         const auto parentClip = parent->GetClipRect();
         if (parentClip.active) {

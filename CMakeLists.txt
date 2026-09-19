@@ -8,6 +8,13 @@ endif()
 string(TIMESTAMP NEOWPF_BUILD_TIME "%Y-%m-%d %H:%M:%S UTC" UTC)
 project(NeoWPF VERSION "${NEOWPF_VERSION}" LANGUAGES CXX)
 
+set(NEOWPF_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoWPFBuildInfo.h.in"
+    "${NEOWPF_GENERATED_INCLUDE_DIR}/NeoWPFBuildInfo.h"
+    @ONLY
+)
+
 include(CTest)
 
 if(WIN32)
@@ -292,12 +299,13 @@ target_include_directories(NeoWPF.Foundation
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         "${CMAKE_CURRENT_BINARY_DIR}/generated/xaml"
+    PRIVATE
+        "${NEOWPF_GENERATED_INCLUDE_DIR}"
 )
 target_compile_definitions(NeoWPF.Foundation
     PUBLIC
         NEOWPF_ENABLE_CONTROL_STYLES=$<BOOL:${APPLY_CONTROL_STYLES}>
     NEOWPF_VERSION_STRING="${PROJECT_VERSION}"
-    NEOWPF_BUILD_TIME="${NEOWPF_BUILD_TIME}"
     NEOWPF_BUILD_CONFIGURATION="$<CONFIG>"
 )
 
@@ -321,6 +329,13 @@ neowpf_add_xaml(
     NAMESPACE NeoWPF::UI::Generated
     COMPONENT ScrollBarStyles
     PUBLIC_HEADER NeoWPF/UI/Controls/ScrollBarStyles.h
+)
+neowpf_add_xaml(
+    NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Slider/Visual/SliderStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated
+    COMPONENT SliderStyles
+    PUBLIC_HEADER NeoWPF/UI/Controls/SliderStyles.h
 )
 neowpf_add_xaml(
     NeoWPF.Foundation
@@ -788,6 +803,7 @@ if(BUILD_TESTING)
         tests/Automated/TriggerTests.cpp
         tests/Automated/VisualTests.cpp
         tests/Automated/XamlParserTests.cpp
+        tests/Automated/SliderTests.cpp
     )
 
     if(UNIX)

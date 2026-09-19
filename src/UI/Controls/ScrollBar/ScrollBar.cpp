@@ -309,11 +309,6 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     UpdateThumbVisualState();
 
-    if (auto thumbControl = std::dynamic_pointer_cast<Thumb>(FindTemplateChild("PART_Thumb"))) {
-        thumbControl->InvalidateVisual();
-        thumbControl->BuildRenderCommands(commands);
-    }
-
     if (track) {
         if (isVertical) {
             track->SetRect(absX, absY, trackThickness, trackLength);
@@ -333,7 +328,10 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         commands.DrawRoundedRect(absX, absY, trackLength, trackThickness, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_trackColor.ToArgb(), GetOpacity(), clip);
     }
 
-    if (thumb) {
+    if (auto thumbControl = std::dynamic_pointer_cast<Thumb>(FindTemplateChild("PART_Thumb"))) {
+        thumbControl->InvalidateVisual();
+        thumbControl->BuildRenderCommands(commands);
+    } else if (thumb) {
         if (isVertical) {
             thumb->SetRect(absX, absY + thumbPosition, trackThickness, thumbLength);
         } else {
@@ -346,10 +344,6 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         thumb->SetOpacity(GetOpacity());
         thumb->SetClipRect(clip);
         thumb->BuildRenderCommands(commands);
-    } else if (isVertical) {
-        commands.DrawRoundedRect(absX, absY + thumbPosition, trackThickness, thumbLength, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_thumbColor.ToArgb(), GetOpacity(), clip);
-    } else {
-        commands.DrawRoundedRect(absX + thumbPosition, absY, thumbLength, trackThickness, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, m_thumbColor.ToArgb(), GetOpacity(), clip);
     }
 
 }

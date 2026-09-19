@@ -16,6 +16,8 @@
 #include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/UI/Localization/LocalizationManager.h>
 
+#include <NeoWPFBuildInfo.h>
+
 #include <atomic>
 
 namespace NeoWPF::Core {

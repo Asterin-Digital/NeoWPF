@@ -49,7 +49,7 @@ void UIElement::OnInitialize()
         const auto targetType = std::type_index(typeid(*this));
         const UIElement* current = this;
         while (current && !current->TryFindImplicitStyle(targetType, implicitStyle)) {
-            current = dynamic_cast<const UIElement*>(current->GetParent());
+            current = current->GetParentElement();
         }
 
         if (!implicitStyle) {
@@ -94,11 +94,16 @@ void UIElement::InvalidateWorldTransformCache() const noexcept {
     }
 
     m_worldTransformDirty = true;
-    for (auto* child : GetVisualChildren()) {
-        if (auto childElement = dynamic_cast<UIElement*>(child)) {
-            childElement->InvalidateWorldTransformCache();
+    const auto invalidateDescendants = [](Visual* visual, const auto& self) -> void {
+        for (auto* child : visual->GetVisualChildren()) {
+            if (auto childElement = dynamic_cast<UIElement*>(child)) {
+                childElement->InvalidateWorldTransformCache();
+            } else {
+                self(child, self);
+            }
         }
-    }
+    };
+    invalidateDescendants(const_cast<UIElement*>(this), invalidateDescendants);
 }
 
 NeoWPF::UI::Core::Matrix4 UIElement::GetLocalTransformMatrix() const noexcept {
@@ -128,12 +133,8 @@ NeoWPF::UI::Core::Matrix4 UIElement::GetLocalPositionMatrix() const noexcept {
 
 NeoWPF::UI::Core::Matrix4 UIElement::GetWorldTransformMatrix() const noexcept {
     if (m_worldTransformDirty) {
-        if (auto parentVisual = GetParent()) {
-            if (auto parentElement = dynamic_cast<const UIElement*>(parentVisual)) {
-                m_cachedWorldTransform = GetLocalTransformMatrix() * parentElement->GetWorldTransformMatrix();
-            } else {
-                m_cachedWorldTransform = GetLocalTransformMatrix();
-            }
+        if (auto parentElement = GetParentElement()) {
+            m_cachedWorldTransform = GetLocalTransformMatrix() * parentElement->GetWorldTransformMatrix();
         } else {
             m_cachedWorldTransform = GetLocalTransformMatrix();
         }
@@ -142,13 +143,33 @@ NeoWPF::UI::Core::Matrix4 UIElement::GetWorldTransformMatrix() const noexcept {
     return m_cachedWorldTransform;
 }
 
+UIElement* UIElement::GetParentElement() noexcept
+{
+    for (auto* parent = GetParent(); parent; parent = parent->GetParent()) {
+        if (auto* element = dynamic_cast<UIElement*>(parent)) {
+            return element;
+        }
+    }
+    return nullptr;
+}
+
+const UIElement* UIElement::GetParentElement() const noexcept
+{
+    for (const auto* parent = GetParent(); parent; parent = parent->GetParent()) {
+        if (const auto* element = dynamic_cast<const UIElement*>(parent)) {
+            return element;
+        }
+    }
+    return nullptr;
+}
+
 WorldRenderTransform UIElement::GetWorldRenderTransform() const noexcept {
     WorldRenderTransform result;
     result.positionMatrix = NeoWPF::UI::Core::Matrix4::Identity();
     result.rotationRadians = GetWorldRotationRadians();
 
     std::vector<const UIElement*> ancestors;
-    for (auto current = this; current; current = dynamic_cast<const UIElement*>(current->GetParent())) {
+    for (auto current = this; current; current = current->GetParentElement()) {
         ancestors.push_back(current);
     }
 
@@ -194,7 +215,7 @@ float UIElement::GetWorldRotationRadians() const noexcept {
             }
             *authoredRotation += *transformRotation;
         }
-        current = dynamic_cast<const UIElement*>(current->GetParent());
+        current = current->GetParentElement();
     }
 
     if (authoredRotation) {
@@ -427,8 +448,7 @@ bool UIElement::TryFindResource(const std::string& key, std::any& outValue) cons
             return true;
         }
 
-        const auto* parentVisual = current->GetParent();
-        current = dynamic_cast<const UIElement*>(parentVisual);
+        current = current->GetParentElement();
     }
 
     return NeoWPF::Core::ApplicationResources::Resources::TryFindResource(key, outValue);
@@ -551,8 +571,7 @@ void UIElement::RaiseEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
         while (current)
         {
             route.push_back(current);
-            auto* parentVisual = current->GetParent();
-            current = dynamic_cast<UIElement*>(parentVisual);
+            current = current->GetParentElement();
         }
         for (auto it = route.rbegin(); it != route.rend() && !args->IsHandled(); ++it)
         {
@@ -567,8 +586,7 @@ void UIElement::RaiseEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
         while (current && !args->IsHandled())
         {
             invokeOnElement(current);
-            auto* parentVisual = current->GetParent();
-            current = dynamic_cast<UIElement*>(parentVisual);
+            current = current->GetParentElement();
         }
     }
 }

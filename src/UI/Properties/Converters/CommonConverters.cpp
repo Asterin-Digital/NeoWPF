@@ -536,7 +536,9 @@ bool TryConvertValue(const DependencyProperty& property,
 
     if (property.GetPropertyType() == typeid(std::any) &&
         value.type() != typeid(std::wstring) &&
-        value.type() != typeid(std::string)) {
+        value.type() != typeid(std::string) &&
+        value.type() != typeid(const wchar_t*) &&
+        value.type() != typeid(wchar_t*)) {
         convertedValue = value;
         return true;
     }
@@ -546,6 +548,18 @@ bool TryConvertValue(const DependencyProperty& property,
         text = NeoWPF::Platform::WideToUtf8(std::any_cast<std::wstring>(value));
     } else if (value.type() == typeid(std::string)) {
         text = std::any_cast<std::string>(value);
+    } else if (value.type() == typeid(const wchar_t*)) {
+        const auto stringValue = std::any_cast<const wchar_t*>(value);
+        if (!stringValue) {
+            return false;
+        }
+        text = NeoWPF::Platform::WideToUtf8(std::wstring(stringValue));
+    } else if (value.type() == typeid(wchar_t*)) {
+        const auto stringValue = std::any_cast<wchar_t*>(value);
+        if (!stringValue) {
+            return false;
+        }
+        text = NeoWPF::Platform::WideToUtf8(std::wstring(stringValue));
     } else {
         return false;
     }

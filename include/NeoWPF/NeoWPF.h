@@ -282,6 +282,8 @@ namespace NeoWPF {
 
     using UI::ScrollBar;
 
+    using UI::Slider;
+
     using Input::InputManager;
 
     using Input::Mouse;

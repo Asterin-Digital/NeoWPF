@@ -20,11 +20,8 @@ void RangeBase::SetMinimum(double value) noexcept
 
     m_minimum = clamped;
     if (m_value < m_minimum) {
-        SetValue(m_minimum);
-        return;
+        m_value = m_minimum;
     }
-
-    OnValueChanged(m_value);
 }
 
 void RangeBase::SetMaximum(double value) noexcept
@@ -36,11 +33,8 @@ void RangeBase::SetMaximum(double value) noexcept
 
     m_maximum = clamped;
     if (m_value > m_maximum) {
-        SetValue(m_maximum);
-        return;
+        m_value = m_maximum;
     }
-
-    OnValueChanged(m_value);
 }
 
 void RangeBase::SetValue(double value) noexcept
