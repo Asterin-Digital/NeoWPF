@@ -138,7 +138,11 @@ void* LWindowing::CreateWindow(
     }
     m_windows.push_back(std::move(window));
 
-    EnsureClientTitleBar(nativeHandle, NeoWPF::Contracts::ChromeMode::Native);
+    EnsureClientTitleBar(
+        nativeHandle,
+        windowState.windowHost->GetTitleBar()
+            ? NeoWPF::Contracts::ChromeMode::Custom
+            : NeoWPF::Contracts::ChromeMode::Native);
 
     return nativeHandle;
 }

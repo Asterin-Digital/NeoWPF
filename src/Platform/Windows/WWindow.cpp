@@ -391,6 +391,8 @@ void Window::SetWindowTitleBar(void* nativeHandle, std::shared_ptr<NeoWPF::UI::V
         return;
     }
 
+    const bool hasTitleBar = static_cast<bool>(titleBar);
+
     auto* platform = NeoWPF::Platform::CurrentPlatform();
     auto* chrome = platform ? platform->Chrome() : nullptr;
 
@@ -401,6 +403,10 @@ void Window::SetWindowTitleBar(void* nativeHandle, std::shared_ptr<NeoWPF::UI::V
 
             if (chrome) {
                 chrome->SetTitleBarHitTest(hwnd, nullptr, nullptr);
+            }
+
+            if (hasTitleBar && chrome) {
+                chrome->SetChromeMode(hwnd, NeoWPF::Contracts::ChromeMode::Custom);
             }
             return;
         }

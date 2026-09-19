@@ -50,10 +50,6 @@ class Grid : public Panel {
 public:
     using Panel::AddChild;
 
-    /*
-        @summary
-        Holds sizing information for a grid row or column.
-    */
     struct Definition {
         SizeMode mode = SizeMode::Auto;
         int value = 0;
@@ -68,7 +64,9 @@ public:
         static GridLength Fixed(int pixels) noexcept { return {SizeMode::Fixed, pixels > 0 ? pixels : 0}; }
     };
 
-    Grid() = default;
+    Grid() {
+        SetBackgroundColor(0x00000000u);
+    }
 
     static const NeoWPF::UI::Properties::DependencyProperty& RowProperty();
     static const NeoWPF::UI::Properties::DependencyProperty& ColumnProperty();

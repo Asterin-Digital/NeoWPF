@@ -2,6 +2,7 @@
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Platform/NativeWindow.h>
+#include <NeoWPF/Platform/PlatformRegistry.h>
 #include <windows.h>
 
 #ifdef CreateWindow
@@ -50,6 +51,14 @@ void* WWindowing::CreateWindow(
     {
         std::lock_guard<std::mutex> lock(app.windowsMutex);
         app.windows.push_back(windowState);
+    }
+
+    if (windowState.windowHost->GetTitleBar()) {
+        if (auto* platform = NeoWPF::Platform::CurrentPlatform()) {
+            if (auto* chrome = platform->Chrome()) {
+                chrome->SetChromeMode(nativeHandle, NeoWPF::Contracts::ChromeMode::Custom);
+            }
+        }
     }
 
     const auto hwnd = static_cast<HWND>(nativeHandle);

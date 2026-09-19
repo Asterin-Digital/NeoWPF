@@ -332,11 +332,22 @@ std::shared_ptr<NeoWPF::UI::Visual> Window::GetWindowContent(void* nativeHandle)
 void Window::SetWindowTitleBar(void* nativeHandle, std::shared_ptr<NeoWPF::UI::Visual> titleBar)
 {
     auto& app = NeoWPF::Core::GetAppState();
-    std::lock_guard<std::mutex> lock(app.windowsMutex);
-    for (auto& windowState : app.windows) {
-        if (windowState.nativeWindowHandle == nativeHandle && windowState.windowHost) {
-            windowState.windowHost->SetTitleBar(std::move(titleBar));
-            return;
+    bool hasTitleBar = static_cast<bool>(titleBar);
+    {
+        std::lock_guard<std::mutex> lock(app.windowsMutex);
+        for (auto& windowState : app.windows) {
+            if (windowState.nativeWindowHandle == nativeHandle && windowState.windowHost) {
+                windowState.windowHost->SetTitleBar(std::move(titleBar));
+                break;
+            }
+        }
+    }
+
+    if (hasTitleBar) {
+        if (auto* platform = CurrentPlatform()) {
+            if (auto* chrome = platform->Chrome()) {
+                chrome->SetChromeMode(nativeHandle, NeoWPF::Contracts::ChromeMode::Custom);
+            }
         }
     }
 }
