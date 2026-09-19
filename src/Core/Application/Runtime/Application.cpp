@@ -16,7 +16,15 @@
 #include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/UI/Localization/LocalizationManager.h>
 
+#include <atomic>
+
 namespace NeoWPF::Core {
+
+namespace {
+
+std::atomic<bool> s_initialized{false};
+
+}
 
 std::shared_ptr<Application> Application::s_current = nullptr;
 
@@ -44,8 +52,7 @@ void Application::Initialize()
         NeoWPF::Platform::RegisterPlatform(NeoWPF::Platform::CreateDefaultPlatform());
     }
     if (!NeoWPF::Platform::HasPlatform()) {
-        NeoWPF::Diagnostics::LogError("Application::Initialize: no platform backend is available");
-        return;
+        NeoWPF::Platform::ExitForMissingPlatform();
     }
     NeoWPF::Diagnostics::InitializeCrashHandler();
     NeoWPF::Core::ApplicationResources::Resources::Initialize();
@@ -62,6 +69,7 @@ void Application::Initialize()
     NeoWPF::UI::Properties::RegisterCoreControlProperties();
     NeoWPF::UI::Markup::Xaml::ValidateXamlRegistrations();
     NeoWPF::UI::Markup::Xaml::RegisterXamlMarkupExtensions();
+    s_initialized.store(true, std::memory_order_release);
 
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application::Initialize complete");
 }
@@ -77,6 +85,9 @@ NeoWPF::Platform::Window Application::CreateWindow(
     int height,
     const std::shared_ptr<NeoWPF::UI::Window>& windowHost)
 {
+    if (!s_initialized.load(std::memory_order_acquire)) {
+        NeoWPF::Platform::ExitForUninitializedApplication();
+    }
     if (!title) {
         return NeoWPF::Platform::Window();
     }
@@ -126,6 +137,9 @@ bool Application::IsConsoleVisible()
 int Application::Run()
 {
     auto& appState = GetAppState();
+    if (!NeoWPF::Platform::HasPlatform()) {
+        NeoWPF::Platform::ExitForMissingPlatform();
+    }
     if (appState.windows.empty()) {
         NeoWPF::Platform::CurrentPlatform()->Windowing().ShowFatalError(
             L"NeoWPF Error", L"No windows created. Call CreateWindow() before Run().");
@@ -163,6 +177,7 @@ int Application::Run()
 
 void Application::Shutdown()
 {
+    s_initialized.store(false, std::memory_order_release);
     NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().Clear();
     NeoWPF::Core::ApplicationResources::Resources::Shutdown();
     NeoWPF::Diagnostics::PerformanceMetrics::Shutdown();
@@ -272,9 +287,8 @@ bool Application::LoadFontFromMemory(
 
 Application& Application::Current()
 {
-    if (!s_current) {
-        NeoWPF::Diagnostics::LogError("Application::Current: Application not initialized. Call Initialize() first.");
-        std::abort();
+    if (!s_initialized.load(std::memory_order_acquire)) {
+        NeoWPF::Platform::ExitForUninitializedApplication();
     }
     return *s_current;
 }

@@ -1,4 +1,5 @@
 #include <NeoWPF/Platform/PlatformRegistry.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 
 #ifdef _WIN32
 #include <NeoWPF/Platform/Windows/WPlatform.h>
@@ -8,6 +9,11 @@
 
 #include <mutex>
 #include <utility>
+#include <cstdlib>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 namespace NeoWPF::Platform {
 namespace {
@@ -50,6 +56,30 @@ NeoWPF::Contracts::IPlatform* CurrentPlatform() noexcept
 bool HasPlatform() noexcept
 {
     return CurrentPlatform() != nullptr;
+}
+
+[[noreturn]] void ExitForMissingPlatform()
+{
+    constexpr auto message = L"NeoWPF could not initialize because no platform backend is available.\n\n"
+                             L"Make sure Application::Initialize() is called before using the application.";
+    NeoWPF::Diagnostics::LogError(
+        "Application initialization failed: no platform backend is available");
+#ifdef _WIN32
+    ::MessageBoxW(nullptr, message, L"NeoWPF Initialization Error", MB_OK | MB_ICONERROR);
+#endif
+    std::exit(EXIT_FAILURE);
+}
+
+[[noreturn]] void ExitForUninitializedApplication()
+{
+    constexpr auto message = L"The NeoWPF application was used before Application::Initialize() was called.\n\n"
+                             L"Call NeoWPF::Core::Application::Initialize() before accessing the application.";
+    NeoWPF::Diagnostics::LogError(
+        "Application was used before Application::Initialize() was called");
+#ifdef _WIN32
+    ::MessageBoxW(nullptr, message, L"NeoWPF Initialization Error", MB_OK | MB_ICONERROR);
+#endif
+    std::exit(EXIT_FAILURE);
 }
 
 }
