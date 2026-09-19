@@ -233,7 +233,7 @@ public:
 
         @internal
     */
-    void Measure(int availableWidth, int availableHeight) override;
+    void Measure(double availableWidth, double availableHeight) override;
 
     /*
         @summary
@@ -247,7 +247,7 @@ public:
 
         @internal
     */
-    void Arrange(int finalWidth, int finalHeight) override;
+    void Arrange(double finalWidth, double finalHeight) override;
 
     /*
         @summary
@@ -279,7 +279,7 @@ public:
 
         @internal
     */
-    int GetContentWidth() const noexcept { return m_textCache.GetContentWidth(); }
+    double GetContentWidth() const noexcept { return m_textCache.GetContentWidth(); }
 
     /*
         @summary
@@ -287,7 +287,7 @@ public:
 
         @internal
     */
-    int GetContentHeight() const noexcept { return m_textCache.GetContentHeight(); }
+    double GetContentHeight() const noexcept { return m_textCache.GetContentHeight(); }
 
 protected:
     void OnPaddingChanged(Thickness padding);
@@ -299,7 +299,7 @@ private:
     std::wstring m_fontFamily = std::wstring(L"Segoe UI");
     int m_fontWeight = 400;
     NeoWPF::UI::FontStyle m_fontStyle = NeoWPF::UI::FontStyle::Normal;
-    int m_padding = 0;
+    double m_padding = 0.0;
     TextHorizontalAlignment m_textHorizontalAlignment = TextHorizontalAlignment::Left;
     TextVerticalAlignment m_textVerticalAlignment = TextVerticalAlignment::Top;
     TextWrapping m_textWrapping = TextWrapping::NoWrap;

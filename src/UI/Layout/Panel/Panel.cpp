@@ -109,7 +109,7 @@ private:
 };
 }
 
-void Panel::Measure(int availableWidth, int availableHeight)
+void Panel::Measure(double availableWidth, double availableHeight)
 {
     ActivePanelGuard guard(this);
     if (guard.IsReentrant()) {
@@ -117,8 +117,8 @@ void Panel::Measure(int availableWidth, int availableHeight)
         return;
     }
 
-    int maxW = 0;
-    int maxH = 0;
+    double maxW = 0.0;
+    double maxH = 0.0;
     for (auto child : GetLogicalChildren()) {
         if (child == this || IsAncestorInParentChain(this, child)) {
             continue;
@@ -137,19 +137,19 @@ void Panel::Measure(int availableWidth, int availableHeight)
                 }
             }
             const auto margin = fe->GetMargin();
-            const int childAvailableWidth = availableWidth > 0 ? std::max(0, availableWidth - margin.Horizontal()) : availableWidth;
-            const int childAvailableHeight = availableHeight > 0 ? std::max(0, availableHeight - margin.Vertical()) : availableHeight;
+            const double childAvailableWidth = availableWidth > 0.0 ? (std::max)(0.0, availableWidth - margin.Horizontal()) : availableWidth;
+            const double childAvailableHeight = availableHeight > 0.0 ? (std::max)(0.0, availableHeight - margin.Vertical()) : availableHeight;
             fe->Measure(childAvailableWidth, childAvailableHeight);
-            const int resolvedW = fe->ResolveWidth(childAvailableWidth, fe->GetDesiredWidth()) + margin.Horizontal();
-            const int resolvedH = fe->ResolveHeight(childAvailableHeight, fe->GetDesiredHeight()) + margin.Vertical();
-            fe->SetDesiredSize(std::max(0, fe->ResolveWidth(childAvailableWidth, fe->GetDesiredWidth())), std::max(0, fe->ResolveHeight(childAvailableHeight, fe->GetDesiredHeight())));
+            const double resolvedW = fe->ResolveWidth(childAvailableWidth, fe->GetDesiredWidth()) + margin.Horizontal();
+            const double resolvedH = fe->ResolveHeight(childAvailableHeight, fe->GetDesiredHeight()) + margin.Vertical();
+            fe->SetDesiredSize((std::max)(0.0, fe->ResolveWidth(childAvailableWidth, fe->GetDesiredWidth())), (std::max)(0.0, fe->ResolveHeight(childAvailableHeight, fe->GetDesiredHeight())));
             maxW = (std::max)(maxW, resolvedW);
             maxH = (std::max)(maxH, resolvedH);
         }
     }
 
-    const int desiredW = ResolveWidth(availableWidth, maxW);
-    const int desiredH = ResolveHeight(availableHeight, maxH);
+    const double desiredW = ResolveWidth(availableWidth, maxW);
+    const double desiredH = ResolveHeight(availableHeight, maxH);
 
     if (GetLogicalChildren().empty()) {
         SetDesiredSize(desiredW, desiredH);
@@ -158,7 +158,7 @@ void Panel::Measure(int availableWidth, int availableHeight)
     }
 }
 
-void Panel::Arrange(int finalWidth, int finalHeight)
+void Panel::Arrange(double finalWidth, double finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
@@ -185,12 +185,12 @@ void Panel::Arrange(int finalWidth, int finalHeight)
                 }
             }
             const auto margin = fe->GetMargin();
-            const int contentWidth = std::max(0, finalWidth - margin.Horizontal());
-            const int contentHeight = std::max(0, finalHeight - margin.Vertical());
-            const int resolvedW = std::max(0, fe->ResolveWidth(contentWidth, fe->GetDesiredWidth()));
-            const int resolvedH = std::max(0, fe->ResolveHeight(contentHeight, fe->GetDesiredHeight()));
+            const double contentWidth = (std::max)(0.0, finalWidth - margin.Horizontal());
+            const double contentHeight = (std::max)(0.0, finalHeight - margin.Vertical());
+            const double resolvedW = (std::max)(0.0, fe->ResolveWidth(contentWidth, fe->GetDesiredWidth()));
+            const double resolvedH = (std::max)(0.0, fe->ResolveHeight(contentHeight, fe->GetDesiredHeight()));
 
-            int alignedX = 0, alignedY = 0, alignedW = resolvedW, alignedH = resolvedH;
+            double alignedX = 0.0, alignedY = 0.0, alignedW = resolvedW, alignedH = resolvedH;
             Alignment::ApplyAlignment(
                 fe,
                 contentWidth, contentHeight,
@@ -223,17 +223,17 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         return;
     }
 
-    int absX = 0;
-    int absY = 0;
+    double absX = 0.0;
+    double absY = 0.0;
     GetAbsolutePosition(absX, absY);
 
     if (GetBackgroundColor().ToArgb() != 0x00000000u) {
         const auto cornerRadius = GetCornerRadius();
         commands.DrawRoundedRect(
-            static_cast<float>(absX),
-            static_cast<float>(absY),
-            static_cast<float>(GetFinalWidth()),
-            static_cast<float>(GetFinalHeight()),
+            absX,
+            absY,
+            GetFinalWidth(),
+            GetFinalHeight(),
             cornerRadius.TopLeft,
             cornerRadius.TopRight,
             cornerRadius.BottomRight,

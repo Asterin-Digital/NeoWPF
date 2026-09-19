@@ -223,43 +223,43 @@ int Checkbox::GetFontSize() const noexcept
     return m_fontSize;
 }
 
-void Checkbox::Measure(int availableWidth, int availableHeight)
+void Checkbox::Measure(double availableWidth, double availableHeight)
 {
-    const int contentAvailableWidth = availableWidth > 0 ? std::max(0, availableWidth - m_padding.Horizontal()) : 0;
+    const double contentAvailableWidth = availableWidth > 0.0 ? (std::max)(0.0, availableWidth - m_padding.Horizontal()) : 0.0;
     Content::ContentControl::Measure(contentAvailableWidth, 0);
 
-    int contentWidth = 0;
-    int contentHeight = 0;
+    double contentWidth = 0.0;
+    double contentHeight = 0.0;
     if (auto presenter = GetPresenter()) {
         contentWidth = presenter->GetDesiredWidth();
         contentHeight = presenter->GetDesiredHeight();
     }
 
-    const int boxSize = std::max(18, contentHeight);
-    int desiredWidth = boxSize + m_padding.Horizontal() + contentWidth;
-    int desiredHeight = std::max(boxSize, contentHeight) + m_padding.Vertical();
+    const double boxSize = (std::max)(18.0, contentHeight);
+    const double desiredWidth = boxSize + m_padding.Horizontal() + contentWidth;
+    const double desiredHeight = (std::max)(boxSize, contentHeight) + m_padding.Vertical();
 
     SetDesiredSize(desiredWidth, desiredHeight);
 }
 
-void Checkbox::Arrange(int finalWidth, int finalHeight)
+void Checkbox::Arrange(double finalWidth, double finalHeight)
 {
-    const int contentHeight = std::max(0, finalHeight);
+    const double contentHeight = (std::max)(0.0, finalHeight);
     Content::ContentControl::Arrange(finalWidth, finalHeight);
 
     if (auto presenter = GetPresenter()) {
-        const int desiredOffsetX = 18 + m_padding.Left;
+        const double desiredOffsetX = 18.0 + m_padding.Left;
         if (presenter->GetLayoutOffsetX() != desiredOffsetX || presenter->GetLayoutOffsetY() != m_padding.Top) {
             presenter->SetLayoutOffset(desiredOffsetX, m_padding.Top);
         }
-        presenter->Arrange(std::max(0, finalWidth - (18 + m_padding.Left + m_padding.Right)),
-            std::max(0, contentHeight - m_padding.Top - m_padding.Bottom));
+        presenter->Arrange((std::max)(0.0, finalWidth - (18.0 + m_padding.Left + m_padding.Right)),
+            (std::max)(0.0, contentHeight - m_padding.Top - m_padding.Bottom));
         if (auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(presenter->FindTemplateChild("PART_ContentHost"))) {
-            const int desiredTextOffsetY = (finalHeight - contentHeight) / 2;
+            const double desiredTextOffsetY = (finalHeight - contentHeight) / 2.0;
             contentHost->SetRect(
-                static_cast<int>(std::lround(presenter->GetLayoutOffsetX())),
+                presenter->GetLayoutOffsetX(),
                 desiredTextOffsetY + m_padding.Top,
-                std::max(0, static_cast<int>(std::lround(finalWidth - presenter->GetLayoutOffsetX()))),
+                (std::max)(0.0, finalWidth - presenter->GetLayoutOffsetX()),
                 contentHeight);
         }
     }
@@ -267,46 +267,46 @@ void Checkbox::Arrange(int finalWidth, int finalHeight)
 
 void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
-    const int boxSize = 18;
+    const double boxSize = 18.0;
 
     const auto renderTransform = GetWorldRenderTransform();
-    float fAbsX = 0.0f;
-    float fAbsY = 0.0f;
-    float drawWidth = static_cast<float>(GetFinalWidth());
-    float drawHeight = static_cast<float>(GetFinalHeight());
+    double fAbsX = 0.0;
+    double fAbsY = 0.0;
+    double drawWidth = GetFinalWidth();
+    double drawHeight = GetFinalHeight();
     renderTransform.positionMatrix.TransformPoint(fAbsX, fAbsY, fAbsX, fAbsY);
-    float right = drawWidth;
-    float bottom = drawHeight;
+    double right = drawWidth;
+    double bottom = drawHeight;
     renderTransform.positionMatrix.TransformPoint(right, bottom, right, bottom);
     drawWidth = std::abs(right - fAbsX);
     drawHeight = std::abs(bottom - fAbsY);
 
-    const float boxTop = fAbsY + (drawHeight - static_cast<float>(boxSize)) / 2.0f;
-    const float boxLeft = fAbsX;
-    const float boxRight = boxLeft + static_cast<float>(boxSize);
-    const float boxBottom = boxTop + static_cast<float>(boxSize);
+    const double boxTop = fAbsY + (drawHeight - boxSize) / 2.0;
+    const double boxLeft = fAbsX;
+    const double boxRight = boxLeft + boxSize;
+    const double boxBottom = boxTop + boxSize;
 
     auto box = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Box"));
     if (box) {
-        box->SetRect(static_cast<int>(std::lround(boxLeft)), static_cast<int>(std::lround(boxTop)), boxSize, boxSize);
+        box->SetRect(boxLeft, boxTop, boxSize, boxSize);
         box->SetBorderThickness(1);
         box->SetOpacity(GetOpacity());
         box->BuildRenderCommands(commands);
     }
     else {
-        commands.DrawRoundedRect(boxLeft, boxTop, static_cast<float>(boxSize), static_cast<float>(boxSize), 0.0f, 0.0f, 0.0f, 0.0f, m_bgColor.ToArgb(), GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
-        commands.DrawRoundedRect(boxLeft, boxTop, static_cast<float>(boxSize), static_cast<float>(boxSize), 0.0f, 0.0f, 0.0f, 0.0f, m_borderColor.ToArgb(), GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
+        commands.DrawRoundedRect(boxLeft, boxTop, boxSize, boxSize, 0.0f, 0.0f, 0.0f, 0.0f, m_bgColor.ToArgb(), GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
+        commands.DrawRoundedRect(boxLeft, boxTop, boxSize, boxSize, 0.0f, 0.0f, 0.0f, 0.0f, m_borderColor.ToArgb(), GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
     }
 
     if (IsChecked()) {
         const auto checkColor = NeoWPF::UI::Color::FromArgb(0xFF212121u);
-        const float checkCenterX = boxLeft + static_cast<float>(boxSize) * 0.5f;
-        const float checkCenterY = boxTop + static_cast<float>(boxSize) * 0.5f;
+        const double checkCenterX = boxLeft + boxSize * 0.5;
+        const double checkCenterY = boxTop + boxSize * 0.5;
         constexpr float kCheckAngle = 0.68f;
 
-    auto drawCheckStroke = [&](float width, float height, float rotationRadians, float offsetX, float offsetY) {
-        const float x = checkCenterX + offsetX - width * 0.5f;
-        const float y = checkCenterY + offsetY - height * 0.5f;
+    auto drawCheckStroke = [&](double width, double height, float rotationRadians, double offsetX, double offsetY) {
+        const double x = checkCenterX + offsetX - width * 0.5;
+        const double y = checkCenterY + offsetY - height * 0.5;
         commands.DrawRoundedRect(x, y, width, height, 0.0f, 0.0f, 0.0f, 0.0f,
                                 checkColor.ToArgb(), GetOpacity(),
                                 NeoWPF::Rendering::ClipRect{}, rotationRadians,
@@ -321,13 +321,15 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
     if (contentHost) {
+        const double hostX = fAbsX + boxSize + m_padding.Left;
+        const double hostY = fAbsY + m_padding.Top;
+        const double hostWidth = (std::max)(0.0, drawWidth - boxSize - m_padding.Left - m_padding.Right);
+        const double hostHeight = (std::max)(1.0, drawHeight - m_padding.Top - m_padding.Bottom);
         contentHost->SetRect(
-            static_cast<int>(std::lround(fAbsX)) + boxSize + m_padding.Left,
-            static_cast<int>(std::lround(fAbsY)) + m_padding.Top,
-            std::max(0, static_cast<int>(std::lround(drawWidth)) -
-                (boxSize + m_padding.Left + m_padding.Right)),
-            std::max(1, static_cast<int>(std::lround(drawHeight)) -
-                m_padding.Top - m_padding.Bottom));
+            hostX,
+            hostY,
+            hostWidth,
+            hostHeight);
         contentHost->BuildRenderCommands(commands);
     }
 

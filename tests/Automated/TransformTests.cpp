@@ -181,6 +181,38 @@ TEST_F(TextBlockRenderCommandTest, ButtonBackgroundAndBitmapTextShareScaleTransf
     EXPECT_FLOAT_EQ(scaledTextCenterY, 20.0f + (unscaledTextCenterY - 20.0f) * 2.0f);
 }
 
+TEST_F(TextBlockRenderCommandTest, TextIsPixelPerfectCenteredInsideTextBlockAndButton)
+{
+    constexpr double width = 160.0;
+    constexpr double height = 41.0;
+    constexpr double expectedCenterX = width / 2.0;
+    constexpr double expectedCenterY = height / 2.0;
+
+    NeoWPF::UI::TextBlock textBlock(L"fg");
+    textBlock.SetTextHorizontalAlignment(NeoWPF::UI::TextHorizontalAlignment::Center);
+    textBlock.SetTextVerticalAlignment(NeoWPF::UI::TextVerticalAlignment::Center);
+    textBlock.Measure(width, height);
+    textBlock.Arrange(width, height);
+
+    NeoWPF::Rendering::CommandList textBlockCommands;
+    textBlock.BuildRenderCommands(textBlockCommands);
+    const auto* textBlockQuad = FindTextQuad(textBlockCommands);
+    ASSERT_NE(textBlockQuad, nullptr);
+    EXPECT_DOUBLE_EQ(textBlockQuad->x + textBlockQuad->w / 2.0, expectedCenterX);
+    EXPECT_DOUBLE_EQ(textBlockQuad->y + textBlockQuad->h / 2.0, expectedCenterY);
+
+    NeoWPF::UI::Button button(L"gf");
+    button.Measure(width, height);
+    button.Arrange(width, height);
+
+    NeoWPF::Rendering::CommandList buttonCommands;
+    button.BuildRenderCommands(buttonCommands);
+    const auto* buttonQuad = FindTextQuad(buttonCommands);
+    ASSERT_NE(buttonQuad, nullptr);
+    EXPECT_DOUBLE_EQ(buttonQuad->x + buttonQuad->w / 2.0, expectedCenterX);
+    EXPECT_DOUBLE_EQ(buttonQuad->y + buttonQuad->h / 2.0, expectedCenterY);
+}
+
 TEST_F(TextBlockRenderCommandTest, ButtonRotationKeepsTextCenteredThroughEasedLoop)
 {
     NeoWPF::UI::Button button(L"Spin me");

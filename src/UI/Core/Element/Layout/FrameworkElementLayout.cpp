@@ -126,12 +126,12 @@ LayoutSizeMode FrameworkElement::GetHeightMode() const noexcept
     return m_heightMode;
 }
 
-int FrameworkElement::GetWidth() const noexcept
+double FrameworkElement::GetWidth() const noexcept
 {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Width", *this);
     if (property) {
         try {
-            return GetValue<int>(*property);
+            return GetValue<double>(*property);
         } catch (const std::bad_any_cast&) {
             return m_width;
         }
@@ -140,9 +140,9 @@ int FrameworkElement::GetWidth() const noexcept
     return m_width;
 }
 
-void FrameworkElement::SetWidth(int width) noexcept
+void FrameworkElement::SetWidth(double width) noexcept
 {
-    const int clampedWidth = width < 0 ? 0 : width;
+    const double clampedWidth = width < 0.0 ? 0.0 : width;
     if (IsApplyingPropertyValue()) {
         m_width = clampedWidth;
         return;
@@ -158,12 +158,12 @@ void FrameworkElement::SetWidth(int width) noexcept
     InvalidateVisual();
 }
 
-int FrameworkElement::GetHeight() const noexcept
+double FrameworkElement::GetHeight() const noexcept
 {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Height", *this);
     if (property) {
         try {
-            return GetValue<int>(*property);
+            return GetValue<double>(*property);
         } catch (const std::bad_any_cast&) {
             return m_height;
         }
@@ -207,42 +207,42 @@ void FrameworkElement::SetMargin(Thickness margin) noexcept
     }
 }
 
-void FrameworkElement::SetMargin(int uniform) noexcept
+void FrameworkElement::SetMargin(double uniform) noexcept
 {
     SetMargin(Thickness(uniform));
 }
 
-void FrameworkElement::SetMargin(int left, int top, int right, int bottom) noexcept
+void FrameworkElement::SetMargin(double left, double top, double right, double bottom) noexcept
 {
     SetMargin(Thickness(left, top, right, bottom));
 }
 
-int FrameworkElement::GetMarginLeft() const noexcept
+double FrameworkElement::GetMarginLeft() const noexcept
 {
     return m_margin.Left;
 }
 
-int FrameworkElement::GetMarginTop() const noexcept
+double FrameworkElement::GetMarginTop() const noexcept
 {
     return m_margin.Top;
 }
 
-int FrameworkElement::GetMarginRight() const noexcept
+double FrameworkElement::GetMarginRight() const noexcept
 {
     return m_margin.Right;
 }
 
-int FrameworkElement::GetMarginBottom() const noexcept
+double FrameworkElement::GetMarginBottom() const noexcept
 {
     return m_margin.Bottom;
 }
 
-int FrameworkElement::GetMarginHorizontal() const noexcept
+double FrameworkElement::GetMarginHorizontal() const noexcept
 {
     return m_margin.Left + m_margin.Right;
 }
 
-int FrameworkElement::GetMarginVertical() const noexcept
+double FrameworkElement::GetMarginVertical() const noexcept
 {
     return m_margin.Top + m_margin.Bottom;
 }
@@ -284,17 +284,17 @@ void FrameworkElement::SetSpacing(Spacing spacing) noexcept
     }
 }
 
-void FrameworkElement::SetSpacing(int uniform) noexcept
+void FrameworkElement::SetSpacing(double uniform) noexcept
 {
     SetSpacing(Spacing(uniform));
 }
 
-int FrameworkElement::GetHorizontalSpacing() const noexcept
+double FrameworkElement::GetHorizontalSpacing() const noexcept
 {
     return m_spacing.Horizontal;
 }
 
-void FrameworkElement::SetHorizontalSpacing(int spacing) noexcept
+void FrameworkElement::SetHorizontalSpacing(double spacing) noexcept
 {
     if (m_spacing.Horizontal != spacing) {
         m_spacing.Horizontal = spacing;
@@ -304,12 +304,12 @@ void FrameworkElement::SetHorizontalSpacing(int spacing) noexcept
     }
 }
 
-int FrameworkElement::GetVerticalSpacing() const noexcept
+double FrameworkElement::GetVerticalSpacing() const noexcept
 {
     return m_spacing.Vertical;
 }
 
-void FrameworkElement::SetVerticalSpacing(int spacing) noexcept
+void FrameworkElement::SetVerticalSpacing(double spacing) noexcept
 {
     if (m_spacing.Vertical != spacing) {
         m_spacing.Vertical = spacing;
@@ -319,9 +319,9 @@ void FrameworkElement::SetVerticalSpacing(int spacing) noexcept
     }
 }
 
-void FrameworkElement::SetHeight(int height) noexcept
+void FrameworkElement::SetHeight(double height) noexcept
 {
-    const int clampedHeight = height < 0 ? 0 : height;
+    const double clampedHeight = height < 0.0 ? 0.0 : height;
     if (IsApplyingPropertyValue()) {
         m_height = clampedHeight;
         return;
@@ -499,35 +499,35 @@ void FrameworkElement::SetVerticalAlignment(VerticalAlignment align) noexcept
     m_verticalAlignment = align;
 }
 
-int FrameworkElement::ResolveWidth(int availableWidth, int desiredWidth) const
+double FrameworkElement::ResolveWidth(double availableWidth, double desiredWidth) const
 {
     if (GetWidthMode() == LayoutSizeMode::Stretch) {
-        return (std::max)(0, availableWidth);
+        return (std::max)(0.0, availableWidth);
     }
 
     if (!GetParent() && availableWidth > 0) {
-        return (std::max)(0, availableWidth);
+        return (std::max)(0.0, availableWidth);
     }
 
-    const int preferredWidth = GetWidth() > 0 ? GetWidth() : desiredWidth;
-    return (std::max)(0, preferredWidth);
+    const double preferredWidth = GetWidth() > 0.0 ? GetWidth() : desiredWidth;
+    return (std::max)(0.0, preferredWidth);
 }
 
-int FrameworkElement::ResolveHeight(int availableHeight, int desiredHeight) const
+double FrameworkElement::ResolveHeight(double availableHeight, double desiredHeight) const
 {
     if (GetHeightMode() == LayoutSizeMode::Stretch) {
-        return (std::max)(0, availableHeight);
+        return (std::max)(0.0, availableHeight);
     }
 
     if (!GetParent() && availableHeight > 0) {
-        return (std::max)(0, availableHeight);
+        return (std::max)(0.0, availableHeight);
     }
 
-    const int preferredHeight = GetHeight() > 0 ? GetHeight() : desiredHeight;
-    return (std::max)(0, preferredHeight);
+    const double preferredHeight = GetHeight() > 0.0 ? GetHeight() : desiredHeight;
+    return (std::max)(0.0, preferredHeight);
 }
 
-void FrameworkElement::BeginAnimation(int fromWidth, int toWidth, int fromHeight, int toHeight, float durationSeconds)
+void FrameworkElement::BeginAnimation(double fromWidth, double toWidth, double fromHeight, double toHeight, float durationSeconds)
 {
     this->BeginAnimation("Width", fromWidth, toWidth, durationSeconds);
     this->BeginAnimation("Height", fromHeight, toHeight, durationSeconds);
@@ -539,11 +539,11 @@ void FrameworkElement::BeginAnimation(HorizontalAlignment horizontal, VerticalAl
     this->BeginAnimation("VerticalAlignment", GetVerticalAlignment(), vertical, durationSeconds);
 }
 
-void FrameworkElement::Measure(int availableWidth, int availableHeight)
+void FrameworkElement::Measure(double availableWidth, double availableHeight)
 {
     if (s_frameworkElementLogging) {
         NeoWPF::Diagnostics::LogInfo(
-            "[FrameworkElement::Measure] Type=%s, Available=(%d x %d)",
+            "[FrameworkElement::Measure] Type=%s, Available=(%g x %g)",
             typeid(*this).name(),
             availableWidth,
             availableHeight
@@ -554,7 +554,7 @@ void FrameworkElement::Measure(int availableWidth, int availableHeight)
 
     if (NeoWPF::Core::Application::IsLayoutInspectionEnabled()) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
-            "[Layout] Measure %s desired=(%d x %d) available=(%d x %d)",
+            "[Layout] Measure %s desired=(%g x %g) available=(%g x %g)",
             typeid(*this).name(),
             m_desiredWidth,
             m_desiredHeight,
@@ -563,11 +563,11 @@ void FrameworkElement::Measure(int availableWidth, int availableHeight)
     }
 }
 
-void FrameworkElement::Arrange(int finalWidth, int finalHeight)
+void FrameworkElement::Arrange(double finalWidth, double finalHeight)
 {
     if (s_frameworkElementLogging) {
         NeoWPF::Diagnostics::LogInfo(
-            "[FrameworkElement::Arrange] Type=%s, Final=(%d x %d)",
+            "[FrameworkElement::Arrange] Type=%s, Final=(%g x %g)",
             typeid(*this).name(),
             finalWidth,
             finalHeight
@@ -590,20 +590,20 @@ void FrameworkElement::Arrange(int finalWidth, int finalHeight)
     const bool hasExplicitHeight = GetHeight() > 0;
 
     if (stretchWidth && !hasExplicitWidth && finalWidth >= 0) {
-        m_finalWidth = std::max(0, finalWidth);
+        m_finalWidth = std::max(0.0, finalWidth);
     } else {
         m_finalWidth = ResolveWidth(finalWidth, m_desiredWidth);
     }
 
     if (stretchHeight && !hasExplicitHeight && finalHeight >= 0) {
-        m_finalHeight = std::max(0, finalHeight);
+        m_finalHeight = std::max(0.0, finalHeight);
     } else {
         m_finalHeight = ResolveHeight(finalHeight, m_desiredHeight);
     }
 
     if (NeoWPF::Core::Application::IsLayoutInspectionEnabled()) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
-            "[Layout] Arrange %s desired=(%d x %d) final=(%d x %d) offset=(%d,%d)",
+            "[Layout] Arrange %s desired=(%g x %g) final=(%g x %g) offset=(%g,%g)",
             typeid(*this).name(),
             m_desiredWidth,
             m_desiredHeight,

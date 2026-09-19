@@ -161,7 +161,7 @@ void ContentControl::SetPresenter(const std::shared_ptr<ContentPresenter>& prese
     InvalidateVisual();
 }
 
-void ContentControl::Measure(int availableWidth, int availableHeight)
+void ContentControl::Measure(double availableWidth, double availableHeight)
 {
 if (m_presenter && !m_presenter->GetParent()) {
     try {
@@ -178,10 +178,10 @@ if (m_presenter && !m_presenter->GetParent()) {
     if (m_presenter) {
         m_presenter->Measure(availableWidth, availableHeight);
 
-        const int presenterWidth = m_presenter->GetDesiredWidth();
-        const int presenterHeight = m_presenter->GetDesiredHeight();
-        const int explicitWidth = GetWidth() > 0 ? GetWidth() : 0;
-        const int explicitHeight = GetHeight() > 0 ? GetHeight() : 0;
+        const double presenterWidth = m_presenter->GetDesiredWidth();
+        const double presenterHeight = m_presenter->GetDesiredHeight();
+        const double explicitWidth = GetWidth() > 0.0 ? GetWidth() : 0.0;
+        const double explicitHeight = GetHeight() > 0.0 ? GetHeight() : 0.0;
 
         SetDesiredSize(
             std::max(presenterWidth, explicitWidth),
@@ -193,15 +193,15 @@ if (m_presenter && !m_presenter->GetParent()) {
     SetDesiredSize(0, 0);
 }
 
-void ContentControl::Arrange(int finalWidth, int finalHeight)
+void ContentControl::Arrange(double finalWidth, double finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
-        "[ContentControl] Arrange: this=%p final=(%d,%d) presenter=%p", this, finalWidth, finalHeight, m_presenter.get());
+        "[ContentControl] Arrange: this=%p final=(%g,%g) presenter=%p", this, finalWidth, finalHeight, m_presenter.get());
     if (m_presenter) {
         m_presenter->Arrange(GetFinalWidth(), GetFinalHeight());
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
-            "[ContentControl] Arrange: presenter arranged=%p final=(%d,%d)", m_presenter.get(), m_presenter->GetFinalWidth(), m_presenter->GetFinalHeight());
+            "[ContentControl] Arrange: presenter arranged=%p final=(%g,%g)", m_presenter.get(), m_presenter->GetFinalWidth(), m_presenter->GetFinalHeight());
     }
 }
 

@@ -889,10 +889,10 @@ TEST(XamlParserTests, XamlAndCppConstructionProduceEquivalentTreeState)
     const auto* cppFrameworkElement = dynamic_cast<const NeoWPF::UI::FrameworkElement*>(cppTree.get());
     ASSERT_NE(xamlFrameworkElement, nullptr);
     ASSERT_NE(cppFrameworkElement, nullptr);
-    EXPECT_EQ(std::any_cast<int>(xamlFrameworkElement->GetRawValue(NeoWPF::UI::FrameworkElement::WidthProperty())),
-              std::any_cast<int>(cppFrameworkElement->GetRawValue(NeoWPF::UI::FrameworkElement::WidthProperty())));
-    EXPECT_EQ(std::any_cast<int>(xamlFrameworkElement->GetRawValue(NeoWPF::UI::FrameworkElement::HeightProperty())),
-              std::any_cast<int>(cppFrameworkElement->GetRawValue(NeoWPF::UI::FrameworkElement::HeightProperty())));
+    EXPECT_EQ(std::any_cast<double>(xamlFrameworkElement->GetRawValue(NeoWPF::UI::FrameworkElement::WidthProperty())),
+              std::any_cast<double>(cppFrameworkElement->GetRawValue(NeoWPF::UI::FrameworkElement::WidthProperty())));
+    EXPECT_EQ(std::any_cast<double>(xamlFrameworkElement->GetRawValue(NeoWPF::UI::FrameworkElement::HeightProperty())),
+              std::any_cast<double>(cppFrameworkElement->GetRawValue(NeoWPF::UI::FrameworkElement::HeightProperty())));
     EXPECT_EQ(std::any_cast<std::wstring>(xamlButton->GetRawValue(NeoWPF::UI::Button::TextProperty())),
               std::any_cast<std::wstring>(cppButtonValue->GetRawValue(NeoWPF::UI::Button::TextProperty())));
     EXPECT_EQ(std::any_cast<std::wstring>(xamlText->GetRawValue(NeoWPF::UI::TextBlock::TextProperty())),
@@ -1025,8 +1025,8 @@ TEST(XamlParserTests, XamlAndCppMatchScalarLayoutProperties)
     EXPECT_EQ(xamlElement->GetHeight(), cppTree->GetHeight());
     EXPECT_EQ(xamlElement->GetMargin(), cppTree->GetMargin());
     EXPECT_EQ(xamlElement->GetSpacing(), cppTree->GetSpacing());
-    EXPECT_EQ(std::any_cast<int>(xamlElement->GetRawValue(NeoWPF::UI::FrameworkElement::WidthProperty())),
-              std::any_cast<int>(cppTree->GetRawValue(NeoWPF::UI::FrameworkElement::WidthProperty())));
+    EXPECT_EQ(std::any_cast<double>(xamlElement->GetRawValue(NeoWPF::UI::FrameworkElement::WidthProperty())),
+              std::any_cast<double>(cppTree->GetRawValue(NeoWPF::UI::FrameworkElement::WidthProperty())));
     EXPECT_EQ(std::any_cast<NeoWPF::UI::Thickness>(xamlElement->GetRawValue(NeoWPF::UI::FrameworkElement::MarginProperty())),
               std::any_cast<NeoWPF::UI::Thickness>(cppTree->GetRawValue(NeoWPF::UI::FrameworkElement::MarginProperty())));
 

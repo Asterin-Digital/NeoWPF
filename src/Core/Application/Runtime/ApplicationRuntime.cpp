@@ -68,8 +68,8 @@ void LayoutVisualTree(NeoWPF::UI::Visual* rootVisual, unsigned int width, unsign
     }
 
     if (auto fe = dynamic_cast<NeoWPF::UI::FrameworkElement*>(rootVisual)) {
-        fe->Measure(static_cast<int>(width), static_cast<int>(height));
-        fe->Arrange(static_cast<int>(width), static_cast<int>(height));
+        fe->Measure(width, height);
+        fe->Arrange(width, height);
     }
 }
 
@@ -132,7 +132,7 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
             }
             overlay->Initialize();
             if (auto* element = dynamic_cast<NeoWPF::UI::FrameworkElement*>(overlay.get())) {
-                element->Measure(static_cast<int>(width), static_cast<int>(height));
+                element->Measure(width, height);
                 element->Arrange(element->GetDesiredWidth(), element->GetDesiredHeight());
             }
         }

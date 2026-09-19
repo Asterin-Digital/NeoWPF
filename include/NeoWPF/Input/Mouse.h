@@ -68,8 +68,8 @@ namespace NeoWPF::Input
 
             if (auto fw = dynamic_cast<const NeoWPF::UI::FrameworkElement*>(relativeTo))
             {
-                int absX = 0;
-                int absY = 0;
+                double absX = 0.0;
+                double absY = 0.0;
                 fw->GetAbsolutePosition(absX, absY);
                 return NeoWPF::UI::Core::Point(static_cast<float>(x - absX), static_cast<float>(y - absY));
             }

@@ -5,19 +5,19 @@ namespace NeoWPF::UI {
 
     void Alignment::ApplyAlignment(
         FrameworkElement* child,
-        int availableWidth,
-        int availableHeight,
+        double availableWidth,
+        double availableHeight,
         HorizontalAlignment hAlign,
         VerticalAlignment vAlign,
-        int& outX,
-        int& outY,
-        int& outWidth,
-        int& outHeight
+        double& outX,
+        double& outY,
+        double& outWidth,
+        double& outHeight
     ) {
         if (!child) return;
 
-        int desiredWidth = child->GetDesiredWidth();
-        int desiredHeight = child->GetDesiredHeight();
+        double desiredWidth = child->GetDesiredWidth();
+        double desiredHeight = child->GetDesiredHeight();
 
 
         if (hAlign == HorizontalAlignment::Stretch) {

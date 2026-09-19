@@ -11,22 +11,22 @@ See LICENSE file in the project root for full license text.
 namespace NeoWPF::UI {
 
 struct GridChildLayout {
-    int x = 0;
-    int y = 0;
-    int width = 0;
-    int height = 0;
+    double x = 0.0;
+    double y = 0.0;
+    double width = 0.0;
+    double height = 0.0;
 };
 
 struct GridLayoutResult {
-    std::vector<int> rowHeights;
-    std::vector<int> colWidths;
+    std::vector<double> rowHeights;
+    std::vector<double> colWidths;
 };
 
 struct GridLayoutMetrics {
-    std::vector<int> rowHeights;
-    std::vector<int> colWidths;
-    std::vector<int> autoRowHeights;
-    std::vector<int> autoColWidths;
+    std::vector<double> rowHeights;
+    std::vector<double> colWidths;
+    std::vector<double> autoRowHeights;
+    std::vector<double> autoColWidths;
     std::vector<GridChildLayout> childLayouts;
 };
 
@@ -37,21 +37,21 @@ public:
     static GridLayoutResult ComputeLayout(
         const std::vector<Grid::Definition>& rowDefs,
         const std::vector<Grid::Definition>& colDefs,
-        int availableWidth,
-        int availableHeight,
+        double availableWidth,
+        double availableHeight,
         const std::vector<Visual*>& children,
-        int horizontalSpacing = 0,
-        int verticalSpacing = 0);
+        double horizontalSpacing = 0.0,
+        double verticalSpacing = 0.0);
 
     static GridLayoutMetrics ComputeMetrics(
         const Grid* grid,
         const std::vector<Grid::Definition>& rowDefs,
         const std::vector<Grid::Definition>& colDefs,
-        int availableWidth,
-        int availableHeight,
+        double availableWidth,
+        double availableHeight,
         const std::vector<Visual*>& children,
-        int horizontalSpacing = 0,
-        int verticalSpacing = 0);
+        double horizontalSpacing = 0.0,
+        double verticalSpacing = 0.0);
 };
 
 }

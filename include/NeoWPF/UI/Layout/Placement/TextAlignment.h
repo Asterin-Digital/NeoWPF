@@ -24,35 +24,35 @@ enum class TextVerticalAlignment {
 class TextAlignment {
 public:
     static void ApplyTextAlignment(
-        int contentWidth,
-        int contentHeight,
-        int availableWidth,
-        int availableHeight,
+        double contentWidth,
+        double contentHeight,
+        double availableWidth,
+        double availableHeight,
         TextHorizontalAlignment horizontalAlignment,
         TextVerticalAlignment verticalAlignment,
-        int& outX,
-        int& outY) noexcept;
+        double& outX,
+        double& outY) noexcept;
 
-    static int GetBlockVerticalOffset(int contentWidth, int contentHeight, int viewportHeight,
-                                      TextVerticalAlignment alignment) noexcept;
+    static double GetBlockVerticalOffset(double contentWidth, double contentHeight, double viewportHeight,
+                                         TextVerticalAlignment alignment) noexcept;
 
-    static int GetLineHorizontalOffset(int lineWidth, int viewportWidth,
-                                      TextHorizontalAlignment alignment) noexcept;
+    static double GetLineHorizontalOffset(double lineWidth, double viewportWidth,
+                                         TextHorizontalAlignment alignment) noexcept;
 
     static void ApplyTextAlignmentF(
-        int contentWidth,
-        int contentHeight,
-        int availableWidth,
-        int availableHeight,
+        double contentWidth,
+        double contentHeight,
+        double availableWidth,
+        double availableHeight,
         TextHorizontalAlignment horizontalAlignment,
         TextVerticalAlignment verticalAlignment,
         float& outX,
         float& outY) noexcept;
 
-    static float GetBlockVerticalOffsetF(int contentWidth, int contentHeight, int viewportHeight,
+    static float GetBlockVerticalOffsetF(double contentWidth, double contentHeight, double viewportHeight,
                                          TextVerticalAlignment alignment) noexcept;
 
-    static float GetLineHorizontalOffsetF(int lineWidth, int viewportWidth,
+    static float GetLineHorizontalOffsetF(double lineWidth, double viewportWidth,
                                           TextHorizontalAlignment alignment) noexcept;
 };
 

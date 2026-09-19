@@ -27,14 +27,14 @@ class Alignment {
 public:
     static void ApplyAlignment(
         FrameworkElement* child,
-        int availableWidth,
-        int availableHeight,
+        double availableWidth,
+        double availableHeight,
         HorizontalAlignment hAlign,
         VerticalAlignment vAlign,
-        int& outX,
-        int& outY,
-        int& outWidth,
-        int& outHeight
+        double& outX,
+        double& outY,
+        double& outWidth,
+        double& outHeight
     );
 };
 

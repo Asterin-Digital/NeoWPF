@@ -18,7 +18,7 @@ TemplateVisual::TemplateVisual(const std::string& name)
 {
 }
 
-void TemplateVisual::SetRect(int x, int y, int width, int height) noexcept
+void TemplateVisual::SetRect(double x, double y, double width, double height) noexcept
 {
     m_x = x;
     m_y = y;
@@ -89,10 +89,10 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
         return;
     }
 
-    const float x = static_cast<float>(m_x);
-    const float y = static_cast<float>(m_y);
-    const float width = static_cast<float>(m_width);
-    const float height = static_cast<float>(m_height);
+    const double x = m_x;
+    const double y = m_y;
+    const double width = m_width;
+    const double height = m_height;
 
     if (m_borderThickness > 0 && m_borderColor != 0x00000000u) {
         commands.DrawRoundedRect(
@@ -113,21 +113,21 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
     }
 
     if (m_fillColor != 0x00000000u) {
-        const float inset = static_cast<float>(std::max(0, m_borderThickness));
-        const float innerX = x + inset;
-        const float innerY = y + inset;
-        const float innerWidth = std::max(0.0f, width - (2.0f * inset));
-        const float innerHeight = std::max(0.0f, height - (2.0f * inset));
-        if (innerWidth > 0.0f && innerHeight > 0.0f) {
+        const double inset = std::max<double>(0.0, m_borderThickness);
+        const double innerX = x + inset;
+        const double innerY = y + inset;
+        const double innerWidth = std::max(0.0, width - (2.0 * inset));
+        const double innerHeight = std::max(0.0, height - (2.0 * inset));
+        if (innerWidth > 0.0 && innerHeight > 0.0) {
             commands.DrawRoundedRect(
                 innerX,
                 innerY,
                 innerWidth,
                 innerHeight,
-                std::max(0.0f, m_cornerRadius.TopLeft - inset),
-                std::max(0.0f, m_cornerRadius.TopRight - inset),
-                std::max(0.0f, m_cornerRadius.BottomRight - inset),
-                std::max(0.0f, m_cornerRadius.BottomLeft - inset),
+                std::max(0.0, m_cornerRadius.TopLeft - inset),
+                std::max(0.0, m_cornerRadius.TopRight - inset),
+                std::max(0.0, m_cornerRadius.BottomRight - inset),
+                std::max(0.0, m_cornerRadius.BottomLeft - inset),
                 m_fillColor,
                 m_opacity,
                 m_clip,

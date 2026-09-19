@@ -334,18 +334,18 @@ void ComboBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         this, GetIsDropDownOpen() ? 1 : 0, GetFinalWidth(), GetFinalHeight(),
         m_popup && m_popup->GetIsOpen() ? 1 : 0);
     const auto renderTransform = GetWorldRenderTransform();
-    float absoluteX = 0.0f;
-    float absoluteY = 0.0f;
+    double absoluteX = 0.0;
+    double absoluteY = 0.0;
     renderTransform.positionMatrix.TransformPoint(0.0f, 0.0f, absoluteX, absoluteY);
 
-    const float x = static_cast<float>(absoluteX);
-    const float y = static_cast<float>(absoluteY);
-    const float width = static_cast<float>(std::max(0, GetFinalWidth()));
-    const float height = static_cast<float>(std::max(0, GetFinalHeight()));
+    const double x = absoluteX;
+    const double y = absoluteY;
+    const double width = std::max(0.0, GetFinalWidth());
+    const double height = std::max(0.0, GetFinalHeight());
 
     auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"));
     if (background) {
-        background->SetRect(static_cast<int>(std::lround(absoluteX)), static_cast<int>(std::lround(absoluteY)), static_cast<int>(width), static_cast<int>(height));
+        background->SetRect(x, y, width, height);
         background->SetOpacity(GetOpacity());
         background->BuildRenderCommands(commands);
     }
@@ -354,10 +354,10 @@ void ComboBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     if (contentHost) {
         const auto padding = GetPadding();
         contentHost->SetRect(
-            static_cast<int>(std::lround(absoluteX)) + padding.Left,
-            static_cast<int>(std::lround(absoluteY)) + padding.Top,
-            std::max(0, static_cast<int>(width) - padding.Horizontal()),
-            std::max(0, static_cast<int>(height) - padding.Vertical()));
+            x + padding.Left,
+            y + padding.Top,
+            std::max(0.0, width - padding.Horizontal()),
+            std::max(0.0, height - padding.Vertical()));
         contentHost->SetOpacity(GetOpacity());
         contentHost->BuildRenderCommands(commands);
     }

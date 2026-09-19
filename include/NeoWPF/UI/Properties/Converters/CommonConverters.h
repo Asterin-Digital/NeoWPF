@@ -43,6 +43,12 @@ public:
     bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
 };
 
+class DoubleConverter final : public TypeConverter {
+public:
+    bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
+};
+
 class FloatConverter final : public TypeConverter {
 public:
     bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
@@ -111,6 +117,7 @@ std::shared_ptr<const TypeConverter> GetStringConverter();
 std::shared_ptr<const TypeConverter> GetContentConverter();
 std::shared_ptr<const TypeConverter> GetWideStringConverter();
 std::shared_ptr<const TypeConverter> GetIntConverter();
+std::shared_ptr<const TypeConverter> GetDoubleConverter();
 std::shared_ptr<const TypeConverter> GetFloatConverter();
 std::shared_ptr<const TypeConverter> GetBoolConverter();
 std::shared_ptr<const TypeConverter> GetColorConverter();

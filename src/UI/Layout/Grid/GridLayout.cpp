@@ -2,6 +2,7 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
+#include <cmath>
 
 #ifdef max
 #undef max
@@ -15,37 +16,38 @@ namespace NeoWPF::UI {
     namespace {
         std::vector<Grid::Definition> NormalizeDefinitions(
             const std::vector<Grid::Definition>& defs,
-            const std::vector<int>& autoSizes)
+            const std::vector<double>& autoSizes)
         {
             std::vector<Grid::Definition> normalized = GridLayout::ResolveDefinitions(defs);
 
-            for (size_t i = 0; i < normalized.size(); ++i) {
+            for (std::size_t i = 0; i < normalized.size(); ++i) {
                 if (normalized[i].mode == SizeMode::Auto) {
                     normalized[i].mode = SizeMode::Fixed;
-                    normalized[i].value = i < autoSizes.size() ? autoSizes[i] : 0;
+                    const double autoSize = i < autoSizes.size() ? (autoSizes[i] > 0.0 ? autoSizes[i] : 0.0) : 0.0;
+                    normalized[i].value = static_cast<int>(std::lround(autoSize));
                 }
             }
 
             return normalized;
         }
 
-        std::vector<int> ResolveAutoSizes(
+        std::vector<double> ResolveAutoSizes(
             const Grid* grid,
             const std::vector<Grid::Definition>& defs,
             const std::vector<Visual*>& children,
             bool resolveRowHeights)
         {
             const auto effectiveDefs = GridLayout::ResolveDefinitions(defs);
-            const int count = std::max(1, static_cast<int>(effectiveDefs.size()));
-            std::vector<int> autoSizes(count, 0);
+            const std::size_t count = effectiveDefs.empty() ? 1u : effectiveDefs.size();
+            std::vector<double> autoSizes(count, 0.0);
 
-            for (int index = 0; index < count; ++index) {
+            for (std::size_t index = 0; index < count; ++index) {
                 const bool isAuto = effectiveDefs[index].mode == SizeMode::Auto || effectiveDefs[index].mode == SizeMode::Star;
                 if (!isAuto) {
                     continue;
                 }
 
-                int maxSize = 0;
+                double maxSize = 0.0;
                 for (auto child : children) {
                     if (!child || !grid) {
                         continue;
@@ -55,7 +57,8 @@ namespace NeoWPF::UI {
                         if (grid->GetRow(child) == index && Grid::GetRowSpan(child) == 1) {
                             if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
                                 const auto margin = fe->GetMargin();
-                                maxSize = std::max(maxSize, fe->GetDesiredHeight() + margin.Vertical());
+                                const double candidateHeight = fe->GetDesiredHeight() + margin.Vertical();
+                                maxSize = candidateHeight > maxSize ? candidateHeight : maxSize;
                             }
                         }
                     }
@@ -63,7 +66,8 @@ namespace NeoWPF::UI {
                         if (grid->GetColumn(child) == index && Grid::GetColumnSpan(child) == 1) {
                             if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
                                 const auto margin = fe->GetMargin();
-                                maxSize = std::max(maxSize, fe->GetDesiredWidth() + margin.Horizontal());
+                                const double candidateWidth = fe->GetDesiredWidth() + margin.Horizontal();
+                                maxSize = candidateWidth > maxSize ? candidateWidth : maxSize;
                             }
                         }
                     }
@@ -75,7 +79,6 @@ namespace NeoWPF::UI {
             return autoSizes;
         }
     }
-
 
     std::vector<Grid::Definition> GridLayout::ResolveDefinitions(const std::vector<Grid::Definition>& defs)
     {
@@ -89,134 +92,113 @@ namespace NeoWPF::UI {
     GridLayoutResult GridLayout::ComputeLayout(
         const std::vector<Grid::Definition>& rowDefs,
         const std::vector<Grid::Definition>& colDefs,
-        int availableWidth,
-        int availableHeight,
+        double availableWidth,
+        double availableHeight,
         const std::vector<Visual*>& children,
-        int horizontalSpacing,
-        int verticalSpacing)
+        double horizontalSpacing,
+        double verticalSpacing)
     {
         auto effectiveRowDefs = GridLayout::ResolveDefinitions(rowDefs);
         auto effectiveColDefs = GridLayout::ResolveDefinitions(colDefs);
 
-        const int gapX = std::max(0, horizontalSpacing);
-        const int gapY = std::max(0, verticalSpacing);
-        int numRows = std::max(1, static_cast<int>(effectiveRowDefs.size()));
-        int numCols = std::max(1, static_cast<int>(effectiveColDefs.size()));
+        const double gapX = horizontalSpacing > 0.0 ? horizontalSpacing : 0.0;
+        const double gapY = verticalSpacing > 0.0 ? verticalSpacing : 0.0;
+        const std::size_t numRows = effectiveRowDefs.empty() ? 1u : effectiveRowDefs.size();
+        const std::size_t numCols = effectiveColDefs.empty() ? 1u : effectiveColDefs.size();
 
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
-            "[Grid] ComputeLayout: Available %dx%d, Grid %dx%d, %zu children",
+            "[Grid] ComputeLayout: Available %gx%g, Grid %zux%zu, %zu children",
             availableWidth, availableHeight, numCols, numRows, children.size());
 
         GridLayoutResult result;
-        result.rowHeights.resize(numRows, 0);
-        result.colWidths.resize(numCols, 0);
+        result.rowHeights.resize(numRows, 0.0);
+        result.colWidths.resize(numCols, 0.0);
 
-        const int totalGapWidth = std::max(0, numCols - 1) * gapX;
-        const int totalGapHeight = std::max(0, numRows - 1) * gapY;
+        const double totalGapWidth = numCols > 1u ? (numCols - 1u) * gapX : 0.0;
+        const double totalGapHeight = numRows > 1u ? (numRows - 1u) * gapY : 0.0;
 
-        int totalFixedHeight = 0;
-        int totalFixedWidth = 0;
-        int starRowCount = 0;
-        int starColCount = 0;
+        double totalFixedHeight = 0.0;
+        double totalFixedWidth = 0.0;
+        double starRowCount = 0.0;
+        double starColCount = 0.0;
 
-        for (int r = 0; r < numRows; ++r) {
+        for (std::size_t r = 0; r < numRows; ++r) {
             const auto& def = effectiveRowDefs[r];
             if (def.mode == SizeMode::Fixed) {
-                int size = std::max(0, def.value);
+                const double size = def.value > 0 ? def.value : 0.0;
                 result.rowHeights[r] = size;
                 totalFixedHeight += size;
-                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
-                    "[Grid] Row %d: Fixed %d", r, size);
             }
             else if (def.mode == SizeMode::Star) {
-                starRowCount += def.value > 0 ? def.value : 1;
-                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
-                    "[Grid] Row %d: Star(%.0f)", r, (float)def.value);
-            }
-            else {
-                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
-                    "[Grid] Row %d: Auto", r);
+                starRowCount += def.value > 0 ? def.value : 1.0;
             }
         }
 
-        for (int c = 0; c < numCols; ++c) {
+        for (std::size_t c = 0; c < numCols; ++c) {
             const auto& def = effectiveColDefs[c];
             if (def.mode == SizeMode::Fixed) {
-                int size = std::max(0, def.value);
+                const double size = def.value > 0 ? def.value : 0.0;
                 result.colWidths[c] = size;
                 totalFixedWidth += size;
-                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
-                    "[Grid] Col %d: Fixed %d", c, size);
             }
             else if (def.mode == SizeMode::Star) {
-                starColCount += def.value > 0 ? def.value : 1;
-                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
-                    "[Grid] Col %d: Star(%.0f)", c, (float)def.value);
-            }
-            else {
-                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
-                    "[Grid] Col %d: Auto", c);
+                starColCount += def.value > 0 ? def.value : 1.0;
             }
         }
 
-        int remainingHeight = std::max(0, availableHeight - totalFixedHeight - totalGapHeight);
-        int remainingWidth = std::max(0, availableWidth - totalFixedWidth - totalGapWidth);
+        const double remainingHeightValue = availableHeight - totalFixedHeight - totalGapHeight;
+        double remainingHeight = remainingHeightValue > 0.0 ? remainingHeightValue : 0.0;
+        const double remainingWidthValue = availableWidth - totalFixedWidth - totalGapWidth;
+        double remainingWidth = remainingWidthValue > 0.0 ? remainingWidthValue : 0.0;
 
-        int starHeightPerUnit = starRowCount > 0 ? remainingHeight / starRowCount : 0;
-        int starWidthPerUnit = starColCount > 0 ? remainingWidth / starColCount : 0;
+        const double starHeightPerUnit = starRowCount > 0.0 ? std::floor(remainingHeight / starRowCount) : 0.0;
+        const double starWidthPerUnit = starColCount > 0.0 ? std::floor(remainingWidth / starColCount) : 0.0;
 
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
-            "[Grid] Star calculation: rows=%d(perUnit=%d), cols=%d(perUnit=%d)",
-            starRowCount, starHeightPerUnit, starColCount, starWidthPerUnit);
-
-        for (int r = 0; r < numRows; ++r) {
+        for (std::size_t r = 0; r < numRows; ++r) {
             const auto& def = effectiveRowDefs[r];
             if (def.mode == SizeMode::Star) {
-                int starCount = def.value > 0 ? def.value : 1;
+                const double starCount = def.value > 0 ? def.value : 1.0;
                 result.rowHeights[r] = starHeightPerUnit * starCount;
-                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
-                    "[Grid] Row %d (Star): %d", r, result.rowHeights[r]);
             }
         }
 
-        for (int c = 0; c < numCols; ++c) {
+        for (std::size_t c = 0; c < numCols; ++c) {
             const auto& def = effectiveColDefs[c];
             if (def.mode == SizeMode::Star) {
-                int starCount = def.value > 0 ? def.value : 1;
+                const double starCount = def.value > 0 ? def.value : 1.0;
                 result.colWidths[c] = starWidthPerUnit * starCount;
-                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Debug,
-                    "[Grid] Col %d (Star): %d", c, result.colWidths[c]);
             }
         }
 
-        int usedHeight = totalFixedHeight;
-        for (int h : result.rowHeights) usedHeight += h;
-        int heightRemainder = availableHeight - usedHeight;
-        for (int r = 0; r < numRows && heightRemainder > 0; ++r) {
+        double usedHeight = totalFixedHeight;
+        for (const double h : result.rowHeights) usedHeight += h;
+        double heightRemainder = availableHeight - usedHeight;
+        for (std::size_t r = 0; r < numRows && heightRemainder > 0.0; ++r) {
             if (effectiveRowDefs[r].mode == SizeMode::Star) {
-                ++result.rowHeights[r];
-                --heightRemainder;
+                result.rowHeights[r] += 1.0;
+                heightRemainder -= 1.0;
             }
         }
 
-        int usedWidth = totalFixedWidth;
-        for (int w : result.colWidths) usedWidth += w;
-        int widthRemainder = availableWidth - usedWidth;
-        for (int c = 0; c < numCols && widthRemainder > 0; ++c) {
+        double usedWidth = totalFixedWidth;
+        for (const double w : result.colWidths) usedWidth += w;
+        double widthRemainder = availableWidth - usedWidth;
+        for (std::size_t c = 0; c < numCols && widthRemainder > 0.0; ++c) {
             if (effectiveColDefs[c].mode == SizeMode::Star) {
-                ++result.colWidths[c];
-                --widthRemainder;
+                result.colWidths[c] += 1.0;
+                widthRemainder -= 1.0;
             }
         }
 
-        int totalH = 0, totalW = 0;
-        for (int r = 0; r < numRows; ++r) totalH += result.rowHeights[r];
-        for (int c = 0; c < numCols; ++c) totalW += result.colWidths[c];
-        totalW += std::max(0, numCols - 1) * gapX;
-        totalH += std::max(0, numRows - 1) * gapY;
+        double totalH = 0.0;
+        double totalW = 0.0;
+        for (std::size_t r = 0; r < numRows; ++r) totalH += result.rowHeights[r];
+        for (std::size_t c = 0; c < numCols; ++c) totalW += result.colWidths[c];
+        totalW += numCols > 1u ? (numCols - 1u) * gapX : 0.0;
+        totalH += numRows > 1u ? (numRows - 1u) * gapY : 0.0;
 
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
-            "[Grid] Layout (Auto=0): %dx%d", totalW, totalH);
+            "[Grid] Layout (Auto=0): %gx%g", totalW, totalH);
 
         return result;
     }
@@ -225,14 +207,14 @@ namespace NeoWPF::UI {
         const Grid* grid,
         const std::vector<Grid::Definition>& rowDefs,
         const std::vector<Grid::Definition>& colDefs,
-        int availableWidth,
-        int availableHeight,
+        double availableWidth,
+        double availableHeight,
         const std::vector<Visual*>& children,
-        int horizontalSpacing,
-        int verticalSpacing)
+        double horizontalSpacing,
+        double verticalSpacing)
     {
-        const int gapX = std::max(0, horizontalSpacing);
-        const int gapY = std::max(0, verticalSpacing);
+        const double gapX = horizontalSpacing > 0.0 ? horizontalSpacing : 0.0;
+        const double gapY = verticalSpacing > 0.0 ? verticalSpacing : 0.0;
 
         GridLayoutMetrics metrics;
         metrics.autoRowHeights = ResolveAutoSizes(grid, rowDefs, children, true);
@@ -246,51 +228,54 @@ namespace NeoWPF::UI {
         metrics.colWidths = layout.colWidths;
         metrics.childLayouts.resize(children.size());
 
-        for (size_t i = 0; i < children.size(); ++i) {
+        const std::size_t colCount = metrics.colWidths.size();
+        const std::size_t rowCount = metrics.rowHeights.size();
+
+        for (std::size_t i = 0; i < children.size(); ++i) {
             auto child = children[i];
             if (!child) {
                 continue;
             }
 
-            int r = grid ? grid->GetRow(child) : 0;
-            int c = grid ? grid->GetColumn(child) : 0;
-            int rspan = Grid::GetRowSpan(child);
-            int cspan = Grid::GetColumnSpan(child);
+            const int rowPos = grid ? grid->GetRow(child) : 0;
+            const int columnPos = grid ? grid->GetColumn(child) : 0;
+            const int rowSpanValue = Grid::GetRowSpan(child);
+            const int columnSpanValue = Grid::GetColumnSpan(child);
 
-            int x = 0;
-            int y = 0;
-            int w = 0;
-            int h = 0;
+            double left = 0.0;
+            double top = 0.0;
+            double widthValue = 0.0;
+            double heightValue = 0.0;
 
-            int boundedRow = std::max(0, r);
-            int boundedCol = std::max(0, c);
-            int safeRowSpan = std::max(1, rspan);
-            int safeColSpan = std::max(1, cspan);
-            int colCount = static_cast<int>(metrics.colWidths.size());
-            int rowCount = static_cast<int>(metrics.rowHeights.size());
-            int endCol = std::min(colCount, boundedCol + safeColSpan);
-            int endRow = std::min(rowCount, boundedRow + safeRowSpan);
+            const int boundedRow = rowPos > 0 ? rowPos : 0;
+            const int boundedCol = columnPos > 0 ? columnPos : 0;
+            const int safeRowSpan = rowSpanValue > 1 ? rowSpanValue : 1;
+            const int safeColSpan = columnSpanValue > 1 ? columnSpanValue : 1;
+            const int colCount = static_cast<int>(metrics.colWidths.size());
+            const int rowCount = static_cast<int>(metrics.rowHeights.size());
+            const int endCol = (boundedCol + safeColSpan) < colCount ? (boundedCol + safeColSpan) : colCount;
+            const int endRow = (boundedRow + safeRowSpan) < rowCount ? (boundedRow + safeRowSpan) : rowCount;
 
             for (int j = 0; j < boundedCol && j < colCount; ++j) {
-                x += metrics.colWidths[j] + gapX;
+                left += metrics.colWidths[j] + gapX;
             }
             for (int j = boundedCol; j < endCol; ++j) {
-                w += metrics.colWidths[j];
+                widthValue += metrics.colWidths[j];
             }
             if (safeColSpan > 1) {
-                w += gapX * (safeColSpan - 1);
+                widthValue += gapX * (safeColSpan - 1);
             }
             for (int j = 0; j < boundedRow && j < rowCount; ++j) {
-                y += metrics.rowHeights[j] + gapY;
+                top += metrics.rowHeights[j] + gapY;
             }
             for (int j = boundedRow; j < endRow; ++j) {
-                h += metrics.rowHeights[j];
+                heightValue += metrics.rowHeights[j];
             }
             if (safeRowSpan > 1) {
-                h += gapY * (safeRowSpan - 1);
+                heightValue += gapY * (safeRowSpan - 1);
             }
 
-            metrics.childLayouts[i] = { x, y, w, h };
+            metrics.childLayouts[i] = { left, top, widthValue, heightValue };
         }
 
         return metrics;

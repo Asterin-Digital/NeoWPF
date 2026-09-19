@@ -40,15 +40,17 @@ int ResolveCaretY(const std::vector<NeoWPF::UI::Text::FlowLine>& lines, std::siz
 {
     int y = 0;
     for (std::size_t i = 0; i < lineIndex && i < lines.size(); ++i) {
-        y += std::max(1, lines[i].lineHeight);
+        const double lineHeight = lines[i].lineHeight > 1.0 ? lines[i].lineHeight : 1.0;
+        y += std::lround(lineHeight);
     }
     return y;
 }
 
 int ResolveLineVisualOffset(const NeoWPF::UI::Text::FlowLine& line)
 {
-    if (line.height > 0 && line.lineHeight > line.height) {
-        return (line.lineHeight - line.height) / 2;
+    if (line.height > 0.0 && line.lineHeight > line.height) {
+        const double offset = (line.lineHeight - line.height) / 2.0;
+        return std::lround(offset);
     }
     return 0;
 }
@@ -57,12 +59,12 @@ int ResolveLineVisualOffset(const NeoWPF::UI::Text::FlowLine& line)
 
 void TextBox::UpdateCaretFromMouse(int x, int y)
 {
-    int absX = 0, absY = 0;
+    double absX = 0.0, absY = 0.0;
     GetAbsolutePosition(absX, absY);
-    const int localX = x - absX - std::max(0, GetPadding().Left);
-    const int localY = y - absY - std::max(0, GetPadding().Top);
+    const double localX = x - absX - std::max(0.0, GetPadding().Left);
+    const double localY = y - absY - std::max(0.0, GetPadding().Top);
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Info,
-        "[TextBox] UpdateCaretFromMouse: x=%d y=%d localX=%d localY=%d", x, y, localX, localY);
+        "[TextBox] UpdateCaretFromMouse: x=%d y=%d localX=%g localY=%g", x, y, localX, localY);
 
     const auto& lines = m_renderCache.GetLines();
     if (lines.empty()) {
@@ -71,9 +73,9 @@ void TextBox::UpdateCaretFromMouse(int x, int y)
     }
 
     std::size_t targetLine = 0;
-    int accumulatedY = 0;
+    double accumulatedY = 0.0;
     for (; targetLine + 1 < lines.size(); ++targetLine) {
-        const int lineHeight = std::max(1, lines[targetLine].lineHeight);
+        const double lineHeight = lines[targetLine].lineHeight > 1.0 ? lines[targetLine].lineHeight : 1.0;
         if (localY < accumulatedY + lineHeight) break;
         accumulatedY += lineHeight;
     }
@@ -85,11 +87,11 @@ void TextBox::UpdateCaretFromMouse(int x, int y)
     }
 
     std::size_t bestPosition = line.charStart;
-    int bestDistance = std::numeric_limits<int>::max();
+    double bestDistance = std::numeric_limits<double>::max();
     for (std::size_t i = 0; i <= line.text.size(); ++i) {
         const auto metrics = NeoWPF::Rendering::Text::MeasureText(
             line.text.substr(0, i), m_fontSize, GetFontFamily(), 0, 0);
-        const int distance = std::abs(localX - metrics.width);
+        const double distance = std::abs(localX - metrics.width);
         if (distance < bestDistance) {
             bestDistance = distance;
             bestPosition = line.charStart + i;
@@ -127,9 +129,11 @@ int TextBox::GetCaretHeight() const
     const auto& lines = m_renderCache.GetLines();
     const auto [lineIndex, _] = GetCaretLineColumn(m_caret.position);
     if (lineIndex < lines.size()) {
-        return std::max(1, lines[lineIndex].lineHeight);
+        const double lineHeight = lines[lineIndex].lineHeight > 1.0 ? lines[lineIndex].lineHeight : 1.0;
+        return std::lround(lineHeight);
     }
-    return std::max(1, NeoWPF::UI::Text::MeasureLineHeight(L"W", m_fontSize, GetFontFamily()));
+    const double defaultLineHeight = NeoWPF::UI::Text::MeasureLineHeight(L"W", m_fontSize, GetFontFamily());
+    return std::lround(defaultLineHeight > 1.0 ? defaultLineHeight : 1.0);
 }
 
 std::pair<std::size_t, std::size_t> TextBox::GetCaretLineColumn(std::size_t caretPosition) const

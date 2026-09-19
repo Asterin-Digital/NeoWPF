@@ -200,17 +200,17 @@ void Button::OnBorderColorChanged(NeoWPF::UI::Color color)
     InvalidateVisual();
 }
 
-void Button::OnBorderThicknessChanged(int)
+void Button::OnBorderThicknessChanged(double)
 {
     InvalidateVisual();
 }
 
-void Button::Measure(int availableWidth, int availableHeight)
+void Button::Measure(double availableWidth, double availableHeight)
 {
     Content::ContentControl::Measure(availableWidth, availableHeight);
 }
 
-void Button::Arrange(int finalWidth, int finalHeight)
+void Button::Arrange(double finalWidth, double finalHeight)
 {
     Content::ContentControl::Arrange(finalWidth, finalHeight);
 }
@@ -218,13 +218,13 @@ void Button::Arrange(int finalWidth, int finalHeight)
 void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
     const auto renderTransform = GetWorldRenderTransform();
-    float drawX = 0.0f;
-    float drawY = 0.0f;
-    float drawWidth = static_cast<float>(GetFinalWidth());
-    float drawHeight = static_cast<float>(GetFinalHeight());
+    double drawX = 0.0;
+    double drawY = 0.0;
+    double drawWidth = GetFinalWidth();
+    double drawHeight = GetFinalHeight();
     renderTransform.positionMatrix.TransformPoint(drawX, drawY, drawX, drawY);
-    float right = drawWidth;
-    float bottom = drawHeight;
+    double right = drawWidth;
+    double bottom = drawHeight;
     renderTransform.positionMatrix.TransformPoint(right, bottom, right, bottom);
     drawWidth = std::abs(right - drawX);
     drawHeight = std::abs(bottom - drawY);
@@ -232,14 +232,17 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     rotationRadians = renderTransform.rotationRadians;
 
     const auto cornerRadius = GetCornerRadius();
+    const auto nonNegative = [](double value) {
+        return value > 0.0 ? value : 0.0;
+    };
 
     auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"));
     if (background) {
         background->SetRect(
-            static_cast<int>(std::lround(drawX)),
-            static_cast<int>(std::lround(drawY)),
-            std::max(0, static_cast<int>(std::lround(drawWidth))),
-            std::max(0, static_cast<int>(std::lround(drawHeight))));
+            drawX,
+            drawY,
+            nonNegative(drawWidth),
+            nonNegative(drawHeight));
         background->SetBorderThickness(1);
         background->SetCornerRadius(cornerRadius);
         background->SetOpacity(GetOpacity());
@@ -247,38 +250,43 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         background->BuildRenderCommands(commands);
     }
     else {
-        const float borderThickness = 1.0f;
+        const double borderThickness = 1.0;
         const uint32_t borderColor = 0xFF707070u;
-        const float borderInset = borderThickness * 0.5f;
-        const float borderX = drawX + borderInset;
-        const float borderY = drawY + borderInset;
-        const float borderW = std::max(0.0f, drawWidth - borderThickness);
-        const float borderH = std::max(0.0f, drawHeight - borderThickness);
+        const double borderInset = borderThickness * 0.5;
+        const double borderX = drawX + borderInset;
+        const double borderY = drawY + borderInset;
+        const double borderW = drawWidth > borderThickness ? drawWidth - borderThickness : 0.0;
+        const double borderH = drawHeight > borderThickness ? drawHeight - borderThickness : 0.0;
+
+        const double borderTL = cornerRadius.TopLeft > borderInset ? cornerRadius.TopLeft - borderInset : 0.0;
+        const double borderTR = cornerRadius.TopRight > borderInset ? cornerRadius.TopRight - borderInset : 0.0;
+        const double borderBR = cornerRadius.BottomRight > borderInset ? cornerRadius.BottomRight - borderInset : 0.0;
+        const double borderBL = cornerRadius.BottomLeft > borderInset ? cornerRadius.BottomLeft - borderInset : 0.0;
 
         commands.DrawRoundedRect(
             borderX,
             borderY,
             borderW,
             borderH,
-            std::max(0.0f, cornerRadius.TopLeft - borderInset),
-            std::max(0.0f, cornerRadius.TopRight - borderInset),
-            std::max(0.0f, cornerRadius.BottomRight - borderInset),
-            std::max(0.0f, cornerRadius.BottomLeft - borderInset),
+            borderTL,
+            borderTR,
+            borderBR,
+            borderBL,
             borderColor,
             GetOpacity(),
             NeoWPF::Rendering::ClipRect{},
             rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
 
-        const float inset = borderThickness;
-        const float innerX = drawX + inset;
-        const float innerY = drawY + inset;
-        const float innerW = std::max(0.0f, drawWidth - 2.0f * inset);
-        const float innerH = std::max(0.0f, drawHeight - 2.0f * inset);
+        const double inset = borderThickness;
+        const double innerX = drawX + inset;
+        const double innerY = drawY + inset;
+        const double innerW = drawWidth > (2.0 * inset) ? drawWidth - (2.0 * inset) : 0.0;
+        const double innerH = drawHeight > (2.0 * inset) ? drawHeight - (2.0 * inset) : 0.0;
         if (innerW > 0.0f && innerH > 0.0f) {
-            const float innerTL = std::max(0.0f, cornerRadius.TopLeft - inset);
-            const float innerTR = std::max(0.0f, cornerRadius.TopRight - inset);
-            const float innerBR = std::max(0.0f, cornerRadius.BottomRight - inset);
-            const float innerBL = std::max(0.0f, cornerRadius.BottomLeft - inset);
+            const double innerTL = cornerRadius.TopLeft > inset ? cornerRadius.TopLeft - inset : 0.0;
+            const double innerTR = cornerRadius.TopRight > inset ? cornerRadius.TopRight - inset : 0.0;
+            const double innerBR = cornerRadius.BottomRight > inset ? cornerRadius.BottomRight - inset : 0.0;
+            const double innerBL = cornerRadius.BottomLeft > inset ? cornerRadius.BottomLeft - inset : 0.0;
 
             commands.DrawRoundedRect(
                 innerX,
@@ -299,19 +307,19 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
     if (contentHost) {
         const auto padding = GetPadding();
-        const int absX = static_cast<int>(std::lround(drawX));
-        const int absY = static_cast<int>(std::lround(drawY));
-        const int insetX = std::max(0, padding.Left);
-        const int insetY = std::max(0, padding.Top);
-        const int chX = static_cast<int>(std::lround(drawX)) + insetX;
-        const int chY = static_cast<int>(std::lround(drawY)) + insetY;
-        const int chW = std::max(0, static_cast<int>(std::lround(drawWidth)) - padding.Horizontal());
-        const int chH = std::max(0, static_cast<int>(std::lround(drawHeight)) - padding.Vertical());
+        const double absX = drawX;
+        const double absY = drawY;
+        const double insetX = padding.Left > 0.0 ? padding.Left : 0.0;
+        const double insetY = padding.Top > 0.0 ? padding.Top : 0.0;
+        const double chX = drawX + insetX;
+        const double chY = drawY + insetY;
+        const double chW = drawWidth - padding.Horizontal();
+        const double chH = drawHeight - padding.Vertical();
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Info,
-            "[Button] BuildRenderCommands: abs=(%d,%d) size=(%d,%d) inset=(%d,%d) contentHost=(%d,%d,%d,%d) contentHostPtr=%p",
+            "[Button] BuildRenderCommands: abs=(%g,%g) size=(%g,%g) inset=(%g,%g) contentHost=(%g,%g,%g,%g) contentHostPtr=%p",
             absX, absY, GetFinalWidth(), GetFinalHeight(), insetX, insetY, chX, chY, chW, chH, contentHost.get());
 
-        contentHost->SetRect(chX, chY, chW, chH);
+        contentHost->SetRect(chX, chY, chW > 0.0 ? chW : 0.0, chH > 0.0 ? chH : 0.0);
         contentHost->SetBorderThickness(0);
         contentHost->SetOpacity(GetOpacity());
         contentHost->SetRotation(rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
@@ -320,13 +328,13 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         auto presenter = GetPresenter();
         if (presenter) {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
-                "[Button] Presenter: ptr=%p final=(%d,%d) layoutOffset=(%d,%d)",
+                "[Button] Presenter: ptr=%p final=(%g,%g) layoutOffset=(%g,%g)",
                 presenter.get(), presenter->GetFinalWidth(), presenter->GetFinalHeight(), presenter->GetLayoutOffsetX(), presenter->GetLayoutOffsetY());
         }
 
         if (m_textContent) {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug,
-                "[Button] TextContent: ptr=%p final=(%d,%d) layoutOffset=(%d,%d)",
+                "[Button] TextContent: ptr=%p final=(%g,%g) layoutOffset=(%g,%g)",
                 m_textContent.get(), m_textContent->GetFinalWidth(), m_textContent->GetFinalHeight(), m_textContent->GetLayoutOffsetX(), m_textContent->GetLayoutOffsetY());
         }
     }

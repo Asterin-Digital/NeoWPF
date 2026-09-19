@@ -342,7 +342,7 @@ public:
 
         @internal
     */
-    void Measure(int availableWidth, int availableHeight) override;
+    void Measure(double availableWidth, double availableHeight) override;
 
     /*
         @summary
@@ -350,7 +350,7 @@ public:
 
         @internal
     */
-    void Arrange(int finalWidth, int finalHeight) override;
+    void Arrange(double finalWidth, double finalHeight) override;
 
 protected:
     void OnInitialize() override;
@@ -362,7 +362,7 @@ protected:
                                      Properties::PropertyValueSource source) override;
     void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
     void OnBorderColorChanged(NeoWPF::UI::Color color) override;
-    void OnBorderThicknessChanged(int thickness) override;
+    void OnBorderThicknessChanged(double thickness) override;
 
     /*
         @summary

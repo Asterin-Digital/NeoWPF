@@ -17,7 +17,7 @@ public:
         SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Stretch);
     }
 
-    void Measure(int, int) override
+    void Measure(double, double) override
     {
         SetDesiredSize(width, height);
     }

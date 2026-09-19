@@ -438,7 +438,7 @@ public:
 
         @internal
     */
-    virtual void Measure(int availableWidth, int availableHeight) {}
+    virtual void Measure(double availableWidth, double availableHeight) {}
 
     /*
         @summary
@@ -452,7 +452,7 @@ public:
 
         @internal
     */
-    virtual void Arrange(int finalWidth, int finalHeight) {}
+    virtual void Arrange(double finalWidth, double finalHeight) {}
 
     /*
         @summary
@@ -911,8 +911,8 @@ protected:
             const auto fromBottomLeft = fromValue.BottomLeft + (toValue.BottomLeft - fromValue.BottomLeft) * progress;
             SetValue(property, std::any(NeoWPF::UI::CornerRadius(fromTopLeft, fromTopRight, fromBottomRight, fromBottomLeft)));
         } else if constexpr (std::is_integral_v<T> && !std::is_same_v<T, bool>) {
-            const auto fromInt = static_cast<double>(fromValue);
-            const auto toInt = static_cast<double>(toValue);
+            const double fromInt = fromValue;
+            const double toInt = toValue;
             const auto currentInt = std::lround(fromInt + (toInt - fromInt) * progress);
             SetValue(property, std::any(static_cast<T>(currentInt)));
         } else if constexpr (std::is_floating_point_v<T>) {
@@ -920,8 +920,8 @@ protected:
             SetValue(property, std::any(currentFloat));
         } else if constexpr (std::is_enum_v<T>) {
             using Underlying = std::underlying_type_t<T>;
-            const auto fromEnum = static_cast<double>(static_cast<Underlying>(fromValue));
-            const auto toEnum = static_cast<double>(static_cast<Underlying>(toValue));
+            const double fromEnum = static_cast<Underlying>(fromValue);
+            const double toEnum = static_cast<Underlying>(toValue);
             const auto currentEnum = std::lround(fromEnum + (toEnum - fromEnum) * progress);
             SetValue(property, std::any(static_cast<T>(static_cast<Underlying>(currentEnum))));
         } else {

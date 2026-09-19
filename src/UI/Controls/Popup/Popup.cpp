@@ -99,32 +99,32 @@ void Popup::SetPlacement(PopupPlacement placement)
     }
 }
 
-int Popup::GetHorizontalOffset() const noexcept
+double Popup::GetHorizontalOffset() const noexcept
 {
     try {
-        return GetValue<int>(HorizontalOffsetProperty());
+        return GetValue<double>(HorizontalOffsetProperty());
     } catch (const std::bad_any_cast&) {
         return 0;
     }
 }
 
-void Popup::SetHorizontalOffset(int offset)
+void Popup::SetHorizontalOffset(double offset)
 {
     if (!IsApplyingPropertyValue()) {
         SetValue(HorizontalOffsetProperty(), offset);
     }
 }
 
-int Popup::GetVerticalOffset() const noexcept
+double Popup::GetVerticalOffset() const noexcept
 {
     try {
-        return GetValue<int>(VerticalOffsetProperty());
+        return GetValue<double>(VerticalOffsetProperty());
     } catch (const std::bad_any_cast&) {
         return 0;
     }
 }
 
-void Popup::SetVerticalOffset(int offset)
+void Popup::SetVerticalOffset(double offset)
 {
     if (!IsApplyingPropertyValue()) {
         SetValue(VerticalOffsetProperty(), offset);
@@ -136,7 +136,7 @@ bool Popup::IsHitTestVisible() const noexcept
     return GetIsOpen() && Content::ContentControl::IsHitTestVisible();
 }
 
-void Popup::Measure(int availableWidth, int availableHeight)
+void Popup::Measure(double availableWidth, double availableHeight)
 {
     if (!GetIsOpen()) {
         SetDesiredSize(0, 0);
@@ -145,16 +145,16 @@ void Popup::Measure(int availableWidth, int availableHeight)
     Content::ContentControl::Measure(availableWidth, availableHeight);
 }
 
-void Popup::Arrange(int finalWidth, int finalHeight)
+void Popup::Arrange(double finalWidth, double finalHeight)
 {
     if (!GetIsOpen()) {
         return;
     }
-    int x = GetHorizontalOffset();
-    int y = GetVerticalOffset();
+    double x = GetHorizontalOffset();
+    double y = GetVerticalOffset();
     if (auto* target = GetPlacementTarget()) {
-        int targetX = 0;
-        int targetY = 0;
+        double targetX = 0.0;
+        double targetY = 0.0;
         target->GetAbsolutePosition(targetX, targetY);
         switch (GetPlacement()) {
         case PopupPlacement::Bottom:

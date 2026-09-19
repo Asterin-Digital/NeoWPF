@@ -184,7 +184,7 @@ public:
 
         @internal
     */
-    void Measure(int availableWidth, int availableHeight) override;
+    void Measure(double availableWidth, double availableHeight) override;
 
     /*
         @summary
@@ -192,7 +192,7 @@ public:
 
         @internal
     */
-    void Arrange(int finalWidth, int finalHeight) override;
+    void Arrange(double finalWidth, double finalHeight) override;
 
     /*
         @summary

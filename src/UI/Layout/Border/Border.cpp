@@ -18,10 +18,10 @@ Border::Border()
     SetClipToBounds(true);
 }
 
-void Border::Measure(int availableWidth, int availableHeight)
+void Border::Measure(double availableWidth, double availableHeight)
 {
     const auto padding = GetPadding();
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Measure] available=%dx%d explicit=%dx%d padding=(%d,%d,%d,%d) border=%d",
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Measure] available=%fx%f explicit=%fx%f padding=(%f,%f,%f,%f) border=%f",
         availableWidth, availableHeight, GetWidth(), GetHeight(),
         padding.Left, padding.Top, padding.Right, padding.Bottom, GetBorderThickness());
 
@@ -33,29 +33,29 @@ void Border::Measure(int availableWidth, int availableHeight)
             }
         }
 
-        const int explicitW = GetWidth();
-        const int explicitH = GetHeight();
-        const int availableContentWidth = std::max(0, explicitW > 0 ? explicitW : availableWidth);
-        const int availableContentHeight = std::max(0, explicitH > 0 ? explicitH : availableHeight);
+        const double explicitW = GetWidth();
+        const double explicitH = GetHeight();
+        const double availableContentWidth = (std::max)(0.0, explicitW > 0.0 ? explicitW : availableWidth);
+        const double availableContentHeight = (std::max)(0.0, explicitH > 0.0 ? explicitH : availableHeight);
 
         const auto border = GetBorderThicknessValue();
-        const int innerWidth = std::max(0, availableContentWidth - border.Left - border.Right - padding.Horizontal());
-        const int innerHeight = std::max(0, availableContentHeight - border.Top - border.Bottom - padding.Vertical());
+        const double innerWidth = (std::max)(0.0, availableContentWidth - border.Left - border.Right - padding.Horizontal());
+        const double innerHeight = (std::max)(0.0, availableContentHeight - border.Top - border.Bottom - padding.Vertical());
 
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Measure] inner=%dx%d content=%dx%d",
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Measure] inner=%fx%f content=%fx%f",
             innerWidth, innerHeight, availableContentWidth, availableContentHeight);
 
         presenter->Measure(innerWidth, innerHeight);
 
-        const int contentW = presenter->GetDesiredWidth();
-        const int contentH = presenter->GetDesiredHeight();
-        const int contentDesiredW = std::max(0, contentW + border.Left + border.Right + padding.Horizontal());
-        const int contentDesiredH = std::max(0, contentH + border.Top + border.Bottom + padding.Vertical());
+        const double contentW = presenter->GetDesiredWidth();
+        const double contentH = presenter->GetDesiredHeight();
+        const double contentDesiredW = (std::max)(0.0, contentW + border.Left + border.Right + padding.Horizontal());
+        const double contentDesiredH = (std::max)(0.0, contentH + border.Top + border.Bottom + padding.Vertical());
 
-        const int desiredW = std::max(contentDesiredW, explicitW > 0 ? explicitW : 0);
-        const int desiredH = std::max(contentDesiredH, explicitH > 0 ? explicitH : 0);
+        const double desiredW = (std::max)(contentDesiredW, explicitW > 0.0 ? explicitW : 0.0);
+        const double desiredH = (std::max)(contentDesiredH, explicitH > 0.0 ? explicitH : 0.0);
 
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Measure] desired=%dx%d content=%dx%d",
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Measure] desired=%fx%f content=%fx%f",
             desiredW, desiredH, contentDesiredW, contentDesiredH);
 
         SetDesiredSize(desiredW, desiredH);
@@ -67,22 +67,22 @@ void Border::Measure(int availableWidth, int availableHeight)
     SetDesiredSize(0, 0);
 }
 
-void Border::Arrange(int finalWidth, int finalHeight)
+void Border::Arrange(double finalWidth, double finalHeight)
 {
     const auto padding = GetPadding();
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Arrange] final=%dx%d padding=(%d,%d,%d,%d) border=%d",
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Arrange] final=%fx%f padding=(%f,%f,%f,%f) border=%f",
         finalWidth, finalHeight, padding.Left, padding.Top, padding.Right, padding.Bottom, GetBorderThickness());
 
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
     if (auto presenter = GetPresenter()) {
         const auto border = GetBorderThicknessValue();
-        const int innerX = border.Left + padding.Left;
-        const int innerY = border.Top + padding.Top;
-        const int innerWidth = std::max(0, finalWidth - border.Left - border.Right - padding.Horizontal());
-        const int innerHeight = std::max(0, finalHeight - border.Top - border.Bottom - padding.Vertical());
+        const double innerX = border.Left + padding.Left;
+        const double innerY = border.Top + padding.Top;
+        const double innerWidth = (std::max)(0.0, finalWidth - border.Left - border.Right - padding.Horizontal());
+        const double innerHeight = (std::max)(0.0, finalHeight - border.Top - border.Bottom - padding.Vertical());
 
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Arrange] presenter offset=%dx%d inner=%dx%d",
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Arrange] presenter offset=%fx%f inner=%fx%f",
             innerX, innerY, innerWidth, innerHeight);
 
         presenter->Arrange(innerWidth, innerHeight);
@@ -92,7 +92,7 @@ void Border::Arrange(int finalWidth, int finalHeight)
                 AddChild(presenter);
             } catch (const std::bad_weak_ptr&) {
             }
-        } */ // possible crash
+        } */ // bad dont do this
     }
 }
 
@@ -102,8 +102,8 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         return;
     }
 
-    int absX = 0;
-    int absY = 0;
+    double absX = 0.0;
+    double absY = 0.0;
     GetAbsolutePosition(absX, absY);
 
     const auto cornerRadius = GetCornerRadius();
@@ -112,24 +112,24 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     if (GetBorderThickness() > 0 && GetBorderColor().ToArgb() != 0x00000000u) {
         const auto border = GetBorderThicknessValue();
-        if (border.Top > 0) commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY), static_cast<float>(GetFinalWidth()), static_cast<float>(border.Top), GetBorderColor().ToArgb(), GetOpacity(), clip);
-        if (border.Bottom > 0) commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY + GetFinalHeight() - border.Bottom), static_cast<float>(GetFinalWidth()), static_cast<float>(border.Bottom), GetBorderColor().ToArgb(), GetOpacity(), clip);
-        if (border.Left > 0) commands.DrawRect(static_cast<float>(absX), static_cast<float>(absY + border.Top), static_cast<float>(border.Left), static_cast<float>(std::max(0, GetFinalHeight() - border.Top - border.Bottom)), GetBorderColor().ToArgb(), GetOpacity(), clip);
-        if (border.Right > 0) commands.DrawRect(static_cast<float>(absX + GetFinalWidth() - border.Right), static_cast<float>(absY + border.Top), static_cast<float>(border.Right), static_cast<float>(std::max(0, GetFinalHeight() - border.Top - border.Bottom)), GetBorderColor().ToArgb(), GetOpacity(), clip);
+        if (border.Top > 0) commands.DrawRect(absX, absY, GetFinalWidth(), border.Top, GetBorderColor().ToArgb(), GetOpacity(), clip);
+        if (border.Bottom > 0) commands.DrawRect(absX, absY + GetFinalHeight() - border.Bottom, GetFinalWidth(), border.Bottom, GetBorderColor().ToArgb(), GetOpacity(), clip);
+        if (border.Left > 0) commands.DrawRect(absX, absY + border.Top, border.Left, (std::max)(0.0, GetFinalHeight() - border.Top - border.Bottom), GetBorderColor().ToArgb(), GetOpacity(), clip);
+        if (border.Right > 0) commands.DrawRect(absX + GetFinalWidth() - border.Right, absY + border.Top, border.Right, (std::max)(0.0, GetFinalHeight() - border.Top - border.Bottom), GetBorderColor().ToArgb(), GetOpacity(), clip);
     }
 
     if (GetBackgroundColor().ToArgb() != 0x00000000u) {
         const auto border = GetBorderThicknessValue();
-        const float inset = static_cast<float>(std::max({border.Left, border.Top, border.Right, border.Bottom}));
+        const double inset = std::max({border.Left, border.Top, border.Right, border.Bottom});
         commands.DrawRoundedRect(
-            static_cast<float>(absX + border.Left),
-            static_cast<float>(absY + border.Top),
-            static_cast<float>(std::max(0, GetFinalWidth() - border.Left - border.Right)),
-            static_cast<float>(std::max(0, GetFinalHeight() - border.Top - border.Bottom)),
-            std::max(0.0f, cornerRadius.TopLeft - inset),
-            std::max(0.0f, cornerRadius.TopRight - inset),
-            std::max(0.0f, cornerRadius.BottomRight - inset),
-            std::max(0.0f, cornerRadius.BottomLeft - inset),
+            absX + border.Left,
+            absY + border.Top,
+            (std::max)(0.0, GetFinalWidth() - border.Left - border.Right),
+            (std::max)(0.0, GetFinalHeight() - border.Top - border.Bottom),
+            std::max(0.0, cornerRadius.TopLeft - inset),
+            std::max(0.0, cornerRadius.TopRight - inset),
+            std::max(0.0, cornerRadius.BottomRight - inset),
+            std::max(0.0, cornerRadius.BottomLeft - inset),
             GetBackgroundColor().ToArgb(),
             GetOpacity(),
             clip,
@@ -150,14 +150,14 @@ Thickness Border::GetPadding() const noexcept
     return Control::GetPadding();
 }
 
-void Border::SetBorderThickness(int thickness) noexcept
+void Border::SetBorderThickness(double thickness) noexcept
 {
     Control::SetBorderThickness(thickness);
     m_borderThicknesses = Thickness(thickness);
     InvalidateVisual();
 }
 
-int Border::GetBorderThickness() const noexcept
+double Border::GetBorderThickness() const noexcept
 {
     return Control::GetBorderThickness();
 }
@@ -201,7 +201,7 @@ void Border::OnPaddingChanged(Thickness)
     InvalidateVisual();
 }
 
-void Border::OnBorderThicknessChanged(int)
+void Border::OnBorderThicknessChanged(double)
 {
     InvalidateVisual();
 }

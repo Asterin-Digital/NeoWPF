@@ -8,8 +8,8 @@ See LICENSE file in the project root for full license text.
 namespace NeoWPF::UI {
 
 struct ContentBounds {
-    int width = 0;
-    int height = 0;
+    double width = 0.0;
+    double height = 0.0;
 };
 
 class IContentAware {

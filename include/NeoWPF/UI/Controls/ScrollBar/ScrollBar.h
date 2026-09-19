@@ -95,13 +95,13 @@ public:
         @param size
         A minimum-sized thumb; values below 1 are clamped to 1.
     */
-    void SetThumbSize(int size) noexcept { m_thumbSize = size < 1 ? 1 : size; InvalidateVisual(); }
+    void SetThumbSize(double size) noexcept { m_thumbSize = size < 1.0 ? 1.0 : size; InvalidateVisual(); }
 
     /*
         @summary
         Returns the current thumb size.
     */
-    int GetThumbSize() const noexcept { return m_thumbSize; }
+    double GetThumbSize() const noexcept { return m_thumbSize; }
 
     /*
         @summary
@@ -112,7 +112,7 @@ public:
 
         @internal
     */
-    void SetContentSize(int size) noexcept;
+    void SetContentSize(double size) noexcept;
 
     /*
         @summary
@@ -123,7 +123,7 @@ public:
 
         @internal
     */
-    void SetViewportSize(int size) noexcept;
+    void SetViewportSize(double size) noexcept;
 
     /*
         @summary
@@ -135,13 +135,13 @@ public:
         @example
         scrollBar->SetValue(240);
     */
-    void SetValue(int value) noexcept;
+    void SetValue(double value) noexcept;
 
     /*
         @summary
         Returns the current scroll position.
     */
-    int GetValue() const noexcept { return static_cast<int>(RangeBase::GetValue()); }
+    double GetValue() const noexcept { return RangeBase::GetValue(); }
 
     void LineUp() noexcept;
     void LineDown() noexcept;
@@ -155,7 +155,7 @@ public:
         @details
         Hook this up if you want to react to the thumb moving, such as updating other UI.
     */
-    NeoWPF::Core::Event<int> ValueChanged;
+    NeoWPF::Core::Event<double> ValueChanged;
 
     /*
         @summary
@@ -163,7 +163,7 @@ public:
 
         @internal
     */
-    void Measure(int availableWidth, int availableHeight) override;
+    void Measure(double availableWidth, double availableHeight) override;
 
     /*
         @summary
@@ -171,7 +171,7 @@ public:
 
         @internal
     */
-    void Arrange(int finalWidth, int finalHeight) override;
+    void Arrange(double finalWidth, double finalHeight) override;
 
     /*
         @summary
@@ -190,7 +190,7 @@ public:
 
         @internal
     */
-    int GetScrollRange() const noexcept;
+    double GetScrollRange() const noexcept;
 
     /*
         @summary
@@ -198,7 +198,7 @@ public:
 
         @internal
     */
-    int GetThumbLength(int trackLength) const noexcept;
+    double GetThumbLength(double trackLength) const noexcept;
 
     /*
         @summary
@@ -206,7 +206,7 @@ public:
 
         @internal
     */
-    int GetThumbPosition(int trackLength, int thumbLength) const noexcept;
+    double GetThumbPosition(double trackLength, double thumbLength) const noexcept;
 
 private:
     
@@ -217,13 +217,13 @@ private:
 
         @internal
     */
-    void UpdateValueFromPosition(int x, int y) noexcept;
+    void UpdateValueFromPosition(double x, double y) noexcept;
 
     void OnValueChanged(double value) override;
     void OnPaddingChanged(Thickness padding) override;
     void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
     void OnBorderColorChanged(NeoWPF::UI::Color color) override;
-    void OnBorderThicknessChanged(int thickness) override;
+    void OnBorderThicknessChanged(double thickness) override;
 
     /*
         @summary
@@ -245,9 +245,9 @@ private:
     Orientation m_orientation = Orientation::Vertical;
     NeoWPF::UI::Color m_trackColor = NeoWPF::UI::Color::FromArgb(0xFF2A2A2Au);
     NeoWPF::UI::Color m_thumbColor = NeoWPF::UI::Color::FromArgb(0xFF5A5A5Au);
-    int m_thumbSize = 24;
-    int m_contentSize = 0;
-    int m_viewportSize = 0;
+    double m_thumbSize = 24.0;
+    double m_contentSize = 0.0;
+    double m_viewportSize = 0.0;
 };
 
 class ScrollBarTemplate : public Templates::ControlTemplate {

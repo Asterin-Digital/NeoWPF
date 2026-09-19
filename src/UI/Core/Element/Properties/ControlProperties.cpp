@@ -34,8 +34,8 @@ namespace {
 
     NeoWPF::UI::Properties::PropertyMetadata MakeControlBorderThicknessMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(0);
-        metadata.Converter = NeoWPF::UI::Properties::GetIntConverter();
+        metadata.DefaultValue = std::any(0.0);
+        metadata.Converter = NeoWPF::UI::Properties::GetDoubleConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -56,7 +56,7 @@ void RegisterControlProperties() {
         &UI::Control::GetBorderColor,
         static_cast<void (UI::Control::*)(::NeoWPF::UI::Color)>(&UI::Control::SetBorderColor),
         MakeControlBorderColorMetadata());
-    RegisterProperty<UI::Control, int>("BorderThickness",
+    RegisterProperty<UI::Control, double>("BorderThickness",
         &UI::Control::GetBorderThickness,
         &UI::Control::SetBorderThickness,
         MakeControlBorderThicknessMetadata());
@@ -92,7 +92,7 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Control::BorderCol
 }
 
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Control::BorderThicknessProperty() {
-    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Control, int>(
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Control, double>(
         "BorderThickness",
         &NeoWPF::UI::Control::GetBorderThickness,
         &NeoWPF::UI::Control::SetBorderThickness,

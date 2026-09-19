@@ -67,7 +67,7 @@ bool Transform::HasRotation() const noexcept {
     return false;
 }
 
-void Matrix4::TransformPoint(float x, float y, float& outX, float& outY) const noexcept {
+void Matrix4::TransformPoint(double x, double y, double& outX, double& outY) const noexcept {
     outX = x * m[0][0] + y * m[1][0] + m[3][0];
     outY = x * m[0][1] + y * m[1][1] + m[3][1];
 }

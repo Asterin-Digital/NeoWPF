@@ -19,7 +19,7 @@ public:
     {
     }
 
-    void Measure(int, int) override
+    void Measure(double, double) override
     {
         SetDesiredSize(m_width, m_height);
     }
@@ -238,7 +238,7 @@ public:
     {
     }
 
-    void Measure(int, int) override
+    void Measure(double, double) override
     {
         SetDesiredSize(40, 12);
     }

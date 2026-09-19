@@ -8,9 +8,9 @@ namespace NeoWPF::UI {
 
 bool Thumb::IsInteractable() const noexcept
 {
-    const int width = std::max(GetFinalWidth(), m_width);
-    const int height = std::max(GetFinalHeight(), m_height);
-    const bool interactable = m_isVisible && width > 0 && height > 0;
+    const double width = GetFinalWidth() > m_width ? GetFinalWidth() : m_width;
+    const double height = GetFinalHeight() > m_height ? GetFinalHeight() : m_height;
+    const bool interactable = m_isVisible && width > 0.0 && height > 0.0;
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Info,
         "[Thumb] IsInteractable: visible=%s width=%d height=%d result=%s",
         m_isVisible ? "true" : "false",
@@ -93,15 +93,15 @@ void Thumb::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         return;
     }
 
-    const int width = std::max(GetFinalWidth(), m_width);
-    const int height = std::max(GetFinalHeight(), m_height);
-    if (width <= 0 || height <= 0) {
+    const double width = GetFinalWidth() > m_width ? GetFinalWidth() : m_width;
+    const double height = GetFinalHeight() > m_height ? GetFinalHeight() : m_height;
+    if (width <= 0.0 || height <= 0.0) {
         return;
     }
 
     const auto renderTransform = GetWorldRenderTransform();
-    float absX = 0.0f;
-    float absY = 0.0f;
+    double absX = 0.0;
+    double absY = 0.0;
     renderTransform.positionMatrix.TransformPoint(0.0f, 0.0f, absX, absY);
 
     const auto clip = GetClipRect();
@@ -109,8 +109,8 @@ void Thumb::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     commands.DrawRoundedRect(
         absX,
         absY,
-        static_cast<float>(width),
-        static_cast<float>(height),
+        width,
+        height,
         cornerRadius.TopLeft,
         cornerRadius.TopRight,
         cornerRadius.BottomRight,

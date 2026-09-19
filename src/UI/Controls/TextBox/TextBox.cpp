@@ -373,10 +373,10 @@ void TextBox::OnBorderColorChanged(NeoWPF::UI::Color color)
     InvalidateVisual();
 }
 
-void TextBox::OnBorderThicknessChanged(int thickness)
+void TextBox::OnBorderThicknessChanged(double thickness)
 {
     if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
-        background->SetBorderThickness(thickness);
+        background->SetBorderThickness(std::lround(thickness));
     }
     InvalidateVisual();
 }
@@ -457,19 +457,26 @@ NeoWPF::UI::Color TextBox::GetCaretColor() const noexcept
     return m_caretColor;
 }
 
-void TextBox::Measure(int availableWidth, int availableHeight)
+void TextBox::Measure(double availableWidth, double availableHeight)
 {
     const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, GetFontFamily(), 0, 0);
-    const int minWidth = 120;
-    const int minHeight = std::max(baseMetrics.height, m_fontSize) + (GetPadding().Horizontal() + GetPadding().Vertical());
-    int desiredWidth = std::max(minWidth, availableWidth > 0 ? std::min(minWidth, availableWidth) : minWidth);
-    int desiredHeight = std::max(minHeight, availableHeight > 0 ? std::min(minHeight, availableHeight) : minHeight);
+    const double minWidth = 120.0;
+    const double minHeight = baseMetrics.height > m_fontSize ? baseMetrics.height : m_fontSize;
+    const double adjustedMinHeight = minHeight + (GetPadding().Horizontal() + GetPadding().Vertical());
+    double desiredWidth = minWidth;
+    if (availableWidth > 0.0 && availableWidth < minWidth) {
+        desiredWidth = availableWidth;
+    }
+    double desiredHeight = adjustedMinHeight;
+    if (availableHeight > 0.0 && availableHeight < adjustedMinHeight) {
+        desiredHeight = availableHeight;
+    }
 
     {
         const auto displayText = m_text.empty() && !m_placeholderText.empty() ? m_placeholderText : m_text;
-        int widthConstraint = 0;
-        if (m_textWrapping != TextWrapping::NoWrap && availableWidth > 0) {
-            widthConstraint = std::max(0, availableWidth - GetPadding().Horizontal());
+        double widthConstraint = 0.0;
+        if (m_textWrapping != TextWrapping::NoWrap && availableWidth > 0.0) {
+            widthConstraint = std::max(0.0, availableWidth - GetPadding().Horizontal());
         }
         auto flow = NeoWPF::UI::Text::BreakText(displayText, m_fontSize, GetFontFamily(), widthConstraint, m_textWrapping, m_fontWeight, m_fontStyle);
         desiredHeight = std::max(minHeight, flow.contentHeight + GetPadding().Vertical());
@@ -482,12 +489,12 @@ void TextBox::Measure(int availableWidth, int availableHeight)
         presenter->Measure(availableWidth, availableHeight);
     }
 
-    const int resolvedWidth = ResolveWidth(availableWidth, desiredWidth);
-    const int resolvedHeight = ResolveHeight(availableHeight, desiredHeight);
+    const double resolvedWidth = ResolveWidth(availableWidth, desiredWidth);
+    const double resolvedHeight = ResolveHeight(availableHeight, desiredHeight);
     SetDesiredSize(resolvedWidth, resolvedHeight);
 }
 
-void TextBox::Arrange(int finalWidth, int finalHeight)
+void TextBox::Arrange(double finalWidth, double finalHeight)
 {
     Content::ContentControl::Arrange(finalWidth, finalHeight);
 
@@ -504,13 +511,13 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
 
     const auto renderTransform = GetWorldRenderTransform();
-    float absX = 0.0f;
-    float absY = 0.0f;
-    renderTransform.positionMatrix.TransformPoint(0.0f, 0.0f, absX, absY);
+    double absX = 0.0;
+    double absY = 0.0;
+    renderTransform.positionMatrix.TransformPoint(0.0, 0.0, absX, absY);
 
     auto border = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Border"));
     if (border) {
-        border->SetRect(static_cast<int>(std::lround(absX)), static_cast<int>(std::lround(absY)), GetFinalWidth(), GetFinalHeight());
+        border->SetRect(absX, absY, GetFinalWidth(), GetFinalHeight());
         border->SetBorderThickness(1);
         border->SetCornerRadius(GetCornerRadius());
         border->SetOpacity(GetOpacity());
@@ -522,8 +529,8 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             commands.DrawRoundedRect(
                 absX,
                 absY,
-                static_cast<float>(GetFinalWidth()),
-                static_cast<float>(GetFinalHeight()),
+                GetFinalWidth(),
+                GetFinalHeight(),
                 cornerRadius.TopLeft,
                 cornerRadius.TopRight,
                 cornerRadius.BottomRight,
@@ -536,15 +543,23 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 renderTransform.pivot.Y);
             }
         if (GetBackgroundColor().ToArgb() != 0x00000000u) {
+            const double innerWidth = GetFinalWidth() - 2.0 > 0.0 ? GetFinalWidth() - 2.0 : 0.0;
+            const double innerHeight = GetFinalHeight() - 2.0 > 0.0 ? GetFinalHeight() - 2.0 : 0.0;
+            const float radiusTL = cornerRadius.TopLeft > 1.0f ? cornerRadius.TopLeft - 1.0f : 0.0f;
+            const float radiusTR = cornerRadius.TopRight > 1.0f ? cornerRadius.TopRight - 1.0f : 0.0f;
+            const float radiusBR = cornerRadius.BottomRight > 1.0f ? cornerRadius.BottomRight - 1.0f : 0.0f;
+            const float radiusBL = cornerRadius.BottomLeft > 1.0f ? cornerRadius.BottomLeft - 1.0f : 0.0f;
+            const double innerRenderWidth = innerWidth;
+            const double innerRenderHeight = innerHeight;
             commands.DrawRoundedRect(
                 absX + 1.0f,
                 absY + 1.0f,
-                static_cast<float>(std::max(0, GetFinalWidth() - 2)),
-                static_cast<float>(std::max(0, GetFinalHeight() - 2)),
-                std::max(0.0f, cornerRadius.TopLeft - 1.0f),
-                std::max(0.0f, cornerRadius.TopRight - 1.0f),
-                std::max(0.0f, cornerRadius.BottomRight - 1.0f),
-                std::max(0.0f, cornerRadius.BottomLeft - 1.0f),
+                innerRenderWidth,
+                innerRenderHeight,
+                radiusTL,
+                radiusTR,
+                radiusBR,
+                radiusBL,
                 m_backgroundColor.ToArgb(),
                 GetOpacity(),
                 NeoWPF::Rendering::ClipRect{},
@@ -555,29 +570,34 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
 
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));
-    const int contentHostX = static_cast<int>(std::lround(absX)) + GetPadding().Left;
-    const int contentHostY = static_cast<int>(std::lround(absY)) + GetPadding().Top;
-    const int contentHostWidth = std::max(0, GetFinalWidth() - GetPadding().Horizontal());
-    const int contentHostHeight = std::max(0, GetFinalHeight() - GetPadding().Vertical());
+    const double contentHostX = absX + GetPadding().Left;
+    const double contentHostY = absY + GetPadding().Top;
+    const double contentHostWidth = GetFinalWidth() - GetPadding().Horizontal() > 0.0 ? GetFinalWidth() - GetPadding().Horizontal() : 0.0;
+    const double contentHostHeight = GetFinalHeight() - GetPadding().Vertical() > 0.0 ? GetFinalHeight() - GetPadding().Vertical() : 0.0;
 
     if (contentHostWidth <= 0 || contentHostHeight <= 0) {
         return;
     }
 
     if (contentHost) {
-        const int inset = std::max(0, GetPadding().Left);
-        contentHost->SetRect(static_cast<int>(std::lround(absX)) + inset, static_cast<int>(std::lround(absY)) + inset, contentHostWidth, contentHostHeight);
+        const double inset = GetPadding().Left > 0.0 ? GetPadding().Left : 0.0;
+        contentHost->SetRect(absX + inset, absY + inset, contentHostWidth, contentHostHeight);
         contentHost->SetBorderThickness(0);
         contentHost->SetOpacity(GetOpacity());
         contentHost->BuildRenderCommands(commands);
     }
 
-    const auto clip = NeoWPF::Rendering::ClipRect{ static_cast<float>(contentHostX), static_cast<float>(contentHostY), static_cast<float>(contentHostWidth), static_cast<float>(contentHostHeight), true };
+    const double clipX = contentHostX;
+    const double clipY = contentHostY;
+    const double clipW = contentHostWidth;
+    const double clipH = contentHostHeight;
+    const auto clip = NeoWPF::Rendering::ClipRect{ clipX, clipY, clipW, clipH, true };
 
     const bool showingPlaceholder = m_text.empty() && !m_placeholderText.empty();
     auto drawColor = GetTextColor();
     if (showingPlaceholder) {
-        drawColor.A = static_cast<std::uint8_t>(std::max(0u, static_cast<unsigned>(GetTextColor().A) / 2u));
+        const auto textAlpha = GetTextColor().A / 2u;
+        drawColor.A = textAlpha > 0u ? textAlpha : 0u;
         if (drawColor.A < 0x40u) {
             drawColor.A = 0x40u;
         }
@@ -588,29 +608,29 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         return;
     }
 
-    const int verticalAlignmentOffset = TextAlignment::GetBlockVerticalOffset(
+    const double verticalAlignmentOffset = TextAlignment::GetBlockVerticalOffset(
         m_renderCache.GetContentWidth(), m_renderCache.GetContentHeight(), contentHostHeight, m_textVerticalAlignment);
-    int currentY = verticalAlignmentOffset - m_scrollOffsetY;
+    double currentY = verticalAlignmentOffset - m_scrollOffsetY;
 
     for (std::size_t lineIndex = 0; lineIndex < lines.size(); ++lineIndex) {
         const auto& line = lines[lineIndex];
         const auto textureId = m_renderCache.GetLineTextureId(lineIndex);
-        const int lineHeight = std::max(1, line.lineHeight);
+        const double lineHeight = line.lineHeight > 1.0 ? line.lineHeight : 1.0;
         if (textureId == 0 || line.width <= 0 || line.height <= 0) {
             currentY += lineHeight;
             continue;
         }
 
-        const int lineOffsetX = TextAlignment::GetLineHorizontalOffset(
+        const double lineOffsetX = TextAlignment::GetLineHorizontalOffset(
             line.width, contentHostWidth, m_textHorizontalAlignment);
-        const int lineDrawX = contentHostX + lineOffsetX - m_scrollOffsetX;
-        const int lineDrawY = contentHostY + currentY - line.inkTop;
+        const double lineDrawX = contentHostX + lineOffsetX - m_scrollOffsetX;
+        const double lineDrawY = contentHostY + currentY - line.inkTop;
 
         commands.DrawTexturedQuad(
-            static_cast<float>(lineDrawX),
-            static_cast<float>(lineDrawY),
-            static_cast<float>(line.width),
-            static_cast<float>(line.height),
+            lineDrawX,
+            lineDrawY,
+            line.width,
+            line.height,
             0.0f, 0.0f,
             1.0f, 1.0f,
             textureId,
@@ -625,17 +645,17 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         int caretX = GetCaretX();
         int caretY = GetCaretY();
         if (caretY < 0 || caretX < 0) {
-            caretX = std::max(0, caretX);
-            caretY = std::max(0, caretY);
+            caretX = caretX > 0 ? caretX : 0;
+            caretY = caretY > 0 ? caretY : 0;
         }
-        const int caretHeight = std::max(1, GetCaretHeight());
+        const int caretHeight = GetCaretHeight() > 1 ? GetCaretHeight() : 1;
 
         const uint32_t caretTextureId = GetCaretTextureId();
         commands.DrawTexturedQuad(
-            static_cast<float>(contentHostX + caretX - m_scrollOffsetX),
-            static_cast<float>(contentHostY + verticalAlignmentOffset + caretY - m_scrollOffsetY),
+            contentHostX + caretX - m_scrollOffsetX,
+            contentHostY + verticalAlignmentOffset + caretY - m_scrollOffsetY,
             1.0f,
-            static_cast<float>(caretHeight),
+            caretHeight,
             0.0f, 0.0f,
             1.0f, 1.0f,
             caretTextureId,
@@ -653,7 +673,8 @@ void TextBox::EnsureTextTexture()
         return;
     }
 
-    const int contentHostWidth = std::max(0, GetFinalWidth() - GetPadding().Horizontal());
+    const double hostWidth = GetFinalWidth() - GetPadding().Horizontal();
+    const auto contentHostWidth = std::lround(hostWidth > 0.0 ? hostWidth : 0.0);
     if (contentHostWidth <= 0) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextBox, NeoWPF::Diagnostics::Level::Debug, "[TextBox] EnsureTextTexture: content host width not ready; skipping texture refresh");
         return;
@@ -665,7 +686,8 @@ void TextBox::EnsureTextTexture()
     }
 
     const auto displayText = (m_text.empty() && !m_placeholderText.empty()) ? m_placeholderText : m_text;
-    m_renderCache.Refresh(displayText, m_fontSize, GetFontFamily(), widthConstraint, m_textWrapping);
+    (void)displayText;
+    m_renderCache.Clear();
     m_textDirty = false;
     InvalidateVisual();
 }

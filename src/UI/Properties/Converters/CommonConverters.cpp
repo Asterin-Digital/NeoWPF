@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <array>
+#include <cmath>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -47,6 +48,13 @@ std::string EscapeLiteral(const std::string& value, bool wide)
         }
     }
     result << '"';
+    return result.str();
+}
+
+std::string FormatCodeNumber(double value)
+{
+    std::ostringstream result;
+    result << std::setprecision(15) << value;
     return result.str();
 }
 
@@ -244,11 +252,38 @@ bool IntConverter::TryConvertToCode(const std::string& rawValue, std::string& ex
     });
 }
 
-bool FloatConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+bool DoubleConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
     try {
         std::size_t parsed = 0;
         const auto input = NeoWPF::Platform::Trim(rawValue);
+        const double value = std::stod(input, &parsed);
+        if (parsed != input.size()) {
+            return false;
+        }
+        convertedValue = value;
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+bool DoubleConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    return ParseAndFormat(*this, rawValue, expression, [](const std::any& value) {
+        return std::to_string(std::any_cast<double>(value));
+    });
+}
+
+bool FloatConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+{
+    try {
+        const auto input = NeoWPF::Platform::Trim(rawValue);
+        if (input.empty() || input.back() == 'f' || input.back() == 'F') {
+            return false;
+        }
+
+        std::size_t parsed = 0;
         const float value = std::stof(input, &parsed);
         if (parsed != input.size()) {
             return false;
@@ -263,7 +298,9 @@ bool FloatConverter::ConvertFromString(const std::string& rawValue, std::any& co
 bool FloatConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
 {
     return ParseAndFormat(*this, rawValue, expression, [](const std::any& value) {
-        return std::to_string(std::any_cast<float>(value)) + "f";
+        std::ostringstream stream;
+        stream << std::fixed << std::setprecision(6) << std::any_cast<float>(value) << 'f';
+        return stream.str();
     });
 }
 
@@ -317,11 +354,11 @@ bool ThicknessConverter::ConvertFromString(const std::string& rawValue, std::any
         return false;
     }
     try {
-        std::vector<int> values;
+        std::vector<double> values;
         for (const auto& part : parts) {
             std::size_t parsed = 0;
             const auto input = NeoWPF::Platform::Trim(part);
-            values.push_back(std::stoi(input, &parsed));
+            values.push_back(std::stod(input, &parsed));
             if (parsed != input.size()) {
                 return false;
             }
@@ -349,10 +386,10 @@ bool ThicknessConverter::TryConvertToCode(const std::string& rawValue, std::stri
 
     const auto thickness = std::any_cast<NeoWPF::UI::Thickness>(convertedValue);
     expression = "NeoWPF::UI::Thickness(" +
-        std::to_string(thickness.Left) + ", " +
-        std::to_string(thickness.Top) + ", " +
-        std::to_string(thickness.Right) + ", " +
-        std::to_string(thickness.Bottom) + ")";
+        FormatCodeNumber(thickness.Left) + ", " +
+        FormatCodeNumber(thickness.Top) + ", " +
+        FormatCodeNumber(thickness.Right) + ", " +
+        FormatCodeNumber(thickness.Bottom) + ")";
     return true;
 }
 
@@ -364,11 +401,11 @@ bool SpacingConverter::ConvertFromString(const std::string& rawValue, std::any& 
     }
 
     try {
-        std::vector<int> values;
+        std::vector<double> values;
         for (const auto& part : parts) {
             std::size_t parsed = 0;
             const auto input = NeoWPF::Platform::Trim(part);
-            values.push_back(std::stoi(input, &parsed));
+            values.push_back(std::stod(input, &parsed));
             if (parsed != input.size()) {
                 return false;
             }
@@ -454,6 +491,7 @@ DEFINE_CONVERTER_FACTORY(String, StringConverter)
 DEFINE_CONVERTER_FACTORY(Content, ContentConverter)
 DEFINE_CONVERTER_FACTORY(WideString, WideStringConverter)
 DEFINE_CONVERTER_FACTORY(Int, IntConverter)
+DEFINE_CONVERTER_FACTORY(Double, DoubleConverter)
 DEFINE_CONVERTER_FACTORY(Float, FloatConverter)
 DEFINE_CONVERTER_FACTORY(Bool, BoolConverter)
 DEFINE_CONVERTER_FACTORY(Color, ColorConverter)

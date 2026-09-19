@@ -19,43 +19,19 @@ void TextRasterCache::Clear() {
     }
     m_lineTextureIds.clear();
     m_flow = {};
-    m_hasCache = false;
 }
 
 bool TextRasterCache::Refresh(const std::wstring& text, int fontSize, const std::wstring& fontFamily,
-                             int availableWidth, TextWrapping wrapping,
-                             int fontWeight,
-                             NeoWPF::UI::FontStyle fontStyle) {
-    const int effectiveFontSize = fontSize > 0 ? fontSize : 16;
-    const int effectiveFontWeight = fontWeight > 0 ? fontWeight : 400;
-
-    if (m_hasCache && text == m_cachedText && effectiveFontSize == m_cachedFontSize &&
-        fontFamily == m_cachedFontFamily && availableWidth == m_cachedAvailableWidth &&
-        wrapping == m_cachedWrapping && effectiveFontWeight == m_cachedFontWeight &&
-        fontStyle == m_cachedFontStyle) {
-        return false;
-    }
-
+                              double availableWidth, TextWrapping wrapping,
+                              int fontWeight,
+                              NeoWPF::UI::FontStyle fontStyle) {
     Clear();
-
-    m_cachedText = text;
-    m_cachedFontSize = effectiveFontSize;
-    m_cachedFontFamily = fontFamily;
-    m_cachedAvailableWidth = availableWidth;
-    m_cachedWrapping = wrapping;
-    m_cachedFontWeight = effectiveFontWeight;
-    m_cachedFontStyle = fontStyle;
-    m_hasCache = true;
 
     if (text.empty()) {
         return true;
     }
 
-    m_flow = BreakText(text, effectiveFontSize, fontFamily, availableWidth, wrapping, effectiveFontWeight, fontStyle);
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
-        NeoWPF::Diagnostics::Level::Debug,
-        "[TextRasterCache] refresh textLength=%zu lines=%zu content=%dx%d availableWidth=%d",
-        text.size(), m_flow.lines.size(), m_flow.contentWidth, m_flow.contentHeight, availableWidth);
+    m_flow = BreakText(text, fontSize, fontFamily, availableWidth, wrapping, fontWeight, fontStyle);
     m_lineTextureIds.reserve(m_flow.lines.size());
 
     for (auto& line : m_flow.lines) {
@@ -64,24 +40,31 @@ bool TextRasterCache::Refresh(const std::wstring& text, int fontSize, const std:
             continue;
         }
 
-        int w = 0;
-        int h = 0;
+        int bitmapWidth = 0;
+        int bitmapHeight = 0;
         int inkTop = 0;
         int inkHeight = 0;
-        auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(
-            line.text, effectiveFontSize, 0, 0, fontFamily, effectiveFontWeight, fontStyle, w, h, inkTop, inkHeight);
-        line.width = w;
-        line.height = h;
+        const auto bitmap = NeoWPF::Rendering::Text::RenderTextBitmap(
+            line.text,
+            fontSize,
+            0,
+            0,
+            fontFamily,
+            fontWeight,
+            fontStyle,
+            bitmapWidth,
+            bitmapHeight,
+            inkTop,
+            inkHeight);
+
+        line.width = bitmapWidth;
+        line.height = bitmapHeight;
         line.inkTop = inkTop;
 
-        const std::uint32_t textureId = (!bitmap.empty() && w > 0 && h > 0)
-            ? NeoWPF::Rendering::Renderer_CreateTexture(static_cast<unsigned int>(w), static_cast<unsigned int>(h), bitmap.data())
+        const std::uint32_t textureId = !bitmap.empty() && bitmapWidth > 0 && bitmapHeight > 0
+            ? NeoWPF::Rendering::Renderer_CreateTexture(bitmapWidth, bitmapHeight, bitmap.data())
             : 0;
         m_lineTextureIds.push_back(textureId);
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
-            NeoWPF::Diagnostics::Level::Debug,
-            "[TextRasterCache] line textLength=%zu bitmap=%dx%d rgba=%zu textureId=%u",
-            line.text.size(), w, h, bitmap.size(), textureId);
     }
 
     return true;

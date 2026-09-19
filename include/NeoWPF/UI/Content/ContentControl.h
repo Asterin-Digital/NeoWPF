@@ -64,8 +64,8 @@ public:
     void SetPresenter(const std::shared_ptr<ContentPresenter>& presenter);
     const std::shared_ptr<ContentPresenter>& GetPresenter() const noexcept { return m_presenter; }
 
-    void Measure(int availableWidth, int availableHeight) override;
-    void Arrange(int finalWidth, int finalHeight) override;
+    void Measure(double availableWidth, double availableHeight) override;
+    void Arrange(double finalWidth, double finalHeight) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
     ContentBounds GetContentBounds() const noexcept override;

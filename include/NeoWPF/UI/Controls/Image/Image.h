@@ -35,8 +35,8 @@ public:
     void SetStretchDirection(Core::Media::StretchDirection direction) noexcept;
     Core::Media::StretchDirection GetStretchDirection() const noexcept { return m_stretchDirection; }
 
-    void Measure(int availableWidth, int availableHeight) override;
-    void Arrange(int finalWidth, int finalHeight) override;
+    void Measure(double availableWidth, double availableHeight) override;
+    void Arrange(double finalWidth, double finalHeight) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
 protected:
@@ -51,8 +51,8 @@ private:
     Core::Media::Stretch m_stretch = Core::Media::Stretch::Uniform;
     Core::Media::StretchDirection m_stretchDirection = Core::Media::StretchDirection::Both;
     uint32_t m_textureId = 0;
-    int m_lastArrangeWidth = 0;
-    int m_lastArrangeHeight = 0;
+    double m_lastArrangeWidth = 0.0;
+    double m_lastArrangeHeight = 0.0;
     int m_pixelWidth = 0;
     int m_pixelHeight = 0;
     const void* m_pixelData = nullptr;

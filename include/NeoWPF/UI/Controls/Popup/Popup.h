@@ -43,15 +43,15 @@ public:
     PopupPlacement GetPlacement() const noexcept;
     void SetPlacement(PopupPlacement placement);
 
-    int GetHorizontalOffset() const noexcept;
-    void SetHorizontalOffset(int offset);
+    double GetHorizontalOffset() const noexcept;
+    void SetHorizontalOffset(double offset);
 
-    int GetVerticalOffset() const noexcept;
-    void SetVerticalOffset(int offset);
+    double GetVerticalOffset() const noexcept;
+    void SetVerticalOffset(double offset);
 
     bool IsHitTestVisible() const noexcept override;
-    void Measure(int availableWidth, int availableHeight) override;
-    void Arrange(int finalWidth, int finalHeight) override;
+    void Measure(double availableWidth, double availableHeight) override;
+    void Arrange(double finalWidth, double finalHeight) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
 private:

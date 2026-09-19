@@ -8,8 +8,7 @@ namespace NeoWPF::UI::Animation {
 namespace {
 
 std::uint8_t InterpolateChannel(std::uint8_t from, std::uint8_t to, double progress) noexcept {
-    const double value = static_cast<double>(from) +
-                         (static_cast<double>(to) - static_cast<double>(from)) * progress;
+    const double value = from + (to - from) * progress;
     return static_cast<std::uint8_t>(std::clamp(std::lround(value), 0L, 255L));
 }
 

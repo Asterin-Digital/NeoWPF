@@ -65,7 +65,7 @@ namespace NeoWPF::UI {
 
 bool StackPanel::stackPanelDebugLogging = false;
 
-void StackPanel::Measure(int availableWidth, int availableHeight)
+void StackPanel::Measure(double availableWidth, double availableHeight)
 {
     StackPanelGuard guard(this);
     if (guard.IsReentrant()) {
@@ -77,9 +77,9 @@ void StackPanel::Measure(int availableWidth, int availableHeight)
     }
 
     const bool isHorizontal = m_orientation == Orientation::Horizontal;
-    const int itemSpacing = isHorizontal ? GetHorizontalSpacing() : GetVerticalSpacing();
-    int totalMainExtent = 0;
-    int maxCrossExtent = 0;
+    const double itemSpacing = isHorizontal ? GetHorizontalSpacing() : GetVerticalSpacing();
+    double totalMainExtent = 0.0;
+    double maxCrossExtent = 0.0;
     if (stackPanelDebugLogging) {
         NeoWPF::Diagnostics::LogInfo("[StackPanel::Measure] container=%p available=%dx%d spacing=%d", this, availableWidth, availableHeight, itemSpacing);
     }
@@ -107,14 +107,14 @@ void StackPanel::Measure(int availableWidth, int availableHeight)
 
         if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
             const auto margin = fe->GetMargin();
-            const int childAvailableWidth = availableWidth > 0 ? std::max(0, availableWidth - margin.Horizontal()) : availableWidth;
-            const int childAvailableHeight = availableHeight > 0 ? std::max(0, availableHeight - margin.Vertical()) : availableHeight;
+            const double childAvailableWidth = availableWidth > 0.0 ? (std::max)(0.0, availableWidth - margin.Horizontal()) : availableWidth;
+            const double childAvailableHeight = availableHeight > 0.0 ? (std::max)(0.0, availableHeight - margin.Vertical()) : availableHeight;
             fe->Measure(childAvailableWidth, childAvailableHeight);
-            const int childDesiredW = fe->GetDesiredWidth();
-            const int childDesiredH = fe->GetDesiredHeight();
-            const int resolvedW = std::max(0, fe->ResolveWidth(childAvailableWidth, childDesiredW) + margin.Horizontal());
-            const int resolvedH = std::max(0, fe->ResolveHeight(childAvailableHeight, childDesiredH) + margin.Vertical());
-            fe->SetDesiredSize(std::max(0, fe->ResolveWidth(childAvailableWidth, childDesiredW)), std::max(0, fe->ResolveHeight(childAvailableHeight, childDesiredH)));
+            const double childDesiredW = fe->GetDesiredWidth();
+            const double childDesiredH = fe->GetDesiredHeight();
+            const double resolvedW = (std::max)(0.0, fe->ResolveWidth(childAvailableWidth, childDesiredW) + margin.Horizontal());
+            const double resolvedH = (std::max)(0.0, fe->ResolveHeight(childAvailableHeight, childDesiredH) + margin.Vertical());
+            fe->SetDesiredSize((std::max)(0.0, fe->ResolveWidth(childAvailableWidth, childDesiredW)), (std::max)(0.0, fe->ResolveHeight(childAvailableHeight, childDesiredH)));
             if (!firstChild) {
                 totalMainExtent += itemSpacing;
             }
@@ -132,19 +132,19 @@ void StackPanel::Measure(int availableWidth, int availableHeight)
         }
     }
 
-    const int desiredW = isHorizontal
-        ? std::max(0, totalMainExtent)
-        : std::max(0, maxCrossExtent);
-    const int desiredH = isHorizontal
-        ? std::max(0, maxCrossExtent)
-        : std::max(0, totalMainExtent);
+    const double desiredW = isHorizontal
+        ? (std::max)(0.0, totalMainExtent)
+        : (std::max)(0.0, maxCrossExtent);
+    const double desiredH = isHorizontal
+        ? (std::max)(0.0, maxCrossExtent)
+        : (std::max)(0.0, totalMainExtent);
     SetDesiredSize(desiredW, desiredH);
     if (stackPanelDebugLogging) {
         NeoWPF::Diagnostics::LogInfo("[StackPanel::Measure] result desired=%dx%d", desiredW, desiredH);
     }
 }
 
-void StackPanel::Arrange(int finalWidth, int finalHeight)
+void StackPanel::Arrange(double finalWidth, double finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
@@ -162,8 +162,8 @@ void StackPanel::Arrange(int finalWidth, int finalHeight)
 
 
     const bool isHorizontal = m_orientation == Orientation::Horizontal;
-    const int itemSpacing = isHorizontal ? GetHorizontalSpacing() : GetVerticalSpacing();
-    int mainOffset = 0;
+    const double itemSpacing = isHorizontal ? GetHorizontalSpacing() : GetVerticalSpacing();
+    double mainOffset = 0.0;
     bool firstChild = true;
     std::vector<Visual*> seenChildren;
     for (auto child : GetVisualChildren()) {
@@ -188,15 +188,15 @@ void StackPanel::Arrange(int finalWidth, int finalHeight)
 
         if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
             const auto margin = fe->GetMargin();
-            const int contentWidth = std::max(0, finalWidth - margin.Horizontal());
-            const int contentHeight = std::max(0, finalHeight - margin.Vertical());
-            const int childW = std::max(0, fe->ResolveWidth(contentWidth, fe->GetDesiredWidth()));
-            const int childH = std::max(0, fe->ResolveHeight(contentHeight, fe->GetDesiredHeight()));
+            const double contentWidth = (std::max)(0.0, finalWidth - margin.Horizontal());
+            const double contentHeight = (std::max)(0.0, finalHeight - margin.Vertical());
+            const double childW = (std::max)(0.0, fe->ResolveWidth(contentWidth, fe->GetDesiredWidth()));
+            const double childH = (std::max)(0.0, fe->ResolveHeight(contentHeight, fe->GetDesiredHeight()));
 
-            int alignedX = 0;
-            int alignedY = 0;
-            int alignedW = childW;
-            int alignedH = childH;
+            double alignedX = 0.0;
+            double alignedY = 0.0;
+            double alignedW = childW;
+            double alignedH = childH;
 
             if (!firstChild) {
                 mainOffset += itemSpacing;

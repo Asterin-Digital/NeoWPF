@@ -156,16 +156,20 @@ WorldRenderTransform UIElement::GetWorldRenderTransform() const noexcept {
     for (auto current = ancestors.rbegin(); current != ancestors.rend(); ++current) {
         const auto* element = *current;
         const auto transform = element->GetRenderTransform();
-        if (transform && transform->HasRotation() && !pivotFound) {
+        if (transform && !pivotFound && transform->HasRotation()) {
             const auto origin = element->GetRenderTransformOrigin();
-            float originX = origin.X;
-            float originY = origin.Y;
+            double originX = origin.X;
+            double originY = origin.Y;
             if (const auto* frameworkElement = dynamic_cast<const FrameworkElement*>(element)) {
-                originX *= static_cast<float>(frameworkElement->GetFinalWidth());
-                originY *= static_cast<float>(frameworkElement->GetFinalHeight());
+                originX *= frameworkElement->GetFinalWidth();
+                originY *= frameworkElement->GetFinalHeight();
             }
             element->GetLocalPositionMatrix().TransformPoint(originX, originY, originX, originY);
-            result.positionMatrix.TransformPoint(originX, originY, result.pivot.X, result.pivot.Y);
+            double pivotX = 0.0;
+            double pivotY = 0.0;
+            result.positionMatrix.TransformPoint(originX, originY, pivotX, pivotY);
+            result.pivot.X = static_cast<float>(pivotX);
+            result.pivot.Y = static_cast<float>(pivotY);
             pivotFound = true;
         }
         result.positionMatrix = element->GetLocalPositionMatrix() * result.positionMatrix;

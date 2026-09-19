@@ -3,6 +3,7 @@
 #include <NeoWPF/UI/Layout/Scrolling/IScrollInfo.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
+#include <cmath>
 
 namespace NeoWPF::UI {
 
@@ -39,9 +40,9 @@ ScrollViewer::ScrollViewer()
 
 ScrollViewer::~ScrollViewer() = default;
 
-void ScrollViewer::SetHorizontalOffset(int offset) noexcept
+void ScrollViewer::SetHorizontalOffset(double offset) noexcept
 {
-    const int clamped = std::clamp(offset, 0, std::max(0, m_contentWidth - m_viewportWidth));
+    const double clamped = std::clamp(offset, 0.0, (std::max)(0.0, m_contentWidth - m_viewportWidth));
     if (clamped == m_horizontalOffset) {
         return;
     }
@@ -62,19 +63,19 @@ void ScrollViewer::SetHorizontalOffset(int offset) noexcept
     InvalidateVisual();
 }
 
-void ScrollViewer::SetVerticalOffset(int offset) noexcept
+void ScrollViewer::SetVerticalOffset(double offset) noexcept
 {
     if (m_contentPresenter) {
         auto content = m_contentPresenter->GetContentElement();
         if (content) {
             auto scrollInfo = std::dynamic_pointer_cast<Layout::Scrolling::IScrollInfo>(content);
             if (scrollInfo) {
-                m_contentHeight = std::max(0, scrollInfo->GetExtentHeight());
+                m_contentHeight = std::max(0.0, scrollInfo->GetExtentHeight());
             }
         }
     }
 
-    const int clamped = std::clamp(offset, 0, std::max(0, m_contentHeight - m_viewportHeight));
+    const double clamped = std::clamp(offset, 0.0, (std::max)(0.0, m_contentHeight - m_viewportHeight));
     if (clamped == m_verticalOffset) {
         return;
     }
@@ -102,7 +103,7 @@ void ScrollViewer::ScrollToTop() noexcept
 
 void ScrollViewer::ScrollToBottom() noexcept
 {
-    SetVerticalOffset(std::max(0, m_contentHeight - m_viewportHeight));
+    SetVerticalOffset(std::max(0.0, m_contentHeight - m_viewportHeight));
 }
 
 void ScrollViewer::SetHorizontalScrollBarVisibility(ScrollBarVisibility visibility) noexcept
@@ -125,12 +126,12 @@ void ScrollViewer::SetVerticalScrollBarVisibility(ScrollBarVisibility visibility
     InvalidateVisual();
 }
 
-void ScrollViewer::Measure(int availableWidth, int availableHeight)
+void ScrollViewer::Measure(double availableWidth, double availableHeight)
 {
-    const int explicitW = GetWidth();
-    const int explicitH = GetHeight();
-    m_viewportWidth  = explicitW > 0 ? explicitW  : std::max(0, availableWidth);
-    m_viewportHeight = explicitH > 0 ? explicitH  : std::max(0, availableHeight);
+    const double explicitW = GetWidth();
+    const double explicitH = GetHeight();
+    m_viewportWidth  = explicitW > 0.0 ? explicitW  : (std::max)(0.0, availableWidth);
+    m_viewportHeight = explicitH > 0.0 ? explicitH  : (std::max)(0.0, availableHeight);
 
     Content::ContentControl::Measure(m_viewportWidth, m_viewportHeight);
 
@@ -139,8 +140,8 @@ void ScrollViewer::Measure(int availableWidth, int availableHeight)
         if (content) {
             auto scrollInfo = std::dynamic_pointer_cast<Layout::Scrolling::IScrollInfo>(content);
             if (scrollInfo) {
-                m_contentWidth = std::max(0, scrollInfo->GetExtentWidth());
-                m_contentHeight = std::max(0, scrollInfo->GetExtentHeight());
+                m_contentWidth = (std::max)(0.0, scrollInfo->GetExtentWidth());
+                m_contentHeight = (std::max)(0.0, scrollInfo->GetExtentHeight());
             } else {
                 m_contentWidth = m_contentPresenter->GetDesiredWidth();
                 m_contentHeight = m_contentPresenter->GetDesiredHeight();
@@ -154,11 +155,11 @@ void ScrollViewer::Measure(int availableWidth, int availableHeight)
     SetDesiredSize(m_viewportWidth, m_viewportHeight);
 }
 
-void ScrollViewer::Arrange(int finalWidth, int finalHeight)
+void ScrollViewer::Arrange(double finalWidth, double finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
-    m_viewportWidth = std::max(0, GetFinalWidth());
-    m_viewportHeight = std::max(0, GetFinalHeight());
+    m_viewportWidth = (std::max)(0.0, GetFinalWidth());
+    m_viewportHeight = (std::max)(0.0, GetFinalHeight());
 
     if (m_contentPresenter) {
         auto content = m_contentPresenter->GetContentElement();
@@ -167,13 +168,13 @@ void ScrollViewer::Arrange(int finalWidth, int finalHeight)
             scrollInfo = std::dynamic_pointer_cast<Layout::Scrolling::IScrollInfo>(content);
         }
 
-        int arrangeWidth = m_viewportWidth;
-        int arrangeHeight = m_viewportHeight;
+        double arrangeWidth = m_viewportWidth;
+        double arrangeHeight = m_viewportHeight;
 
         if (!scrollInfo) {
             // physical scrolling needs the full content size
-            arrangeWidth = std::max(m_viewportWidth, m_contentPresenter->GetDesiredWidth());
-            arrangeHeight = std::max(m_viewportHeight, m_contentPresenter->GetDesiredHeight());
+            arrangeWidth = (std::max)(m_viewportWidth, m_contentPresenter->GetDesiredWidth());
+            arrangeHeight = (std::max)(m_viewportHeight, m_contentPresenter->GetDesiredHeight());
         }
         m_contentPresenter->Arrange(arrangeWidth, arrangeHeight);
     }
@@ -202,13 +203,13 @@ void ScrollViewer::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 void ScrollViewer::InitializeScrollBars() noexcept
 {
     if (m_horizontalScrollBar) {
-        m_horizontalScrollBar->ValueChanged += [this](int value) {
+        m_horizontalScrollBar->ValueChanged += [this](double value) {
             SetHorizontalOffset(value);
         };
     }
 
     if (m_verticalScrollBar) {
-        m_verticalScrollBar->ValueChanged += [this](int value) {
+        m_verticalScrollBar->ValueChanged += [this](double value) {
             SetVerticalOffset(value);
         };
     }
@@ -274,15 +275,15 @@ void ScrollViewer::UpdateScrollBarState() noexcept
     }
 
     if (m_horizontalScrollBar) {
-        const int contentSize = scrollInfo ? scrollInfo->GetExtentWidth() : m_contentWidth;
-        const int viewportSize = scrollInfo ? scrollInfo->GetViewportWidth() : m_viewportWidth;
+        const double contentSize = scrollInfo ? scrollInfo->GetExtentWidth() : m_contentWidth;
+        const double viewportSize = scrollInfo ? scrollInfo->GetViewportWidth() : m_viewportWidth;
         m_horizontalScrollBar->SetContentSize(contentSize);
         m_horizontalScrollBar->SetViewportSize(viewportSize);
     }
 
     if (m_verticalScrollBar) {
-        const int contentSize = scrollInfo ? scrollInfo->GetExtentHeight() : m_contentHeight;
-        const int viewportSize = scrollInfo ? scrollInfo->GetViewportHeight() : m_viewportHeight;
+        const double contentSize = scrollInfo ? scrollInfo->GetExtentHeight() : m_contentHeight;
+        const double viewportSize = scrollInfo ? scrollInfo->GetViewportHeight() : m_viewportHeight;
         m_verticalScrollBar->SetContentSize(contentSize);
         m_verticalScrollBar->SetViewportSize(viewportSize);
     }
@@ -310,18 +311,18 @@ void ScrollViewer::UpdateScrollBarVisibility() noexcept
 void ScrollViewer::UpdateOffsets() noexcept
 {
     if (m_horizontalScrollBar && m_horizontalScrollBar->IsVisible()) {
-        const int barHeight = 16;
+        const double barHeight = 16.0;
         m_horizontalScrollBar->SetWidth(m_viewportWidth);
         m_horizontalScrollBar->SetHeight(barHeight);
-        m_horizontalScrollBar->SetLayoutOffset(0, std::max(0, m_viewportHeight - barHeight));
+        m_horizontalScrollBar->SetLayoutOffset(0.0, std::max(0.0, m_viewportHeight - barHeight));
         m_horizontalScrollBar->Arrange(m_viewportWidth, barHeight);
     }
 
     if (m_verticalScrollBar && m_verticalScrollBar->IsVisible()) {
-        const int barWidth = 16;
+        const double barWidth = 16.0;
         m_verticalScrollBar->SetWidth(barWidth);
         m_verticalScrollBar->SetHeight(m_viewportHeight);
-        m_verticalScrollBar->SetLayoutOffset(std::max(0, m_viewportWidth - barWidth), 0);
+        m_verticalScrollBar->SetLayoutOffset(std::max(0.0, m_viewportWidth - barWidth), 0.0);
         m_verticalScrollBar->Arrange(barWidth, m_viewportHeight);
     }
 }
@@ -339,7 +340,9 @@ void ScrollViewer::UpdateContentPresenterOffset() noexcept
             return;
         }
     }
-    m_contentPresenter->SetContentRenderOffset(-m_horizontalOffset, -m_verticalOffset);
+    m_contentPresenter->SetContentRenderOffset(
+        static_cast<int>(std::lround(-m_horizontalOffset)),
+        static_cast<int>(std::lround(-m_verticalOffset)));
 }
 
 }

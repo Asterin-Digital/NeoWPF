@@ -53,8 +53,8 @@ TEST_F(PopupTests, DependencyPropertiesStaySynchronizedWithPublicApi)
     EXPECT_FALSE(popup.GetValue<bool>(NeoWPF::UI::Popup::StaysOpenProperty()));
     EXPECT_EQ(popup.GetValue<NeoWPF::UI::PopupPlacement>(NeoWPF::UI::Popup::PlacementProperty()),
               NeoWPF::UI::PopupPlacement::Right);
-    EXPECT_EQ(popup.GetValue<int>(NeoWPF::UI::Popup::HorizontalOffsetProperty()), 13);
-    EXPECT_EQ(popup.GetValue<int>(NeoWPF::UI::Popup::VerticalOffsetProperty()), -7);
+    EXPECT_EQ(popup.GetValue<double>(NeoWPF::UI::Popup::HorizontalOffsetProperty()), 13.0);
+    EXPECT_EQ(popup.GetValue<double>(NeoWPF::UI::Popup::VerticalOffsetProperty()), -7.0);
 }
 
 TEST_F(PopupTests, OpenAndCloseControlRenderingAndHitTesting)
@@ -101,8 +101,8 @@ TEST_F(PopupTests, PlacementAndOffsetsUseTargetBounds)
     popup.SetIsOpen(true);
     popup.Arrange(80, 20);
 
-    int targetX = 0;
-    int targetY = 0;
+    double targetX = 0.0;
+    double targetY = 0.0;
     target->GetAbsolutePosition(targetX, targetY);
     EXPECT_EQ(popup.GetLayoutOffsetX(), targetX + 5);
     EXPECT_EQ(popup.GetLayoutOffsetY(), targetY + target->GetFinalHeight() + 9);

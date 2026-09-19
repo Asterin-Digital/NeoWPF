@@ -107,10 +107,10 @@ namespace NeoWPF::Input
             return nullptr;
         }
 
-        int elementWidth = 0;
-        int elementHeight = 0;
-        int absX = 0;
-        int absY = 0;
+        double elementWidth = 0.0;
+        double elementHeight = 0.0;
+        double absX = 0.0;
+        double absY = 0.0;
         auto fw = dynamic_cast<NeoWPF::UI::FrameworkElement*>(element);
         if (fw)
         {
@@ -118,7 +118,7 @@ namespace NeoWPF::Input
             elementWidth = fw->GetFinalWidth();
             elementHeight = fw->GetFinalHeight();
 
-            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Trace, "[HitTest] %s  Bounds: (%d, %d) size (%d x %d), Test point: (%d, %d)",
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Trace, "[HitTest] %s  Bounds: (%g, %g) size (%g x %g), Test point: (%d, %d)",
                 indent, absX, absY, elementWidth, elementHeight, x, y);
 
             if (x < absX || x >= absX + elementWidth || y < absY || y >= absY + elementHeight)
@@ -140,7 +140,7 @@ namespace NeoWPF::Input
         const bool isHitTestTarget = isHitTestVisible && (element->IsInteractable() || hasMouseHandlers);
 
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Info,
-            "[HitTest] %s  Element=%s, IsEnabled: %s, IsHitTestVisible: %s, IsHitTestTarget: %s, Bounds=(%d,%d) size=(%d,%d)",
+            "[HitTest] %s  Element=%s, IsEnabled: %s, IsHitTestVisible: %s, IsHitTestTarget: %s, Bounds=(%g,%g) size=(%g,%g)",
             indent,
             typeid(*element).name(),
             isEnabled ? "true" : "false",
@@ -172,20 +172,21 @@ namespace NeoWPF::Input
 
                 if (contentBounds.width > 0 && contentBounds.height > 0 && fw)
                 {
-                    int absX, absY;
+                    double absX = 0.0;
+                    double absY = 0.0;
                     fw->GetAbsolutePosition(absX, absY);
 
-                    const int hitWidth = std::max(elementWidth, contentBounds.width);
-                    const int hitHeight = std::max(elementHeight, contentBounds.height);
+                    const double hitWidth = (std::max)(elementWidth, contentBounds.width);
+                    const double hitHeight = (std::max)(elementHeight, contentBounds.height);
 
                     if (x < absX || x >= absX + hitWidth || y < absY || y >= absY + hitHeight)
                     {
-                        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Trace, "[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - OUTSIDE", indent, absX, absY, hitWidth, hitHeight);
+                        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Trace, "[HitTest] %s  Content bounds: (%g, %g) size (%g x %g) - OUTSIDE", indent, absX, absY, hitWidth, hitHeight);
                         deepestHit = nullptr;
                     }
                     else
                     {
-                        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Trace, "[HitTest] %s  Content bounds: (%d, %d) size (%d x %d) - INSIDE", indent, absX, absY, hitWidth, hitHeight);
+                        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Trace, "[HitTest] %s  Content bounds: (%g, %g) size (%g x %g) - INSIDE", indent, absX, absY, hitWidth, hitHeight);
                     }
                 }
             }

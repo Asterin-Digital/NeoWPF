@@ -43,12 +43,12 @@ namespace NeoWPF::UI {
 namespace {
     void ComputeImageRenderSize(int sourceWidth,
                                 int sourceHeight,
-                                int targetWidth,
-                                int targetHeight,
+                                double targetWidth,
+                                double targetHeight,
                                 Core::Media::Stretch stretch,
                                 Core::Media::StretchDirection direction,
-                                int& outWidth,
-                                int& outHeight)
+                                double& outWidth,
+                                double& outHeight)
     {
         outWidth = sourceWidth;
         outHeight = sourceHeight;
@@ -67,9 +67,9 @@ namespace {
             return;
         }
 
-        const float scaleX = static_cast<float>(targetWidth) / static_cast<float>(sourceWidth);
-        const float scaleY = static_cast<float>(targetHeight) / static_cast<float>(sourceHeight);
-        float scale = (stretch == Core::Media::Stretch::UniformToFill) ? std::max(scaleX, scaleY) : std::min(scaleX, scaleY);
+        const double scaleX = targetWidth / static_cast<double>(sourceWidth);
+        const double scaleY = targetHeight / static_cast<double>(sourceHeight);
+        double scale = (stretch == Core::Media::Stretch::UniformToFill) ? (std::max)(scaleX, scaleY) : (std::min)(scaleX, scaleY);
 
         if (direction == Core::Media::StretchDirection::DownOnly && scale > 1.0f) {
             scale = 1.0f;
@@ -77,8 +77,8 @@ namespace {
             scale = 1.0f;
         }
 
-        outWidth = static_cast<int>(sourceWidth * scale + 0.5f);
-        outHeight = static_cast<int>(sourceHeight * scale + 0.5f);
+        outWidth = static_cast<double>(sourceWidth) * scale;
+        outHeight = static_cast<double>(sourceHeight) * scale;
 
         if (outWidth <= 0) {
             outWidth = 1;
@@ -188,7 +188,7 @@ void Image::SetStretchDirection(Core::Media::StretchDirection direction) noexcep
     InvalidateVisual();
 }
 
-void Image::Measure(int availableWidth, int availableHeight)
+void Image::Measure(double availableWidth, double availableHeight)
 {
     UpdateSourceState();
 
@@ -200,7 +200,7 @@ void Image::Measure(int availableWidth, int availableHeight)
     SetDesiredSize(m_pixelWidth, m_pixelHeight);
 }
 
-void Image::Arrange(int finalWidth, int finalHeight)
+void Image::Arrange(double finalWidth, double finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
@@ -217,8 +217,8 @@ void Image::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         return;
     }
 
-    int drawWidth = 0;
-    int drawHeight = 0;
+    double drawWidth = 0.0;
+    double drawHeight = 0.0;
     ComputeImageRenderSize(m_pixelWidth, m_pixelHeight, GetFinalWidth(), GetFinalHeight(), m_stretch, m_stretchDirection, drawWidth, drawHeight);
 
     if (drawWidth <= 0 || drawHeight <= 0) {
@@ -227,13 +227,13 @@ void Image::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     const auto clip = GetClipRect();
     const auto renderTransform = GetWorldRenderTransform();
-    float drawX = static_cast<float>(std::max(0, (GetFinalWidth() - drawWidth) / 2));
-    float drawY = static_cast<float>(std::max(0, (GetFinalHeight() - drawHeight) / 2));
-    float drawWidthF = static_cast<float>(drawWidth);
-    float drawHeightF = static_cast<float>(drawHeight);
+    double drawX = (std::max)(0.0, (GetFinalWidth() - drawWidth) / 2.0);
+    double drawY = (std::max)(0.0, (GetFinalHeight() - drawHeight) / 2.0);
+    double drawWidthF = drawWidth;
+    double drawHeightF = drawHeight;
     renderTransform.positionMatrix.TransformPoint(drawX, drawY, drawX, drawY);
-    float right = drawX + drawWidthF;
-    float bottom = drawY + drawHeightF;
+    double right = drawX + drawWidthF;
+    double bottom = drawY + drawHeightF;
     renderTransform.positionMatrix.TransformPoint(right, bottom, right, bottom);
     drawWidthF = std::abs(right - drawX);
     drawHeightF = std::abs(bottom - drawY);

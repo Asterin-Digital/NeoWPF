@@ -8,15 +8,15 @@ See LICENSE file in the project root for full license text.
 namespace NeoWPF::UI {
 
 struct Spacing {
-    int Horizontal = 0;
-    int Vertical = 0;
+    double Horizontal = 0.0;
+    double Vertical = 0.0;
 
     constexpr Spacing() noexcept = default;
 
-    constexpr Spacing(int uniform) noexcept
+    constexpr Spacing(double uniform) noexcept
         : Horizontal(uniform), Vertical(uniform) {}
 
-    constexpr Spacing(int horizontal, int vertical) noexcept
+    constexpr Spacing(double horizontal, double vertical) noexcept
         : Horizontal(horizontal), Vertical(vertical) {}
 
     constexpr bool operator==(const Spacing& other) const noexcept {

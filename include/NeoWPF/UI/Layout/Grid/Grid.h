@@ -288,7 +288,7 @@ public:
 
         @internal
     */
-    void Measure(int availableWidth, int availableHeight) override;
+    void Measure(double availableWidth, double availableHeight) override;
 
     /*
         @summary
@@ -302,7 +302,7 @@ public:
 
         @internal
     */
-    void Arrange(int finalWidth, int finalHeight) override;
+    void Arrange(double finalWidth, double finalHeight) override;
 
 protected:
     /*
@@ -316,8 +316,8 @@ protected:
 private:
     std::vector<Definition> m_rowDefs;
     std::vector<Definition> m_colDefs;
-    std::vector<int> m_autoRowHeights;
-    std::vector<int> m_autoColWidths;
+    std::vector<double> m_autoRowHeights;
+    std::vector<double> m_autoColWidths;
     std::unordered_map<Visual*, int> m_rowMap;
     std::unordered_map<Visual*, int> m_colMap;
 

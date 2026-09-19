@@ -3,25 +3,25 @@
 namespace NeoWPF::UI {
 
 void TextAlignment::ApplyTextAlignment(
-    int contentWidth,
-    int contentHeight,
-    int availableWidth,
-    int availableHeight,
+    double contentWidth,
+    double contentHeight,
+    double availableWidth,
+    double availableHeight,
     TextHorizontalAlignment horizontalAlignment,
     TextVerticalAlignment verticalAlignment,
-    int& outX,
-    int& outY) noexcept
+    double& outX,
+    double& outY) noexcept
 {
-    outX = 0;
-    outY = 0;
+    outX = 0.0;
+    outY = 0.0;
 
     if (availableWidth > contentWidth) {
         switch (horizontalAlignment) {
         case TextHorizontalAlignment::Left:
-            outX = 0;
+            outX = 0.0;
             break;
         case TextHorizontalAlignment::Center:
-            outX = (availableWidth - contentWidth) / 2;
+            outX = (availableWidth - contentWidth) / 2.0;
             break;
         case TextHorizontalAlignment::Right:
             outX = availableWidth - contentWidth;
@@ -32,10 +32,10 @@ void TextAlignment::ApplyTextAlignment(
     if (availableHeight > contentHeight) {
         switch (verticalAlignment) {
         case TextVerticalAlignment::Top:
-            outY = 0;
+            outY = 0.0;
             break;
         case TextVerticalAlignment::Center:
-            outY = (availableHeight - contentHeight) / 2;
+            outY = (availableHeight - contentHeight) / 2.0;
             break;
         case TextVerticalAlignment::Bottom:
             outY = availableHeight - contentHeight;
@@ -44,30 +44,30 @@ void TextAlignment::ApplyTextAlignment(
     }
 }
 
-int TextAlignment::GetBlockVerticalOffset(int contentWidth, int contentHeight, int viewportHeight,
-                                         TextVerticalAlignment alignment) noexcept
+double TextAlignment::GetBlockVerticalOffset(double contentWidth, double contentHeight, double viewportHeight,
+                                            TextVerticalAlignment alignment) noexcept
 {
-    int unusedX = 0;
-    int outY = 0;
+    double unusedX = 0.0;
+    double outY = 0.0;
     ApplyTextAlignment(contentWidth, contentHeight, contentWidth, viewportHeight,
                        TextHorizontalAlignment::Left, alignment, unusedX, outY);
     return outY;
 }
 
-int TextAlignment::GetLineHorizontalOffset(int lineWidth, int viewportWidth,
-                                         TextHorizontalAlignment alignment) noexcept
+double TextAlignment::GetLineHorizontalOffset(double lineWidth, double viewportWidth,
+                                            TextHorizontalAlignment alignment) noexcept
 {
-    int outX = 0;
-    int unusedY = 0;
-    ApplyTextAlignment(lineWidth, 1, viewportWidth, 1, alignment, TextVerticalAlignment::Top, outX, unusedY);
+    double outX = 0.0;
+    double unusedY = 0.0;
+    ApplyTextAlignment(lineWidth, 1.0, viewportWidth, 1.0, alignment, TextVerticalAlignment::Top, outX, unusedY);
     return outX;
 }
 
 void TextAlignment::ApplyTextAlignmentF(
-    int contentWidth,
-    int contentHeight,
-    int availableWidth,
-    int availableHeight,
+    double contentWidth,
+    double contentHeight,
+    double availableWidth,
+    double availableHeight,
     TextHorizontalAlignment horizontalAlignment,
     TextVerticalAlignment verticalAlignment,
     float& outX,
@@ -81,10 +81,10 @@ void TextAlignment::ApplyTextAlignmentF(
         case TextHorizontalAlignment::Left:
             break;
         case TextHorizontalAlignment::Center:
-            outX = static_cast<float>(availableWidth - contentWidth) / 2.0f;
+            outX = (availableWidth - contentWidth) / 2.0f;
             break;
         case TextHorizontalAlignment::Right:
-            outX = static_cast<float>(availableWidth - contentWidth);
+            outX = availableWidth - contentWidth;
             break;
         }
     }
@@ -94,17 +94,17 @@ void TextAlignment::ApplyTextAlignmentF(
         case TextVerticalAlignment::Top:
             break;
         case TextVerticalAlignment::Center:
-            outY = static_cast<float>(availableHeight - contentHeight) / 2.0f;
+            outY = (availableHeight - contentHeight) / 2.0f;
             break;
         case TextVerticalAlignment::Bottom:
-            outY = static_cast<float>(availableHeight - contentHeight);
+            outY = availableHeight - contentHeight;
             break;
         }
     }
 }
 
-float TextAlignment::GetBlockVerticalOffsetF(int contentWidth, int contentHeight, int viewportHeight,
-                                              TextVerticalAlignment alignment) noexcept
+float TextAlignment::GetBlockVerticalOffsetF(double contentWidth, double contentHeight, double viewportHeight,
+                                            TextVerticalAlignment alignment) noexcept
 {
     float unusedX = 0.0f;
     float outY = 0.0f;
@@ -113,12 +113,12 @@ float TextAlignment::GetBlockVerticalOffsetF(int contentWidth, int contentHeight
     return outY;
 }
 
-float TextAlignment::GetLineHorizontalOffsetF(int lineWidth, int viewportWidth,
-                                               TextHorizontalAlignment alignment) noexcept
+float TextAlignment::GetLineHorizontalOffsetF(double lineWidth, double viewportWidth,
+                                            TextHorizontalAlignment alignment) noexcept
 {
     float outX = 0.0f;
     float unusedY = 0.0f;
-    ApplyTextAlignmentF(lineWidth, 1, viewportWidth, 1, alignment, TextVerticalAlignment::Top, outX, unusedY);
+    ApplyTextAlignmentF(lineWidth, 1.0, viewportWidth, 1.0, alignment, TextVerticalAlignment::Top, outX, unusedY);
     return outX;
 }
 

@@ -22,12 +22,12 @@ Thickness Control::GetPadding() const noexcept {
     return m_padding;
 }
 
-int Control::GetPaddingLeft() const noexcept { return GetPadding().Left; }
-int Control::GetPaddingTop() const noexcept { return GetPadding().Top; }
-int Control::GetPaddingRight() const noexcept { return GetPadding().Right; }
-int Control::GetPaddingBottom() const noexcept { return GetPadding().Bottom; }
-int Control::GetPaddingHorizontal() const noexcept { return GetPadding().Horizontal(); }
-int Control::GetPaddingVertical() const noexcept { return GetPadding().Vertical(); }
+double Control::GetPaddingLeft() const noexcept { return GetPadding().Left; }
+double Control::GetPaddingTop() const noexcept { return GetPadding().Top; }
+double Control::GetPaddingRight() const noexcept { return GetPadding().Right; }
+double Control::GetPaddingBottom() const noexcept { return GetPadding().Bottom; }
+double Control::GetPaddingHorizontal() const noexcept { return GetPadding().Horizontal(); }
+double Control::GetPaddingVertical() const noexcept { return GetPadding().Vertical(); }
 
 void Control::SetPadding(Thickness padding) noexcept {
     const auto oldPadding = GetPadding();
@@ -49,7 +49,7 @@ void Control::SetPadding(Thickness padding) noexcept {
     OnPaddingChanged(padding);
     if (oldPadding != padding) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Info,
-            "[Control] SetPadding: old=(%d,%d,%d,%d) new=(%d,%d,%d,%d) this=%p",
+            "[Control] SetPadding: old=(%g,%g,%g,%g) new=(%g,%g,%g,%g) this=%p",
             oldPadding.Left, oldPadding.Top, oldPadding.Right, oldPadding.Bottom,
             padding.Left, padding.Top, padding.Right, padding.Bottom, this);
     }
@@ -117,15 +117,15 @@ void Control::SetBorderColor(NeoWPF::UI::Color color) noexcept {
     OnBorderColorChanged(color);
 }
 
-int Control::GetBorderThickness() const noexcept {
+double Control::GetBorderThickness() const noexcept {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderThickness", *this);
     if (property) {
-        try { return GetValue<int>(*property); } catch (const std::bad_any_cast&) {}
+        try { return GetValue<double>(*property); } catch (const std::bad_any_cast&) {}
     }
     return m_borderThickness;
 }
 
-void Control::SetBorderThickness(int thickness) noexcept {
+void Control::SetBorderThickness(double thickness) noexcept {
     if (IsApplyingPropertyValue()) {
         m_borderThickness = thickness;
         OnBorderThicknessChanged(thickness);
@@ -135,11 +135,7 @@ void Control::SetBorderThickness(int thickness) noexcept {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderThickness", *this);
     if (property) {
         if (GetBorderThickness() != thickness) {
-            if (property->GetPropertyType() == typeid(Thickness)) {
-                SetValue(*property, Thickness(thickness));
-            } else {
-                SetValue(*property, thickness);
-            }
+            SetValue(*property, thickness);
         }
         return;
     }
@@ -150,6 +146,6 @@ void Control::SetBorderThickness(int thickness) noexcept {
 
 void Control::OnBackgroundColorChanged(NeoWPF::UI::Color) {}
 void Control::OnBorderColorChanged(NeoWPF::UI::Color) {}
-void Control::OnBorderThicknessChanged(int) {}
+void Control::OnBorderThicknessChanged(double) {}
 
 }

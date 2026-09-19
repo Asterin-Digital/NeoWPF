@@ -17,8 +17,8 @@ NeoWPF::UI::Properties::PropertyMetadata MakeBoolMetadata(bool defaultValue)
 NeoWPF::UI::Properties::PropertyMetadata MakeOffsetMetadata()
 {
     NeoWPF::UI::Properties::PropertyMetadata metadata;
-    metadata.DefaultValue = std::any(0);
-    metadata.Converter = NeoWPF::UI::Properties::GetIntConverter();
+    metadata.DefaultValue = std::any(0.0);
+    metadata.Converter = NeoWPF::UI::Properties::GetDoubleConverter();
     metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsArrange |
                      NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
     return metadata;
@@ -48,9 +48,9 @@ void RegisterPopupProperties()
         &UI::Popup::GetPlacementTarget, &UI::Popup::SetPlacementTarget);
     RegisterProperty<UI::Popup, UI::PopupPlacement>("Placement",
         &UI::Popup::GetPlacement, &UI::Popup::SetPlacement, MakePlacementMetadata());
-    RegisterProperty<UI::Popup, int>("HorizontalOffset",
+    RegisterProperty<UI::Popup, double>("HorizontalOffset",
         &UI::Popup::GetHorizontalOffset, &UI::Popup::SetHorizontalOffset, MakeOffsetMetadata());
-    RegisterProperty<UI::Popup, int>("VerticalOffset",
+    RegisterProperty<UI::Popup, double>("VerticalOffset",
         &UI::Popup::GetVerticalOffset, &UI::Popup::SetVerticalOffset, MakeOffsetMetadata());
 
     NeoWPF::UI::Markup::Xaml::RegisterXamlType<UI::Popup>(
@@ -94,7 +94,7 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Popup::PlacementPr
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Popup::HorizontalOffsetProperty()
 {
     static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<
-        NeoWPF::UI::Popup, int>("HorizontalOffset", &NeoWPF::UI::Popup::GetHorizontalOffset,
+        NeoWPF::UI::Popup, double>("HorizontalOffset", &NeoWPF::UI::Popup::GetHorizontalOffset,
             &NeoWPF::UI::Popup::SetHorizontalOffset, MakeOffsetMetadata());
     return *property;
 }
@@ -102,7 +102,7 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Popup::HorizontalO
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Popup::VerticalOffsetProperty()
 {
     static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<
-        NeoWPF::UI::Popup, int>("VerticalOffset", &NeoWPF::UI::Popup::GetVerticalOffset,
+        NeoWPF::UI::Popup, double>("VerticalOffset", &NeoWPF::UI::Popup::GetVerticalOffset,
             &NeoWPF::UI::Popup::SetVerticalOffset, MakeOffsetMetadata());
     return *property;
 }

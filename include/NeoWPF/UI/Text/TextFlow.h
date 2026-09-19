@@ -17,22 +17,20 @@ struct FlowLine {
     std::wstring text;
     std::size_t charStart = 0;
     std::size_t charEnd = 0;
-    int width = 0;
-    int height = 0;
-    int lineHeight = 0;
-    int inkTop = 0;
+    double width = 0.0;
+    double height = 0.0;
+    double lineHeight = 0.0;
+    double inkTop = 0.0;
 };
 
 struct FlowResult {
     std::vector<FlowLine> lines;
-    int contentWidth = 0;
-    int contentHeight = 0;
+    double contentWidth = 0.0;
+    double contentHeight = 0.0;
 };
 
 FlowResult BreakText(const std::wstring& text, int fontSize, const std::wstring& fontFamily,
-                     int availableWidth, TextWrapping wrapping);
-FlowResult BreakText(const std::wstring& text, int fontSize, const std::wstring& fontFamily,
-                     int availableWidth, TextWrapping wrapping, int fontWeight,
+                     double availableWidth, TextWrapping wrapping, int fontWeight,
                      NeoWPF::UI::FontStyle fontStyle);
 
 int MeasureLineHeight(const std::wstring& text, int fontSize, const std::wstring& fontFamily);

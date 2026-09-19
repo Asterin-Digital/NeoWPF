@@ -10,14 +10,14 @@ namespace NeoWPF::UI {
 NeoWPF::Rendering::ClipRect FrameworkElement::GetClipRect() const noexcept {
     NeoWPF::Rendering::ClipRect clip{};
     if (m_clipToBounds && m_finalWidth > 0 && m_finalHeight > 0) {
-        int absX = 0;
-        int absY = 0;
+        double absX = 0.0;
+        double absY = 0.0;
         GetAbsolutePosition(absX, absY);
 
-        clip.x = static_cast<float>(absX);
-        clip.y = static_cast<float>(absY);
-        clip.w = static_cast<float>(m_finalWidth);
-        clip.h = static_cast<float>(m_finalHeight);
+        clip.x = absX;
+        clip.y = absY;
+        clip.w = m_finalWidth;
+        clip.h = m_finalHeight;
         clip.active = true;
 
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
@@ -34,10 +34,10 @@ NeoWPF::Rendering::ClipRect FrameworkElement::GetClipRect() const noexcept {
                 return parentClip;
             }
 
-            const float left = (std::max)(clip.x, parentClip.x);
-            const float top = (std::max)(clip.y, parentClip.y);
-            const float right = (std::min)(clip.x + clip.w, parentClip.x + parentClip.w);
-            const float bottom = (std::min)(clip.y + clip.h, parentClip.y + parentClip.h);
+            const double left = (std::max)(clip.x, parentClip.x);
+            const double top = (std::max)(clip.y, parentClip.y);
+            const double right = (std::min)(clip.x + clip.w, parentClip.x + parentClip.w);
+            const double bottom = (std::min)(clip.y + clip.h, parentClip.y + parentClip.h);
             if (right <= left || bottom <= top) {
                 NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
                     "[GetClipRect] Intersection is empty - returning active zero-size clip");
@@ -53,10 +53,10 @@ NeoWPF::Rendering::ClipRect FrameworkElement::GetClipRect() const noexcept {
     return clip;
 }
 
-void FrameworkElement::GetAbsolutePosition(int& outX, int& outY) const noexcept
+void FrameworkElement::GetAbsolutePosition(double& outX, double& outY) const noexcept
 {
-    float x = static_cast<float>(m_offsetX + m_renderOffsetX);
-    float y = static_cast<float>(m_offsetY + m_renderOffsetY);
+    double x = m_offsetX + m_renderOffsetX;
+    double y = m_offsetY + m_renderOffsetY;
 
     auto parent = GetParent();
     while (parent)
@@ -73,21 +73,21 @@ void FrameworkElement::GetAbsolutePosition(int& outX, int& outY) const noexcept
                will be shifted and the element's transform can stop lining up with its
                rendered background or child content.
             */
-            float width = static_cast<float>(fw->GetFinalWidth());
-            float height = static_cast<float>(fw->GetFinalHeight());
+            double width = fw->GetFinalWidth();
+            double height = fw->GetFinalHeight();
 
-            x += static_cast<float>(fw->GetLayoutOffsetX() + fw->GetRenderOffsetX());
-            y += static_cast<float>(fw->GetLayoutOffsetY() + fw->GetRenderOffsetY());
+            x += fw->GetLayoutOffsetX() + fw->GetRenderOffsetX();
+            y += fw->GetLayoutOffsetY() + fw->GetRenderOffsetY();
             fw->ApplyRenderTransform(x, y, width, height);
         }
         parent = parent->GetParent();
     }
 
-    outX = static_cast<int>(std::lround(x));
-    outY = static_cast<int>(std::lround(y));
+    outX = x;
+    outY = y;
 }
 
-void FrameworkElement::GetAbsoluteLayoutPosition(int& outX, int& outY) const noexcept
+void FrameworkElement::GetAbsoluteLayoutPosition(double& outX, double& outY) const noexcept
 {
     outX = m_offsetX;
     outY = m_offsetY;
@@ -105,7 +105,7 @@ void FrameworkElement::GetAbsoluteLayoutPosition(int& outX, int& outY) const noe
     }
 }
 
-void FrameworkElement::ApplyRenderTransform(float& x, float& y, float& width, float& height) const noexcept
+void FrameworkElement::ApplyRenderTransform(double& x, double& y, double& width, double& height) const noexcept
 {
     auto transform = GetRenderTransform();
     if (!transform) {
@@ -113,15 +113,15 @@ void FrameworkElement::ApplyRenderTransform(float& x, float& y, float& width, fl
     }
 
     const auto origin = GetRenderTransformOrigin();
-    const float originX = width * origin.X;
-    const float originY = height * origin.Y;
+    const double originX = width * origin.X;
+    const double originY = height * origin.Y;
 
     if (auto scaleTransform = std::dynamic_pointer_cast<const NeoWPF::UI::Core::ScaleTransform>(transform)) {
-        const float scaleX = scaleTransform->GetScaleX();
-        const float scaleY = scaleTransform->GetScaleY();
+        const double scaleX = scaleTransform->GetScaleX();
+        const double scaleY = scaleTransform->GetScaleY();
 
-        const float pivotX = x + originX;
-        const float pivotY = y + originY;
+        const double pivotX = x + originX;
+        const double pivotY = y + originY;
 
         x = pivotX + (x - pivotX) * scaleX;
         y = pivotY + (y - pivotY) * scaleY;
@@ -138,11 +138,11 @@ void FrameworkElement::ApplyRenderTransform(float& x, float& y, float& width, fl
             }
 
             if (auto childScale = std::dynamic_pointer_cast<const NeoWPF::UI::Core::ScaleTransform>(child)) {
-                const float scaleX = childScale->GetScaleX();
-                const float scaleY = childScale->GetScaleY();
+                const double scaleX = childScale->GetScaleX();
+                const double scaleY = childScale->GetScaleY();
 
-                const float pivotX = x + originX;
-                const float pivotY = y + originY;
+                const double pivotX = x + originX;
+                const double pivotY = y + originY;
 
                 x = pivotX + (x - pivotX) * scaleX;
                 y = pivotY + (y - pivotY) * scaleY;
@@ -152,21 +152,21 @@ void FrameworkElement::ApplyRenderTransform(float& x, float& y, float& width, fl
             }
 
             const NeoWPF::UI::Core::Matrix4 childMatrix = child->GetMatrix();
-            const float translateX = childMatrix.m[3][0];
-            const float translateY = childMatrix.m[3][1];
+            const double translateX = childMatrix.m[3][0];
+            const double translateY = childMatrix.m[3][1];
 
-            const float absoluteOriginX = x + originX;
-            const float absoluteOriginY = y + originY;
+            const double absoluteOriginX = x + originX;
+            const double absoluteOriginY = y + originY;
 
-            const auto applyPoint = [&](float px, float py, float& outX, float& outY) {
-                const float dx = px - absoluteOriginX;
-                const float dy = py - absoluteOriginY;
+            const auto applyPoint = [&](double px, double py, double& outX, double& outY) {
+                const double dx = px - absoluteOriginX;
+                const double dy = py - absoluteOriginY;
                 outX = childMatrix.m[0][0] * dx + childMatrix.m[0][1] * dy + absoluteOriginX + translateX;
                 outY = childMatrix.m[1][0] * dx + childMatrix.m[1][1] * dy + absoluteOriginY + translateY;
             };
 
-            float transformedOriginX = absoluteOriginX;
-            float transformedOriginY = absoluteOriginY;
+            double transformedOriginX = absoluteOriginX;
+            double transformedOriginY = absoluteOriginY;
             applyPoint(absoluteOriginX, absoluteOriginY, transformedOriginX, transformedOriginY);
 
             x = transformedOriginX - originX;
@@ -176,21 +176,21 @@ void FrameworkElement::ApplyRenderTransform(float& x, float& y, float& width, fl
     }
 
     const NeoWPF::UI::Core::Matrix4 matrix = transform->GetMatrix();
-    const float translateX = matrix.m[3][0];
-    const float translateY = matrix.m[3][1];
+    const double translateX = matrix.m[3][0];
+    const double translateY = matrix.m[3][1];
 
-    const float absoluteOriginX = x + originX;
-    const float absoluteOriginY = y + originY;
+    const double absoluteOriginX = x + originX;
+    const double absoluteOriginY = y + originY;
 
-    const auto applyPoint = [&](float px, float py, float& outX, float& outY) {
-        const float dx = px - absoluteOriginX;
-        const float dy = py - absoluteOriginY;
+    const auto applyPoint = [&](double px, double py, double& outX, double& outY) {
+        const double dx = px - absoluteOriginX;
+        const double dy = py - absoluteOriginY;
         outX = matrix.m[0][0] * dx + matrix.m[0][1] * dy + absoluteOriginX + translateX;
         outY = matrix.m[1][0] * dx + matrix.m[1][1] * dy + absoluteOriginY + translateY;
     };
 
-    float transformedOriginX = absoluteOriginX;
-    float transformedOriginY = absoluteOriginY;
+    double transformedOriginX = absoluteOriginX;
+    double transformedOriginY = absoluteOriginY;
     applyPoint(absoluteOriginX, absoluteOriginY, transformedOriginX, transformedOriginY);
 
     x = transformedOriginX - originX;
@@ -208,10 +208,10 @@ NeoWPF::UI::Core::Matrix4 FrameworkElement::GetLocalTransformMatrix() const noex
        this can cause transformed content to no longer line up correctly with the
        element or its parent
     */
-    const float width = static_cast<float>(GetFinalWidth());
-    const float height = static_cast<float>(GetFinalHeight());
-    const float originX = width * origin.X;
-    const float originY = height * origin.Y;
+    const double width = GetFinalWidth();
+    const double height = GetFinalHeight();
+    const double originX = width * origin.X;
+    const double originY = height * origin.Y;
 
     NeoWPF::UI::Core::Matrix4 local = NeoWPF::UI::Core::Matrix4::Translation(
         static_cast<float>(m_offsetX + m_renderOffsetX),
@@ -219,9 +219,9 @@ NeoWPF::UI::Core::Matrix4 FrameworkElement::GetLocalTransformMatrix() const noex
 
     if (auto transform = GetRenderTransform()) {
         if (originX != 0.0f || originY != 0.0f) {
-            local = NeoWPF::UI::Core::Matrix4::Translation(-originX, -originY);
+            local = NeoWPF::UI::Core::Matrix4::Translation(static_cast<float>(-originX), static_cast<float>(-originY));
             local = local * transform->GetMatrix();
-            local = local * NeoWPF::UI::Core::Matrix4::Translation(originX, originY);
+            local = local * NeoWPF::UI::Core::Matrix4::Translation(static_cast<float>(originX), static_cast<float>(originY));
             local = local * NeoWPF::UI::Core::Matrix4::Translation(
                 static_cast<float>(m_offsetX + m_renderOffsetX),
                 static_cast<float>(m_offsetY + m_renderOffsetY));
@@ -236,14 +236,14 @@ NeoWPF::UI::Core::Matrix4 FrameworkElement::GetLocalTransformMatrix() const noex
 NeoWPF::UI::Core::Matrix4 FrameworkElement::GetLocalPositionMatrix() const noexcept
 {
     const auto origin = GetRenderTransformOrigin();
-    const float originX = static_cast<float>(GetFinalWidth()) * origin.X;
-    const float originY = static_cast<float>(GetFinalHeight()) * origin.Y;
+    const double originX = GetFinalWidth() * origin.X;
+    const double originY = GetFinalHeight() * origin.Y;
     const auto transform = GetRenderTransform();
     const auto positionTransform = transform ? transform->GetPositionMatrix()
                                               : NeoWPF::UI::Core::Matrix4::Identity();
-    return NeoWPF::UI::Core::Matrix4::Translation(-originX, -originY)
+    return NeoWPF::UI::Core::Matrix4::Translation(static_cast<float>(-originX), static_cast<float>(-originY))
         * positionTransform
-        * NeoWPF::UI::Core::Matrix4::Translation(originX, originY)
+        * NeoWPF::UI::Core::Matrix4::Translation(static_cast<float>(originX), static_cast<float>(originY))
         * NeoWPF::UI::Core::Matrix4::Translation(
             static_cast<float>(m_offsetX + m_renderOffsetX),
             static_cast<float>(m_offsetY + m_renderOffsetY));

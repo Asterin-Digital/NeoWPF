@@ -397,20 +397,20 @@ void ExecuteRendererDraw(const CommandList& cmd)
             const float alpha = baseAlpha * r.opacity;
 
             if (std::fabs(r.rotationRadians) < 1e-6f) {
-                float clippedX = 0.0f;
-                float clippedY = 0.0f;
-                float clippedW = 0.0f;
-                float clippedH = 0.0f;
+                double clippedX = 0.0;
+                double clippedY = 0.0;
+                double clippedW = 0.0;
+                double clippedH = 0.0;
                 const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
                 if (clipped) {
                     if (clippedW > 0.0f && clippedH > 0.0f) {
-                        pushRect(clippedX, clippedY, clippedW, clippedH, red, green, blue, alpha, r.rotationRadians, r.pivotX, r.pivotY);
+                        pushRect(static_cast<float>(clippedX), static_cast<float>(clippedY), static_cast<float>(clippedW), static_cast<float>(clippedH), red, green, blue, alpha, r.rotationRadians, static_cast<float>(r.pivotX), static_cast<float>(r.pivotY));
                     }
                 } else {
-                    pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha, r.rotationRadians, r.pivotX, r.pivotY);
+                    pushRect(static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h), red, green, blue, alpha, r.rotationRadians, static_cast<float>(r.pivotX), static_cast<float>(r.pivotY));
                 }
             } else {
-                pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha, r.rotationRadians, r.pivotX, r.pivotY);
+                pushRect(static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h), red, green, blue, alpha, r.rotationRadians, static_cast<float>(r.pivotX), static_cast<float>(r.pivotY));
             }
             lastKind = command.kind;
             hasPendingKind = true;
@@ -425,20 +425,20 @@ void ExecuteRendererDraw(const CommandList& cmd)
             const float alpha = baseAlpha * r.opacity;
 
             if (std::fabs(r.rotationRadians) < 1e-6f) {
-                float clippedX = 0.0f;
-                float clippedY = 0.0f;
-                float clippedW = 0.0f;
-                float clippedH = 0.0f;
+                double clippedX = 0.0;
+                double clippedY = 0.0;
+                double clippedW = 0.0;
+                double clippedH = 0.0;
                 const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
                 if (clipped) {
                     if (clippedW > 0.0f && clippedH > 0.0f) {
-                        pushRoundedRect(clippedX, clippedY, clippedW, clippedH, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians, r.pivotX, r.pivotY);
+                        pushRoundedRect(static_cast<float>(clippedX), static_cast<float>(clippedY), static_cast<float>(clippedW), static_cast<float>(clippedH), static_cast<float>(r.topLeft), static_cast<float>(r.topRight), static_cast<float>(r.bottomRight), static_cast<float>(r.bottomLeft), red, green, blue, alpha, r.rotationRadians, static_cast<float>(r.pivotX), static_cast<float>(r.pivotY));
                     }
                 } else {
-                    pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians, r.pivotX, r.pivotY);
+                    pushRoundedRect(static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h), static_cast<float>(r.topLeft), static_cast<float>(r.topRight), static_cast<float>(r.bottomRight), static_cast<float>(r.bottomLeft), red, green, blue, alpha, r.rotationRadians, static_cast<float>(r.pivotX), static_cast<float>(r.pivotY));
                 }
             } else {
-                pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight, r.bottomRight, r.bottomLeft, red, green, blue, alpha, r.rotationRadians, r.pivotX, r.pivotY);
+                pushRoundedRect(static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h), static_cast<float>(r.topLeft), static_cast<float>(r.topRight), static_cast<float>(r.bottomRight), static_cast<float>(r.bottomLeft), red, green, blue, alpha, r.rotationRadians, static_cast<float>(r.pivotX), static_cast<float>(r.pivotY));
             }
             lastKind = command.kind;
             hasPendingKind = true;
@@ -449,29 +449,29 @@ void ExecuteRendererDraw(const CommandList& cmd)
             if (hasPendingKind && lastKind != CommandList::CommandKind::TexturedQuad) {
                 flushSolidBatch();
             }
-            float clippedX = 0.0f;
-            float clippedY = 0.0f;
-            float clippedW = 0.0f;
-            float clippedH = 0.0f;
+            double clippedX = 0.0;
+            double clippedY = 0.0;
+            double clippedW = 0.0;
+            double clippedH = 0.0;
             if (q.rotationRadians == 0.0f) {
                 const bool clipped = ClipRectToBounds(q.x, q.y, q.w, q.h, q.clip, clippedX, clippedY, clippedW, clippedH);
                 if (clipped) {
                     if (clippedW > 0.0f && clippedH > 0.0f) {
                         const float uSpan = q.u1 - q.u0;
                         const float vSpan = q.v1 - q.v0;
-                        const float xDelta = clippedX - q.x;
-                        const float yDelta = clippedY - q.y;
-                        const float newU0 = q.u0 + (xDelta / q.w) * uSpan;
-                        const float newV0 = q.v0 + (yDelta / q.h) * vSpan;
-                        const float newU1 = newU0 + (clippedW / q.w) * uSpan;
-                        const float newV1 = newV0 + (clippedH / q.h) * vSpan;
-                        pushTextQuad(clippedX, clippedY, clippedW, clippedH, newU0, newV0, newU1, newV1, q.tintColor, q.opacity, q.textureId);
+                        const double xDelta = clippedX - q.x;
+                        const double yDelta = clippedY - q.y;
+                        const float newU0 = static_cast<float>(q.u0 + (xDelta / q.w) * uSpan);
+                        const float newV0 = static_cast<float>(q.v0 + (yDelta / q.h) * vSpan);
+                        const float newU1 = static_cast<float>(newU0 + (clippedW / q.w) * uSpan);
+                        const float newV1 = static_cast<float>(newV0 + (clippedH / q.h) * vSpan);
+                        pushTextQuad(static_cast<float>(clippedX), static_cast<float>(clippedY), static_cast<float>(clippedW), static_cast<float>(clippedH), newU0, newV0, newU1, newV1, q.tintColor, q.opacity, q.textureId);
                     }
                 } else {
-                    pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId);
+                    pushTextQuad(static_cast<float>(q.x), static_cast<float>(q.y), static_cast<float>(q.w), static_cast<float>(q.h), q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId);
                 }
             } else {
-                pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId, q.rotationRadians, q.pivotX, q.pivotY);
+                pushTextQuad(static_cast<float>(q.x), static_cast<float>(q.y), static_cast<float>(q.w), static_cast<float>(q.h), q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId, q.rotationRadians, static_cast<float>(q.pivotX), static_cast<float>(q.pivotY));
             }
             lastKind = command.kind;
             hasPendingKind = true;

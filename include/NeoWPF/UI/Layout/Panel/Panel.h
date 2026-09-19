@@ -26,8 +26,8 @@ public:
 
     static const NeoWPF::UI::Properties::DependencyProperty& BackgroundColorProperty();
 
-    void Measure(int availableWidth, int availableHeight) override;
-    void Arrange(int finalWidth, int finalHeight) override;
+    void Measure(double availableWidth, double availableHeight) override;
+    void Arrange(double finalWidth, double finalHeight) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
     virtual void OnMouseDown(int x, int y, std::uint32_t buttonState) override {}

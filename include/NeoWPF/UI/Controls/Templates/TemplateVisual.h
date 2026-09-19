@@ -42,7 +42,7 @@ public:
         @param height
         The visual height.
     */
-    void SetRect(int x, int y, int width, int height) noexcept;
+    void SetRect(double x, double y, double width, double height) noexcept;
 
     /*
         @summary
@@ -51,7 +51,7 @@ public:
         @returns
         The x position in pixels.
     */
-    int GetX() const noexcept { return m_x; }
+    double GetX() const noexcept { return m_x; }
 
     /*
         @summary
@@ -60,7 +60,7 @@ public:
         @returns
         The y position in pixels.
     */
-    int GetY() const noexcept { return m_y; }
+    double GetY() const noexcept { return m_y; }
 
     /*
         @summary
@@ -69,7 +69,7 @@ public:
         @returns
         The width in pixels.
     */
-    int GetWidth() const noexcept { return m_width; }
+    double GetWidth() const noexcept { return m_width; }
 
     /*
         @summary
@@ -78,7 +78,7 @@ public:
         @returns
         The height in pixels.
     */
-    int GetHeight() const noexcept { return m_height; }
+    double GetHeight() const noexcept { return m_height; }
 
     /*
         @summary
@@ -189,10 +189,10 @@ public:
 
 private:
     std::string m_name;
-    int m_x = 0;
-    int m_y = 0;
-    int m_width = 0;
-    int m_height = 0;
+    double m_x = 0.0;
+    double m_y = 0.0;
+    double m_width = 0.0;
+    double m_height = 0.0;
     std::uint32_t m_fillColor = 0x00000000u;
     std::uint32_t m_borderColor = 0x00000000u;
     int m_borderThickness = 0;

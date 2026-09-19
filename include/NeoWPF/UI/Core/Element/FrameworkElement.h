@@ -62,7 +62,7 @@ public:
 
         @internal
     */
-    int GetDesiredWidth() const noexcept { return m_desiredWidth; }
+    double GetDesiredWidth() const noexcept { return m_desiredWidth; }
 
     /*
         @summary
@@ -70,7 +70,7 @@ public:
 
         @internal
     */
-    int GetDesiredHeight() const noexcept { return m_desiredHeight; }
+    double GetDesiredHeight() const noexcept { return m_desiredHeight; }
 
     /*
         @summary
@@ -84,7 +84,7 @@ public:
 
         @internal
     */
-    void SetDesiredSize(int width, int height) noexcept {
+    void SetDesiredSize(double width, double height) noexcept {
         m_desiredWidth = width;
         m_desiredHeight = height;
     }
@@ -101,7 +101,7 @@ public:
 
         @internal
     */
-    void Measure(int availableWidth, int availableHeight) override;
+    void Measure(double availableWidth, double availableHeight) override;
 
     /*
         @summary
@@ -115,7 +115,7 @@ public:
 
         @internal
     */
-    void Arrange(int finalWidth, int finalHeight) override;
+    void Arrange(double finalWidth, double finalHeight) override;
 
     NeoWPF::UI::Core::Matrix4 GetLocalPositionMatrix() const noexcept override;
 
@@ -125,7 +125,7 @@ public:
 
         @internal
     */
-    int GetFinalWidth() const noexcept { return m_finalWidth; }
+    double GetFinalWidth() const noexcept { return m_finalWidth; }
 
     /*
         @summary
@@ -133,7 +133,7 @@ public:
 
         @internal
     */
-    int GetFinalHeight() const noexcept { return m_finalHeight; }
+    double GetFinalHeight() const noexcept { return m_finalHeight; }
 
     /*
         @summary
@@ -167,7 +167,7 @@ public:
 
         @internal
     */
-    void SetLayoutOffset(int x, int y) noexcept {
+    void SetLayoutOffset(double x, double y) noexcept {
         if (m_offsetX != x || m_offsetY != y) {
             m_offsetX = x;
             m_offsetY = y;
@@ -182,7 +182,7 @@ public:
 
         @internal
     */
-    int GetLayoutOffsetX() const noexcept { return m_offsetX; }
+    double GetLayoutOffsetX() const noexcept { return m_offsetX; }
 
     /*
         @summary
@@ -190,7 +190,7 @@ public:
 
         @internal
     */
-    int GetLayoutOffsetY() const noexcept { return m_offsetY; }
+    double GetLayoutOffsetY() const noexcept { return m_offsetY; }
 
     /*
         @summary
@@ -211,7 +211,7 @@ public:
         @param durationSeconds
         The animation duration in seconds.
     */
-    void BeginAnimation(int fromWidth, int toWidth, int fromHeight, int toHeight, float durationSeconds);
+    void BeginAnimation(double fromWidth, double toWidth, double fromHeight, double toHeight, float durationSeconds);
 
     /*
         @summary
@@ -271,7 +271,7 @@ public:
         @param width
         The width to use.
     */
-    int GetWidth() const noexcept;
+    double GetWidth() const noexcept;
 
     /*
         @summary
@@ -280,13 +280,13 @@ public:
         @param width
         The width to use.
     */
-    void SetWidth(int width) noexcept;
+    void SetWidth(double width) noexcept;
 
     /*
         @summary
         Returns the element's preferred height.
     */
-    int GetHeight() const noexcept;
+    double GetHeight() const noexcept;
 
     /*
         @summary
@@ -295,7 +295,7 @@ public:
         @param height
         The height to use.
     */
-    void SetHeight(int height) noexcept;
+    void SetHeight(double height) noexcept;
 
     /*
         @summary
@@ -313,20 +313,20 @@ public:
         @summary
         Sets a uniform layout margin for the element.
     */
-    void SetMargin(int uniform) noexcept;
+    void SetMargin(double uniform) noexcept;
 
     /*
         @summary
         Sets a custom layout margin for the element.
     */
-    void SetMargin(int left, int top, int right, int bottom) noexcept;
+    void SetMargin(double left, double top, double right, double bottom) noexcept;
 
-    int GetMarginLeft() const noexcept;
-    int GetMarginTop() const noexcept;
-    int GetMarginRight() const noexcept;
-    int GetMarginBottom() const noexcept;
-    int GetMarginHorizontal() const noexcept;
-    int GetMarginVertical() const noexcept;
+    double GetMarginLeft() const noexcept;
+    double GetMarginTop() const noexcept;
+    double GetMarginRight() const noexcept;
+    double GetMarginBottom() const noexcept;
+    double GetMarginHorizontal() const noexcept;
+    double GetMarginVertical() const noexcept;
 
     /*
         @summary
@@ -344,31 +344,31 @@ public:
         @summary
         Sets a uniform layout spacing for the element.
     */
-    void SetSpacing(int uniform) noexcept;
+    void SetSpacing(double uniform) noexcept;
 
     /*
         @summary
         Returns the horizontal spacing used for layout.
     */
-    int GetHorizontalSpacing() const noexcept;
+    double GetHorizontalSpacing() const noexcept;
 
     /*
         @summary
         Sets the horizontal spacing used for layout.
     */
-    void SetHorizontalSpacing(int spacing) noexcept;
+    void SetHorizontalSpacing(double spacing) noexcept;
 
     /*
         @summary
         Returns the vertical spacing used for layout.
     */
-    int GetVerticalSpacing() const noexcept;
+    double GetVerticalSpacing() const noexcept;
 
     /*
         @summary
         Sets the vertical spacing used for layout.
     */
-    void SetVerticalSpacing(int spacing) noexcept;
+    void SetVerticalSpacing(double spacing) noexcept;
 
     /*
         @summary
@@ -397,7 +397,7 @@ public:
 
         @internal
     */
-    int ResolveWidth(int availableWidth, int desiredWidth) const;
+    double ResolveWidth(double availableWidth, double desiredWidth) const;
 
     /*
         @summary
@@ -411,7 +411,7 @@ public:
 
         @internal
     */
-    int ResolveHeight(int availableHeight, int desiredHeight) const;
+    double ResolveHeight(double availableHeight, double desiredHeight) const;
 
     /*
         @summary
@@ -497,7 +497,7 @@ public:
 
         @internal
     */
-    void GetAbsolutePosition(int& outX, int& outY) const noexcept;
+    void GetAbsolutePosition(double& outX, double& outY) const noexcept;
 
     /*
         @summary
@@ -511,30 +511,30 @@ public:
 
         @internal
     */
-    void GetAbsoluteLayoutPosition(int& outX, int& outY) const noexcept;
+    void GetAbsoluteLayoutPosition(double& outX, double& outY) const noexcept;
 
 protected:
     void OnAddChild(Visual* child) override;
 
-    void ApplyRenderTransform(float& x, float& y, float& width, float& height) const noexcept;
+    void ApplyRenderTransform(double& x, double& y, double& width, double& height) const noexcept;
     NeoWPF::UI::Core::Matrix4 GetLocalTransformMatrix() const noexcept override;
 
 public:
     static bool s_frameworkElementLogging;
 
 private:
-    int m_desiredWidth = 0;
-    int m_desiredHeight = 0;
-    int m_finalWidth = 0;
-    int m_finalHeight = 0;
-    int m_offsetX = 0;
-    int m_offsetY = 0;
+    double m_desiredWidth = 0.0;
+    double m_desiredHeight = 0.0;
+    double m_finalWidth = 0.0;
+    double m_finalHeight = 0.0;
+    double m_offsetX = 0.0;
+    double m_offsetY = 0.0;
     LayoutSizeMode m_widthMode = LayoutSizeMode::Auto;
-    int m_width = 0;
-    int m_renderOffsetX = 0;
-    int m_renderOffsetY = 0;
+    double m_width = 0.0;
+    double m_renderOffsetX = 0.0;
+    double m_renderOffsetY = 0.0;
     LayoutSizeMode m_heightMode = LayoutSizeMode::Auto;
-    int m_height = 0;
+    double m_height = 0.0;
     Thickness m_margin;
     Spacing m_spacing;
     NeoWPF::UI::CornerRadius m_cornerRadius;
@@ -542,11 +542,11 @@ private:
     bool m_clipToBounds = false;
 
 protected:
-    void SetRenderOffset(int x, int y) noexcept { m_renderOffsetX = x; m_renderOffsetY = y; InvalidateTransformCache(); InvalidateVisual(); }
+    void SetRenderOffset(double x, double y) noexcept { m_renderOffsetX = x; m_renderOffsetY = y; InvalidateTransformCache(); InvalidateVisual(); }
 
 public:
-    int GetRenderOffsetX() const noexcept { return m_renderOffsetX; }
-    int GetRenderOffsetY() const noexcept { return m_renderOffsetY; }
+    double GetRenderOffsetX() const noexcept { return m_renderOffsetX; }
+    double GetRenderOffsetY() const noexcept { return m_renderOffsetY; }
 
 private:
     HorizontalAlignment m_horizontalAlignment = HorizontalAlignment::Stretch;

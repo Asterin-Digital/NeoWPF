@@ -18,7 +18,7 @@ namespace {
 
 class TestElement final : public NeoWPF::UI::FrameworkElement {
 public:
-    void Measure(int, int) override
+    void Measure(double, double) override
     {
         SetDesiredSize(100, 40);
     }
@@ -30,12 +30,12 @@ TEST(TransformCompositionTests, TranslationTransformsLocalPoint)
     element.SetLayoutOffset(10, 20);
     element.SetRenderTransform(std::make_shared<NeoWPF::UI::TranslateTransform>(5.0f, 7.0f));
 
-    float x = 0.0f;
-    float y = 0.0f;
-    element.GetWorldTransformMatrix().TransformPoint(0.0f, 0.0f, x, y);
+    double x = 0.0;
+    double y = 0.0;
+    element.GetWorldTransformMatrix().TransformPoint(0.0, 0.0, x, y);
 
-    EXPECT_FLOAT_EQ(x, 15.0f);
-    EXPECT_FLOAT_EQ(y, 27.0f);
+    EXPECT_DOUBLE_EQ(x, 15.0);
+    EXPECT_DOUBLE_EQ(y, 27.0);
 }
 
 TEST(TransformCompositionTests, ChildWorldTransformIncludesParentTransform)
@@ -46,12 +46,12 @@ TEST(TransformCompositionTests, ChildWorldTransformIncludesParentTransform)
     child->SetLayoutOffset(3, 4);
     parent->AddChild(child);
 
-    float x = 0.0f;
-    float y = 0.0f;
-    child->GetWorldTransformMatrix().TransformPoint(0.0f, 0.0f, x, y);
+    double x = 0.0;
+    double y = 0.0;
+    child->GetWorldTransformMatrix().TransformPoint(0.0, 0.0, x, y);
 
-    EXPECT_FLOAT_EQ(x, 13.0f);
-    EXPECT_FLOAT_EQ(y, 24.0f);
+    EXPECT_DOUBLE_EQ(x, 13.0);
+    EXPECT_DOUBLE_EQ(y, 24.0);
 }
 
 TEST(TransformCompositionTests, CenterOriginScaleKeepsCenterFixed)
@@ -61,12 +61,12 @@ TEST(TransformCompositionTests, CenterOriginScaleKeepsCenterFixed)
     element.SetRenderTransformOrigin({0.5f, 0.5f});
     element.SetRenderTransform(std::make_shared<NeoWPF::UI::ScaleTransform>(2.0f, 2.0f));
 
-    float x = 0.0f;
-    float y = 0.0f;
-    element.GetWorldTransformMatrix().TransformPoint(50.0f, 20.0f, x, y);
+    double x = 0.0;
+    double y = 0.0;
+    element.GetWorldTransformMatrix().TransformPoint(50.0, 20.0, x, y);
 
-    EXPECT_FLOAT_EQ(x, 50.0f);
-    EXPECT_FLOAT_EQ(y, 20.0f);
+    EXPECT_DOUBLE_EQ(x, 50.0);
+    EXPECT_DOUBLE_EQ(y, 20.0);
 }
 
 #if defined(_WIN32)

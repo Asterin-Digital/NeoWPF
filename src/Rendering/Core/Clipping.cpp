@@ -5,8 +5,8 @@
 
 namespace NeoWPF::Rendering {
 
-bool ClipRectToBounds(float x, float y, float w, float h, const ClipRect& clip,
-                      float& outX, float& outY, float& outW, float& outH) noexcept
+bool ClipRectToBounds(double x, double y, double w, double h, const ClipRect& clip,
+                      double& outX, double& outY, double& outW, double& outH) noexcept
 {
     outX = x;
     outY = y;
@@ -17,21 +17,21 @@ bool ClipRectToBounds(float x, float y, float w, float h, const ClipRect& clip,
         return false;
     }
 
-    if (w <= 0.0f || h <= 0.0f || clip.w <= 0.0f || clip.h <= 0.0f ||
+    if (w <= 0.0 || h <= 0.0 || clip.w <= 0.0 || clip.h <= 0.0 ||
         !std::isfinite(x) || !std::isfinite(y) || !std::isfinite(w) || !std::isfinite(h) ||
         !std::isfinite(clip.x) || !std::isfinite(clip.y) ||
         !std::isfinite(clip.w) || !std::isfinite(clip.h)) {
-        outX = outY = outW = outH = 0.0f;
+        outX = outY = outW = outH = 0.0;
         return true;
     }
 
-    const float intersectLeft = (std::max)(x, clip.x);
-    const float intersectTop = (std::max)(y, clip.y);
-    const float intersectRight = (std::min)(x + w, clip.x + clip.w);
-    const float intersectBottom = (std::min)(y + h, clip.y + clip.h);
+    const double intersectLeft = (std::max)(x, clip.x);
+    const double intersectTop = (std::max)(y, clip.y);
+    const double intersectRight = (std::min)(x + w, clip.x + clip.w);
+    const double intersectBottom = (std::min)(y + h, clip.y + clip.h);
 
     if (intersectRight <= intersectLeft || intersectBottom <= intersectTop) {
-        outX = outY = outW = outH = 0.0f;
+        outX = outY = outW = outH = 0.0;
         return true;
     }
 

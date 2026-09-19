@@ -293,7 +293,7 @@ TEST(DependencyPropertyTests, FrameworkElementExposesStaticPropertyHandles)
 
     EXPECT_EQ(widthProperty.GetName(), "Width");
     EXPECT_EQ(widthProperty.GetOwnerType(), std::type_index(typeid(NeoWPF::UI::FrameworkElement)));
-    EXPECT_EQ(widthProperty.GetPropertyType(), std::type_index(typeid(int)));
+    EXPECT_EQ(widthProperty.GetPropertyType(), std::type_index(typeid(double)));
     EXPECT_EQ(heightProperty.GetName(), "Height");
     EXPECT_EQ(marginProperty.GetName(), "Margin");
     EXPECT_EQ(marginProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::Thickness)));
@@ -314,7 +314,7 @@ TEST(DependencyPropertyTests, ControlExposesStaticPropertyHandles)
     EXPECT_EQ(backgroundColorProperty.GetName(), "Background");
     EXPECT_EQ(backgroundColorProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::Color)));
     EXPECT_EQ(borderThicknessProperty.GetName(), "BorderThickness");
-    EXPECT_EQ(borderThicknessProperty.GetPropertyType(), std::type_index(typeid(int)));
+    EXPECT_EQ(borderThicknessProperty.GetPropertyType(), std::type_index(typeid(double)));
     EXPECT_EQ(NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", typeid(NeoWPF::UI::Control)), &paddingProperty);
 }
 
@@ -428,9 +428,9 @@ TEST(DependencyPropertyTests, ScrollViewerExposesStaticPropertyHandles)
 
     EXPECT_EQ(horizontalOffsetProperty.GetName(), "HorizontalOffset");
     EXPECT_EQ(horizontalOffsetProperty.GetOwnerType(), std::type_index(typeid(NeoWPF::UI::ScrollViewer)));
-    EXPECT_EQ(horizontalOffsetProperty.GetPropertyType(), std::type_index(typeid(int)));
+    EXPECT_EQ(horizontalOffsetProperty.GetPropertyType(), std::type_index(typeid(double)));
     EXPECT_EQ(verticalOffsetProperty.GetName(), "VerticalOffset");
-    EXPECT_EQ(verticalOffsetProperty.GetPropertyType(), std::type_index(typeid(int)));
+    EXPECT_EQ(verticalOffsetProperty.GetPropertyType(), std::type_index(typeid(double)));
     EXPECT_EQ(horizontalVisibilityProperty.GetName(), "HorizontalScrollBarVisibility");
     EXPECT_EQ(horizontalVisibilityProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::ScrollBarVisibility)));
     EXPECT_EQ(verticalVisibilityProperty.GetName(), "VerticalScrollBarVisibility");

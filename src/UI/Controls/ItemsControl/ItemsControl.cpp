@@ -175,16 +175,16 @@ void ItemsControl::RealizeSourceItems()
     }
 }
 
-void ItemsControl::Measure(int availableWidth, int availableHeight)
+void ItemsControl::Measure(double availableWidth, double availableHeight)
 {
-    const int itemSpacing = GetVerticalSpacing();
+    const double itemSpacing = GetVerticalSpacing();
 
-    const int contentWidth = availableWidth > 0 ? std::max(0, availableWidth - (m_padding * 2)) : 0;
+    const double contentWidth = availableWidth > 0.0 ? (std::max)(0.0, availableWidth - (m_padding * 2)) : 0.0;
     if (m_virtualization) {
         m_virtualization->SetViewportSize(contentWidth, availableHeight);
 
 
-        int totalWidth = 0;
+        double totalWidth = 0.0;
         int first = m_virtualization->GetFirstRealizedIndex();
         int last = m_virtualization->GetLastRealizedIndex();
 
@@ -194,7 +194,7 @@ void ItemsControl::Measure(int availableWidth, int availableHeight)
                 auto it = m_realizedItems.find(i);
                 if (it == m_realizedItems.end() || !it->second) continue;
                 it->second->Measure(contentWidth, 0);
-                totalWidth = std::max(totalWidth, it->second->GetDesiredWidth());
+                totalWidth = (std::max)(totalWidth, it->second->GetDesiredWidth());
             }
         } else {
             const int count = static_cast<int>(m_items.size());
@@ -203,19 +203,19 @@ void ItemsControl::Measure(int availableWidth, int availableHeight)
                     const auto& item = m_items[i];
                     if (!item) continue;
                     item->Measure(contentWidth, 0);
-                    totalWidth = std::max(totalWidth, item->GetDesiredWidth());
+                    totalWidth = (std::max)(totalWidth, item->GetDesiredWidth());
                 }
             }
         }
 
-        const int desiredWidth = std::max(totalWidth, contentWidth) + m_padding * 2;
-        const int desiredHeight = std::max(0, m_virtualization->GetExtentHeight());
+        const double desiredWidth = (std::max)(totalWidth, contentWidth) + m_padding * 2;
+        const double desiredHeight = (std::max)(0.0, m_virtualization->GetExtentHeight());
         SetDesiredSize(ResolveWidth(availableWidth, desiredWidth), ResolveHeight(availableHeight, desiredHeight));
         return;
     }
 
-    int totalHeight = m_padding * 2;
-    int totalWidth = 0;
+    double totalHeight = m_padding * 2;
+    double totalWidth = 0.0;
 
     if (m_hasItemsSource) {
         const int count = static_cast<int>(m_itemsSource.size());
@@ -226,7 +226,7 @@ void ItemsControl::Measure(int availableWidth, int availableHeight)
             }
 
             it->second->Measure(contentWidth, 0);
-            totalWidth = std::max(totalWidth, it->second->GetDesiredWidth());
+            totalWidth = (std::max)(totalWidth, it->second->GetDesiredWidth());
             totalHeight += it->second->GetDesiredHeight() + itemSpacing;
         }
 
@@ -240,7 +240,7 @@ void ItemsControl::Measure(int availableWidth, int availableHeight)
             }
 
             item->Measure(contentWidth, 0);
-            totalWidth = std::max(totalWidth, item->GetDesiredWidth());
+            totalWidth = (std::max)(totalWidth, item->GetDesiredWidth());
             totalHeight += item->GetDesiredHeight() + itemSpacing;
         }
 
@@ -249,23 +249,23 @@ void ItemsControl::Measure(int availableWidth, int availableHeight)
         }
     }
 
-    const int desiredWidth = std::max(totalWidth, contentWidth) + m_padding * 2;
-    const int desiredHeight = std::max(0, totalHeight);
+    const double desiredWidth = (std::max)(totalWidth, contentWidth) + m_padding * 2;
+    const double desiredHeight = (std::max)(0.0, totalHeight);
     SetDesiredSize(ResolveWidth(availableWidth, desiredWidth), ResolveHeight(availableHeight, desiredHeight));
 }
 
-void ItemsControl::Arrange(int finalWidth, int finalHeight)
+void ItemsControl::Arrange(double finalWidth, double finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
-    const int itemSpacing = GetVerticalSpacing();
-    const int contentWidth = std::max(0, finalWidth - m_padding * 2);
+    const double itemSpacing = GetVerticalSpacing();
+    const double contentWidth = (std::max)(0.0, finalWidth - m_padding * 2);
 
     if (m_virtualization) {
         const int first = m_virtualization->GetFirstRealizedIndex();
         const int last = m_virtualization->GetLastRealizedIndex();
-        const int itemHeight = m_virtualization->GetItemHeight();
-        const int vOffset = m_virtualization->GetVerticalOffset();
+        const double itemHeight = m_virtualization->GetItemHeight();
+        const double vOffset = m_virtualization->GetVerticalOffset();
 
 
         if (m_hasItemsSource) {
@@ -273,9 +273,9 @@ void ItemsControl::Arrange(int finalWidth, int finalHeight)
             for (int i = first; i <= last; ++i) {
                 auto it = m_realizedItems.find(i);
                 if (it == m_realizedItems.end() || !it->second) continue;
-                const int h = it->second->GetDesiredHeight();
-                const int y = m_virtualization->GetOffsetForIndex(i) - vOffset;
-                m_virtualization->UpdateMeasuredHeight(i, std::max(1, h));
+                const double h = it->second->GetDesiredHeight();
+                const double y = m_virtualization->GetOffsetForIndex(i) - vOffset;
+                m_virtualization->UpdateMeasuredHeight(i, (std::max)(1.0, h));
                 it->second->Arrange(contentWidth, h);
                 it->second->SetLayoutOffset(m_padding, y);
                 auto dataCtx = it->second->GetDataContext();
@@ -288,8 +288,8 @@ void ItemsControl::Arrange(int finalWidth, int finalHeight)
                 if (i < 0 || i >= static_cast<int>(m_items.size())) continue;
                 const auto& item = m_items[i];
                 if (!item) continue;
-                const int y = m_virtualization->GetOffsetForIndex(i) - vOffset;
-                const int h = m_virtualization->GetMeasuredHeight(i);
+                const double y = m_virtualization->GetOffsetForIndex(i) - vOffset;
+                const double h = m_virtualization->GetMeasuredHeight(i);
                 item->Arrange(contentWidth, h);
                 item->SetLayoutOffset(m_padding, y);
             }
@@ -298,7 +298,7 @@ void ItemsControl::Arrange(int finalWidth, int finalHeight)
         return;
     }
 
-    int currentY = m_padding;
+    double currentY = m_padding;
 
     if (m_hasItemsSource) {
         const int count = static_cast<int>(m_itemsSource.size());
@@ -308,7 +308,7 @@ void ItemsControl::Arrange(int finalWidth, int finalHeight)
                 continue;
             }
 
-            const int itemHeight = std::max(0, it->second->GetDesiredHeight());
+            const double itemHeight = (std::max)(0.0, it->second->GetDesiredHeight());
             it->second->Arrange(contentWidth, itemHeight);
             it->second->SetLayoutOffset(m_padding, currentY);
             currentY += itemHeight + itemSpacing;
@@ -319,7 +319,7 @@ void ItemsControl::Arrange(int finalWidth, int finalHeight)
                 continue;
             }
 
-            const int itemHeight = std::max(0, item->GetDesiredHeight());
+            const double itemHeight = (std::max)(0.0, item->GetDesiredHeight());
             item->Arrange(contentWidth, itemHeight);
             item->SetLayoutOffset(m_padding, currentY);
             currentY += itemHeight + itemSpacing;
@@ -407,58 +407,58 @@ void ItemsControl::RealizeRange(int first, int last)
 }
 
 
-int ItemsControl::GetExtentWidth() const noexcept
+double ItemsControl::GetExtentWidth() const noexcept
 {
     if (m_virtualization) return m_virtualization->GetExtentWidth();
     return GetDesiredWidth();
 }
 
-int ItemsControl::GetExtentHeight() const noexcept
+double ItemsControl::GetExtentHeight() const noexcept
 {
     if (m_virtualization) {
-        int result = m_virtualization->GetExtentHeight();
+        double result = m_virtualization->GetExtentHeight();
         int count = GetItemCount();
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
             "[ItemsControl] GetExtentHeight count=%d virt=%d", count, result);
         return result;
     }
-    int result = GetDesiredHeight();
+    double result = GetDesiredHeight();
     int count = GetItemCount();
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
         "[ItemsControl] GetExtentHeight count=%d (no virt)=%d", count, result);
     return result;
 }
 
-int ItemsControl::GetViewportWidth() const noexcept
+double ItemsControl::GetViewportWidth() const noexcept
 {
     if (m_virtualization) return m_virtualization->GetViewportWidth();
     return GetFinalWidth();
 }
 
-int ItemsControl::GetViewportHeight() const noexcept
+double ItemsControl::GetViewportHeight() const noexcept
 {
     if (m_virtualization) return m_virtualization->GetViewportHeight();
     return GetFinalHeight();
 }
 
-int ItemsControl::GetHorizontalOffset() const noexcept
+double ItemsControl::GetHorizontalOffset() const noexcept
 {
     if (m_virtualization) return m_virtualization->GetHorizontalOffset();
     return 0;
 }
 
-int ItemsControl::GetVerticalOffset() const noexcept
+double ItemsControl::GetVerticalOffset() const noexcept
 {
     if (m_virtualization) return m_virtualization->GetVerticalOffset();
     return 0;
 }
 
-void ItemsControl::SetHorizontalOffset(int offset) noexcept
+void ItemsControl::SetHorizontalOffset(double offset) noexcept
 {
     if (m_virtualization) m_virtualization->SetHorizontalOffset(offset);
 }
 
-void ItemsControl::SetVerticalOffset(int offset) noexcept
+void ItemsControl::SetVerticalOffset(double offset) noexcept
 {
     if (m_virtualization) m_virtualization->SetVerticalOffset(offset);
 }

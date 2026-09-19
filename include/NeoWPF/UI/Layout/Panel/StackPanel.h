@@ -32,8 +32,8 @@ public:
         SetBackgroundColor(NeoWPF::UI::Color::FromArgb(0x00000000u));
     }
 
-    void Measure(int availableWidth, int availableHeight) override;
-    void Arrange(int finalWidth, int finalHeight) override;
+    void Measure(double availableWidth, double availableHeight) override;
+    void Arrange(double finalWidth, double finalHeight) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
     /*

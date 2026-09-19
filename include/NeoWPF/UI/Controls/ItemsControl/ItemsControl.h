@@ -146,7 +146,7 @@ public:
         @summary
         Returns the spacing between items.
     */
-    int GetSpacing() const noexcept { return GetVerticalSpacing(); }
+    double GetSpacing() const noexcept { return GetVerticalSpacing(); }
 
     /*
         @summary
@@ -186,7 +186,7 @@ public:
 
         @internal
     */
-    void Measure(int availableWidth, int availableHeight) override;
+    void Measure(double availableWidth, double availableHeight) override;
 
     /*
         @summary
@@ -200,7 +200,7 @@ public:
 
         @internal
     */
-    void Arrange(int finalWidth, int finalHeight) override;
+    void Arrange(double finalWidth, double finalHeight) override;
 
     /*
         @summary
@@ -214,20 +214,20 @@ public:
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
     /* IScrollInfo: extent in device pixels */
-    int GetExtentWidth() const noexcept override;
-    int GetExtentHeight() const noexcept override;
+    double GetExtentWidth() const noexcept override;
+    double GetExtentHeight() const noexcept override;
 
     /* IScrollInfo: viewport dimensions */
-    int GetViewportWidth() const noexcept override;
-    int GetViewportHeight() const noexcept override;
+    double GetViewportWidth() const noexcept override;
+    double GetViewportHeight() const noexcept override;
 
     /* IScrollInfo: current scroll offsets */
-    int GetHorizontalOffset() const noexcept override;
-    int GetVerticalOffset() const noexcept override;
+    double GetHorizontalOffset() const noexcept override;
+    double GetVerticalOffset() const noexcept override;
 
     /* IScrollInfo: set scroll offsets */
-    void SetHorizontalOffset(int offset) noexcept override;
-    void SetVerticalOffset(int offset) noexcept override;
+    void SetHorizontalOffset(double offset) noexcept override;
+    void SetVerticalOffset(double offset) noexcept override;
 
     /* IScrollInfo: small-line scrolling commands */
     void LineLeft() noexcept override;
@@ -246,7 +246,7 @@ public:
 
 private:
     std::vector<std::shared_ptr<FrameworkElement>> m_items;
-    int m_padding = 0;
+    double m_padding = 0.0;
     std::shared_ptr<Controls::ItemsControl::Virtualization::ItemsControlVirtualizer> m_virtualization;
     std::vector<std::any> m_itemsSource;
     bool m_hasItemsSource = false;

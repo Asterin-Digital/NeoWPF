@@ -6,16 +6,16 @@
 namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementWidthMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(0);
-        metadata.Converter = NeoWPF::UI::Properties::GetIntConverter();
+        metadata.DefaultValue = std::any(0.0);
+        metadata.Converter = NeoWPF::UI::Properties::GetDoubleConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
 
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementHeightMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(0);
-        metadata.Converter = NeoWPF::UI::Properties::GetIntConverter();
+        metadata.DefaultValue = std::any(0.0);
+        metadata.Converter = NeoWPF::UI::Properties::GetDoubleConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -91,11 +91,11 @@ namespace {
 
 namespace NeoWPF::UI::Properties {
     void RegisterFrameworkElementProperties() {
-        RegisterProperty<UI::FrameworkElement, int>("Width",
+        RegisterProperty<UI::FrameworkElement, double>("Width",
             &UI::FrameworkElement::GetWidth,
             &UI::FrameworkElement::SetWidth,
             MakeFrameworkElementWidthMetadata());
-        RegisterProperty<UI::FrameworkElement, int>("Height",
+        RegisterProperty<UI::FrameworkElement, double>("Height",
             &UI::FrameworkElement::GetHeight,
             &UI::FrameworkElement::SetHeight,
             MakeFrameworkElementHeightMetadata());
@@ -142,13 +142,13 @@ namespace NeoWPF::UI::Properties {
 
 DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::FrameworkElement,
                              Width,
-                             int,
+                             double,
                              &NeoWPF::UI::FrameworkElement::GetWidth,
                              &NeoWPF::UI::FrameworkElement::SetWidth,
                              MakeFrameworkElementWidthMetadata)
 DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::FrameworkElement,
                              Height,
-                             int,
+                             double,
                              &NeoWPF::UI::FrameworkElement::GetHeight,
                              &NeoWPF::UI::FrameworkElement::SetHeight,
                              MakeFrameworkElementHeightMetadata)

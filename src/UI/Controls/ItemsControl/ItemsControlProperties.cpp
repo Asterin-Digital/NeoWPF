@@ -19,7 +19,7 @@ namespace NeoWPF::UI::Properties {
             [](UI::ItemsControl* owner) -> UI::Thickness { return UI::Thickness(owner->GetPadding()); },
             [](UI::ItemsControl* owner, const UI::Thickness& value) {
                 if (owner) {
-                    owner->SetPadding(value.Left);
+                    owner->SetPadding(value);
                 }
             },
             paddingMetadata);

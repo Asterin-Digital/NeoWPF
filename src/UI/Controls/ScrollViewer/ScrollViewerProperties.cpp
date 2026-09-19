@@ -9,14 +9,14 @@ namespace NeoWPF::UI::Properties {
 namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeScrollViewerHorizontalOffsetMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(0);
+        metadata.DefaultValue = std::any(0.0);
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange;
         return metadata;
     }
 
     NeoWPF::UI::Properties::PropertyMetadata MakeScrollViewerVerticalOffsetMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(0);
+        metadata.DefaultValue = std::any(0.0);
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange;
         return metadata;
     }
@@ -38,11 +38,11 @@ namespace {
 
 namespace NeoWPF::UI::Properties {
     void RegisterScrollViewerProperties() {
-        RegisterProperty<UI::ScrollViewer, int>("HorizontalOffset",
+        RegisterProperty<UI::ScrollViewer, double>("HorizontalOffset",
             &UI::ScrollViewer::GetHorizontalOffset,
             &UI::ScrollViewer::SetHorizontalOffset,
             MakeScrollViewerHorizontalOffsetMetadata());
-        RegisterProperty<UI::ScrollViewer, int>("VerticalOffset",
+        RegisterProperty<UI::ScrollViewer, double>("VerticalOffset",
             &UI::ScrollViewer::GetVerticalOffset,
             &UI::ScrollViewer::SetVerticalOffset,
             MakeScrollViewerVerticalOffsetMetadata());
@@ -59,13 +59,13 @@ namespace NeoWPF::UI::Properties {
 
 DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::ScrollViewer,
                              HorizontalOffset,
-                             int,
+                             double,
                              &NeoWPF::UI::ScrollViewer::GetHorizontalOffset,
                              &NeoWPF::UI::ScrollViewer::SetHorizontalOffset,
                              MakeScrollViewerHorizontalOffsetMetadata)
 DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::ScrollViewer,
                              VerticalOffset,
-                             int,
+                             double,
                              &NeoWPF::UI::ScrollViewer::GetVerticalOffset,
                              &NeoWPF::UI::ScrollViewer::SetVerticalOffset,
                              MakeScrollViewerVerticalOffsetMetadata)

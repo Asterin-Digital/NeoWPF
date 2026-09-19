@@ -63,8 +63,8 @@ public:
     void SetPadding(Thickness padding) noexcept;
     Thickness GetPadding() const noexcept;
 
-    void SetBorderThickness(int thickness) noexcept;
-    int GetBorderThickness() const noexcept;
+    void SetBorderThickness(double thickness) noexcept;
+    double GetBorderThickness() const noexcept;
     void SetBorderThickness(Thickness thickness) noexcept;
     Thickness GetBorderThicknessValue() const noexcept;
 
@@ -90,7 +90,7 @@ public:
 
         @internal
     */
-    void Measure(int availableWidth, int availableHeight) override;
+    void Measure(double availableWidth, double availableHeight) override;
 
     /*
         @summary
@@ -104,7 +104,7 @@ public:
 
         @internal
     */
-    void Arrange(int finalWidth, int finalHeight) override;
+    void Arrange(double finalWidth, double finalHeight) override;
 
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
@@ -112,7 +112,7 @@ public:
 
 protected:
     void OnPaddingChanged(Thickness padding) override;
-    void OnBorderThicknessChanged(int thickness) override;
+    void OnBorderThicknessChanged(double thickness) override;
     void OnBorderColorChanged(NeoWPF::UI::Color color) override;
     void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
 

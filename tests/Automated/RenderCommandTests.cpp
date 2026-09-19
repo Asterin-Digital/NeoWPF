@@ -20,8 +20,8 @@ TEST(RenderCommandTests, PreservesCommandOrderAndPayload)
     EXPECT_EQ(commands.commands[0].kind, NeoWPF::Rendering::CommandList::CommandKind::Rect);
     EXPECT_EQ(commands.commands[1].kind, NeoWPF::Rendering::CommandList::CommandKind::RoundedRect);
     EXPECT_EQ(commands.commands[2].kind, NeoWPF::Rendering::CommandList::CommandKind::TexturedQuad);
-    EXPECT_FLOAT_EQ(commands.commands[0].rect.x, 1.0f);
-    EXPECT_FLOAT_EQ(commands.commands[1].roundedRect.bottomLeft, 4.0f);
+    EXPECT_DOUBLE_EQ(commands.commands[0].rect.x, 1.0);
+    EXPECT_DOUBLE_EQ(commands.commands[1].roundedRect.bottomLeft, 4.0);
     EXPECT_EQ(commands.commands[2].texturedQuad.textureId, 42u);
 }
 
@@ -37,19 +37,19 @@ TEST(RenderCommandTests, ClearRemovesAllQueuedCommands)
 TEST(RenderCommandTests, ClipsRectangleAndReportsVisibleIntersection)
 {
     const NeoWPF::Rendering::ClipRect clip{10.0f, 20.0f, 30.0f, 40.0f, true};
-    float x = 0.0f;
-    float y = 0.0f;
-    float width = 0.0f;
-    float height = 0.0f;
+    double x = 0.0;
+    double y = 0.0;
+    double width = 0.0;
+    double height = 0.0;
 
     const bool clipped = NeoWPF::Rendering::ClipRectToBounds(
         0.0f, 10.0f, 50.0f, 30.0f, clip, x, y, width, height);
 
     EXPECT_TRUE(clipped);
-    EXPECT_FLOAT_EQ(x, 10.0f);
-    EXPECT_FLOAT_EQ(y, 20.0f);
-    EXPECT_FLOAT_EQ(width, 30.0f);
-    EXPECT_FLOAT_EQ(height, 20.0f);
+    EXPECT_DOUBLE_EQ(x, 10.0);
+    EXPECT_DOUBLE_EQ(y, 20.0);
+    EXPECT_DOUBLE_EQ(width, 30.0);
+    EXPECT_DOUBLE_EQ(height, 20.0);
 }
 
 #if !defined(_WIN32)

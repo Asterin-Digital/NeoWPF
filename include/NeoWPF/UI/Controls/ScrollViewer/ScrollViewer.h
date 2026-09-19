@@ -64,7 +64,7 @@ public:
 
         @internal
     */
-    int GetHorizontalOffset() const noexcept { return m_horizontalOffset; }
+    double GetHorizontalOffset() const noexcept { return m_horizontalOffset; }
 
     /*
         @summary
@@ -72,7 +72,7 @@ public:
 
         @internal
     */
-    int GetVerticalOffset() const noexcept { return m_verticalOffset; }
+    double GetVerticalOffset() const noexcept { return m_verticalOffset; }
 
     /*
         @summary
@@ -81,7 +81,7 @@ public:
         @param offset
         The new horizontal offset in pixels.
     */
-    void SetHorizontalOffset(int offset) noexcept;
+    void SetHorizontalOffset(double offset) noexcept;
 
     /*
         @summary
@@ -90,7 +90,7 @@ public:
         @param offset
         The new vertical offset in pixels.
     */
-    void SetVerticalOffset(int offset) noexcept;
+    void SetVerticalOffset(double offset) noexcept;
 
     /*
         @summary
@@ -148,7 +148,7 @@ public:
 
         @internal
     */
-    void Measure(int availableWidth, int availableHeight) override;
+    void Measure(double availableWidth, double availableHeight) override;
 
     /*
         @summary
@@ -162,7 +162,7 @@ public:
 
         @internal
     */
-    void Arrange(int finalWidth, int finalHeight) override;
+    void Arrange(double finalWidth, double finalHeight) override;
 
     /*
         @summary
@@ -194,12 +194,12 @@ private:
     void UpdateOffsets() noexcept;
     void UpdateContentPresenterOffset() noexcept;
 
-    int m_horizontalOffset = 0;
-    int m_verticalOffset = 0;
-    int m_contentWidth = 0;
-    int m_contentHeight = 0;
-    int m_viewportWidth = 0;
-    int m_viewportHeight = 0;
+    double m_horizontalOffset = 0.0;
+    double m_verticalOffset = 0.0;
+    double m_contentWidth = 0.0;
+    double m_contentHeight = 0.0;
+    double m_viewportWidth = 0.0;
+    double m_viewportHeight = 0.0;
 
     ScrollBarVisibility m_horizontalScrollBarVisibility = ScrollBarVisibility::Auto;
     ScrollBarVisibility m_verticalScrollBarVisibility = ScrollBarVisibility::Auto;

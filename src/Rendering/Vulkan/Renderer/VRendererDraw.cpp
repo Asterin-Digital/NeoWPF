@@ -105,17 +105,17 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
             continue;
         }
         const bool rounded = command.kind == NeoWPF::Rendering::CommandList::CommandKind::RoundedRect;
-        const float xValue = rounded ? command.roundedRect.x : command.rect.x;
-        const float yValue = rounded ? command.roundedRect.y : command.rect.y;
-        const float widthValue = rounded ? command.roundedRect.w : command.rect.w;
-        const float heightValue = rounded ? command.roundedRect.h : command.rect.h;
+        const double xValue = rounded ? command.roundedRect.x : command.rect.x;
+        const double yValue = rounded ? command.roundedRect.y : command.rect.y;
+        const double widthValue = rounded ? command.roundedRect.w : command.rect.w;
+        const double heightValue = rounded ? command.roundedRect.h : command.rect.h;
         const std::uint32_t color = rounded ? command.roundedRect.color : command.rect.color;
         const float opacity = rounded ? command.roundedRect.opacity : command.rect.opacity;
         const float rotation = rounded ? command.roundedRect.rotationRadians : command.rect.rotationRadians;
-        float x = xValue;
-        float y = yValue;
-        float width = widthValue;
-        float height = heightValue;
+        double x = xValue;
+        double y = yValue;
+        double width = widthValue;
+        double height = heightValue;
         if (std::fabs(rotation) <= 1e-6f && NeoWPF::Rendering::ClipRectToBounds(
             xValue, yValue, widthValue, heightValue,
             rounded ? command.roundedRect.clip : command.rect.clip, x, y, width, height) &&
@@ -203,10 +203,10 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
             NeoWPF::Diagnostics::LogWarn("[Vulkan] Skipping textured quad with missing texture id=%u", quad.textureId);
             continue;
         }
-        float x = quad.x;
-        float y = quad.y;
-        float width = quad.w;
-        float height = quad.h;
+        double x = quad.x;
+        double y = quad.y;
+        double width = quad.w;
+        double height = quad.h;
         float u0 = quad.u0;
         float v0 = quad.v0;
         float u1 = quad.u1;

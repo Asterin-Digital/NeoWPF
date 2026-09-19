@@ -227,7 +227,7 @@ void TextBlock::OnPaddingChanged(Thickness padding) {
     InvalidateVisual();
 }
 
-void TextBlock::Measure(int availableWidth, int availableHeight)
+void TextBlock::Measure(double availableWidth, double availableHeight)
 {
     const auto padding = GetPadding();
     if (m_text.empty()) {
@@ -235,72 +235,72 @@ void TextBlock::Measure(int availableWidth, int availableHeight)
         return;
     }
 
-    int widthConstraint = 0;
-    if (m_textWrapping != TextWrapping::NoWrap && availableWidth > 0) {
-        widthConstraint = std::max(0, availableWidth - padding.Horizontal());
+    double widthConstraint = 0.0;
+    if (m_textWrapping != TextWrapping::NoWrap && availableWidth > 0.0) {
+        widthConstraint = std::max(0.0, availableWidth - padding.Horizontal());
     }
 
     auto flow = NeoWPF::UI::Text::BreakText(m_text, m_fontSize, GetFontFamily(), widthConstraint, m_textWrapping, m_fontWeight, m_fontStyle);
     SetDesiredSize(flow.contentWidth + padding.Horizontal(), flow.contentHeight + padding.Vertical());
 }
 
-void TextBlock::Arrange(int finalWidth, int finalHeight)
+void TextBlock::Arrange(double finalWidth, double finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
     const auto padding = GetPadding();
-    const int innerWidth = std::max(0, finalWidth - padding.Horizontal());
+    const double innerWidth = std::max(0.0, finalWidth - padding.Horizontal());
     if (m_textDirty || innerWidth != m_lastArrangeWidth) {
-        EnsureTextTexture(innerWidth, finalHeight);
-        m_lastArrangeWidth = innerWidth;
+        EnsureTextTexture(std::lround(innerWidth), std::lround(finalHeight));
+        m_lastArrangeWidth = std::lround(innerWidth);
     }
 }
 
 void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
     const auto padding = GetPadding();
-    const int innerWidth = std::max(0, GetFinalWidth() - padding.Horizontal());
-    const int innerHeight = std::max(0, GetFinalHeight() - padding.Vertical());
+    const double innerWidth = std::max(0.0, GetFinalWidth() - padding.Horizontal());
+    const double innerHeight = std::max(0.0, GetFinalHeight() - padding.Vertical());
 
     const auto& lines = m_textCache.GetLines();
     if (m_text.empty() || lines.empty()) return;
 
     const auto clip = GetClipRect();
 
-    const float blockOffsetY = TextAlignment::GetBlockVerticalOffsetF(
+    const double blockOffsetY = TextAlignment::GetBlockVerticalOffsetF(
     m_textCache.GetContentWidth(), m_textCache.GetContentHeight(), innerHeight, m_textVerticalAlignment);
     const auto worldRenderTransform = GetWorldRenderTransform();
     const float rotationRadians = worldRenderTransform.rotationRadians;
     const float pivotX = worldRenderTransform.pivot.X;
     const float pivotY = worldRenderTransform.pivot.Y;
-    float currentY = blockOffsetY;
+    double currentY = blockOffsetY;
 
     for (std::size_t i = 0; i < lines.size(); ++i) {
         const auto& line = lines[i];
         const auto textureId = m_textCache.GetLineTextureId(i);
-        const int lineHeight = std::max(1, line.lineHeight);
-        if (textureId == 0 || line.width <= 0 || line.height <= 0) {
+        const double lineHeight = std::max(1.0, line.lineHeight);
+        if (textureId == 0 || line.width <= 0.0 || line.height <= 0.0) {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
                 NeoWPF::Diagnostics::Level::Debug,
-                "[TextBlock] skip line=%zu textureId=%u size=%dx%d lineHeight=%d",
+                "[TextBlock] skip line=%zu textureId=%u size=%.1f,%.1f lineHeight=%.1f",
                 i, textureId, line.width, line.height, lineHeight);
             currentY += lineHeight;
             continue;
         }
 
-        const float lineOffsetX = TextAlignment::GetLineHorizontalOffsetF(
+        const double lineOffsetX = TextAlignment::GetLineHorizontalOffsetF(
             line.width, innerWidth, m_textHorizontalAlignment);
 
-        const float localX = static_cast<float>(padding.Left) + lineOffsetX;
-        const float localY = static_cast<float>(padding.Top) + currentY;
+        const double localX = padding.Left + lineOffsetX;
+        const double localY = padding.Top + currentY;
 
-        float drawX = localX;
-        float drawY = localY;
+        double drawX = localX;
+        double drawY = localY;
         worldRenderTransform.positionMatrix.TransformPoint(drawX, drawY, drawX, drawY);
-        float right = localX + static_cast<float>(line.width);
-        float bottom = localY + static_cast<float>(line.height);
+        double right = localX + line.width;
+        double bottom = localY + line.height;
         worldRenderTransform.positionMatrix.TransformPoint(right, bottom, right, bottom);
-        const float drawWidth = std::abs(right - drawX);
-        const float drawHeight = std::abs(bottom - drawY);
+        const double drawWidth = std::abs(right - drawX);
+        const double drawHeight = std::abs(bottom - drawY);
 
         commands.DrawTexturedQuad(drawX, drawY, drawWidth, drawHeight,
                                    0.0f, 0.0f, 1.0f, 1.0f,
@@ -310,7 +310,7 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             "[TextBlock] draw line=%zu textureId=%u pos=%.1f,%.1f size=%.1fx%.1f opacity=%.2f",
             i, textureId, drawX, drawY, drawWidth, drawHeight, GetOpacity());
 
-        currentY += static_cast<float>(lineHeight);
+        currentY += lineHeight;
     }
 }
 
@@ -320,7 +320,7 @@ void TextBlock::EnsureTextTexture(int availableWidth, int)
         return;
     }
 
-    int widthConstraint = 0;
+    double widthConstraint = 0.0;
     if (m_textWrapping != TextWrapping::NoWrap && availableWidth > 0) {
         widthConstraint = availableWidth;
     }
