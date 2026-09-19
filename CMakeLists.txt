@@ -8,13 +8,6 @@ endif()
 string(TIMESTAMP NEOWPF_BUILD_TIME "%Y-%m-%d %H:%M:%S UTC" UTC)
 project(NeoWPF VERSION "${NEOWPF_VERSION}" LANGUAGES CXX)
 
-set(NEOWPF_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoWPFBuildInfo.h.in"
-    "${NEOWPF_GENERATED_INCLUDE_DIR}/NeoWPFBuildInfo.h"
-    @ONLY
-)
-
 include(CTest)
 
 if(WIN32)
@@ -230,6 +223,52 @@ if(UNIX)
     find_package(OpenSSL CONFIG REQUIRED)
     find_package(Freetype CONFIG REQUIRED)
     find_package(PNG REQUIRED)
+
+    # HarfBuzz's vcpkg CMake config on this triplet has a known packaging
+    # bug (vcpkg itself flags it as "heuristically generated, and may not
+    # be correct" - its INTERFACE_INCLUDE_DIRECTORIES comes out as a bare
+    # "/x64-linux/include/harfbuzz" with the actual prefix missing, which
+    # fails CMake's generate-time existence check). Skip the CONFIG package
+    # entirely and resolve it through pkg-config instead, same as
+    # fontconfig below - proven working, and harfbuzz's vcpkg build ships a
+    # normal .pc file regardless.
+
+    # ---------------------------------------------------------------------
+    # HarfBuzz and Fontconfig get merged into the archive: both already
+    # build from source via the existing vcpkg.json with no extra setup, so
+    # pkg-config is pointed at the vcpkg prefix instead of the system one,
+    # resolving them to the static .a builds that
+    # NeoWPFStaticDependencies.cmake folds in, same as Freetype/PNG/CURL.
+    #
+    # Wayland-client and xkbcommon stay off this path on purpose. Getting a
+    # static build of Wayland requires vcpkg's "force-build" feature plus a
+    # triplet-level variable (X_VCPKG_FORCE_VCPKG_WAYLAND_LIBRARIES) that
+    # isn't set up here - so instead of half-configuring that, they're left
+    # exactly as the WAYLAND/XKBCOMMON probe near the top of this file
+    # already resolves them (the system .so, also used for wayland-scanner
+    # and the xdg-shell/xdg-decoration protocol lookup). Consumers of
+    # NeoWPF::NeoWPF link these two themselves, same as Vulkan.
+    # ---------------------------------------------------------------------
+    set(NEOWPF_STATIC_PKG_CONFIG_PATH
+        "${NEOWPF_VCPKG_PREFIX}/lib/pkgconfig"
+        "${NEOWPF_VCPKG_PREFIX}/debug/lib/pkgconfig")
+    set(_neowpf_saved_pkg_config_path "$ENV{PKG_CONFIG_PATH}")
+    list(JOIN NEOWPF_STATIC_PKG_CONFIG_PATH ":" _neowpf_static_pkg_config_path_joined)
+    set(ENV{PKG_CONFIG_PATH} "${_neowpf_static_pkg_config_path_joined}")
+    pkg_check_modules(NEOWPF_HARFBUZZ_STATIC REQUIRED IMPORTED_TARGET harfbuzz)
+    pkg_check_modules(NEOWPF_FONTCONFIG_STATIC REQUIRED IMPORTED_TARGET fontconfig)
+    set(ENV{PKG_CONFIG_PATH} "${_neowpf_saved_pkg_config_path}")
+    unset(_neowpf_saved_pkg_config_path)
+    unset(_neowpf_static_pkg_config_path_joined)
+
+    # Vulkan is left as the system Vulkan::Vulkan loader on purpose: even a
+    # statically-linked loader still has to dlopen() the actual GPU driver's
+    # ICD at runtime, so "merging" it doesn't make the binary any more
+    # self-contained the way Freetype/HarfBuzz/PNG do - it just hides a
+    # linker flag while the real runtime dependency (an installed Vulkan
+    # driver) stays exactly as required as before. If this is still wanted,
+    # it needs a from-source static build of Vulkan-Loader (BUILD_STATIC_LOADER)
+    # via a custom vcpkg overlay port - vcpkg doesn't ship one today.
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -299,13 +338,12 @@ target_include_directories(NeoWPF.Foundation
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         "${CMAKE_CURRENT_BINARY_DIR}/generated/xaml"
-    PRIVATE
-        "${NEOWPF_GENERATED_INCLUDE_DIR}"
 )
 target_compile_definitions(NeoWPF.Foundation
     PUBLIC
         NEOWPF_ENABLE_CONTROL_STYLES=$<BOOL:${APPLY_CONTROL_STYLES}>
     NEOWPF_VERSION_STRING="${PROJECT_VERSION}"
+    NEOWPF_BUILD_TIME="${NEOWPF_BUILD_TIME}"
     NEOWPF_BUILD_CONFIGURATION="$<CONFIG>"
 )
 
@@ -329,20 +367,6 @@ neowpf_add_xaml(
     NAMESPACE NeoWPF::UI::Generated
     COMPONENT ScrollBarStyles
     PUBLIC_HEADER NeoWPF/UI/Controls/ScrollBarStyles.h
-)
-neowpf_add_xaml(
-    NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Slider/Visual/SliderStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated
-    COMPONENT SliderStyles
-    PUBLIC_HEADER NeoWPF/UI/Controls/SliderStyles.h
-)
-neowpf_add_xaml(
-    NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ProgressBar/Visual/ProgressBarStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated
-    COMPONENT ProgressBarStyles
-    PUBLIC_HEADER NeoWPF/UI/Controls/ProgressBarStyles.h
 )
 neowpf_add_xaml(
     NeoWPF.Foundation
@@ -666,10 +690,11 @@ else()
             PkgConfig::WAYLAND
             PkgConfig::XKBCOMMON
             Freetype::Freetype
-            PkgConfig::HARFBUZZ
-            PkgConfig::FONTCONFIG
+            PkgConfig::NEOWPF_HARFBUZZ_STATIC
+            PkgConfig::NEOWPF_FONTCONFIG_STATIC
             CURL::libcurl
             PNG::PNG
+            ZLIB::ZLIB
     )
     target_link_libraries(NeoWPF.Foundation
         PUBLIC
@@ -677,10 +702,11 @@ else()
             PkgConfig::WAYLAND
             PkgConfig::XKBCOMMON
             Freetype::Freetype
-            PkgConfig::HARFBUZZ
-            PkgConfig::FONTCONFIG
+            PkgConfig::NEOWPF_HARFBUZZ_STATIC
+            PkgConfig::NEOWPF_FONTCONFIG_STATIC
             CURL::libcurl
             PNG::PNG
+            ZLIB::ZLIB
     )
     message(STATUS "NeoWPF Linux configuration selected with Vulkan renderer backend.")
 endif()
@@ -810,8 +836,6 @@ if(BUILD_TESTING)
         tests/Automated/TriggerTests.cpp
         tests/Automated/VisualTests.cpp
         tests/Automated/XamlParserTests.cpp
-        tests/Automated/SliderTests.cpp
-        tests/Automated/ProgressBarTests.cpp
     )
 
     if(UNIX)

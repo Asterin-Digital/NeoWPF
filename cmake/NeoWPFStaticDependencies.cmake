@@ -51,7 +51,18 @@ if(NEOWPF_STATIC_DEPENDENCIES)
             endif()
 
             unset(_resolved_path CACHE)
+            set(_neowpf_saved_find_library_suffixes "${CMAKE_FIND_LIBRARY_SUFFIXES}")
+            if(WIN32)
+                set(CMAKE_FIND_LIBRARY_SUFFIXES ".lib")
+            else()
+                set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+            endif()
             find_library(_resolved_path NAMES ${_candidate_names})
+            set(CMAKE_FIND_LIBRARY_SUFFIXES "${_neowpf_saved_find_library_suffixes}")
+            unset(_neowpf_saved_find_library_suffixes)
+            if(NOT _resolved_path)
+                find_library(_resolved_path NAMES ${_candidate_names})
+            endif()
             if(_resolved_path)
                 set(_resolved "${_resolved_path}")
             endif()
@@ -194,6 +205,14 @@ if(NEOWPF_STATIC_DEPENDENCIES)
         list(APPEND NEOWPF_STATIC_ARCHIVES_RELEASE ${_neowpf_archives_RELEASE})
     endforeach()
 
+    if(UNIX AND TARGET ZLIB::ZLIB)
+        neowpf_resolve_linked_archive("ZLIB::ZLIB" _neowpf_zlib_archive)
+        if(_neowpf_zlib_archive)
+            list(APPEND NEOWPF_STATIC_ARCHIVES_DEBUG "${_neowpf_zlib_archive}")
+            list(APPEND NEOWPF_STATIC_ARCHIVES_RELEASE "${_neowpf_zlib_archive}")
+        endif()
+    endif()
+
     if(WIN32)
         set(NEOWPF_WINDOWS_SDK_STATIC_LIBS
             d3d11 dxgi dbghelp ole32 windowscodecs bcrypt crypt32 ws2_32
@@ -261,7 +280,9 @@ if(NEOWPF_STATIC_DEPENDENCIES)
             "if(NEOWPF_COPY_RESULT)\n"
             "    message(FATAL_ERROR \"${_target_name} archive staging failed with exit code \${NEOWPF_COPY_RESULT}\")\n"
             "endif()\n"
-            "set(NEOWPF_ARCHIVE_INPUTS \"\${NEOWPF_STAGED_TARGET};\${NEOWPF_INPUT_ARCHIVES};\${NEOWPF_EXTRA_ARCHIVES}\")\n"
+            "set(NEOWPF_ARCHIVE_INPUTS \"\${NEOWPF_STAGED_TARGET}\")\n"
+            "list(APPEND NEOWPF_ARCHIVE_INPUTS \${NEOWPF_INPUT_ARCHIVES})\n"
+            "list(APPEND NEOWPF_ARCHIVE_INPUTS \${NEOWPF_EXTRA_ARCHIVES})\n"
         )
         if(WIN32)
             string(APPEND _merge_script_content

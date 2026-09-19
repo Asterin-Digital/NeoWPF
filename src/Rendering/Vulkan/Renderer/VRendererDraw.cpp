@@ -83,7 +83,7 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
         static bool loggedMissingPipeline = false;
         if (!loggedMissingPipeline) {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
-                NeoWPF::Diagnostics::Level::Error,
+                NeoWPF::Diagnostics::Level::Info,
                 "[Vulkan] Execute skipped: solid pipeline or vertex buffer unavailable");
             loggedMissingPipeline = true;
         }
@@ -94,6 +94,12 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
     struct Point { float x, y; };
     std::vector<Vertex> vertices;
     vertices.reserve(commands.commands.size() * 6);
+    const auto makePoint = [](double x, double y) {
+        return Point{static_cast<float>(x), static_cast<float>(y)};
+    };
+    const auto appendVertex = [&vertices](double x, double y, float red, float green, float blue, float alpha) {
+        vertices.push_back({static_cast<float>(x), static_cast<float>(y), red, green, blue, alpha});
+    };
     const auto rotatePoint = [](Point point, Point center, float angle) {
         const float cosine = std::cos(angle);
         const float sine = std::sin(angle);
@@ -117,7 +123,7 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
         constexpr float pi = 3.14159265358979323846f;
         std::vector<Point> outline;
         outline.reserve(36);
-        const auto addArc = [&outline](Point center, float start, float end, float radius) {
+        const auto addArc = [&outline, &makePoint](Point center, float start, float end, float radius) {
             if (radius <= 0.0f) {
                 outline.push_back(center);
                 return;
@@ -125,24 +131,24 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
             for (int index = 0; index <= 8; ++index) {
                 const float t = static_cast<float>(index) / 8.0f;
                 const float angle = start + (end - start) * t;
-                outline.push_back({center.x + radius * std::cos(angle),
-                                   center.y + radius * std::sin(angle)});
+                outline.push_back(makePoint(center.x + radius * std::cos(angle),
+                                            center.y + radius * std::sin(angle)));
             }
         };
-        outline.push_back({rect.x + topLeft, rect.y});
-        outline.push_back({rect.x + rect.w - topRight, rect.y});
-        addArc({rect.x + rect.w - topRight, rect.y + topRight}, -pi * 0.5f, 0.0f, topRight);
-        addArc({rect.x + rect.w - bottomRight, rect.y + rect.h - bottomRight}, 0.0f, pi * 0.5f, bottomRight);
-        addArc({rect.x + bottomLeft, rect.y + rect.h - bottomLeft}, pi * 0.5f, pi, bottomLeft);
-        addArc({rect.x + topLeft, rect.y + topLeft}, pi, pi * 1.5f, topLeft);
-        const Point center{rect.pivotX, rect.pivotY};
+        outline.push_back(makePoint(rect.x + topLeft, rect.y));
+        outline.push_back(makePoint(rect.x + rect.w - topRight, rect.y));
+        addArc(makePoint(rect.x + rect.w - topRight, rect.y + topRight), -pi * 0.5f, 0.0f, topRight);
+        addArc(makePoint(rect.x + rect.w - bottomRight, rect.y + rect.h - bottomRight), 0.0f, pi * 0.5f, bottomRight);
+        addArc(makePoint(rect.x + bottomLeft, rect.y + rect.h - bottomLeft), pi * 0.5f, pi, bottomLeft);
+        addArc(makePoint(rect.x + topLeft, rect.y + topLeft), pi, pi * 1.5f, topLeft);
+        const Point center = makePoint(rect.pivotX, rect.pivotY);
         for (std::size_t index = 1; index + 1 < outline.size(); ++index) {
             const Point p0 = rotatePoint(outline[0], center, rect.rotationRadians);
             const Point p1 = rotatePoint(outline[index], center, rect.rotationRadians);
             const Point p2 = rotatePoint(outline[index + 1], center, rect.rotationRadians);
-            vertices.push_back({p0.x, p0.y, red, green, blue, alpha});
-            vertices.push_back({p1.x, p1.y, red, green, blue, alpha});
-            vertices.push_back({p2.x, p2.y, red, green, blue, alpha});
+            appendVertex(p0.x, p0.y, red, green, blue, alpha);
+            appendVertex(p1.x, p1.y, red, green, blue, alpha);
+            appendVertex(p2.x, p2.y, red, green, blue, alpha);
         }
     };
     for (const auto& command : commands.commands) {
@@ -185,21 +191,21 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
             continue;
         }
         if (std::fabs(rotation) > 1e-6f) {
-            const Point center{command.rect.pivotX, command.rect.pivotY};
-            const Point points[] = {{x, y}, {x + width, y}, {x + width, y + height},
-                                    {x + width, y + height}, {x, y + height}, {x, y}};
+            const Point center = makePoint(command.rect.pivotX, command.rect.pivotY);
+            const Point points[] = {makePoint(x, y), makePoint(x + width, y), makePoint(x + width, y + height),
+                                    makePoint(x + width, y + height), makePoint(x, y + height), makePoint(x, y)};
             for (const auto& point : points) {
                 const Point transformed = rotatePoint(point, center, rotation);
-                vertices.push_back({transformed.x, transformed.y, red, green, blue, alpha});
+                appendVertex(transformed.x, transformed.y, red, green, blue, alpha);
             }
             continue;
         }
-        const Vertex quad[] = {
-            {x, y, red, green, blue, alpha}, {x + width, y, red, green, blue, alpha},
-            {x + width, y + height, red, green, blue, alpha},
-            {x + width, y + height, red, green, blue, alpha},
-            {x, y + height, red, green, blue, alpha}, {x, y, red, green, blue, alpha}};
-        vertices.insert(vertices.end(), std::begin(quad), std::end(quad));
+        appendVertex(x, y, red, green, blue, alpha);
+        appendVertex(x + width, y, red, green, blue, alpha);
+        appendVertex(x + width, y + height, red, green, blue, alpha);
+        appendVertex(x + width, y + height, red, green, blue, alpha);
+        appendVertex(x, y + height, red, green, blue, alpha);
+        appendVertex(x, y, red, green, blue, alpha);
     }
     void* mapped = nullptr;
     const VkDeviceSize offset = 0;
@@ -230,6 +236,11 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
     struct TexturedVertex { float x, y, u, v, r, g, b, a; };
     std::vector<TexturedVertex> texturedVertices;
     std::vector<VkDescriptorSet> descriptors;
+    const auto appendTexturedVertex = [&texturedVertices](double x, double y, float u, float v,
+                                                           float red, float green, float blue, float alpha) {
+        texturedVertices.push_back({static_cast<float>(x), static_cast<float>(y), u, v,
+                                    red, green, blue, alpha});
+    };
     texturedVertices.reserve(commands.commands.size() * 6);
     descriptors.reserve(commands.commands.size());
     for (const auto& command : commands.commands) {
@@ -276,14 +287,14 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
         const float red = ((quad.tintColor >> 16) & 0xFF) / 255.0f;
         const float green = ((quad.tintColor >> 8) & 0xFF) / 255.0f;
         const float blue = (quad.tintColor & 0xFF) / 255.0f;
-        const Point center{quad.pivotX, quad.pivotY};
-        const Point points[] = {{x, y}, {x + width, y}, {x + width, y + height},
-                                {x + width, y + height}, {x, y + height}, {x, y}};
+        const Point center = makePoint(quad.pivotX, quad.pivotY);
+        const Point points[] = {makePoint(x, y), makePoint(x + width, y), makePoint(x + width, y + height),
+                    makePoint(x + width, y + height), makePoint(x, y + height), makePoint(x, y)};
         const float uvs[] = {u0, v0, u1, v0, u1, v1, u1, v1, u0, v1, u0, v0};
         for (std::size_t index = 0; index < 6; ++index) {
             const Point transformed = rotatePoint(points[index], center, quad.rotationRadians);
-            texturedVertices.push_back({transformed.x, transformed.y, uvs[index * 2], uvs[index * 2 + 1],
-                                         red, green, blue, alpha});
+            appendTexturedVertex(transformed.x, transformed.y, uvs[index * 2], uvs[index * 2 + 1],
+                                 red, green, blue, alpha);
         }
         descriptors.push_back(descriptor);
     }

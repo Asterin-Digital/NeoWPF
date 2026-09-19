@@ -118,6 +118,32 @@ if(BUILD_TESTING)
     find_package(GTest CONFIG REQUIRED)
 endif()
 
+add_library(NeoWPF::NeoWPF STATIC IMPORTED GLOBAL)
+set_target_properties(NeoWPF::NeoWPF PROPERTIES
+    IMPORTED_LOCATION "${NEOWPF_LIBRARY}"
+    INTERFACE_INCLUDE_DIRECTORIES "${NEOWPF_ROOT}/include"
+)
+
+if(UNIX AND NOT APPLE)
+    find_package(Vulkan REQUIRED)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(WAYLAND REQUIRED IMPORTED_TARGET wayland-client)
+    pkg_check_modules(XKBCOMMON REQUIRED IMPORTED_TARGET xkbcommon)
+    set_target_properties(NeoWPF::NeoWPF PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Vulkan::Vulkan;PkgConfig::WAYLAND;PkgConfig::XKBCOMMON"
+    )
+endif()
+
+set(NEOPM_ARCHIVE_LINK_LIBS
+    Winux
+    NeoCM
+    NeoWPF::NeoWPF
+)
+if(UNIX)
+    list(PREPEND NEOPM_ARCHIVE_LINK_LIBS -Wl,--start-group)
+    list(APPEND NEOPM_ARCHIVE_LINK_LIBS -Wl,--end-group)
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -149,9 +175,7 @@ target_link_libraries(
         Boost::interprocess
         Boost::nowide
         Boost::process
-        Winux
-        NeoCM
-        "${NEOWPF_LIBRARY}"
+        ${NEOPM_ARCHIVE_LINK_LIBS}
 )
 
 if(WIN32)
@@ -177,9 +201,7 @@ if(BUILD_TESTING)
         PRIVATE
             GTest::gtest_main
             Boost::filesystem
-            Winux
-            NeoCM
-            "${NEOWPF_LIBRARY}"
+            ${NEOPM_ARCHIVE_LINK_LIBS}
     )
 
     target_include_directories(

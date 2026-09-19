@@ -4,7 +4,21 @@ project(NeoCM LANGUAGES CXX)
 
 include(CTest)
 
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../NeoWPFVersion.txt" NEOWPF_VERSION)
+if(NOT DEFINED NEOWPF_ROOT)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../NeoWPFVersion.txt")
+        set(NEOWPF_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." CACHE PATH
+            "Path to the NeoWPF source tree")
+    else()
+        set(NEOWPF_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../NeoWPF" CACHE PATH
+            "Path to the NeoWPF source tree")
+    endif()
+endif()
+
+if(NOT EXISTS "${NEOWPF_ROOT}/NeoWPFVersion.txt")
+    message(FATAL_ERROR
+        "Could not locate NeoWPFVersion.txt under NEOWPF_ROOT: ${NEOWPF_ROOT}")
+endif()
+file(READ "${NEOWPF_ROOT}/NeoWPFVersion.txt" NEOWPF_VERSION)
 string(STRIP "${NEOWPF_VERSION}" NEOWPF_VERSION)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -12,9 +26,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(cmake/NeoCMSources.cmake)
-
-set(NEOWPF_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." CACHE PATH
-    "Path to the NeoWPF source tree")
 
 set(NEOWPF_FOUNDATION_TARGET "NeoWPF::Foundation" CACHE STRING
     "NeoWPF Foundation target used when NeoCM is embedded in the NeoWPF build")
