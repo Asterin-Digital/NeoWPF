@@ -1,0 +1,43 @@
+#!/bin/sh
+
+set -u
+
+repo_root=$(git rev-parse --show-toplevel) || exit 1
+cd "$repo_root" || exit 1
+
+build_dir=""
+for candidate in \
+    "out/build/x64-debug" \
+    "out/build/x64-release" \
+    "out/build/linux-debug" \
+    "out/build/linux-release" \
+    "build/x64-debug" \
+    "build/x64-release" \
+    "build/linux-debug" \
+    "build/linux-release"
+do
+    if [ -f "$candidate/CTestTestfile.cmake" ]; then
+        build_dir="$candidate"
+        break
+    fi
+done
+
+if [ -z "$build_dir" ]; then
+    echo "NeoWPF pre-commit: no configured CMake test build was found."
+    echo "Configure and build a preset before committing, for example:"
+    echo "  cmake --preset x64-debug"
+    echo "  cmake --build --preset x64-debug --config Debug"
+    exit 1
+fi
+
+echo "NeoWPF pre-commit: running all tests in $build_dir"
+ctest --test-dir "$build_dir" --output-on-failure
+status=$?
+
+if [ "$status" -ne 0 ]; then
+    echo "NeoWPF pre-commit: tests failed; commit aborted."
+    exit "$status"
+fi
+
+echo "NeoWPF pre-commit: all tests passed."
+exit 0
