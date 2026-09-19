@@ -95,6 +95,7 @@
 #include <NeoWPF/UI/Controls/ListBox/ListBox.h>
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
 #include <NeoWPF/UI/Controls/Slider/Slider.h>
+#include <NeoWPF/UI/Controls/ProgressBar/ProgressBar.h>
 #include <NeoWPF/UI/Controls/ScrollViewer/ScrollViewer.h>
 #include <NeoWPF/UI/Controls/Selector/Selector.h>
 #include <NeoWPF/UI/Controls/ComboBox/ComboBox.h>

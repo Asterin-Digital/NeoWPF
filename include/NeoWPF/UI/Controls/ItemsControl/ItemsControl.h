@@ -135,7 +135,7 @@ public:
         @param spacing
         The spacing in pixels.
     */
-    void SetSpacing(int spacing) noexcept {
+    void SetSpacing(double spacing) noexcept {
         SetVerticalSpacing(spacing);
         InvalidateMeasure();
         InvalidateArrange();

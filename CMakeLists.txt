@@ -339,6 +339,13 @@ neowpf_add_xaml(
 )
 neowpf_add_xaml(
     NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ProgressBar/Visual/ProgressBarStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated
+    COMPONENT ProgressBarStyles
+    PUBLIC_HEADER NeoWPF/UI/Controls/ProgressBarStyles.h
+)
+neowpf_add_xaml(
+    NeoWPF.Foundation
     "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Text/Visual/TextBlockStyles.xaml"
     NAMESPACE NeoWPF::UI::Generated
     COMPONENT TextBlockStyles
@@ -804,6 +811,7 @@ if(BUILD_TESTING)
         tests/Automated/VisualTests.cpp
         tests/Automated/XamlParserTests.cpp
         tests/Automated/SliderTests.cpp
+        tests/Automated/ProgressBarTests.cpp
     )
 
     if(UNIX)

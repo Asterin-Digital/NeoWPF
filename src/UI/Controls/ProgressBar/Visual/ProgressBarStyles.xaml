@@ -1,0 +1,4 @@
+<Style TargetType="ProgressBar">
+    <Setter Property="Background" Value="#FFEAEAEA" />
+    <Setter Property="BorderThickness" Value="0" />
+</Style>
