@@ -41,6 +41,7 @@ enum class Category : uint8_t {
 	ComboBox,
 	Popup,
 	ItemsControl,
+	Renderer,
 	Files,
 	Count,
 };

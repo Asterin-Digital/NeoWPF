@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <vector>
 
 namespace NeoWPF::Rendering::Vulkan {
@@ -17,7 +18,45 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
     std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
     auto* context = CurrentWindowContext();
     if (!context || !context->frameActive) {
+        static bool loggedInactiveContext = false;
+        if (!loggedInactiveContext) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+                NeoWPF::Diagnostics::Level::Debug,
+                "[Vulkan] Execute skipped: window context unavailable or frame inactive");
+            loggedInactiveContext = true;
+        }
         return;
+    }
+
+    std::size_t rectCount = 0;
+    std::size_t roundedRectCount = 0;
+    std::size_t texturedQuadCount = 0;
+    for (const auto& command : commands.commands) {
+        switch (command.kind) {
+        case NeoWPF::Rendering::CommandList::CommandKind::Rect:
+            ++rectCount;
+            break;
+        case NeoWPF::Rendering::CommandList::CommandKind::RoundedRect:
+            ++roundedRectCount;
+            break;
+        case NeoWPF::Rendering::CommandList::CommandKind::TexturedQuad:
+            ++texturedQuadCount;
+            break;
+        }
+    }
+    static std::size_t lastCommandCount = std::numeric_limits<std::size_t>::max();
+    static std::size_t lastRoundedRectCount = std::numeric_limits<std::size_t>::max();
+    static std::size_t lastTexturedQuadCount = std::numeric_limits<std::size_t>::max();
+    if (commands.commands.size() != lastCommandCount ||
+        roundedRectCount != lastRoundedRectCount ||
+        texturedQuadCount != lastTexturedQuadCount) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[Vulkan] Command shape changed commands=%zu rects=%zu roundedRects=%zu texturedQuads=%zu",
+            commands.commands.size(), rectCount, roundedRectCount, texturedQuadCount);
+        lastCommandCount = commands.commands.size();
+        lastRoundedRectCount = roundedRectCount;
+        lastTexturedQuadCount = texturedQuadCount;
     }
 
     std::uint32_t backgroundColor = 0xFFFFFFFFu;
@@ -41,6 +80,13 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
     vkCmdClearAttachments(context->commandBuffers[context->currentImage], 1, &clearAttachment, 1, &clearRect);
 
     if (m_solidPipeline == VK_NULL_HANDLE || m_solidVertexBuffer == VK_NULL_HANDLE) {
+        static bool loggedMissingPipeline = false;
+        if (!loggedMissingPipeline) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+                NeoWPF::Diagnostics::Level::Error,
+                "[Vulkan] Execute skipped: solid pipeline or vertex buffer unavailable");
+            loggedMissingPipeline = true;
+        }
         return;
     }
 

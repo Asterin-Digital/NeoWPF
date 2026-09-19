@@ -145,8 +145,11 @@ public:
 
 protected:
     void OnSelectionChanged(int oldIndex, int newIndex, const std::any& oldItem, const std::any& newItem) override;
+    void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
+    void OnBorderColorChanged(NeoWPF::UI::Color color) override;
 
 private:
+    void EnsurePopupTemplateParts();
     void UpdateDisplayedItem(const std::any& item);
 
     std::shared_ptr<Content::ContentPresenter> m_display;

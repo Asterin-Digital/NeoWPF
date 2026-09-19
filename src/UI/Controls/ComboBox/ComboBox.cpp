@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Controls/ComboBox/ComboBox.h>
 #include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/UI/Controls/ListBox/ListBox.h>
+#include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <NeoWPF/UI/Controls/ComboBoxItemStyles.h>
@@ -165,14 +166,8 @@ ComboBox::ComboBox()
     SetPresenter(m_display);
     m_display->SetContentData(std::any(std::wstring(L"Select an item")));
 
-    m_popup = std::make_shared<Popup>();
-    m_popup->SetPlacementTarget(this);
-    m_popup->SetPlacement(GetPlacement());
-    m_popup->SetStaysOpen(false);
-
     m_dropDown = std::make_shared<ComboBoxDropDown>(this);
     m_dropDown->SetPadding(4);
-    m_popup->SetContent(m_dropDown);
 
     AddHandler(NeoWPF::Input::Core::MouseUpEvent(), [this](UIElement*, NeoWPF::Input::Core::RoutedEventArgs* args) {
         const bool wasOpen = GetIsDropDownOpen();
@@ -196,6 +191,43 @@ ComboBox::~ComboBox()
         NeoWPF::Diagnostics::Level::Debug, "[ComboBox] Destroyed comboBox=%p", this);
 }
 
+void ComboBox::EnsurePopupTemplateParts()
+{
+    if (!m_popup) {
+        m_popup = std::dynamic_pointer_cast<Popup>(FindTemplateChild("PART_Popup"));
+    }
+    if (!m_popup) {
+        return;
+    }
+
+    m_popup->SetPlacementTarget(this);
+    m_popup->SetPlacement(GetPlacement());
+    m_popup->SetStaysOpen(false);
+
+    if (auto popupBorder = std::dynamic_pointer_cast<Border>(FindTemplateChild("PART_PopupBorder"))) {
+        popupBorder->SetChild(m_dropDown);
+        m_popup->SetContent(popupBorder);
+    } else {
+        m_popup->SetContent(m_dropDown);
+    }
+}
+
+void ComboBox::OnBackgroundColorChanged(NeoWPF::UI::Color color)
+{
+    if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
+        background->SetFillColor(color.ToArgb());
+    }
+    InvalidateVisual();
+}
+
+void ComboBox::OnBorderColorChanged(NeoWPF::UI::Color color)
+{
+    if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
+        background->SetBorderColor(color.ToArgb());
+    }
+    InvalidateVisual();
+}
+
 bool ComboBox::GetIsDropDownOpen() const noexcept
 {
     try {
@@ -214,6 +246,10 @@ void ComboBox::SetIsDropDownOpen(bool isOpen)
         IsApplyingPropertyValue() ? 1 : 0, m_popup && m_popup->GetIsOpen() ? 1 : 0);
     if (!IsApplyingPropertyValue()) {
         SetValue(IsDropDownOpenProperty(), isOpen);
+        return;
+    }
+    EnsurePopupTemplateParts();
+    if (!m_popup) {
         return;
     }
     m_popup->SetIsOpen(isOpen);
@@ -241,7 +277,9 @@ void ComboBox::SetPlacement(PopupPlacement placement)
         SetValue(PlacementProperty(), placement);
         return;
     }
-    m_popup->SetPlacement(placement);
+    if (m_popup) {
+        m_popup->SetPlacement(placement);
+    }
 }
 
 void ComboBox::SetItems(const std::vector<std::shared_ptr<FrameworkElement>>& items)
@@ -330,7 +368,7 @@ void ComboBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
         NeoWPF::Diagnostics::Level::Trace,
-        "[ComboBox] BuildRenderCommands comboBox=%p open=%d final=%dx%d popupOpen=%d",
+        "[ComboBox] BuildRenderCommands comboBox=%p open=%d final=%.1fx%.1f popupOpen=%d",
         this, GetIsDropDownOpen() ? 1 : 0, GetFinalWidth(), GetFinalHeight(),
         m_popup && m_popup->GetIsOpen() ? 1 : 0);
     const auto renderTransform = GetWorldRenderTransform();
@@ -345,9 +383,20 @@ void ComboBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"));
     if (background) {
+        const auto commandsBefore = commands.commands.size();
+        background->SetFillColor(GetBackgroundColor().ToArgb());
+        background->SetBorderColor(GetBorderColor().ToArgb());
         background->SetRect(x, y, width, height);
         background->SetOpacity(GetOpacity());
         background->BuildRenderCommands(commands);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[ComboBox] Background emitted comboBox=%p commands=%zu->%zu rect=%.1fx%.1f opacity=%.2f",
+            this, commandsBefore, commands.commands.size(), width, height, GetOpacity());
+    } else {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
+            NeoWPF::Diagnostics::Level::Info,
+            "[ComboBox] PART_Background missing comboBox=%p", this);
     }
 
     auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"));

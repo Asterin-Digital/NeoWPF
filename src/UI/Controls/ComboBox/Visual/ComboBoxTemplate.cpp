@@ -1,4 +1,6 @@
 #include <NeoWPF/UI/Controls/ComboBox/ComboBox.h>
+#include <NeoWPF/UI/Controls/Popup/Popup.h>
+#include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <memory>
@@ -20,8 +22,16 @@ ComboBoxTemplate::ComboBoxTemplate()
     contentHost->SetBorderColor(0x00000000u);
     contentHost->SetBorderThickness(0);
 
+    auto popup = std::make_shared<Popup>();
+    auto popupBorder = std::make_shared<Border>();
+    popupBorder->SetBorderThickness(1);
+    popupBorder->SetBorderColor(0xFFAAAAAAu);
+    popupBorder->SetBackgroundColor(0xFFF0F0F0u);
+
     AddTemplateChild("PART_Background", background);
     AddTemplateChild("PART_ContentHost", contentHost);
+    AddTemplateChild("PART_Popup", popup);
+    AddTemplateChild("PART_PopupBorder", popupBorder);
 
     auto manager = std::make_shared<Styling::VisualStateManager>();
     auto commonStates = std::make_shared<Styling::VisualStateGroup>("CommonStates");

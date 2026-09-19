@@ -9,6 +9,7 @@
 #include <cmath>
 #include <Windows.h>
 #include <any>
+#include <limits>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 
@@ -46,7 +47,16 @@ namespace NeoWPF::Rendering::D3D11 {
 void ExecuteRendererDraw(const CommandList& cmd)
 {
     ID3D11RenderTargetView* rtv = GetCurrentRendererTargetView();
-    if (!rtv) return;
+    static bool loggedMissingTarget = false;
+    if (!rtv) {
+        if (!loggedMissingTarget) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+                NeoWPF::Diagnostics::Level::Info,
+                "[D3D11] ExecuteRendererDraw skipped: render target is unavailable");
+            loggedMissingTarget = true;
+        }
+        return;
+    }
 
     std::size_t textCommandCount = 0;
     for (const auto& command : cmd.commands) {
@@ -54,10 +64,42 @@ void ExecuteRendererDraw(const CommandList& cmd)
             ++textCommandCount;
         }
     }
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
-        NeoWPF::Diagnostics::Level::Debug,
-        "[D3D11] ExecuteRendererDraw commands=%zu texturedQuads=%zu target=%p",
-        cmd.commands.size(), textCommandCount, rtv);
+    std::size_t roundedRectCount = 0;
+    std::size_t rectCount = 0;
+    for (const auto& command : cmd.commands) {
+        if (command.kind == CommandList::CommandKind::RoundedRect) {
+            ++roundedRectCount;
+        } else if (command.kind == CommandList::CommandKind::Rect) {
+            ++rectCount;
+        }
+    }
+    static std::size_t lastCommandCount = std::numeric_limits<std::size_t>::max();
+    static std::size_t lastRoundedRectCount = std::numeric_limits<std::size_t>::max();
+    static std::size_t lastTextCommandCount = std::numeric_limits<std::size_t>::max();
+    const bool commandShapeChanged = cmd.commands.size() != lastCommandCount ||
+        roundedRectCount != lastRoundedRectCount ||
+        textCommandCount != lastTextCommandCount;
+    if (commandShapeChanged) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[D3D11] Command shape changed commands=%zu rects=%zu roundedRects=%zu texturedQuads=%zu target=%p",
+            cmd.commands.size(), rectCount, roundedRectCount, textCommandCount, rtv);
+        lastCommandCount = cmd.commands.size();
+        lastRoundedRectCount = roundedRectCount;
+        lastTextCommandCount = textCommandCount;
+        for (std::size_t index = 0; index < cmd.commands.size(); ++index) {
+            const auto& command = cmd.commands[index];
+            if (command.kind != CommandList::CommandKind::RoundedRect) {
+                continue;
+            }
+            const auto& rounded = command.roundedRect;
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+                NeoWPF::Diagnostics::Level::Trace,
+                "[D3D11] RoundedRect index=%zu rect=%.1f,%.1fx%.1f,%.1f color=0x%08X opacity=%.2f",
+                index, rounded.x, rounded.y, rounded.w, rounded.h,
+                rounded.color, rounded.opacity);
+        }
+    }
 
     const unsigned int width = GetCurrentRendererWidth();
     const unsigned int height = GetCurrentRendererHeight();
@@ -95,7 +137,11 @@ void ExecuteRendererDraw(const CommandList& cmd)
         blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
         blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
         blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-        g_device->CreateBlendState(&blendDesc, &blendState);
+        const auto result = g_device->CreateBlendState(&blendDesc, &blendState);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            result == S_OK ? NeoWPF::Diagnostics::Level::Info : NeoWPF::Diagnostics::Level::Info,
+            "[D3D11] Solid blend state creation result=0x%08X ready=%d",
+            static_cast<unsigned int>(result), blendState ? 1 : 0);
     }
 
     struct Vertex { float x, y; float r, g, b, a; };
