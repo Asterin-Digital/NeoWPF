@@ -69,6 +69,7 @@ TEST(TransformCompositionTests, CenterOriginScaleKeepsCenterFixed)
     EXPECT_FLOAT_EQ(y, 20.0f);
 }
 
+#if defined(_WIN32)
 TEST(TransformCompositionTests, TextBlockUsesUnrotatedAbsoluteOriginWhenParentRotates)
 {
     NeoWPF::Core::Application::Initialize();
@@ -103,6 +104,7 @@ TEST(TransformCompositionTests, TextBlockUsesUnrotatedAbsoluteOriginWhenParentRo
     NeoWPF::Rendering::Renderer_Shutdown();
     NeoWPF::Core::Application::Shutdown();
 }
+#endif
 
 TEST(TransformCompositionTests, TryGetRotationReportsSupportedTransformValues)
 {

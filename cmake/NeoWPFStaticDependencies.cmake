@@ -261,9 +261,7 @@ if(NEOWPF_STATIC_DEPENDENCIES)
             "if(NEOWPF_COPY_RESULT)\n"
             "    message(FATAL_ERROR \"${_target_name} archive staging failed with exit code \${NEOWPF_COPY_RESULT}\")\n"
             "endif()\n"
-            "set(NEOWPF_ARCHIVE_INPUTS \"\${NEOWPF_STAGED_TARGET}\")\n"
-            "list(APPEND NEOWPF_ARCHIVE_INPUTS \${NEOWPF_INPUT_ARCHIVES})\n"
-            "list(APPEND NEOWPF_ARCHIVE_INPUTS \${NEOWPF_EXTRA_ARCHIVES})\n"
+            "set(NEOWPF_ARCHIVE_INPUTS \"\${NEOWPF_STAGED_TARGET};\${NEOWPF_INPUT_ARCHIVES};\${NEOWPF_EXTRA_ARCHIVES}\")\n"
         )
         if(WIN32)
             string(APPEND _merge_script_content

@@ -5,6 +5,8 @@
 #include <NeoPM/Sdk/SdkManager.h>
 #include <NeoPM/Utils/Logger.h>
 
+#include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <memory>
 #include <vector>
