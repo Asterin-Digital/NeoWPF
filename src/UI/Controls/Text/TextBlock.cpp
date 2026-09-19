@@ -299,6 +299,19 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         double right = localX + line.width;
         double bottom = localY + line.height;
         worldRenderTransform.positionMatrix.TransformPoint(right, bottom, right, bottom);
+        /*
+         * @note
+         * Keep pixel snapping to avoid half-pixel text placement and
+         * bottom glyph overhang.
+         */
+        if (std::abs(rotationRadians) <= 1e-6f) {
+            const double snappedX = std::round(drawX);
+            const double snappedY = std::round(drawY);
+            right += snappedX - drawX;
+            bottom += snappedY - drawY;
+            drawX = snappedX;
+            drawY = snappedY;
+        }
         const double drawWidth = std::abs(right - drawX);
         const double drawHeight = std::abs(bottom - drawY);
 
