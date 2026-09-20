@@ -18,6 +18,10 @@
 
 #include <atomic>
 
+#ifndef NEOWPF_SLOW_ENV
+#define NEOWPF_SLOW_ENV 2
+#endif
+
 namespace NeoWPF::Core {
 
 namespace {
@@ -148,7 +152,7 @@ int Application::Run()
 
     StartRenderThread();
 
-    constexpr auto renderInitializationTimeout = std::chrono::seconds(2);
+    constexpr auto renderInitializationTimeout = std::chrono::seconds(NEOWPF_SLOW_ENV);
     std::unique_lock<std::mutex> lock(appState.renderInitMutex);
     if (!appState.renderInitCondition.wait_for(lock, renderInitializationTimeout, [] {
             return GetAppState().renderThreadInitialized.load() || GetAppState().renderThreadInitFailed.load();

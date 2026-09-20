@@ -164,6 +164,19 @@ def get_declaration_kind(line: str) -> str:
     return "declaration"
 
 
+def extract_declaration(lines: List[str], start_index: int) -> str:
+    declaration_lines = []
+    for line in lines[start_index:]:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        declaration_lines.append(stripped)
+        if stripped.endswith(";") or "{" in stripped:
+            break
+
+    return " ".join(declaration_lines).strip()
+
+
 def find_namespace(content: str) -> str:
     match = re.search(r"namespace\s+([A-Za-z0-9_:]+)", content)
     return match.group(1) if match else ""
@@ -211,6 +224,7 @@ def parse_header(path: Path, repo_root: Path) -> List[Dict[str, object]]:
         entries.append({
             "kind": kind,
             "name": decl_name,
+            "code": extract_declaration(lines, next_index),
             "source": source_name,
             "summary": doc["summary"],
             "details": doc["details"],
@@ -247,7 +261,7 @@ def main() -> None:
     args = parse_args()
     repo_root = Path(args.repo_root).resolve()
     include_root = Path(args.include_root).resolve() if args.include_root else (repo_root / "include" / "NeoWPF")
-    output_path = Path(r"E:\NeoWPF.doc\public\content\api\api-index.json")
+    output_path = Path(args.output) if args.output else Path(r"E:\NeoWPF.doc\public\content\api\api-index.json")
 
     index = build_index(repo_root, include_root)
 

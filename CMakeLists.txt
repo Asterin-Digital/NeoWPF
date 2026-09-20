@@ -224,31 +224,6 @@ if(UNIX)
     find_package(Freetype CONFIG REQUIRED)
     find_package(PNG REQUIRED)
 
-    # HarfBuzz's vcpkg CMake config on this triplet has a known packaging
-    # bug (vcpkg itself flags it as "heuristically generated, and may not
-    # be correct" - its INTERFACE_INCLUDE_DIRECTORIES comes out as a bare
-    # "/x64-linux/include/harfbuzz" with the actual prefix missing, which
-    # fails CMake's generate-time existence check). Skip the CONFIG package
-    # entirely and resolve it through pkg-config instead, same as
-    # fontconfig below - proven working, and harfbuzz's vcpkg build ships a
-    # normal .pc file regardless.
-
-    # ---------------------------------------------------------------------
-    # HarfBuzz and Fontconfig get merged into the archive: both already
-    # build from source via the existing vcpkg.json with no extra setup, so
-    # pkg-config is pointed at the vcpkg prefix instead of the system one,
-    # resolving them to the static .a builds that
-    # NeoWPFStaticDependencies.cmake folds in, same as Freetype/PNG/CURL.
-    #
-    # Wayland-client and xkbcommon stay off this path on purpose. Getting a
-    # static build of Wayland requires vcpkg's "force-build" feature plus a
-    # triplet-level variable (X_VCPKG_FORCE_VCPKG_WAYLAND_LIBRARIES) that
-    # isn't set up here - so instead of half-configuring that, they're left
-    # exactly as the WAYLAND/XKBCOMMON probe near the top of this file
-    # already resolves them (the system .so, also used for wayland-scanner
-    # and the xdg-shell/xdg-decoration protocol lookup). Consumers of
-    # NeoWPF::NeoWPF link these two themselves, same as Vulkan.
-    # ---------------------------------------------------------------------
     set(NEOWPF_STATIC_PKG_CONFIG_PATH
         "${NEOWPF_VCPKG_PREFIX}/lib/pkgconfig"
         "${NEOWPF_VCPKG_PREFIX}/debug/lib/pkgconfig")
@@ -261,14 +236,6 @@ if(UNIX)
     unset(_neowpf_saved_pkg_config_path)
     unset(_neowpf_static_pkg_config_path_joined)
 
-    # Vulkan is left as the system Vulkan::Vulkan loader on purpose: even a
-    # statically-linked loader still has to dlopen() the actual GPU driver's
-    # ICD at runtime, so "merging" it doesn't make the binary any more
-    # self-contained the way Freetype/HarfBuzz/PNG do - it just hides a
-    # linker flag while the real runtime dependency (an installed Vulkan
-    # driver) stays exactly as required as before. If this is still wanted,
-    # it needs a from-source static build of Vulkan-Loader (BUILD_STATIC_LOADER)
-    # via a custom vcpkg overlay port - vcpkg doesn't ship one today.
 endif()
 
 set(CMAKE_CXX_STANDARD 20)

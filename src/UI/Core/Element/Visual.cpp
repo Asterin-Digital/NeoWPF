@@ -80,6 +80,7 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
 {
     if (!child) return;
 
+    // [tree-mtx]
     std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
 
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Debug,
@@ -136,6 +137,7 @@ void Visual::AddChild(const std::shared_ptr<Visual>& child)
 {
     if (!child) return;
 
+    // [tree-mtx]
     std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
 
     if (!AttachChildToParent(this, child, "[Visual::AddChild]")) {
@@ -181,6 +183,7 @@ void Visual::RemoveVisualChild(Visual* child)
 {
     if (!child) return;
 
+    // [tree-mtx]
     std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
     for (auto it = m_children.begin(); it != m_children.end(); ++it) {
         if (it->get() == child) {
@@ -210,6 +213,7 @@ void Visual::RemoveFromParent()
 
 std::vector<Visual*> Visual::GetVisualChildren() const
 {
+    // [tree-mtx]
     std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
 
     std::vector<Visual*> children;
@@ -244,6 +248,7 @@ std::vector<Visual*> Visual::GetVisualDescendants() const
 
 std::vector<Visual*> Visual::GetVisualChildrenInZOrder() const
 {
+    // [tree-mtx]
     std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
 
     std::vector<Visual*> orderedChildren;
@@ -261,6 +266,7 @@ std::vector<Visual*> Visual::GetVisualChildrenInZOrder() const
 
 std::vector<Visual*> Visual::GetLogicalChildren() const
 {
+    // [tree-mtx]
     std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
 
     std::vector<Visual*> children;
@@ -277,6 +283,7 @@ void Visual::AddLogicalChild(const std::shared_ptr<Visual>& child)
 {
     if (!child) return;
 
+    // [tree-mtx]
     std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
     m_logicalChildren.push_back(child);
 }
@@ -324,6 +331,7 @@ void Visual::Initialize()
 
         std::vector<std::shared_ptr<Visual>> childrenSnapshot;
         {
+            // [tree-mtx]
             std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
             childrenSnapshot = m_children;
         }
@@ -399,6 +407,7 @@ Visual* Visual::FindInVisualTree(std::function<bool(Visual*)> predicate) noexcep
         return nullptr;
     }
 
+    // [tree-mtx]
     std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
 
     try {
