@@ -15,7 +15,7 @@ struct MainThreadExecutor::State {
 };
 
 MainThreadExecutor::MainThreadExecutor()
-    : m_state(std::make_unique<State>())
+    : m_state(std::make_shared<State>())
 {
     m_state->ownerThread = std::this_thread::get_id();
 }
@@ -27,17 +27,37 @@ MainThreadExecutor::~MainThreadExecutor()
 
 bool MainThreadExecutor::Post(std::function<void()> task)
 {
+    return GetHandle().Post(std::move(task));
+}
+
+MainThreadExecutor::Handle::Handle(const std::shared_ptr<State>& state) noexcept
+    : m_state(state)
+{
+}
+
+bool MainThreadExecutor::Handle::Post(std::function<void()> task) const
+{
     if (!task) {
         return false;
     }
 
-    std::lock_guard<std::mutex> lock(m_state->mutex);
-    if (m_state->stopped) {
+    auto state = m_state.lock();
+    if (!state) {
         return false;
     }
 
-    m_state->tasks.push_back(std::move(task));
+    std::lock_guard<std::mutex> lock(state->mutex);
+    if (state->stopped) {
+        return false;
+    }
+
+    state->tasks.push_back(std::move(task));
     return true;
+}
+
+MainThreadExecutor::Handle MainThreadExecutor::GetHandle() const noexcept
+{
+    return Handle(m_state);
 }
 
 std::size_t MainThreadExecutor::Drain(std::chrono::milliseconds budget)

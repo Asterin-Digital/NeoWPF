@@ -275,17 +275,28 @@ void BitmapImage::BeginAsyncLoad() {
     m_isLoading = true;
     if (m_downloadStartedCallback) m_downloadStartedCallback();
 
+    std::weak_ptr<BitmapImage> weakSelf;
+    try {
+        weakSelf = shared_from_this();
+    } catch (const std::bad_weak_ptr&) {
+        m_isLoading = false;
+        NeoWPF::Diagnostics::LogError("BitmapImage::BeginAsyncLoad requires shared ownership");
+        return;
+    }
+
     auto& appState = NeoWPF::Core::GetAppState();
     if (!appState.backgroundExecutor ||
-        !appState.backgroundExecutor->Post([this]() { PerformAsyncLoad(); })) {
+        !appState.backgroundExecutor->Post([weakSelf]() {
+            if (auto self = weakSelf.lock()) {
+                self->PerformAsyncLoad();
+            }
+        })) {
         m_isLoading = false;
         NeoWPF::Diagnostics::LogError("BitmapImage::BeginAsyncLoad failed because the background executor is stopped");
     }
 }
 
 void BitmapImage::PerformAsyncLoad() {
-    std::shared_ptr<BitmapImage> self(this, [](void*) {});
-
     const std::string cacheKey = NeoWPF::Platform::WideToUtf8(m_uriSource) + "_" +
                                 std::to_string(m_decodePixelWidth) + "x" + std::to_string(m_decodePixelHeight);
 
@@ -293,8 +304,15 @@ void BitmapImage::PerformAsyncLoad() {
         std::lock_guard<std::mutex> lock(g_cacheMutex);
         auto it = g_imageCache.find(cacheKey);
         if (it != g_imageCache.end()) {
-            m_isLoading = false;
-            if (m_downloadCompletedCallback) m_downloadCompletedCallback();
+            auto& appState = NeoWPF::Core::GetAppState();
+            if (appState.mainThreadExecutor) {
+                std::weak_ptr<BitmapImage> weakSelf = shared_from_this();
+                appState.mainThreadExecutor->Post([weakSelf]() {
+                    if (auto self = weakSelf.lock()) {
+                        self->CompleteAsyncLoad();
+                    }
+                });
+            }
             return;
         }
     }
@@ -306,8 +324,23 @@ void BitmapImage::PerformAsyncLoad() {
         }
     }
 
+    auto& appState = NeoWPF::Core::GetAppState();
+    if (appState.mainThreadExecutor) {
+        std::weak_ptr<BitmapImage> weakSelf = shared_from_this();
+        appState.mainThreadExecutor->Post([weakSelf]() {
+            if (auto self = weakSelf.lock()) {
+                self->CompleteAsyncLoad();
+            }
+        });
+    }
+}
+
+void BitmapImage::CompleteAsyncLoad()
+{
     m_isLoading = false;
-    if (m_downloadCompletedCallback) m_downloadCompletedCallback();
+    if (m_downloadCompletedCallback) {
+        m_downloadCompletedCallback();
+    }
 }
 
 }

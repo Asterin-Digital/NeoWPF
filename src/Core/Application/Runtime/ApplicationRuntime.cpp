@@ -76,7 +76,7 @@ void LayoutVisualTree(NeoWPF::UI::Visual* rootVisual, unsigned int width, unsign
 
 void BuildVisualTreeCommands(NeoWPF::UI::Visual* rootVisual, NeoWPF::Rendering::CommandList& buildCommandList)
 {
-    if (!rootVisual) {
+    if (!rootVisual || !NeoWPF::Core::Threading::ThreadAffinity::IsMainThread()) {
         return;
     }
 

@@ -58,10 +58,7 @@ public:
 
         @internal
     */
-    Visual* GetParent() const noexcept {
-        std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
-        return m_parent;
-    }
+    Visual* GetParent() const noexcept;
 
     /*
         @summary
@@ -72,10 +69,7 @@ public:
 
         @internal
     */
-    void SetParent(Visual* parent) noexcept {
-        std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
-        m_parent = parent;
-    }
+    void SetParent(Visual* parent) noexcept;
 
     /*
         @summary

@@ -73,6 +73,12 @@ bool ThreadAffinity::IsMainThread() noexcept
     return GetCurrentThreadKind() == ThreadKind::Main;
 }
 
+bool ThreadAffinity::IsMainThreadRegistered() noexcept
+{
+    std::lock_guard<std::mutex> lock(AffinityMutex());
+    return MainThreadId() != ThreadId{};
+}
+
 bool ThreadAffinity::IsRenderThread() noexcept
 {
     return GetCurrentThreadKind() == ThreadKind::Render;

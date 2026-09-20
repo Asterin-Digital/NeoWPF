@@ -342,9 +342,18 @@ void Image::SetupAsyncLoading()
         return;
     }
 
-    bitmapImage->SetDownloadCompletedCallback([this]() {
-        m_sourceDirty = true;
-        InvalidateVisual();
+    std::weak_ptr<Image> weakSelf;
+    try {
+        weakSelf = std::dynamic_pointer_cast<Image>(shared_from_this());
+    } catch (const std::bad_weak_ptr&) {
+        return;
+    }
+
+    bitmapImage->SetDownloadCompletedCallback([weakSelf]() {
+        if (auto self = weakSelf.lock()) {
+            self->m_sourceDirty = true;
+            self->InvalidateVisual();
+        }
     });
 }
 

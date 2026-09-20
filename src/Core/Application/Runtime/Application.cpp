@@ -48,6 +48,7 @@ void Application::AddLocale(std::shared_ptr<NeoWPF::UI::Localization::LocaleTabl
 void Application::Initialize()
 {
     NEO_WPF_STARTUP_ACTION("Application.Initialize");
+    NeoWPF::Core::Threading::ThreadAffinity::RegisterMainThread();
     NeoWPF::Diagnostics::Log(
         NeoWPF::Diagnostics::Category::Application,
         NeoWPF::Diagnostics::Level::Info,
@@ -188,13 +189,13 @@ int Application::Run()
 void Application::Shutdown()
 {
     auto& appState = GetAppState();
-    if (appState.mainThreadExecutor) {
-        appState.mainThreadExecutor->Stop();
-        appState.mainThreadExecutor.reset();
-    }
     if (appState.backgroundExecutor) {
         appState.backgroundExecutor->Stop();
         appState.backgroundExecutor.reset();
+    }
+    if (appState.mainThreadExecutor) {
+        appState.mainThreadExecutor->Stop();
+        appState.mainThreadExecutor.reset();
     }
     NeoWPF::Core::Threading::ThreadAffinity::ClearMainThread();
     s_initialized.store(false, std::memory_order_release);

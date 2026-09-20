@@ -41,7 +41,12 @@ public:
         Task<Result> task(state);
         if (!Post([task, function = std::forward<Function>(function)]() mutable {
                 try {
-                    task.SetResult(function());
+                    if constexpr (std::is_void_v<Result>) {
+                        function();
+                        task.SetResult();
+                    } else {
+                        task.SetResult(function());
+                    }
                 } catch (...) {
                     task.SetException(std::current_exception());
                 }

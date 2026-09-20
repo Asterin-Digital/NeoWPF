@@ -1,10 +1,15 @@
 #include <gtest/gtest.h>
 
 #include <NeoWPF/Core/Application/Application.h>
+#include <NeoWPF/Core/Threading/ThreadAffinity.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 
 #include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <memory>
+#include <thread>
+#include <unordered_set>
 #include <vector>
 
 namespace {
@@ -84,6 +89,71 @@ TEST(VisualTests, AddChildAddsLogicalChildAndInvokesOnAddChild)
     EXPECT_EQ(parent->GetLogicalChildren()[0], child.get());
     EXPECT_EQ(parent->AddedChildren.size(), 1u);
     EXPECT_EQ(parent->AddedChildren[0], child.get());
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(VisualTests, AllowsWorkerThreadStructuralVisualMutation)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto parent = std::make_shared<TestVisual>();
+    const auto child = std::make_shared<TestVisual>();
+    std::thread worker([&parent, &child] {
+        parent->AddVisualChild(child);
+    });
+    worker.join();
+
+    ASSERT_EQ(parent->GetVisualChildren().size(), 1u);
+    EXPECT_EQ(parent->GetVisualChildren()[0], child.get());
+    EXPECT_FALSE(parent->IsLayoutDirty());
+    EXPECT_TRUE(NeoWPF::Core::Threading::ThreadAffinity::IsMainThread());
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(VisualTests, WorkerCanMutateVisualTreeEvery50Milliseconds)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const auto parent = std::make_shared<TestVisual>();
+    std::vector<std::shared_ptr<TestVisual>> children;
+    for (int index = 0; index < 8; ++index) {
+        children.push_back(std::make_shared<TestVisual>());
+    }
+
+    std::atomic<bool> running{true};
+    std::atomic<bool> invalidSnapshot{false};
+    std::thread worker([&] {
+        for (int cycle = 0; cycle < 20; ++cycle) {
+            for (const auto& child : children) {
+                parent->AddVisualChild(child);
+            }
+            for (const auto& child : children) {
+                parent->RemoveVisualChild(child);
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+        running = false;
+    });
+
+    while (running.load()) {
+        const auto snapshot = parent->GetVisualChildren();
+        std::unordered_set<NeoWPF::UI::Visual*> uniqueChildren;
+        for (auto* child : snapshot) {
+            if (!child || !uniqueChildren.insert(child).second) {
+                invalidSnapshot = true;
+                break;
+            }
+        }
+    }
+    worker.join();
+
+    EXPECT_FALSE(invalidSnapshot.load());
+    EXPECT_TRUE(parent->GetVisualChildren().empty());
+    EXPECT_FALSE(parent->IsLayoutDirty());
+    EXPECT_FALSE(parent->IsTreeDirty());
 
     NeoWPF::Core::Application::Shutdown();
 }

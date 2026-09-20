@@ -26,6 +26,7 @@ public:
     static void ClearMainThread() noexcept;
     static void ClearRenderThread() noexcept;
     static bool IsMainThread() noexcept;
+    static bool IsMainThreadRegistered() noexcept;
     static bool IsRenderThread() noexcept;
 };
 

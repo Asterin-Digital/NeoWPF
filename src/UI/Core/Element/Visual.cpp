@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/Core/Threading/ThreadAffinity.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <NeoWPF/Diagnostics/Logger.h>
@@ -14,6 +15,12 @@ namespace NeoWPF::UI {
 
 
 namespace {
+
+bool CanRunVisualLifecycle() noexcept
+{
+    return !NeoWPF::Core::Threading::ThreadAffinity::IsMainThreadRegistered() ||
+        NeoWPF::Core::Threading::ThreadAffinity::IsMainThread();
+}
 
 void DebugBreakPortable() noexcept
 {
@@ -103,7 +110,7 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
         return;
     }
 
-    if (IsInitialized() && !child->IsInitialized() && !child->IsInitializing()) {
+    if (CanRunVisualLifecycle() && IsInitialized() && !child->IsInitialized() && !child->IsInitializing()) {
         child->Initialize();
     }
 
@@ -124,7 +131,7 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Trace,
         "[Visual::AddVisualChild] After push_back");
 
-    if (IsInitialized()) {
+    if (CanRunVisualLifecycle() && IsInitialized()) {
         MarkLayoutDirty();
     } // @note not sure if this will cause any issues (previosuly it double marked layout dirty unconditionally)
      // so if anything breaks, just do it unconditionally in here, but unless it causes problems keep it
@@ -154,23 +161,27 @@ void Visual::AddChild(const std::shared_ptr<Visual>& child)
 
     m_children.push_back(child);
 
-    if (IsInitialized()) {
+    if (CanRunVisualLifecycle() && IsInitialized()) {
         MarkLayoutDirty();
     }
 
-    if (IsInitialized() && !child->IsInitialized() && !child->IsInitializing()) {
+    if (CanRunVisualLifecycle() && IsInitialized() && !child->IsInitialized() && !child->IsInitializing()) {
         child->Initialize();
     }
 
     if (ContainsVisualChild(m_logicalChildren, child.get())) {
-        MarkLayoutDirty();
+        if (CanRunVisualLifecycle()) {
+            MarkLayoutDirty();
+        }
         return;
     }
 
     m_logicalChildren.push_back(child);
 
-    MarkLayoutDirty();
-    OnAddChild(child.get());
+    if (CanRunVisualLifecycle()) {
+        MarkLayoutDirty();
+        OnAddChild(child.get());
+    }
 }
 
 void Visual::RemoveVisualChild(const std::shared_ptr<Visual>& child)
@@ -200,8 +211,10 @@ void Visual::RemoveVisualChild(Visual* child)
     }
 
     child->SetParent(nullptr);
-    OnRemoveVisualChild(child);
-    MarkLayoutDirty();
+    if (CanRunVisualLifecycle()) {
+        OnRemoveVisualChild(child);
+        MarkLayoutDirty();
+    }
 }
 
 void Visual::RemoveFromParent()
@@ -290,7 +303,7 @@ void Visual::AddLogicalChild(const std::shared_ptr<Visual>& child)
 
 void Visual::MarkTreeDirty()
 {
-    if (m_isTreeDirty) {
+    if (!CanRunVisualLifecycle() || m_isTreeDirty) {
         return;
     }
 
@@ -302,7 +315,7 @@ void Visual::MarkTreeDirty()
 
 void Visual::MarkLayoutDirty()
 {
-    if (m_isLayoutDirty) {
+    if (!CanRunVisualLifecycle() || m_isLayoutDirty) {
         return;
     }
 
@@ -315,7 +328,7 @@ void Visual::MarkLayoutDirty()
 
 void Visual::Initialize()
 {
-    if (m_isInitialized || m_initializationInProgress) {
+    if (!CanRunVisualLifecycle() || m_isInitialized || m_initializationInProgress) {
         return;
     }
 
@@ -372,6 +385,18 @@ void Visual::Initialize()
 Visual::Visual()
 {
     GetRegistry().push_back(this);
+}
+
+Visual* Visual::GetParent() const noexcept
+{
+    std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
+    return m_parent;
+}
+
+void Visual::SetParent(Visual* parent) noexcept
+{
+    std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
+    m_parent = parent;
 }
 
 Visual::~Visual()

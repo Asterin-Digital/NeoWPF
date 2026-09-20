@@ -8,6 +8,8 @@
 
 #include <atomic>
 #include <chrono>
+#include <barrier>
+#include <future>
 #include <mutex>
 #include <stdexcept>
 #include <thread>
@@ -46,6 +48,32 @@ TEST(ThreadingTests, RenderAffinityBelongsToTheRegisteredWorker)
 
     EXPECT_TRUE(workerIsRenderThread.load());
     EXPECT_FALSE(NeoWPF::Core::Threading::ThreadAffinity::IsRenderThread());
+}
+
+TEST(ThreadingTests, ThreadAffinityRemainsStableUnderConcurrentChecks)
+{
+    NeoWPF::Core::Threading::ThreadAffinity::RegisterMainThread();
+    constexpr int workerCount = 8;
+    constexpr int checksPerWorker = 10000;
+    std::atomic<int> correctChecks{0};
+    std::vector<std::thread> workers;
+
+    for (int index = 0; index < workerCount; ++index) {
+        workers.emplace_back([&correctChecks] {
+            for (int check = 0; check < checksPerWorker; ++check) {
+                if (!NeoWPF::Core::Threading::ThreadAffinity::IsMainThread() &&
+                    !NeoWPF::Core::Threading::ThreadAffinity::IsRenderThread()) {
+                    ++correctChecks;
+                }
+            }
+        });
+    }
+    for (auto& worker : workers) {
+        worker.join();
+    }
+
+    EXPECT_EQ(correctChecks.load(), workerCount * checksPerWorker);
+    NeoWPF::Core::Threading::ThreadAffinity::ClearMainThread();
 }
 
 TEST(ThreadingTests, ThreadKindMatchesCurrentThread)
@@ -221,4 +249,189 @@ TEST(ThreadingTests, RejectedTaskCompletesWithAnException)
 
     EXPECT_TRUE(task.IsCompleted());
     EXPECT_THROW(task.Get(), std::runtime_error);
+}
+
+TEST(ThreadingTests, VoidTaskCompletesSuccessfully)
+{
+    NeoWPF::Core::Threading::BackgroundExecutor background(1);
+    std::atomic<bool> ran{false};
+
+    auto task = background.SubmitTask([&ran] { ran = true; });
+
+    task.Get();
+    EXPECT_TRUE(ran.load());
+    EXPECT_TRUE(task.IsCompleted());
+}
+
+TEST(ThreadingTests, VoidTaskContinuationRunsOnMainExecutor)
+{
+    NeoWPF::Core::Threading::BackgroundExecutor background(1);
+    NeoWPF::Core::Threading::MainThreadExecutor main;
+    std::atomic<bool> continued{false};
+
+    auto task = background.SubmitTask([] {});
+    ASSERT_TRUE(task.Then(main, [&continued] { continued = true; }));
+
+    task.Get();
+    EXPECT_FALSE(continued.load());
+    EXPECT_EQ(main.Drain(std::chrono::milliseconds(100)), 1u);
+    EXPECT_TRUE(continued.load());
+}
+
+TEST(ThreadingTests, VoidTaskPropagatesExceptions)
+{
+    NeoWPF::Core::Threading::BackgroundExecutor background(1);
+    auto task = background.SubmitTask([] { throw std::runtime_error("void task failure"); });
+
+    EXPECT_THROW(task.Get(), std::runtime_error);
+    EXPECT_TRUE(task.IsCompleted());
+}
+
+TEST(ThreadingTests, MainExecutorRejectsEveryPostAfterShutdown)
+{
+    NeoWPF::Core::Threading::MainThreadExecutor executor;
+    executor.Stop();
+
+    constexpr int postCount = 256;
+    std::atomic<int> accepted{0};
+    std::vector<std::thread> producers;
+    for (int index = 0; index < 8; ++index) {
+        producers.emplace_back([&executor, &accepted] {
+            for (int post = 0; post < postCount / 8; ++post) {
+                accepted += executor.Post([] {});
+            }
+        });
+    }
+    for (auto& producer : producers) {
+        producer.join();
+    }
+
+    EXPECT_EQ(accepted.load(), 0);
+    EXPECT_EQ(executor.Drain(std::chrono::milliseconds(10)), 0u);
+}
+
+TEST(ThreadingTests, MainExecutorSurvivesTaskException)
+{
+    NeoWPF::Core::Threading::MainThreadExecutor executor;
+    std::atomic<bool> ranAfterFailure{false};
+
+    ASSERT_TRUE(executor.Post([] { throw std::runtime_error("main task failure"); }));
+    EXPECT_THROW(executor.Drain(std::chrono::milliseconds(100)), std::runtime_error);
+
+    ASSERT_TRUE(executor.Post([&ranAfterFailure] { ranAfterFailure = true; }));
+    EXPECT_EQ(executor.Drain(std::chrono::milliseconds(100)), 1u);
+    EXPECT_TRUE(ranAfterFailure.load());
+}
+
+TEST(ThreadingTests, BackgroundExecutorHandlesConcurrentProducers)
+{
+    constexpr int producerCount = 8;
+    constexpr int tasksPerProducer = 128;
+    constexpr int expectedTasks = producerCount * tasksPerProducer;
+    NeoWPF::Core::Threading::BackgroundExecutor executor(4);
+    std::barrier start(producerCount);
+    std::atomic<int> completed{0};
+    std::atomic<int> accepted{0};
+    std::vector<std::thread> producers;
+
+    for (int index = 0; index < producerCount; ++index) {
+        producers.emplace_back([&] {
+            start.arrive_and_wait();
+            for (int task = 0; task < tasksPerProducer; ++task) {
+                accepted += executor.Post([&completed] { ++completed; });
+            }
+        });
+    }
+    for (auto& producer : producers) {
+        producer.join();
+    }
+
+    executor.Stop(NeoWPF::Core::Threading::ShutdownMode::DrainPending);
+    EXPECT_EQ(accepted.load(), expectedTasks);
+    EXPECT_EQ(completed.load(), expectedTasks);
+}
+
+TEST(ThreadingTests, BackgroundExecutorContinuesAfterWorkerTaskThrows)
+{
+    NeoWPF::Core::Threading::BackgroundExecutor executor(1);
+    std::promise<void> completed;
+    auto completion = completed.get_future();
+
+    ASSERT_TRUE(executor.Post([] { throw std::runtime_error("worker failure"); }));
+    ASSERT_TRUE(executor.Post([&completed] { completed.set_value(); }));
+
+    EXPECT_EQ(completion.wait_for(std::chrono::seconds(1)), std::future_status::ready);
+    executor.Stop(NeoWPF::Core::Threading::ShutdownMode::DrainPending);
+}
+
+TEST(ThreadingTests, CancellationStopsQueuedTokenWork)
+{
+    NeoWPF::Core::Threading::BackgroundExecutor executor(1);
+    NeoWPF::Core::Threading::CancellationSource source;
+    std::atomic<int> ran{0};
+    std::promise<void> releaseWorker;
+    auto workerReleased = releaseWorker.get_future().share();
+
+    ASSERT_TRUE(executor.Post([workerReleased] {
+        workerReleased.wait();
+    }));
+
+    for (int index = 0; index < 256; ++index) {
+        ASSERT_TRUE(executor.Post(source.GetToken(), [&ran](auto) { ++ran; }));
+    }
+    source.RequestCancellation();
+    releaseWorker.set_value();
+    executor.Stop(NeoWPF::Core::Threading::ShutdownMode::DrainPending);
+
+    EXPECT_EQ(ran.load(), 0);
+}
+
+TEST(ThreadingTests, StoppedMainExecutorDropsTaskContinuation)
+{
+    NeoWPF::Core::Threading::BackgroundExecutor background(1);
+    NeoWPF::Core::Threading::MainThreadExecutor main;
+    std::atomic<bool> continued{false};
+    auto task = background.SubmitTask([] { return 7; });
+
+    main.Stop();
+    ASSERT_TRUE(task.Then(main, [&continued](int) { continued = true; }));
+    EXPECT_EQ(task.Get(), 7);
+    EXPECT_FALSE(continued.load());
+}
+
+TEST(ThreadingTests, TaskContinuationSurvivesExecutorDestruction)
+{
+    NeoWPF::Core::Threading::BackgroundExecutor background(1);
+    std::promise<void> releaseTask;
+    auto taskReleased = releaseTask.get_future().share();
+    std::atomic<bool> continued{false};
+    auto task = background.SubmitTask([taskReleased] {
+        taskReleased.wait();
+        return 7;
+    });
+
+    {
+        NeoWPF::Core::Threading::MainThreadExecutor main;
+        ASSERT_TRUE(task.Then(main, [&continued](int) { continued = true; }));
+    }
+
+    releaseTask.set_value();
+    EXPECT_EQ(task.Get(), 7);
+    EXPECT_FALSE(continued.load());
+}
+
+TEST(ThreadingTests, BackgroundExecutorCanStopFromWorker)
+{
+    NeoWPF::Core::Threading::BackgroundExecutor executor(2);
+    std::promise<void> stoppedFromWorker;
+    auto stopped = stoppedFromWorker.get_future();
+
+    ASSERT_TRUE(executor.Post([&executor, &stoppedFromWorker] {
+        executor.Stop();
+        stoppedFromWorker.set_value();
+    }));
+
+    EXPECT_EQ(stopped.wait_for(std::chrono::seconds(1)), std::future_status::ready);
+    EXPECT_TRUE(executor.IsStopped());
+    executor.Stop();
 }

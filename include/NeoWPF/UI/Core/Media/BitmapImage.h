@@ -19,7 +19,7 @@ enum class CachePolicy {
     OnDemand
 };
 
-class BitmapImage : public BitmapSource {
+class BitmapImage : public BitmapSource, public std::enable_shared_from_this<BitmapImage> {
 public:
     using DownloadStartedCallback = std::function<void()>;
     using DownloadProgressCallback = std::function<void(int bytesRead, int totalBytes)>;
@@ -75,6 +75,7 @@ public:
 private:
     bool TryLoad();
     void PerformAsyncLoad();
+    void CompleteAsyncLoad();
 
     std::wstring m_uriSource;
     int m_decodePixelWidth = 0;

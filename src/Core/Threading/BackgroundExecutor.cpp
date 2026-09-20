@@ -99,19 +99,19 @@ void BackgroundExecutor::Stop(ShutdownMode mode) noexcept
 {
     {
         std::lock_guard<std::mutex> lock(m_state->mutex);
-        if (m_state->stopping) {
-            return;
-        }
-        m_state->stopping = true;
-        m_state->cancelPending = mode == ShutdownMode::CancelPending;
-        if (m_state->cancelPending) {
-            m_state->tasks.clear();
+        if (!m_state->stopping) {
+            m_state->stopping = true;
+            m_state->cancelPending = mode == ShutdownMode::CancelPending;
+            if (m_state->cancelPending) {
+                m_state->tasks.clear();
+            }
         }
     }
 
     m_state->condition.notify_all();
+    const auto currentThread = std::this_thread::get_id();
     for (auto& worker : m_state->workers) {
-        if (worker.joinable()) {
+        if (worker.joinable() && worker.get_id() != currentThread) {
             worker.join();
         }
     }
