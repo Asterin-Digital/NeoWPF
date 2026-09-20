@@ -810,6 +810,7 @@ if(BUILD_TESTING)
         tests/Automated/LImageDecodingTests.cpp
         tests/Automated/TriggerTests.cpp
         tests/Automated/VisualTests.cpp
+        tests/Automated/GroupedToggleBaseTests.cpp
         tests/Automated/ThreadingTests.cpp
         tests/Automated/XamlParserTests.cpp
     )

@@ -11,6 +11,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/Core/Events/Event.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
 
 namespace NeoWPF::Input::Core {
     class MouseEventArgs;
@@ -20,6 +21,9 @@ namespace NeoWPF::UI {
 
 class ToggleBase : public NeoWPF::UI::Content::ContentControl {
 public:
+    static const Properties::DependencyProperty& IsCheckedProperty();
+    static const Properties::DependencyProperty& ContentTextProperty();
+
     ToggleBase();
     virtual ~ToggleBase() = default;
 

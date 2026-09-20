@@ -133,13 +133,9 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
 
     if (CanRunVisualLifecycle() && IsInitialized()) {
         MarkLayoutDirty();
-    } // @note not sure if this will cause any issues (previosuly it double marked layout dirty unconditionally)
-     // so if anything breaks, just do it unconditionally in here, but unless it causes problems keep it
+    } 
 }
 
-
-// note: internal controls are not allowed to call this method, it's meant to be apart of the public API
-// NOT for internal usage whatsoever 
 void Visual::AddChild(const std::shared_ptr<Visual>& child)
 {
     if (!child) return;

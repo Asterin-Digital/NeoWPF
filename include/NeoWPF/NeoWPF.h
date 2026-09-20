@@ -29,6 +29,11 @@ for details related to AI usage, contributing, and other information
 ///////////////////////////////////////////////////
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
+#include <NeoWPF/Core/Threading/BackgroundExecutor.h>
+#include <NeoWPF/Core/Threading/Cancellation.h>
+#include <NeoWPF/Core/Threading/MainThreadExecutor.h>
+#include <NeoWPF/Core/Threading/Task.h>
+#include <NeoWPF/Core/Threading/ThreadAffinity.h>
 #include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/Platform/NativeWindow.h>
@@ -200,6 +205,9 @@ namespace NeoWPF {
     {
         return std::to_wstring(value);
     }
+    
+    namespace Threading = Core::Threading;
+
     using Core::Application;
 
     using Core::ApplicationThemes::ThemeDefinition;

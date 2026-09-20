@@ -7,11 +7,18 @@ See LICENSE file in the project root for full license text.
 
 #include <NeoWPF/UI/Core/Element/Control.h>
 #include <NeoWPF/Core/Events/Event.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
 
 namespace NeoWPF::UI {
 
 class RangeBase : public Control {
 public:
+    static const Properties::DependencyProperty& MinimumProperty();
+    static const Properties::DependencyProperty& MaximumProperty();
+    static const Properties::DependencyProperty& ValueProperty();
+    static const Properties::DependencyProperty& SmallChangeProperty();
+    static const Properties::DependencyProperty& LargeChangeProperty();
+
     RangeBase() = default;
     virtual ~RangeBase() = default;
 
@@ -33,6 +40,11 @@ public:
     NeoWPF::Core::Event<double> ValueChanged;
 
 protected:
+    void OnDependencyPropertyChanged(const Properties::DependencyProperty& property,
+                                     const Properties::PropertyMetadata& metadata,
+                                     const std::any& oldValue,
+                                     const std::any& newValue,
+                                     Properties::PropertyValueSource source) override;
     virtual void OnValueChanged(double value);
 
 private:

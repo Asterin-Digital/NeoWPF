@@ -88,6 +88,7 @@
 #include <NeoWPF/UI/Controls/Image/Image.h>
 #include <NeoWPF/UI/Controls/Base/ButtonBase/ButtonBase.h>
 #include <NeoWPF/UI/Controls/Base/ToggleBase/ToggleBase.h>
+#include <NeoWPF/UI/Controls/Base/GroupedToggleBase/GroupedToggleBase.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Controls/FilePicker/FilePicker.h>
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>

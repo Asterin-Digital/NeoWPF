@@ -12,6 +12,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/Core/Events/Event.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/Input/Command.h>
 
 namespace NeoWPF::Input::Core {
@@ -22,6 +23,10 @@ namespace NeoWPF::UI {
 
 class ButtonBase : public NeoWPF::UI::Content::ContentControl, public NeoWPF::Input::ICommandSource {
 public:
+    static const Properties::DependencyProperty& CommandProperty();
+    static const Properties::DependencyProperty& CommandParameterProperty();
+    static const Properties::DependencyProperty& CommandTargetProperty();
+
     ButtonBase();
     virtual ~ButtonBase() = default;
 
@@ -37,10 +42,10 @@ public:
     void SetCommand(std::shared_ptr<NeoWPF::Input::ICommand> command) override;
 
     std::any GetCommandParameter() const noexcept override { return m_commandParameter; }
-    void SetCommandParameter(const std::any& parameter) override { m_commandParameter = parameter; }
+    void SetCommandParameter(const std::any& parameter) override;
 
     NeoWPF::UI::UIElement* GetCommandTarget() const noexcept override { return m_commandTarget; }
-    void SetCommandTarget(NeoWPF::UI::UIElement* target) noexcept override { m_commandTarget = target; }
+    void SetCommandTarget(NeoWPF::UI::UIElement* target) noexcept override;
 
     NeoWPF::Core::Event<> Click;
 

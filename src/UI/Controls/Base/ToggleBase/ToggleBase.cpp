@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Controls/Base/ToggleBase/ToggleBase.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
+#include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 namespace NeoWPF::UI {
 
@@ -55,6 +56,13 @@ void ToggleBase::UpdateContentTextFromState()
 
 void ToggleBase::SetChecked(bool value) noexcept
 {
+    if (!IsApplyingPropertyValue()) {
+        if (const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("IsChecked", *this)) {
+            SetValue(*property, value);
+            return;
+        }
+    }
+
     if (m_isChecked == value) {
         return;
     }
@@ -79,6 +87,13 @@ void ToggleBase::Toggle() noexcept
 
 void ToggleBase::SetContentText(const std::wstring& text)
 {
+    if (!IsApplyingPropertyValue()) {
+        if (const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("ContentText", *this)) {
+            SetValue(*property, text);
+            return;
+        }
+    }
+
     m_contentText = text;
     InvalidateVisual();
 }

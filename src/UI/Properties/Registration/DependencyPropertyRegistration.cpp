@@ -7,6 +7,9 @@ void RegisterCoreControlProperties() {
     RegisterFrameworkElementProperties();
     RegisterControlProperties();
     RegisterContentControlProperties();
+    RegisterButtonBaseProperties();
+    RegisterToggleBaseProperties();
+    RegisterGroupedToggleBaseProperties();
     RegisterWindowProperties();
     RegisterApplicationProperties();
     RegisterButtonProperties();
@@ -38,4 +41,4 @@ void RegisterCoreControlProperties() {
     RegisterLocaleTableProperties();
 }
 
-} // namespace NeoWPF::UI::Properties
+}

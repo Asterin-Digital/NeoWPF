@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Controls/Base/ButtonBase/ButtonBase.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
+#include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 // hai hai!! if you need a base for an UI control that has button behavior, please use this
 // instead of reimplementing behavior and state from scratch
@@ -65,10 +66,41 @@ void ButtonBase::RaiseClick()
 
 void ButtonBase::SetCommand(std::shared_ptr<NeoWPF::Input::ICommand> command)
 {
+    if (!IsApplyingPropertyValue()) {
+        if (const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Command", *this)) {
+            SetValue(*property, command);
+            return;
+        }
+    }
+
     m_command = std::move(command);
     if (!m_commandTarget) {
         m_commandTarget = this;
     }
+}
+
+void ButtonBase::SetCommandParameter(const std::any& parameter)
+{
+    if (!IsApplyingPropertyValue()) {
+        if (const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("CommandParameter", *this)) {
+            SetValue(*property, parameter);
+            return;
+        }
+    }
+
+    m_commandParameter = parameter;
+}
+
+void ButtonBase::SetCommandTarget(NeoWPF::UI::UIElement* target) noexcept
+{
+    if (!IsApplyingPropertyValue()) {
+        if (const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("CommandTarget", *this)) {
+            SetValue(*property, target);
+            return;
+        }
+    }
+
+    m_commandTarget = target;
 }
 
 void ButtonBase::OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args)
