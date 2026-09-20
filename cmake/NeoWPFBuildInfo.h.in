@@ -1,0 +1,3 @@
+#pragma once
+
+#define NEOWPF_BUILD_TIME "@NEOWPF_BUILD_TIME@"

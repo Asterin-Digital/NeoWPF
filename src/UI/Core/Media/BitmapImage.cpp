@@ -1,6 +1,6 @@
 #include <NeoWPF/UI/Core/Media/BitmapImage.h>
+#include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Diagnostics/Logger.h>
-#include <NeoWPF/Core/Threading/AsyncTaskQueue.h>
 #include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <algorithm>
@@ -275,7 +275,12 @@ void BitmapImage::BeginAsyncLoad() {
     m_isLoading = true;
     if (m_downloadStartedCallback) m_downloadStartedCallback();
 
-    NeoWPF::Core::Threading::AsyncTaskQueue::GetInstance().Enqueue([this]() { PerformAsyncLoad(); });
+    auto& appState = NeoWPF::Core::GetAppState();
+    if (!appState.backgroundExecutor ||
+        !appState.backgroundExecutor->Post([this]() { PerformAsyncLoad(); })) {
+        m_isLoading = false;
+        NeoWPF::Diagnostics::LogError("BitmapImage::BeginAsyncLoad failed because the background executor is stopped");
+    }
 }
 
 void BitmapImage::PerformAsyncLoad() {

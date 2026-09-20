@@ -1,5 +1,6 @@
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Core/Application/Application.h>
+#include <NeoWPF/Core/Threading/ThreadAffinity.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Platform/PlatformRegistry.h>
@@ -169,6 +170,7 @@ void StartRenderThread()
     s_appState.renderThreadInitialized = false;
     s_appState.renderThreadInitFailed = false;
     s_appState.renderThread = std::thread([]() {
+    NeoWPF::Core::Threading::ThreadAffinity::RegisterRenderThread();
         auto* platform = NeoWPF::Platform::CurrentPlatform();
         try {
             {
@@ -181,6 +183,7 @@ void StartRenderThread()
                         s_appState.renderThreadInitialized = false;
                         s_appState.running = false;
                         s_appState.renderInitCondition.notify_one();
+                        NeoWPF::Core::Threading::ThreadAffinity::ClearRenderThread();
                         return;
                     }
                 }
@@ -199,6 +202,7 @@ void StartRenderThread()
             }
             s_appState.renderInitCondition.notify_one();
             s_appState.running = false;
+            NeoWPF::Core::Threading::ThreadAffinity::ClearRenderThread();
             return;
         }
         catch (...) {
@@ -209,6 +213,7 @@ void StartRenderThread()
             }
             s_appState.renderInitCondition.notify_one();
             s_appState.running = false;
+            NeoWPF::Core::Threading::ThreadAffinity::ClearRenderThread();
             return;
         }
 
@@ -270,6 +275,7 @@ void StartRenderThread()
                 platform->Rendering().Shutdown();
             }
         }
+        NeoWPF::Core::Threading::ThreadAffinity::ClearRenderThread();
     });
 }
 
@@ -282,6 +288,7 @@ void ShutdownApplication()
 
 int RunApplicationMessageLoop()
 {
+    NeoWPF::Core::Threading::ThreadAffinity::RegisterMainThread();
     auto* platform = NeoWPF::Platform::CurrentPlatform();
     auto& windowing = platform->Windowing();
     void* primaryWindow = nullptr;
@@ -353,6 +360,10 @@ int RunApplicationMessageLoop()
         }
 
         nextFrame = std::chrono::steady_clock::now() + frameInterval;
+
+        if (s_appState.mainThreadExecutor) {
+            s_appState.mainThreadExecutor->Drain(std::chrono::milliseconds(2));
+        }
 
         const auto tickStart = std::chrono::steady_clock::now();
         NeoWPF::UI::Tick();

@@ -81,10 +81,10 @@ void TextAlignment::ApplyTextAlignmentF(
         case TextHorizontalAlignment::Left:
             break;
         case TextHorizontalAlignment::Center:
-            outX = (availableWidth - contentWidth) / 2.0f;
+            outX = static_cast<float>((availableWidth - contentWidth) / 2.0);
             break;
         case TextHorizontalAlignment::Right:
-            outX = availableWidth - contentWidth;
+            outX = static_cast<float>(availableWidth - contentWidth);
             break;
         }
     }
@@ -94,10 +94,10 @@ void TextAlignment::ApplyTextAlignmentF(
         case TextVerticalAlignment::Top:
             break;
         case TextVerticalAlignment::Center:
-            outY = (availableHeight - contentHeight) / 2.0f;
+            outY = static_cast<float>((availableHeight - contentHeight) / 2.0);
             break;
         case TextVerticalAlignment::Bottom:
-            outY = availableHeight - contentHeight;
+            outY = static_cast<float>(availableHeight - contentHeight);
             break;
         }
     }

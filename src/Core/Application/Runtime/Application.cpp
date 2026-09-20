@@ -14,7 +14,10 @@
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <NeoWPF/Diagnostics/TextDumper.h>
 #include <NeoWPF/Platform/PlatformRegistry.h>
+#include <NeoWPF/Core/Threading/ThreadAffinity.h>
 #include <NeoWPF/UI/Localization/LocalizationManager.h>
+
+#include <NeoWPFBuildInfo.h>
 
 #include <atomic>
 
@@ -70,6 +73,9 @@ void Application::Initialize()
     if (!s_current) {
         s_current = std::make_shared<Application>();
     }
+    auto& appState = GetAppState();
+    appState.mainThreadExecutor = std::make_unique<NeoWPF::Core::Threading::MainThreadExecutor>();
+    appState.backgroundExecutor = std::make_unique<NeoWPF::Core::Threading::BackgroundExecutor>();
     NeoWPF::UI::Properties::RegisterCoreControlProperties();
     NeoWPF::UI::Markup::Xaml::ValidateXamlRegistrations();
     NeoWPF::UI::Markup::Xaml::RegisterXamlMarkupExtensions();
@@ -181,6 +187,16 @@ int Application::Run()
 
 void Application::Shutdown()
 {
+    auto& appState = GetAppState();
+    if (appState.mainThreadExecutor) {
+        appState.mainThreadExecutor->Stop();
+        appState.mainThreadExecutor.reset();
+    }
+    if (appState.backgroundExecutor) {
+        appState.backgroundExecutor->Stop();
+        appState.backgroundExecutor.reset();
+    }
+    NeoWPF::Core::Threading::ThreadAffinity::ClearMainThread();
     s_initialized.store(false, std::memory_order_release);
     NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().Clear();
     NeoWPF::Core::ApplicationResources::Resources::Shutdown();

@@ -12,6 +12,8 @@ See LICENSE file in the project root for full license text.
 #include <thread>
 #include <vector>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
+#include <NeoWPF/Core/Threading/MainThreadExecutor.h>
+#include <NeoWPF/Core/Threading/BackgroundExecutor.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/UI/Controls/Window.h>
@@ -50,6 +52,8 @@ struct AppState {
     std::atomic<bool> renderThreadInitFailed{false};
     std::atomic<bool> layoutDebugLogging{false};
     std::thread renderThread;
+    std::unique_ptr<NeoWPF::Core::Threading::MainThreadExecutor> mainThreadExecutor;
+    std::unique_ptr<NeoWPF::Core::Threading::BackgroundExecutor> backgroundExecutor;
     int exitCode = 0;
 
     std::mutex renderInitMutex;
@@ -60,9 +64,6 @@ struct AppState {
 
     std::mutex windowsMutex;
     std::mutex commandListMutex;
-    NeoWPF::Rendering::CommandList renderCommandList;
-    NeoWPF::Rendering::CommandList buildCommandList;
-    bool commandListInitialized = false;
     std::vector<NeoWPF::Diagnostics::DeveloperWarningMessage> pendingDeveloperMessages;
     std::vector<std::shared_ptr<NeoWPF::UI::Visual>> developerOverlayVisuals;
     std::vector<std::wstring> pendingTextInspectionLines;
