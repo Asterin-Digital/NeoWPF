@@ -598,17 +598,6 @@ TEST(TypeConverterTests, ConvertsAllAlignmentMembersCaseInsensitively)
     EXPECT_TRUE(expression.empty());
 }
 
-TEST(TypeConverterTests, LeavesUnsupportedComplexConvertersUnavailable)
-{
-    std::string expression = "stale code";
-    EXPECT_FALSE(NeoWPF::UI::Properties::GetColorConverter()->TryConvertToCode("#336699", expression));
-    EXPECT_TRUE(expression.empty());
-
-    expression = "stale code";
-    EXPECT_TRUE(NeoWPF::UI::Properties::GetThicknessConverter()->TryConvertToCode("1,2,3,4", expression));
-    EXPECT_EQ(expression, "NeoWPF::UI::Thickness(1, 2, 3, 4)");
-}
-
 TEST(TypeConverterTests, ClearsExpressionWhenConversionFails)
 {
     std::string expression = "stale code";

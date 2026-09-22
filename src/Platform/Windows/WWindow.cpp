@@ -363,6 +363,7 @@ void Window::SetWindowContent(void* nativeHandle, std::shared_ptr<NeoWPF::UI::Vi
         if (windowState.nativeWindowHandle == hwnd) {
             windowState.contentRoot = content.get();
             windowState.windowHost->SetContent(content);
+            NeoWPF::Core::SetInputRootForWindow(hwnd);
             return;
         }
     }

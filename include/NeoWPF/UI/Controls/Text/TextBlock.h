@@ -47,6 +47,7 @@ class TextBlock : public FrameworkElement, public IContentAware {
 public:
     static const Properties::DependencyProperty& TextProperty();
     static const Properties::DependencyProperty& TextColorProperty();
+    static const Properties::DependencyProperty& ForegroundProperty();
     static const Properties::DependencyProperty& FontSizeProperty();
     static const Properties::DependencyProperty& FontFamilyProperty();
     static const Properties::DependencyProperty& FontWeightProperty();

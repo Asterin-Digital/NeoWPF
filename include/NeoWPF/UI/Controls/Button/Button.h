@@ -37,9 +37,12 @@ class Button : public NeoWPF::UI::ButtonBase {
 public:
     static const Properties::DependencyProperty& TextProperty();
     static const Properties::DependencyProperty& TextColorProperty();
+    static const Properties::DependencyProperty& ForegroundProperty();
     static const Properties::DependencyProperty& FontSizeProperty();
     static const Properties::DependencyProperty& FontWeightProperty();
     static const Properties::DependencyProperty& FontStyleProperty();
+    static const Properties::DependencyProperty& TextHorizontalAlignmentProperty();
+    static const Properties::DependencyProperty& TextVerticalAlignmentProperty();
 
     Button();
 

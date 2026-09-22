@@ -567,10 +567,15 @@ void UIElement::RaiseEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
     if (routingStrategy == NeoWPF::Input::Core::RoutingStrategy::Tunnel)
     {
         std::vector<UIElement*> route;
+        std::vector<std::shared_ptr<UIElement>> routeOwnership;
         auto* current = this;
         while (current)
         {
             route.push_back(current);
+            try {
+                routeOwnership.push_back(std::dynamic_pointer_cast<UIElement>(current->shared_from_this()));
+            } catch (const std::bad_weak_ptr&) {
+            }
             current = current->GetParentElement();
         }
         for (auto it = route.rbegin(); it != route.rend() && !args->IsHandled(); ++it)
@@ -582,11 +587,23 @@ void UIElement::RaiseEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
 
     if (routingStrategy == NeoWPF::Input::Core::RoutingStrategy::Bubble)
     {
+        std::vector<UIElement*> route;
+        std::vector<std::shared_ptr<UIElement>> routeOwnership;
         auto* current = this;
-        while (current && !args->IsHandled())
+        while (current)
         {
-            invokeOnElement(current);
+            route.push_back(current);
+            try {
+                routeOwnership.push_back(std::dynamic_pointer_cast<UIElement>(current->shared_from_this()));
+            } catch (const std::bad_weak_ptr&) {
+            }
             current = current->GetParentElement();
+        }
+        for (auto* element : route) {
+            if (args->IsHandled()) {
+                break;
+            }
+            invokeOnElement(element);
         }
     }
 }

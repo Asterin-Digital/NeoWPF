@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <array>
+#include <charconv>
 #include <cmath>
 #include <iomanip>
 #include <sstream>
@@ -124,6 +125,18 @@ constexpr std::array<ConversionEntry<NeoWPF::UI::HorizontalAlignment>, 4> Horizo
     {"center", NeoWPF::UI::HorizontalAlignment::Center, "NeoWPF::UI::HorizontalAlignment::Center"},
     {"right", NeoWPF::UI::HorizontalAlignment::Right, "NeoWPF::UI::HorizontalAlignment::Right"},
     {"stretch", NeoWPF::UI::HorizontalAlignment::Stretch, "NeoWPF::UI::HorizontalAlignment::Stretch"},
+}};
+
+constexpr std::array<ConversionEntry<NeoWPF::UI::TextHorizontalAlignment>, 3> TextHorizontalAlignmentEntries {{
+    {"left", NeoWPF::UI::TextHorizontalAlignment::Left, "NeoWPF::UI::TextHorizontalAlignment::Left"},
+    {"center", NeoWPF::UI::TextHorizontalAlignment::Center, "NeoWPF::UI::TextHorizontalAlignment::Center"},
+    {"right", NeoWPF::UI::TextHorizontalAlignment::Right, "NeoWPF::UI::TextHorizontalAlignment::Right"},
+}};
+
+constexpr std::array<ConversionEntry<NeoWPF::UI::TextVerticalAlignment>, 3> TextVerticalAlignmentEntries {{
+    {"top", NeoWPF::UI::TextVerticalAlignment::Top, "NeoWPF::UI::TextVerticalAlignment::Top"},
+    {"center", NeoWPF::UI::TextVerticalAlignment::Center, "NeoWPF::UI::TextVerticalAlignment::Center"},
+    {"bottom", NeoWPF::UI::TextVerticalAlignment::Bottom, "NeoWPF::UI::TextVerticalAlignment::Bottom"},
 }};
 
 constexpr std::array<ConversionEntry<NeoWPF::UI::VerticalAlignment>, 4> VerticalAlignmentEntries {{
@@ -361,6 +374,19 @@ bool ColorConverter::ConvertFromString(const std::string& rawValue, std::any& co
     }
 }
 
+bool ColorConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    std::any convertedValue;
+    if (!ConvertFromString(rawValue, convertedValue)) {
+        expression.clear();
+        return false;
+    }
+
+    const auto color = std::any_cast<NeoWPF::UI::Color>(convertedValue);
+    expression = "NeoWPF::UI::Color::FromArgb(" + std::to_string(color.ToArgb()) + "u)";
+    return true;
+}
+
 bool ThicknessConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
     const auto parts = NeoWPF::Platform::Split(NeoWPF::Platform::Trim(rawValue), ',');
@@ -454,6 +480,26 @@ bool VerticalAlignmentConverter::TryConvertToCode(const std::string& rawValue, s
     return ConvertMappedValueToCode(*this, rawValue, VerticalAlignmentEntries, expression);
 }
 
+bool TextHorizontalAlignmentConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+{
+    return ConvertMappedValue(rawValue, TextHorizontalAlignmentEntries, convertedValue);
+}
+
+bool TextHorizontalAlignmentConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    return ConvertMappedValueToCode(*this, rawValue, TextHorizontalAlignmentEntries, expression);
+}
+
+bool TextVerticalAlignmentConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+{
+    return ConvertMappedValue(rawValue, TextVerticalAlignmentEntries, convertedValue);
+}
+
+bool TextVerticalAlignmentConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    return ConvertMappedValueToCode(*this, rawValue, TextVerticalAlignmentEntries, expression);
+}
+
 bool SelectionModeConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
     return ConvertMappedValue(rawValue, SelectionModeEntries, convertedValue);
@@ -476,7 +522,19 @@ bool PopupPlacementConverter::TryConvertToCode(const std::string& rawValue, std:
 
 bool FontWeightConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
-    return ConvertMappedValue(rawValue, FontWeightEntries, convertedValue);
+    if (ConvertMappedValue(rawValue, FontWeightEntries, convertedValue)) {
+        return true;
+    }
+
+    const auto value = NeoWPF::Platform::Trim(rawValue);
+    int numericValue = 0;
+    const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), numericValue);
+    if (error != std::errc{} || end != value.data() + value.size() || numericValue < 1 || numericValue > 999) {
+        return false;
+    }
+
+    convertedValue = numericValue;
+    return true;
 }
 
 bool FontWeightConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
@@ -513,6 +571,8 @@ DEFINE_CONVERTER_FACTORY(Thickness, ThicknessConverter)
 DEFINE_CONVERTER_FACTORY(Spacing, SpacingConverter)
 DEFINE_CONVERTER_FACTORY(HorizontalAlignment, HorizontalAlignmentConverter)
 DEFINE_CONVERTER_FACTORY(VerticalAlignment, VerticalAlignmentConverter)
+DEFINE_CONVERTER_FACTORY(TextHorizontalAlignment, TextHorizontalAlignmentConverter)
+DEFINE_CONVERTER_FACTORY(TextVerticalAlignment, TextVerticalAlignmentConverter)
 DEFINE_CONVERTER_FACTORY(SelectionMode, SelectionModeConverter)
 DEFINE_CONVERTER_FACTORY(PopupPlacement, PopupPlacementConverter)
 DEFINE_CONVERTER_FACTORY(FontWeight, FontWeightConverter)

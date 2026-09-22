@@ -13,7 +13,9 @@ namespace NeoWPF::UI {
 class Control : public FrameworkElement {
 public:
     static const Properties::DependencyProperty& PaddingProperty();
+    static const Properties::DependencyProperty& BackgroundProperty();
     static const Properties::DependencyProperty& BackgroundColorProperty();
+    static const Properties::DependencyProperty& BorderBrushProperty();
     static const Properties::DependencyProperty& BorderColorProperty();
     static const Properties::DependencyProperty& BorderThicknessProperty();
 

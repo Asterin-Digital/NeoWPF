@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Core/Element/Control.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
@@ -60,6 +61,8 @@ void RegisterControlProperties() {
         &UI::Control::GetBorderThickness,
         &UI::Control::SetBorderThickness,
         MakeControlBorderThicknessMetadata());
+    NeoWPF::UI::Markup::Xaml::RegisterXamlType<UI::Control>(
+        "Control", "", "NeoWPF::UI::Control", "NeoWPF/UI/Core/Element/Control.h");
 }
 
 }
@@ -82,6 +85,10 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Control::Backgroun
     return *property;
 }
 
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Control::BackgroundProperty() {
+    return BackgroundColorProperty();
+}
+
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Control::BorderColorProperty() {
     static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Control, NeoWPF::UI::Color>(
         "BorderBrush",
@@ -89,6 +96,10 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Control::BorderCol
         static_cast<void (NeoWPF::UI::Control::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::Control::SetBorderColor),
         MakeControlBorderColorMetadata());
     return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Control::BorderBrushProperty() {
+    return BorderColorProperty();
 }
 
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Control::BorderThicknessProperty() {

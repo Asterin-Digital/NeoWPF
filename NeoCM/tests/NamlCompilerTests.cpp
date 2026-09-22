@@ -490,6 +490,24 @@ TEST(NamlCompilerTests, RejectsInvalidPropertyValue)
     EXPECT_NE(result.error.find("invalid value for property 'Padding'"), std::string::npos);
 }
 
+TEST(NamlCompilerTests, AcceptsTextAlignmentAndFontWeightProperties)
+{
+    const auto result = CompileXaml(
+        "<Grid><TextBlock TextHorizontalAlignment=\"Center\" FontWeight=\"Bold\" /><Button TextHorizontalAlignment=\"Right\" TextVerticalAlignment=\"Center\" FontWeight=\"700\" /></Grid>",
+        "TextProperties.xaml");
+
+    EXPECT_TRUE(result.success) << result.error;
+}
+
+TEST(NamlCompilerTests, ResolvesInheritedControlProperties)
+{
+    const auto result = CompileXaml(
+        "<Button Background=\"#FF101820\" BorderBrush=\"#FFE05A3F\" BorderThickness=\"1\" />",
+        "ControlProperties.xaml");
+
+    EXPECT_TRUE(result.success) << result.error;
+}
+
 TEST(NamlCompilerTests, RejectsDuplicateNames)
 {
     const auto result = CompileXaml(

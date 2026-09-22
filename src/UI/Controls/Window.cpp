@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/UI/Localization/LocalizationManager.h>
+#include <NeoWPF/Input/InputManager.h>
 #include <algorithm>
 
 namespace NeoWPF::UI {
@@ -78,6 +79,8 @@ bool Window::TryResolveLocale(const std::wstring& key, std::wstring& value) cons
 
 void Window::RebuildVisualTree() noexcept
 {
+    NeoWPF::Input::InputManager::GetInstance().NotifyVisualTreeReplaced();
+
     if (m_visualRoot) {
         RemoveVisualChild(m_visualRoot);
     }

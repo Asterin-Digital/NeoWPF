@@ -33,6 +33,7 @@ void RegisterCoreControlProperties() {
     RegisterImageProperties();
     RegisterBorderProperties();
     RegisterPanelProperties();
+    RegisterCanvasProperties();
     RegisterGridProperties();
     RegisterRowDefinitionProperties();
     RegisterColumnDefinitionProperties();

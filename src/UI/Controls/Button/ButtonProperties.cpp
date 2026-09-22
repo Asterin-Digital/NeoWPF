@@ -48,6 +48,22 @@ namespace {
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeButtonTextHorizontalAlignmentMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(::NeoWPF::UI::TextHorizontalAlignment::Center);
+        metadata.Converter = NeoWPF::UI::Properties::GetTextHorizontalAlignmentConverter();
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeButtonTextVerticalAlignmentMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(::NeoWPF::UI::TextVerticalAlignment::Center);
+        metadata.Converter = NeoWPF::UI::Properties::GetTextVerticalAlignmentConverter();
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
 }
 
 namespace NeoWPF::UI::Properties {
@@ -72,6 +88,14 @@ namespace NeoWPF::UI::Properties {
             &UI::Button::GetFontStyle,
             &UI::Button::SetFontStyle,
             MakeButtonFontStyleMetadata());
+        RegisterProperty<UI::Button, TextHorizontalAlignment>("TextHorizontalAlignment",
+            &UI::Button::GetTextHorizontalAlignment,
+            static_cast<void (UI::Button::*)(TextHorizontalAlignment)>(&UI::Button::SetTextHorizontalAlignment),
+            MakeButtonTextHorizontalAlignmentMetadata());
+        RegisterProperty<UI::Button, TextVerticalAlignment>("TextVerticalAlignment",
+            &UI::Button::GetTextVerticalAlignment,
+            static_cast<void (UI::Button::*)(TextVerticalAlignment)>(&UI::Button::SetTextVerticalAlignment),
+            MakeButtonTextVerticalAlignmentMetadata());
         ::NeoWPF::UI::Markup::Xaml::RegisterXamlType<::NeoWPF::UI::Button>(
             "Button", "", "NeoWPF::UI::Button", "NeoWPF/UI/Controls/Button/Button.h");
     }
@@ -93,6 +117,10 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::TextColorP
         static_cast<void (NeoWPF::UI::Button::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::Button::SetTextColor),
         MakeButtonTextColorMetadata());
     return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::ForegroundProperty() {
+    return TextColorProperty();
 }
 
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::FontSizeProperty() {
@@ -119,5 +147,23 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::FontStyleP
         &NeoWPF::UI::Button::GetFontStyle,
         &NeoWPF::UI::Button::SetFontStyle,
         MakeButtonFontStyleMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::TextHorizontalAlignmentProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Button, TextHorizontalAlignment>(
+        "TextHorizontalAlignment",
+        &NeoWPF::UI::Button::GetTextHorizontalAlignment,
+        static_cast<void (NeoWPF::UI::Button::*)(TextHorizontalAlignment)>(&NeoWPF::UI::Button::SetTextHorizontalAlignment),
+        MakeButtonTextHorizontalAlignmentMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::TextVerticalAlignmentProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Button, TextVerticalAlignment>(
+        "TextVerticalAlignment",
+        &NeoWPF::UI::Button::GetTextVerticalAlignment,
+        static_cast<void (NeoWPF::UI::Button::*)(TextVerticalAlignment)>(&NeoWPF::UI::Button::SetTextVerticalAlignment),
+        MakeButtonTextVerticalAlignmentMetadata());
     return *property;
 }

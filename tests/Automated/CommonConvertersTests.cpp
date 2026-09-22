@@ -104,6 +104,20 @@ TEST(CommonConvertersTests, ConvertsEveryFontWeight)
     });
 }
 
+TEST(CommonConvertersTests, ConvertsNumericFontWeights)
+{
+    const auto converter = NeoWPF::UI::Properties::GetFontWeightConverter();
+    std::any converted;
+
+    ASSERT_TRUE(converter->ConvertFromString(" 700 ", converted));
+    ASSERT_EQ(converted.type(), typeid(int));
+    EXPECT_EQ(std::any_cast<int>(converted), 700);
+
+    EXPECT_FALSE(converter->ConvertFromString("0", converted));
+    EXPECT_FALSE(converter->ConvertFromString("1000", converted));
+    EXPECT_FALSE(converter->ConvertFromString("700px", converted));
+}
+
 TEST(CommonConvertersTests, RejectsUnknownMappedValues)
 {
     ExpectUnknownValueRejected(NeoWPF::UI::Properties::GetHorizontalAlignmentConverter());
@@ -133,6 +147,15 @@ TEST(CommonConvertersTests, ConvertsBasicStringValues)
     EXPECT_EQ(std::any_cast<std::wstring>(converted), L"hello");
     EXPECT_TRUE(GetWideStringConverter()->TryConvertToCode("hello", expression));
     EXPECT_EQ(expression, "std::wstring(L\"hello\")");
+}
+
+TEST(CommonConvertersTests, ConvertsColorValuesToCode)
+{
+    std::string expression;
+    const auto converter = NeoWPF::UI::Properties::GetColorConverter();
+
+    ASSERT_TRUE(converter->TryConvertToCode("#FF101820", expression));
+    EXPECT_EQ(expression, "NeoWPF::UI::Color::FromArgb(4279244832u)");
 }
 
 TEST(CommonConvertersTests, ConvertsContentToTextBlock)
@@ -194,6 +217,6 @@ TEST(CommonConvertersTests, ConvertsColorThicknessAndSpacing)
     std::string expression;
     EXPECT_TRUE(GetThicknessConverter()->TryConvertToCode("1,2,3,4", expression));
     EXPECT_EQ(expression, "NeoWPF::UI::Thickness(1, 2, 3, 4)");
-    EXPECT_FALSE(GetColorConverter()->TryConvertToCode("#123456", expression));
-    EXPECT_TRUE(expression.empty());
+    EXPECT_TRUE(GetColorConverter()->TryConvertToCode("#123456", expression));
+    EXPECT_EQ(expression, "NeoWPF::UI::Color::FromArgb(4279383126u)");
 }

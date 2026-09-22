@@ -44,6 +44,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockTextHorizontalAlignmentMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(::NeoWPF::UI::TextHorizontalAlignment::Left);
+        metadata.Converter = NeoWPF::UI::Properties::GetTextHorizontalAlignmentConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -51,6 +52,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockTextVerticalAlignmentMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(::NeoWPF::UI::TextVerticalAlignment::Top);
+        metadata.Converter = NeoWPF::UI::Properties::GetTextVerticalAlignmentConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -150,6 +152,10 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBlock::TextCol
         static_cast<void (NeoWPF::UI::TextBlock::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::TextBlock::SetTextColor),
         MakeTextBlockTextColorMetadata());
     return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBlock::ForegroundProperty() {
+    return TextColorProperty();
 }
 
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBlock::FontSizeProperty() {

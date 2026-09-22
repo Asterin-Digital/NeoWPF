@@ -307,14 +307,17 @@ std::shared_ptr<NeoWPF::UI::Visual> Window::GetTitleBar() const noexcept
 void Window::SetWindowContent(void* nativeHandle, std::shared_ptr<NeoWPF::UI::Visual> content)
 {
     auto& app = NeoWPF::Core::GetAppState();
-    std::lock_guard<std::mutex> lock(app.windowsMutex);
-    for (auto& windowState : app.windows) {
-        if (windowState.nativeWindowHandle == nativeHandle && windowState.windowHost) {
-            windowState.contentRoot = content.get();
-            windowState.windowHost->SetContent(std::move(content));
-            return;
+    {
+        std::lock_guard<std::mutex> lock(app.windowsMutex);
+        for (auto& windowState : app.windows) {
+            if (windowState.nativeWindowHandle == nativeHandle && windowState.windowHost) {
+                windowState.contentRoot = content.get();
+                windowState.windowHost->SetContent(std::move(content));
+                break;
+            }
         }
     }
+    NeoWPF::Core::SetInputRootForWindow(nativeHandle);
 }
 
 std::shared_ptr<NeoWPF::UI::Visual> Window::GetWindowContent(void* nativeHandle)

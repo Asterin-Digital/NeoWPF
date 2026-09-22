@@ -37,7 +37,13 @@ bool ShouldWarnDanglingChild(const std::shared_ptr<Visual>& child)
         return false;
     }
 
-    return false;
+    try {
+        auto self = child->shared_from_this();
+        (void)self;
+        return false;
+    } catch (const std::bad_weak_ptr&) {
+        return true;
+    }
 }
 
 bool ContainsVisualChild(const std::vector<std::shared_ptr<Visual>>& children, Visual* child)
@@ -102,7 +108,7 @@ void Visual::AddVisualChild(const std::shared_ptr<Visual>& child)
         const std::wstring title = std::wstring(NeoWPF::Diagnostics::DeveloperWarnings::kDanglingChildReferenceCode) + L": dangling child reference detected";
         NeoWPF::Diagnostics::QueueDeveloperWarning(
             title,
-            L"A visual child was attached without active shared ownership.",
+            L"A visual child was attached without enable_shared_from_this ownership. Keep the child managed by a shared_ptr created with make_shared or otherwise connected to its shared ownership control block.",
             NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
     }
 
@@ -397,6 +403,20 @@ void Visual::SetParent(Visual* parent) noexcept
 
 Visual::~Visual()
 {
+    {
+        std::lock_guard<std::recursive_mutex> lock(m_visualTreeMutex);
+        for (auto& child : m_children) {
+            if (child && child->m_parent == this) {
+                child->m_parent = nullptr;
+            }
+        }
+        for (auto& child : m_logicalChildren) {
+            if (child && child->m_parent == this) {
+                child->m_parent = nullptr;
+            }
+        }
+    }
+
     auto& registry = GetRegistry();
     for (auto it = registry.begin(); it != registry.end(); ++it) {
         if (*it == this) {

@@ -12,6 +12,8 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::UI {
 enum class PopupPlacement;
+enum class TextHorizontalAlignment;
+enum class TextVerticalAlignment;
 }
 
 namespace NeoWPF::UI::Properties {
@@ -64,6 +66,7 @@ public:
 class ColorConverter final : public TypeConverter {
 public:
     bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
 };
 
 class ThicknessConverter final : public TypeConverter {
@@ -84,6 +87,18 @@ public:
 };
 
 class VerticalAlignmentConverter final : public TypeConverter {
+public:
+    bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
+};
+
+class TextHorizontalAlignmentConverter final : public TypeConverter {
+public:
+    bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
+};
+
+class TextVerticalAlignmentConverter final : public TypeConverter {
 public:
     bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
     bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
@@ -125,6 +140,8 @@ std::shared_ptr<const TypeConverter> GetThicknessConverter();
 std::shared_ptr<const TypeConverter> GetSpacingConverter();
 std::shared_ptr<const TypeConverter> GetHorizontalAlignmentConverter();
 std::shared_ptr<const TypeConverter> GetVerticalAlignmentConverter();
+std::shared_ptr<const TypeConverter> GetTextHorizontalAlignmentConverter();
+std::shared_ptr<const TypeConverter> GetTextVerticalAlignmentConverter();
 std::shared_ptr<const TypeConverter> GetSelectionModeConverter();
 std::shared_ptr<const TypeConverter> GetPopupPlacementConverter();
 std::shared_ptr<const TypeConverter> GetFontWeightConverter();
