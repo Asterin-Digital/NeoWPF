@@ -280,6 +280,8 @@ namespace NeoWPF {
 
     using UI::Checkbox;
 
+    using UI::RadioButton;
+
     using UI::ItemsControl;
 
     using UI::ScrollViewer;

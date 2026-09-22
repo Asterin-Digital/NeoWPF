@@ -26,6 +26,9 @@ void ThemeManager::RegisterBuiltInThemes()
     light.Resources["Checkbox.BorderColor"] = uint32_t(0xFF202020u);
     light.Resources["Checkbox.BoxColor"] = uint32_t(0xFFFFFFFFu);
     light.Resources["Checkbox.TextColor"] = uint32_t(0xFF000000u);
+    light.Resources["RadioButton.BorderColor"] = uint32_t(0xFF202020u);
+    light.Resources["RadioButton.CircleColor"] = uint32_t(0xFFFFFFFFu);
+    light.Resources["RadioButton.TextColor"] = uint32_t(0xFF000000u);
     light.Resources["TextBox.BackgroundColor"] = uint32_t(0xFFFFFFFFu);
     light.Resources["TextBox.BorderColor"] = uint32_t(0xFFABADB3u);
     light.Resources["TextBox.ForegroundColor"] = uint32_t(0xFF000000u);
@@ -44,6 +47,9 @@ void ThemeManager::RegisterBuiltInThemes()
     dark.Resources["Checkbox.BorderColor"] = uint32_t(0xFF9E9E9Eu);
     dark.Resources["Checkbox.BoxColor"] = uint32_t(0xFF2A2A2Au);
     dark.Resources["Checkbox.TextColor"] = uint32_t(0xFFEDEDEDu);
+    dark.Resources["RadioButton.BorderColor"] = uint32_t(0xFF9E9E9Eu);
+    dark.Resources["RadioButton.CircleColor"] = uint32_t(0xFF2A2A2Au);
+    dark.Resources["RadioButton.TextColor"] = uint32_t(0xFFEDEDEDu);
     dark.Resources["TextBox.BackgroundColor"] = uint32_t(0xFF2F2F2Fu);
     dark.Resources["TextBox.BorderColor"] = uint32_t(0xFF666666u);
     dark.Resources["TextBox.ForegroundColor"] = uint32_t(0xFFEDEDEDu);

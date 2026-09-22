@@ -331,6 +331,13 @@ neowpf_add_xaml(
 )
 neowpf_add_xaml(
     NeoWPF.Foundation
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/RadioButton/Visual/RadioButtonStyles.xaml"
+    NAMESPACE NeoWPF::UI::Generated
+    COMPONENT RadioButtonStyles
+    PUBLIC_HEADER NeoWPF/UI/Controls/RadioButtonStyles.h
+)
+neowpf_add_xaml(
+    NeoWPF.Foundation
     "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Button/Visual/ButtonStyles.xaml"
     NAMESPACE NeoWPF::UI::Generated
     COMPONENT ButtonStyles
@@ -811,6 +818,7 @@ if(BUILD_TESTING)
         tests/Automated/TriggerTests.cpp
         tests/Automated/VisualTests.cpp
         tests/Automated/GroupedToggleBaseTests.cpp
+        tests/Automated/RadioButtonTests.cpp
         tests/Automated/ThreadingTests.cpp
         tests/Automated/XamlParserTests.cpp
     )

@@ -220,6 +220,7 @@ namespace NeoWPF::UI::Properties {
     void RegisterRangeBaseProperties();
     void RegisterThumbProperties();
     void RegisterCheckboxProperties();
+    void RegisterRadioButtonProperties();
     void RegisterItemsControlProperties();
     void RegisterSelectorProperties();
     void RegisterComboBoxProperties();

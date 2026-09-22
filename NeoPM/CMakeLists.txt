@@ -11,7 +11,7 @@ set(NEOPM_WINUX_GIT_TAG "main" CACHE STRING
     "Winux Git tag, branch, or commit to fetch")
 set(WINUX_BUILD_TESTS OFF CACHE BOOL "Build Winux tests" FORCE)
 if(NEOPM_USE_LOCAL_WINUX)
-    set(NEOPM_LOCAL_WINUX_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../Winux")
+    set(NEOPM_LOCAL_WINUX_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../Winux")
     if(NOT EXISTS "${NEOPM_LOCAL_WINUX_ROOT}")
         message(FATAL_ERROR
             "Could not find local version of Winux at ${NEOPM_LOCAL_WINUX_ROOT}")
@@ -51,7 +51,7 @@ if(NOT EXISTS "${NEOPM_VCPKG_PREFIX}/include/curl/curl.h" OR
 endif()
 list(PREPEND CMAKE_PREFIX_PATH "${NEOPM_VCPKG_PREFIX}")
 
-set(NEOWPF_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../NeoWPF" CACHE PATH
+set(NEOWPF_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." CACHE PATH
     "Path to the NeoWPF source tree")
 file(READ "${NEOWPF_ROOT}/NeoWPFVersion.txt" NEOWPF_VERSION)
 string(STRIP "${NEOWPF_VERSION}" NEOWPF_VERSION)
@@ -153,6 +153,14 @@ include(cmake/NeoPMSources.cmake)
 add_executable(NeoPM
     ${NEOPM_SOURCES}
     ${NEOPM_HEADERS}
+)
+
+set_target_properties(NeoPM PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/out/bin"
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/out/bin/Debug"
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/out/bin/Release"
+    RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_SOURCE_DIR}/out/bin/RelWithDebInfo"
+    RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/out/bin/MinSizeRel"
 )
 
 target_include_directories(

@@ -26,41 +26,20 @@ enum class XamlTypeRole {
     ApplicationRoot,
 };
 
-/*
-    @summary
-    Metadata for a type that can be constructed from XAML.
 
-    @details
-    This struct holds factory and content-property information for a single XAML-buildable type.
-    Both Visuals and non-Visuals (e.g., RowDefinition, Setter, Trigger) can be registered.
-*/
 struct XamlTypeInfo {
-    /* The runtime type (used for instanceof checks, registry lookups by type, etc.) */
     std::type_index Type;
 
-    /* Factory function: constructs a new instance of this type as a DependencyObject */
     std::function<std::shared_ptr<NeoWPF::UI::Properties::DependencyObject>()> Factory;
 
-    /* 
-        Name of the content property for this type, e.g., "Children" for panels, "Content" for single-slot containers.
-        Empty string if this type takes no default content.
-    */
     std::string ContentPropertyName;
 
-    /* 
-        If true, content is not built eagerly into live objects (e.g., ControlTemplate).
-        Instead, the unbuilt node or a factory closure is stored for deferred instantiation.
-        Default: false (eager build).
-    */
     bool DeferContentBuild = false;
 
-    /* Fully qualified C++ type name used by offline XAML code generation. */
     std::string CppTypeName;
 
-    /* Public include path required to use CppTypeName in generated code. */
     std::string HeaderPath;
 
-    /* Identifies special document-root types for offline code generation. */
     XamlTypeRole Role = XamlTypeRole::Element;
 };
 
