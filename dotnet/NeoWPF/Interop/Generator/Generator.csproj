@@ -6,4 +6,7 @@
     <AssemblyName>NeoWPF.DotNet.Generator</AssemblyName>
     <RootNamespace>NeoWPF.DotNet.Interop.Generator</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Reflection.MetadataLoadContext" Version="10.0.0" />
+  </ItemGroup>
 </Project>

@@ -3,7 +3,7 @@ import sys
 
 IGNORED_NAMES = {
     ".git", "__pycache__", ".DS_Store", "Library", "Temp", "obj", "Build",
-    "Logs", "UserSettings", "x64", ".vs", "out", "cmake", "vcpkg_installed", "build", ".vscode", "Testing", "Debug", "NWpfBuild", "tools", "reports"
+    "Logs", "UserSettings", "x64", ".vs", "out", "cmake", "vcpkg_installed", "build", "bin", ".vscode", "Testing", "Debug", "NWpfBuild", "tools", "reports"
 }
 
 IGNORED_PATHS = {
@@ -103,11 +103,11 @@ def build_tree(root_dir, is_ignored, rel_dir="", prefix=""):
         is_last = index == len(items) - 1
 
         if is_last:
-            print(prefix + "â””â”€â”€ " + item)
+            print(prefix + "\u2514\u2500\u2500 " + item)
             new_prefix = prefix + "    "
         else:
-            print(prefix + "â”œâ”€â”€ " + item)
-            new_prefix = prefix + "â”‚   "
+            print(prefix + "\u251c\u2500\u2500 " + item)
+            new_prefix = prefix + "\u2502   "
 
         if os.path.isdir(path):
             build_tree(root_dir, is_ignored, child_rel, new_prefix)
@@ -137,4 +137,4 @@ if __name__ == "__main__":
     print(root)
     build_tree(root, is_ignored)
 
-# python "C:\Users\Katsu\source\repos\Winux\private\DirTree.py" "C:\Users\Katsu\source\repos\NeoWPF"
+# python "C:\Users\Katsu\source\repos\NeoWPF\scripts\DirTree.py" "C:\Users\Katsu\source\repos\NeoWPF"
