@@ -253,8 +253,8 @@ option(NEOWPF_BUILD_MEDIA
     "Build the optional NeoWPF.Media target and fetch LuAudio"
     OFF)
 option(NEOWPF_BUILD_DOTNET
-    "Build the .NET interop layer"
-    OFF)
+    "Build the optional .NET interop layer"
+    ON)
 set(NEOWPF_LUAUDIO_GIT_REPOSITORY "https://github.com/Past-Horizon/LuAudio.git" CACHE STRING
     "LuAudio Git repository used by NeoWPF.Media")
 set(NEOWPF_LUAUDIO_GIT_TAG "main" CACHE STRING
@@ -693,31 +693,6 @@ else()
     message(STATUS "NeoWPF Linux configuration selected with Vulkan renderer backend.")
 endif()
 
-if(NEOWPF_BUILD_DOTNET)
-    add_library(NeoWPF.DotNet STATIC
-        ${NEOWPF_DOTNET_SOURCES}
-        ${NEOWPF_DOTNET_HEADERS}
-    )
-    add_library(NeoWPF::DotNet ALIAS NeoWPF.DotNet)
-    target_include_directories(NeoWPF.DotNet
-        PUBLIC
-            "${CMAKE_CURRENT_SOURCE_DIR}/include"
-        PRIVATE
-            "${CMAKE_CURRENT_SOURCE_DIR}/src"
-    )
-    target_link_libraries(NeoWPF.DotNet
-        PUBLIC
-            NeoWPF::NeoWPF
-    )
-    set_target_properties(NeoWPF.DotNet PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY "${NEOWPF_RELEASE_DIRECTORY}"
-        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${NEOWPF_RELEASE_DIRECTORY_DEBUG}"
-        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${NEOWPF_RELEASE_DIRECTORY_RELEASE}"
-        ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${NEOWPF_RELEASE_DIRECTORY_RELWITHDEBINFO}"
-        ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${NEOWPF_RELEASE_DIRECTORY_MINSIZEREL}"
-    )
-endif()
-
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoWPFStaticDependencies.cmake")
 
 if(WIN32 OR UNIX)
@@ -773,6 +748,61 @@ if(NEOWPF_BUILD_MEDIA)
             NeoWPF::Media::Core
             NeoWPF::Media::LuAudio
     )
+endif()
+
+if(NEOWPF_BUILD_DOTNET)
+    find_program(NEOWPF_DOTNET_EXECUTABLE dotnet REQUIRED)
+
+    add_library(NeoWPF.DotNet STATIC
+        ${NEOWPF_DOTNET_SOURCES}
+        ${NEOWPF_DOTNET_HEADERS}
+    )
+    add_library(NeoWPF::DotNet ALIAS NeoWPF.DotNet)
+    target_include_directories(NeoWPF.DotNet
+        PUBLIC
+            "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    )
+    target_link_libraries(NeoWPF.DotNet
+        PUBLIC
+            NeoWPF::NeoWPF
+    )
+    target_compile_definitions(NeoWPF.DotNet
+        PRIVATE
+            NEOWPF_INTERNAL_BUILD
+    )
+    set_target_properties(NeoWPF.DotNet PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${NEOWPF_RELEASE_DIRECTORY}"
+        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${NEOWPF_RELEASE_DIRECTORY_DEBUG}"
+        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${NEOWPF_RELEASE_DIRECTORY_RELEASE}"
+        ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${NEOWPF_RELEASE_DIRECTORY_RELWITHDEBINFO}"
+        ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${NEOWPF_RELEASE_DIRECTORY_MINSIZEREL}"
+    )
+
+    if(MSVC)
+        target_compile_options(NeoWPF.DotNet PRIVATE
+            /W3
+            /sdl
+            /permissive-
+            /Zc:wchar_t
+            /Zc:forScope
+            /Zc:inline
+            /EHsc
+        )
+    endif()
+
+    set(NEOWPF_DOTNET_GENERATOR_PROJECT
+        "${CMAKE_CURRENT_SOURCE_DIR}/dotnet/NeoWPF/Interop/Generator/Generator.csproj")
+    set(NEOWPF_DOTNET_GENERATOR_TEST_PROJECT
+        "${CMAKE_CURRENT_SOURCE_DIR}/dotnet/NeoWPF/Interop/Generator.Tests/Generator.Tests.csproj")
+
+    add_custom_target(NeoWPF.DotNet.Generator
+        COMMAND "${NEOWPF_DOTNET_EXECUTABLE}" build "${NEOWPF_DOTNET_GENERATOR_PROJECT}" --configuration $<CONFIG>
+        VERBATIM
+        COMMENT "Building NeoWPF.DotNet generator"
+    )
+    add_dependencies(NeoWPF.DotNet NeoWPF.DotNet.Generator)
 endif()
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES
@@ -844,9 +874,34 @@ if(BUILD_TESTING)
 
     include(GoogleTest)
     gtest_discover_tests(NeoWPF.AutomatedTests)
+
+    if(NEOWPF_BUILD_DOTNET)
+        set(NEOWPF_DOTNET_TEST_SCRIPT
+            "${CMAKE_CURRENT_BINARY_DIR}/RunNeoWPFDotNetTests.cmake")
+        configure_file(
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RunNeoWPFDotNetTests.cmake"
+            "${NEOWPF_DOTNET_TEST_SCRIPT}"
+            COPYONLY
+        )
+        add_test(
+            NAME NeoWPF.DotNet.Generator.Tests
+            COMMAND "${CMAKE_COMMAND}"
+                -DDOTNET_EXECUTABLE=${NEOWPF_DOTNET_EXECUTABLE}
+                -DTEST_PROJECT=${NEOWPF_DOTNET_GENERATOR_TEST_PROJECT}
+                -P "${NEOWPF_DOTNET_TEST_SCRIPT}"
+        )
+    endif()
 endif()
 
 install(TARGETS NeoWPF ARCHIVE DESTINATION lib)
-install(DIRECTORY include/NeoWPF DESTINATION include)
+if(NEOWPF_BUILD_DOTNET)
+    install(TARGETS NeoWPF.DotNet ARCHIVE DESTINATION lib)
+endif()
+install(DIRECTORY include/NeoWPF DESTINATION include
+    PATTERN "DotNet" EXCLUDE
+)
+if(NEOWPF_BUILD_DOTNET)
+    install(DIRECTORY include/NeoWPF/DotNet DESTINATION include/NeoWPF)
+endif()
 install(DIRECTORY include/NeoNaml DESTINATION include)
 install(FILES LICENSE DESTINATION .)

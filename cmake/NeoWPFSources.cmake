@@ -14,6 +14,7 @@ endif()
 list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/Rendering/(D3D11|Vulkan)/")
 list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/NeoNaml/")
 list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/Media/")
+list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/DotNet/")
 if(NOT WIN32)
     list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/Platform/Windows/")
 else()
@@ -38,6 +39,7 @@ file(GLOB_RECURSE NEOWPF_HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/include/NeoWPF/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/NeoNaml/*.h"
 )
+list(FILTER NEOWPF_HEADERS EXCLUDE REGEX "/include/NeoWPF/DotNet/")
 
 set(NEOWPF_DOTNET_SOURCES)
 set(NEOWPF_DOTNET_HEADERS)
@@ -48,6 +50,11 @@ if(NEOWPF_BUILD_DOTNET)
     file(GLOB_RECURSE NEOWPF_DOTNET_HEADERS CONFIGURE_DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/include/NeoWPF/DotNet/*.h"
     )
+    if(NOT WIN32)
+        list(FILTER NEOWPF_DOTNET_SOURCES EXCLUDE REGEX "/src/DotNet/Windows/")
+    else()
+        list(FILTER NEOWPF_DOTNET_SOURCES EXCLUDE REGEX "/src/DotNet/Linux/")
+    endif()
     if(NOT NEOWPF_DOTNET_SOURCES)
         message(FATAL_ERROR
             "NEOWPF_BUILD_DOTNET is enabled, but no sources were found under "

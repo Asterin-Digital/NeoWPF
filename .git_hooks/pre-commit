@@ -6,6 +6,7 @@ repo_root=$(git rev-parse --show-toplevel) || exit 1
 cd "$repo_root" || exit 1
 
 build_dir=""
+build_config=""
 for candidate in \
     "out/build/x64-debug" \
     "out/build/x64-release" \
@@ -18,6 +19,10 @@ for candidate in \
 do
     if [ -f "$candidate/CTestTestfile.cmake" ]; then
         build_dir="$candidate"
+        case "$candidate" in
+            *x64-debug|*linux-debug) build_config="Debug" ;;
+            *x64-release|*linux-release) build_config="Release" ;;
+        esac
         break
     fi
 done
@@ -31,7 +36,7 @@ if [ -z "$build_dir" ]; then
 fi
 
 echo "NeoWPF pre-commit: running all tests in $build_dir"
-ctest --test-dir "$build_dir" --output-on-failure
+ctest --test-dir "$build_dir" -C "$build_config" --output-on-failure
 status=$?
 
 if [ "$status" -ne 0 ]; then

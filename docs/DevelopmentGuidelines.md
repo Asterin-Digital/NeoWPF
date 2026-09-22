@@ -55,6 +55,29 @@ Do not duplicate code. If you need utilities, use the existing ones. If there is
 
 Keep files lean and modularize your code. It's not necessary to create a new module out of a file if it's small - it would only annoy the future developer working on that part if they have to browse many other files just to understand one thing. A monolithic file should get split, while a small but focused one shouldn't, unless you expect it to grow a lot.
 
+### Project Structure
+
+Use this structure:
+
+```text
+[system]/[subsystem]/[detail]
+```
+
+A system cannot contain another system. A subsystem can contain detail only. A detail cannot contain a system or subsystem. Use the same structure across headers, sources, tests, and managed code.
+
+### Platform Separation
+
+Portable code must not contain platform `#if`/`#ifdef` branches or platform headers. Put platform implementations in the corresponding directories:
+
+```text
+include/NeoWPF/Platform/Windows/
+include/NeoWPF/Platform/Linux/
+src/Platform/Windows/
+src/Platform/Linux/
+```
+
+Use platform-neutral interfaces in shared code and select implementations through CMake.
+
 5. ## Documentation
 
 Do not document source files or internal details. If you need documentation, do it inside the header file for your source file. Follow CommentFormatting.md and CommentingRules.md for more information. In source files, only notes and warnings are allowed - like one simple note telling a developer not to do something, or after you fix a bug, you can leave a note there for the future developer working on that part to know what not to do.
