@@ -3,6 +3,11 @@ MIT License — Copyright (c) 2026 NeoWPF
 See LICENSE file in the project root for full license text.
 */
 
+/* @note
+/  Are you a user? If yes, don't include this header file directly.
+/  These exact utils are exported inside NeoWPF.h with better ergonomics, so use those.
+*/
+
 #pragma once
 
 #include <cstdint>

@@ -33,6 +33,14 @@ namespace {
         return metadata;
     }
 
+    NeoWPF::UI::Properties::PropertyMetadata MakeButtonFontFamilyMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(std::wstring());
+        metadata.Converter = NeoWPF::UI::Properties::GetWideStringConverter();
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
+        return metadata;
+    }
+
     NeoWPF::UI::Properties::PropertyMetadata MakeButtonFontWeightMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(400);
@@ -80,6 +88,10 @@ namespace NeoWPF::UI::Properties {
             &UI::Button::GetFontSize,
             &UI::Button::SetFontSize,
             MakeButtonFontSizeMetadata());
+        RegisterProperty<UI::Button, std::wstring>("FontFamily",
+            &UI::Button::GetFontFamily,
+            &UI::Button::SetFontFamily,
+            MakeButtonFontFamilyMetadata());
         RegisterProperty<UI::Button, int>("FontWeight",
             &UI::Button::GetFontWeight,
             &UI::Button::SetFontWeight,
@@ -129,6 +141,15 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::FontSizePr
         &NeoWPF::UI::Button::GetFontSize,
         &NeoWPF::UI::Button::SetFontSize,
         MakeButtonFontSizeMetadata());
+    return *property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::FontFamilyProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Button, std::wstring>(
+        "FontFamily",
+        &NeoWPF::UI::Button::GetFontFamily,
+        &NeoWPF::UI::Button::SetFontFamily,
+        MakeButtonFontFamilyMetadata());
     return *property;
 }
 

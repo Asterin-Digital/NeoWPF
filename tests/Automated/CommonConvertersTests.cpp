@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
+
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Controls/Popup/Popup.h>
 #include <NeoWPF/UI/Controls/Selector/Selector.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
@@ -15,6 +17,18 @@
 #include <vector>
 
 namespace {
+
+TEST(CommonConvertersTests, EmitsCPlusPlusForSpacing)
+{
+    const auto converter = NeoWPF::UI::Properties::GetSpacingConverter();
+    std::string expression;
+
+    ASSERT_TRUE(converter->TryConvertToCode("5", expression));
+    EXPECT_EQ(expression, "NeoWPF::UI::Spacing(5, 5)");
+
+    ASSERT_TRUE(converter->TryConvertToCode("5,7", expression));
+    EXPECT_EQ(expression, "NeoWPF::UI::Spacing(5, 7)");
+}
 
 using ConverterCase = std::pair<const char*, const char*>;
 

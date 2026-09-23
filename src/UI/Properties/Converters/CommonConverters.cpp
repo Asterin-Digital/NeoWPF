@@ -460,6 +460,21 @@ bool SpacingConverter::ConvertFromString(const std::string& rawValue, std::any& 
     }
 }
 
+bool SpacingConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    std::any convertedValue;
+    if (!ConvertFromString(rawValue, convertedValue)) {
+        expression.clear();
+        return false;
+    }
+
+    const auto spacing = std::any_cast<NeoWPF::UI::Spacing>(convertedValue);
+    expression = "NeoWPF::UI::Spacing(" +
+        FormatCodeNumber(spacing.Horizontal) + ", " +
+        FormatCodeNumber(spacing.Vertical) + ")";
+    return true;
+}
+
 bool HorizontalAlignmentConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
     return ConvertMappedValue(rawValue, HorizontalAlignmentEntries, convertedValue);

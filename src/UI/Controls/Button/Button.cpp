@@ -14,26 +14,16 @@
 #include <memory>
 #include <cmath>
 
-#ifdef max
-#undef max
-#endif
-
 namespace NeoWPF::UI {
 
 Button::Button()
     : ButtonBase()
 {
-    /* @note 
-    /  WPFLayout1.cpp matches WPF layout behavior 
-    /  not defaulting to center, center makes the button
-    /  sit awkwardly next to the textbox on the left unlike WPF which is to the right (middle)
-    */
     SetHorizontalAlignment(HorizontalAlignment::Center);
     SetVerticalAlignment(VerticalAlignment::Center);
     SetTemplate(std::make_shared<ButtonTemplate>());
 
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
-    presenter->SetPadding(8);
     SetPresenter(presenter);
 
     m_textContent = std::make_shared<NeoWPF::UI::TextBlock>();
@@ -46,39 +36,16 @@ Button::Button()
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
 
-    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::ButtonStyles, *this);
+    SetStylePropertyValue("Padding", NeoWPF::UI::Thickness(8));
+    SetStylePropertyValue("Background", NeoWPF::UI::Color::FromArgb(0xFFEEEEEEu));
+    SetStylePropertyValue("BorderBrush", NeoWPF::UI::Color::FromArgb(0xFF333333u));
 
-    SetPadding(8);
-    SetBackgroundColor(m_backgroundColor);
-    SetBorderColor(m_borderColor);
+    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::ButtonStyles, *this);
 }
 
 Button::Button(const std::wstring& text)
-    : ButtonBase()
+    : Button()
 {
-    SetHorizontalAlignment(HorizontalAlignment::Center);
-    SetVerticalAlignment(VerticalAlignment::Center);
-    SetTemplate(std::make_shared<ButtonTemplate>());
-
-    auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
-    presenter->SetPadding(8);
-    SetPresenter(presenter);
-
-    m_textContent = std::make_shared<NeoWPF::UI::TextBlock>();
-    m_textContent->SetHorizontalAlignment(HorizontalAlignment::Stretch);
-    m_textContent->SetVerticalAlignment(VerticalAlignment::Stretch);
-    m_textContent->SetText(L"");
-    m_textContent->SetTextHorizontalAlignment(TextHorizontalAlignment::Center);
-    m_textContent->SetTextVerticalAlignment(TextVerticalAlignment::Center);
-    m_textContent->SetTextColor(m_textColor.ToArgb());
-    m_textContent->SetFontSize(m_fontSize);
-    SetContent(m_textContent);
-
-    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::ButtonStyles, *this);
-
-    SetPadding(8);
-    SetBackgroundColor(m_backgroundColor);
-    SetBorderColor(m_borderColor);
     SetText(text);
 }
 
@@ -90,11 +57,8 @@ Button::~Button()
 void Button::SetText(const std::wstring& text)
 {
     if (!IsApplyingPropertyValue()) {
-        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Text", *this);
-        if (property) {
-            SetValue(*property, text);
-            return;
-        }
+        SetValue(TextProperty(), text);
+        return;
     }
 
     m_text = text;
@@ -111,6 +75,11 @@ void Button::SetLocale(const std::wstring& key)
 
 void Button::SetTextHorizontalAlignment(TextHorizontalAlignment alignment) noexcept
 {
+    if (!IsApplyingPropertyValue()) {
+        SetValue(TextHorizontalAlignmentProperty(), alignment);
+        return;
+    }
+
     if (m_textContent) {
         m_textContent->SetTextHorizontalAlignment(alignment);
     }
@@ -127,6 +96,11 @@ TextHorizontalAlignment Button::GetTextHorizontalAlignment() const noexcept
 
 void Button::SetTextVerticalAlignment(TextVerticalAlignment alignment) noexcept
 {
+    if (!IsApplyingPropertyValue()) {
+        SetValue(TextVerticalAlignmentProperty(), alignment);
+        return;
+    }
+
     if (m_textContent) {
         m_textContent->SetTextVerticalAlignment(alignment);
     }
@@ -139,6 +113,76 @@ TextVerticalAlignment Button::GetTextVerticalAlignment() const noexcept
         return m_textContent->GetTextVerticalAlignment();
     }
     return TextVerticalAlignment::Top;
+}
+
+void Button::SetTextColor(NeoWPF::UI::Color color) noexcept
+{
+    if (!IsApplyingPropertyValue()) {
+        SetValue(TextColorProperty(), color);
+        return;
+    }
+
+    m_textColor = color;
+    if (m_textContent) {
+        m_textContent->SetTextColor(color.ToArgb());
+    }
+    InvalidateVisual();
+}
+
+void Button::SetFontSize(int fontSize) noexcept
+{
+    if (!IsApplyingPropertyValue()) {
+        SetValue(FontSizeProperty(), fontSize);
+        return;
+    }
+
+    m_fontSize = fontSize;
+    if (m_textContent) {
+        m_textContent->SetFontSize(fontSize);
+    }
+    InvalidateVisual();
+}
+
+void Button::SetFontFamily(const std::wstring& fontFamily) noexcept
+{
+    if (!IsApplyingPropertyValue()) {
+        SetValue(FontFamilyProperty(), fontFamily);
+        return;
+    }
+
+    m_fontFamily = fontFamily;
+    if (m_textContent) {
+        m_textContent->SetFontFamily(fontFamily);
+    }
+    InvalidateVisual();
+}
+
+void Button::SetFontWeight(int fontWeight) noexcept
+{
+    if (!IsApplyingPropertyValue()) {
+        SetValue(FontWeightProperty(), fontWeight);
+        return;
+    }
+
+    m_fontWeight = fontWeight;
+    if (m_textContent) {
+        m_textContent->SetFontWeight(fontWeight);
+    }
+    InvalidateVisual();
+}
+
+void Button::SetFontStyle(NeoWPF::UI::FontStyle fontStyle) noexcept
+{
+    if (!IsApplyingPropertyValue()) {
+        SetValue(FontStyleProperty(), fontStyle);
+        return;
+    }
+
+    m_fontStyle = fontStyle;
+    if (m_textContent) {
+        m_textContent->SetFontStyle(fontStyle);
+    }
+    InvalidateVisual();
 }
 
 void Button::SetPadding(Thickness padding) noexcept
@@ -155,18 +199,11 @@ Thickness Button::GetPadding() const noexcept
 void Button::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
 {
     Control::SetBackgroundColor(color);
-    InvalidateVisual();
 }
 
 void Button::SetBorderColor(NeoWPF::UI::Color color) noexcept
 {
     Control::SetBorderColor(color);
-    InvalidateVisual();
-}
-
-NeoWPF::UI::Color Button::GetBorderColor() const noexcept
-{
-    return m_borderColor;
 }
 
 void Button::OnPaddingChanged(Thickness padding)
@@ -179,9 +216,6 @@ void Button::OnPaddingChanged(Thickness padding)
 
 void Button::OnBackgroundColorChanged(NeoWPF::UI::Color color)
 {
-    m_baseBackgroundColor = color;
-    m_backgroundColor = color;
-
     if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
         background->SetFillColor(color.ToArgb());
     }
@@ -191,8 +225,6 @@ void Button::OnBackgroundColorChanged(NeoWPF::UI::Color color)
 
 void Button::OnBorderColorChanged(NeoWPF::UI::Color color)
 {
-    m_borderColor = color;
-
     if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
         background->SetBorderColor(color.ToArgb());
     }
@@ -251,7 +283,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
     else {
         const double borderThickness = 1.0;
-        const uint32_t borderColor = 0xFF707070u;
+        const uint32_t borderColor = GetBorderColor().ToArgb();
         const double borderInset = borderThickness * 0.5;
         const double borderX = drawX + borderInset;
         const double borderY = drawY + borderInset;
@@ -297,7 +329,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 innerTR,
                 innerBR,
                 innerBL,
-                m_backgroundColor.ToArgb(),
+                GetBackgroundColor().ToArgb(),
                 GetOpacity(),
                 NeoWPF::Rendering::ClipRect{},
                 rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);

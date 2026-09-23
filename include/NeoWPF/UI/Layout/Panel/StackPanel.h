@@ -28,7 +28,6 @@ namespace NeoWPF::UI {
 class StackPanel : public Panel {
 public:
     StackPanel() noexcept {
-        //SetOpacity(0.0f); // setting the opacity of the StackPanel to 0 does not make children invisible.
         SetBackgroundColor(NeoWPF::UI::Color::FromArgb(0x00000000u));
     }
 

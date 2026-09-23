@@ -39,6 +39,7 @@ public:
     static const Properties::DependencyProperty& TextColorProperty();
     static const Properties::DependencyProperty& ForegroundProperty();
     static const Properties::DependencyProperty& FontSizeProperty();
+    static const Properties::DependencyProperty& FontFamilyProperty();
     static const Properties::DependencyProperty& FontWeightProperty();
     static const Properties::DependencyProperty& FontStyleProperty();
     static const Properties::DependencyProperty& TextHorizontalAlignmentProperty();
@@ -105,7 +106,7 @@ public:
         @param color
         ARGB color value.
     */
-    void SetTextColor(NeoWPF::UI::Color color) noexcept { m_textColor = color; if (m_textContent) { m_textContent->SetTextColor(color.ToArgb()); } InvalidateVisual(); }
+    void SetTextColor(NeoWPF::UI::Color color) noexcept;
 
     /*
         @summary
@@ -120,7 +121,7 @@ public:
         @param fontSize
         Size in pixels.
     */
-    void SetFontSize(int fontSize) noexcept { m_fontSize = fontSize; if (m_textContent) { m_textContent->SetFontSize(fontSize); } InvalidateVisual(); }
+    void SetFontSize(int fontSize) noexcept;
 
     /*
         @summary
@@ -131,17 +132,7 @@ public:
     /*
     * @todo Verify if this is correct later
     */
-    void SetFontFamily(const std::wstring& fontFamily) noexcept
-    {
-        if (fontFamily.empty()) {
-            return;
-        }
-        m_fontFamily = fontFamily;
-        if (m_textContent) {
-            m_textContent->SetFontFamily(fontFamily);
-        }
-        InvalidateVisual();
-    }
+    void SetFontFamily(const std::wstring& fontFamily) noexcept;
 
     /*
        @summary
@@ -153,7 +144,7 @@ public:
         @summary
         Sets the font weight used to measure and render text.
     */
-    void SetFontWeight(int fontWeight) noexcept { m_fontWeight = fontWeight; if (m_textContent) { m_textContent->SetFontWeight(fontWeight); } InvalidateVisual(); }
+    void SetFontWeight(int fontWeight) noexcept;
 
     /*
         @summary
@@ -165,7 +156,7 @@ public:
         @summary
         Sets the font style used to measure and render text.
     */
-    void SetFontStyle(NeoWPF::UI::FontStyle fontStyle) noexcept { m_fontStyle = fontStyle; if (m_textContent) { m_textContent->SetFontStyle(fontStyle); } InvalidateVisual(); }
+    void SetFontStyle(NeoWPF::UI::FontStyle fontStyle) noexcept;
 
     /*
         @summary
@@ -201,7 +192,7 @@ public:
         @summary
         Returns the current background color.
     */
-    NeoWPF::UI::Color GetBackgroundColor() const noexcept { return m_backgroundColor; }
+    using Control::GetBackgroundColor;
 
     /*
         @summary
@@ -216,7 +207,7 @@ public:
         @summary
         Returns the current border color.
     */
-    NeoWPF::UI::Color GetBorderColor() const noexcept;
+    using Control::GetBorderColor;
 
     /*
         @summary
@@ -268,9 +259,6 @@ private:
 private:
     std::wstring m_text;
     NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFF000000u);
-    NeoWPF::UI::Color m_backgroundColor = NeoWPF::UI::Color::FromArgb(0xFFEEEEEEu);
-    NeoWPF::UI::Color m_baseBackgroundColor = NeoWPF::UI::Color::FromArgb(0xFF2F2F2Fu);
-    NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0xFF333333u);
     int m_fontSize = 16;
     std::wstring m_fontFamily;
     int m_fontWeight = 400;

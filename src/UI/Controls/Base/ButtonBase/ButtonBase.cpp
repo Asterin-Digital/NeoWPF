@@ -81,14 +81,16 @@ void ButtonBase::SetCommand(std::shared_ptr<NeoWPF::Input::ICommand> command)
 
 void ButtonBase::SetCommandParameter(const std::any& parameter)
 {
-    if (!IsApplyingPropertyValue()) {
-        if (const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("CommandParameter", *this)) {
-            SetValue(*property, parameter);
-            return;
-        }
+    if (IsApplyingPropertyValue()) {
+        m_commandParameter = parameter;
+        return;
     }
 
     m_commandParameter = parameter;
+    if (const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("CommandParameter", *this)) {
+        SetValueInternal(*property, parameter, Properties::PropertyValueSource::Local);
+        return;
+    }
 }
 
 void ButtonBase::SetCommandTarget(NeoWPF::UI::UIElement* target) noexcept

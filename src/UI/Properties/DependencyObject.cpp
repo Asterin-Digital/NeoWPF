@@ -609,9 +609,22 @@ void DependencyObject::ClearBinding(const DependencyProperty* property)
 
 void DependencyObject::ClearValue(const DependencyProperty& property)
 {
+    const auto localValue = m_localValues.find(&property);
+    if (localValue == m_localValues.end()) {
+        return;
+    }
+
+    const std::any oldValue = GetRawValue(property);
     m_localValues.erase(&property);
-    m_styleValues.erase(&property);
-    m_expressionValues.erase(&property);
+    ClearLocaleExpression(property);
+
+    const std::any newValue = GetRawValue(property);
+    if (!ValuesEqual(oldValue, newValue)) {
+        NotifyDependencyPropertyChanged(property,
+                                        oldValue,
+                                        newValue,
+                                        PropertyValueSource::Local);
+    }
 }
 
 void DependencyObject::ClearValue(const DependencyProperty* property)

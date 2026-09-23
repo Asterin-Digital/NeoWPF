@@ -834,6 +834,7 @@ if(BUILD_TESTING)
         tests/Automated/LocalizationTests.cpp
         tests/Automated/EventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
+        tests/Automated/ButtonTests.cpp
         tests/Automated/CommonConvertersTests.cpp
         tests/Automated/FileDialogTests.cpp
         tests/Automated/TransformTests.cpp

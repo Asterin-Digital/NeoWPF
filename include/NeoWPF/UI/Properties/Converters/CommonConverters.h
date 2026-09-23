@@ -78,6 +78,7 @@ public:
 class SpacingConverter final : public TypeConverter {
 public:
     bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
 };
 
 class HorizontalAlignmentConverter final : public TypeConverter {
