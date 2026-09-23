@@ -16,8 +16,6 @@ namespace NeoWPF::Input::Core
 
 namespace NeoWPF::UI {
 
-static bool s_panelLogging;
-
 void RegisterPanelStyles();
 
 class Panel : public Control {
@@ -29,9 +27,6 @@ public:
     void Measure(double availableWidth, double availableHeight) override;
     void Arrange(double finalWidth, double finalHeight) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
-
-    virtual void OnMouseDown(int x, int y, std::uint32_t buttonState) override {}
-    virtual void OnMouseUp(int x, int y, std::uint32_t buttonState) override {}
 
     void SetBackgroundColor(NeoWPF::UI::Color color) noexcept;
     void SetBackgroundColor(std::uint32_t color) noexcept { SetBackgroundColor(NeoWPF::UI::Color::FromArgb(color)); }

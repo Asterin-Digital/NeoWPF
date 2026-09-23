@@ -842,6 +842,8 @@ if(BUILD_TESTING)
         tests/Automated/TransformCompositionTests.cpp
         tests/Automated/RenderCommandTests.cpp
         tests/Automated/GridTests.cpp
+        tests/Automated/PanelTests.cpp
+        tests/Automated/StackPanelTests.cpp
         tests/Automated/CanvasTests.cpp
         tests/Automated/ItemsControlTests.cpp
         tests/Automated/ListBoxTests.cpp

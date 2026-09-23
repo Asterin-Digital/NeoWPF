@@ -57,8 +57,6 @@ public:
     */
     Orientation GetOrientation() const noexcept { return m_orientation; }
 
-    static bool stackPanelDebugLogging;
-
 private:
     Orientation m_orientation = Orientation::Vertical;
 };

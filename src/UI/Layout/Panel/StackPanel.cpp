@@ -1,107 +1,20 @@
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
-#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
 #include <algorithm>
-#include <vector>
-
-#ifdef min
-#undef min
-#endif
-#ifdef max
-#undef max
-#endif
-
-namespace {
-    bool IsAncestorInParentChain(NeoWPF::UI::Visual* node, NeoWPF::UI::Visual* possibleAncestor)
-    {
-        std::vector<NeoWPF::UI::Visual*> visited;
-        for (auto parent = node->GetParent(); parent; parent = parent->GetParent()) {
-            if (parent == possibleAncestor) {
-                return true;
-            }
-            if (std::find(visited.begin(), visited.end(), parent) != visited.end()) {
-                break;
-            }
-            visited.push_back(parent);
-        }
-        return false;
-    }
-
-    struct StackPanelGuard {
-        explicit StackPanelGuard(const NeoWPF::UI::StackPanel* panel)
-            : panel(panel), activeStackPanels(GetActiveStackPanels())
-        {
-            if (std::find(activeStackPanels->begin(), activeStackPanels->end(), panel) != activeStackPanels->end()) {
-                alreadyActive = true;
-            } else {
-                activeStackPanels->push_back(panel);
-            }
-        }
-
-        ~StackPanelGuard()
-        {
-            if (!alreadyActive) {
-                activeStackPanels->pop_back();
-            }
-        }
-
-        bool IsReentrant() const noexcept { return alreadyActive; }
-
-    private:
-        static std::vector<const NeoWPF::UI::StackPanel*>* GetActiveStackPanels()
-        {
-            static thread_local std::vector<const NeoWPF::UI::StackPanel*> active;
-            return &active;
-        }
-
-        const NeoWPF::UI::StackPanel* panel;
-        std::vector<const NeoWPF::UI::StackPanel*>* activeStackPanels;
-        bool alreadyActive = false;
-    };
-}
 
 namespace NeoWPF::UI {
 
-bool StackPanel::stackPanelDebugLogging = false;
-
 void StackPanel::Measure(double availableWidth, double availableHeight)
 {
-    StackPanelGuard guard(this);
-    if (guard.IsReentrant()) {
-        if (stackPanelDebugLogging) {
-            NeoWPF::Diagnostics::LogInfo("[StackPanel::Measure] reentrant measure skipped for %p", this);
-        }
-        SetDesiredSize(0, 0);
-        return;
-    }
-
     const bool isHorizontal = m_orientation == Orientation::Horizontal;
     const double itemSpacing = isHorizontal ? GetHorizontalSpacing() : GetVerticalSpacing();
     double totalMainExtent = 0.0;
     double maxCrossExtent = 0.0;
-    if (stackPanelDebugLogging) {
-        NeoWPF::Diagnostics::LogInfo("[StackPanel::Measure] container=%p available=%dx%d spacing=%d", this, availableWidth, availableHeight, itemSpacing);
-    }
 
-    std::vector<Visual*> seenChildren;
     bool firstChild = true;
     for (auto child : GetVisualChildren()) {
-        if (!child) {
-            continue;
-        }
-        if (std::find(seenChildren.begin(), seenChildren.end(), child) != seenChildren.end()) {
-            if (stackPanelDebugLogging) {
-                NeoWPF::Diagnostics::LogInfo("[StackPanel::Measure] skipping duplicate child=%p", child);
-            }
-            continue;
-        }
-        seenChildren.push_back(child);
-
-        if (child == this || IsAncestorInParentChain(this, child)) {
-            if (stackPanelDebugLogging) {
-                NeoWPF::Diagnostics::LogInfo("[StackPanel::Measure] skipping recursive child=%p", child);
-            }
+        if (auto uiChild = dynamic_cast<UIElement*>(child); uiChild && !uiChild->IsVisible()) {
             continue;
         }
 
@@ -126,9 +39,6 @@ void StackPanel::Measure(double availableWidth, double availableHeight)
                 maxCrossExtent = (std::max)(maxCrossExtent, resolvedW);
             }
             firstChild = false;
-            if (stackPanelDebugLogging) {
-                NeoWPF::Diagnostics::LogInfo("[StackPanel::Measure] child=%p desired=%dx%d resolved=%dx%d", child, childDesiredW, childDesiredH, resolvedW, resolvedH);
-            }
         }
     }
 
@@ -139,50 +49,19 @@ void StackPanel::Measure(double availableWidth, double availableHeight)
         ? (std::max)(0.0, maxCrossExtent)
         : (std::max)(0.0, totalMainExtent);
     SetDesiredSize(desiredW, desiredH);
-    if (stackPanelDebugLogging) {
-        NeoWPF::Diagnostics::LogInfo("[StackPanel::Measure] result desired=%dx%d", desiredW, desiredH);
-    }
 }
 
 void StackPanel::Arrange(double finalWidth, double finalHeight)
 {
     FrameworkElement::Arrange(finalWidth, finalHeight);
 
-    if (stackPanelDebugLogging) {
-        NeoWPF::Diagnostics::LogInfo("[StackPanel::Arrange] container=%p final=%dx%d", this, finalWidth, finalHeight);
-    }
-
-    StackPanelGuard guard(this);
-    if (guard.IsReentrant()) {
-        if (stackPanelDebugLogging) {
-            NeoWPF::Diagnostics::LogInfo("[StackPanel::Arrange] reentrant arrange skipped for %p", this);
-        }
-        return;
-    }
-
 
     const bool isHorizontal = m_orientation == Orientation::Horizontal;
     const double itemSpacing = isHorizontal ? GetHorizontalSpacing() : GetVerticalSpacing();
     double mainOffset = 0.0;
     bool firstChild = true;
-    std::vector<Visual*> seenChildren;
     for (auto child : GetVisualChildren()) {
-        if (!child) {
-            continue;
-        }
-        if (std::find(seenChildren.begin(), seenChildren.end(), child) != seenChildren.end()) {
-
-            if (stackPanelDebugLogging) {
-                NeoWPF::Diagnostics::LogInfo("[StackPanel::Arrange] skipping duplicate child=%p", child);
-            }
-            continue;
-        }
-        seenChildren.push_back(child);
-
-        if (child == this || IsAncestorInParentChain(this, child)) {
-            if (stackPanelDebugLogging) {
-                NeoWPF::Diagnostics::LogInfo("[StackPanel::Arrange] skipping recursive child=%p", child);
-            }
+        if (auto uiChild = dynamic_cast<UIElement*>(child); uiChild && !uiChild->IsVisible()) {
             continue;
         }
 
@@ -215,6 +94,7 @@ void StackPanel::Arrange(double finalWidth, double finalHeight)
                     alignedH
                 );
                 alignedX = mainOffset + margin.Left;
+                alignedY += margin.Top;
                 if (fe->GetVerticalAlignment() != VerticalAlignment::Stretch) {
                     alignedH = childH;
                 }
@@ -232,6 +112,7 @@ void StackPanel::Arrange(double finalWidth, double finalHeight)
                     alignedH
                 );
                 alignedY = mainOffset + margin.Top;
+                alignedX += margin.Left;
                 if (fe->GetHorizontalAlignment() != HorizontalAlignment::Stretch) {
                     alignedW = childW;
                 }
@@ -240,9 +121,6 @@ void StackPanel::Arrange(double finalWidth, double finalHeight)
 
             fe->Arrange(alignedW, alignedH);
             fe->SetLayoutOffset(alignedX, alignedY);
-            if (stackPanelDebugLogging) {
-                NeoWPF::Diagnostics::LogInfo("[StackPanel::Arrange] child=%p offset=%d size=%dx%d desired=%dx%d aligned=%dx%d@%d,%d", child, mainOffset, childW, childH, fe->GetDesiredWidth(), fe->GetDesiredHeight(), alignedW, alignedH, alignedX, alignedY);
-            }
             mainOffset += isHorizontal ? childW + margin.Horizontal() : childH + margin.Vertical();
             firstChild = false;
         }
@@ -256,10 +134,6 @@ void StackPanel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
 
     for (auto child : GetVisualChildrenInZOrder()) {
-        if (!child) {
-            continue;
-        }
-
         if (auto uiChild = dynamic_cast<UIElement*>(child)) {
             if (!uiChild->IsVisible()) {
                 continue;
