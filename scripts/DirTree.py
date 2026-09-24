@@ -114,6 +114,11 @@ def build_tree(root_dir, is_ignored, rel_dir="", prefix=""):
 
 
 if __name__ == "__main__":
+    if sys.stdout.isatty():
+        sys.stdout.reconfigure(encoding="utf-8")
+    else:
+        sys.stdout.reconfigure(encoding="utf-8-sig")
+
     if len(sys.argv) != 2:
         print("Usage: python script.py <root_dir>")
         sys.exit(1)

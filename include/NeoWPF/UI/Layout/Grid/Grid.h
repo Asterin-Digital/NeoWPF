@@ -318,11 +318,6 @@ private:
     std::vector<Definition> m_colDefs;
     std::vector<double> m_autoRowHeights;
     std::vector<double> m_autoColWidths;
-    std::unordered_map<Visual*, int> m_rowMap;
-    std::unordered_map<Visual*, int> m_colMap;
-
-    static std::unordered_map<Visual*, int> s_rowSpanMap;
-    static std::unordered_map<Visual*, int> s_colSpanMap;
 };
 
 }

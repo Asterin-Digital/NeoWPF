@@ -1,0 +1,1 @@
+NeoPM needs to be separated from NeoWPF monorepo, it should have it's own repository under the NeoWPF organization rather then being inside NeoWPF repository along NeoCM and NeoLint which are internal tools.

@@ -27,9 +27,6 @@ namespace {
 
 namespace NeoWPF::UI {
 
-    std::unordered_map<Visual*, int> Grid::s_rowSpanMap;
-    std::unordered_map<Visual*, int> Grid::s_colSpanMap;
-
     void Grid::AddRow(SizeMode mode, int value)
     {
         auto rowDefinition = std::make_shared<RowDefinition>();
@@ -68,11 +65,6 @@ namespace NeoWPF::UI {
                 obj->SetValue(Grid::RowProperty(), r);
             }
         }
-        if (r <= 0) {
-            m_rowMap.erase(v);
-        } else {
-            m_rowMap[v] = r;
-        }
     }
 
     void Grid::SetColumn(Visual* v, int c) noexcept
@@ -85,11 +77,6 @@ namespace NeoWPF::UI {
                 obj->SetValue(Grid::ColumnProperty(), c);
             }
         }
-        if (c <= 0) {
-            m_colMap.erase(v);
-        } else {
-            m_colMap[v] = c;
-        }
     }
 
     int Grid::GetRow(Visual* v) const noexcept
@@ -101,8 +88,7 @@ namespace NeoWPF::UI {
             } catch (const std::bad_any_cast&) {
             }
         }
-        auto it = m_rowMap.find(v);
-        return it == m_rowMap.end() ? 0 : it->second;
+        return 0;
     }
 
     int Grid::GetColumn(Visual* v) const noexcept
@@ -114,8 +100,7 @@ namespace NeoWPF::UI {
             } catch (const std::bad_any_cast&) {
             }
         }
-        auto it = m_colMap.find(v);
-        return it == m_colMap.end() ? 0 : it->second;
+        return 0;
     }
 
     void Grid::ClearAttachedProperties(Visual* v)
@@ -127,10 +112,6 @@ namespace NeoWPF::UI {
             obj->ClearValue(Grid::RowSpanProperty());
             obj->ClearValue(Grid::ColumnSpanProperty());
         }
-        m_rowMap.erase(v);
-        m_colMap.erase(v);
-        s_rowSpanMap.erase(v);
-        s_colSpanMap.erase(v);
     }
 
     void Grid::AddRowDefinition(std::shared_ptr<RowDefinition> rowDef)
@@ -164,11 +145,6 @@ namespace NeoWPF::UI {
                 obj->SetValue(Grid::RowSpanProperty(), span);
             }
         }
-        if (span <= 1) {
-            s_rowSpanMap.erase(v);
-        } else {
-            s_rowSpanMap[v] = span;
-        }
     }
 
     void Grid::SetColumnSpan(Visual* v, int span)
@@ -181,11 +157,6 @@ namespace NeoWPF::UI {
                 obj->SetValue(Grid::ColumnSpanProperty(), span);
             }
         }
-        if (span <= 1) {
-            s_colSpanMap.erase(v);
-        } else {
-            s_colSpanMap[v] = span;
-        }
     }
 
     int Grid::GetRowSpan(Visual* v)
@@ -197,8 +168,7 @@ namespace NeoWPF::UI {
             } catch (const std::bad_any_cast&) {
             }
         }
-        auto it = s_rowSpanMap.find(v);
-        return it == s_rowSpanMap.end() ? 1 : it->second;
+        return 1;
     }
 
     int Grid::GetColumnSpan(Visual* v)
@@ -210,8 +180,7 @@ namespace NeoWPF::UI {
             } catch (const std::bad_any_cast&) {
             }
         }
-        auto it = s_colSpanMap.find(v);
-        return it == s_colSpanMap.end() ? 1 : it->second;
+        return 1;
     }
 
     void Grid::AddChild(const std::shared_ptr<Visual>& child, int row, int column, int rowSpan, int columnSpan)
