@@ -1,5 +1,5 @@
 /*
-MIT License — Copyright (c) 2026 NeoWPF
+Apache 2.0 License — Copyright (c) 2026 NeoWPF
 See LICENSE file in the project root for full license text.
 */
 
@@ -11,7 +11,7 @@ See LICENSE file in the project root for full license text.
 #include <string>
 #include <vector>
 
-#include <NeoWPF/Contracts/IFileDialog.h>
+#include <NeoWPF/Contracts/IGeneral.h>
 #include <NeoWPF/Contracts/IWindowChrome.h>
 #include <NeoWPF/Contracts/IRendering.h>
 #include <NeoWPF/Contracts/IWindowing.h>
@@ -27,6 +27,7 @@ public:
     virtual ~IPlatform() = default;
 
     virtual const char* Name() const noexcept = 0;
+    virtual IClipboard& Clipboard() noexcept = 0;
     virtual IWindowing& Windowing() noexcept = 0;
     virtual IRendering& Rendering() noexcept = 0;
     virtual IWindowChrome* Chrome() noexcept = 0;

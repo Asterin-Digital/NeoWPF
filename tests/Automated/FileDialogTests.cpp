@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <NeoWPF/Contracts/IFileDialog.h>
+#include <NeoWPF/Contracts/IGeneral.h>
 #if defined(_WIN32)
 #include <NeoWPF/Platform/Windows/WFileDialog.h>
 #else

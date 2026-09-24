@@ -1,5 +1,5 @@
 /*
-MIT License — Copyright (c) 2026 NeoWPF
+Apache 2.0 License — Copyright (c) 2026 NeoWPF
 See LICENSE file in the project root for full license text.
 */
 
@@ -7,6 +7,7 @@ See LICENSE file in the project root for full license text.
 
 #include <NeoWPF/Contracts/IPlatform.h>
 #include <NeoWPF/Platform/CurlHttp.h>
+#include <NeoWPF/Platform/Linux/LClipboard.h>
 #include <NeoWPF/Platform/Linux/LFileDialog.h>
 #include <NeoWPF/Platform/Linux/LImageDecoding.h>
 #include <NeoWPF/Platform/Linux/LWindowChrome.h>
@@ -21,6 +22,7 @@ public:
     ~LPlatform() override;
 
     const char* Name() const noexcept override;
+    NeoWPF::Contracts::IClipboard& Clipboard() noexcept override;
     NeoWPF::Contracts::IWindowing& Windowing() noexcept override;
     NeoWPF::Contracts::IRendering& Rendering() noexcept override;
     NeoWPF::Contracts::IWindowChrome* Chrome() noexcept override;
@@ -55,6 +57,7 @@ private:
     NeoWPF::Platform::CurlHttp m_http;
     LImageDecoding m_imageDecoding;
     LWindowing m_windowing;
+    LClipboard m_clipboard;
     LWindowChrome m_chrome;
     NeoWPF::Rendering::Vulkan::VulkanRendering m_rendering;
 };

@@ -1,5 +1,5 @@
 /*
-MIT License — Copyright (c) 2026 NeoWPF
+Apache 2.0 License — Copyright (c) 2026 NeoWPF
 See LICENSE file in the project root for full license text.
 */
 
@@ -15,6 +15,7 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::Platform::Linux {
 class LWindow;
+class LClipboard;
 }
 
 namespace NeoWPF::Platform::Linux {
@@ -55,6 +56,11 @@ public:
     wl_compositor* Compositor() const noexcept;
     wl_shm* Shm() const noexcept;
     wl_seat* Seat() const noexcept;
+    wl_data_device_manager* DataDeviceManager() const noexcept;
+    void AttachClipboard(LClipboard* clipboard) noexcept;
+    void DetachClipboard(LClipboard* clipboard) noexcept;
+    void RegisterInputSerial(std::uint32_t serial) noexcept;
+    std::uint32_t LastInputSerial() const noexcept;
     xdg_wm_base* XdgWmBase() const noexcept;
     bool HasXdgShell() const noexcept;
 
@@ -71,8 +77,11 @@ private:
     wl_compositor* m_compositor = nullptr;
     wl_shm* m_shm = nullptr;
     wl_seat* m_seat = nullptr;
+    wl_data_device_manager* m_dataDeviceManager = nullptr;
     xdg_wm_base* m_xdgWmBase = nullptr;
     bool m_hasXdgShell = false;
+    LClipboard* m_clipboard = nullptr;
+    std::uint32_t m_lastInputSerial = 0;
     std::vector<std::unique_ptr<LWindow>> m_windows;
     int m_exitCode = 0;
     bool m_consoleVisible = false;

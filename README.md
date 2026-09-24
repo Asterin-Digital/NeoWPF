@@ -1,6 +1,6 @@
 ## NeoWPF — A Modern C++ UI Framework
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20Android-lightgrey)](Compile.md)
 [![C++](https://img.shields.io/badge/C%2B%2B-20-blue)](Compile.md)
 [![Docs](https://img.shields.io/badge/docs-website-informational)](https://neowpf.github.io/Docs/)
@@ -131,4 +131,4 @@ Source files: [NeoWPF/Docs](https://github.com/NeoWPF/Docs).
 
 ### License
 
-NeoWPF uses an MIT license, See [LICENSE](./LICENSE) for details.
+NeoWPF uses the Apache 2.0 license, See [LICENSE](./LICENSE) for details.

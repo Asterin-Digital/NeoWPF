@@ -22,7 +22,8 @@ const xdg_toplevel_listener ToplevelListener = {
 }
 
 LWindow::LWindow(LWindowing& windowing, const wchar_t* title, int width, int height)
-    : m_display(windowing.Display()),
+        : m_windowing(windowing),
+            m_display(windowing.Display()),
       m_title(title ? title : L""),
       m_width((std::max)(width, 1)),
       m_height((std::max)(height, 1)),

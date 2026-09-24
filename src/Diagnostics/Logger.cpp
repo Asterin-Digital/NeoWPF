@@ -233,6 +233,7 @@ bool SetLevelByName(std::string_view name, Level level) noexcept {
         {"combobox",        Category::ComboBox},
         {"popup",           Category::Popup},
         {"itemscontrol",    Category::ItemsControl},
+        {"clipboard",       Category::Clipboard},
         {"renderer",        Category::Renderer},
         {"files",           Category::Files},
     };

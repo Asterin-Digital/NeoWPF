@@ -1,5 +1,5 @@
 /*
-MIT License — Copyright (c) 2026 NeoWPF
+Apache 2.0 License — Copyright (c) 2026 NeoWPF
 See LICENSE file in the project root for full license text.
 */
 
@@ -8,7 +8,7 @@ See LICENSE file in the project root for full license text.
 #include <string>
 #include <vector>
 
-#include <NeoWPF/Contracts/IFileDialog.h>
+#include <NeoWPF/Contracts/IGeneral.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
 
 namespace NeoWPF::UI {

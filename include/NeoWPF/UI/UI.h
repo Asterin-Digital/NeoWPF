@@ -1,7 +1,9 @@
-/**
- * MIT License — Copyright (c) 2026 NeoWPF
- * See LICENSE file in the project root for full license text.
- *
+/*
+Apache 2.0 License — Copyright (c) 2026 NeoWPF
+See LICENSE file in the project root for full license text.
+*/
+
+/*
  * Notes:
  * Keep src implementations out of this file.
  * Don't create a src file for UI.h (this) I prefer to keep it header only.
@@ -92,6 +94,7 @@
 #include <NeoWPF/UI/Controls/Base/GroupedToggleBase/GroupedToggleBase.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Controls/FilePicker/FilePicker.h>
+#include <NeoWPF/UI/Controls/Clipboard/Clipboard.h>
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
 #include <NeoWPF/UI/Controls/RadioButton/RadioButton.h>
 #include <NeoWPF/UI/Controls/ItemsControl/ItemsControl.h>

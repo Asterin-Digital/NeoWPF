@@ -1,5 +1,5 @@
 /*
-MIT License — Copyright (c) 2026 NeoWPF
+Apache 2.0 License — Copyright (c) 2026 NeoWPF
 See LICENSE file in the project root for full license text.
 */
 
@@ -73,6 +73,7 @@ private:
     std::uint32_t WaylandButtonToNeoWPFButton(std::uint32_t button) const noexcept;
     static std::uint32_t TranslateXkbKeysymToVirtualKey(std::uint32_t keysym) noexcept;
 
+    LWindowing& m_windowing;
     wl_display* m_display = nullptr;
     wl_surface* m_surface = nullptr;
     wl_seat* m_seat = nullptr;

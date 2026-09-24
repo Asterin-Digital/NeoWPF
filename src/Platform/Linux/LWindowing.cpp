@@ -1,6 +1,7 @@
 #include <NeoWPF/Platform/Linux/LWindowing.h>
 #include <NeoWPF/Platform/Linux/LClientSideTitleBar.h>
 #include <NeoWPF/Platform/Linux/LWindow.h>
+#include <NeoWPF/Platform/Linux/LClipboard.h>
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
@@ -226,6 +227,9 @@ bool LWindowing::PumpMessages(std::chrono::milliseconds timeout)
     if (!m_display || wl_display_dispatch_pending(m_display) < 0) {
         return false;
     }
+    if (m_clipboard) {
+        m_clipboard->ProcessPendingReads();
+    }
     wl_display_flush(m_display);
     pollfd descriptor{wl_display_get_fd(m_display), POLLIN, 0};
     const int result = poll(&descriptor, 1, static_cast<int>(timeout.count()));
@@ -304,6 +308,10 @@ void LWindowing::Disconnect() noexcept
         wl_shm_destroy(m_shm);
         m_shm = nullptr;
     }
+    if (m_dataDeviceManager) {
+        wl_data_device_manager_destroy(m_dataDeviceManager);
+        m_dataDeviceManager = nullptr;
+    }
     if (m_xdgWmBase) {
         xdg_wm_base_destroy(m_xdgWmBase);
         m_xdgWmBase = nullptr;
@@ -344,6 +352,35 @@ wl_seat* LWindowing::Seat() const noexcept
     return m_seat;
 }
 
+wl_data_device_manager* LWindowing::DataDeviceManager() const noexcept
+{
+    return m_dataDeviceManager;
+}
+
+void LWindowing::AttachClipboard(LClipboard* clipboard) noexcept
+{
+    m_clipboard = clipboard;
+}
+
+void LWindowing::DetachClipboard(LClipboard* clipboard) noexcept
+{
+    if (m_clipboard == clipboard) {
+        m_clipboard = nullptr;
+    }
+}
+
+void LWindowing::RegisterInputSerial(std::uint32_t serial) noexcept
+{
+    if (serial != 0) {
+        m_lastInputSerial = serial;
+    }
+}
+
+std::uint32_t LWindowing::LastInputSerial() const noexcept
+{
+    return m_lastInputSerial;
+}
+
 xdg_wm_base* LWindowing::XdgWmBase() const noexcept
 {
     return m_xdgWmBase;
@@ -371,6 +408,9 @@ void LWindowing::HandleGlobal(void* data, wl_registry* registry, std::uint32_t n
         if (windowing->m_seat) {
             NeoWPF::Diagnostics::LogInfo("[Wayland] Connected to seat");
         }
+    } else if (std::strcmp(interface, wl_data_device_manager_interface.name) == 0) {
+        windowing->m_dataDeviceManager = static_cast<wl_data_device_manager*>(wl_registry_bind(
+            registry, name, &wl_data_device_manager_interface, std::min(version, 3u)));
     } else if (std::strcmp(interface, "xdg_wm_base") == 0) {
         windowing->m_xdgWmBase = static_cast<xdg_wm_base*>(wl_registry_bind(
             registry, name, &xdg_wm_base_interface, 1));

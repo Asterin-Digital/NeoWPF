@@ -173,13 +173,14 @@ void LWindow::HandlePointerMotion(void* data, wl_pointer*, std::uint32_t, wl_fix
         window->m_pointerX, window->m_pointerY, window->m_pointerButtonState);
 }
 
-void LWindow::HandlePointerButton(void* data, wl_pointer*, std::uint32_t, std::uint32_t, std::uint32_t button,
+void LWindow::HandlePointerButton(void* data, wl_pointer*, std::uint32_t serial, std::uint32_t, std::uint32_t button,
                                  std::uint32_t state)
 {
     auto* window = static_cast<LWindow*>(data);
     if (!window) {
         return;
     }
+    window->m_windowing.RegisterInputSerial(serial);
     const auto bit = window->WaylandButtonToNeoWPFButton(button);
     if (bit == 0) {
         return;
@@ -249,13 +250,14 @@ void LWindow::HandleKeyboardLeave(void* data, wl_keyboard*, std::uint32_t, wl_su
     }
 }
 
-void LWindow::HandleKeyboardKey(void* data, wl_keyboard*, std::uint32_t, std::uint32_t, std::uint32_t key,
+void LWindow::HandleKeyboardKey(void* data, wl_keyboard*, std::uint32_t serial, std::uint32_t, std::uint32_t key,
                                std::uint32_t state)
 {
     auto* window = static_cast<LWindow*>(data);
     if (!window || !window->m_xkbState) {
         return;
     }
+    window->m_windowing.RegisterInputSerial(serial);
 
     const auto keysym = xkb_state_key_get_one_sym(window->m_xkbState, key + 8u);
     const auto virtualKey = TranslateXkbKeysymToVirtualKey(keysym);
