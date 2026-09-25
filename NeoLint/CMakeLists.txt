@@ -1,0 +1,93 @@
+﻿cmake_minimum_required(VERSION 3.20)
+
+project(NeoLint LANGUAGES CXX)
+
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/NeoLintVersion.txt" NEOLINT_VERSION)
+string(STRIP "${NEOLINT_VERSION}" NEOLINT_VERSION)
+if(NOT NEOLINT_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+  message(FATAL_ERROR "NeoLintVersion.txt must contain a semantic version")
+endif()
+
+if(WIN32)
+  set(NEOLINT_PLATFORM "Windows")
+  set(NEOLINT_DEFAULT_VCPKG_TRIPLET "x64-windows")
+elseif(UNIX)
+  set(NEOLINT_PLATFORM "Linux")
+  set(NEOLINT_DEFAULT_VCPKG_TRIPLET "x64-linux")
+else()
+  message(FATAL_ERROR "Unsupported NeoLint platform: ${CMAKE_SYSTEM_NAME}")
+endif()
+
+set(VCPKG_TARGET_TRIPLET "${NEOLINT_DEFAULT_VCPKG_TRIPLET}" CACHE STRING
+  "vcpkg triplet used by NeoLint")
+set(NEOLINT_VCPKG_PREFIX
+  "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
+if(NOT EXISTS "${NEOLINT_VCPKG_PREFIX}/share/nlohmann_json/nlohmann_jsonConfig.cmake")
+  message(FATAL_ERROR
+    "NeoLint requires nlohmann-json for triplet '${VCPKG_TARGET_TRIPLET}'. "
+    "Install it with: vcpkg install --triplet ${VCPKG_TARGET_TRIPLET}")
+endif()
+list(PREPEND CMAKE_PREFIX_PATH "${NEOLINT_VCPKG_PREFIX}")
+
+set(NEOLINT_LLVM_ROOT "$ENV{IREFLECT_LLVM_ROOT}" CACHE PATH
+  "External LLVM/Clang SDK prefix")
+if(NOT NEOLINT_LLVM_ROOT)
+  message(FATAL_ERROR
+    "NEOLINT_LLVM_ROOT must point to an external LLVM/Clang SDK. "
+    "The IREFLECT_LLVM_ROOT environment variable is accepted as the default.")
+endif()
+
+set(LLVM_DIR "${NEOLINT_LLVM_ROOT}/share/llvm" CACHE PATH
+  "LLVM CMake package directory" FORCE)
+set(Clang_DIR "${NEOLINT_LLVM_ROOT}/share/clang" CACHE PATH
+  "Clang CMake package directory" FORCE)
+find_package(LLVM CONFIG REQUIRED)
+find_package(Clang CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoLintSources.cmake")
+
+add_executable(NeoLint ${NEOLINT_SOURCES})
+
+set(NEOLINT_OUTPUT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/NLintBuild/${NEOLINT_PLATFORM}")
+set_target_properties(NeoLint PROPERTIES
+  OUTPUT_NAME "NeoLint.${NEOLINT_PLATFORM}.$<CONFIG>.${NEOLINT_VERSION}"
+  RUNTIME_OUTPUT_DIRECTORY "${NEOLINT_OUTPUT_ROOT}/$<CONFIG>"
+  LIBRARY_OUTPUT_DIRECTORY "${NEOLINT_OUTPUT_ROOT}/$<CONFIG>"
+  ARCHIVE_OUTPUT_DIRECTORY "${NEOLINT_OUTPUT_ROOT}/$<CONFIG>"
+  RUNTIME_OUTPUT_DIRECTORY_DEBUG "${NEOLINT_OUTPUT_ROOT}/Debug"
+  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${NEOLINT_OUTPUT_ROOT}/Release"
+  RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${NEOLINT_OUTPUT_ROOT}/RelWithDebInfo"
+  RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${NEOLINT_OUTPUT_ROOT}/MinSizeRel"
+  LIBRARY_OUTPUT_DIRECTORY_DEBUG "${NEOLINT_OUTPUT_ROOT}/Debug"
+  LIBRARY_OUTPUT_DIRECTORY_RELEASE "${NEOLINT_OUTPUT_ROOT}/Release"
+  LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${NEOLINT_OUTPUT_ROOT}/RelWithDebInfo"
+  LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${NEOLINT_OUTPUT_ROOT}/MinSizeRel"
+  ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${NEOLINT_OUTPUT_ROOT}/Debug"
+  ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${NEOLINT_OUTPUT_ROOT}/Release"
+  ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${NEOLINT_OUTPUT_ROOT}/RelWithDebInfo"
+  ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${NEOLINT_OUTPUT_ROOT}/MinSizeRel"
+)
+
+target_include_directories(NeoLint PRIVATE
+  "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+target_include_directories(NeoLint SYSTEM PRIVATE
+  ${LLVM_INCLUDE_DIRS}
+  ${CLANG_INCLUDE_DIRS}
+)
+target_compile_definitions(NeoLint PRIVATE ${LLVM_DEFINITIONS})
+target_compile_features(NeoLint PRIVATE cxx_std_20)
+target_link_libraries(NeoLint PRIVATE
+  clangTooling
+  clangFrontend
+  clangAST
+  clangBasic
+  LLVMSupport
+  nlohmann_json::nlohmann_json
+)
+
+if(MSVC)
+  target_compile_options(NeoLint PRIVATE /W4 /permissive- /external:W0)
+endif()
+

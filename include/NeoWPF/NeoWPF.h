@@ -230,21 +230,43 @@ namespace NeoWPF {
 
     using UI::Image;
 
+    namespace Locales {
+        using Platform::WideToUtf8;
+
+        using Platform::Utf8ToWide;
+
+        using Platform::Trim;
+
+        using Platform::ToLower;
+
+        using Platform::ToUpper;
+
+        using Platform::NormalizeFileExtension;
+
+        using Platform::IsAsciiAlpha;
+
+        using Platform::IsAsciiDigit;
+
+        using Platform::Split;
+
+        using Platform::TryParseInt;
+
+        using Platform::TryParseUInt32Hex;
+
+        using ::NeoWPF::UI::Localization::Culture;
+
+        using ::NeoWPF::UI::Localization::LocaleExpression;
+
+        using ::NeoWPF::UI::Localization::LocaleOperations;
+
+        using ::NeoWPF::UI::Localization::LocaleString;
+
+        using ::NeoWPF::UI::Localization::LocaleTable;
+
+        using ::NeoWPF::UI::Localization::LocalizationManager;
+    }
+
     namespace UI {
-        namespace Locales {
-            using ::NeoWPF::UI::Localization::Culture;
-
-            using ::NeoWPF::UI::Localization::LocaleExpression;
-
-            using ::NeoWPF::UI::Localization::LocaleOperations;
-
-            using ::NeoWPF::UI::Localization::LocaleString;
-
-            using ::NeoWPF::UI::Localization::LocaleTable;
-
-            using ::NeoWPF::UI::Localization::LocalizationManager;
-        }
-
         namespace Media {
             using BitmapImage = ::NeoWPF::UI::Core::Media::BitmapImage;
 
