@@ -5,15 +5,6 @@
 
 namespace NeoWPF::UI {
 
-namespace {
-
-int DefaultPadding() noexcept { return 0; }
-NeoWPF::UI::Color DefaultBackgroundColor() noexcept { return NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu); }
-NeoWPF::UI::Color DefaultBorderColor() noexcept { return NeoWPF::UI::Color::FromArgb(0xFFABADB3u); }
-int DefaultBorderThickness() noexcept { return 0; }
-
-}
-
 Thickness Control::GetPadding() const noexcept {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", *this);
     if (property) {

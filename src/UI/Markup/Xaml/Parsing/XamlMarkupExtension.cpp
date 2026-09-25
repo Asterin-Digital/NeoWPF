@@ -112,21 +112,6 @@ private:
     std::wstring m_key;
 };
 
-std::string Trim(std::string_view value)
-{
-    std::size_t first = 0;
-    while (first < value.size() && std::isspace(static_cast<unsigned char>(value[first]))) {
-        ++first;
-    }
-
-    std::size_t last = value.size();
-    while (last > first && std::isspace(static_cast<unsigned char>(value[last - 1]))) {
-        --last;
-    }
-
-    return std::string(value.substr(first, last - first));
-}
-
 std::vector<std::string> SplitArguments(std::string_view value)
 {
     std::vector<std::string> arguments;
@@ -136,7 +121,8 @@ std::vector<std::string> SplitArguments(std::string_view value)
             continue;
         }
 
-        arguments.push_back(Trim(value.substr(start, index - start)));
+        arguments.push_back(NeoWPF::Platform::Trim(
+            std::string(value.substr(start, index - start))));
         start = index + 1;
     }
     return arguments;
@@ -191,13 +177,14 @@ std::shared_ptr<XamlMarkupExtension> ParseXamlMarkupExtension(
     const XamlMarkupExtensionContext& context,
     std::string& error)
 {
-    const auto expression = Trim(value);
+    const auto expression = NeoWPF::Platform::Trim(std::string(value));
     if (expression.size() < 3 || expression.front() != '{' || expression.back() != '}') {
         error = "markup extension must be enclosed in '{' and '}'";
         return nullptr;
     }
 
-    const auto body = Trim(std::string_view(expression).substr(1, expression.size() - 2));
+    const auto body = NeoWPF::Platform::Trim(
+        std::string(std::string_view(expression).substr(1, expression.size() - 2)));
     const auto separator = body.find_first_of(" \t\r\n");
     const auto name = body.substr(0, separator);
     const auto* factory = XamlMarkupExtensionRegistry::Get().Find(name);
@@ -269,12 +256,14 @@ void RegisterXamlMarkupExtensions()
                         error = "binding path was specified more than once";
                         return std::shared_ptr<XamlMarkupExtension>();
                     }
-                    path = Trim(argument);
+                    path = NeoWPF::Platform::Trim(argument);
                     continue;
                 }
 
-                const auto key = Trim(std::string_view(argument).substr(0, equals));
-                const auto rawValue = Trim(std::string_view(argument).substr(equals + 1));
+                const auto key = NeoWPF::Platform::Trim(
+                    std::string(std::string_view(argument).substr(0, equals)));
+                const auto rawValue = NeoWPF::Platform::Trim(
+                    std::string(std::string_view(argument).substr(equals + 1)));
                 if (key == "Path") {
                     if (!path.empty() || rawValue.empty()) {
                         error = "binding Path is missing or duplicated";
@@ -306,7 +295,7 @@ void RegisterXamlMarkupExtensions()
         [](std::string_view arguments,
            const XamlMarkupExtensionContext& context,
            std::string& error) {
-            const auto key = Trim(arguments);
+            const auto key = NeoWPF::Platform::Trim(std::string(arguments));
             if (key.empty()) {
                 error = "StaticResource key is required";
                 return std::shared_ptr<XamlMarkupExtension>();
@@ -319,7 +308,7 @@ void RegisterXamlMarkupExtensions()
         [](std::string_view arguments,
            const XamlMarkupExtensionContext&,
            std::string& error) {
-            const auto trimmedArguments = Trim(arguments);
+            const auto trimmedArguments = NeoWPF::Platform::Trim(std::string(arguments));
             if (trimmedArguments.empty()) {
                 error = "Locale key is required";
                 return std::shared_ptr<XamlMarkupExtension>();
@@ -338,12 +327,14 @@ void RegisterXamlMarkupExtensions()
                         error = "Locale key was specified more than once";
                         return std::shared_ptr<XamlMarkupExtension>();
                     }
-                    key = Trim(argument);
+                    key = NeoWPF::Platform::Trim(argument);
                     continue;
                 }
 
-                const auto name = Trim(std::string_view(argument).substr(0, equals));
-                const auto value = Trim(std::string_view(argument).substr(equals + 1));
+                const auto name = NeoWPF::Platform::Trim(
+                    std::string(std::string_view(argument).substr(0, equals)));
+                const auto value = NeoWPF::Platform::Trim(
+                    std::string(std::string_view(argument).substr(equals + 1)));
                 if (name != "Key" || value.empty() || !key.empty()) {
                     error = "Locale Key is invalid or duplicated";
                     return std::shared_ptr<XamlMarkupExtension>();

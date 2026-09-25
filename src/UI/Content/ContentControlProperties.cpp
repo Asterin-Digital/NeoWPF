@@ -3,10 +3,12 @@
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
 
-namespace NeoWPF::UI::Properties {
+namespace NeoWPF::UI::Content {
+using namespace NeoWPF::UI::Properties;
 
-const DependencyProperty& NeoWPF::UI::Content::ContentControl::ContentProperty()
+const Properties::DependencyProperty& ContentControl::ContentProperty()
 {
     static const auto& property = DependencyProperty::Register<
         NeoWPF::UI::Content::ContentControl, std::any>("Content", [] {
@@ -40,6 +42,10 @@ const DependencyProperty& NeoWPF::UI::Content::ContentControl::ContentProperty()
     (void)bindingRegistered;
     return property;
 }
+
+}
+
+namespace NeoWPF::UI::Properties {
 
 void RegisterContentControlProperties()
 {

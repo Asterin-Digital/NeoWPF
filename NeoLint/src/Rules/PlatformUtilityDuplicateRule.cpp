@@ -83,7 +83,8 @@ void PlatformUtilityDuplicateRule::RegisterMatchers(
     MatchFinder& finder, MatchFinder::MatchCallback& callback)
 {
     finder.addMatcher(
-        functionDecl(isDefinition(), unless(cxxMethodDecl())).bind("platform-utility-duplicate"),
+        functionDecl(isDefinition(), unless(cxxMethodDecl()), isExpansionInMainFile())
+            .bind("platform-utility-duplicate"),
         &callback);
 }
 

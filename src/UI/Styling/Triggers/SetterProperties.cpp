@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Styling/Triggers/Setter.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
 
 #include <functional>
 

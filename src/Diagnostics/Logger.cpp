@@ -201,19 +201,6 @@ Level GetGlobalLevel() noexcept {
     return static_cast<Level>(s_globalLevel.load(std::memory_order_relaxed));
 }
 
-static std::string ToLower(std::string_view v) {
-    return NeoWPF::Platform::ToLower(std::string(v));
-}
-
-static bool ParseLevel(std::string_view v, Level& out) noexcept {
-    const auto s = ToLower(v);
-    if (s == "off") { out = Level::Off; return true; }
-    if (s == "info") { out = Level::Info; return true; }
-    if (s == "debug") { out = Level::Debug; return true; }
-    if (s == "trace") { out = Level::Trace; return true; }
-    return false;
-}
-
 bool SetLevelByName(std::string_view name, Level level) noexcept {
     static constexpr std::pair<std::string_view, Category> kMap[] = {
         {"visual",          Category::Visual},
@@ -235,7 +222,7 @@ bool SetLevelByName(std::string_view name, Level level) noexcept {
         {"files",           Category::Files},
     };
 
-    const auto n = ToLower(name);
+    const auto n = NeoWPF::Platform::ToLower(std::string(name));
     for (const auto& [key, cat] : kMap) {
         if (n == key) {
             SetLevel(cat, level);

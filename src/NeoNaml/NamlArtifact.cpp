@@ -1,7 +1,7 @@
 #include <NeoNaml/NamlArtifact.h>
+#include <NeoWPF/Platform/PlatformUtils.h>
 
 #include <charconv>
-#include <cctype>
 #include <sstream>
 #include <string_view>
 
@@ -39,16 +39,9 @@ std::string Escape(std::string_view value)
     return result;
 }
 
-std::string Trim(std::string_view value)
-{
-    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front()))) value.remove_prefix(1);
-    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back()))) value.remove_suffix(1);
-    return std::string(value);
-}
-
 bool ParseUnsigned(std::string_view value, std::uint32_t& result)
 {
-    const auto trimmed = Trim(value);
+    const auto trimmed = NeoWPF::Platform::Trim(std::string(value));
     const auto parsed = std::from_chars(trimmed.data(), trimmed.data() + trimmed.size(), result);
     return parsed.ec == std::errc{} && parsed.ptr == trimmed.data() + trimmed.size();
 }
@@ -91,7 +84,8 @@ std::string Field(std::string_view line, std::string_view name)
     if (prefix == std::string_view::npos) return {};
     const auto start = prefix + name.size() + 1;
     const auto end = line.find(' ', start);
-    return Trim(line.substr(start, end == std::string_view::npos ? line.size() - start : end - start));
+    return NeoWPF::Platform::Trim(std::string(line.substr(
+        start, end == std::string_view::npos ? line.size() - start : end - start)));
 }
 
 bool ParseKind(std::string_view value, NamlValueKind& kind)
@@ -109,7 +103,7 @@ bool ParseKind(std::string_view value, NamlValueKind& kind)
 
 bool ParseRecord(std::string_view line, std::string_view section, NamlArtifact& artifact, std::string& error)
 {
-    const auto trimmed = Trim(line);
+    const auto trimmed = NeoWPF::Platform::Trim(std::string(line));
     if (trimmed.empty() || trimmed == "}") return true;
 
     if (section.empty() && trimmed.rfind("version=", 0) == 0) {
@@ -296,7 +290,7 @@ bool DeserializeNaml(const unsigned char* data,
     bool header = false;
     std::string section;
     while (std::getline(input, line)) {
-        const auto trimmed = Trim(line);
+        const auto trimmed = NeoWPF::Platform::Trim(std::string(line));
         if (trimmed == "NAML1") { header = true; continue; }
         if (trimmed.ends_with(" {")) { section = trimmed.substr(0, trimmed.size() - 2); continue; }
         if (trimmed == "end") break;

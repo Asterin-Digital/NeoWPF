@@ -680,11 +680,6 @@ void TextBox::EnsureTextTexture()
         return;
     }
 
-    int widthConstraint = 0;
-    if (m_textWrapping != TextWrapping::NoWrap) {
-        widthConstraint = contentHostWidth;
-    }
-
     const auto displayText = (m_text.empty() && !m_placeholderText.empty()) ? m_placeholderText : m_text;
     (void)displayText;
     m_renderCache.Clear();

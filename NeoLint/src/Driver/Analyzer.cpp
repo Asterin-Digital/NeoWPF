@@ -6,16 +6,60 @@
 #include <NeoLint/Diagnostics/Logger.h>
 
 #include <clang/Tooling/JSONCompilationDatabase.h>
+#include <clang/Tooling/CompilationDatabase.h>
 #include <clang/Tooling/Tooling.h>
 
 #include <algorithm>
 #include <string>
+#include <utility>
 
 namespace neolint
 {
 namespace
 {
 constexpr std::size_t kCacheSaveInterval = 50;
+
+class SingleCommandDatabase final : public clang::tooling::CompilationDatabase
+{
+public:
+    explicit SingleCommandDatabase(clang::tooling::CompileCommand command)
+        : command_(std::move(command)) {}
+
+    std::vector<clang::tooling::CompileCommand> getCompileCommands(
+        llvm::StringRef) const override
+    {
+        return {command_};
+    }
+
+    std::vector<std::string> getAllFiles() const override
+    {
+        return {command_.Filename};
+    }
+
+private:
+    clang::tooling::CompileCommand command_;
+};
+
+const clang::tooling::CompileCommand& SelectCommand(
+    const std::vector<clang::tooling::CompileCommand>& commands,
+    const std::string& preferredConfig)
+{
+    if (!preferredConfig.empty())
+    {
+        const std::string marker = "CMAKE_INTDIR=\"" + preferredConfig + "\"";
+        for (const auto& command : commands)
+        {
+            if (std::any_of(command.CommandLine.begin(), command.CommandLine.end(),
+                [&](const std::string& argument) {
+                    return argument.find(marker) != std::string::npos;
+                }))
+            {
+                return command;
+            }
+        }
+    }
+    return commands.front();
+}
 
 bool IsUnder(const std::filesystem::path& file, const std::filesystem::path& root)
 {
@@ -100,9 +144,15 @@ int Analyzer::Run(const AnalysisOptions& options, DiagnosticsSink& diagnostics) 
     for (std::size_t index = 0; index < files.size(); ++index)
     {
         const auto& file = files[index];
+        const auto commands = database->getCompileCommands(file);
+        if (commands.empty())
+        {
+            diagnostics::Logger::Warning("no compile command for " + file + ", skipping");
+            continue;
+        }
+        const auto& selectedCommand = SelectCommand(commands, options.buildConfig);
         const auto sourceStamp = driver::AnalysisCache::FileStamp(file);
-        const auto commandSignature = driver::AnalysisCache::CommandSignature(
-            database->getCompileCommands(file));
+        const auto commandSignature = driver::AnalysisCache::CommandSignature({selectedCommand});
         DiagnosticList fileDiagnostics;
         if (cache.TryGet(file, sourceStamp, commandSignature, fileDiagnostics))
         {
@@ -115,7 +165,8 @@ int Analyzer::Run(const AnalysisOptions& options, DiagnosticsSink& diagnostics) 
         diagnostics::Logger::Info("[" + std::to_string(index + 1) + "/" +
                                   std::to_string(files.size()) + "] analyzing " + file);
         DiagnosticsSink analyzedFile;
-        clang::tooling::ClangTool tool(*database, {file});
+        SingleCommandDatabase singleDatabase(selectedCommand);
+        clang::tooling::ClangTool tool(singleDatabase, {file});
         driver::ActionFactory factory(config, analyzedFile, options.strict);
         result = std::max(result, tool.run(&factory));
         fileDiagnostics = analyzedFile.Diagnostics();

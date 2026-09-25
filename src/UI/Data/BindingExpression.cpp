@@ -65,39 +65,6 @@ std::optional<std::any> ResolvePocoValue(const std::shared_ptr<INotifyPropertyCh
     return currentValue;
 }
 
-bool TrySetPocoValue(const std::shared_ptr<INotifyPropertyChanged>& source,
-                     const std::vector<std::string>& segments,
-                     const std::any& value)
-{
-    if (!source || segments.empty()) {
-        return false;
-    }
-
-    std::shared_ptr<INotifyPropertyChanged> currentSource = source;
-    for (std::size_t index = 0; index + 1 < segments.size(); ++index) {
-        if (!currentSource) {
-            return false;
-        }
-
-        const auto childValue = currentSource->GetPropertyValue(segments[index]);
-        if (!childValue.has_value()) {
-            return false;
-        }
-
-        try {
-            currentSource = std::any_cast<std::shared_ptr<INotifyPropertyChanged>>(*childValue);
-        } catch (const std::bad_any_cast&) {
-            return false;
-        }
-    }
-
-    if (!currentSource) {
-        return false;
-    }
-
-    return currentSource->SetPropertyValue(segments.back(), value);
-}
-
 } // namespace
 
 BindingExpression::BindingExpression(Properties::DependencyObject& target,
@@ -190,7 +157,7 @@ bool BindingExpression::TrySetPocoSourceValue(const std::shared_ptr<INotifyPrope
         return false;
     }
 
-    std::shared_ptr<INotifyPropertyChanged> currentSource = source;
+    auto currentSource = source;
     for (std::size_t index = 0; index + 1 < segments.size(); ++index) {
         if (!currentSource) {
             return false;
@@ -208,11 +175,7 @@ bool BindingExpression::TrySetPocoSourceValue(const std::shared_ptr<INotifyPrope
         }
     }
 
-    if (!currentSource) {
-        return false;
-    }
-
-    return currentSource->SetPropertyValue(segments.back(), value);
+    return currentSource && currentSource->SetPropertyValue(segments.back(), value);
 }
 
 void BindingExpression::Attach()

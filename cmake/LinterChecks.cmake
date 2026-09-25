@@ -71,6 +71,7 @@ add_custom_target(NeoWPF.NeoLintCheck
     COMMAND "${NEOWPF_NEOLINT_EXECUTABLE}"
         --compile-commands "${NEOWPF_NEOLINT_COMPILE_COMMANDS}"
         --config "${NEOWPF_NEOLINT_CONFIG}"
+        --build-config "$<CONFIG>"
         --report "${NEOWPF_NEOLINT_REPORT}"
         --cache "${NEOWPF_NEOLINT_CACHE}"
         --source-root "${CMAKE_CURRENT_SOURCE_DIR}/src"
@@ -78,6 +79,7 @@ add_custom_target(NeoWPF.NeoLintCheck
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     COMMENT "Running NeoLint checks before compiling NeoWPF"
     VERBATIM
+    USES_TERMINAL
 )
 
 add_dependencies(NeoWPF.Foundation NeoWPF.NeoLintCheck)

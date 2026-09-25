@@ -283,8 +283,6 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     const double boxTop = fAbsY + (drawHeight - boxSize) / 2.0;
     const double boxLeft = fAbsX;
-    const double boxRight = boxLeft + boxSize;
-    const double boxBottom = boxTop + boxSize;
 
     auto box = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Box"));
     if (box) {

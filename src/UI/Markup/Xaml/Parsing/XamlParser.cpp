@@ -173,7 +173,6 @@ XamlNode ParseNode(ParserState& state)
 
         if (state.Offset < state.Source.size() && state.Source[state.Offset] == '!') {
             if (state.Source.compare(state.Offset, 2, "--") == 0) {
-                const std::size_t commentStart = state.Offset;
                 state.Offset += 2;
                 state.Column += 2;
                 while (state.Offset + 1 < state.Source.size()) {

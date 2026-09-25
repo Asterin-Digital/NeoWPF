@@ -45,12 +45,6 @@ namespace NeoWPF::Rendering::D3D11 {
 
 namespace NeoWPF::Rendering::D3D11 {
 
-static void LogAndThrow(const char* message)
-{
-    ::NeoWPF::Diagnostics::LogError("%s", message);
-    throw std::runtime_error(message);
-}
-
 static void ThrowIfFailed(HRESULT hr, const char* message)
 {
     if (FAILED(hr)) {

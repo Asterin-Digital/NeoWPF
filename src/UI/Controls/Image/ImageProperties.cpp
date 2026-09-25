@@ -36,13 +36,16 @@ void RegisterImageProperties() {
         stretchDirectionMetadata);
 }
 
+}
+
+namespace NeoWPF::UI {
 namespace {
 
-const NeoWPF::UI::Properties::DependencyProperty& EnsureImageProperty(const char* name)
+const Properties::DependencyProperty& EnsureImageProperty(const char* name)
 {
-    NeoWPF::UI::Properties::RegisterImageProperties();
-    const auto* property = NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty(
-        name, typeid(NeoWPF::UI::Image));
+    Properties::RegisterImageProperties();
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty(
+        name, typeid(Image));
     if (!property) {
         throw std::logic_error("Image dependency property was not registered");
     }
@@ -51,8 +54,8 @@ const NeoWPF::UI::Properties::DependencyProperty& EnsureImageProperty(const char
 
 }
 
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Image::SourceProperty = EnsureImageProperty("Source");
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Image::StretchProperty = EnsureImageProperty("Stretch");
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Image::StretchDirectionProperty = EnsureImageProperty("StretchDirection");
+const Properties::DependencyProperty& Image::SourceProperty = EnsureImageProperty("Source");
+const Properties::DependencyProperty& Image::StretchProperty = EnsureImageProperty("Stretch");
+const Properties::DependencyProperty& Image::StretchDirectionProperty = EnsureImageProperty("StretchDirection");
 
 }

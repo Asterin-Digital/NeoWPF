@@ -228,9 +228,6 @@ namespace NeoWPF::UI {
         metrics.colWidths = layout.colWidths;
         metrics.childLayouts.resize(children.size());
 
-        const std::size_t colCount = metrics.colWidths.size();
-        const std::size_t rowCount = metrics.rowHeights.size();
-
         for (std::size_t i = 0; i < children.size(); ++i) {
             auto child = children[i];
             if (!child) {

@@ -298,7 +298,6 @@ void ItemsControl::Arrange(double finalWidth, double finalHeight)
     if (m_virtualization) {
         const int first = m_virtualization->GetFirstRealizedIndex();
         const int last = m_virtualization->GetLastRealizedIndex();
-        const double itemHeight = m_virtualization->GetItemHeight();
         const double vOffset = m_virtualization->GetVerticalOffset();
 
 

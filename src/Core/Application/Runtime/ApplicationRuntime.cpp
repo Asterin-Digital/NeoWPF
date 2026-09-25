@@ -269,12 +269,7 @@ void StartRenderThread()
 
         }
 
-        {
-            std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
-            for (const auto& windowState : s_appState.windows) {
-                platform->Rendering().Shutdown();
-            }
-        }
+        platform->Rendering().Shutdown();
         NeoWPF::Core::Threading::ThreadAffinity::ClearRenderThread();
     });
 }
@@ -310,7 +305,6 @@ int RunApplicationMessageLoop()
     unsigned int clientHeight = 0;
     windowing.GetWindowSize(primaryWindow, clientWidth, clientHeight);
 
-    const auto& visuals = NeoWPF::UI::Visual::GetRegisteredVisuals();
     {
         std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
         for (auto& windowState : s_appState.windows) {

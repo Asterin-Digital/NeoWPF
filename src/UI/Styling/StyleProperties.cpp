@@ -2,6 +2,7 @@
 #include <NeoWPF/UI/Styling/Triggers/Setter.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
 
 namespace NeoWPF::UI::Styling {
 namespace {

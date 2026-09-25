@@ -16,6 +16,7 @@ struct AnalysisOptions
     std::filesystem::path report;
     std::filesystem::path cache;
     std::vector<std::filesystem::path> sourceRoots;
+    std::string buildConfig;
     bool strict = false;
 };
 
