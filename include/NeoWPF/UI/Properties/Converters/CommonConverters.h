@@ -9,6 +9,7 @@ See LICENSE file in the project root for full license text.
 
 #include <any>
 #include <memory>
+#include <typeindex>
 
 namespace NeoWPF::UI {
 enum class PopupPlacement;
@@ -129,6 +130,12 @@ public:
     bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
 };
 
+class TypeIndexConverter final : public TypeConverter {
+public:
+    bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
+};
+
 std::shared_ptr<const TypeConverter> GetStringConverter();
 std::shared_ptr<const TypeConverter> GetContentConverter();
 std::shared_ptr<const TypeConverter> GetWideStringConverter();
@@ -147,6 +154,7 @@ std::shared_ptr<const TypeConverter> GetSelectionModeConverter();
 std::shared_ptr<const TypeConverter> GetPopupPlacementConverter();
 std::shared_ptr<const TypeConverter> GetFontWeightConverter();
 std::shared_ptr<const TypeConverter> GetFontStyleConverter();
+std::shared_ptr<const TypeConverter> GetTypeIndexConverter();
 
 bool TryConvertValue(const DependencyProperty& property,
                      const std::any& value,

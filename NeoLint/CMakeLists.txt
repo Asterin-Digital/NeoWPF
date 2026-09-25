@@ -2,6 +2,8 @@
 
 project(NeoLint LANGUAGES CXX)
 
+include(CTest)
+
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/NeoLintVersion.txt" NEOLINT_VERSION)
 string(STRIP "${NEOLINT_VERSION}" NEOLINT_VERSION)
 if(NOT NEOLINT_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
@@ -10,7 +12,7 @@ endif()
 
 if(WIN32)
   set(NEOLINT_PLATFORM "Windows")
-  set(NEOLINT_DEFAULT_VCPKG_TRIPLET "x64-windows")
+  set(NEOLINT_DEFAULT_VCPKG_TRIPLET "x64-windows-static-md")
 elseif(UNIX)
   set(NEOLINT_PLATFORM "Linux")
   set(NEOLINT_DEFAULT_VCPKG_TRIPLET "x64-linux")
@@ -44,6 +46,9 @@ set(Clang_DIR "${NEOLINT_LLVM_ROOT}/share/clang" CACHE PATH
 find_package(LLVM CONFIG REQUIRED)
 find_package(Clang CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+if(BUILD_TESTING)
+  find_package(GTest CONFIG REQUIRED)
+endif()
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoLintSources.cmake")
 
@@ -89,5 +94,37 @@ target_link_libraries(NeoLint PRIVATE
 
 if(MSVC)
   target_compile_options(NeoLint PRIVATE /W4 /permissive- /external:W0)
+endif()
+
+if(BUILD_TESTING)
+  add_executable(NeoLint.Tests
+    ${NEOLINT_TEST_SOURCES}
+  )
+  target_include_directories(NeoLint.Tests PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  )
+  target_compile_definitions(NeoLint.Tests PRIVATE
+    NEOLINT_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+  )
+  target_compile_features(NeoLint.Tests PRIVATE cxx_std_20)
+  target_include_directories(NeoLint.Tests SYSTEM PRIVATE
+    ${LLVM_INCLUDE_DIRS}
+    ${CLANG_INCLUDE_DIRS}
+  )
+  target_link_libraries(NeoLint.Tests PRIVATE
+    GTest::gtest_main
+    nlohmann_json::nlohmann_json
+    clangTooling
+    clangFrontend
+    clangASTMatchers
+    clangAST
+    clangBasic
+    LLVMSupport
+  )
+  if(MSVC)
+    target_compile_options(NeoLint.Tests PRIVATE /W4 /permissive- /external:W0)
+  endif()
+  include(GoogleTest)
+  gtest_discover_tests(NeoLint.Tests)
 endif()
 

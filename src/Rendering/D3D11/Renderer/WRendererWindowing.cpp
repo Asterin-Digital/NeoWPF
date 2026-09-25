@@ -52,20 +52,6 @@ void SetCurrentWindow(HWND hwnd)
     g_currentWindow = hwnd;
 }
 
-void RemoveContext(HWND hwnd)
-{
-    std::lock_guard<std::mutex> lock(g_windowContextsMutex);
-    auto it = g_windowContexts.find(hwnd);
-    if (it != g_windowContexts.end()) {
-        it->second->rtv.Reset();
-        it->second->swapChain.Reset();
-        g_windowContexts.erase(it);
-    }
-    if (g_currentWindow == hwnd) {
-        g_currentWindow = nullptr;
-    }
-}
-
 }
 
 namespace NeoWPF::Rendering::D3D11 {

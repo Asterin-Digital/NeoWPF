@@ -1,42 +1,8 @@
 #include <NeoWPF/UI/Controls/Image/Image.h>
 #include <NeoWPF/UI/Core/Media/BitmapImage.h>
-#include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
-
-namespace {
-    const NeoWPF::UI::Properties::DependencyProperty& EnsureSourceProperty()
-    {
-        NeoWPF::UI::Properties::RegisterImageProperties();
-        if (const auto* property = NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("Source", typeid(NeoWPF::UI::Image))) {
-            return *property;
-        }
-        return NeoWPF::UI::Properties::RegisterProperty<NeoWPF::UI::Image, std::shared_ptr<NeoWPF::UI::Core::Media::ImageSource>>("Source");
-    }
-
-    const NeoWPF::UI::Properties::DependencyProperty& EnsureStretchProperty()
-    {
-        NeoWPF::UI::Properties::RegisterImageProperties();
-        if (const auto* property = NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("Stretch", typeid(NeoWPF::UI::Image))) {
-            return *property;
-        }
-        return NeoWPF::UI::Properties::RegisterProperty<NeoWPF::UI::Image, NeoWPF::UI::Core::Media::Stretch>("Stretch");
-    }
-
-    const NeoWPF::UI::Properties::DependencyProperty& EnsureStretchDirectionProperty()
-    {
-        NeoWPF::UI::Properties::RegisterImageProperties();
-        if (const auto* property = NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("StretchDirection", typeid(NeoWPF::UI::Image))) {
-            return *property;
-        }
-        return NeoWPF::UI::Properties::RegisterProperty<NeoWPF::UI::Image, NeoWPF::UI::Core::Media::StretchDirection>("StretchDirection");
-    }
-}
-
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Image::SourceProperty = EnsureSourceProperty();
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Image::StretchProperty = EnsureStretchProperty();
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Image::StretchDirectionProperty = EnsureStretchDirectionProperty();
 
 namespace NeoWPF::UI {
 

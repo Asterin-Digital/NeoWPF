@@ -1,6 +1,8 @@
 #include <NeoWPF/UI/Controls/Image/Image.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
+#include <stdexcept>
+
 namespace NeoWPF::UI::Properties {
     namespace UI = ::NeoWPF::UI;
     using ::NeoWPF::UI::Color;
@@ -33,5 +35,24 @@ void RegisterImageProperties() {
         &UI::Image::SetStretchDirection,
         stretchDirectionMetadata);
 }
+
+namespace {
+
+const NeoWPF::UI::Properties::DependencyProperty& EnsureImageProperty(const char* name)
+{
+    NeoWPF::UI::Properties::RegisterImageProperties();
+    const auto* property = NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty(
+        name, typeid(NeoWPF::UI::Image));
+    if (!property) {
+        throw std::logic_error("Image dependency property was not registered");
+    }
+    return *property;
+}
+
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Image::SourceProperty = EnsureImageProperty("Source");
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Image::StretchProperty = EnsureImageProperty("Stretch");
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Image::StretchDirectionProperty = EnsureImageProperty("StretchDirection");
 
 }

@@ -26,4 +26,4 @@ ToDo.md
 __pycache__
 bin
 obj
-/NLintBuild/
+NeoLint/NLintBuild/

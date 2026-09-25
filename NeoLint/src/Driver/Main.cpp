@@ -11,7 +11,9 @@ namespace
 void PrintUsage(const char* executable)
 {
     std::cout << "Usage: " << executable
-              << " --compile-commands <compile_commands.json> [--config <.neolint.yml>]\n"
+              << " --compile-commands <compile_commands.json> [--config <.neolint.json>]"
+              << " [--report <report.json>] [--cache <cache.json>]"
+              << " [--source-root <src-or-include>]... [--strict]\n"
               << "       " << executable << " --list-rules\n";
 }
 }
@@ -33,10 +35,20 @@ int main(int argc, char** argv)
             listRules = true;
             continue;
         }
-        if ((argument == "--compile-commands" || argument == "--config") && index + 1 < argc)
+        if (argument == "--strict")
+        {
+            options.strict = true;
+            continue;
+        }
+           if ((argument == "--compile-commands" || argument == "--config" ||
+               argument == "--report" || argument == "--cache" ||
+               argument == "--source-root") && index + 1 < argc)
         {
             if (argument == "--compile-commands") options.compilationDatabase = argv[++index];
-            else options.config = argv[++index];
+            else if (argument == "--config") options.config = argv[++index];
+              else if (argument == "--report") options.report = argv[++index];
+              else if (argument == "--cache") options.cache = argv[++index];
+              else options.sourceRoots.emplace_back(argv[++index]);
             continue;
         }
         std::cerr << "NeoLint: unknown or incomplete argument: " << argument << '\n';

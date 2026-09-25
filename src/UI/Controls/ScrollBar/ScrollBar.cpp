@@ -4,7 +4,6 @@
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
-#include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <cmath>
 #include <memory>
 #include <algorithm>
@@ -128,7 +127,6 @@ void ScrollBar::Measure(double availableWidth, double availableHeight)
 {
     const bool isVertical = m_orientation == Orientation::Vertical;
     const int thickness = 16;
-    const int minLength = 24;
     double primaryAvailable = (std::max)(0.0, isVertical ? availableHeight : availableWidth);
 
     if (m_viewportSize > 0) {
@@ -147,10 +145,6 @@ void ScrollBar::Measure(double availableWidth, double availableHeight)
 
 void ScrollBar::Arrange(double finalWidth, double finalHeight)
 {
-    const bool isVertical = m_orientation == Orientation::Vertical;
-    double effectiveWidth = finalWidth;
-    double effectiveHeight = finalHeight;
-
     FrameworkElement::Arrange(finalWidth, finalHeight);
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Control, NeoWPF::Diagnostics::Level::Debug, "[ScrollBar] Arrange: final=%dx%d orientation=%d value=%d content=%d viewport=%d", finalWidth, finalHeight, static_cast<int>(m_orientation), GetValue(), m_contentSize, m_viewportSize);
     UpdateScrollState();
@@ -236,15 +230,6 @@ void ScrollBar::SetOrientationValue(int orientation) noexcept
         thumbControl->SetOrientation(m_orientation);
     }
     InvalidateVisual();
-}
-
-const NeoWPF::UI::Properties::DependencyProperty& ScrollBar::GetOrientationProperty()
-{
-    static const auto& property = NeoWPF::UI::Properties::RegisterProperty<ScrollBar, int>(
-        "Orientation",
-        &ScrollBar::GetOrientationValue,
-        &ScrollBar::SetOrientationValue);
-    return property;
 }
 
 void ScrollBar::UpdateThumbVisualState() noexcept

@@ -5,6 +5,7 @@
 
 #include <filesystem>
 #include <string>
+#include <vector>
 
 namespace neolint
 {
@@ -12,6 +13,10 @@ struct AnalysisOptions
 {
     std::filesystem::path compilationDatabase;
     std::filesystem::path config;
+    std::filesystem::path report;
+    std::filesystem::path cache;
+    std::vector<std::filesystem::path> sourceRoots;
+    bool strict = false;
 };
 
 class Analyzer

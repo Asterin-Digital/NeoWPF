@@ -3,7 +3,7 @@ import sys
 
 IGNORED_NAMES = {
     ".git", "__pycache__", ".DS_Store", "Library", "Temp", "obj", "Build",
-    "Logs", "UserSettings", "x64", ".vs", "out", "cmake", "vcpkg_installed", "build", "bin", ".vscode", "Testing", "Debug", "NWpfBuild", "tools", "reports"
+    "Logs", "UserSettings", "x64", ".vs", "out", "cmake", "vcpkg_installed", "build", "bin", ".vscode", "Testing", "Debug", "NWpfBuild", "tools", "reports", "NLintBuild"
 }
 
 IGNORED_PATHS = {

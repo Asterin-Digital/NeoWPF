@@ -8,6 +8,7 @@
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_CXX_COMPILER": "$env{VCToolsInstallDir}/bin/Hostx64/x64/cl.exe"
             },
             "condition": {
@@ -23,6 +24,7 @@
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "NEOWPF_RENDERER_BACKEND": "Vulkan"
             },
             "condition": {

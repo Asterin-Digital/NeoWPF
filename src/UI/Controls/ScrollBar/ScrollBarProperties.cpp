@@ -32,3 +32,13 @@ namespace NeoWPF::UI::Properties {
             orientationMetadata);
     }
 }
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::ScrollBar::GetOrientationProperty()
+{
+    static const auto* property = [] {
+        NeoWPF::UI::Properties::RegisterScrollBarProperties();
+        return NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty(
+            "Orientation", typeid(NeoWPF::UI::ScrollBar));
+    }();
+    return *property;
+}

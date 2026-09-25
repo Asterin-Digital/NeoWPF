@@ -826,7 +826,7 @@ public:
                                              const Properties::PropertyMetadata& metadata,
                                              const std::any& oldValue,
                                              const std::any& newValue,
-                                             Properties::PropertyValueSource source);
+                                             Properties::PropertyValueSource source) override;
 
     /*
         @summary

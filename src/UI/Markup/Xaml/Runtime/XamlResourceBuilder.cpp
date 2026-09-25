@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlResourceBuilder.h>
 
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
+#include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/UI/Styling/Style.h>
 
 #include <array>
@@ -10,17 +11,6 @@
 
 namespace NeoWPF::UI::Markup::Xaml {
 namespace {
-
-std::wstring ToWideString(std::string_view value)
-{
-    std::wstring result;
-    result.reserve(value.size());
-    for (const char character : value) {
-        result.push_back(static_cast<wchar_t>(character));
-    }
-    return result;
-}
-
 }
 
 bool IsXamlResourcesProperty(std::string_view propertyName)
@@ -98,7 +88,7 @@ bool BuildXamlResourceDictionary(
         if (!localKeys.insert(entry.XamlKey).second) {
             NeoWPF::Diagnostics::QueueDeveloperWarning(
                 NeoWPF::Diagnostics::DeveloperWarnings::kXamlResourceKeyCode,
-                L"Duplicate resource key: " + ToWideString(entry.XamlKey),
+                L"Duplicate resource key: " + NeoWPF::Platform::Utf8ToWide(entry.XamlKey),
                 NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
             continue;
         }

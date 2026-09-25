@@ -1,114 +1,150 @@
 #include <NeoLint/Driver/Analyzer.h>
-#include <NeoLint/Core/IRule.h>
-#include <NeoLint/Core/RuleContext.h>
+#include <NeoLint/Driver/AnalysisActions.h>
+#include <NeoLint/Driver/AnalysisCache.h>
 #include <NeoLint/Core/RuleRegistry.h>
+#include <NeoLint/Reporting/JsonReportWriter.h>
+#include <NeoLint/Diagnostics/Logger.h>
 
-#include <clang/AST/ASTConsumer.h>
-#include <clang/Frontend/CompilerInstance.h>
-#include <clang/Frontend/FrontendActions.h>
-#include <clang/Tooling/CompilationDatabase.h>
 #include <clang/Tooling/JSONCompilationDatabase.h>
 #include <clang/Tooling/Tooling.h>
 
-#include <memory>
+#include <algorithm>
+#include <string>
 
 namespace neolint
 {
 namespace
 {
-class MatchAdapter final : public clang::ast_matchers::MatchFinder::MatchCallback
-{
-public:
-    MatchAdapter(IRule& rule, RuleContext& context) : rule_(rule), context_(context) {}
-    void run(const clang::ast_matchers::MatchFinder::MatchResult& result) override
-    {
-        rule_.OnMatch(result, context_);
-    }
-private:
-    IRule& rule_;
-    RuleContext& context_;
-};
+constexpr std::size_t kCacheSaveInterval = 50;
 
-class Consumer final : public clang::ASTConsumer
+bool IsUnder(const std::filesystem::path& file, const std::filesystem::path& root)
 {
-public:
-    Consumer(clang::ASTContext& ast, const RuleConfig& config, DiagnosticsSink& diagnostics)
-        : context_(ast, config, diagnostics)
+    const auto relative = file.lexically_relative(root);
+    return !relative.empty() && relative != "." &&
+        relative.native().find(L"..") != 0 && !relative.is_absolute();
+}
+
+std::vector<std::filesystem::path> NormalizeRoots(
+    const std::vector<std::filesystem::path>& roots)
+{
+    std::vector<std::filesystem::path> normalized;
+    for (const auto& root : roots) normalized.push_back(driver::AnalysisCache::NormalizePath(root));
+    return normalized;
+}
+
+std::vector<std::string> SelectFiles(
+    const clang::tooling::CompilationDatabase& database,
+    const std::vector<std::filesystem::path>& roots)
+{
+    std::vector<std::string> files;
+    for (const auto& file : database.getAllFiles())
     {
-        for (const auto& id : RuleRegistry::Instance().Ids())
+        const auto normalized = driver::AnalysisCache::NormalizePath(file);
+        if (roots.empty() || std::any_of(roots.begin(), roots.end(),
+            [&](const auto& root) { return IsUnder(normalized, root); }))
         {
-            auto rule = RuleRegistry::Instance().Create(id);
-            if (!rule || !config.SettingsFor(id).enabled) continue;
-            adapters_.push_back(std::make_unique<MatchAdapter>(*rule, context_));
-            rules_.push_back(std::move(rule));
-            rules_.back()->RegisterMatchers(finder_, *adapters_.back());
+            files.push_back(file);
         }
     }
-
-    void HandleTranslationUnit(clang::ASTContext&) override
-    {
-        finder_.matchAST(context_.AST());
-    }
-
-private:
-    RuleContext context_;
-    clang::ast_matchers::MatchFinder finder_;
-    std::vector<std::unique_ptr<IRule>> rules_;
-    std::vector<std::unique_ptr<MatchAdapter>> adapters_;
-};
-
-class Action final : public clang::ASTFrontendAction
-{
-public:
-    Action(const RuleConfig& config, DiagnosticsSink& diagnostics)
-        : config_(config), diagnostics_(diagnostics) {}
-
-    std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
-        clang::CompilerInstance& compiler, llvm::StringRef) override
-    {
-        return std::make_unique<Consumer>(compiler.getASTContext(), config_, diagnostics_);
-    }
-
-private:
-    const RuleConfig& config_;
-    DiagnosticsSink& diagnostics_;
-};
-
-class ActionFactory final : public clang::tooling::FrontendActionFactory
-{
-public:
-    ActionFactory(const RuleConfig& config, DiagnosticsSink& diagnostics)
-        : config_(config), diagnostics_(diagnostics) {}
-
-    std::unique_ptr<clang::FrontendAction> create() override
-    {
-        return std::make_unique<Action>(config_, diagnostics_);
-    }
-
-private:
-    const RuleConfig& config_;
-    DiagnosticsSink& diagnostics_;
-};
+    return files;
+}
 }
 
 int Analyzer::Run(const AnalysisOptions& options, DiagnosticsSink& diagnostics) const
 {
+    diagnostics::Logger::Info("starting analysis");
+    diagnostics::Logger::Info("compile database: " + options.compilationDatabase.string());
+    diagnostics::Logger::Info("cache: " + (options.cache.empty() ? "disabled" : options.cache.string()));
     std::string error;
     const auto config = RuleConfig::Load(options.config, error);
-    if (!error.empty()) return 2;
+    if (!error.empty())
+    {
+        diagnostics::Logger::Error(error);
+        return 2;
+    }
+
+    for (const auto& configuredRule : config.RuleIds())
+    {
+        if (!RuleRegistry::Instance().Create(configuredRule))
+        {
+            diagnostics::Logger::Error("unknown rule in config: " + configuredRule);
+            return 2;
+        }
+    }
 
     auto database = clang::tooling::JSONCompilationDatabase::loadFromFile(
         options.compilationDatabase.string(), error,
         clang::tooling::JSONCommandLineSyntax::AutoDetect);
-    if (!database) return 2;
+    if (!database)
+    {
+        diagnostics::Logger::Error("cannot load compilation database: " + error);
+        return 2;
+    }
 
-    const auto files = database->getAllFiles();
-    if (files.empty()) return 2;
+    const auto sourceRoots = NormalizeRoots(options.sourceRoots);
+    diagnostics::Logger::Info("source roots: " + std::to_string(sourceRoots.size()));
+    const auto files = SelectFiles(*database, sourceRoots);
+    if (files.empty())
+    {
+        diagnostics::Logger::Error(sourceRoots.empty() ?
+            "compilation database contains no files" :
+            "compilation database contains no files under the configured source roots");
+        return 2;
+    }
+    diagnostics::Logger::Info("selected " + std::to_string(files.size()) + " source files");
 
-    clang::tooling::ClangTool tool(*database, files);
-    ActionFactory factory(config, diagnostics);
-    const auto result = tool.run(&factory);
+    auto cache = driver::AnalysisCache::Load(options.cache, options.config, sourceRoots);
+    diagnostics::Logger::Info("loaded " + std::to_string(cache.EntryCount()) +
+                              " reusable cache entries");
+    int result = 0;
+    for (std::size_t index = 0; index < files.size(); ++index)
+    {
+        const auto& file = files[index];
+        const auto sourceStamp = driver::AnalysisCache::FileStamp(file);
+        const auto commandSignature = driver::AnalysisCache::CommandSignature(
+            database->getCompileCommands(file));
+        DiagnosticList fileDiagnostics;
+        if (cache.TryGet(file, sourceStamp, commandSignature, fileDiagnostics))
+        {
+            diagnostics::Logger::Info("[" + std::to_string(index + 1) + "/" +
+                                      std::to_string(files.size()) + "] cached " + file);
+            for (auto& diagnostic : fileDiagnostics) diagnostics.Report(std::move(diagnostic));
+            continue;
+        }
+
+        diagnostics::Logger::Info("[" + std::to_string(index + 1) + "/" +
+                                  std::to_string(files.size()) + "] analyzing " + file);
+        DiagnosticsSink analyzedFile;
+        clang::tooling::ClangTool tool(*database, {file});
+        driver::ActionFactory factory(config, analyzedFile, options.strict);
+        result = std::max(result, tool.run(&factory));
+        fileDiagnostics = analyzedFile.Diagnostics();
+        for (const auto& diagnostic : fileDiagnostics) diagnostics.Report(diagnostic);
+        cache.Store(file, sourceStamp, commandSignature, fileDiagnostics);
+        if (!options.cache.empty() &&
+            ((index + 1) % kCacheSaveInterval == 0 || index + 1 == files.size()) &&
+            !cache.Save(error))
+        {
+            diagnostics::Logger::Error(error);
+            return 2;
+        }
+        diagnostics::Logger::Info("completed " + file + " (" +
+                                  std::to_string(fileDiagnostics.size()) + " diagnostics)");
+    }
+
     diagnostics.WriteHuman("NeoLint");
+    if (!options.report.empty() &&
+        !JsonReportWriter::Write(options.report, diagnostics.Diagnostics(), error))
+    {
+        diagnostics::Logger::Error(error);
+        return 2;
+    }
+    if (!options.cache.empty() && !cache.Save(error))
+    {
+        diagnostics::Logger::Error(error);
+        return 2;
+    }
+    diagnostics::Logger::Info("analysis complete");
     return result == 0 && !diagnostics.HasErrors() ? 0 : 1;
 }
 }

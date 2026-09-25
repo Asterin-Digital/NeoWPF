@@ -15,7 +15,7 @@ std::string_view PropertySourceTagRule::Id() const noexcept
 
 std::string_view PropertySourceTagRule::Description() const noexcept
 {
-    return "Reject Local value sources inside Setter and Trigger-family code.";
+    return "Require trigger and style property wrappers to preserve their value source.";
 }
 
 RuleSeverity PropertySourceTagRule::DefaultSeverity() const noexcept
@@ -28,19 +28,22 @@ void PropertySourceTagRule::RegisterMatchers(
 {
     finder.addMatcher(
         callExpr(
-            callee(functionDecl(hasName("SetValueInternal"))),
+            callee(functionDecl(hasName("SetNamedPropertyValue"))),
             hasArgument(2, declRefExpr(to(enumConstantDecl(hasName("Local"))))),
-            hasAncestor(cxxMethodDecl(ofClass(cxxRecordDecl(matchesName("(Setter|Trigger|Style)")))))
-        ).bind("invalid-set-value-source"), &callback);
+            hasAncestor(cxxMethodDecl(anyOf(
+                hasName("SetTriggerPropertyValue"),
+                hasName("SetStylePropertyValue"))))
+        ).bind("invalid-wrapper-source"), &callback);
 }
 
 void PropertySourceTagRule::OnMatch(const MatchFinder::MatchResult& result,
                                     RuleContext& context)
 {
-    const auto* call = result.Nodes.getNodeAs<clang::CallExpr>("invalid-set-value-source");
+    const auto* call = result.Nodes.getNodeAs<clang::CallExpr>("invalid-wrapper-source");
     if (!call) return;
-    context.Report(Id(), call->getExprLoc(), context.Config().SettingsFor(Id()).severity,
-                   "Setter, Trigger, and Style code must not record PropertyValueSource::Local");
+    context.Report(Id(), call->getExprLoc(), context.SettingsFor(Id()).severity,
+                   "SetTriggerPropertyValue and SetStylePropertyValue must not pass "
+                   "PropertyValueSource::Local");
 }
 
 namespace

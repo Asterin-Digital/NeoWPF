@@ -1,9 +1,9 @@
 #include <NeoCM/Core/CommandParser.h>
 #include <NeoCM/Core/Commands/CompileCommand.h>
 #include <NeoCM/Utils/Logger.h>
+#include <NeoWPF/Platform/PlatformUtils.h>
 
 #include <algorithm>
-#include <cwchar>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -90,17 +90,7 @@ CommandArguments CommandParser::ParseArguments(int argc, wchar_t* argv[]) const
 
 std::string CommandParser::WideStringToString(const wchar_t* wide) const
 {
-    if (!wide) {
-        return {};
-    }
-
-    const int length = static_cast<int>(std::wcslen(wide));
-    std::string out;
-    out.reserve(static_cast<size_t>(length));
-    for (int i = 0; i < length; ++i) {
-        out.push_back(static_cast<char>(wide[i]));
-    }
-    return out;
+    return wide ? NeoWPF::Platform::WideToUtf8(std::wstring(wide)) : std::string{};
 }
 
 void CommandParser::PrintCommandHelp(const std::string& commandName) const

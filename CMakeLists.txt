@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
+    "Export compile_commands.json for tooling such as NeoLint")
+
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/NeoWPFVersion.txt" NEOWPF_VERSION)
 string(STRIP "${NEOWPF_VERSION}" NEOWPF_VERSION)
 if(NOT NEOWPF_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
@@ -307,6 +310,7 @@ include(cmake/NeoWPFXamlCommands.cmake)
 add_library(NeoWPF.Foundation OBJECT ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})
 add_library(NeoWPF::Foundation ALIAS NeoWPF.Foundation
 )
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/LinterChecks.cmake")
 target_sources(NeoWPF.Foundation PRIVATE $<TARGET_OBJECTS:NeoNaml>)
 target_include_directories(NeoWPF.Foundation
     PUBLIC

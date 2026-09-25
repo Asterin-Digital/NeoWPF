@@ -3,7 +3,6 @@
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
-#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 
 #include <any>
@@ -11,63 +10,6 @@
 #include <string>
 
 namespace NeoWPF::UI::Styling {
-namespace {
-
-class TargetTypeConverter final : public Properties::TypeConverter {
-public:
-    bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override
-    {
-        const auto* typeInfo = NeoWPF::UI::Markup::Xaml::XamlTypeRegistry::Get().Find(rawValue);
-        if (!typeInfo) {
-            return false;
-        }
-        convertedValue = typeInfo->Type;
-        return true;
-    }
-
-    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override
-    {
-        const auto* typeInfo = NeoWPF::UI::Markup::Xaml::XamlTypeRegistry::Get().Find(rawValue);
-        if (!typeInfo || typeInfo->CppTypeName.empty()) {
-            expression.clear();
-            return false;
-        }
-        expression = "std::type_index(typeid(" + typeInfo->CppTypeName + "))";
-        return true;
-    }
-};
-
-Properties::PropertyMetadata MakeTargetTypeMetadata()
-{
-    Properties::PropertyMetadata metadata;
-    metadata.DefaultValue = std::type_index(typeid(void));
-    metadata.Converter = std::make_shared<TargetTypeConverter>();
-    return metadata;
-}
-
-Properties::PropertyMetadata MakeSettersMetadata()
-{
-    Properties::PropertyMetadata metadata;
-    metadata.DefaultValue = std::vector<std::shared_ptr<Triggers::Setter>>{};
-    return metadata;
-}
-
-}
-
-const Properties::DependencyProperty& Style::TargetTypeProperty()
-{
-    static const auto& property = Properties::DependencyProperty::Register<Style, std::type_index>(
-        "TargetType", MakeTargetTypeMetadata());
-    return property;
-}
-
-const Properties::DependencyProperty& Style::SettersProperty()
-{
-    static const auto& property = Properties::DependencyProperty::Register<Style, std::vector<std::shared_ptr<Setter>>>(
-        "Setters", MakeSettersMetadata());
-    return property;
-}
-
 std::type_index Style::GetTargetType() const
 {
     return GetValue<std::type_index>(TargetTypeProperty());

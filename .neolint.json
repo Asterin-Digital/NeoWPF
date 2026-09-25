@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "neowpf-property-source-tag": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "neowpf-dp-registration-location": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "neowpf-platform-utility-duplicate": {
+      "enabled": true,
+      "severity": "warning"
+    }
+  }
+}

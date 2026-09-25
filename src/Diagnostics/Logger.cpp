@@ -1,4 +1,5 @@
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Platform/PlatformUtils.h>
 #include <cstdio>
 #include <cstdarg>
 #include <cstring>
@@ -10,8 +11,6 @@
 #include <mutex>
 #include <string>
 #include <thread>
-#include <algorithm>
-#include <cctype>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -203,9 +202,7 @@ Level GetGlobalLevel() noexcept {
 }
 
 static std::string ToLower(std::string_view v) {
-    std::string s(v);
-    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    return s;
+    return NeoWPF::Platform::ToLower(std::string(v));
 }
 
 static bool ParseLevel(std::string_view v, Level& out) noexcept {

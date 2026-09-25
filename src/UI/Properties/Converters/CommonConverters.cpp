@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
@@ -567,6 +568,27 @@ bool FontStyleConverter::TryConvertToCode(const std::string& rawValue, std::stri
     return ConvertMappedValueToCode(*this, rawValue, FontStyleEntries, expression);
 }
 
+bool TypeIndexConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+{
+    const auto* typeInfo = NeoWPF::UI::Markup::Xaml::XamlTypeRegistry::Get().Find(rawValue);
+    if (!typeInfo) {
+        return false;
+    }
+    convertedValue = typeInfo->Type;
+    return true;
+}
+
+bool TypeIndexConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    const auto* typeInfo = NeoWPF::UI::Markup::Xaml::XamlTypeRegistry::Get().Find(rawValue);
+    if (!typeInfo || typeInfo->CppTypeName.empty()) {
+        expression.clear();
+        return false;
+    }
+    expression = "std::type_index(typeid(" + typeInfo->CppTypeName + "))";
+    return true;
+}
+
 #define DEFINE_CONVERTER_FACTORY(Name, Type) \
 std::shared_ptr<const TypeConverter> Get##Name##Converter() \
 { \
@@ -592,6 +614,7 @@ DEFINE_CONVERTER_FACTORY(SelectionMode, SelectionModeConverter)
 DEFINE_CONVERTER_FACTORY(PopupPlacement, PopupPlacementConverter)
 DEFINE_CONVERTER_FACTORY(FontWeight, FontWeightConverter)
 DEFINE_CONVERTER_FACTORY(FontStyle, FontStyleConverter)
+DEFINE_CONVERTER_FACTORY(TypeIndex, TypeIndexConverter)
 
 #undef DEFINE_CONVERTER_FACTORY
 
