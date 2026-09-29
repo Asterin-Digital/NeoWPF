@@ -11,6 +11,28 @@ endif()
 string(TIMESTAMP NEOWPF_BUILD_TIME "%Y-%m-%d %H:%M:%S UTC" UTC)
 project(NeoWPF VERSION "${NEOWPF_VERSION}" LANGUAGES CXX)
 
+include(FetchContent)
+
+set(CUDEV_BUILD_TESTS OFF CACHE BOOL "Build Cudev tests" FORCE)
+option(NEOWPF_USE_LOCAL_CUDEV "Use the sibling Cudev checkout" OFF)
+if(NEOWPF_USE_LOCAL_CUDEV)
+    get_filename_component(NEOWPF_CUDEV_SOURCE_DIR
+        "${CMAKE_CURRENT_SOURCE_DIR}/../Cudev" ABSOLUTE)
+    if(NOT EXISTS "${NEOWPF_CUDEV_SOURCE_DIR}/CMakeLists.txt")
+        message(FATAL_ERROR
+            "NEOWPF_USE_LOCAL_CUDEV is ON, but no Cudev project was found at ${NEOWPF_CUDEV_SOURCE_DIR}")
+    endif()
+    add_subdirectory("${NEOWPF_CUDEV_SOURCE_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}/_deps/cudev-build")
+else()
+    FetchContent_Declare(
+        cudev
+        URL https://github.com/Past-Horizon/Cudev/archive/refs/tags/v0.1.2.zip
+    )
+    FetchContent_MakeAvailable(cudev)
+    set(NEOWPF_CUDEV_SOURCE_DIR "${cudev_SOURCE_DIR}")
+endif()
+
 set(NEOWPF_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoWPFBuildInfo.h.in"
@@ -304,6 +326,7 @@ target_include_directories(NeoNaml
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
+target_link_libraries(NeoNaml PUBLIC Cudev)
 
 include(cmake/NeoWPFXamlCommands.cmake)
 
@@ -697,6 +720,9 @@ else()
     message(STATUS "NeoWPF Linux configuration selected with Vulkan renderer backend.")
 endif()
 
+target_link_libraries(NeoWPF.Foundation PUBLIC Cudev)
+target_link_libraries(NeoWPF PUBLIC Cudev)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoWPFStaticDependencies.cmake")
 
 if(WIN32 OR UNIX)
@@ -907,6 +933,8 @@ endif()
 install(DIRECTORY include/NeoWPF DESTINATION include
     PATTERN "DotNet" EXCLUDE
 )
+install(DIRECTORY "${NEOWPF_CUDEV_SOURCE_DIR}/include/Cudev" DESTINATION include)
+install(FILES "${NEOWPF_CUDEV_SOURCE_DIR}/LICENSE" DESTINATION . RENAME Cudev-LICENSE)
 if(NEOWPF_BUILD_DOTNET)
     install(DIRECTORY include/NeoWPF/DotNet DESTINATION include/NeoWPF)
 endif()
