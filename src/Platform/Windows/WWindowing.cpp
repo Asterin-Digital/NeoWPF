@@ -33,7 +33,8 @@ void* WWindowing::CreateWindow(
         app.hInst = ::GetModuleHandleW(nullptr);
     }
 
-    void* nativeHandle = NeoWPF::Platform::Window::CreateWindow(app.hInst, title, width, height);
+    const bool transparent = windowHost && windowHost->IsTransparent();
+    void* nativeHandle = NeoWPF::Platform::Window::CreateWindow(app.hInst, title, width, height, transparent);
     if (!nativeHandle) {
         NeoWPF::Diagnostics::LogError("CreateWindow failed for title=%ls width=%d height=%d", title, width, height);
         return nullptr;

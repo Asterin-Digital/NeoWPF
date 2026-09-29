@@ -430,11 +430,16 @@ std::shared_ptr<NeoWPF::UI::Visual> Window::GetWindowTitleBar(void* nativeHandle
     return nullptr;
 }
 
-void* Window::CreateWindow(void* hInst, const wchar_t* title, int w, int h)
+void* Window::CreateWindow(void* hInst, const wchar_t* title, int w, int h, bool transparent)
 {
     HINSTANCE hInstance = static_cast<HINSTANCE>(hInst);
     EnsureNeoWPFWindowClass(hInstance);
-    HWND hwnd = CreateWindowExW(0, NeoWPFWindowClassName, title, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, w, h, nullptr, nullptr, hInstance, nullptr);
+    const DWORD exStyle = transparent ? WS_EX_NOREDIRECTIONBITMAP : 0;
+    const DWORD style = transparent ? WS_POPUP : WS_OVERLAPPEDWINDOW;
+    HWND hwnd = CreateWindowExW(exStyle, NeoWPFWindowClassName, title, style, CW_USEDEFAULT, CW_USEDEFAULT, w, h, nullptr, nullptr, hInstance, nullptr);
+    if (hwnd && transparent) {
+        ::SetPropW(hwnd, L"NeoWPF.Transparent", reinterpret_cast<HANDLE>(1));
+    }
     return hwnd;
 }
 

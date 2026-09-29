@@ -245,6 +245,7 @@ void StartRenderThread()
 
                 if (w > 0 && h > 0) {
                     try {
+                        NeoWPF::Rendering::Renderer_BindWindow(windowState.nativeWindowHandle);
                         NeoWPF::Rendering::Renderer_Resize(w, h);
                         const auto renderStart = std::chrono::steady_clock::now();
                         NeoWPF::Rendering::Renderer_BeginFrame();
@@ -264,6 +265,7 @@ void StartRenderThread()
                     } catch (...) {
                         NeoWPF::Diagnostics::LogError("Render frame failed with unknown error");
                     }
+                    NeoWPF::Rendering::Renderer_ReleaseWindow(windowState.nativeWindowHandle);
                 }
             }
 

@@ -1,5 +1,13 @@
 #include <gtest/gtest.h>
 
+#if defined(_WIN32)
+#include <Windows.h>
+#ifdef CreateWindow
+#undef CreateWindow
+#endif
+#endif
+
+#include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Rendering/Clipping.h>
 #include <NeoWPF/Rendering/Renderer.h>
 
@@ -51,6 +59,50 @@ TEST(RenderCommandTests, ClipsRectangleAndReportsVisibleIntersection)
     EXPECT_DOUBLE_EQ(width, 30.0);
     EXPECT_DOUBLE_EQ(height, 20.0);
 }
+
+#if defined(_WIN32)
+
+TEST(WindowRenderLifecycleTests, CreatesTwoIndependentWindowsAndBindsEachRenderTargetSeparately)
+{
+    NeoWPF::Core::Application::Initialize();
+    auto& app = NeoWPF::Core::Application::Current();
+
+    auto leftWindow = app.CreateWindow(L"NeoWPF window smoke left", 320, 240);
+    auto rightWindow = app.CreateWindow(L"NeoWPF window smoke right", 640, 480);
+
+    ASSERT_NE(leftWindow.Handle(), nullptr);
+    ASSERT_NE(rightWindow.Handle(), nullptr);
+    EXPECT_NE(leftWindow.Handle(), rightWindow.Handle());
+
+    ::ShowWindow(static_cast<HWND>(leftWindow.Handle()), SW_HIDE);
+    ::ShowWindow(static_cast<HWND>(rightWindow.Handle()), SW_HIDE);
+
+    NeoWPF::Rendering::Renderer_Initialize(leftWindow.Handle());
+    ASSERT_TRUE(NeoWPF::Rendering::Renderer_IsInitialized());
+
+    NeoWPF::Rendering::Renderer_BindWindow(leftWindow.Handle());
+    NeoWPF::Rendering::Renderer_Resize(320, 240);
+    NeoWPF::Rendering::CommandList leftCommands;
+    leftCommands.DrawRect(10.0, 10.0, 100.0, 80.0, 0xFF336699u);
+    NeoWPF::Rendering::Renderer_BeginFrame();
+    NeoWPF::Rendering::Renderer_Execute(leftCommands);
+    NeoWPF::Rendering::Renderer_Present();
+
+    NeoWPF::Rendering::Renderer_BindWindow(rightWindow.Handle());
+    NeoWPF::Rendering::Renderer_Resize(640, 480);
+    NeoWPF::Rendering::CommandList rightCommands;
+    rightCommands.DrawRect(20.0, 20.0, 200.0, 160.0, 0xFF993366u);
+    NeoWPF::Rendering::Renderer_BeginFrame();
+    NeoWPF::Rendering::Renderer_Execute(rightCommands);
+    NeoWPF::Rendering::Renderer_Present();
+
+    NeoWPF::Rendering::Renderer_ReleaseWindow(rightWindow.Handle());
+    NeoWPF::Rendering::Renderer_ReleaseWindow(leftWindow.Handle());
+    NeoWPF::Rendering::Renderer_Shutdown();
+    NeoWPF::Core::Application::Shutdown();
+}
+
+#endif
 
 #if !defined(_WIN32)
 

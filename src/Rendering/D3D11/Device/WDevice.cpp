@@ -5,6 +5,8 @@
 #include <NeoWPF/Rendering/ShaderSources.h>
 #include <d3d11.h>
 #include <dxgi.h>
+#include <dxgi1_2.h>
+#include <dcomp.h>
 #include <wrl.h>
 #include <stdexcept>
 #include <d3dcompiler.h>
@@ -90,6 +92,46 @@ static DXGI_SWAP_CHAIN_DESC CreateSwapChainDesc(HWND hwnd, unsigned int width, u
     return sd;
 }
 
+static bool IsTransparentWindow(HWND hwnd)
+{
+    return hwnd && ::GetPropW(hwnd, L"NeoWPF.Transparent") != nullptr;
+}
+
+static HRESULT CreateCompositionSwapChain(unsigned int width, unsigned int height, IDXGISwapChain** swapChain)
+{
+    if (!g_device || !swapChain) return E_INVALIDARG;
+
+    ComPtr<IDXGIDevice> dxgiDevice;
+    HRESULT hr = g_device.As(&dxgiDevice);
+    if (FAILED(hr)) return hr;
+
+    ComPtr<IDXGIAdapter> adapter;
+    hr = dxgiDevice->GetAdapter(&adapter);
+    if (FAILED(hr)) return hr;
+
+    ComPtr<IDXGIFactory2> factory;
+    hr = adapter->GetParent(IID_PPV_ARGS(&factory));
+    if (FAILED(hr)) return hr;
+
+    DXGI_SWAP_CHAIN_DESC1 desc = {};
+    desc.Width = width ? width : 1;
+    desc.Height = height ? height : 1;
+    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    desc.BufferCount = 2;
+    desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+    desc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
+
+    ComPtr<IDXGISwapChain1> compositionSwapChain;
+    hr = factory->CreateSwapChainForComposition(g_device.Get(), &desc, nullptr, &compositionSwapChain);
+    if (FAILED(hr)) return hr;
+    ComPtr<IDXGISwapChain> baseSwapChain;
+    hr = compositionSwapChain.As(&baseSwapChain);
+    if (FAILED(hr)) return hr;
+    return baseSwapChain.CopyTo(swapChain);
+}
+
 void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain)
 {
     NEO_WPF_STARTUP_ACTION("D3D11.CreateDeviceAndSwapChain");
@@ -156,6 +198,13 @@ void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height
         }
     }
     ThrowIfFailed(hr, "D3D11 device/swapchain creation failed");
+    if (IsTransparentWindow(hwnd)) {
+        ComPtr<IDXGISwapChain> compositionSwapChain;
+        ThrowIfFailed(CreateCompositionSwapChain(width, height, &compositionSwapChain),
+            "Failed to create transparent composition swapchain");
+        (*swapChain)->Release();
+        *swapChain = compositionSwapChain.Detach();
+    }
     ::NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
         "[D3D11] CreateDeviceAndSwapChain: success (device ready)");
 }
@@ -182,6 +231,10 @@ HRESULT CreateSwapChainForWindow(HWND hwnd, unsigned int width, unsigned int hei
     ComPtr<IDXGIFactory> factory;
     hr = adapter->GetParent(IID_PPV_ARGS(&factory));
     if (FAILED(hr)) return hr;
+
+    if (IsTransparentWindow(hwnd)) {
+        return CreateCompositionSwapChain(width, height, swapChain);
+    }
 
     DXGI_SWAP_CHAIN_DESC sd = CreateSwapChainDesc(hwnd, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SWAP_EFFECT_FLIP_DISCARD);
     return factory->CreateSwapChain(g_device.Get(), &sd, swapChain);

@@ -65,6 +65,10 @@ Use this structure:
 
 A system cannot contain another system. A subsystem can contain detail only. A detail cannot contain a system or subsystem. Use the same structure across headers, sources, tests, and managed code.
 
+### Dependency Properties
+
+If it's worth it, make sure a property is backed up by dependency property instead of one-off private member; so the rest of NeoWPF can also benefit.
+
 ### Platform Separation
 
 Portable code must not contain platform `#if`/`#ifdef` branches or platform headers. Put platform implementations in the corresponding directories:

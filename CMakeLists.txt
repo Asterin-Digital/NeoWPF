@@ -274,12 +274,18 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(NEOWPF_USE_NEOLINT
+    "Run the NeoLint before compiling NeoWPF"
+    OFF)
 option(NEOWPF_BUILD_MEDIA
     "Build the optional NeoWPF.Media target and fetch LuAudio"
     OFF)
+option(NEOWPF_BUILD_SAMPLES
+    "Build NeoWPF sample applications"
+    OFF)
 option(NEOWPF_BUILD_DOTNET
     "Build the optional .NET interop layer"
-    ON)
+    OFF)
 set(NEOWPF_LUAUDIO_GIT_REPOSITORY "https://github.com/Past-Horizon/LuAudio.git" CACHE STRING
     "LuAudio Git repository used by NeoWPF.Media")
 set(NEOWPF_LUAUDIO_GIT_TAG "main" CACHE STRING
@@ -657,6 +663,7 @@ if(WIN32)
             CURL::libcurl
             d3d11
             dxgi
+            dcomp
             dbghelp
             ole32
             windowscodecs
@@ -678,6 +685,7 @@ if(WIN32)
             CURL::libcurl
             d3d11
             dxgi
+            dcomp
             dbghelp
             ole32
             windowscodecs
@@ -724,6 +732,13 @@ target_link_libraries(NeoWPF.Foundation PUBLIC Cudev)
 target_link_libraries(NeoWPF PUBLIC Cudev)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoWPFStaticDependencies.cmake")
+
+if(WIN32 AND NEOWPF_BUILD_SAMPLES)
+    add_executable(NeoWPF.WindowsTransparencySample
+        samples/WindowsTransparency.cpp
+    )
+    target_link_libraries(NeoWPF.WindowsTransparencySample PRIVATE NeoWPF::NeoWPF)
+endif()
 
 if(WIN32 OR UNIX)
     add_custom_command(TARGET NeoWPF POST_BUILD

@@ -1,4 +1,5 @@
 #include <NeoWPF/Platform/PlatformUtils.h>
+#include <Cudev/Cudev.h>
 
 #include <algorithm>
 #include <cctype>

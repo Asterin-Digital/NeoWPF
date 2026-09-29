@@ -100,7 +100,7 @@ if(NEOWPF_STATIC_DEPENDENCIES)
 
                 list(REMOVE_DUPLICATES _neowpf_windows_sdk_dirs)
                 foreach(_sdk_lib_name IN ITEMS
-                    d3d11 dxgi dbghelp ole32 windowscodecs bcrypt crypt32 ws2_32 wldap32 winmm advapi32 iphlpapi normaliz secur32 dwmapi)
+                    d3d11 dxgi dcomp dbghelp ole32 windowscodecs bcrypt crypt32 ws2_32 wldap32 winmm advapi32 iphlpapi normaliz secur32 dwmapi)
                     if("${_link_name}" STREQUAL "${_sdk_lib_name}")
                         foreach(_sdk_dir IN LISTS _neowpf_windows_sdk_dirs)
                             if(EXISTS "${_sdk_dir}/${_sdk_lib_name}.lib")
@@ -205,6 +205,11 @@ if(NEOWPF_STATIC_DEPENDENCIES)
         list(APPEND NEOWPF_STATIC_ARCHIVES_RELEASE ${_neowpf_archives_RELEASE})
     endforeach()
 
+    if(TARGET Cudev)
+        list(APPEND NEOWPF_STATIC_ARCHIVES_DEBUG "$<TARGET_FILE:Cudev>")
+        list(APPEND NEOWPF_STATIC_ARCHIVES_RELEASE "$<TARGET_FILE:Cudev>")
+    endif()
+
     if(UNIX AND TARGET ZLIB::ZLIB)
         neowpf_resolve_linked_archive("ZLIB::ZLIB" _neowpf_zlib_archive)
         if(_neowpf_zlib_archive)
@@ -215,7 +220,7 @@ if(NEOWPF_STATIC_DEPENDENCIES)
 
     if(WIN32)
         set(NEOWPF_WINDOWS_SDK_STATIC_LIBS
-            d3d11 dxgi dbghelp ole32 windowscodecs bcrypt crypt32 ws2_32
+            d3d11 dxgi dcomp dbghelp ole32 windowscodecs bcrypt crypt32 ws2_32
             wldap32 winmm advapi32 iphlpapi normaliz secur32 dwmapi)
 
         set(_neowpf_windows_sdk_dirs)
