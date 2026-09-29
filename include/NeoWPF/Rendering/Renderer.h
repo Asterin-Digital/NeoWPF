@@ -224,6 +224,28 @@ void Renderer_Initialize(void* nativeWindowHandle);
 
 /*
     @summary
+    Binds the renderer to a specific native window for the upcoming render pass.
+
+    @param nativeWindowHandle
+    The native window handle that owns the rendering surface.
+
+    @internal
+*/
+void Renderer_BindWindow(void* nativeWindowHandle);
+
+/*
+    @summary
+    Releases the renderer's binding to a native window.
+
+    @param nativeWindowHandle
+    The native window handle being released.
+
+    @internal
+*/
+void Renderer_ReleaseWindow(void* nativeWindowHandle);
+
+/*
+    @summary
     Releases the renderer's resources.
 
     @internal

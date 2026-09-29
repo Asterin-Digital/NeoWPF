@@ -6,6 +6,16 @@
 
 namespace NeoWPF::UI {
 
+void Window::SetAllowsTransparency(bool allowsTransparency) noexcept
+{
+    SetValue(AllowsTransparencyProperty(), allowsTransparency);
+}
+
+bool Window::IsTransparent() const noexcept
+{
+    return GetValue<bool>(AllowsTransparencyProperty());
+}
+
 NeoWPF::UI::Color Window::GetBackgroundColor() const noexcept
 {
     if (m_backgroundColor.has_value()) {

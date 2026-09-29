@@ -45,7 +45,29 @@ public:
     static void SetWindowTitleBar(void* nativeHandle, std::shared_ptr<NeoWPF::UI::Visual> titleBar);
     static std::shared_ptr<NeoWPF::UI::Visual> GetWindowTitleBar(void* nativeHandle);
 
-    static void* CreateWindow(void* hInst, const wchar_t* title, int w, int h);
+    /*
+        @summary
+        Creates a native window for the current platform.
+
+        @param hInst
+        Native platform instance handle.
+
+        @param title
+        Window title.
+
+        @param w
+        Initial window width.
+
+        @param h
+        Initial window height.
+
+        @param transparent
+        True to request a transparent native window.
+
+        @returns
+        The native window handle, or nullptr when creation fails.
+    */
+    static void* CreateWindow(void* hInst, const wchar_t* title, int w, int h, bool transparent = false);
 
 private:
     void* m_nativeHandle = nullptr;

@@ -28,6 +28,7 @@ public:
     static const Properties::DependencyProperty& TitleProperty();
     static const Properties::DependencyProperty& LocalesProperty();
     static const Properties::DependencyProperty& BackgroundColorProperty();
+    static const Properties::DependencyProperty& AllowsTransparencyProperty();
 
     /*
         @summary
@@ -49,6 +50,27 @@ public:
         Returns the window title.
     */
     const wchar_t* GetTitle() const noexcept { return m_title.c_str(); }
+
+    /*
+        @summary
+        Enables or disables per-pixel transparency for the native window.
+
+        @param allowsTransparency
+        True to request per-pixel transparency when the native window is created.
+
+        @note
+        The value must be set before the native window is created.
+    */
+    void SetAllowsTransparency(bool allowsTransparency) noexcept;
+
+    /*
+        @summary
+        Returns whether per-pixel transparency was requested for the native window.
+
+        @returns
+        True when per-pixel transparency was requested.
+    */
+    bool IsTransparent() const noexcept;
 
     /*
         @summary

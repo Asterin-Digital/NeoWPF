@@ -1,9 +1,5 @@
 include_guard(GLOBAL)
 
-option(NEOWPF_USE_NEOLINT
-    "Run the versioned NeoLint Release executable before compiling NeoWPF"
-    ON)
-
 if(NOT NEOWPF_USE_NEOLINT)
     message(STATUS "NeoLint checks disabled (set NEOWPF_USE_NEOLINT=ON to enable)")
     return()

@@ -2,6 +2,7 @@
 #include <NeoWPF/Rendering/Renderer.h>
 #include <d3d11.h>
 #include <dxgi.h>
+#include <dcomp.h>
 #include <wrl.h>
 #include <memory>
 #include <mutex>
@@ -28,6 +29,9 @@ struct RendererWindowContext {
     ComPtr<ID3D11RenderTargetView> rtv;
     unsigned int width = 0;
     unsigned int height = 0;
+    bool transparent = false;
+    ComPtr<IDCompositionTarget> compositionTarget;
+    ComPtr<IDCompositionVisual> compositionVisual;
 };
 
 thread_local HWND g_currentWindow = nullptr;
@@ -50,6 +54,45 @@ std::shared_ptr<RendererWindowContext> CurrentContext()
 void SetCurrentWindow(HWND hwnd)
 {
     g_currentWindow = hwnd;
+}
+
+HRESULT AttachComposition(HWND hwnd, IDXGISwapChain* swapChain,
+    ComPtr<IDCompositionTarget>& target, ComPtr<IDCompositionVisual>& visual)
+{
+    if (!hwnd || !swapChain) return E_INVALIDARG;
+
+    ComPtr<IDXGIDevice> dxgiDevice;
+    HRESULT hr = NeoWPF::Rendering::D3D11::g_device.As(&dxgiDevice);
+    if (FAILED(hr)) return hr;
+
+    ComPtr<IDCompositionDevice> compositionDevice;
+    hr = DCompositionCreateDevice(dxgiDevice.Get(), IID_PPV_ARGS(&compositionDevice));
+    if (FAILED(hr)) return hr;
+    hr = compositionDevice->CreateTargetForHwnd(hwnd, TRUE, &target);
+    if (FAILED(hr)) return hr;
+    hr = compositionDevice->CreateVisual(&visual);
+    if (FAILED(hr)) return hr;
+    hr = visual->SetContent(swapChain);
+    if (FAILED(hr)) return hr;
+    hr = target->SetRoot(visual.Get());
+    if (FAILED(hr)) return hr;
+    return compositionDevice->Commit();
+}
+
+bool AttachCompositionIfNeeded(const std::shared_ptr<RendererWindowContext>& ctx,
+    IDXGISwapChain* swapChain)
+{
+    if (!ctx || !ctx->transparent) {
+        return true;
+    }
+
+    ctx->compositionTarget.Reset();
+    ctx->compositionVisual.Reset();
+    return SUCCEEDED(AttachComposition(
+        ctx->hwnd,
+        swapChain,
+        ctx->compositionTarget,
+        ctx->compositionVisual));
 }
 
 }
@@ -94,10 +137,18 @@ void InitializeRendererWindowing(HWND hwnd)
     ctx->swapChain = swapChain;
     ctx->width = width;
     ctx->height = height;
+    ctx->transparent = ::GetPropW(hwnd, L"NeoWPF.Transparent") != nullptr;
 
     hr = g_device->CreateRenderTargetView(backBuffer.Get(), nullptr, &ctx->rtv);
     if (FAILED(hr)) {
         throw std::runtime_error("Failed to create render target view");
+    }
+
+    if (ctx->transparent) {
+        hr = AttachComposition(hwnd, swapChain.Get(), ctx->compositionTarget, ctx->compositionVisual);
+        if (FAILED(hr)) {
+            throw std::runtime_error("Failed to attach transparent composition swapchain");
+        }
     }
 
     {
@@ -154,6 +205,10 @@ void ResizeRendererWindowing(unsigned int w, unsigned int h)
         ctx->rtv.Reset();
         ctx->swapChain = rebuiltSwapChain;
         ctx->rtv = rebuiltRTV;
+        if (!AttachCompositionIfNeeded(ctx, ctx->swapChain.Get())) {
+            ::NeoWPF::Diagnostics::LogWarn("Failed to reattach transparent composition swapchain during resize");
+            return;
+        }
         ctx->width = w;
         ctx->height = h;
         return;
@@ -169,7 +224,7 @@ void ResizeRendererWindowing(unsigned int w, unsigned int h)
     }
     ctx->rtv.Reset();
 
-    HRESULT hr = ctx->swapChain->ResizeBuffers(0, w, h, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
+    HRESULT hr = ctx->swapChain->ResizeBuffers(0, w, h, DXGI_FORMAT_UNKNOWN, 0);
     if (FAILED(hr)) {
         ComPtr<IDXGISwapChain> rebuiltSwapChain;
         hr = CreateSwapChainForWindow(ctx->hwnd, w, h, &rebuiltSwapChain);
@@ -199,6 +254,10 @@ void ResizeRendererWindowing(unsigned int w, unsigned int h)
         ctx->rtv.Reset();
         ctx->swapChain = rebuiltSwapChain;
         ctx->rtv = rebuiltRTV;
+        if (!AttachCompositionIfNeeded(ctx, ctx->swapChain.Get())) {
+            ::NeoWPF::Diagnostics::LogWarn("Failed to reattach transparent composition swapchain after resize failure");
+            return;
+        }
         ctx->width = w;
         ctx->height = h;
         return;
@@ -235,6 +294,10 @@ void ResizeRendererWindowing(unsigned int w, unsigned int h)
         ctx->rtv.Reset();
         ctx->swapChain = rebuiltSwapChain;
         ctx->rtv = rebuiltRTV;
+        if (!AttachCompositionIfNeeded(ctx, ctx->swapChain.Get())) {
+            ::NeoWPF::Diagnostics::LogWarn("Failed to reattach transparent composition swapchain after back-buffer failure");
+            return;
+        }
         ctx->width = w;
         ctx->height = h;
         return;
@@ -270,6 +333,10 @@ void ResizeRendererWindowing(unsigned int w, unsigned int h)
         ctx->rtv.Reset();
         ctx->swapChain = rebuiltSwapChain;
         ctx->rtv = rebuiltRTV;
+        if (!AttachCompositionIfNeeded(ctx, ctx->swapChain.Get())) {
+            ::NeoWPF::Diagnostics::LogWarn("Failed to reattach transparent composition swapchain after render-target failure");
+            return;
+        }
         ctx->width = w;
         ctx->height = h;
         return;
@@ -312,6 +379,10 @@ bool PresentRendererWindowing()
         ctx->rtv.Reset();
         ctx->swapChain = rebuiltSwapChain;
         ctx->rtv = rebuiltRTV;
+        if (!AttachCompositionIfNeeded(ctx, ctx->swapChain.Get())) {
+            ::NeoWPF::Diagnostics::LogWarn("Failed to reattach transparent composition swapchain after present failure");
+            return false;
+        }
         return false;
     }
 
@@ -334,6 +405,12 @@ ID3D11RenderTargetView* GetCurrentRendererTargetView()
 {
     auto ctx = CurrentContext();
     return ctx && ctx->rtv ? ctx->rtv.Get() : nullptr;
+}
+
+bool IsCurrentRendererTransparent()
+{
+    const auto ctx = CurrentContext();
+    return ctx && ctx->transparent;
 }
 
 }

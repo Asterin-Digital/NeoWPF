@@ -23,6 +23,13 @@ NeoWPF::UI::Properties::PropertyMetadata MakeWindowBackgroundMetadata()
     return metadata;
 }
 
+NeoWPF::UI::Properties::PropertyMetadata MakeWindowTransparencyMetadata()
+{
+    NeoWPF::UI::Properties::PropertyMetadata metadata;
+    metadata.DefaultValue = std::any(false);
+    return metadata;
+}
+
 }
 
 namespace NeoWPF::UI {
@@ -81,6 +88,17 @@ const NeoWPF::UI::Properties::DependencyProperty& Window::BackgroundColorPropert
     return property;
 }
 
+const NeoWPF::UI::Properties::DependencyProperty& Window::AllowsTransparencyProperty()
+{
+    static const auto& property = NeoWPF::UI::Properties::RegisterProperty<
+        Window, bool>(
+            "AllowsTransparency",
+            &Window::IsTransparent,
+            &Window::SetAllowsTransparency,
+            MakeWindowTransparencyMetadata());
+    return property;
+}
+
 }
 
 namespace NeoWPF::UI::Properties {
@@ -92,6 +110,7 @@ void RegisterWindowProperties()
     (void)NeoWPF::UI::Window::TitleProperty();
     (void)NeoWPF::UI::Window::LocalesProperty();
     (void)NeoWPF::UI::Window::BackgroundColorProperty();
+    (void)NeoWPF::UI::Window::AllowsTransparencyProperty();
     NeoWPF::UI::Markup::Xaml::RegisterXamlType<NeoWPF::UI::Window>(
         "Window",
         "Content",

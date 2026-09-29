@@ -39,6 +39,7 @@ namespace NeoWPF::Rendering::D3D11 {
     unsigned int GetCurrentRendererWidth();
     unsigned int GetCurrentRendererHeight();
     ID3D11RenderTargetView* GetCurrentRendererTargetView();
+    bool IsCurrentRendererTransparent();
     ComPtr<ID3D11ShaderResourceView> GetTextureShaderResourceView(uint32_t id);
 }
 
@@ -120,9 +121,14 @@ void ExecuteRendererDraw(const CommandList& cmd)
     }
 
     const float a = ((bgColor >> 24) & 0xFF) / 255.0f;
-    const float r = ((bgColor >> 16) & 0xFF) / 255.0f;
-    const float g = ((bgColor >> 8) & 0xFF) / 255.0f;
-    const float b = (bgColor & 0xFF) / 255.0f;
+    float r = ((bgColor >> 16) & 0xFF) / 255.0f;
+    float g = ((bgColor >> 8) & 0xFF) / 255.0f;
+    float b = (bgColor & 0xFF) / 255.0f;
+    if (IsCurrentRendererTransparent()) {
+        r *= a;
+        g *= a;
+        b *= a;
+    }
     float clearColor[4] = { r, g, b, a };
     g_context->ClearRenderTargetView(rtv, clearColor);
 
@@ -134,7 +140,7 @@ void ExecuteRendererDraw(const CommandList& cmd)
         blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
         blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
         blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-        blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+        blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
         blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
         blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
         const auto result = g_device->CreateBlendState(&blendDesc, &blendState);

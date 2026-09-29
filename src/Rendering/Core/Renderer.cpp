@@ -4,16 +4,31 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <unordered_map>
 
 namespace {
 
-std::uint64_t s_lastCommandHash = 0;
-bool s_hasCommandHash = false;
-unsigned int s_lastWidth = 0;
-unsigned int s_lastHeight = 0;
-bool s_hasSize = false;
-bool s_framePending = false;
-bool s_frameSubmitted = false;
+struct WindowFrameState {
+    std::uint64_t lastCommandHash = 0;
+    bool hasCommandHash = false;
+    unsigned int lastWidth = 0;
+    unsigned int lastHeight = 0;
+    bool hasSize = false;
+    bool framePending = false;
+    bool frameSubmitted = false;
+};
+
+thread_local void* s_boundWindowHandle = nullptr;
+std::unordered_map<void*, WindowFrameState> s_windowStates;
+
+WindowFrameState& GetWindowFrameState(void* nativeWindowHandle)
+{
+    if (!nativeWindowHandle) {
+        static WindowFrameState nullState;
+        return nullState;
+    }
+    return s_windowStates[nativeWindowHandle];
+}
 
 std::uint64_t HashCommandList(const NeoWPF::Rendering::CommandList& commands) noexcept
 {
@@ -39,12 +54,29 @@ NeoWPF::Contracts::IRendering* CurrentRendering() noexcept
 
 void NeoWPF::Rendering::Renderer_Initialize(void* nativeWindowHandle)
 {
-    s_hasCommandHash = false;
-    s_hasSize = false;
-    s_framePending = false;
-    s_frameSubmitted = false;
+    if (nativeWindowHandle) {
+        s_boundWindowHandle = nativeWindowHandle;
+    }
     if (auto* rendering = CurrentRendering()) {
         rendering->Initialize(nativeWindowHandle);
+    }
+}
+
+void NeoWPF::Rendering::Renderer_BindWindow(void* nativeWindowHandle)
+{
+    s_boundWindowHandle = nativeWindowHandle;
+    if (!nativeWindowHandle) {
+        return;
+    }
+    if (auto* rendering = CurrentRendering()) {
+        rendering->Initialize(nativeWindowHandle);
+    }
+}
+
+void NeoWPF::Rendering::Renderer_ReleaseWindow(void* nativeWindowHandle)
+{
+    if (s_boundWindowHandle == nativeWindowHandle) {
+        s_boundWindowHandle = nullptr;
     }
 }
 
@@ -53,17 +85,25 @@ void NeoWPF::Rendering::Renderer_Shutdown()
     if (auto* rendering = CurrentRendering()) {
         rendering->Shutdown();
     }
+    s_windowStates.clear();
+    s_boundWindowHandle = nullptr;
 }
 
 void NeoWPF::Rendering::Renderer_Resize(unsigned int w, unsigned int h)
 {
-    if (s_hasSize && w == s_lastWidth && h == s_lastHeight) {
+    auto* nativeWindowHandle = s_boundWindowHandle;
+    if (!nativeWindowHandle) {
         return;
     }
-    s_hasCommandHash = false;
-    s_lastWidth = w;
-    s_lastHeight = h;
-    s_hasSize = true;
+
+    auto& state = GetWindowFrameState(nativeWindowHandle);
+    if (state.hasSize && w == state.lastWidth && h == state.lastHeight) {
+        return;
+    }
+    state.hasCommandHash = false;
+    state.lastWidth = w;
+    state.lastHeight = h;
+    state.hasSize = true;
     if (auto* rendering = CurrentRendering()) {
         rendering->Resize(w, h);
     }
@@ -71,38 +111,56 @@ void NeoWPF::Rendering::Renderer_Resize(unsigned int w, unsigned int h)
 
 void NeoWPF::Rendering::Renderer_BeginFrame()
 {
-    s_framePending = true;
-    s_frameSubmitted = false;
+    auto* nativeWindowHandle = s_boundWindowHandle;
+    if (!nativeWindowHandle) {
+        return;
+    }
+
+    auto& state = GetWindowFrameState(nativeWindowHandle);
+    state.framePending = true;
+    state.frameSubmitted = false;
 }
 
 void NeoWPF::Rendering::Renderer_Execute(const CommandList& cmd)
 {
-    if (!s_framePending) {
+    auto* nativeWindowHandle = s_boundWindowHandle;
+    if (!nativeWindowHandle) {
+        return;
+    }
+
+    auto& state = GetWindowFrameState(nativeWindowHandle);
+    if (!state.framePending) {
         return;
     }
     const auto commandHash = HashCommandList(cmd);
-    if (s_hasCommandHash && commandHash == s_lastCommandHash) {
-        s_framePending = false;
+    if (state.hasCommandHash && commandHash == state.lastCommandHash) {
+        state.framePending = false;
         return;
     }
     if (auto* rendering = CurrentRendering()) {
         rendering->BeginFrame();
         rendering->Execute(cmd);
-        s_lastCommandHash = commandHash;
-        s_hasCommandHash = true;
-        s_frameSubmitted = true;
+        state.lastCommandHash = commandHash;
+        state.hasCommandHash = true;
+        state.frameSubmitted = true;
     }
-    s_framePending = false;
+    state.framePending = false;
 }
 
 void NeoWPF::Rendering::Renderer_Present()
 {
-    if (s_frameSubmitted) {
+    auto* nativeWindowHandle = s_boundWindowHandle;
+    if (!nativeWindowHandle) {
+        return;
+    }
+
+    auto& state = GetWindowFrameState(nativeWindowHandle);
+    if (state.frameSubmitted) {
         if (auto* rendering = CurrentRendering()) {
             rendering->Present();
         }
     }
-    s_frameSubmitted = false;
+    state.frameSubmitted = false;
 }
 
 uint32_t NeoWPF::Rendering::Renderer_CreateTexture(unsigned int w, unsigned int h, const void* rgbaData)
