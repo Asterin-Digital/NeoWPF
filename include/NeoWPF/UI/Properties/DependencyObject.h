@@ -5,6 +5,7 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
+#include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <any>
 #include <functional>
 #include <memory>
@@ -320,6 +321,9 @@ namespace NeoWPF::UI::Properties {
     template<typename T>
     void DependencyObject::SetValue(const DependencyProperty& property, const T& value)
     {
+        if constexpr (Detail::IsAnyEqualityComparable<T>::value) {
+            RegisterAnyEqualityComparer<T>();
+        }
         SetValue(property, std::any(value));
     }
 

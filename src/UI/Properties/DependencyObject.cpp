@@ -8,9 +8,29 @@
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
+#include <mutex>
 #include <stdexcept>
 
 namespace NeoWPF::UI::Properties {
+
+namespace {
+std::mutex g_anyEqualityComparersMutex;
+std::unordered_map<std::type_index, AnyEqualityComparer> g_anyEqualityComparers;
+}
+
+void RegisterAnyEqualityComparer(const std::type_index& valueType,
+                                 AnyEqualityComparer comparer) noexcept
+{
+    if (!comparer) {
+        return;
+    }
+
+    try {
+        const std::lock_guard lock(g_anyEqualityComparersMutex);
+        g_anyEqualityComparers.insert_or_assign(valueType, comparer);
+    } catch (...) {
+    }
+}
 
 bool ValuesEqual(const std::any& left, const std::any& right) noexcept
 {
@@ -43,6 +63,21 @@ bool ValuesEqual(const std::any& left, const std::any& right) noexcept
     }
     if (left.type() == typeid(std::wstring)) {
         return std::any_cast<std::wstring>(left) == std::any_cast<std::wstring>(right);
+    }
+
+    try {
+        AnyEqualityComparer comparer = nullptr;
+        {
+            const std::lock_guard lock(g_anyEqualityComparersMutex);
+            const auto it = g_anyEqualityComparers.find(std::type_index(left.type()));
+            if (it != g_anyEqualityComparers.end()) {
+                comparer = it->second;
+            }
+        }
+        if (comparer) {
+            return comparer(left, right);
+        }
+    } catch (...) {
     }
 
     return false;
@@ -285,6 +320,14 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
     }
 
     std::any oldValue = GetRawValue(property);
+    const auto& coerceValue = property.GetMetadata().CoerceValueCallback;
+    if (coerceValue) {
+        value = coerceValue(this, value);
+        if (property.GetPropertyType() != typeid(std::any) &&
+            (!value.has_value() || value.type() != property.GetPropertyType())) {
+            return;
+        }
+    }
 
     if (source == PropertyValueSource::Expression) {
         m_localValues.erase(&property);

@@ -470,10 +470,13 @@ public:
     template<typename T>
     void SetDataContext(const std::shared_ptr<T>& dataContext) noexcept {
         if constexpr (std::is_convertible_v<std::shared_ptr<T>, std::shared_ptr<Properties::DependencyObject>>) {
+            Properties::RegisterAnyEqualityComparer<std::shared_ptr<Properties::DependencyObject>>();
             SetDataContext(std::any(std::shared_ptr<Properties::DependencyObject>(dataContext)));
         } else if constexpr (std::is_convertible_v<std::shared_ptr<T>, std::shared_ptr<UI::Data::INotifyPropertyChanged>>) {
+            Properties::RegisterAnyEqualityComparer<std::shared_ptr<UI::Data::INotifyPropertyChanged>>();
             SetDataContext(std::any(std::shared_ptr<UI::Data::INotifyPropertyChanged>(dataContext)));
         } else {
+            Properties::RegisterAnyEqualityComparer<std::shared_ptr<T>>();
             SetDataContext(std::any(dataContext));
         }
     }

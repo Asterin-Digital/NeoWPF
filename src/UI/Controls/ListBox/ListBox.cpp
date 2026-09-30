@@ -128,13 +128,13 @@ void ListBox::OnSelectionChanged(int oldIndex, int newIndex, const std::any& old
     (void)oldItem;
     (void)newItem;
 
-    const auto items = GetItems();
-    for (const auto& itemVisual : items) {
+    const auto items = GetVisualChildren();
+    for (auto* itemVisual : items) {
         if (!itemVisual) {
             continue;
         }
 
-        auto listBoxItem = std::dynamic_pointer_cast<ListBoxItem>(itemVisual);
+        auto* listBoxItem = dynamic_cast<ListBoxItem*>(itemVisual);
         if (!listBoxItem) {
             continue;
         }

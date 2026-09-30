@@ -72,6 +72,19 @@ public:
     */
     void SetItemsSource(const std::vector<std::any>& source);
 
+    template<typename T>
+    requires Properties::Detail::IsAnyEqualityComparable<T>::value
+    void SetItemsSource(const std::vector<T>& source)
+    {
+        Properties::RegisterAnyEqualityComparer<T>();
+        std::vector<std::any> erasedSource;
+        erasedSource.reserve(source.size());
+        for (const auto& item : source) {
+            erasedSource.emplace_back(item);
+        }
+        SetItemsSource(erasedSource);
+    }
+
     /*
         @summary
         Sets the factory used to create item visuals from an `ItemsSource` item.

@@ -77,6 +77,37 @@ const auto& CallbackProperty()
     return property;
 }
 
+const auto& CoercedProperty()
+{
+    using namespace NeoWPF::UI::Properties;
+    static const auto& property = DependencyProperty::Register<TestObject, int>(
+        "Automated.CoercedProperty",
+        PropertyMetadata{
+            0,
+            [](DependencyObject*, const DependencyPropertyChangedEventArgs& args) {
+                ++callbackCount;
+                callbackOldValue = std::any_cast<int>(args.OldValue);
+                callbackNewValue = std::any_cast<int>(args.NewValue);
+            },
+            [](DependencyObject*, const std::any& value) -> std::any {
+                return std::clamp(std::any_cast<int>(value), 0, 10);
+            }});
+    return property;
+}
+
+const auto& ThicknessEqualityProperty()
+{
+    using namespace NeoWPF::UI::Properties;
+    static const auto& property = DependencyProperty::Register<TestObject, NeoWPF::UI::Thickness>(
+        "Automated.ThicknessEqualityProperty",
+        PropertyMetadata{
+            NeoWPF::UI::Thickness(1),
+            [](DependencyObject*, const DependencyPropertyChangedEventArgs&) {
+                ++callbackCount;
+            }});
+    return property;
+}
+
 TEST(DependencyPropertyTests, ReturnsMetadataAndDefaultValue)
 {
     TestObject object;
@@ -123,6 +154,44 @@ TEST(DependencyPropertyTests, InvokesChangedCallbackWithOldAndNewValues)
     EXPECT_EQ(callbackOldValue, 0);
     EXPECT_EQ(callbackNewValue, 7);
     EXPECT_EQ(object.GetValue<int>(property), 7);
+}
+
+TEST(DependencyPropertyTests, CoercesLocalAndAnimatedValuesBeforeCommit)
+{
+    TestObject object;
+    callbackCount = 0;
+    callbackOldValue = -1;
+    callbackNewValue = -1;
+    const auto& property = CoercedProperty();
+
+    object.SetValue(property, 15);
+
+    EXPECT_EQ(object.GetValue<int>(property), 10);
+    EXPECT_EQ(callbackCount, 1);
+    EXPECT_EQ(callbackOldValue, 0);
+    EXPECT_EQ(callbackNewValue, 10);
+
+    object.SetValueAnimated(property, std::any(7));
+
+    EXPECT_EQ(object.GetValue<int>(property), 7);
+    EXPECT_EQ(callbackCount, 2);
+    EXPECT_EQ(callbackOldValue, 10);
+    EXPECT_EQ(callbackNewValue, 7);
+}
+
+TEST(DependencyPropertyTests, ClearValueDoesNotNotifyWhenComparableValuesAreEqual)
+{
+    TestObject object;
+    callbackCount = 0;
+    const auto& property = ThicknessEqualityProperty();
+
+    object.SetValue(property, NeoWPF::UI::Thickness(1));
+    ASSERT_EQ(callbackCount, 1);
+
+    callbackCount = 0;
+    object.ClearValue(property);
+
+    EXPECT_EQ(callbackCount, 0);
 }
 
 TEST(DependencyPropertyTests, ValuesEqualSharesTheDependencyPropertyComparisonRules)

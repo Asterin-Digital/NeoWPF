@@ -16,6 +16,10 @@
 
 namespace {
 
+struct SelectorItemModel {
+    int id = 0;
+};
+
 TEST(ListBoxItemTests, IsSelectedDefaultsToFalse)
 {
     NeoWPF::UI::ListBoxItem item;
@@ -198,6 +202,54 @@ TEST(ListBoxTests, MultipleSelectionModeTogglesItems)
     listBox.SetSelectedItem(std::string("first"));
     EXPECT_FALSE(first->GetIsSelected());
     EXPECT_TRUE(second->GetIsSelected());
+}
+
+TEST(ListBoxTests, ObjectValuedItemsUseSharedIdentityForSelection)
+{
+    NeoWPF::UI::ListBox listBox;
+    listBox.SetSelectionMode(NeoWPF::UI::SelectionMode::Multiple);
+
+    auto model = std::make_shared<SelectorItemModel>();
+    auto item = std::make_shared<NeoWPF::UI::ListBoxItem>();
+    item->SetDataContext(model);
+    listBox.AddItem(item);
+
+    listBox.SetSelectedItem(model);
+
+    EXPECT_TRUE(listBox.IsSelected(model));
+    EXPECT_EQ(listBox.GetSelectedIndex(), 0);
+    EXPECT_TRUE(item->GetIsSelected());
+
+    listBox.SetSelectedItem(model);
+
+    EXPECT_FALSE(listBox.IsSelected(model));
+    EXPECT_EQ(listBox.GetSelectedIndex(), -1);
+    EXPECT_FALSE(item->GetIsSelected());
+}
+
+TEST(ListBoxTests, TypedObjectItemsSourceSupportsSelectionByIndexAndValue)
+{
+    NeoWPF::UI::ListBox listBox;
+    listBox.SetSelectionMode(NeoWPF::UI::SelectionMode::Multiple);
+
+    auto model = std::make_shared<SelectorItemModel>();
+    listBox.SetItemsSource(std::vector<std::shared_ptr<SelectorItemModel>>{model});
+    listBox.SetItemTemplate([](const std::any&, int) {
+        return std::make_shared<NeoWPF::UI::ListBoxItem>();
+    });
+
+    ASSERT_EQ(listBox.GetVisualChildren().size(), 1u);
+    auto item = dynamic_cast<NeoWPF::UI::ListBoxItem*>(listBox.GetVisualChildren()[0]);
+    ASSERT_NE(item, nullptr);
+
+    listBox.SetSelectedIndex(0);
+    EXPECT_TRUE(listBox.IsSelected(model));
+    EXPECT_TRUE(item->GetIsSelected());
+
+    listBox.SetSelectedItem(model);
+    EXPECT_FALSE(listBox.IsSelected(model));
+    EXPECT_EQ(listBox.GetSelectedIndex(), -1);
+    EXPECT_FALSE(item->GetIsSelected());
 }
 
 }

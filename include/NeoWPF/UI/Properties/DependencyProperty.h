@@ -6,6 +6,7 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <any>
+#include <concepts>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -114,6 +115,7 @@ using XamlValueParser = std::function<bool(const std::string&, std::any&)>;
 struct PropertyMetadata {
     std::any DefaultValue;
     PropertyChangedCallbackFunction PropertyChangedCallback;
+    // Runs before a value is committed; non-any properties must return their registered type.
     CoerceValueCallbackFunction CoerceValueCallback;
     PropertyFlags Flags = PropertyFlags::None;
     XamlValueParser ValueParser;
@@ -124,6 +126,30 @@ bool ValuesEqual(const std::any& left, const std::any& right) noexcept;
 bool ValuesEqual(const DependencyObject& owner,
                  const DependencyProperty& property,
                  const std::any& expectedValue);
+
+using AnyEqualityComparer = bool (*)(const std::any&, const std::any&);
+/* Registers operator== for values erased into std::any before they are compared. */
+void RegisterAnyEqualityComparer(const std::type_index& valueType,
+                                 AnyEqualityComparer comparer) noexcept;
+
+namespace Detail {
+template<typename T, bool IsArray = std::is_array_v<T>>
+struct IsAnyEqualityComparable : std::false_type {};
+
+template<typename T>
+struct IsAnyEqualityComparable<T, false>
+    : std::bool_constant<std::equality_comparable<T>> {};
+}
+
+template<typename T>
+requires Detail::IsAnyEqualityComparable<T>::value
+void RegisterAnyEqualityComparer() noexcept
+{
+    RegisterAnyEqualityComparer(std::type_index(typeid(T)), [](const std::any& left,
+                                                               const std::any& right) {
+        return std::any_cast<const T&>(left) == std::any_cast<const T&>(right);
+    });
+}
 
 /*
     @summary
