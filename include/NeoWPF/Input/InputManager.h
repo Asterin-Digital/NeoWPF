@@ -47,7 +47,7 @@ namespace NeoWPF::Input
         bool IsKeyUp(int keyCode) const;
 
         void SetRootElement(NeoWPF::UI::UIElement* root);
-        void NotifyVisualTreeReplaced();
+        void NotifyVisualTreeReplaced(NeoWPF::UI::Visual* oldRoot = nullptr);
         void SetOverlayElements(const std::vector<std::shared_ptr<NeoWPF::UI::Visual>>& overlays);
         bool TryMoveFocus(bool forward = true);
 

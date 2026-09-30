@@ -22,16 +22,20 @@ bool CloseApplicationWindow(void* nativeWindowHandle)
         return false;
     }
 
-    NeoWPF::Input::InputManager::GetInstance().SetRootElement(nullptr);
-
+    std::shared_ptr<NeoWPF::UI::Window> windowHost;
     {
         std::lock_guard<std::mutex> lock(App().windowsMutex);
         auto it = std::find_if(App().windows.begin(), App().windows.end(), [nativeWindowHandle](const WindowState& windowState) {
             return windowState.nativeWindowHandle == nativeWindowHandle;
         });
         if (it != App().windows.end()) {
+            windowHost = it->windowHost;
             App().windows.erase(it);
         }
+    }
+
+    if (windowHost) {
+        NeoWPF::Input::InputManager::GetInstance().NotifyVisualTreeReplaced(windowHost.get());
     }
 
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "CloseApplicationWindow");

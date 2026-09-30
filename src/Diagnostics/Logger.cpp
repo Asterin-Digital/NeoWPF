@@ -220,6 +220,7 @@ bool SetLevelByName(std::string_view name, Level level) noexcept {
         {"clipboard",       Category::Clipboard},
         {"renderer",        Category::Renderer},
         {"files",           Category::Files},
+        {"input",           Category::Input},
     };
 
     const auto n = NeoWPF::Platform::ToLower(std::string(name));

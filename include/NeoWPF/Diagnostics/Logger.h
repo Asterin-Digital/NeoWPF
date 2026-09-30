@@ -44,6 +44,7 @@ enum class Category : uint8_t {
 	Clipboard,
 	Renderer,
 	Files,
+	Input,
 	Count,
 };
 

@@ -1,4 +1,5 @@
 #include <NeoWPF/Input/InputManager.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 
 namespace NeoWPF::Input
@@ -19,6 +20,10 @@ namespace NeoWPF::Input
             return;
         }
 
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
+            "[Input] Focus changed: old=%p new=%p",
+            static_cast<void*>(m_focusedElement), static_cast<void*>(element));
+
         if (m_focusedElement)
         {
             m_focusedElement->SetFocused(false);
@@ -36,6 +41,12 @@ namespace NeoWPF::Input
 
     void InputManager::SetMouseCapture(NeoWPF::UI::UIElement* element)
     {
+        if (m_captureElement == element) {
+            return;
+        }
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
+            "[Input] Capture changed: old=%p new=%p",
+            static_cast<void*>(m_captureElement), static_cast<void*>(element));
         m_captureElement = element;
     }
 }

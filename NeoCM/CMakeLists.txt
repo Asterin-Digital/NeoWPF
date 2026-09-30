@@ -18,8 +18,8 @@ if(NOT EXISTS "${NEOWPF_ROOT}/NeoWPFVersion.txt")
     message(FATAL_ERROR
         "Could not locate NeoWPFVersion.txt under NEOWPF_ROOT: ${NEOWPF_ROOT}")
 endif()
-file(READ "${NEOWPF_ROOT}/NeoWPFVersion.txt" NEOWPF_VERSION)
-string(STRIP "${NEOWPF_VERSION}" NEOWPF_VERSION)
+include("${NEOWPF_ROOT}/cmake/NeoWPFVersion.cmake")
+neowpf_read_artifact_version("${NEOWPF_ROOT}" NEOWPF_VERSION)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

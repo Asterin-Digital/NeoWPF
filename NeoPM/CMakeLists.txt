@@ -53,8 +53,8 @@ list(PREPEND CMAKE_PREFIX_PATH "${NEOPM_VCPKG_PREFIX}")
 
 set(NEOWPF_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." CACHE PATH
     "Path to the NeoWPF source tree")
-file(READ "${NEOWPF_ROOT}/NeoWPFVersion.txt" NEOWPF_VERSION)
-string(STRIP "${NEOWPF_VERSION}" NEOWPF_VERSION)
+include("${NEOWPF_ROOT}/cmake/NeoWPFVersion.cmake")
+neowpf_read_artifact_version("${NEOWPF_ROOT}" NEOWPF_VERSION)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(NEOWPF_CONFIGURATION "Release")

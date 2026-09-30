@@ -315,15 +315,19 @@ std::shared_ptr<NeoWPF::UI::Visual> Window::GetTitleBar() const noexcept
 void Window::SetWindowContent(void* nativeHandle, std::shared_ptr<NeoWPF::UI::Visual> content)
 {
     auto& app = NeoWPF::Core::GetAppState();
+    std::shared_ptr<NeoWPF::UI::Window> host;
     {
         std::lock_guard<std::mutex> lock(app.windowsMutex);
         for (auto& windowState : app.windows) {
             if (windowState.nativeWindowHandle == nativeHandle && windowState.windowHost) {
                 windowState.contentRoot = content.get();
-                windowState.windowHost->SetContent(std::move(content));
+                host = windowState.windowHost;
                 break;
             }
         }
+    }
+    if (host) {
+        host->SetContent(std::move(content));
     }
     NeoWPF::Core::SetInputRootForWindow(nativeHandle);
 }
@@ -344,14 +348,18 @@ void Window::SetWindowTitleBar(void* nativeHandle, std::shared_ptr<NeoWPF::UI::V
 {
     auto& app = NeoWPF::Core::GetAppState();
     bool hasTitleBar = static_cast<bool>(titleBar);
+    std::shared_ptr<NeoWPF::UI::Window> host;
     {
         std::lock_guard<std::mutex> lock(app.windowsMutex);
         for (auto& windowState : app.windows) {
             if (windowState.nativeWindowHandle == nativeHandle && windowState.windowHost) {
-                windowState.windowHost->SetTitleBar(std::move(titleBar));
+                host = windowState.windowHost;
                 break;
             }
         }
+    }
+    if (host) {
+        host->SetTitleBar(std::move(titleBar));
     }
 
     if (hasTitleBar) {

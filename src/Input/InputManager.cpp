@@ -1,4 +1,5 @@
 #include <NeoWPF/Input/InputManager.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Input/Core/Events.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
@@ -6,6 +7,17 @@
 
 namespace NeoWPF::Input
 {
+    namespace {
+        bool IsInSubtree(const NeoWPF::UI::Visual* node, const NeoWPF::UI::Visual* subtreeRoot)
+        {
+            for (; node; node = node->GetParent()) {
+                if (node == subtreeRoot) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 
     void InputManager::CollectFocusableElements(NeoWPF::UI::UIElement* root,
                                                std::vector<NeoWPF::UI::UIElement*>& elements) const
@@ -75,6 +87,10 @@ namespace NeoWPF::Input
             return;
         }
 
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
+            "[Input] Root changed: old=%p new=%p",
+            static_cast<void*>(m_rootElement), static_cast<void*>(root));
+
         if (m_focusedElement)
         {
             m_focusedElement->OnLostFocus();
@@ -87,18 +103,65 @@ namespace NeoWPF::Input
         m_rootElement = root;
     }
 
-    void InputManager::NotifyVisualTreeReplaced()
+    void InputManager::NotifyVisualTreeReplaced(NeoWPF::UI::Visual* oldRoot)
     {
-        ++m_treeEpoch;
-        if (m_focusedElement) {
-            m_focusedElement->SetFocused(false);
-            m_focusedElement->OnLostFocus();
+        if (!oldRoot) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
+                "[Input] Full visual-tree reset: root=%p hover=%p focus=%p capture=%p",
+                static_cast<void*>(m_rootElement), static_cast<void*>(m_mouseOverElement),
+                static_cast<void*>(m_focusedElement), static_cast<void*>(m_captureElement));
+            ++m_treeEpoch;
+            if (m_focusedElement) {
+                m_focusedElement->SetFocused(false);
+                m_focusedElement->OnLostFocus();
+            }
+            m_focusedElement = nullptr;
+            m_captureElement = nullptr;
+            m_mouseOverElement = nullptr;
+            m_lastHitTestResult = nullptr;
+            m_rootElement = nullptr;
+            return;
         }
-        m_focusedElement = nullptr;
-        m_captureElement = nullptr;
-        m_mouseOverElement = nullptr;
-        m_lastHitTestResult = nullptr;
-        m_rootElement = nullptr;
+
+        const auto inOld = [oldRoot](const NeoWPF::UI::UIElement* element) {
+            return element && IsInSubtree(element, oldRoot);
+        };
+        const bool hover = inOld(m_mouseOverElement);
+        const bool focus = inOld(m_focusedElement);
+        const bool capture = inOld(m_captureElement);
+        const bool root = inOld(m_rootElement);
+        if (!hover && !focus && !capture && !root) {
+            return;
+        }
+
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
+            "[Input] Visual tree replaced: oldRoot=%p hover=%d focus=%d capture=%d root=%d",
+            static_cast<void*>(oldRoot), hover, focus, capture, root);
+
+        if (hover) {
+            auto* previous = m_mouseOverElement;
+            m_mouseOverElement = nullptr;
+            Core::MouseEventArgs args(m_mouseX, m_mouseY, m_mouseButtonState, 0);
+            previous->OnMouseLeave(&args);
+            RouteMouseEvent(previous, Core::MouseLeaveEvent(), m_mouseX, m_mouseY, m_mouseButtonState, 0);
+        }
+        ++m_treeEpoch;
+        if (focus) {
+            auto* focused = m_focusedElement;
+            m_focusedElement = nullptr;
+            focused->SetFocused(false);
+            focused->OnLostFocus();
+        }
+        if (capture) {
+            m_captureElement = nullptr;
+        }
+        if (root) {
+            m_rootElement = nullptr;
+            m_overlayElements.clear();
+        }
+        if (inOld(m_lastHitTestResult)) {
+            m_lastHitTestResult = nullptr;
+        }
     }
 
     void InputManager::SetOverlayElements(const std::vector<std::shared_ptr<NeoWPF::UI::Visual>>& overlays)
@@ -154,6 +217,9 @@ namespace NeoWPF::Input
             Core::MouseEventArgs args(x, y, buttonState, wheelDelta);
             if ((buttonState & 0x01) != (m_prevMouseButtonState & 0x01))
             {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
+                    "[Input] Captured mouse button %s: target=%p position=(%d,%d) buttons=%u",
+                    (buttonState & 0x01) != 0 ? "down" : "up", static_cast<void*>(captured), x, y, buttonState);
                 if ((buttonState & 0x01) != 0)
                 {
                     RouteMouseEvent(captured, Core::PreviewMouseDownEvent(), x, y, buttonState, wheelDelta);
@@ -228,8 +294,17 @@ namespace NeoWPF::Input
 
         NeoWPF::UI::UIElement* targetElement = HitTest(x, y);
 
+        if ((buttonState & 0x01) != (m_prevMouseButtonState & 0x01)) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
+                "[Input] Mouse button %s: target=%p position=(%d,%d) buttons=%u",
+                (buttonState & 0x01) != 0 ? "down" : "up", static_cast<void*>(targetElement), x, y, buttonState);
+        }
+
         if (targetElement != m_mouseOverElement)
         {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
+                "[Input] Hover changed: old=%p new=%p position=(%d,%d)",
+                static_cast<void*>(m_mouseOverElement), static_cast<void*>(targetElement), x, y);
             if (m_mouseOverElement)
             {
                 Core::MouseEventArgs leaveArgs(x, y, buttonState, wheelDelta);
@@ -329,6 +404,10 @@ namespace NeoWPF::Input
 
     void InputManager::ProcessKeyboardInput(int keyCode, bool isKeyDown, wchar_t charCode, int repeatCount)
     {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
+            "[Input] Key %s: key=%d char=%u repeat=%d focus=%p",
+            isKeyDown ? "down" : "up", keyCode, static_cast<unsigned int>(charCode), repeatCount,
+            static_cast<void*>(m_focusedElement));
         if (keyCode >= 0 && keyCode < static_cast<int>(m_keyStates.size()))
         {
             m_keyStates[keyCode] = isKeyDown;

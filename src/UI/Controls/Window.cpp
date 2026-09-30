@@ -89,7 +89,9 @@ bool Window::TryResolveLocale(const std::wstring& key, std::wstring& value) cons
 
 void Window::RebuildVisualTree() noexcept
 {
-    NeoWPF::Input::InputManager::GetInstance().NotifyVisualTreeReplaced();
+    if (m_visualRoot) {
+        NeoWPF::Input::InputManager::GetInstance().NotifyVisualTreeReplaced(m_visualRoot.get());
+    }
 
     if (m_visualRoot) {
         RemoveVisualChild(m_visualRoot);

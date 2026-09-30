@@ -23,6 +23,8 @@ if you don't give a config, it means --both.
 from __future__ import annotations
 
 import argparse
+import os
+import re
 import sys
 import zipfile
 from pathlib import Path
@@ -32,6 +34,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent
 BUILD_ROOT = ROOT / "NWpfBuild"
 VERSION_FILE = ROOT / "NeoWPFVersion.txt"
+BUILT_VERSION_FILE = BUILD_ROOT / "NeoWPFBuiltVersion.txt"
 LICENSE_FILE = ROOT / "LICENSE"
 INCLUDE_ROOT = ROOT / "include"
 PACKAGE_ROOT = BUILD_ROOT / "Packed"
@@ -53,6 +56,8 @@ PLATFORMS = {
 }
 
 CONFIGS = ("Release", "Debug")
+VERSION_PATTERN = re.compile(r"^(\d+)\.(\d+)\.(\d+)\.(\d+)$")
+MAX_BUILD_NUMBER = 0xFFFFFFFF
 
 
 def parse_args() -> argparse.Namespace:
@@ -81,14 +86,43 @@ def parse_args() -> argparse.Namespace:
 
 
 def read_version() -> str:
-    if not VERSION_FILE.is_file():
-        raise FileNotFoundError(f"couldn't find version file: {VERSION_FILE}")
+    version_file = os.environ.get("NEOWPF_SHARED_VERSION_FILE")
+    if version_file:
+        source_version_file = Path(version_file)
+    elif sys.platform.startswith("linux") and "/.vs/" in str(ROOT):
+        candidates = list(
+            Path("/mnt/c/Users").glob(
+                "*/source/repos/NeoWPF/NeoWPFVersion.txt"
+            )
+        )
+        if len(candidates) != 1:
+            raise ValueError(
+                "could not uniquely locate the shared Windows NeoWPFVersion.txt; "
+                "set NEOWPF_SHARED_VERSION_FILE"
+            )
+        source_version_file = candidates[0]
+    else:
+        source_version_file = VERSION_FILE
 
-    version = VERSION_FILE.read_text(encoding="utf-8").strip()
-    if not version:
-        raise ValueError(f"{VERSION_FILE} is empty")
+    def read_valid_version(path: Path) -> tuple[str, tuple[str, str, str, str]]:
+        if not path.is_file():
+            raise FileNotFoundError(f"couldn't find version file: {path}")
+        version = path.read_text(encoding="utf-8").strip()
+        match = VERSION_PATTERN.fullmatch(version)
+        if match is None or int(match.group(4)) > MAX_BUILD_NUMBER:
+            raise ValueError(
+                f"{path} must contain Major.Minor.Patch.Build with a 32-bit Build"
+            )
+        return version, match.groups()
 
-    return version
+    source_version, source_parts = read_valid_version(source_version_file)
+    if not BUILT_VERSION_FILE.is_file():
+        return source_version
+
+    built_version, built_parts = read_valid_version(BUILT_VERSION_FILE)
+    if built_parts[:3] == source_parts[:3]:
+        return built_version
+    return source_version
 
 
 def selected_platforms(args: argparse.Namespace) -> list[str]:

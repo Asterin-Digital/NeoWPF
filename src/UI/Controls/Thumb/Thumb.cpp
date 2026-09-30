@@ -12,7 +12,7 @@ bool Thumb::IsInteractable() const noexcept
     const double height = GetFinalHeight() > m_height ? GetFinalHeight() : m_height;
     const bool interactable = m_isVisible && width > 0.0 && height > 0.0;
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Info,
-        "[Thumb] IsInteractable: visible=%s width=%d height=%d result=%s",
+        "[Thumb] IsInteractable: visible=%s width=%g height=%g result=%s",
         m_isVisible ? "true" : "false",
         width,
         height,

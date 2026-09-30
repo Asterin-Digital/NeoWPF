@@ -3,11 +3,14 @@ cmake_minimum_required(VERSION 3.20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
     "Export compile_commands.json for tooling such as NeoLint")
 
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/NeoWPFVersion.txt" NEOWPF_VERSION)
-string(STRIP "${NEOWPF_VERSION}" NEOWPF_VERSION)
-if(NOT NEOWPF_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
-    message(FATAL_ERROR "NeoWPFVersion.txt must contain a semantic version")
-endif()
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoWPFVersion.cmake")
+neowpf_resolve_version_file("${CMAKE_CURRENT_SOURCE_DIR}" NEOWPF_VERSION_FILE)
+neowpf_read_version_file(
+    "${NEOWPF_VERSION_FILE}"
+    NEOWPF_VERSION
+)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${NEOWPF_VERSION_FILE}")
 string(TIMESTAMP NEOWPF_BUILD_TIME "%Y-%m-%d %H:%M:%S UTC" UTC)
 project(NeoWPF VERSION "${NEOWPF_VERSION}" LANGUAGES CXX)
 
@@ -746,6 +749,11 @@ if(WIN32 OR UNIX)
         COMMAND ${CMAKE_COMMAND} -E copy
             "${NEOWPF_RELEASE_SOURCE}"
             "${NEOWPF_RELEASE_DIRECTORY}/NeoWPF.${NEOWPF_PLATFORM}.$<CONFIG>.${PROJECT_VERSION}.${NEOWPF_RELEASE_EXTENSION}"
+        COMMAND "${CMAKE_COMMAND}"
+            "-DNEOWPF_VERSION_FILE=${NEOWPF_VERSION_FILE}"
+            "-DNEOWPF_BUILT_VERSION_FILE=${CMAKE_CURRENT_SOURCE_DIR}/NWpfBuild/NeoWPFBuiltVersion.txt"
+            "-DNEOWPF_EXPECTED_VERSION=${PROJECT_VERSION}"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AdvanceNeoWPFBuildNumber.cmake"
         VERBATIM
     )
 endif()
