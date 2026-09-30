@@ -8,6 +8,10 @@
       "enabled": true,
       "severity": "error"
     },
+    "neowpf-source-layout": {
+      "enabled": true,
+      "severity": "error"
+    },
     "neowpf-platform-utility-duplicate": {
       "enabled": true,
       "severity": "warning"

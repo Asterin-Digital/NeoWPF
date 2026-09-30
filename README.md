@@ -22,7 +22,8 @@ There's a myriad of frameworks out there, and each may have their own reason to 
 |---|---|---|
 | Windows | ✅ Most mature | Primary development target |
 | Linux   | 🟡 Partial | Half the maturity of Windows |
-| Android | 🟠 Newest | Early support, under active development |
+
+Half the maturity here means that Linux is less used then Windows, not that it's missing feature's or just doesn't work.
 
 ### Quick Start
 ```cpp
@@ -69,7 +70,7 @@ int main()
 }
 ```
 
-For XAML and better usage of NeoWPF, it is generally recommended to install and use NeoPM (project manager) which gives support for XAML, resources and much more.
+For XAML and better usage of NeoWPF, NeoPM is required which also gives support for XAML, project management, resources and much more.
 
 ### History
 
