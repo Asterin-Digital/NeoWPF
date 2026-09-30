@@ -77,6 +77,9 @@ bool WWindowing::GetNativeWindowInfo(void* nativeWindowHandle, NeoWPF::Contracts
     }
 
     outInfo.system = NeoWPF::Contracts::NativeWindowSystem::Win32;
+    outInfo.surfaceAlpha = ::GetPropW(static_cast<HWND>(nativeWindowHandle), L"NeoWPF.Transparent")
+        ? NeoWPF::Contracts::SurfaceAlpha::Premultiplied
+        : NeoWPF::Contracts::SurfaceAlpha::Opaque;
     outInfo.window = nativeWindowHandle;
     return true;
 }

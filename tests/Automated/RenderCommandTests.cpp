@@ -12,6 +12,7 @@
 #include <NeoWPF/Rendering/Renderer.h>
 
 #if !defined(_WIN32)
+#include <NeoWPF/Rendering/Vulkan/SurfaceAlpha.h>
 #include <NeoWPF/Rendering/Vulkan/VulkanRendering.h>
 #endif
 
@@ -105,6 +106,42 @@ TEST(WindowRenderLifecycleTests, CreatesTwoIndependentWindowsAndBindsEachRenderT
 #endif
 
 #if !defined(_WIN32)
+
+TEST(VulkanRenderingTests, RequiresPremultipliedCompositeAlphaForTransparentWindows)
+{
+    using NeoWPF::Rendering::Vulkan::SelectSurfaceCompositeAlpha;
+
+    const auto transparent = SelectSurfaceCompositeAlpha(
+        true, VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR |
+              VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR);
+    ASSERT_TRUE(transparent.has_value());
+    EXPECT_EQ(*transparent, VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR);
+
+    EXPECT_FALSE(SelectSurfaceCompositeAlpha(
+        true, VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR).has_value());
+    const auto opaque = SelectSurfaceCompositeAlpha(
+        false, VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR |
+               VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR);
+    ASSERT_TRUE(opaque.has_value());
+    EXPECT_EQ(*opaque, VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
+}
+
+TEST(VulkanRenderingTests, PremultipliesOnlyTransparentClearColors)
+{
+    using NeoWPF::Rendering::Vulkan::ToSurfaceClearColor;
+
+    const auto premultiplied = ToSurfaceClearColor(0x80402010u, true);
+    EXPECT_NEAR(premultiplied[0], (64.0f / 255.0f) * (128.0f / 255.0f), 0.000001f);
+    EXPECT_NEAR(premultiplied[1], (32.0f / 255.0f) * (128.0f / 255.0f), 0.000001f);
+    EXPECT_NEAR(premultiplied[2], (16.0f / 255.0f) * (128.0f / 255.0f), 0.000001f);
+    EXPECT_FLOAT_EQ(premultiplied[3], 128.0f / 255.0f);
+
+    const auto opaque = ToSurfaceClearColor(0x80402010u, false);
+    EXPECT_FLOAT_EQ(opaque[0], 64.0f / 255.0f);
+    EXPECT_FLOAT_EQ(opaque[1], 32.0f / 255.0f);
+    EXPECT_FLOAT_EQ(opaque[2], 16.0f / 255.0f);
+    EXPECT_FLOAT_EQ(opaque[3], 128.0f / 255.0f);
+}
 
 TEST(VulkanRenderingTests, RejectsInvalidWaylandWindowHandle)
 {

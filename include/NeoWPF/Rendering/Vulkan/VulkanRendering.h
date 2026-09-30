@@ -46,6 +46,7 @@ private:
         VkFence inFlight = VK_NULL_HANDLE;
         std::uint32_t currentImage = 0;
         bool frameActive = false;
+        bool transparent = false;
     };
 
     bool InitializeDevice();

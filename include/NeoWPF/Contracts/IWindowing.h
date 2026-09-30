@@ -22,6 +22,11 @@ enum class NativeWindowSystem {
     Wayland,
 };
 
+enum class SurfaceAlpha {
+    Opaque,
+    Premultiplied,
+};
+
 using VulkanSurfaceCreateCallback = bool (*)(
     void* userData,
     void* instance,
@@ -31,6 +36,7 @@ using VulkanSurfaceCreateCallback = bool (*)(
 
 struct NativeWindowInfo {
     NativeWindowSystem system = NativeWindowSystem::Unknown;
+    SurfaceAlpha surfaceAlpha = SurfaceAlpha::Opaque;
     void* window = nullptr;
     void* display = nullptr;
     const char* const* vulkanInstanceExtensions = nullptr;

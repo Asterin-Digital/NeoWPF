@@ -272,8 +272,6 @@ Do not reuse the same build directory after switching between Ninja and Visual S
 On Ubuntu:
 
 ```bash
-sudo apt update
-
 sudo apt install -y \
     git \
     build-essential \
@@ -330,7 +328,7 @@ NeoWPF uses the `x64-linux` triplet:
 
 ```bash
 cd ~/NeoWPF
-vcpkg install --triplet x64-linux
+sudo vcpkg install --triplet x64-linux
 ```
 
 The dependencies are installed into the NeoWPF vcpkg installation used by the project.

@@ -114,7 +114,8 @@ void* LWindowing::CreateWindow(
         return nullptr;
     }
 
-    auto window = std::make_unique<LWindow>(*this, title, width, height);
+    const bool transparent = windowHost && windowHost->IsTransparent();
+    auto window = std::make_unique<LWindow>(*this, title, width, height, transparent);
     if (!window->IsValid()) {
         return nullptr;
     }
@@ -139,11 +140,13 @@ void* LWindowing::CreateWindow(
     }
     m_windows.push_back(std::move(window));
 
-    EnsureClientTitleBar(
-        nativeHandle,
-        windowState.windowHost->GetTitleBar()
-            ? NeoWPF::Contracts::ChromeMode::Custom
-            : NeoWPF::Contracts::ChromeMode::Native);
+    if (!transparent) {
+        EnsureClientTitleBar(
+            nativeHandle,
+            windowState.windowHost->GetTitleBar()
+                ? NeoWPF::Contracts::ChromeMode::Custom
+                : NeoWPF::Contracts::ChromeMode::Native);
+    }
 
     return nativeHandle;
 }
@@ -157,6 +160,9 @@ bool LWindowing::GetNativeWindowInfo(void* nativeWindowHandle,
         return false;
     }
     outInfo.system = NeoWPF::Contracts::NativeWindowSystem::Wayland;
+    outInfo.surfaceAlpha = window->IsTransparent()
+        ? NeoWPF::Contracts::SurfaceAlpha::Premultiplied
+        : NeoWPF::Contracts::SurfaceAlpha::Opaque;
     outInfo.window = window->Surface();
     outInfo.display = window->Display();
     outInfo.vulkanInstanceExtensions = VulkanInstanceExtensions;

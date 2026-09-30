@@ -16,7 +16,8 @@ namespace NeoWPF::Platform::Linux {
 
 class LWindow final {
 public:
-    LWindow(LWindowing& windowing, const wchar_t* title, int width, int height);
+        LWindow(LWindowing& windowing, const wchar_t* title, int width, int height,
+            bool transparent = false);
     ~LWindow();
 
     LWindow(const LWindow&) = delete;
@@ -30,6 +31,7 @@ public:
     const std::wstring& Title() const noexcept;
     int Width() const noexcept;
     int Height() const noexcept;
+    bool IsTransparent() const noexcept;
     void SetSize(int width, int height) noexcept;
     bool IsConfigured() const noexcept;
     bool IsClosed() const noexcept;
@@ -94,6 +96,7 @@ private:
     bool m_configured = false;
     bool m_closed = false;
     bool m_maximized = false;
+    bool m_transparent = false;
     std::uint32_t m_repeatKey = 0;
     bool m_repeatActive = false;
     std::chrono::steady_clock::time_point m_repeatNext{};

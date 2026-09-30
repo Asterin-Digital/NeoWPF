@@ -1,4 +1,5 @@
 #include <NeoWPF/Rendering/Vulkan/VulkanRendering.h>
+#include <NeoWPF/Rendering/Vulkan/SurfaceAlpha.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 
 #include <algorithm>
@@ -97,6 +98,13 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
         static_cast<int>(format.format), static_cast<int>(format.colorSpace),
         context.swapchainExtent.width, context.swapchainExtent.height);
 
+    const auto compositeAlpha = SelectSurfaceCompositeAlpha(
+        context.transparent, capabilities.supportedCompositeAlpha);
+    if (!compositeAlpha) {
+        NeoWPF::Diagnostics::LogError(
+            "[Vulkan] Surface does not support the required composite alpha mode for this window");
+        return false;
+    }
     DestroySwapchainResources(context);
     const std::uint32_t requestedImageCount = (std::max)(capabilities.minImageCount, 2u);
     const std::uint32_t imageCount = std::min(
@@ -110,7 +118,7 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
         format.format, format.colorSpace, context.swapchainExtent, 1, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         separateQueues ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE,
         separateQueues ? 2u : 0u, separateQueues ? queueFamilies.data() : nullptr,
-        capabilities.currentTransform, VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_PRESENT_MODE_FIFO_KHR,
+        capabilities.currentTransform, *compositeAlpha, VK_PRESENT_MODE_FIFO_KHR,
         VK_TRUE, VK_NULL_HANDLE};
     result = vkCreateSwapchainKHR(m_device, &swapchainInfo, nullptr, &context.swapchain);
     if (result != VK_SUCCESS) {

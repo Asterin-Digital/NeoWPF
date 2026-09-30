@@ -3,6 +3,7 @@
 #include <NeoWPF/Rendering/Clipping.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/Vulkan/VulkanRendering.h>
+#include <NeoWPF/Rendering/Vulkan/SurfaceAlpha.h>
 
 #include <algorithm>
 #include <cmath>
@@ -69,13 +70,11 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
             backgroundColor = resourceColor.ToArgb();
         }
     }
+    const auto clearColor = ToSurfaceClearColor(backgroundColor, context->transparent);
     const VkClearAttachment clearAttachment{
         VK_IMAGE_ASPECT_COLOR_BIT,
         0,
-        {{((backgroundColor >> 16) & 0xFF) / 255.0f,
-          ((backgroundColor >> 8) & 0xFF) / 255.0f,
-          (backgroundColor & 0xFF) / 255.0f,
-          ((backgroundColor >> 24) & 0xFF) / 255.0f}}};
+        {{clearColor[0], clearColor[1], clearColor[2], clearColor[3]}}};
     const VkClearRect clearRect{{{0, 0}, context->swapchainExtent}, 0, 1};
     vkCmdClearAttachments(context->commandBuffers[context->currentImage], 1, &clearAttachment, 1, &clearRect);
 

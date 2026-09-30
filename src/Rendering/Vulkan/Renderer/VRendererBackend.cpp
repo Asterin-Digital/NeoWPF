@@ -5,6 +5,7 @@
 #include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/Rendering/Clipping.h>
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/Rendering/Vulkan/SurfaceAlpha.h>
 
 #include <algorithm>
 #include <any>
@@ -92,6 +93,7 @@ bool VulkanRendering::Initialize(void* nativeWindowHandle)
     if (!windowContext) {
         return false;
     }
+    windowContext->transparent = windowInfo.surfaceAlpha == NeoWPF::Contracts::SurfaceAlpha::Premultiplied;
     if (m_initialized && windowContext->surface != VK_NULL_HANDLE) {
         return true;
     }

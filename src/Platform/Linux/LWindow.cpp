@@ -21,13 +21,15 @@ const xdg_toplevel_listener ToplevelListener = {
 
 }
 
-LWindow::LWindow(LWindowing& windowing, const wchar_t* title, int width, int height)
+LWindow::LWindow(LWindowing& windowing, const wchar_t* title, int width, int height,
+             bool transparent)
         : m_windowing(windowing),
             m_display(windowing.Display()),
       m_title(title ? title : L""),
       m_width((std::max)(width, 1)),
       m_height((std::max)(height, 1)),
-      m_seat(windowing.Seat())
+    m_seat(windowing.Seat()),
+    m_transparent(transparent)
 {
     if (windowing.IsConnected() && windowing.Compositor()) {
         m_surface = wl_compositor_create_surface(windowing.Compositor());
@@ -122,6 +124,11 @@ int LWindow::Width() const noexcept
 int LWindow::Height() const noexcept
 {
     return m_height;
+}
+
+bool LWindow::IsTransparent() const noexcept
+{
+    return m_transparent;
 }
 
 void LWindow::SetSize(int width, int height) noexcept
@@ -368,7 +375,7 @@ std::shared_ptr<NeoWPF::UI::Visual> Window::GetWindowTitleBar(void* nativeHandle
     return nullptr;
 }
 
-void* Window::CreateWindow(void*, const wchar_t* title, int width, int height)
+void* Window::CreateWindow(void*, const wchar_t* title, int width, int height, bool transparent)
 {
     auto* platform = CurrentPlatform();
     return platform ? platform->Windowing().CreateWindow(title, width, height) : nullptr;
