@@ -211,6 +211,10 @@ void Popup::Arrange(double finalWidth, double finalHeight)
             x += targetX + target->GetFinalWidth();
             y += targetY;
             break;
+        case PopupPlacement::Center:
+            x += targetX + (target->GetFinalWidth() - finalWidth) / 2.0;
+            y += targetY + (target->GetFinalHeight() - finalHeight) / 2.0;
+            break;
         }
     }
     SetLayoutOffset(x, y);

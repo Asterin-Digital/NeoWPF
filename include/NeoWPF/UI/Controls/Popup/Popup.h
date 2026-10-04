@@ -16,7 +16,8 @@ enum class PopupPlacement {
     Bottom,
     Top,
     Left,
-    Right
+    Right,
+    Center
 };
 
 class Popup : public Content::ContentControl {

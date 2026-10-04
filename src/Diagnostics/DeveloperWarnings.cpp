@@ -1,11 +1,16 @@
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/UI/Controls/Button/Button.h>
+#include <NeoWPF/UI/Controls/Clipboard/Clipboard.h>
+#include <NeoWPF/UI/Controls/Popup/Popup.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Layout/Border/Border.h>
+#include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <algorithm>
 #include <memory>
 
 namespace NeoWPF::Diagnostics {
@@ -16,9 +21,25 @@ bool g_isBuildingWarningOverlay = false;
 bool g_hasQueuedDeveloperWarning = false;
 std::optional<DeveloperWarningMessage> g_lastDeveloperWarning;
 
-struct OverlayBuildResult {
-    std::shared_ptr<NeoWPF::UI::Visual> panel;
-    std::vector<std::shared_ptr<NeoWPF::UI::Visual>> ownedVisuals;
+class DeveloperWarningOverlay final : public NeoWPF::UI::Grid {
+public:
+    void SetDialogCard(const std::shared_ptr<NeoWPF::UI::Border>& card)
+    {
+        m_dialogCard = card;
+    }
+
+    void Measure(double availableWidth, double availableHeight) override
+    {
+        if (auto card = m_dialogCard.lock()) {
+            card->SetWidth((std::max)(0.0, (std::min)(760.0, availableWidth - 48.0)));
+        }
+
+        NeoWPF::UI::Grid::Measure(availableWidth, availableHeight);
+        SetDesiredSize(availableWidth, availableHeight);
+    }
+
+private:
+    std::weak_ptr<NeoWPF::UI::Border> m_dialogCard;
 };
 
 struct WarningOverlayBuildGuard {
@@ -37,85 +58,145 @@ private:
     bool& flag;
 };
 
-OverlayBuildResult CreateDeveloperWarningOverlay(const DeveloperWarningMessage& warning, int overlayIndex)
+std::shared_ptr<NeoWPF::UI::Popup> CreateDeveloperWarningPopup(
+    const DeveloperWarningMessage& warning,
+    NeoWPF::UI::FrameworkElement* placementTarget)
 {
+    const auto accentColor = warning.severity == DeveloperWarningSeverity::Error
+        ? 0xFFF87171u
+        : 0xFFFBBF24u;
+    const auto severityText = warning.severity == DeveloperWarningSeverity::Error
+        ? L"DEVELOPER ERROR"
+        : L"DEVELOPER WARNING";
+
+    auto popup = std::make_shared<NeoWPF::UI::Popup>();
+    popup->SetPlacementTarget(placementTarget);
+    popup->SetPlacement(NeoWPF::UI::PopupPlacement::Center);
+    popup->SetStaysOpen(true);
+
+    auto overlay = std::make_shared<DeveloperWarningOverlay>();
+    overlay->AddRow(NeoWPF::UI::SizeMode::Star, 1);
+    overlay->AddColumn(NeoWPF::UI::SizeMode::Star, 1);
+
+    auto backdrop = std::make_shared<NeoWPF::UI::Border>();
+    backdrop->SetBackgroundColor(0xB8000000u);
+    overlay->AddChild(backdrop);
+
     auto card = std::make_shared<NeoWPF::UI::Border>();
-    card->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Left);
-    card->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Top);
-    card->SetMargin(0, 0, 0, 10);
-    card->SetPadding(14);
+    card->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Center);
+    card->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Center);
+    card->SetPadding(28);
     card->SetBorderThickness(1);
-    card->SetBorderColor(warning.severity == DeveloperWarningSeverity::Error ? 0xFFB00020u : 0xFFB8731Fu);
-    card->SetBackgroundColor(warning.severity == DeveloperWarningSeverity::Error ? 0xFF2A1113u : 0xFF2B2418u);
-    card->SetCornerRadius(NeoWPF::UI::CornerRadius(12));
-    card->SetOpacity(0.98f);
-    card->SetZIndex(100000 + overlayIndex);
+    card->SetBorderColor(0xFF3A4655u);
+    card->SetBackgroundColor(0xFF202A36u);
+    card->SetCornerRadius(NeoWPF::UI::CornerRadius(16));
 
     auto content = std::make_shared<NeoWPF::UI::StackPanel>();
     content->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Stretch);
-    content->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Top);
 
-    auto titleText = std::make_shared<NeoWPF::UI::TextBlock>(warning.title);
-    titleText->SetFontSize(14);
-    titleText->SetTextColor(0xFFFFFFFFu);
-    titleText->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Left);
-    titleText->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Top);
+    auto severity = std::make_shared<NeoWPF::UI::TextBlock>(severityText);
+    severity->SetFontSize(12);
+    severity->SetTextColor(accentColor);
+    severity->SetMargin(0, 0, 0, 8);
 
-    auto bodyText = std::make_shared<NeoWPF::UI::TextBlock>(warning.message);
-    bodyText->SetFontSize(12);
-    bodyText->SetTextColor(0xFFEDEDEDu);
-    bodyText->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Left);
-    bodyText->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Top);
+    auto title = std::make_shared<NeoWPF::UI::TextBlock>(warning.title);
+    title->SetFontSize(25);
+    title->SetTextColor(0xFFF8FAFCu);
+    title->SetMargin(0, 0, 0, 22);
 
-    content->AddVisualChild(titleText);
-    content->AddVisualChild(bodyText);
+    auto details = std::make_shared<NeoWPF::UI::Border>();
+    details->SetPadding(20);
+    details->SetBackgroundColor(0xFF151D26u);
+    details->SetBorderColor(0xFF303C49u);
+    details->SetBorderThickness(1);
+    details->SetCornerRadius(NeoWPF::UI::CornerRadius(10));
+
+    auto message = std::make_shared<NeoWPF::UI::TextBlock>(warning.message);
+    message->SetFontSize(15);
+    message->SetTextColor(0xFFD6DEE8u);
+    message->SetTextWrapping(NeoWPF::UI::TextWrapping::Wrap);
+    details->SetContent(message);
+
+    auto actions = std::make_shared<NeoWPF::UI::StackPanel>();
+    actions->SetOrientation(NeoWPF::UI::Orientation::Horizontal);
+    actions->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Right);
+    actions->SetMargin(0, 24, 0, 0);
+
+    auto copy = std::make_shared<NeoWPF::UI::Button>(L"Copy");
+    copy->SetWidth(112);
+    copy->SetHeight(42);
+    copy->SetMargin(0, 0, 10, 0);
+    copy->SetPadding(12);
+    copy->SetBackgroundColor(0xFF2563EBu);
+    copy->SetBorderColor(0xFF2563EBu);
+    copy->SetTextColor(0xFFFFFFFFu);
+
+    auto close = std::make_shared<NeoWPF::UI::Button>(L"Close");
+    close->SetWidth(112);
+    close->SetHeight(42);
+    close->SetPadding(12);
+    close->SetBackgroundColor(0xFF303C49u);
+    close->SetBorderColor(0xFF465365u);
+    close->SetTextColor(0xFFF8FAFCu);
+
+    const std::wstring copyText = warning.title + L"\n\n" + warning.message;
+    std::weak_ptr<NeoWPF::UI::Button> weakCopy = copy;
+    copy->Click += [copyText, weakCopy]() {
+        if (auto button = weakCopy.lock()) {
+            button->SetText(NeoWPF::UI::Clipboard().SetText(copyText) ? L"Copied" : L"Copy failed");
+        }
+    };
+
+    std::weak_ptr<NeoWPF::UI::Popup> weakPopup = popup;
+    close->Click += [weakPopup]() {
+        if (auto openPopup = weakPopup.lock()) {
+            openPopup->SetIsOpen(false);
+        }
+    };
+
+    actions->AddChild(copy);
+    actions->AddChild(close);
+    content->AddChild(severity);
+    content->AddChild(title);
+    content->AddChild(details);
+    content->AddChild(actions);
     card->SetContent(content);
-
-    return {card, {card, content, titleText, bodyText}};
+    overlay->AddChild(card);
+    overlay->SetDialogCard(card);
+    popup->SetContent(overlay);
+    return popup;
 }
 
-void AttachDeveloperWarningOverlayToRoot(const DeveloperWarningMessage& warning, int overlayIndex)
+void AttachDeveloperWarningPopup(const DeveloperWarningMessage& warning)
 {
     auto& appState = NeoWPF::Core::GetAppState();
-    NeoWPF::UI::Visual* targetRoot = nullptr;
+    std::shared_ptr<NeoWPF::UI::Window> targetWindow;
+    NeoWPF::UI::FrameworkElement* placementTarget = nullptr;
 
     for (const auto& windowState : appState.windows) {
         if (windowState.windowHost && windowState.windowHost->GetContent()) {
-            targetRoot = windowState.windowHost->GetContent().get();
+            targetWindow = windowState.windowHost;
+            placementTarget = dynamic_cast<NeoWPF::UI::FrameworkElement*>(
+                windowState.windowHost->GetContent().get());
+            if (!placementTarget) {
+                placementTarget = windowState.windowHost.get();
+            }
             break;
         }
     }
 
-    if (!targetRoot) {
+    if (!targetWindow) {
         return;
     }
 
     if (DeveloperWarnings::s_debugLogging) {
-        NeoWPF::Diagnostics::LogWarn("DeveloperWarnings.cpp: attach overlay index=%d title=%ls message=%ls", overlayIndex, warning.title.c_str(), warning.message.c_str());
+        NeoWPF::Diagnostics::LogWarn("DeveloperWarnings.cpp: open popup title=%ls message=%ls", warning.title.c_str(), warning.message.c_str());
     }
 
     WarningOverlayBuildGuard guard(g_isBuildingWarningOverlay);
-    auto overlay = CreateDeveloperWarningOverlay(warning, overlayIndex);
-
-    if (!appState.developerWarningOverlayHost) {
-        auto overlayHost = std::make_shared<NeoWPF::UI::StackPanel>();
-        overlayHost->SetHorizontalAlignment(NeoWPF::UI::HorizontalAlignment::Right);
-        overlayHost->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Top);
-        overlayHost->SetMargin(16, 16, 16, 16);
-        overlayHost->SetZIndex(100000);
-        targetRoot->AddVisualChild(overlayHost);
-        appState.developerWarningOverlayHost = overlayHost;
-        appState.developerOverlayVisuals.push_back(overlayHost);
-    }
-
-    auto overlayHost = std::dynamic_pointer_cast<NeoWPF::UI::StackPanel>(appState.developerWarningOverlayHost);
-    if (overlayHost) {
-        overlayHost->AddVisualChild(overlay.panel);
-    }
-
-    for (const auto& visual : overlay.ownedVisuals) {
-        appState.developerOverlayVisuals.push_back(visual);
-    }
+    auto popup = CreateDeveloperWarningPopup(warning, placementTarget);
+    appState.developerWarningOverlayHost = popup;
+    popup->SetIsOpen(true);
 }
 
 }
@@ -158,6 +239,9 @@ void ClearDeveloperWarnings()
     g_hasQueuedDeveloperWarning = false;
     auto& appState = NeoWPF::Core::GetAppState();
     appState.pendingDeveloperMessages.clear();
+    if (auto popup = std::dynamic_pointer_cast<NeoWPF::UI::Popup>(appState.developerWarningOverlayHost)) {
+        popup->SetIsOpen(false);
+    }
     appState.developerOverlayVisuals.clear();
     appState.developerWarningOverlayHost.reset();
 }
@@ -174,8 +258,8 @@ void ProcessPendingDeveloperWarnings()
         NeoWPF::Diagnostics::LogWarn("DeveloperWarnings.cpp: flush count=%zu", appState.pendingDeveloperMessages.size());
     }
 
-    for (size_t index = 0; index < appState.pendingDeveloperMessages.size(); ++index) {
-        AttachDeveloperWarningOverlayToRoot(appState.pendingDeveloperMessages[index], static_cast<int>(index));
+    for (const auto& warning : appState.pendingDeveloperMessages) {
+        AttachDeveloperWarningPopup(warning);
     }
 
     appState.pendingDeveloperMessages.clear();

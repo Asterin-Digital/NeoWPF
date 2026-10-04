@@ -51,6 +51,33 @@ struct DeveloperWarnings {
 
     /*
         @summary
+        UniformGrid capacity overflow warning code.
+
+        @devwarn NEO-UI209 UniformGrid capacity exceeded.
+        Triggered when UniformGrid must add effective rows to preserve its children.
+    */
+    static constexpr const wchar_t* kUniformGridCapacityOverflowCode = L"NEO-UI209";
+
+    /*
+        @summary
+        Invalid UniformGrid dimension warning code.
+
+        @devwarn NEO-UI210 Invalid UniformGrid dimension.
+        Triggered when Rows or Columns is negative.
+    */
+    static constexpr const wchar_t* kUniformGridInvalidDimensionCode = L"NEO-UI210";
+
+    /*
+        @summary
+        Invalid UniformGrid FirstColumn warning code.
+
+        @devwarn NEO-UI211 Invalid UniformGrid FirstColumn.
+        Triggered when FirstColumn must be clamped to a valid column index.
+    */
+    static constexpr const wchar_t* kUniformGridInvalidFirstColumnCode = L"NEO-UI211";
+
+    /*
+        @summary
         Layout overflow warning code.
 
         @devwarn NEO-UI013 Layout overflow detected.

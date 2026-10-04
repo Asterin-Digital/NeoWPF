@@ -236,6 +236,7 @@ namespace NeoWPF::UI::Properties {
     void RegisterImageProperties();
     void RegisterBorderProperties();
     void RegisterPanelProperties();
+    void RegisterUniformGridProperties();
     void RegisterCanvasProperties();
     void RegisterGridProperties();
     void RegisterRowDefinitionProperties();

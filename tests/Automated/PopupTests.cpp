@@ -121,6 +121,11 @@ TEST_F(PopupTests, PlacementAndOffsetsUseTargetBounds)
     popup.Arrange(80, 20);
     EXPECT_EQ(popup.GetLayoutOffsetX(), targetX + target->GetFinalWidth() + 5);
     EXPECT_EQ(popup.GetLayoutOffsetY(), targetY + 9);
+
+    popup.SetPlacement(NeoWPF::UI::PopupPlacement::Center);
+    popup.Arrange(80, 20);
+    EXPECT_EQ(popup.GetLayoutOffsetX(), targetX + (target->GetFinalWidth() - 80) / 2 + 5);
+    EXPECT_EQ(popup.GetLayoutOffsetY(), targetY + (target->GetFinalHeight() - 20) / 2 + 9);
 }
 
 TEST_F(PopupTests, OverlayOwnershipTracksOpenAndClose)
@@ -154,6 +159,11 @@ TEST_F(PopupTests, SharedPlacementConverterRejectsMalformedValues)
     EXPECT_TRUE(converter->ConvertFromString("Top", converted));
     ASSERT_EQ(converted.type(), typeid(NeoWPF::UI::PopupPlacement));
     EXPECT_EQ(std::any_cast<NeoWPF::UI::PopupPlacement>(converted), NeoWPF::UI::PopupPlacement::Top);
+
+    converted.reset();
+    EXPECT_TRUE(converter->ConvertFromString("Center", converted));
+    ASSERT_EQ(converted.type(), typeid(NeoWPF::UI::PopupPlacement));
+    EXPECT_EQ(std::any_cast<NeoWPF::UI::PopupPlacement>(converted), NeoWPF::UI::PopupPlacement::Center);
 
     converted.reset();
     EXPECT_FALSE(converter->ConvertFromString("diagonal", converted));

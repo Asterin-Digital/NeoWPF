@@ -153,11 +153,12 @@ constexpr std::array<ConversionEntry<NeoWPF::UI::SelectionMode>, 3> SelectionMod
     {"extended", NeoWPF::UI::SelectionMode::Extended, "NeoWPF::UI::SelectionMode::Extended"},
 }};
 
-constexpr std::array<ConversionEntry<NeoWPF::UI::PopupPlacement>, 4> PopupPlacementEntries {{
+constexpr std::array<ConversionEntry<NeoWPF::UI::PopupPlacement>, 5> PopupPlacementEntries {{
     {"bottom", NeoWPF::UI::PopupPlacement::Bottom, "NeoWPF::UI::PopupPlacement::Bottom"},
     {"top", NeoWPF::UI::PopupPlacement::Top, "NeoWPF::UI::PopupPlacement::Top"},
     {"left", NeoWPF::UI::PopupPlacement::Left, "NeoWPF::UI::PopupPlacement::Left"},
     {"right", NeoWPF::UI::PopupPlacement::Right, "NeoWPF::UI::PopupPlacement::Right"},
+    {"center", NeoWPF::UI::PopupPlacement::Center, "NeoWPF::UI::PopupPlacement::Center"},
 }};
 
 constexpr std::array<ConversionEntry<NeoWPF::UI::FontStyle>, 3> FontStyleEntries {{
