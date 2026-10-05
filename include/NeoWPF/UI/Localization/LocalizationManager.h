@@ -7,6 +7,7 @@ See LICENSE file in the project root for full license text.
 
 #include <NeoWPF/UI/Localization/Culture.h>
 #include <NeoWPF/UI/Localization/LocaleTable.h>
+#include <NeoWPF/Core/Events/Notification.h>
 
 #include <mutex>
 #include <shared_mutex>
@@ -148,8 +149,7 @@ private:
     Culture m_activeLocale;
     Culture m_fallbackLocale;
     MissingKeyPolicy m_missingKeyPolicy = MissingKeyPolicy::Marker;
-    std::unordered_map<std::size_t, std::function<void()>> m_subscribers;
-    std::size_t m_nextSubscriptionId = 1;
+    NeoWPF::Core::Notification<> m_notifications;
 };
 
 }

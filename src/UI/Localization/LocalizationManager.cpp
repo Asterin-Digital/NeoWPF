@@ -1,7 +1,5 @@
 #include <NeoWPF/UI/Localization/LocalizationManager.h>
 
-#include <vector>
-
 namespace NeoWPF::UI::Localization {
 
 LocalizationManager& LocalizationManager::Get()
@@ -210,43 +208,17 @@ void LocalizationManager::NotifyLocaleChanged()
 
 std::size_t LocalizationManager::Subscribe(std::function<void()> handler)
 {
-    if (!handler) {
-        return 0;
-    }
-
-    std::unique_lock lock(m_mutex);
-    const auto subscriptionId = m_nextSubscriptionId++;
-    m_subscribers.emplace(subscriptionId, std::move(handler));
-    return subscriptionId;
+    return m_notifications.Subscribe(std::move(handler));
 }
 
 void LocalizationManager::Unsubscribe(std::size_t subscriptionId)
 {
-    if (subscriptionId == 0) {
-        return;
-    }
-
-    std::unique_lock lock(m_mutex);
-    m_subscribers.erase(subscriptionId);
+    m_notifications.Unsubscribe(subscriptionId);
 }
 
 void LocalizationManager::NotifySubscribers() const
 {
-    std::vector<std::function<void()>> subscribers;
-    {
-        std::shared_lock lock(m_mutex);
-        subscribers.reserve(m_subscribers.size());
-        for (const auto& [subscriptionId, handler] : m_subscribers) {
-            (void)subscriptionId;
-            if (handler) {
-                subscribers.push_back(handler);
-            }
-        }
-    }
-
-    for (const auto& handler : subscribers) {
-        handler();
-    }
+    m_notifications.Publish();
 }
 
 }

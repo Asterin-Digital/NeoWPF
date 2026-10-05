@@ -48,6 +48,7 @@ for details related to AI usage, contributing, and other information.
 #include <NeoWPF/Diagnostics/TextDumper.h>
 ///////////////////////////////////////////////////
 #include <NeoWPF/Core/Application/Resources/ResourceKey.h>
+#include <NeoWPF/Core/Events/Notification.h>
 #include <NeoWPF/Core/Application/Resources/IResourceProvider.h>
 #include <NeoWPF/Core/Application/Resources/EmbeddedResourceProvider.h>
 #include <NeoWPF/Core/Application/Resources/ExternalFileResourceProvider.h>
