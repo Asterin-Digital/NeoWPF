@@ -1,29 +1,36 @@
-.vs
+# Build
+.vs/
+x86/
+Debug/
+build/
+output/
+bin/
+obj/
+out/
+vcpkg_installed/
+NWpfBuild/
+NeoLint/NLintBuild/
 
-x86
-Debug
-build
-output
-reports
+# Dont commit private reports
+reports/
 
-.vscode
-
+# Junk
+__pycache__/
+*.vcxproj.user
 /NeoWPF/
+paths.neo
+tools/
 
-private
-
+# Misc
 out.txt
 output.txt
+
+# CTest output
+Testing/
+
+# Things that should not get commited, private details
+private/
+.vscode/
+.github
 NeoWPF.code-workspace
-NeoWPF.vcxproj.user
-out
-vcpkg_installed
-paths.neo
-NWpfBuild
-Testing
-tools
 ToDo.md
-__pycache__
-bin
-obj
-NeoLint/NLintBuild/

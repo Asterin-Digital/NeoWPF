@@ -19,11 +19,23 @@
 | `@note`         | Helpful information or behavior.                |
 | `@warning`      | Important limitations or caveats.               |
 | `@example`      | Example usage.                                  |
-| `@since`        | Version the API was introduced.                 |
 | `@related`      | Related declarations.                           |
 | `@todo`         | Planned improvements or missing functionality.  |
 | `@devwarn`      | Developer warning code and description used by diagnostics. |
 | `@internal`     | Internal methods that aren't public API's       |
+
+## More Rules
+
+1. You cannot document a constructor
+2. You cannot describe a use case, when to use, or whatnot when documenting something
+3. You cannot document static Dependency Properties
+4. You cannot include internal arlgorithm details in documentation
+5. You MUST, under any circumstances, mark said method as @internal if IT IS internal.
+6. todo, note tags cannot be used in documented header files.
+7. You cannot use regular // plain comments, or /* plain multiline comments */ in a documented header file
+8. Every comment block must have it's tag at the top, and the comment at the bottom, they cannot be one the same line.
+9. todo, note tags can only be used in source files when you leave a small small note that tells the future developer what not to do, and a todo when something is unfinished.
+10. Leaving a known internal method name not marked as @internal will trigger a compile error at build time.
 
 ## Example
 
@@ -37,12 +49,6 @@
 
     @param availableHeight
     Maximum height available.
-
-    @devwarn NEO-UI101 Dangling child reference detected.
-    This warning is queued when a visual child is attached without active shared ownership.
-
-    @note
-    Called before Arrange().
 */
-virtual void Measure(int availableWidth, int availableHeight);
+virtual void Measure(double availableWidth, double availableHeight);
 ```

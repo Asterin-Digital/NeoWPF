@@ -65,6 +65,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 #include <NeoWPF/UI/Layout/Canvas/Canvas.h>
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
+#include <NeoWPF/UI/Layout/UniformGrid/UniformGrid.h>
 #include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Layout/Placement/Orientation.h>
 
