@@ -258,7 +258,7 @@ private:
 
 private:
     std::wstring m_text;
-    NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFF000000u);
+    NeoWPF::UI::Color m_textColor;
     int m_fontSize = 16;
     std::wstring m_fontFamily;
     int m_fontWeight = 400;

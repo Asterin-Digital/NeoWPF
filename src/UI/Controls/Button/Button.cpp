@@ -1,6 +1,5 @@
 #include <NeoWPF/UI/Controls/Button/Button.h>
-#include <NeoWPF/UI/Controls/ButtonStyles.h>
-#include <NeoWPF/ControlStyles.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
@@ -16,12 +15,29 @@
 
 namespace NeoWPF::UI {
 
+namespace {
+
+NeoWPF::UI::Color GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor paletteColor)
+{
+    NeoWPF::UI::Color color;
+    NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().TryGetPaletteColor(paletteColor, color);
+    return color;
+}
+
+}
+
 Button::Button()
     : ButtonBase()
 {
     SetHorizontalAlignment(HorizontalAlignment::Center);
     SetVerticalAlignment(VerticalAlignment::Center);
     SetTemplate(std::make_shared<ButtonTemplate>());
+
+    SetStylePropertyValue("Padding", NeoWPF::UI::Thickness(8));
+    SetStylePropertyValue("Background", GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Surface));
+    SetStylePropertyValue("BorderBrush", GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Border));
+    SetStylePropertyValue("Foreground", GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground));
+    SetStylePropertyValue("FontSize", 14);
 
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
     SetPresenter(presenter);
@@ -35,12 +51,6 @@ Button::Button()
     m_textContent->SetTextColor(m_textColor.ToArgb());
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
-
-    SetStylePropertyValue("Padding", NeoWPF::UI::Thickness(8));
-    SetStylePropertyValue("Background", NeoWPF::UI::Color::FromArgb(0xFFEEEEEEu));
-    SetStylePropertyValue("BorderBrush", NeoWPF::UI::Color::FromArgb(0xFF333333u));
-
-    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::ButtonStyles, *this);
 }
 
 Button::Button(const std::wstring& text)

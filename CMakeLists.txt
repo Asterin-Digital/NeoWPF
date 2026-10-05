@@ -374,13 +374,6 @@ neowpf_add_xaml(
 )
 neowpf_add_xaml(
     NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Button/Visual/ButtonStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated
-    COMPONENT ButtonStyles
-    PUBLIC_HEADER NeoWPF/UI/Controls/ButtonStyles.h
-)
-neowpf_add_xaml(
-    NeoWPF.Foundation
     "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ScrollBar/Visual/ScrollBarStyles.xaml"
     NAMESPACE NeoWPF::UI::Generated
     COMPONENT ScrollBarStyles

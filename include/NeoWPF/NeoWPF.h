@@ -16,7 +16,7 @@ See LICENSE file in the project root for full license text.
 A C++ UI framework meant to bring WPF familiarity to a fast, native and portable language.
 
 Review the project's README.md, DevelopmentGuidelines.md and AI.md 
-for details related to AI usage, contributing, and other information
+for details related to AI usage, contributing, and other information.
 
 ============================================================
 */
@@ -211,6 +211,8 @@ namespace NeoWPF {
     using Core::Application;
 
     using Core::ApplicationThemes::ThemeDefinition;
+    
+    using Core::ApplicationThemes::PaletteColor;
 
     using Core::ApplicationThemes::ThemeManager;
 
@@ -327,7 +329,6 @@ namespace NeoWPF {
     using Input::KeyState;
 
     namespace Input {
-
         using ::NeoWPF::Input::Core::MouseEventArgs;
 
         using ::NeoWPF::Input::Core::KeyboardEventArgs;

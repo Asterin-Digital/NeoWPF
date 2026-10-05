@@ -6,6 +6,27 @@
 
 namespace NeoWPF::Core::ApplicationThemes {
 
+namespace {
+
+const char* GetPaletteResourceKey(PaletteColor paletteColor) noexcept
+{
+    switch (paletteColor) {
+    case PaletteColor::Background: return "Palette.Background";
+    case PaletteColor::Surface: return "Palette.Surface";
+    case PaletteColor::Foreground: return "Palette.Foreground";
+    case PaletteColor::MutedForeground: return "Palette.MutedForeground";
+    case PaletteColor::Border: return "Palette.Border";
+    case PaletteColor::Accent: return "Palette.Accent";
+    case PaletteColor::AccentHover: return "Palette.AccentHover";
+    case PaletteColor::AccentPressed: return "Palette.AccentPressed";
+    case PaletteColor::DisabledSurface: return "Palette.DisabledSurface";
+    case PaletteColor::Focus: return "Palette.Focus";
+    }
+    return nullptr;
+}
+
+}
+
 ThemeManager& ThemeManager::Instance()
 {
     static ThemeManager instance;
@@ -15,46 +36,30 @@ ThemeManager& ThemeManager::Instance()
 void ThemeManager::RegisterBuiltInThemes()
 {
     ThemeDefinition light;
-    light.Name = "Light";
-    light.Resources["Window.BackgroundColor"] = uint32_t(0xFFFFFFFFu);
-    light.Resources["Window.ForegroundColor"] = uint32_t(0xFF1E1E1Eu);
-    light.Resources["Chrome.BackgroundColor"] = uint32_t(0xFFFFFFFFu);
-    light.Resources["Chrome.ForegroundColor"] = uint32_t(0xFF1E1E1Eu);
-    light.Resources["Button.BackgroundColor"] = uint32_t(0xFFEEEEEEu);
-    light.Resources["Button.BorderColor"] = uint32_t(0xFF707070u);
-    light.Resources["Button.ForegroundColor"] = uint32_t(0xFF000000u);
-    light.Resources["Checkbox.BorderColor"] = uint32_t(0xFF202020u);
-    light.Resources["Checkbox.BoxColor"] = uint32_t(0xFFFFFFFFu);
-    light.Resources["Checkbox.TextColor"] = uint32_t(0xFF000000u);
-    light.Resources["RadioButton.BorderColor"] = uint32_t(0xFF202020u);
-    light.Resources["RadioButton.CircleColor"] = uint32_t(0xFFFFFFFFu);
-    light.Resources["RadioButton.TextColor"] = uint32_t(0xFF000000u);
-    light.Resources["TextBox.BackgroundColor"] = uint32_t(0xFFFFFFFFu);
-    light.Resources["TextBox.BorderColor"] = uint32_t(0xFFABADB3u);
-    light.Resources["TextBox.ForegroundColor"] = uint32_t(0xFF000000u);
-    light.Resources["ScrollBar.TrackColor"] = uint32_t(0xFFEAEAEAu);
-    light.Resources["ScrollBar.ThumbColor"] = uint32_t(0xFFCDCDCDu);
+    light.Name = "Light Mint";
+    light.Palette[PaletteColor::Background] = 0xFFF1F2EFu;
+    light.Palette[PaletteColor::Surface] = 0xFFF8F9F7u;
+    light.Palette[PaletteColor::Foreground] = 0xFF252925u;
+    light.Palette[PaletteColor::MutedForeground] = 0xFF737A74u;
+    light.Palette[PaletteColor::Border] = 0xFF9AA19Bu;
+    light.Palette[PaletteColor::Accent] = 0xFF708A74u;
+    light.Palette[PaletteColor::AccentHover] = 0xFFE4EBE3u;
+    light.Palette[PaletteColor::AccentPressed] = 0xFFD6E1D6u;
+    light.Palette[PaletteColor::DisabledSurface] = 0xFFE9ECE9u;
+    light.Palette[PaletteColor::Focus] = 0xFF718C76u;
 
     ThemeDefinition dark;
-    dark.Name = "Dark";
-    dark.Resources["Window.BackgroundColor"] = uint32_t(0xFF1E1E1Eu);
-    dark.Resources["Window.ForegroundColor"] = uint32_t(0xFFEDEDEDu);
-    dark.Resources["Chrome.BackgroundColor"] = uint32_t(0xFF1E1E1Eu);
-    dark.Resources["Chrome.ForegroundColor"] = uint32_t(0xFFEDEDEDu);
-    dark.Resources["Button.BackgroundColor"] = uint32_t(0xFF3A3A3Au);
-    dark.Resources["Button.BorderColor"] = uint32_t(0xFF707070u);
-    dark.Resources["Button.ForegroundColor"] = uint32_t(0xFFEDEDEDu);
-    dark.Resources["Checkbox.BorderColor"] = uint32_t(0xFF9E9E9Eu);
-    dark.Resources["Checkbox.BoxColor"] = uint32_t(0xFF2A2A2Au);
-    dark.Resources["Checkbox.TextColor"] = uint32_t(0xFFEDEDEDu);
-    dark.Resources["RadioButton.BorderColor"] = uint32_t(0xFF9E9E9Eu);
-    dark.Resources["RadioButton.CircleColor"] = uint32_t(0xFF2A2A2Au);
-    dark.Resources["RadioButton.TextColor"] = uint32_t(0xFFEDEDEDu);
-    dark.Resources["TextBox.BackgroundColor"] = uint32_t(0xFF2F2F2Fu);
-    dark.Resources["TextBox.BorderColor"] = uint32_t(0xFF666666u);
-    dark.Resources["TextBox.ForegroundColor"] = uint32_t(0xFFEDEDEDu);
-    dark.Resources["ScrollBar.TrackColor"] = uint32_t(0xFFEAEAEAu);
-    dark.Resources["ScrollBar.ThumbColor"] = uint32_t(0xFFCDCDCDu);
+    dark.Name = "Dark Mint";
+    dark.Palette[PaletteColor::Background] = 0xFF131313u;
+    dark.Palette[PaletteColor::Surface] = 0xFF1D1D1Du;
+    dark.Palette[PaletteColor::Foreground] = 0xFFE6E6E6u;
+    dark.Palette[PaletteColor::MutedForeground] = 0xFF9B9B9Bu;
+    dark.Palette[PaletteColor::Border] = 0xFF686868u;
+    dark.Palette[PaletteColor::Accent] = 0xFF8A9B8Bu;
+    dark.Palette[PaletteColor::AccentHover] = 0xFF252B26u;
+    dark.Palette[PaletteColor::AccentPressed] = 0xFF303730u;
+    dark.Palette[PaletteColor::DisabledSurface] = 0xFF222222u;
+    dark.Palette[PaletteColor::Focus] = 0xFF849786u;
 
     RegisterTheme(light);
     RegisterTheme(dark);
@@ -90,6 +95,15 @@ bool ThemeManager::ApplyTheme(const ThemeDefinition& theme)
         return false;
     }
 
+    for (const auto& [paletteColor, value] : theme.Palette) {
+        const auto* key = GetPaletteResourceKey(paletteColor);
+        if (!key) {
+            continue;
+        }
+        NeoWPF::Core::ApplicationResources::Resources::SetResource(key, value);
+        m_paletteColors[paletteColor] = value;
+    }
+
     for (const auto& [key, value] : theme.Resources) {
         NeoWPF::Core::ApplicationResources::Resources::SetResource(key, value);
     }
@@ -108,6 +122,17 @@ bool ThemeManager::SetActiveTheme(const std::string& name)
     return true;
 }
 
+bool ThemeManager::TryGetPaletteColor(PaletteColor paletteColor, NeoWPF::UI::Color& outColor) const
+{
+    const auto it = m_paletteColors.find(paletteColor);
+    if (it == m_paletteColors.end()) {
+        return false;
+    }
+
+    outColor = NeoWPF::UI::Color::FromArgb(it->second);
+    return true;
+}
+
 const std::string& ThemeManager::GetActiveThemeName() const noexcept
 {
     return m_activeThemeName;
@@ -122,6 +147,7 @@ const ThemeDefinition* ThemeManager::GetActiveTheme() const noexcept
 void ThemeManager::Clear()
 {
     m_themes.clear();
+    m_paletteColors.clear();
     m_activeThemeName.clear();
 }
 

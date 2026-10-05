@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/Button/Button.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
@@ -19,7 +20,14 @@ namespace {
 
     NeoWPF::UI::Properties::PropertyMetadata MakeButtonTextColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(::NeoWPF::UI::Color::FromArgb(0xFF000000u));
+        NeoWPF::UI::Color foreground;
+        if (NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().TryGetPaletteColor(
+                NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground,
+                foreground)) {
+            metadata.DefaultValue = std::any(foreground);
+        } else {
+            metadata.DefaultValue = std::any(::NeoWPF::UI::Color{});
+        }
         metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;

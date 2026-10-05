@@ -1,4 +1,0 @@
-<Style TargetType="Button">
-    <Setter Property="Foreground" Value="#FF000000" />
-    <Setter Property="FontSize" Value="14" />
-</Style>

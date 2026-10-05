@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <NeoWPF/Core/Application/Application.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Input/Command.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
@@ -181,6 +182,34 @@ TEST_F(ButtonTests, TemplateRegistersExpectedParts)
     EXPECT_NE(button.FindTemplateChild("PART_ContentHost"), nullptr);
 }
 
+TEST_F(ButtonTests, UsesSharedPaletteForLightAndDarkThemes)
+{
+    auto& themeManager = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance();
+    EXPECT_EQ(themeManager.GetActiveThemeName(), "Light Mint");
+
+    NeoWPF::UI::Color surface;
+    NeoWPF::UI::Color foreground;
+    NeoWPF::UI::Color border;
+    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Surface, surface));
+    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground, foreground));
+    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Border, border));
+
+    auto lightButton = std::make_shared<NeoWPF::UI::Button>();
+    EXPECT_EQ(lightButton->GetBackgroundColor(), surface);
+    EXPECT_EQ(lightButton->GetTextColor(), foreground);
+    EXPECT_EQ(lightButton->GetBorderColor(), border);
+
+    ASSERT_TRUE(themeManager.SetActiveTheme("Dark Mint"));
+    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Surface, surface));
+    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground, foreground));
+    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Border, border));
+
+    auto darkButton = std::make_shared<NeoWPF::UI::Button>();
+    EXPECT_EQ(darkButton->GetBackgroundColor(), surface);
+    EXPECT_EQ(darkButton->GetTextColor(), foreground);
+    EXPECT_EQ(darkButton->GetBorderColor(), border);
+}
+
 TEST_F(ButtonTests, NormalStateUsesDependencyPropertyColorsAndHonorsBorderThickness)
 {
     auto button = MakeSizedButton();
@@ -205,18 +234,25 @@ TEST_F(ButtonTests, NormalStateUsesDependencyPropertyColorsAndHonorsBorderThickn
 TEST_F(ButtonTests, VisualStatesProduceDeterministicStateColors)
 {
     auto button = MakeSizedButton();
+    NeoWPF::UI::Color hover;
+    NeoWPF::UI::Color accent;
+    NeoWPF::UI::Color pressed;
+    auto& themeManager = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance();
+    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::AccentHover, hover));
+    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Accent, accent));
+    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::AccentPressed, pressed));
 
     button->OnMouseEnter(nullptr);
     NeoWPF::Rendering::CommandList mouseOverCommands;
     button->BuildRenderCommands(mouseOverCommands);
-    EXPECT_TRUE(ContainsRoundedRectColor(mouseOverCommands, 0xFFBEE6FDu));
-    EXPECT_TRUE(ContainsRoundedRectColor(mouseOverCommands, 0xFF3C7FB1u));
+    EXPECT_TRUE(ContainsRoundedRectColor(mouseOverCommands, hover.ToArgb()));
+    EXPECT_TRUE(ContainsRoundedRectColor(mouseOverCommands, accent.ToArgb()));
 
     button->OnMouseDown(10, 10, 0x01u);
     NeoWPF::Rendering::CommandList pressedCommands;
     button->BuildRenderCommands(pressedCommands);
-    EXPECT_TRUE(ContainsRoundedRectColor(pressedCommands, 0xFFC4E5F6u));
-    EXPECT_TRUE(ContainsRoundedRectColor(pressedCommands, 0xFF3C7FB1u));
+    EXPECT_TRUE(ContainsRoundedRectColor(pressedCommands, pressed.ToArgb()));
+    EXPECT_TRUE(ContainsRoundedRectColor(pressedCommands, accent.ToArgb()));
 
     button->OnMouseLeave(nullptr);
     NeoWPF::Rendering::CommandList normalCommands;

@@ -64,6 +64,9 @@ void Application::Initialize()
     }
     NeoWPF::Diagnostics::InitializeCrashHandler();
     NeoWPF::Core::ApplicationResources::Resources::Initialize();
+    auto& themeManager = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance();
+    themeManager.RegisterBuiltInThemes();
+    themeManager.SetActiveTheme("Light Mint");
     NeoWPF::Diagnostics::PerformanceMetrics::Initialize();
 #if defined(_DEBUG)
     ShowConsole(true);
