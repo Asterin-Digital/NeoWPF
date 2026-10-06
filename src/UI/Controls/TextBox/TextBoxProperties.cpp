@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
@@ -27,7 +28,8 @@ namespace {
 
     NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxTextColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(::NeoWPF::UI::Color::FromArgb(0xFF000000u));
+        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+            NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground));
         metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
@@ -35,7 +37,8 @@ namespace {
 
     NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxCaretColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(::NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu));
+        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+            NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground));
         metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;

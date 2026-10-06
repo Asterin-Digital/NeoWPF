@@ -6,10 +6,18 @@ namespace Gallery {
 
 /*
     @summary
-    Creates the Button showcase panel.
+    Creates the Button gallery panel.
 
     @internal
 */
-Ref<NeoWPF::UI::Border> CreateButtonPanel();
+Ref<NeoWPF::UI::UIElement> CreateButtonPanel();
+
+/*
+    @summary
+    Creates the TextBox gallery panel.
+
+    @internal
+*/
+Ref<NeoWPF::UI::UIElement> CreateTextBoxPanel();
 
 }

@@ -7,6 +7,7 @@ See LICENSE file in the project root for full license text.
 
 #include <NeoWPF/Core/Events/Notification.h>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
+#include <NeoWPF/UI/Core/Media/CornerRadius.h>
 #include <NeoWPF/UI/Core/Media/Thickness.h>
 #include <any>
 #include <cstddef>
@@ -48,6 +49,18 @@ enum class ThemeFontSize {
 */
 enum class ThemePadding {
     Button,
+    TextBlock,
+    TextBox,
+    Checkbox,
+};
+
+/*
+    @summary
+    Identifies a control corner-radius role in an application theme.
+*/
+enum class ThemeCornerRadius {
+    Control,
+    Checkbox,
 };
 
 /*
@@ -84,6 +97,12 @@ struct ThemeDefinition {
         Padding values keyed by control theme role.
     */
     std::unordered_map<ThemePadding, NeoWPF::UI::Thickness> Paddings;
+
+    /*
+        @summary
+        Corner radii keyed by control theme role.
+    */
+    std::unordered_map<ThemeCornerRadius, NeoWPF::UI::CornerRadius> CornerRadii;
 };
 
 /*
@@ -240,6 +259,21 @@ public:
 
     /*
         @summary
+        Retrieves the active corner radius associated with a theme role.
+
+        @param cornerRadius
+        Control corner-radius role to retrieve.
+
+        @param outValue
+        Receives the resolved corner radius.
+
+        @returns
+        True when the active theme defines the requested role.
+    */
+    bool TryGetCornerRadius(ThemeCornerRadius cornerRadius, NeoWPF::UI::CornerRadius& outValue) const;
+
+    /*
+        @summary
         Returns the name of the active theme.
 
         @returns
@@ -280,8 +314,21 @@ private:
     std::unordered_map<PaletteColor, std::uint32_t> m_paletteColors;
     std::unordered_map<ThemeFontSize, int> m_fontSizes;
     std::unordered_map<ThemePadding, NeoWPF::UI::Thickness> m_paddings;
+    std::unordered_map<ThemeCornerRadius, NeoWPF::UI::CornerRadius> m_cornerRadii;
     std::string m_activeThemeName;
     NeoWPF::Core::Notification<> m_themeApplied;
 };
+
+/*
+    @summary
+    Returns the active color for a shared palette role.
+
+    @param paletteColor
+    Palette role to retrieve.
+
+    @returns
+    The active color, or the default color when the role is not defined.
+*/
+NeoWPF::UI::Color GetPaletteColor(PaletteColor paletteColor);
 
 }

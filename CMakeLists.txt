@@ -360,13 +360,6 @@ target_compile_definitions(NeoWPF.Foundation
 
 neowpf_add_xaml(
     NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Checkbox/Visual/CheckBoxStyles.xaml"
-    NAMESPACE NeoWPF::UI::Controls
-    COMPONENT Styles
-    PUBLIC_HEADER NeoWPF/UI/Controls/Styles.h
-)
-neowpf_add_xaml(
-    NeoWPF.Foundation
     "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/RadioButton/Visual/RadioButtonStyles.xaml"
     NAMESPACE NeoWPF::UI::Generated
     COMPONENT RadioButtonStyles
@@ -378,20 +371,6 @@ neowpf_add_xaml(
     NAMESPACE NeoWPF::UI::Generated
     COMPONENT ScrollBarStyles
     PUBLIC_HEADER NeoWPF/UI/Controls/ScrollBarStyles.h
-)
-neowpf_add_xaml(
-    NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/Text/Visual/TextBlockStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated
-    COMPONENT TextBlockStyles
-    PUBLIC_HEADER NeoWPF/UI/Controls/TextBlockStyles.h
-)
-neowpf_add_xaml(
-    NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/TextBox/Visual/TextBoxStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated
-    COMPONENT TextBoxStyles
-    PUBLIC_HEADER NeoWPF/UI/Controls/TextBoxStyles.h
 )
 neowpf_add_xaml(
     NeoWPF.Foundation
@@ -882,6 +861,7 @@ if(BUILD_TESTING)
         tests/Automated/LocalizationTests.cpp
         tests/Automated/EventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
+        tests/Automated/ControlThemeTests.cpp
         tests/Automated/ButtonTests.cpp
         tests/Automated/CommonConvertersTests.cpp
         tests/Automated/FileDialogTests.cpp

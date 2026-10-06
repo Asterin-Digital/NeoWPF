@@ -303,6 +303,7 @@ namespace NeoWPF::UI::Properties {
         bool m_isXamlComponentInitialized = false;
         std::unordered_map<const DependencyProperty*, std::any> m_expressionValues;
         std::unordered_map<const DependencyProperty*, std::any> m_localValues;
+        std::unordered_map<const DependencyProperty*, std::any> m_themeValues;
         std::unordered_map<const DependencyProperty*, std::any> m_styleValues;
         std::unordered_map<const DependencyProperty*, std::any> m_triggerValues;
         std::unordered_map<const DependencyProperty*, std::any> m_animatedValues;

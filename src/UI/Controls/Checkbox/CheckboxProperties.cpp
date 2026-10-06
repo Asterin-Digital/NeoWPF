@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
@@ -19,7 +20,8 @@ namespace {
 
     NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxTextColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(::NeoWPF::UI::Color::FromArgb(0xFF000000u));
+        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+            NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground));
         metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
@@ -27,7 +29,8 @@ namespace {
 
     NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxBackgroundColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(::NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu));
+        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+            NeoWPF::Core::ApplicationThemes::PaletteColor::Surface));
         metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
@@ -35,7 +38,8 @@ namespace {
 
     NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxBorderColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(::NeoWPF::UI::Color::FromArgb(0xFF202020u));
+        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+            NeoWPF::Core::ApplicationThemes::PaletteColor::Border));
         metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;

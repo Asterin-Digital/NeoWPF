@@ -8,13 +8,7 @@
 namespace NeoWPF::UI {
 
 namespace {
-
-NeoWPF::UI::Color GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor paletteColor)
-{
-    NeoWPF::UI::Color color;
-    NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().TryGetPaletteColor(paletteColor, color);
-    return color;
-}
+using NeoWPF::Core::ApplicationThemes::GetPaletteColor;
 
 }
 

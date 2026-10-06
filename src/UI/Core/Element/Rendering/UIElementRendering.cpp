@@ -368,6 +368,11 @@ bool UIElement::SetStylePropertyValue(const std::string& name, const std::any& v
     return SetNamedPropertyValue(name, value, Properties::PropertyValueSource::Style);
 }
 
+bool UIElement::SetThemePropertyValue(const std::string& name, const std::any& value)
+{
+    return SetNamedPropertyValue(name, value, Properties::PropertyValueSource::Theme);
+}
+
 bool UIElement::SetTriggerPropertyValue(const std::string& name, const std::any& value)
 {
     return SetNamedPropertyValue(name, value, Properties::PropertyValueSource::Trigger);

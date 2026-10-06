@@ -27,6 +27,7 @@ namespace NeoWPF::UI::Properties {
 */
 enum class PropertyValueSource {
     Default,
+    Theme,
     Local,
     Style,
     Trigger,

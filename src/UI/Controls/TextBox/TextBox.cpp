@@ -1,6 +1,5 @@
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
-#include <NeoWPF/UI/Controls/TextBoxStyles.h>
-#include <NeoWPF/ControlStyles.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
@@ -42,6 +41,41 @@ namespace {
 
 namespace NeoWPF::UI {
 
+namespace {
+
+void ApplyTextBoxThemeStyle(
+    TextBox& textBox)
+{
+    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::ThemeCornerRadius;
+    using NeoWPF::Core::ApplicationThemes::ThemeFontSize;
+    using NeoWPF::Core::ApplicationThemes::ThemePadding;
+    using NeoWPF::Core::ApplicationThemes::ThemeManager;
+    auto& themeManager = ThemeManager::Instance();
+    const auto foreground = NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Foreground);
+    textBox.SetThemePropertyValue("Foreground", foreground);
+    textBox.SetThemePropertyValue("CaretBrush", foreground);
+    textBox.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
+    textBox.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+
+    int fontSize = 0;
+    if (themeManager.TryGetFontSize(ThemeFontSize::Control, fontSize)) {
+        textBox.SetThemePropertyValue("FontSize", fontSize);
+    }
+
+    NeoWPF::UI::Thickness padding;
+    if (themeManager.TryGetPadding(ThemePadding::TextBox, padding)) {
+        textBox.SetThemePropertyValue("Padding", padding);
+    }
+
+    NeoWPF::UI::CornerRadius cornerRadius;
+    if (themeManager.TryGetCornerRadius(ThemeCornerRadius::Control, cornerRadius)) {
+        textBox.SetThemePropertyValue("CornerRadius", cornerRadius);
+    }
+}
+
+}
+
 TextBox::TextBox()
     : Content::ContentControl()
 {
@@ -50,14 +84,17 @@ TextBox::TextBox()
     SetClipToBounds(true);
     SetTemplate(std::make_shared<TextBoxTemplate>());
 
-    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::TextBoxStyles, *this);
-
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
     presenter->SetPadding(GetPadding());
     SetPresenter(presenter);
 
 
     InitializeVisualStates();
+    ApplyTextBoxThemeStyle(*this);
+    m_themeAppliedSubscriptionId = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().SubscribeThemeApplied([this]() {
+        ApplyTextBoxThemeStyle(*this);
+            ApplyVisualState(m_currentVisualState, false);
+    });
 }
 
 void TextBox::OnInitialize()
@@ -74,6 +111,7 @@ void TextBox::SetCaretScroll(CaretScrollBehavior value) noexcept
 
 TextBox::~TextBox()
 {
+    NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().UnsubscribeThemeApplied(m_themeAppliedSubscriptionId);
     NeoWPF::UI::Localization::LocaleOperations::ClearLocale(*this, TextProperty());
     ReleaseCaretTextureId();
 }
@@ -217,10 +255,11 @@ const std::wstring& TextBox::GetPlaceholderText() const noexcept
 
 void TextBox::SetTextColor(NeoWPF::UI::Color color) noexcept
 {
-    if (IsApplyingPropertyValue()) { m_textColor = color; InvalidateVisual(); return; }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Foreground", *this);
-    if (property) { SetValue(*property, color); return; }
-    m_textColor = color; InvalidateVisual();
+    if (IsApplyingPropertyValue()) {
+        InvalidateVisual();
+        return;
+    }
+    SetValue(TextColorProperty(), color);
 }
 
 void TextBox::SetFontFamily(const std::wstring& fontFamily) noexcept
@@ -336,11 +375,7 @@ void TextBox::SetTextColor(std::uint32_t color) noexcept
 
 NeoWPF::UI::Color TextBox::GetTextColor() const noexcept
 {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Foreground", *this);
-    if (property) {
-        try { return GetValue<NeoWPF::UI::Color>(*property); } catch (const std::bad_any_cast&) { return m_textColor; }
-    }
-    return m_textColor;
+    return GetValue<NeoWPF::UI::Color>(TextColorProperty());
 }
 
 void TextBox::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
@@ -354,6 +389,8 @@ void TextBox::OnPaddingChanged(Thickness padding)
     if (auto presenter = GetPresenter()) {
         presenter->SetPadding(padding);
     }
+    m_textDirty = true;
+    InvalidateMeasure();
     InvalidateVisual();
 }
 
@@ -393,10 +430,19 @@ NeoWPF::UI::Color TextBox::GetBackgroundColor() const noexcept
 
 void TextBox::SetFontSize(int fontSize) noexcept
 {
-    if (IsApplyingPropertyValue()) { m_fontSize = fontSize; InvalidateVisual(); return; }
+    if (IsApplyingPropertyValue()) {
+        m_fontSize = fontSize;
+        m_textDirty = true;
+        InvalidateMeasure();
+        InvalidateVisual();
+        return;
+    }
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("FontSize", *this);
     if (property) { SetValue(*property, fontSize); return; }
-    m_fontSize = fontSize; InvalidateVisual();
+    m_fontSize = fontSize;
+    m_textDirty = true;
+    InvalidateMeasure();
+    InvalidateVisual();
 }
 
 int TextBox::GetFontSize() const noexcept
@@ -437,10 +483,11 @@ NeoWPF::UI::Color TextBox::GetBorderColor() const noexcept
 
 void TextBox::SetCaretColor(NeoWPF::UI::Color color) noexcept
 {
-    if (IsApplyingPropertyValue()) { m_caretColor = color; InvalidateVisual(); return; }
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("CaretBrush", *this);
-    if (property) { SetValue(*property, color); return; }
-    m_caretColor = color; InvalidateVisual();
+    if (IsApplyingPropertyValue()) {
+        InvalidateVisual();
+        return;
+    }
+    SetValue(CaretColorProperty(), color);
 }
 
 void TextBox::SetCaretColor(std::uint32_t color) noexcept
@@ -450,11 +497,7 @@ void TextBox::SetCaretColor(std::uint32_t color) noexcept
 
 NeoWPF::UI::Color TextBox::GetCaretColor() const noexcept
 {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("CaretBrush", *this);
-    if (property) {
-        try { return GetValue<NeoWPF::UI::Color>(*property); } catch (const std::bad_any_cast&) { return m_caretColor; }
-    }
-    return m_caretColor;
+    return GetValue<NeoWPF::UI::Color>(CaretColorProperty());
 }
 
 void TextBox::Measure(double availableWidth, double availableHeight)
@@ -659,7 +702,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             0.0f, 0.0f,
             1.0f, 1.0f,
             caretTextureId,
-            GetTextColor().ToArgb(),
+            GetCaretColor().ToArgb(),
             GetOpacity(),
             clip);
     }

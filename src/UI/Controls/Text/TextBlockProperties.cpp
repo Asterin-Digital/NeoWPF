@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
@@ -19,7 +20,8 @@ namespace {
 
     NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockTextColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(::NeoWPF::UI::Color::FromArgb(0xFF000000u));
+        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+            NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground));
         metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
@@ -35,7 +37,7 @@ namespace {
 
     NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockFontFamilyMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(std::wstring());
+        metadata.DefaultValue = std::any(std::wstring(L"Segoe UI"));
         metadata.Converter = NeoWPF::UI::Properties::GetWideStringConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;

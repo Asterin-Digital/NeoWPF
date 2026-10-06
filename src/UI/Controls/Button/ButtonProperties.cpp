@@ -20,14 +20,8 @@ namespace {
 
     NeoWPF::UI::Properties::PropertyMetadata MakeButtonTextColorMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        NeoWPF::UI::Color foreground;
-        if (NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().TryGetPaletteColor(
-                NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground,
-                foreground)) {
-            metadata.DefaultValue = std::any(foreground);
-        } else {
-            metadata.DefaultValue = std::any(::NeoWPF::UI::Color{});
-        }
+        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+            NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground));
         metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;

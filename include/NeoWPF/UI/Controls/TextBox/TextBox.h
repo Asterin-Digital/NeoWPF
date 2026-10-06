@@ -33,9 +33,6 @@ enum class CaretScrollBehavior {
     EnabledForSingleLineNoWrap
 };
 
-class TextBoxStyle;  
-void RegisterTextBoxStyles();
-
 class TextBoxTemplate; 
 
 /*
@@ -449,8 +446,6 @@ private:
 
     std::wstring m_text;
     std::wstring m_placeholderText;
-    NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFFEDEDEDu);
-    NeoWPF::UI::Color m_caretColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
     int m_fontSize = 16;
     TextHorizontalAlignment m_textHorizontalAlignment = TextHorizontalAlignment::Left;
     TextVerticalAlignment m_textVerticalAlignment = TextVerticalAlignment::Top;
@@ -466,6 +461,7 @@ private:
 
     std::shared_ptr<Styling::VisualStateManager> m_visualStateManager;
     std::string m_currentVisualState;
+    std::size_t m_themeAppliedSubscriptionId = 0;
 
     NeoWPF::UI::Text::TextRasterCache m_renderCache;
     bool m_textDirty = true;

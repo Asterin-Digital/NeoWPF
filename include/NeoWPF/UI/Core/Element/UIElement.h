@@ -607,6 +607,20 @@ public:
 
     /*
         @summary
+        Sets a theme value by property name.
+
+        @param name
+        The property name.
+
+        @param value
+        The theme-provided property value.
+
+        @internal
+    */
+    bool SetThemePropertyValue(const std::string& name, const std::any& value);
+
+    /*
+        @summary
         Sets a trigger property by name to an arbitrary value.
 
         @param name

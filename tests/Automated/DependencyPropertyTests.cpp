@@ -507,6 +507,14 @@ TEST(DependencyPropertyTests, ScrollViewerExposesStaticPropertyHandles)
     EXPECT_EQ(NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("HorizontalOffset", typeid(NeoWPF::UI::ScrollViewer)), &horizontalOffsetProperty);
 }
 
+TEST(DependencyPropertyTests, ScrollViewerConstructorDoesNotAttachItsPresenterTwice)
+{
+    NeoWPF::UI::ScrollViewer scrollViewer;
+
+    EXPECT_EQ(scrollViewer.GetHorizontalScrollBarVisibility(), NeoWPF::UI::ScrollBarVisibility::Auto);
+    EXPECT_EQ(scrollViewer.GetVerticalScrollBarVisibility(), NeoWPF::UI::ScrollBarVisibility::Auto);
+}
+
 TEST(DependencyPropertyTests, SelectorExposesStaticPropertyHandles)
 {
     const auto& selectedIndexProperty = NeoWPF::UI::Selector::SelectedIndexProperty();

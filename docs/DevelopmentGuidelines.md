@@ -22,11 +22,10 @@ It can be a layout or UI control:
 - Grid (layout control)
 - Button (UI control)
 
-A layout control does not need *Styles.xaml or *Template.cpp files, along with other visual-related files that a control normally needs. Though both layout and UI controls have one shared requirement:
+A layout control does not need a template unless its behavior requires one. Both layout and UI controls have one shared requirement:
 It must have a *Properties.cpp file, to ensure it works in XAML and for many other things as well.
 
 When creating a UI control, you will usually need these files:
-- *Styles.xaml
 - *Template.cpp (if your control needs one - for example, TextBlock does not)
 - *Properties.cpp
 - The main control file (where rendering happens)
@@ -42,6 +41,16 @@ If your control needs another control to work (for example, TextBox using Scroll
 The API surface for your new control must match the general pattern instead of reinventing another one - not doing so causes annoying inconsistencies.
 
 For example, Set/Get are very common; use those for setters or getters instead of plain names, as this keeps the API surface similar between other controls and pleasant to use. But if a method in the API isn't a setter nor a getter, you should not force it into that naming - use the plain name instead.
+
+Control appearance must use the application theme system instead of hardcoded theme colors or control metrics:
+- Put shared colors in the theme palette using `PaletteColor` roles.
+- Put configurable font sizes, padding, and corner radii in the corresponding theme maps and roles.
+- Use `GetPaletteColor` or the matching `ThemeManager::TryGet...` method to read a theme value.
+- Apply control theme values with `SetThemePropertyValue`, not as local values.
+- Theme values are below explicit styles and local values, so application-specific values keep precedence.
+- Controls that react to theme changes must subscribe to `ThemeManager` notifications and unsubscribe when destroyed.
+- Do not duplicate theme-owned dependency property values in member fields or track prior theme values with flags. Dependency property precedence handles overrides.
+- Invalidate measure or rendering when an applied theme value changes the control's layout or appearance.
 
 3. ## Creating A Big New Control
 

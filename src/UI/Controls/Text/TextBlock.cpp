@@ -1,6 +1,5 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
-#include <NeoWPF/UI/Controls/TextBlockStyles.h>
-#include <NeoWPF/ControlStyles.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
@@ -14,11 +13,42 @@
 
 namespace NeoWPF::UI {
 
+namespace {
+
+void ApplyTextBlockThemeStyle(
+    TextBlock& textBlock)
+{
+    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::ThemeFontSize;
+    using NeoWPF::Core::ApplicationThemes::ThemePadding;
+    using NeoWPF::Core::ApplicationThemes::ThemeManager;
+    auto& themeManager = ThemeManager::Instance();
+    textBlock.SetThemePropertyValue(
+        "Foreground",
+        NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Foreground));
+
+    int fontSize = 0;
+    if (themeManager.TryGetFontSize(ThemeFontSize::Control, fontSize)) {
+        textBlock.SetThemePropertyValue("FontSize", fontSize);
+    }
+
+    Thickness padding;
+    if (themeManager.TryGetPadding(ThemePadding::TextBlock, padding)) {
+        textBlock.SetThemePropertyValue("Padding", padding);
+    }
+
+}
+
+}
+
 TextBlock::TextBlock()
 {
-    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::TextBlockStyles, *this);
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
+    ApplyTextBlockThemeStyle(*this);
+    m_themeAppliedSubscriptionId = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().SubscribeThemeApplied([this]() {
+        ApplyTextBlockThemeStyle(*this);
+    });
 }
 
 TextBlock::TextBlock(const std::wstring& text) : TextBlock()
@@ -28,8 +58,35 @@ TextBlock::TextBlock(const std::wstring& text) : TextBlock()
 
 TextBlock::~TextBlock()
 {
+    NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().UnsubscribeThemeApplied(m_themeAppliedSubscriptionId);
     NeoWPF::UI::Localization::LocaleOperations::ClearLocale(*this, TextProperty());
+}
 
+void TextBlock::SetTextColor(NeoWPF::UI::Color color) noexcept
+{
+    if (!IsApplyingPropertyValue()) {
+        SetValue(TextColorProperty(), color);
+        return;
+    }
+
+    InvalidateVisual();
+}
+
+void TextBlock::SetFontSize(int fontSize) noexcept
+{
+    if (!IsApplyingPropertyValue()) {
+        SetValue(FontSizeProperty(), fontSize);
+        return;
+    }
+
+    if (m_fontSize == fontSize) {
+        return;
+    }
+
+    m_fontSize = fontSize;
+    m_textDirty = true;
+    InvalidateMeasure();
+    InvalidateVisual();
 }
 
 void TextBlock::SetText(const std::wstring& text)
@@ -314,7 +371,7 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
         commands.DrawTexturedQuad(drawX, drawY, drawWidth, drawHeight,
                                    0.0f, 0.0f, 1.0f, 1.0f,
-                                   textureId, m_textColor.ToArgb(), GetOpacity(), clip, rotationRadians, pivotX, pivotY);
+                                textureId, GetTextColor().ToArgb(), GetOpacity(), clip, rotationRadians, pivotX, pivotY);
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
             NeoWPF::Diagnostics::Level::Debug,
             "[TextBlock] draw line=%zu textureId=%u pos=%.1f,%.1f size=%.1fx%.1f opacity=%.2f",

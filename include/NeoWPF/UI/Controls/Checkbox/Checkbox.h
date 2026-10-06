@@ -213,14 +213,12 @@ protected:
 
 private:
     std::wstring m_text;
-    NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFF000000u);
-    NeoWPF::UI::Color m_bgColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
-    NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0xFF202020u);
     Thickness m_padding = Thickness(8);
     int m_fontSize = 14;
     int m_fontWeight = 400;
     NeoWPF::UI::FontStyle m_fontStyle = NeoWPF::UI::FontStyle::Normal;
     std::shared_ptr<NeoWPF::UI::TextBlock> m_textContent;
+    std::size_t m_themeAppliedSubscriptionId = 0;
 };
 
 class CheckboxTemplate : public Templates::ControlTemplate {

@@ -31,7 +31,6 @@ ScrollViewer::ScrollViewer()
     m_verticalScrollBar = std::make_shared<ScrollBar>();
     m_verticalScrollBar->SetOrientation(Orientation::Vertical);
 
-    AddVisualChild(m_contentPresenter);
     AddVisualChild(m_horizontalScrollBar);
     AddVisualChild(m_verticalScrollBar);
 

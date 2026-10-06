@@ -1,5 +1,0 @@
-<Style TargetType="TextBlock">
-    <Setter Property="Foreground" Value="#FF000000" />
-    <Setter Property="FontSize" Value="12" />
-    <Setter Property="FontFamily" Value="Segoe UI" />
-</Style>

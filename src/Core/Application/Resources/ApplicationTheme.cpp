@@ -47,8 +47,14 @@ void ThemeManager::RegisterBuiltInThemes()
     light.Palette[PaletteColor::AccentPressed] = 0xFFD6E1D6u;
     light.Palette[PaletteColor::DisabledSurface] = 0xFFE9ECE9u;
     light.Palette[PaletteColor::Focus] = 0xFF718C76u;
+    //////////////////////////////////////////////////////////
     light.FontSizes[ThemeFontSize::Control] = 14;
     light.Paddings[ThemePadding::Button] = NeoWPF::UI::Thickness(8);
+    light.Paddings[ThemePadding::TextBlock] = NeoWPF::UI::Thickness{};
+    light.Paddings[ThemePadding::TextBox] = NeoWPF::UI::Thickness(6, 4, 6, 4);
+    light.Paddings[ThemePadding::Checkbox] = NeoWPF::UI::Thickness(8);
+    light.CornerRadii[ThemeCornerRadius::Control] = NeoWPF::UI::CornerRadius(4);
+    light.CornerRadii[ThemeCornerRadius::Checkbox] = NeoWPF::UI::CornerRadius(2);
 
     ThemeDefinition dark;
     dark.Name = "Dark Mint";
@@ -62,8 +68,14 @@ void ThemeManager::RegisterBuiltInThemes()
     dark.Palette[PaletteColor::AccentPressed] = 0xFF303730u;
     dark.Palette[PaletteColor::DisabledSurface] = 0xFF222222u;
     dark.Palette[PaletteColor::Focus] = 0xFF849786u;
+    //////////////////////////////////////////////////////////
     dark.FontSizes[ThemeFontSize::Control] = 14;
     dark.Paddings[ThemePadding::Button] = NeoWPF::UI::Thickness(8);
+    dark.Paddings[ThemePadding::TextBlock] = NeoWPF::UI::Thickness{};
+    dark.Paddings[ThemePadding::TextBox] = NeoWPF::UI::Thickness(6, 4, 6, 4);
+    dark.Paddings[ThemePadding::Checkbox] = NeoWPF::UI::Thickness(8);
+    dark.CornerRadii[ThemeCornerRadius::Control] = NeoWPF::UI::CornerRadius(4);
+    dark.CornerRadii[ThemeCornerRadius::Checkbox] = NeoWPF::UI::CornerRadius(2);
 
     RegisterTheme(light);
     RegisterTheme(dark);
@@ -127,6 +139,10 @@ void ThemeManager::ApplyThemeResources(const ThemeDefinition& theme)
         m_paddings[padding] = value;
     }
 
+    for (const auto& [cornerRadius, value] : theme.CornerRadii) {
+        m_cornerRadii[cornerRadius] = value;
+    }
+
     NeoWPF::Diagnostics::LogInfo(("Applied application theme: " + theme.Name).c_str());
 }
 
@@ -164,6 +180,13 @@ bool ThemeManager::TryGetPaletteColor(PaletteColor paletteColor, NeoWPF::UI::Col
     return true;
 }
 
+NeoWPF::UI::Color GetPaletteColor(PaletteColor paletteColor)
+{
+    NeoWPF::UI::Color color;
+    ThemeManager::Instance().TryGetPaletteColor(paletteColor, color);
+    return color;
+}
+
 bool ThemeManager::TryGetFontSize(ThemeFontSize fontSize, int& outValue) const
 {
     const auto it = m_fontSizes.find(fontSize);
@@ -179,6 +202,17 @@ bool ThemeManager::TryGetPadding(ThemePadding padding, NeoWPF::UI::Thickness& ou
 {
     const auto it = m_paddings.find(padding);
     if (it == m_paddings.end()) {
+        return false;
+    }
+
+    outValue = it->second;
+    return true;
+}
+
+bool ThemeManager::TryGetCornerRadius(ThemeCornerRadius cornerRadius, NeoWPF::UI::CornerRadius& outValue) const
+{
+    const auto it = m_cornerRadii.find(cornerRadius);
+    if (it == m_cornerRadii.end()) {
         return false;
     }
 
@@ -203,6 +237,7 @@ void ThemeManager::Clear()
     m_paletteColors.clear();
     m_fontSizes.clear();
     m_paddings.clear();
+    m_cornerRadii.clear();
     m_activeThemeName.clear();
 }
 

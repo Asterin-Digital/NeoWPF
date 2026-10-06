@@ -17,62 +17,26 @@ namespace NeoWPF::UI {
 
 namespace {
 
-NeoWPF::UI::Color GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor paletteColor)
-{
-    NeoWPF::UI::Color color;
-    NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().TryGetPaletteColor(paletteColor, color);
-    return color;
-}
-
 void ApplyThemeStyle(
-    NeoWPF::UI::Button& button,
-    int& appliedFontSize,
-    NeoWPF::UI::Thickness& appliedPadding,
-    bool& hasAppliedFontSize,
-    bool& hasAppliedPadding)
+    NeoWPF::UI::Button& button)
 {
     using NeoWPF::Core::ApplicationThemes::PaletteColor;
     using NeoWPF::Core::ApplicationThemes::ThemeFontSize;
     using NeoWPF::Core::ApplicationThemes::ThemePadding;
     using NeoWPF::Core::ApplicationThemes::ThemeManager;
-    using NeoWPF::UI::Properties::PropertyValueSource;
-
     auto& themeManager = ThemeManager::Instance();
-    NeoWPF::UI::Color surface;
-    NeoWPF::UI::Color border;
-    NeoWPF::UI::Color foreground;
-    if (themeManager.TryGetPaletteColor(PaletteColor::Surface, surface)) {
-        button.SetStylePropertyValue("Background", surface);
-    }
-    if (themeManager.TryGetPaletteColor(PaletteColor::Border, border)) {
-        button.SetStylePropertyValue("BorderBrush", border);
-    }
-    if (themeManager.TryGetPaletteColor(PaletteColor::Foreground, foreground)) {
-        button.SetStylePropertyValue("Foreground", foreground);
-    }
+    button.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
+    button.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+    button.SetThemePropertyValue("Foreground", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Foreground));
 
     int fontSize = 0;
     if (themeManager.TryGetFontSize(ThemeFontSize::Control, fontSize)) {
-        const auto source = button.GetValueSource(NeoWPF::UI::Button::FontSizeProperty());
-        if (source == PropertyValueSource::Default ||
-            (hasAppliedFontSize && source == PropertyValueSource::Style &&
-             button.GetFontSize() == appliedFontSize)) {
-            button.SetStylePropertyValue("FontSize", fontSize);
-            appliedFontSize = fontSize;
-            hasAppliedFontSize = true;
-        }
+        button.SetThemePropertyValue("FontSize", fontSize);
     }
 
     NeoWPF::UI::Thickness padding;
     if (themeManager.TryGetPadding(ThemePadding::Button, padding)) {
-        const auto source = button.GetValueSource(NeoWPF::UI::Control::PaddingProperty());
-        if (source == PropertyValueSource::Default ||
-            (hasAppliedPadding && source == PropertyValueSource::Style &&
-             button.GetPadding() == appliedPadding)) {
-            button.SetStylePropertyValue("Padding", padding);
-            appliedPadding = padding;
-            hasAppliedPadding = true;
-        }
+        button.SetThemePropertyValue("Padding", padding);
     }
 }
 
@@ -98,20 +62,10 @@ Button::Button()
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
 
-    ApplyThemeStyle(
-        *this,
-        m_appliedThemeFontSize,
-        m_appliedThemePadding,
-        m_hasAppliedThemeFontSize,
-        m_hasAppliedThemePadding);
+    ApplyThemeStyle(*this);
     m_themeAppliedSubscriptionId =
         NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().SubscribeThemeApplied([this]() {
-            ApplyThemeStyle(
-                *this,
-                m_appliedThemeFontSize,
-                m_appliedThemePadding,
-                m_hasAppliedThemeFontSize,
-                m_hasAppliedThemePadding);
+            ApplyThemeStyle(*this);
         });
 }
 

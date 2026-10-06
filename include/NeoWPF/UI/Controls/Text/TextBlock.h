@@ -28,9 +28,6 @@ namespace NeoWPF::UI::Styling {
 }
 
 namespace NeoWPF::UI {
-class TextBlockStyle;
-void RegisterTextBlockStyles();
-
 /*
     @summary
     Displays read-only text inside layouts.
@@ -96,14 +93,14 @@ public:
         @param color
         The color to use.
     */
-    void SetTextColor(NeoWPF::UI::Color color) noexcept { m_textColor = color; InvalidateVisual(); }
+    void SetTextColor(NeoWPF::UI::Color color) noexcept;
     void SetTextColor(std::uint32_t color) noexcept { SetTextColor(NeoWPF::UI::Color::FromArgb(color)); }
 
     /*
         @summary
         Returns the current text color.
     */
-    NeoWPF::UI::Color GetTextColor() const noexcept { return m_textColor; }
+    NeoWPF::UI::Color GetTextColor() const noexcept { return GetValue<NeoWPF::UI::Color>(TextColorProperty()); }
 
     /*
         @summary
@@ -112,7 +109,7 @@ public:
         @param fontSize
         Font size in device pixels.
     */
-    void SetFontSize(int fontSize) noexcept { m_fontSize = fontSize; InvalidateVisual(); }
+    void SetFontSize(int fontSize) noexcept;
 
     /*
         @summary
@@ -295,7 +292,6 @@ protected:
 
 private:
     std::wstring m_text;
-    NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFF000000u);
     int m_fontSize = 16;
     std::wstring m_fontFamily = std::wstring(L"Segoe UI");
     int m_fontWeight = 400;
@@ -307,6 +303,7 @@ private:
     bool m_textDirty = true;
     bool m_isHitTestVisible = true;
     int m_lastArrangeWidth = -1;
+    std::size_t m_themeAppliedSubscriptionId = 0;
 
     NeoWPF::UI::Text::TextRasterCache m_textCache;
 
