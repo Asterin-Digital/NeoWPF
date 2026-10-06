@@ -22,21 +22,32 @@
 #endif
 
 namespace {
-    uint32_t GetCaretTextureId() {
-        static uint32_t s_caretTextureId = 0;
-        if (s_caretTextureId == 0) {
-            const uint32_t whitePixel = 0xFFFFFFFFu;
-            s_caretTextureId = NeoWPF::Rendering::Renderer_CreateTexture(1, 1, &whitePixel);
-        }
-        return s_caretTextureId;
+uint32_t g_caretTextureId = 0;
+std::size_t g_textBoxInstanceCount = 0;
+
+uint32_t GetCaretTextureId()
+{
+    if (g_caretTextureId == 0) {
+        const uint32_t whitePixel = 0xFFFFFFFFu;
+        g_caretTextureId = NeoWPF::Rendering::Renderer_CreateTexture(1, 1, &whitePixel);
+    }
+    return g_caretTextureId;
+}
+
+void ReleaseCaretTextureId()
+{
+    if (g_textBoxInstanceCount > 0) {
+        --g_textBoxInstanceCount;
+    }
+    if (g_textBoxInstanceCount != 0 || g_caretTextureId == 0) {
+        return;
     }
 
-    void ReleaseCaretTextureId() {
-        const uint32_t caretTextureId = GetCaretTextureId();
-        if (caretTextureId != 0) {
-            NeoWPF::Rendering::Renderer_DestroyTexture(caretTextureId);
-        }
+    if (NeoWPF::Rendering::Renderer_IsInitialized()) {
+        NeoWPF::Rendering::Renderer_DestroyTexture(g_caretTextureId);
     }
+    g_caretTextureId = 0;
+}
 }
 
 namespace NeoWPF::UI {
@@ -95,6 +106,7 @@ TextBox::TextBox()
         ApplyTextBoxThemeStyle(*this);
             ApplyVisualState(m_currentVisualState, false);
     });
+    ++g_textBoxInstanceCount;
 }
 
 void TextBox::OnInitialize()
@@ -724,8 +736,18 @@ void TextBox::EnsureTextTexture()
     }
 
     const auto displayText = (m_text.empty() && !m_placeholderText.empty()) ? m_placeholderText : m_text;
-    (void)displayText;
-    m_renderCache.Clear();
+    double widthConstraint = 0.0;
+    if (m_textWrapping != TextWrapping::NoWrap) {
+        widthConstraint = static_cast<double>(contentHostWidth);
+    }
+    m_renderCache.Refresh(
+        displayText,
+        m_fontSize,
+        GetFontFamily(),
+        widthConstraint,
+        m_textWrapping,
+        m_fontWeight,
+        m_fontStyle);
     m_textDirty = false;
     InvalidateVisual();
 }

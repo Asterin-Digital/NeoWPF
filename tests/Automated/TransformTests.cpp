@@ -11,6 +11,7 @@
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/UI/Controls/TextBox/TextBox.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <cmath>
 #include <utility>
@@ -137,6 +138,21 @@ TEST_F(TextBlockRenderCommandTest, TopLeftOriginKeepsBitmapQuadAnchorFixed)
 
     EXPECT_FLOAT_EQ(quad->x, 0.0f);
     EXPECT_FLOAT_EQ(quad->y, 0.0f);
+}
+
+TEST_F(TextBlockRenderCommandTest, TextBoxRefreshesAndRendersItsTextCache)
+{
+    NeoWPF::UI::TextBox textBox;
+    textBox.SetText(L"Visible text");
+    textBox.Arrange(180, 44);
+
+    NeoWPF::Rendering::CommandList commands;
+    static_cast<NeoWPF::UI::Visual&>(textBox).BuildRenderCommands(commands);
+    const auto* textQuad = FindTextQuad(commands);
+
+    ASSERT_NE(textQuad, nullptr);
+    EXPECT_GT(textQuad->textureId, 0u);
+    EXPECT_EQ(textQuad->tintColor, NeoWPF::UI::Color::FromArgb(0xFF252925u).ToArgb());
 }
 
 TEST_F(TextBlockRenderCommandTest, ButtonBackgroundAndBitmapTextShareScaleTransform)

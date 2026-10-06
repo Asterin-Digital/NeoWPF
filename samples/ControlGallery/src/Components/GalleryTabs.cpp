@@ -60,16 +60,18 @@ Ref<NeoWPF::UI::UIElement> CreateControlGalleryTabs()
     auto buttons = std::make_shared<std::vector<Ref<Button>>>();
     buttons->reserve(kTabs.size());
 
-    auto panelHost = New<NeoWPF::UI::Content::ContentControl>();
+    auto panelViewer = New<ScrollViewer>();
+    panelViewer->SetHorizontalScrollBarVisibility(ScrollBarVisibility::Auto);
+    panelViewer->SetVerticalScrollBarVisibility(ScrollBarVisibility::Auto);
     for (std::size_t index = 0; index < kTabs.size(); ++index) {
         auto tabButton = MakeTabButton(kTabs[index].Label);
         SetTabAppearance(tabButton, index == 0);
         buttons->push_back(tabButton);
-        tabButton->Click += [index, panelHost, buttons]() {
+        tabButton->Click += [index, panelViewer, buttons]() {
             for (std::size_t buttonIndex = 0; buttonIndex < buttons->size(); ++buttonIndex) {
                 SetTabAppearance((*buttons)[buttonIndex], buttonIndex == index);
             }
-            panelHost->SetContent(kTabs[index].CreatePanel());
+            panelViewer->SetContent(kTabs[index].CreatePanel());
         };
         tabButtons->AddChild(tabButton);
     }
@@ -80,14 +82,9 @@ Ref<NeoWPF::UI::UIElement> CreateControlGalleryTabs()
     tabStrip->SetHeight(52);
     tabStrip->SetContent(tabButtons);
 
-    auto panelViewer = New<ScrollViewer>();
-    panelViewer->SetHorizontalScrollBarVisibility(ScrollBarVisibility::Auto);
-    panelViewer->SetVerticalScrollBarVisibility(ScrollBarVisibility::Auto);
-    panelViewer->SetContent(panelHost);
-
     root->AddChild(tabStrip, 0, 0);
     root->AddChild(panelViewer, 1, 0);
-    panelHost->SetContent(kTabs.front().CreatePanel());
+    panelViewer->SetContent(kTabs.front().CreatePanel());
     return root;
 }
 

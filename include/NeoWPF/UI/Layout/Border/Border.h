@@ -7,6 +7,7 @@ See LICENSE file in the project root for full license text.
 
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
+#include <cstddef>
 #include <memory>
 
 namespace NeoWPF::UI {
@@ -20,8 +21,6 @@ class UIElement;
     @details
     The border reserves interior space for its content so the child stays inside the visible border area.
 */
-void RegisterBorderStyles();
-
 class Border : public NeoWPF::UI::Content::ContentControl {
 public:
     static const NeoWPF::UI::Properties::DependencyProperty& PaddingProperty();
@@ -34,6 +33,7 @@ public:
         Creates a border with default empty content and styling.
     */
     Border();
+    ~Border() override;
 
     using ContentControl::SetContent;
     using ContentControl::GetContent;
@@ -118,6 +118,7 @@ protected:
 
 private:
     Thickness m_borderThicknesses{};
+    std::size_t m_themeAppliedSubscriptionId = 0;
 };
 
 }

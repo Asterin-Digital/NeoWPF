@@ -1,16 +1,11 @@
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
-#include <NeoWPF/UI/Layout/PanelStyles.h>
-#include <NeoWPF/ControlStyles.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
 #include <algorithm>
 
 namespace NeoWPF::UI {
 
-Panel::Panel()
-{
-    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::PanelStyles, *this);
-}
+Panel::Panel() = default;
 
 void Panel::Measure(double availableWidth, double availableHeight)
 {

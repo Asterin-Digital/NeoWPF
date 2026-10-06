@@ -400,20 +400,6 @@ neowpf_add_xaml(
     COMPONENT ComboBoxStyles
     PUBLIC_HEADER NeoWPF/UI/Controls/ComboBoxStyles.h
 )
-neowpf_add_xaml(
-    NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Layout/Border/Visual/BorderStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated
-    COMPONENT BorderStyles
-    PUBLIC_HEADER NeoWPF/UI/Layout/BorderStyles.h
-)
-neowpf_add_xaml(
-    NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Layout/Panel/Panel.Styles.xaml"
-    NAMESPACE NeoWPF::UI::Generated
-    COMPONENT PanelStyles
-    PUBLIC_HEADER NeoWPF/UI/Layout/PanelStyles.h
-)
 set(NEOWPF_STYLE_UMBRELLA "${CMAKE_CURRENT_BINARY_DIR}/generated/xaml/NeoWPF/ControlStyles.h")
 file(GENERATE OUTPUT "${NEOWPF_STYLE_UMBRELLA}" CONTENT [=[
 #pragma once

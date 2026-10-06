@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/Window.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
@@ -17,7 +18,8 @@ NeoWPF::UI::Properties::PropertyMetadata MakeWindowTitleMetadata()
 NeoWPF::UI::Properties::PropertyMetadata MakeWindowBackgroundMetadata()
 {
     NeoWPF::UI::Properties::PropertyMetadata metadata;
-    metadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu));
+    metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+        NeoWPF::Core::ApplicationThemes::PaletteColor::Background));
     metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
     metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
     return metadata;

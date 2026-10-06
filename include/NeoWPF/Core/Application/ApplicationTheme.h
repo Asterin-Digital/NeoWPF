@@ -45,13 +45,22 @@ enum class ThemeFontSize {
 
 /*
     @summary
-    Identifies a Button padding role in an application theme.
+    Identifies a control padding role in an application theme.
 */
 enum class ThemePadding {
     Button,
     TextBlock,
     TextBox,
     Checkbox,
+    Border,
+};
+
+/*
+    @summary
+    Identifies a control border-thickness role in an application theme.
+*/
+enum class ThemeBorderThickness {
+    Border,
 };
 
 /*
@@ -97,6 +106,12 @@ struct ThemeDefinition {
         Padding values keyed by control theme role.
     */
     std::unordered_map<ThemePadding, NeoWPF::UI::Thickness> Paddings;
+
+    /*
+        @summary
+        Border thickness values keyed by control theme role.
+    */
+    std::unordered_map<ThemeBorderThickness, NeoWPF::UI::Thickness> BorderThicknesses;
 
     /*
         @summary
@@ -259,6 +274,21 @@ public:
 
     /*
         @summary
+        Retrieves the active border thickness associated with a theme role.
+
+        @param borderThickness
+        Border-thickness role to retrieve.
+
+        @param outValue
+        Receives the resolved border thickness.
+
+        @returns
+        True when the active theme defines the requested role.
+    */
+    bool TryGetBorderThickness(ThemeBorderThickness borderThickness, NeoWPF::UI::Thickness& outValue) const;
+
+    /*
+        @summary
         Retrieves the active corner radius associated with a theme role.
 
         @param cornerRadius
@@ -314,6 +344,7 @@ private:
     std::unordered_map<PaletteColor, std::uint32_t> m_paletteColors;
     std::unordered_map<ThemeFontSize, int> m_fontSizes;
     std::unordered_map<ThemePadding, NeoWPF::UI::Thickness> m_paddings;
+    std::unordered_map<ThemeBorderThickness, NeoWPF::UI::Thickness> m_borderThicknesses;
     std::unordered_map<ThemeCornerRadius, NeoWPF::UI::CornerRadius> m_cornerRadii;
     std::string m_activeThemeName;
     NeoWPF::Core::Notification<> m_themeApplied;

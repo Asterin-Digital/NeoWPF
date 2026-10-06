@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/Window.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/UI/Localization/LocalizationManager.h>
 #include <NeoWPF/Input/InputManager.h>
@@ -28,7 +29,8 @@ NeoWPF::UI::Color Window::GetBackgroundColor() const noexcept
         return resourceColor;
     }
 
-    return NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
+    return NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+        NeoWPF::Core::ApplicationThemes::PaletteColor::Background);
 }
 
 void Window::SetBackgroundColor(NeoWPF::UI::Color color) noexcept

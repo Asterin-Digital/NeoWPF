@@ -16,8 +16,6 @@ namespace NeoWPF::Input::Core
 
 namespace NeoWPF::UI {
 
-void RegisterPanelStyles();
-
 class Panel : public Control {
 public:
     Panel();

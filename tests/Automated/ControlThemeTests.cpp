@@ -7,6 +7,9 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <NeoWPF/UI/Controls/Window.h>
+#include <NeoWPF/UI/Layout/Border/Border.h>
+#include <NeoWPF/UI/Layout/Panel/Panel.h>
 
 namespace {
 
@@ -42,11 +45,15 @@ TEST_F(ControlThemeTests, TextBlockTextBoxAndCheckboxFollowThemeAndPreserveLocal
     NeoWPF::UI::TextBlock styledTextBlock;
     NeoWPF::UI::TextBox textBox;
     NeoWPF::UI::Checkbox checkbox;
+    NeoWPF::UI::Border borderControl;
+    NeoWPF::UI::Panel panel;
+    NeoWPF::UI::Window window;
     ASSERT_TRUE(styledTextBlock.SetStylePropertyValue("FontSize", 17));
 
     ThemeDefinition customTheme;
     customTheme.Name = "Control Theme Test";
     customTheme.Palette[PaletteColor::Foreground] = 0xFF112233u;
+    customTheme.Palette[PaletteColor::Background] = 0xFF102030u;
     customTheme.Palette[PaletteColor::Surface] = 0xFF223344u;
     customTheme.Palette[PaletteColor::Border] = 0xFF334455u;
     customTheme.Palette[PaletteColor::Focus] = 0xFF445566u;
@@ -58,6 +65,8 @@ TEST_F(ControlThemeTests, TextBlockTextBoxAndCheckboxFollowThemeAndPreserveLocal
     customTheme.Paddings[ThemePadding::TextBlock] = NeoWPF::UI::Thickness(2, 3, 4, 5);
     customTheme.Paddings[ThemePadding::TextBox] = NeoWPF::UI::Thickness(6, 7, 8, 9);
     customTheme.Paddings[ThemePadding::Checkbox] = NeoWPF::UI::Thickness(10, 11, 12, 13);
+    customTheme.Paddings[ThemePadding::Border] = NeoWPF::UI::Thickness(3, 4, 5, 6);
+    customTheme.BorderThicknesses[ThemeBorderThickness::Border] = NeoWPF::UI::Thickness(2, 3, 4, 5);
     customTheme.CornerRadii[ThemeCornerRadius::Control] = NeoWPF::UI::CornerRadius(6);
     customTheme.CornerRadii[ThemeCornerRadius::Checkbox] = NeoWPF::UI::CornerRadius(3);
 
@@ -86,6 +95,13 @@ TEST_F(ControlThemeTests, TextBlockTextBoxAndCheckboxFollowThemeAndPreserveLocal
     EXPECT_EQ(checkbox.GetFontSize(), 20);
     EXPECT_EQ(checkbox.GetPadding(), NeoWPF::UI::Thickness(10, 11, 12, 13));
     EXPECT_EQ(checkbox.GetCornerRadius(), NeoWPF::UI::CornerRadius(3));
+    EXPECT_EQ(borderControl.GetBackgroundColor(), surface);
+    EXPECT_EQ(borderControl.GetBorderColor(), border);
+    EXPECT_EQ(borderControl.GetPadding(), NeoWPF::UI::Thickness(3, 4, 5, 6));
+    EXPECT_EQ(borderControl.GetBorderThicknessValue(), NeoWPF::UI::Thickness(2, 3, 4, 5));
+    EXPECT_EQ(borderControl.GetCornerRadius(), NeoWPF::UI::CornerRadius(6));
+    EXPECT_EQ(panel.GetBackgroundColor(), NeoWPF::UI::Colors::Transparent);
+    EXPECT_EQ(window.GetBackgroundColor(), NeoWPF::UI::Color::FromArgb(0xFF102030u));
     EXPECT_EQ(styledTextBlock.GetFontSize(), 17);
     EXPECT_EQ(styledTextBlock.GetValueSource(NeoWPF::UI::TextBlock::FontSizeProperty()),
               NeoWPF::UI::Properties::PropertyValueSource::Style);
@@ -93,6 +109,7 @@ TEST_F(ControlThemeTests, TextBlockTextBoxAndCheckboxFollowThemeAndPreserveLocal
     textBlock.SetFontSize(25);
     textBox.SetPadding(NeoWPF::UI::Thickness(14));
     checkbox.SetFontSize(22);
+    borderControl.SetPadding(NeoWPF::UI::Thickness(14));
     ASSERT_TRUE(checkbox.ApplyTemplate());
     checkbox.Initialize();
     checkbox.Arrange(120, 40);
@@ -103,6 +120,8 @@ TEST_F(ControlThemeTests, TextBlockTextBoxAndCheckboxFollowThemeAndPreserveLocal
     EXPECT_EQ(textBlock.GetFontSize(), 25);
     EXPECT_EQ(textBox.GetPadding(), NeoWPF::UI::Thickness(14));
     EXPECT_EQ(checkbox.GetFontSize(), 22);
+    EXPECT_EQ(borderControl.GetPadding(), NeoWPF::UI::Thickness(14));
+    EXPECT_EQ(window.GetBackgroundColor(), NeoWPF::UI::Color::FromArgb(0xFFF1F2EFu));
     EXPECT_EQ(textBox.GetTextColor(), NeoWPF::UI::Color::FromArgb(0xFF252925u));
     EXPECT_EQ(checkbox.GetTextColor(), NeoWPF::UI::Color::FromArgb(0xFF252925u));
 

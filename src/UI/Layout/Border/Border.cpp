@@ -1,6 +1,5 @@
 #include <NeoWPF/UI/Layout/Border/Border.h>
-#include <NeoWPF/UI/Layout/BorderStyles.h>
-#include <NeoWPF/ControlStyles.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/Diagnostics/Logger.h>
@@ -8,14 +7,52 @@
 
 namespace NeoWPF::UI {
 
- 
+namespace {
+
+void ApplyBorderTheme(Border& border)
+{
+    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::ThemeBorderThickness;
+    using NeoWPF::Core::ApplicationThemes::ThemeCornerRadius;
+    using NeoWPF::Core::ApplicationThemes::ThemePadding;
+    using NeoWPF::Core::ApplicationThemes::ThemeManager;
+
+    auto& themeManager = ThemeManager::Instance();
+    border.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
+    border.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+
+    NeoWPF::UI::Thickness padding;
+    if (themeManager.TryGetPadding(ThemePadding::Border, padding)) {
+        border.SetThemePropertyValue("Padding", padding);
+    }
+
+    NeoWPF::UI::Thickness borderThickness;
+    if (themeManager.TryGetBorderThickness(ThemeBorderThickness::Border, borderThickness)) {
+        border.SetThemePropertyValue("BorderThickness", borderThickness);
+    }
+
+    NeoWPF::UI::CornerRadius cornerRadius;
+    if (themeManager.TryGetCornerRadius(ThemeCornerRadius::Control, cornerRadius)) {
+        border.SetThemePropertyValue("CornerRadius", cornerRadius);
+    }
+}
+
+}
 
 Border::Border()
 {
-    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::BorderStyles, *this);
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
     SetPresenter(presenter);
     SetClipToBounds(true);
+    ApplyBorderTheme(*this);
+    m_themeAppliedSubscriptionId = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().SubscribeThemeApplied([this]() {
+        ApplyBorderTheme(*this);
+    });
+}
+
+Border::~Border()
+{
+    NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().UnsubscribeThemeApplied(m_themeAppliedSubscriptionId);
 }
 
 void Border::Measure(double availableWidth, double availableHeight)

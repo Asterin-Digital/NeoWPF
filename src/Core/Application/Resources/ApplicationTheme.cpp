@@ -53,6 +53,8 @@ void ThemeManager::RegisterBuiltInThemes()
     light.Paddings[ThemePadding::TextBlock] = NeoWPF::UI::Thickness{};
     light.Paddings[ThemePadding::TextBox] = NeoWPF::UI::Thickness(6, 4, 6, 4);
     light.Paddings[ThemePadding::Checkbox] = NeoWPF::UI::Thickness(8);
+    light.Paddings[ThemePadding::Border] = NeoWPF::UI::Thickness{};
+    light.BorderThicknesses[ThemeBorderThickness::Border] = NeoWPF::UI::Thickness(1);
     light.CornerRadii[ThemeCornerRadius::Control] = NeoWPF::UI::CornerRadius(4);
     light.CornerRadii[ThemeCornerRadius::Checkbox] = NeoWPF::UI::CornerRadius(2);
 
@@ -74,6 +76,8 @@ void ThemeManager::RegisterBuiltInThemes()
     dark.Paddings[ThemePadding::TextBlock] = NeoWPF::UI::Thickness{};
     dark.Paddings[ThemePadding::TextBox] = NeoWPF::UI::Thickness(6, 4, 6, 4);
     dark.Paddings[ThemePadding::Checkbox] = NeoWPF::UI::Thickness(8);
+    dark.Paddings[ThemePadding::Border] = NeoWPF::UI::Thickness{};
+    dark.BorderThicknesses[ThemeBorderThickness::Border] = NeoWPF::UI::Thickness(1);
     dark.CornerRadii[ThemeCornerRadius::Control] = NeoWPF::UI::CornerRadius(4);
     dark.CornerRadii[ThemeCornerRadius::Checkbox] = NeoWPF::UI::CornerRadius(2);
 
@@ -137,6 +141,10 @@ void ThemeManager::ApplyThemeResources(const ThemeDefinition& theme)
 
     for (const auto& [padding, value] : theme.Paddings) {
         m_paddings[padding] = value;
+    }
+
+    for (const auto& [borderThickness, value] : theme.BorderThicknesses) {
+        m_borderThicknesses[borderThickness] = value;
     }
 
     for (const auto& [cornerRadius, value] : theme.CornerRadii) {
@@ -209,6 +217,17 @@ bool ThemeManager::TryGetPadding(ThemePadding padding, NeoWPF::UI::Thickness& ou
     return true;
 }
 
+bool ThemeManager::TryGetBorderThickness(ThemeBorderThickness borderThickness, NeoWPF::UI::Thickness& outValue) const
+{
+    const auto it = m_borderThicknesses.find(borderThickness);
+    if (it == m_borderThicknesses.end()) {
+        return false;
+    }
+
+    outValue = it->second;
+    return true;
+}
+
 bool ThemeManager::TryGetCornerRadius(ThemeCornerRadius cornerRadius, NeoWPF::UI::CornerRadius& outValue) const
 {
     const auto it = m_cornerRadii.find(cornerRadius);
@@ -237,6 +256,7 @@ void ThemeManager::Clear()
     m_paletteColors.clear();
     m_fontSizes.clear();
     m_paddings.clear();
+    m_borderThicknesses.clear();
     m_cornerRadii.clear();
     m_activeThemeName.clear();
 }
