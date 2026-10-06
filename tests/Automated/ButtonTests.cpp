@@ -210,6 +210,57 @@ TEST_F(ButtonTests, UsesSharedPaletteForLightAndDarkThemes)
     EXPECT_EQ(darkButton->GetBorderColor(), border);
 }
 
+TEST_F(ButtonTests, ExistingButtonUpdatesWhenThemeIsApplied)
+{
+    auto& themeManager = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance();
+    NeoWPF::UI::Button button(L"Theme test");
+    const NeoWPF::UI::Thickness customPadding(4, 6, 8, 10);
+    ASSERT_TRUE(button.SetStylePropertyValue("Padding", customPadding));
+    ASSERT_TRUE(button.SetStylePropertyValue("FontSize", 19));
+
+    ASSERT_TRUE(themeManager.ApplyTheme("Dark Mint"));
+
+    NeoWPF::UI::Color expectedSurface;
+    NeoWPF::UI::Color expectedForeground;
+    NeoWPF::UI::Color expectedBorder;
+    ASSERT_TRUE(themeManager.TryGetPaletteColor(
+        NeoWPF::Core::ApplicationThemes::PaletteColor::Surface, expectedSurface));
+    ASSERT_TRUE(themeManager.TryGetPaletteColor(
+        NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground, expectedForeground));
+    ASSERT_TRUE(themeManager.TryGetPaletteColor(
+        NeoWPF::Core::ApplicationThemes::PaletteColor::Border, expectedBorder));
+
+    EXPECT_EQ(button.GetBackgroundColor(), expectedSurface);
+    EXPECT_EQ(button.GetTextColor(), expectedForeground);
+    EXPECT_EQ(button.GetBorderColor(), expectedBorder);
+    EXPECT_EQ(button.GetPadding(), customPadding);
+    EXPECT_EQ(button.GetFontSize(), 19);
+}
+
+TEST_F(ButtonTests, ActiveThemeUpdatesFontSizeAndButtonPadding)
+{
+    auto& themeManager = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance();
+    NeoWPF::UI::Button button(L"Theme metrics");
+
+    EXPECT_EQ(button.GetFontSize(), 14);
+    EXPECT_EQ(button.GetPadding(), NeoWPF::UI::Thickness(8));
+
+    NeoWPF::Core::ApplicationThemes::ThemeDefinition largeControls;
+    largeControls.Name = "Large Controls";
+    largeControls.FontSizes[NeoWPF::Core::ApplicationThemes::ThemeFontSize::Control] = 18;
+    largeControls.Paddings[NeoWPF::Core::ApplicationThemes::ThemePadding::Button] =
+        NeoWPF::UI::Thickness(12, 10, 12, 10);
+    themeManager.RegisterTheme(largeControls);
+
+    ASSERT_TRUE(themeManager.SetActiveTheme("Large Controls"));
+    EXPECT_EQ(button.GetFontSize(), 18);
+    EXPECT_EQ(button.GetPadding(), NeoWPF::UI::Thickness(12, 10, 12, 10));
+
+    ASSERT_TRUE(themeManager.SetActiveTheme("Light Mint"));
+    EXPECT_EQ(button.GetFontSize(), 14);
+    EXPECT_EQ(button.GetPadding(), NeoWPF::UI::Thickness(8));
+}
+
 TEST_F(ButtonTests, NormalStateUsesDependencyPropertyColorsAndHonorsBorderThickness)
 {
     auto button = MakeSizedButton();

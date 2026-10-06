@@ -5,16 +5,21 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
+#include <NeoWPF/Core/Events/Notification.h>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
+#include <NeoWPF/UI/Core/Media/Thickness.h>
 #include <any>
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <unordered_map>
 
 namespace NeoWPF::Core::ApplicationThemes {
 
 /*
-    @summary Identifies a shared color role in an application theme.
+    @summary
+    Identifies a shared color role in an application theme.
 */
 enum class PaletteColor {
     Background,
@@ -29,26 +34,168 @@ enum class PaletteColor {
     Focus
 };
 
-struct ThemeDefinition {
-    std::string Name;
-    std::unordered_map<std::string, std::any> Resources;
-    std::unordered_map<PaletteColor, std::uint32_t> Palette;
+/*
+    @summary
+    Identifies a shared font-size role in an application theme.
+*/
+enum class ThemeFontSize {
+    Control,
 };
 
+/*
+    @summary
+    Identifies a Button padding role in an application theme.
+*/
+enum class ThemePadding {
+    Button,
+};
+
+/*
+    @summary
+    Defines the resources and shared style values associated with a theme.
+*/
+struct ThemeDefinition {
+    /*
+        @summary
+        Name used to register and select the theme.
+    */
+    std::string Name;
+
+    /*
+        @summary
+        Resources applied when the theme is selected.
+    */
+    std::unordered_map<std::string, std::any> Resources;
+
+    /*
+        @summary
+        Shared color values keyed by palette role.
+    */
+    std::unordered_map<PaletteColor, std::uint32_t> Palette;
+
+    /*
+        @summary
+        Font sizes keyed by shared theme role.
+    */
+    std::unordered_map<ThemeFontSize, int> FontSizes;
+
+    /*
+        @summary
+        Padding values keyed by control theme role.
+    */
+    std::unordered_map<ThemePadding, NeoWPF::UI::Thickness> Paddings;
+};
+
+/*
+    @summary
+    Registers, applies, and queries application themes.
+*/
 class ThemeManager {
 public:
+    /*
+        @summary
+        Returns the process-wide theme manager.
+
+        @returns
+        The shared theme manager instance.
+    */
     static ThemeManager& Instance();
 
+    /*
+        @summary
+        Registers the built-in Light Mint and Dark Mint themes.
+
+        @internal
+    */
     void RegisterBuiltInThemes();
+
+    /*
+        @summary
+        Registers or replaces a named theme.
+
+        @param theme
+        Theme definition to register; definitions with an empty name are ignored.
+    */
     void RegisterTheme(const ThemeDefinition& theme);
+
+    /*
+        @summary
+        Checks whether a theme with the given name is registered.
+
+        @param name
+        Theme name to find.
+
+        @returns
+        True when the theme is registered.
+    */
     bool HasTheme(const std::string& name) const;
 
+    /*
+        @summary
+        Applies a registered theme's resources and style values.
+
+        @param name
+        Name of the registered theme to apply.
+
+        @returns
+        True when the theme exists and was applied.
+    */
     bool ApplyTheme(const std::string& name);
+
+    /*
+        @summary
+        Applies the resources and style values in a theme definition.
+
+        @param theme
+        Theme definition to apply; definitions with an empty name are rejected.
+
+        @returns
+        True when the definition was applied.
+
+        @details
+        Applying a definition does not change the active theme name.
+    */
     bool ApplyTheme(const ThemeDefinition& theme);
+
+    /*
+        @summary
+        Applies a registered theme and sets it as the active theme.
+
+        @param name
+        Name of the registered theme to activate.
+
+        @returns
+        True when the theme exists and became active.
+    */
     bool SetActiveTheme(const std::string& name);
 
     /*
-        @summary Retrieves the active color associated with a shared palette role.
+        @summary
+        Subscribes to notifications sent after a theme is applied.
+
+        @param handler
+        Callback invoked after theme resources and palette values are updated.
+
+        @returns
+        A nonzero subscription identifier, or zero when the handler is empty.
+
+        @details
+        The callback runs synchronously on the thread that applies the theme.
+    */
+    std::size_t SubscribeThemeApplied(std::function<void()> handler);
+
+    /*
+        @summary
+        Removes a theme-applied subscription.
+
+        @param subscriptionId
+        Identifier returned by SubscribeThemeApplied.
+    */
+    void UnsubscribeThemeApplied(std::size_t subscriptionId);
+
+    /*
+        @summary
+        Retrieves the active color associated with a shared palette role.
 
         @param paletteColor
         Shared palette role to retrieve.
@@ -56,23 +203,85 @@ public:
         @param outColor
         Receives the resolved color.
 
-        @returns True when the active theme defines the requested role.
-
-        @internal
+        @returns
+        True when the active theme defines the requested role.
     */
     bool TryGetPaletteColor(PaletteColor paletteColor, NeoWPF::UI::Color& outColor) const;
 
+    /*
+        @summary
+        Retrieves the active font size associated with a shared theme role.
+
+        @param fontSize
+        Shared font-size role to retrieve.
+
+        @param outValue
+        Receives the resolved font size.
+
+        @returns
+        True when the active theme defines the requested role.
+    */
+    bool TryGetFontSize(ThemeFontSize fontSize, int& outValue) const;
+
+    /*
+        @summary
+        Retrieves the active Button padding associated with a theme role.
+
+        @param padding
+        Button padding role to retrieve.
+
+        @param outValue
+        Receives the resolved padding.
+
+        @returns
+        True when the active theme defines the requested role.
+    */
+    bool TryGetPadding(ThemePadding padding, NeoWPF::UI::Thickness& outValue) const;
+
+    /*
+        @summary
+        Returns the name of the active theme.
+
+        @returns
+        The active theme name, or an empty string when no theme is active.
+    */
     const std::string& GetActiveThemeName() const noexcept;
+
+    /*
+        @summary
+        Returns the registered definition for the active theme.
+
+        @returns
+        A pointer to the active definition, or null when no registered theme is active.
+    */
     const ThemeDefinition* GetActiveTheme() const noexcept;
 
+    /*
+        @summary
+        Removes registered themes and clears active theme values.
+    */
     void Clear();
 
 private:
     ThemeManager() = default;
 
+    /*
+        @summary
+        Applies theme resources and style values without changing the active theme name.
+
+        @param theme
+        Theme definition to apply.
+
+        @internal
+    */
+    void ApplyThemeResources(const ThemeDefinition& theme);
+
     std::unordered_map<std::string, ThemeDefinition> m_themes;
     std::unordered_map<PaletteColor, std::uint32_t> m_paletteColors;
+    std::unordered_map<ThemeFontSize, int> m_fontSizes;
+    std::unordered_map<ThemePadding, NeoWPF::UI::Thickness> m_paddings;
     std::string m_activeThemeName;
+    NeoWPF::Core::Notification<> m_themeApplied;
 };
 
 }

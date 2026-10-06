@@ -5,6 +5,7 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
@@ -267,6 +268,11 @@ private:
 private:
     int m_padding = 8;
     std::shared_ptr<NeoWPF::UI::TextBlock> m_textContent;
+    std::size_t m_themeAppliedSubscriptionId = 0;
+    int m_appliedThemeFontSize = 0;
+    Thickness m_appliedThemePadding{};
+    bool m_hasAppliedThemeFontSize = false;
+    bool m_hasAppliedThemePadding = false;
 };
 
 class ButtonTemplate : public Templates::ControlTemplate {

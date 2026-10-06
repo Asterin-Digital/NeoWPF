@@ -14,7 +14,6 @@ Ref<NeoWPF::UI::Border> CreateButtonPanel()
     panel->SetPadding(24);
 
     auto button = New<NeoWPF::UI::Button>(L"Toggle theme");
-    button->SetPadding(NeoWPF::UI::Thickness(18, 10, 18, 10));
     button->Click += []() {
         ThemeManager::Instance().SetActiveTheme(
             ThemeManager::Instance().GetActiveThemeName() == "Light Mint" ? "Dark Mint" : "Light Mint");

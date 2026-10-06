@@ -47,6 +47,8 @@ void ThemeManager::RegisterBuiltInThemes()
     light.Palette[PaletteColor::AccentPressed] = 0xFFD6E1D6u;
     light.Palette[PaletteColor::DisabledSurface] = 0xFFE9ECE9u;
     light.Palette[PaletteColor::Focus] = 0xFF718C76u;
+    light.FontSizes[ThemeFontSize::Control] = 14;
+    light.Paddings[ThemePadding::Button] = NeoWPF::UI::Thickness(8);
 
     ThemeDefinition dark;
     dark.Name = "Dark Mint";
@@ -60,6 +62,8 @@ void ThemeManager::RegisterBuiltInThemes()
     dark.Palette[PaletteColor::AccentPressed] = 0xFF303730u;
     dark.Palette[PaletteColor::DisabledSurface] = 0xFF222222u;
     dark.Palette[PaletteColor::Focus] = 0xFF849786u;
+    dark.FontSizes[ThemeFontSize::Control] = 14;
+    dark.Paddings[ThemePadding::Button] = NeoWPF::UI::Thickness(8);
 
     RegisterTheme(light);
     RegisterTheme(dark);
@@ -95,6 +99,13 @@ bool ThemeManager::ApplyTheme(const ThemeDefinition& theme)
         return false;
     }
 
+    ApplyThemeResources(theme);
+    m_themeApplied.Publish();
+    return true;
+}
+
+void ThemeManager::ApplyThemeResources(const ThemeDefinition& theme)
+{
     for (const auto& [paletteColor, value] : theme.Palette) {
         const auto* key = GetPaletteResourceKey(paletteColor);
         if (!key) {
@@ -108,18 +119,38 @@ bool ThemeManager::ApplyTheme(const ThemeDefinition& theme)
         NeoWPF::Core::ApplicationResources::Resources::SetResource(key, value);
     }
 
+    for (const auto& [fontSize, value] : theme.FontSizes) {
+        m_fontSizes[fontSize] = value;
+    }
+
+    for (const auto& [padding, value] : theme.Paddings) {
+        m_paddings[padding] = value;
+    }
+
     NeoWPF::Diagnostics::LogInfo(("Applied application theme: " + theme.Name).c_str());
-    return true;
 }
 
 bool ThemeManager::SetActiveTheme(const std::string& name)
 {
-    if (!ApplyTheme(name)) {
+    const auto it = m_themes.find(name);
+    if (it == m_themes.end() || it->second.Name.empty()) {
         return false;
     }
 
     m_activeThemeName = name;
+    ApplyThemeResources(it->second);
+    m_themeApplied.Publish();
     return true;
+}
+
+std::size_t ThemeManager::SubscribeThemeApplied(std::function<void()> handler)
+{
+    return m_themeApplied.Subscribe(std::move(handler));
+}
+
+void ThemeManager::UnsubscribeThemeApplied(std::size_t subscriptionId)
+{
+    m_themeApplied.Unsubscribe(subscriptionId);
 }
 
 bool ThemeManager::TryGetPaletteColor(PaletteColor paletteColor, NeoWPF::UI::Color& outColor) const
@@ -130,6 +161,28 @@ bool ThemeManager::TryGetPaletteColor(PaletteColor paletteColor, NeoWPF::UI::Col
     }
 
     outColor = NeoWPF::UI::Color::FromArgb(it->second);
+    return true;
+}
+
+bool ThemeManager::TryGetFontSize(ThemeFontSize fontSize, int& outValue) const
+{
+    const auto it = m_fontSizes.find(fontSize);
+    if (it == m_fontSizes.end()) {
+        return false;
+    }
+
+    outValue = it->second;
+    return true;
+}
+
+bool ThemeManager::TryGetPadding(ThemePadding padding, NeoWPF::UI::Thickness& outValue) const
+{
+    const auto it = m_paddings.find(padding);
+    if (it == m_paddings.end()) {
+        return false;
+    }
+
+    outValue = it->second;
     return true;
 }
 
@@ -148,6 +201,8 @@ void ThemeManager::Clear()
 {
     m_themes.clear();
     m_paletteColors.clear();
+    m_fontSizes.clear();
+    m_paddings.clear();
     m_activeThemeName.clear();
 }
 
