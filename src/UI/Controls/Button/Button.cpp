@@ -66,6 +66,7 @@ Button::Button()
     m_themeAppliedSubscriptionId =
         NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().SubscribeThemeApplied([this]() {
             ApplyThemeStyle(*this);
+            ApplyVisualState(m_currentVisualState, false);
         });
 }
 

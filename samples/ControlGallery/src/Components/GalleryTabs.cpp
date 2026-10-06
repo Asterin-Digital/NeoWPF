@@ -3,6 +3,7 @@
 #include <NeoWPF/NeoWPF.h>
 
 #include <array>
+#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -11,6 +12,7 @@ namespace {
 
 using NeoWPF::Core::ApplicationThemes::GetPaletteColor;
 using NeoWPF::Core::ApplicationThemes::PaletteColor;
+using NeoWPF::Core::ApplicationThemes::ThemeManager;
 using NeoWPF::UI::Button;
 using NeoWPF::UI::Grid;
 using NeoWPF::UI::Orientation;
@@ -37,40 +39,85 @@ Ref<Button> MakeTabButton(const std::wstring& label)
 
 void SetTabAppearance(const Ref<Button>& button, bool selected)
 {
+    const auto background = selected
+        ? GetPaletteColor(PaletteColor::Accent)
+        : GetPaletteColor(PaletteColor::Surface);
+    const auto foreground = selected
+        ? GetPaletteColor(PaletteColor::Surface)
+        : GetPaletteColor(PaletteColor::Foreground);
+    const auto border = GetPaletteColor(PaletteColor::Border);
     button->SetStylePropertyValue(
         "Background",
-        selected ? GetPaletteColor(PaletteColor::Accent) : GetPaletteColor(PaletteColor::Surface));
-    button->SetStylePropertyValue(
-        "Foreground",
-        selected ? GetPaletteColor(PaletteColor::Surface) : GetPaletteColor(PaletteColor::Foreground));
-    button->SetStylePropertyValue("BorderBrush", GetPaletteColor(PaletteColor::Border));
+        background);
+    button->SetStylePropertyValue("Foreground", foreground);
+    button->SetStylePropertyValue("BorderBrush", border);
+
+    if (auto backgroundVisual = std::dynamic_pointer_cast<NeoWPF::UI::Templates::TemplateVisual>(
+            button->FindTemplateChild("PART_Background"))) {
+        backgroundVisual->SetFillColor(background.ToArgb());
+        backgroundVisual->SetBorderColor(border.ToArgb());
+    }
+    button->InvalidateVisual();
 }
+
+class GalleryTabHost final : public Grid {
+public:
+    GalleryTabHost()
+    {
+        m_themeSubscriptionId = ThemeManager::Instance().SubscribeThemeApplied([this]() {
+            RefreshTabAppearances();
+        });
+    }
+
+    ~GalleryTabHost() override
+    {
+        ThemeManager::Instance().UnsubscribeThemeApplied(m_themeSubscriptionId);
+    }
+
+    void AddTabButton(const Ref<Button>& button)
+    {
+        m_tabButtons.push_back(button);
+    }
+
+    void SetSelectedTab(std::size_t selectedIndex)
+    {
+        m_selectedTabIndex = selectedIndex;
+        RefreshTabAppearances();
+    }
+
+private:
+    void RefreshTabAppearances()
+    {
+        for (std::size_t index = 0; index < m_tabButtons.size(); ++index) {
+            SetTabAppearance(m_tabButtons[index], index == m_selectedTabIndex);
+        }
+    }
+
+    std::vector<Ref<Button>> m_tabButtons;
+    std::size_t m_selectedTabIndex = 0;
+    std::size_t m_themeSubscriptionId = 0;
+};
 
 }
 
 Ref<NeoWPF::UI::UIElement> CreateControlGalleryTabs()
 {
-    auto root = New<Grid>();
+    auto root = New<GalleryTabHost>();
     root->AddRow(NeoWPF::UI::SizeMode::Auto);
     root->AddRow(NeoWPF::UI::SizeMode::Star);
 
     auto tabButtons = New<StackPanel>();
     tabButtons->SetOrientation(Orientation::Horizontal);
     tabButtons->SetSpacing(8);
-    auto buttons = std::make_shared<std::vector<Ref<Button>>>();
-    buttons->reserve(kTabs.size());
 
     auto panelViewer = New<ScrollViewer>();
     panelViewer->SetHorizontalScrollBarVisibility(ScrollBarVisibility::Auto);
     panelViewer->SetVerticalScrollBarVisibility(ScrollBarVisibility::Auto);
     for (std::size_t index = 0; index < kTabs.size(); ++index) {
         auto tabButton = MakeTabButton(kTabs[index].Label);
-        SetTabAppearance(tabButton, index == 0);
-        buttons->push_back(tabButton);
-        tabButton->Click += [index, panelViewer, buttons]() {
-            for (std::size_t buttonIndex = 0; buttonIndex < buttons->size(); ++buttonIndex) {
-                SetTabAppearance((*buttons)[buttonIndex], buttonIndex == index);
-            }
+        root->AddTabButton(tabButton);
+        tabButton->Click += [index, panelViewer, tabHost = root.get()]() {
+            tabHost->SetSelectedTab(index);
             panelViewer->SetContent(kTabs[index].CreatePanel());
         };
         tabButtons->AddChild(tabButton);
@@ -84,6 +131,7 @@ Ref<NeoWPF::UI::UIElement> CreateControlGalleryTabs()
 
     root->AddChild(tabStrip, 0, 0);
     root->AddChild(panelViewer, 1, 0);
+    root->SetSelectedTab(0);
     panelViewer->SetContent(kTabs.front().CreatePanel());
     return root;
 }

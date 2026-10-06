@@ -237,6 +237,23 @@ TEST_F(ButtonTests, ExistingButtonUpdatesWhenThemeIsApplied)
     EXPECT_EQ(button.GetFontSize(), 19);
 }
 
+TEST_F(ButtonTests, ExistingButtonRefreshesItsVisualStateWhenThemeChanges)
+{
+    auto& themeManager = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance();
+    auto button = MakeSizedButton();
+
+    NeoWPF::Rendering::CommandList lightCommands;
+    button->BuildRenderCommands(lightCommands);
+    EXPECT_TRUE(ContainsRoundedRectColor(lightCommands, 0xFFF8F9F7u));
+
+    ASSERT_TRUE(themeManager.SetActiveTheme("Dark Mint"));
+
+    NeoWPF::Rendering::CommandList darkCommands;
+    button->BuildRenderCommands(darkCommands);
+    EXPECT_TRUE(ContainsRoundedRectColor(darkCommands, 0xFF1D1D1Du));
+    EXPECT_TRUE(ContainsRoundedRectColor(darkCommands, 0xFF686868u));
+}
+
 TEST_F(ButtonTests, ActiveThemeUpdatesFontSizeAndButtonPadding)
 {
     auto& themeManager = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance();
