@@ -1,5 +1,0 @@
-<Style TargetType="ScrollBar">
-    <Setter Property="TrackColor" Value="#FFEAEAEA" />
-    <Setter Property="ThumbColor" Value="#FFCDCDCD" />
-    <Setter Property="ThumbSize" Value="24" />
-</Style>

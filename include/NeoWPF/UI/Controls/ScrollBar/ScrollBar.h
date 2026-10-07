@@ -12,13 +12,11 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Controls/Thumb/Thumb.h>
 #include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Layout/Placement/Orientation.h>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 
 namespace NeoWPF::UI {
-
-class ScrollBarStyle;
-void RegisterScrollBarStyles();
 
 /*
     @summary
@@ -34,6 +32,10 @@ void RegisterScrollBarStyles();
 */
 class ScrollBar : public NeoWPF::UI::RangeBase {
 public:
+    static const NeoWPF::UI::Properties::DependencyProperty& TrackColorProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& ThumbColorProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& ThumbSizeProperty();
+
     ScrollBar();
 
     ~ScrollBar();
@@ -63,14 +65,14 @@ public:
         @param color
         ARGB color value.
     */
-    void SetTrackColor(NeoWPF::UI::Color color) noexcept { m_trackColor = color; InvalidateVisual(); }
+    void SetTrackColor(NeoWPF::UI::Color color) noexcept;
     void SetTrackColor(std::uint32_t color) noexcept { SetTrackColor(NeoWPF::UI::Color::FromArgb(color)); }
 
     /*
         @summary
         Returns the current track color.
     */
-    NeoWPF::UI::Color GetTrackColor() const noexcept { return m_trackColor; }
+    NeoWPF::UI::Color GetTrackColor() const noexcept;
 
     /*
         @summary
@@ -79,14 +81,14 @@ public:
         @param color
         ARGB color value.
     */
-    void SetThumbColor(NeoWPF::UI::Color color) noexcept { m_thumbColor = color; InvalidateVisual(); }
+    void SetThumbColor(NeoWPF::UI::Color color) noexcept;
     void SetThumbColor(std::uint32_t color) noexcept { SetThumbColor(NeoWPF::UI::Color::FromArgb(color)); }
 
     /*
         @summary
         Returns the current thumb color.
     */
-    NeoWPF::UI::Color GetThumbColor() const noexcept { return m_thumbColor; }
+    NeoWPF::UI::Color GetThumbColor() const noexcept;
 
     /*
         @summary
@@ -95,13 +97,13 @@ public:
         @param size
         A minimum-sized thumb; values below 1 are clamped to 1.
     */
-    void SetThumbSize(double size) noexcept { m_thumbSize = size < 1.0 ? 1.0 : size; InvalidateVisual(); }
+    void SetThumbSize(double size) noexcept;
 
     /*
         @summary
         Returns the current thumb size.
     */
-    double GetThumbSize() const noexcept { return m_thumbSize; }
+    double GetThumbSize() const noexcept;
 
     /*
         @summary
@@ -243,11 +245,9 @@ public:
 private:
 
     Orientation m_orientation = Orientation::Vertical;
-    NeoWPF::UI::Color m_trackColor = NeoWPF::UI::Color::FromArgb(0xFF2A2A2Au);
-    NeoWPF::UI::Color m_thumbColor = NeoWPF::UI::Color::FromArgb(0xFF5A5A5Au);
-    double m_thumbSize = 24.0;
     double m_contentSize = 0.0;
     double m_viewportSize = 0.0;
+    std::size_t m_themeAppliedSubscriptionId = 0;
 };
 
 class ScrollBarTemplate : public Templates::ControlTemplate {

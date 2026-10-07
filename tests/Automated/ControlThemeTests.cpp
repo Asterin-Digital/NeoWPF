@@ -4,6 +4,12 @@
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
+#include <NeoWPF/UI/Controls/ComboBox/ComboBox.h>
+#include <NeoWPF/UI/Controls/ListBox/ListBox.h>
+#include <NeoWPF/UI/Controls/ProgressBar/ProgressBar.h>
+#include <NeoWPF/UI/Controls/RadioButton/RadioButton.h>
+#include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
+#include <NeoWPF/UI/Controls/Slider/Slider.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
@@ -45,6 +51,14 @@ TEST_F(ControlThemeTests, TextBlockTextBoxAndCheckboxFollowThemeAndPreserveLocal
     NeoWPF::UI::TextBlock styledTextBlock;
     NeoWPF::UI::TextBox textBox;
     NeoWPF::UI::Checkbox checkbox;
+    NeoWPF::UI::RadioButton radioButton;
+    NeoWPF::UI::ComboBox comboBox;
+    NeoWPF::UI::ComboBoxItem comboBoxItem;
+    NeoWPF::UI::ListBox listBox;
+    NeoWPF::UI::ListBoxItem listBoxItem;
+    NeoWPF::UI::ProgressBar progressBar;
+    NeoWPF::UI::ScrollBar scrollBar;
+    NeoWPF::UI::Slider slider;
     NeoWPF::UI::Border borderControl;
     NeoWPF::UI::Panel panel;
     NeoWPF::UI::Window window;
@@ -61,10 +75,24 @@ TEST_F(ControlThemeTests, TextBlockTextBoxAndCheckboxFollowThemeAndPreserveLocal
     customTheme.Palette[PaletteColor::AccentHover] = 0xFF667788u;
     customTheme.Palette[PaletteColor::AccentPressed] = 0xFF778899u;
     customTheme.Palette[PaletteColor::DisabledSurface] = 0xFF8899AAu;
+    customTheme.Palette[PaletteColor::Track] = 0xFF99AABBu;
+    customTheme.Palette[PaletteColor::Thumb] = 0xFFAABBCCu;
     customTheme.FontSizes[ThemeFontSize::Control] = 20;
     customTheme.Paddings[ThemePadding::TextBlock] = NeoWPF::UI::Thickness(2, 3, 4, 5);
     customTheme.Paddings[ThemePadding::TextBox] = NeoWPF::UI::Thickness(6, 7, 8, 9);
     customTheme.Paddings[ThemePadding::Checkbox] = NeoWPF::UI::Thickness(10, 11, 12, 13);
+    customTheme.Paddings[ThemePadding::ComboBox] = NeoWPF::UI::Thickness(1, 2, 3, 4);
+    customTheme.Paddings[ThemePadding::ComboBoxItem] = NeoWPF::UI::Thickness(5, 6, 7, 8);
+    customTheme.Paddings[ThemePadding::ListBox] = NeoWPF::UI::Thickness(9, 10, 11, 12);
+    customTheme.Paddings[ThemePadding::ListBoxItem] = NeoWPF::UI::Thickness(13, 14, 15, 16);
+    customTheme.Paddings[ThemePadding::ProgressBar] = NeoWPF::UI::Thickness{};
+    customTheme.Paddings[ThemePadding::RadioButton] = NeoWPF::UI::Thickness(17, 18, 19, 20);
+    customTheme.Paddings[ThemePadding::ScrollBar] = NeoWPF::UI::Thickness{};
+    customTheme.Paddings[ThemePadding::Slider] = NeoWPF::UI::Thickness{};
+    customTheme.Metrics[ThemeMetric::ScrollBarThumbSize] = 31.0;
+    customTheme.Metrics[ThemeMetric::ProgressBarBorderThickness] = 0.0;
+    customTheme.Metrics[ThemeMetric::SliderBorderThickness] = 0.0;
+    customTheme.Metrics[ThemeMetric::SliderThumbLength] = 21.0;
     customTheme.Paddings[ThemePadding::Border] = NeoWPF::UI::Thickness(3, 4, 5, 6);
     customTheme.BorderThicknesses[ThemeBorderThickness::Border] = NeoWPF::UI::Thickness(2, 3, 4, 5);
     customTheme.CornerRadii[ThemeCornerRadius::Control] = NeoWPF::UI::CornerRadius(6);
@@ -95,6 +123,26 @@ TEST_F(ControlThemeTests, TextBlockTextBoxAndCheckboxFollowThemeAndPreserveLocal
     EXPECT_EQ(checkbox.GetFontSize(), 20);
     EXPECT_EQ(checkbox.GetPadding(), NeoWPF::UI::Thickness(10, 11, 12, 13));
     EXPECT_EQ(checkbox.GetCornerRadius(), NeoWPF::UI::CornerRadius(3));
+    EXPECT_EQ(radioButton.GetTextColor(), foreground);
+    EXPECT_EQ(radioButton.GetBackgroundColor(), surface);
+    EXPECT_EQ(radioButton.GetBorderColor(), border);
+    EXPECT_EQ(radioButton.GetFontSize(), 20);
+    EXPECT_EQ(radioButton.GetPadding(), NeoWPF::UI::Thickness(17, 18, 19, 20));
+    EXPECT_EQ(comboBox.GetBackgroundColor(), surface);
+    EXPECT_EQ(comboBox.GetBorderColor(), border);
+    EXPECT_EQ(comboBox.GetPadding(), NeoWPF::UI::Thickness(1, 2, 3, 4));
+    EXPECT_EQ(comboBoxItem.GetPadding(), NeoWPF::UI::Thickness(5, 6, 7, 8));
+    EXPECT_EQ(listBox.GetBackgroundColor(), surface);
+    EXPECT_EQ(listBox.GetBorderColor(), border);
+    EXPECT_EQ(listBox.GetPadding(), NeoWPF::UI::Thickness(9, 10, 11, 12));
+    EXPECT_EQ(listBoxItem.GetPadding(), NeoWPF::UI::Thickness(13, 14, 15, 16));
+    EXPECT_EQ(progressBar.GetBackgroundColor(), NeoWPF::UI::Color::FromArgb(0xFF99AABBu));
+    EXPECT_DOUBLE_EQ(progressBar.GetBorderThickness(), 0.0);
+    EXPECT_EQ(scrollBar.GetTrackColor(), NeoWPF::UI::Color::FromArgb(0xFF99AABBu));
+    EXPECT_EQ(scrollBar.GetThumbColor(), NeoWPF::UI::Color::FromArgb(0xFFAABBCCu));
+    EXPECT_DOUBLE_EQ(scrollBar.GetThumbSize(), 31.0);
+    EXPECT_EQ(slider.GetBackgroundColor(), NeoWPF::UI::Color::FromArgb(0xFF99AABBu));
+    EXPECT_DOUBLE_EQ(slider.GetBorderThickness(), 0.0);
     EXPECT_EQ(borderControl.GetBackgroundColor(), surface);
     EXPECT_EQ(borderControl.GetBorderColor(), border);
     EXPECT_EQ(borderControl.GetPadding(), NeoWPF::UI::Thickness(3, 4, 5, 6));
@@ -109,6 +157,8 @@ TEST_F(ControlThemeTests, TextBlockTextBoxAndCheckboxFollowThemeAndPreserveLocal
     textBlock.SetFontSize(25);
     textBox.SetPadding(NeoWPF::UI::Thickness(14));
     checkbox.SetFontSize(22);
+    radioButton.SetFontSize(21);
+    comboBox.SetPadding(NeoWPF::UI::Thickness(14));
     borderControl.SetPadding(NeoWPF::UI::Thickness(14));
     ASSERT_TRUE(checkbox.ApplyTemplate());
     checkbox.Initialize();
@@ -120,6 +170,8 @@ TEST_F(ControlThemeTests, TextBlockTextBoxAndCheckboxFollowThemeAndPreserveLocal
     EXPECT_EQ(textBlock.GetFontSize(), 25);
     EXPECT_EQ(textBox.GetPadding(), NeoWPF::UI::Thickness(14));
     EXPECT_EQ(checkbox.GetFontSize(), 22);
+    EXPECT_EQ(radioButton.GetFontSize(), 21);
+    EXPECT_EQ(comboBox.GetPadding(), NeoWPF::UI::Thickness(14));
     EXPECT_EQ(borderControl.GetPadding(), NeoWPF::UI::Thickness(14));
     EXPECT_EQ(window.GetBackgroundColor(), NeoWPF::UI::Color::FromArgb(0xFFF1F2EFu));
     EXPECT_EQ(textBox.GetTextColor(), NeoWPF::UI::Color::FromArgb(0xFF252925u));

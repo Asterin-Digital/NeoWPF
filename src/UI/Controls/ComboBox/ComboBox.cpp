@@ -1,12 +1,10 @@
 #include <NeoWPF/UI/Controls/ComboBox/ComboBox.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/UI/Controls/ListBox/ListBox.h>
 #include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
-#include <NeoWPF/UI/Controls/ComboBoxItemStyles.h>
-#include <NeoWPF/UI/Controls/ComboBoxStyles.h>
-#include <NeoWPF/ControlStyles.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <algorithm>
@@ -92,15 +90,51 @@ private:
     bool m_syncingFromOwner = false;
 };
 
+void ApplyComboBoxTheme(ComboBox& comboBox)
+{
+    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::ThemePadding;
+    using NeoWPF::Core::ApplicationThemes::ThemeManager;
+
+    comboBox.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
+    comboBox.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+
+    NeoWPF::UI::Thickness padding;
+    if (ThemeManager::Instance().TryGetPadding(ThemePadding::ComboBox, padding)) {
+        comboBox.SetThemePropertyValue("Padding", padding);
+    }
+}
+
+void ApplyComboBoxItemTheme(ComboBoxItem& item)
+{
+    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::ThemePadding;
+    using NeoWPF::Core::ApplicationThemes::ThemeManager;
+
+    auto& themeManager = ThemeManager::Instance();
+    item.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
+    item.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+    NeoWPF::UI::Thickness padding;
+    if (themeManager.TryGetPadding(ThemePadding::ComboBoxItem, padding)) {
+        item.SetThemePropertyValue("Padding", padding);
+    }
+}
+
 }
 
 ComboBoxItem::ComboBoxItem()
 {
-    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::ComboBoxItemStyles, *this);
     SetTemplate(std::make_shared<ComboBoxItemTemplate>());
+    ApplyTheme();
 }
 
 ComboBoxItem::~ComboBoxItem() = default;
+
+void ComboBoxItem::ApplyTheme()
+{
+    ApplyComboBoxItemTheme(*this);
+    ApplyVisualStates(false);
+}
 
 void ComboBoxItem::SetIsHighlighted(bool highlighted) noexcept
 {
@@ -142,13 +176,30 @@ void ComboBoxItem::OnSelectionStateChanged()
 void ComboBoxItem::ApplyVisualStates(bool useTransitions)
 {
     auto manager = GetTemplateVisualStateManager();
-    if (!manager) {
-        return;
+    if (manager) {
+        manager->GoToState(this, "CommonStates", GetIsHighlighted() ? "MouseOver" : "Normal", useTransitions);
+        manager->GoToState(this, "SelectionStates", GetIsSelected() ? "Selected" : "Unselected", useTransitions);
+        manager->GoToState(this, "HighlightStates", GetIsHighlighted() ? "Highlighted" : "NotHighlighted", useTransitions);
     }
 
-    manager->GoToState(this, "CommonStates", GetIsHighlighted() ? "MouseOver" : "Normal", useTransitions);
-    manager->GoToState(this, "SelectionStates", GetIsSelected() ? "Selected" : "Unselected", useTransitions);
-    manager->GoToState(this, "HighlightStates", GetIsHighlighted() ? "Highlighted" : "NotHighlighted", useTransitions);
+    if (auto part = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
+        part->SetFillColor(GetIsHighlighted()
+            ? NeoWPF::Core::ApplicationThemes::GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::AccentHover).ToArgb()
+            : NeoWPF::UI::Colors::Transparent.ToArgb());
+        part->SetBorderColor(GetIsHighlighted()
+            ? NeoWPF::Core::ApplicationThemes::GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Focus).ToArgb()
+            : NeoWPF::UI::Colors::Transparent.ToArgb());
+        part->SetBorderThickness(GetIsHighlighted() ? 1 : 0);
+    }
+    if (auto part = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_SelectionOverlay"))) {
+        part->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+            NeoWPF::Core::ApplicationThemes::PaletteColor::AccentPressed).ToArgb());
+    }
+    if (auto part = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_HighlightOverlay"))) {
+        part->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+            NeoWPF::Core::ApplicationThemes::PaletteColor::AccentHover).ToArgb());
+    }
+    InvalidateVisual();
 }
 
 ComboBox::ComboBox()
@@ -158,16 +209,16 @@ ComboBox::ComboBox()
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
     SetTemplate(std::make_shared<ComboBoxTemplate>());
-    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::ComboBoxStyles, *this);
-    SetPadding(8);
 
     m_display = std::make_shared<Content::ContentPresenter>();
-    m_display->SetPadding(8);
     SetPresenter(m_display);
     m_display->SetContentData(std::any(std::wstring(L"Select an item")));
 
     m_dropDown = std::make_shared<ComboBoxDropDown>(this);
-    m_dropDown->SetPadding(4);
+    ApplyComboBoxTheme(*this);
+    m_themeAppliedSubscriptionId = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().SubscribeThemeApplied([this]() {
+        ApplyComboBoxTheme(*this);
+    });
 
     AddHandler(NeoWPF::Input::Core::MouseUpEvent(), [this](UIElement*, NeoWPF::Input::Core::RoutedEventArgs* args) {
         const bool wasOpen = GetIsDropDownOpen();
@@ -187,8 +238,18 @@ ComboBox::ComboBox()
 
 ComboBox::~ComboBox()
 {
+    NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().UnsubscribeThemeApplied(m_themeAppliedSubscriptionId);
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
         NeoWPF::Diagnostics::Level::Debug, "[ComboBox] Destroyed comboBox=%p", this);
+}
+
+void ComboBox::OnPaddingChanged(Thickness padding)
+{
+    if (m_display) {
+        m_display->SetPadding(padding);
+    }
+    InvalidateMeasure();
+    InvalidateVisual();
 }
 
 void ComboBox::EnsurePopupTemplateParts()

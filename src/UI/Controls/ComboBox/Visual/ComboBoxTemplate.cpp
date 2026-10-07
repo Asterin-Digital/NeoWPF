@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/ComboBox/ComboBox.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Controls/Popup/Popup.h>
 #include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
@@ -6,6 +7,10 @@
 #include <memory>
 
 namespace NeoWPF::UI {
+namespace {
+using NeoWPF::Core::ApplicationThemes::GetPaletteColor;
+using NeoWPF::Core::ApplicationThemes::PaletteColor;
+}
 
 ComboBoxTemplate::ComboBoxTemplate()
 {
@@ -13,8 +18,8 @@ ComboBoxTemplate::ComboBoxTemplate()
     SetVisualTree(root);
 
     auto background = std::make_shared<Templates::TemplateVisual>("PART_Background");
-    background->SetFillColor(0xFFFFFFFFu);
-    background->SetBorderColor(0xFF707070u);
+    background->SetFillColor(GetPaletteColor(PaletteColor::Surface).ToArgb());
+    background->SetBorderColor(GetPaletteColor(PaletteColor::Border).ToArgb());
     background->SetBorderThickness(1);
 
     auto contentHost = std::make_shared<Templates::TemplateVisual>("PART_ContentHost");
@@ -24,9 +29,6 @@ ComboBoxTemplate::ComboBoxTemplate()
 
     auto popup = std::make_shared<Popup>();
     auto popupBorder = std::make_shared<Border>();
-    popupBorder->SetBorderThickness(1);
-    popupBorder->SetBorderColor(0xFFAAAAAAu);
-    popupBorder->SetBackgroundColor(0xFFF0F0F0u);
 
     AddTemplateChild("PART_Background", background);
     AddTemplateChild("PART_ContentHost", contentHost);
@@ -39,8 +41,8 @@ ComboBoxTemplate::ComboBoxTemplate()
     auto normal = std::make_shared<Styling::VisualState>("Normal");
     normal->AddSetter("PART_Background", [](UIElement* element, Visual* visual) {
         if (auto part = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            part->SetFillColor(0xFFFFFFFFu);
-            part->SetBorderColor(0xFF707070u);
+            part->SetFillColor(GetPaletteColor(PaletteColor::Surface).ToArgb());
+            part->SetBorderColor(GetPaletteColor(PaletteColor::Border).ToArgb());
         }
         if (element) element->InvalidateVisual();
     });
@@ -49,8 +51,8 @@ ComboBoxTemplate::ComboBoxTemplate()
     auto mouseOver = std::make_shared<Styling::VisualState>("MouseOver");
     mouseOver->AddSetter("PART_Background", [](UIElement* element, Visual* visual) {
         if (auto part = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            part->SetFillColor(0xFFF5FAFFu);
-            part->SetBorderColor(0xFF3C7FB1u);
+            part->SetFillColor(GetPaletteColor(PaletteColor::AccentHover).ToArgb());
+            part->SetBorderColor(GetPaletteColor(PaletteColor::Focus).ToArgb());
         }
         if (element) element->InvalidateVisual();
     });
@@ -59,8 +61,8 @@ ComboBoxTemplate::ComboBoxTemplate()
     auto open = std::make_shared<Styling::VisualState>("Open");
     open->AddSetter("PART_Background", [](UIElement* element, Visual* visual) {
         if (auto part = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            part->SetFillColor(0xFFEAF4FFu);
-            part->SetBorderColor(0xFF3C7FB1u);
+            part->SetFillColor(GetPaletteColor(PaletteColor::AccentPressed).ToArgb());
+            part->SetBorderColor(GetPaletteColor(PaletteColor::Focus).ToArgb());
         }
         if (element) element->InvalidateVisual();
     });

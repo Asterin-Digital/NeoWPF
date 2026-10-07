@@ -9,6 +9,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Controls/Base/RangeBase/RangeBase.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Layout/Placement/Orientation.h>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 
@@ -64,6 +65,7 @@ private:
     AnimationHandle m_determinateAnimation = kInvalidAnimationHandle;
     AnimationHandle m_indeterminateAnimation = kInvalidAnimationHandle;
     bool m_isInitialized = false;
+    std::size_t m_themeAppliedSubscriptionId = 0;
 };
 
 }

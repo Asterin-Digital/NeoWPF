@@ -1,5 +1,0 @@
-<Style TargetType="ComboBoxItem">
-    <Setter Property="Foreground" Value="#FF18212B" />
-    <Setter Property="Padding" Value="8" />
-</Style>
-

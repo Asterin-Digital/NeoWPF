@@ -32,7 +32,9 @@ enum class PaletteColor {
     AccentHover,
     AccentPressed,
     DisabledSurface,
-    Focus
+    Focus,
+    Track,
+    Thumb,
 };
 
 /*
@@ -53,6 +55,26 @@ enum class ThemePadding {
     TextBox,
     Checkbox,
     Border,
+    ComboBox,
+    ComboBoxItem,
+    ListBox,
+    ListBoxItem,
+    ProgressBar,
+    RadioButton,
+    ScrollBar,
+    Slider,
+};
+
+/*
+    @summary
+    Identifies a shared control-size role in an application theme.
+*/
+enum class ThemeMetric {
+    ScrollBarThumbSize,
+    ProgressBarBorderThickness,
+    SliderBorderThickness,
+    SliderThumbLength,
+    ScrollBarBorderThickness,
 };
 
 /*
@@ -112,6 +134,12 @@ struct ThemeDefinition {
         Border thickness values keyed by control theme role.
     */
     std::unordered_map<ThemeBorderThickness, NeoWPF::UI::Thickness> BorderThicknesses;
+
+    /*
+        @summary
+        Numeric control metrics keyed by theme role.
+    */
+    std::unordered_map<ThemeMetric, double> Metrics;
 
     /*
         @summary
@@ -289,6 +317,21 @@ public:
 
     /*
         @summary
+        Retrieves the active metric associated with a theme role.
+
+        @param metric
+        Metric role to retrieve.
+
+        @param outValue
+        Receives the resolved metric.
+
+        @returns
+        True when the active theme defines the requested role.
+    */
+    bool TryGetMetric(ThemeMetric metric, double& outValue) const;
+
+    /*
+        @summary
         Retrieves the active corner radius associated with a theme role.
 
         @param cornerRadius
@@ -345,6 +388,7 @@ private:
     std::unordered_map<ThemeFontSize, int> m_fontSizes;
     std::unordered_map<ThemePadding, NeoWPF::UI::Thickness> m_paddings;
     std::unordered_map<ThemeBorderThickness, NeoWPF::UI::Thickness> m_borderThicknesses;
+    std::unordered_map<ThemeMetric, double> m_metrics;
     std::unordered_map<ThemeCornerRadius, NeoWPF::UI::CornerRadius> m_cornerRadii;
     std::string m_activeThemeName;
     NeoWPF::Core::Notification<> m_themeApplied;

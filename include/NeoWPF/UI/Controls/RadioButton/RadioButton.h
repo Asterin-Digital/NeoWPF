@@ -14,6 +14,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Text/FontStyle.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <cstddef>
 
 namespace NeoWPF::Input::Core { class MouseEventArgs; }
 
@@ -82,15 +83,11 @@ protected:
 
 private:
     std::wstring m_text;
-    NeoWPF::UI::Color m_textColor = NeoWPF::UI::Color::FromArgb(0xFF000000u);
-    NeoWPF::UI::Color m_bgColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
-    NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0xFF202020u);
-    Thickness m_padding = Thickness(8);
-    int m_fontSize = 14;
     std::wstring m_fontFamily;
     int m_fontWeight = 400;
     NeoWPF::UI::FontStyle m_fontStyle = NeoWPF::UI::FontStyle::Normal;
     std::shared_ptr<NeoWPF::UI::TextBlock> m_textContent;
+    std::size_t m_themeAppliedSubscriptionId = 0;
 };
 
 class RadioButtonTemplate : public Templates::ControlTemplate {

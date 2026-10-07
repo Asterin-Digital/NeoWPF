@@ -1,6 +1,5 @@
 #include <NeoWPF/UI/Controls/RadioButton/RadioButton.h>
-#include <NeoWPF/UI/Controls/RadioButtonStyles.h>
-#include <NeoWPF/ControlStyles.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Localization/LocaleOperations.h>
@@ -10,26 +9,55 @@
 
 namespace NeoWPF::UI {
 
+namespace {
+
+void ApplyRadioButtonTheme(RadioButton& radioButton)
+{
+    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::ThemeFontSize;
+    using NeoWPF::Core::ApplicationThemes::ThemePadding;
+    using NeoWPF::Core::ApplicationThemes::ThemeManager;
+
+    auto& themeManager = ThemeManager::Instance();
+    radioButton.SetThemePropertyValue("Foreground", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Foreground));
+    radioButton.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
+    radioButton.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+
+    int fontSize = 0;
+    if (themeManager.TryGetFontSize(ThemeFontSize::Control, fontSize)) {
+        radioButton.SetThemePropertyValue("FontSize", fontSize);
+    }
+
+    NeoWPF::UI::Thickness padding;
+    if (themeManager.TryGetPadding(ThemePadding::RadioButton, padding)) {
+        radioButton.SetThemePropertyValue("Padding", padding);
+    }
+}
+
+}
+
 RadioButton::RadioButton()
     : GroupedToggleBase()
 {
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
     SetTemplate(std::make_shared<RadioButtonTemplate>());
-    APPLY_CONTROL_STYLES(NeoWPF::UI::Generated::RadioButtonStyles, *this);
     SetPresenter(std::make_shared<NeoWPF::UI::Content::ContentPresenter>());
     m_textContent = std::make_shared<NeoWPF::UI::TextBlock>();
     m_textContent->SetHorizontalAlignment(HorizontalAlignment::Stretch);
     m_textContent->SetVerticalAlignment(VerticalAlignment::Stretch);
     m_textContent->SetTextHorizontalAlignment(TextHorizontalAlignment::Left);
     m_textContent->SetTextVerticalAlignment(TextVerticalAlignment::Center);
-    m_textContent->SetTextColor(m_textColor.ToArgb());
-    m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
+    ApplyRadioButtonTheme(*this);
+    m_themeAppliedSubscriptionId = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().SubscribeThemeApplied([this]() {
+        ApplyRadioButtonTheme(*this);
+    });
 }
 
 RadioButton::~RadioButton()
 {
+    NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().UnsubscribeThemeApplied(m_themeAppliedSubscriptionId);
     NeoWPF::UI::Localization::LocaleOperations::ClearLocale(*this, TextProperty());
 }
 
@@ -92,7 +120,6 @@ void RadioButton::SetTextColor(NeoWPF::UI::Color color) noexcept
             return;
         }
     }
-    m_textColor = color;
     if (m_textContent) m_textContent->SetTextColor(color.ToArgb());
     InvalidateVisual();
 }
@@ -105,8 +132,7 @@ void RadioButton::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
             return;
         }
     }
-    m_bgColor = color;
-    InvalidateVisual();
+    Control::SetBackgroundColor(color);
 }
 
 void RadioButton::SetBorderColor(NeoWPF::UI::Color color) noexcept
@@ -117,8 +143,7 @@ void RadioButton::SetBorderColor(NeoWPF::UI::Color color) noexcept
             return;
         }
     }
-    m_borderColor = color;
-    InvalidateVisual();
+    Control::SetBorderColor(color);
 }
 
 void RadioButton::SetPadding(Thickness padding) noexcept
@@ -129,7 +154,7 @@ void RadioButton::SetPadding(Thickness padding) noexcept
             return;
         }
     }
-    m_padding = padding;
+    InvalidateMeasure();
     InvalidateVisual();
 }
 
@@ -141,8 +166,8 @@ void RadioButton::SetFontSize(int fontSize) noexcept
             return;
         }
     }
-    m_fontSize = fontSize;
     if (m_textContent) m_textContent->SetFontSize(fontSize);
+    InvalidateMeasure();
     InvalidateVisual();
 }
 
@@ -186,33 +211,35 @@ void RadioButton::SetFontStyle(NeoWPF::UI::FontStyle fontStyle) noexcept
     InvalidateVisual();
 }
 
-NeoWPF::UI::Color RadioButton::GetTextColor() const noexcept { return m_textColor; }
-NeoWPF::UI::Color RadioButton::GetBackgroundColor() const noexcept { return m_bgColor; }
-NeoWPF::UI::Color RadioButton::GetBorderColor() const noexcept { return m_borderColor; }
-Thickness RadioButton::GetPadding() const noexcept { return m_padding; }
-int RadioButton::GetFontSize() const noexcept { return m_fontSize; }
+NeoWPF::UI::Color RadioButton::GetTextColor() const noexcept { return GetValue<NeoWPF::UI::Color>(TextColorProperty()); }
+NeoWPF::UI::Color RadioButton::GetBackgroundColor() const noexcept { return Control::GetBackgroundColor(); }
+NeoWPF::UI::Color RadioButton::GetBorderColor() const noexcept { return Control::GetBorderColor(); }
+Thickness RadioButton::GetPadding() const noexcept { return GetValue<Thickness>(PaddingProperty()); }
+int RadioButton::GetFontSize() const noexcept { return GetValue<int>(FontSizeProperty()); }
 int RadioButton::GetFontWeight() const noexcept { return m_fontWeight; }
 NeoWPF::UI::FontStyle RadioButton::GetFontStyle() const noexcept { return m_fontStyle; }
 
 void RadioButton::Measure(double availableWidth, double availableHeight)
 {
-    const double contentWidth = availableWidth > 0.0 ? (std::max)(0.0, availableWidth - m_padding.Horizontal() - 18.0) : 0.0;
+    const auto padding = GetPadding();
+    const double contentWidth = availableWidth > 0.0 ? (std::max)(0.0, availableWidth - padding.Horizontal() - 18.0) : 0.0;
     Content::ContentControl::Measure(contentWidth, availableHeight);
     const auto presenter = GetPresenter();
     const double measuredWidth = presenter ? presenter->GetDesiredWidth() : 0.0;
     const double measuredHeight = presenter ? presenter->GetDesiredHeight() : 0.0;
     const double indicatorSize = (std::max)(18.0, measuredHeight);
-    SetDesiredSize(indicatorSize + m_padding.Horizontal() + measuredWidth, indicatorSize + m_padding.Vertical());
+    SetDesiredSize(indicatorSize + padding.Horizontal() + measuredWidth, indicatorSize + padding.Vertical());
 }
 
 void RadioButton::Arrange(double finalWidth, double finalHeight)
 {
     Content::ContentControl::Arrange(finalWidth, finalHeight);
     if (auto presenter = GetPresenter()) {
-        const double offsetX = 18.0 + m_padding.Left;
-        presenter->SetLayoutOffset(offsetX, m_padding.Top);
-        presenter->Arrange((std::max)(0.0, finalWidth - offsetX - m_padding.Right),
-            (std::max)(0.0, finalHeight - m_padding.Vertical()));
+        const auto padding = GetPadding();
+        const double offsetX = 18.0 + padding.Left;
+        presenter->SetLayoutOffset(offsetX, padding.Top);
+        presenter->Arrange((std::max)(0.0, finalWidth - offsetX - padding.Right),
+            (std::max)(0.0, finalHeight - padding.Vertical()));
     }
 }
 
@@ -233,28 +260,32 @@ void RadioButton::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto circle = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Circle"));
     if (circle) {
         circle->SetRect(left, indicatorTop, indicatorSize, indicatorSize);
+        circle->SetFillColor(GetBackgroundColor().ToArgb());
+        circle->SetBorderColor(GetBorderColor().ToArgb());
         circle->SetBorderThickness(1);
         circle->SetOpacity(GetOpacity());
         circle->BuildRenderCommands(commands);
     }
     else {
         commands.DrawRoundedRect(left, indicatorTop, indicatorSize, indicatorSize, 9.0f, 9.0f, 9.0f, 9.0f,
-            m_bgColor.ToArgb(), GetOpacity(), NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
+            GetBackgroundColor().ToArgb(), GetOpacity(), NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
         commands.DrawRoundedRect(left, indicatorTop, indicatorSize, indicatorSize, 9.0f, 9.0f, 9.0f, 9.0f,
-            m_borderColor.ToArgb(), GetOpacity(), NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
+            GetBorderColor().ToArgb(), GetOpacity(), NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
     }
 
     if (IsChecked()) {
         const double dotSize = 8.0;
         commands.DrawRoundedRect(left + (indicatorSize - dotSize) / 2.0, indicatorTop + (indicatorSize - dotSize) / 2.0,
-            dotSize, dotSize, 4.0f, 4.0f, 4.0f, 4.0f, m_borderColor.ToArgb(), GetOpacity(),
+            dotSize, dotSize, 4.0f, 4.0f, 4.0f, 4.0f,
+            NeoWPF::Core::ApplicationThemes::GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Accent).ToArgb(), GetOpacity(),
             NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
     }
 
     if (auto contentHost = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_ContentHost"))) {
-        contentHost->SetRect(left + indicatorSize + m_padding.Left, top + m_padding.Top,
-            (std::max)(0.0, width - indicatorSize - m_padding.Horizontal()),
-            (std::max)(1.0, height - m_padding.Vertical()));
+        const auto padding = GetPadding();
+        contentHost->SetRect(left + indicatorSize + padding.Left, top + padding.Top,
+            (std::max)(0.0, width - indicatorSize - padding.Horizontal()),
+            (std::max)(1.0, height - padding.Vertical()));
         contentHost->BuildRenderCommands(commands);
     }
     Content::ContentControl::BuildRenderCommands(commands);

@@ -7,6 +7,7 @@ See LICENSE file in the project root for full license text.
 
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Controls/Selector/Selector.h>
+#include <cstddef>
 
 namespace NeoWPF::UI {
 
@@ -55,6 +56,8 @@ public:
 
 private:
     void AttachSelectionHandler(const std::shared_ptr<FrameworkElement>& item);
+    void ApplyTheme();
+    std::size_t m_themeAppliedSubscriptionId = 0;
 };
 
 /*
@@ -94,8 +97,17 @@ public:
 protected:
     virtual void OnSelectionStateChanged() {}
 
+    /*
+        @summary
+        Applies the active theme values to the item.
+
+        @internal
+    */
+    virtual void ApplyTheme();
+
 private:
     ListBox* m_owner = nullptr;
+    std::size_t m_themeAppliedSubscriptionId = 0;
 };
 
 }

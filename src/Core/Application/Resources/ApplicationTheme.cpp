@@ -21,6 +21,8 @@ const char* GetPaletteResourceKey(PaletteColor paletteColor) noexcept
     case PaletteColor::AccentPressed: return "Palette.AccentPressed";
     case PaletteColor::DisabledSurface: return "Palette.DisabledSurface";
     case PaletteColor::Focus: return "Palette.Focus";
+    case PaletteColor::Track: return "Palette.Track";
+    case PaletteColor::Thumb: return "Palette.Thumb";
     }
     return nullptr;
 }
@@ -47,6 +49,8 @@ void ThemeManager::RegisterBuiltInThemes()
     light.Palette[PaletteColor::AccentPressed] = 0xFFD6E1D6u;
     light.Palette[PaletteColor::DisabledSurface] = 0xFFE9ECE9u;
     light.Palette[PaletteColor::Focus] = 0xFF718C76u;
+    light.Palette[PaletteColor::Track] = 0xFFEAEAEAu;
+    light.Palette[PaletteColor::Thumb] = 0xFFCDCDCDu;
     //////////////////////////////////////////////////////////
     light.FontSizes[ThemeFontSize::Control] = 14;
     light.Paddings[ThemePadding::Button] = NeoWPF::UI::Thickness(8);
@@ -54,7 +58,20 @@ void ThemeManager::RegisterBuiltInThemes()
     light.Paddings[ThemePadding::TextBox] = NeoWPF::UI::Thickness(6, 4, 6, 4);
     light.Paddings[ThemePadding::Checkbox] = NeoWPF::UI::Thickness(8);
     light.Paddings[ThemePadding::Border] = NeoWPF::UI::Thickness{};
+    light.Paddings[ThemePadding::ComboBox] = NeoWPF::UI::Thickness(8);
+    light.Paddings[ThemePadding::ComboBoxItem] = NeoWPF::UI::Thickness(8);
+    light.Paddings[ThemePadding::ListBox] = NeoWPF::UI::Thickness(4);
+    light.Paddings[ThemePadding::ListBoxItem] = NeoWPF::UI::Thickness(4);
+    light.Paddings[ThemePadding::ProgressBar] = NeoWPF::UI::Thickness{};
+    light.Paddings[ThemePadding::RadioButton] = NeoWPF::UI::Thickness(8);
+    light.Paddings[ThemePadding::ScrollBar] = NeoWPF::UI::Thickness{};
+    light.Paddings[ThemePadding::Slider] = NeoWPF::UI::Thickness{};
     light.BorderThicknesses[ThemeBorderThickness::Border] = NeoWPF::UI::Thickness(1);
+    light.Metrics[ThemeMetric::ScrollBarThumbSize] = 24.0;
+    light.Metrics[ThemeMetric::ProgressBarBorderThickness] = 0.0;
+    light.Metrics[ThemeMetric::SliderBorderThickness] = 0.0;
+    light.Metrics[ThemeMetric::SliderThumbLength] = 16.0;
+    light.Metrics[ThemeMetric::ScrollBarBorderThickness] = 0.0;
     light.CornerRadii[ThemeCornerRadius::Control] = NeoWPF::UI::CornerRadius(4);
     light.CornerRadii[ThemeCornerRadius::Checkbox] = NeoWPF::UI::CornerRadius(2);
 
@@ -70,6 +87,8 @@ void ThemeManager::RegisterBuiltInThemes()
     dark.Palette[PaletteColor::AccentPressed] = 0xFF303730u;
     dark.Palette[PaletteColor::DisabledSurface] = 0xFF222222u;
     dark.Palette[PaletteColor::Focus] = 0xFF849786u;
+    dark.Palette[PaletteColor::Track] = 0xFF242624u;
+    dark.Palette[PaletteColor::Thumb] = 0xFF5A625Bu;
     //////////////////////////////////////////////////////////
     dark.FontSizes[ThemeFontSize::Control] = 14;
     dark.Paddings[ThemePadding::Button] = NeoWPF::UI::Thickness(8);
@@ -77,7 +96,20 @@ void ThemeManager::RegisterBuiltInThemes()
     dark.Paddings[ThemePadding::TextBox] = NeoWPF::UI::Thickness(6, 4, 6, 4);
     dark.Paddings[ThemePadding::Checkbox] = NeoWPF::UI::Thickness(8);
     dark.Paddings[ThemePadding::Border] = NeoWPF::UI::Thickness{};
+    dark.Paddings[ThemePadding::ComboBox] = NeoWPF::UI::Thickness(8);
+    dark.Paddings[ThemePadding::ComboBoxItem] = NeoWPF::UI::Thickness(8);
+    dark.Paddings[ThemePadding::ListBox] = NeoWPF::UI::Thickness(4);
+    dark.Paddings[ThemePadding::ListBoxItem] = NeoWPF::UI::Thickness(4);
+    dark.Paddings[ThemePadding::ProgressBar] = NeoWPF::UI::Thickness{};
+    dark.Paddings[ThemePadding::RadioButton] = NeoWPF::UI::Thickness(8);
+    dark.Paddings[ThemePadding::ScrollBar] = NeoWPF::UI::Thickness{};
+    dark.Paddings[ThemePadding::Slider] = NeoWPF::UI::Thickness{};
     dark.BorderThicknesses[ThemeBorderThickness::Border] = NeoWPF::UI::Thickness(1);
+    dark.Metrics[ThemeMetric::ScrollBarThumbSize] = 24.0;
+    dark.Metrics[ThemeMetric::ProgressBarBorderThickness] = 0.0;
+    dark.Metrics[ThemeMetric::SliderBorderThickness] = 0.0;
+    dark.Metrics[ThemeMetric::SliderThumbLength] = 16.0;
+    dark.Metrics[ThemeMetric::ScrollBarBorderThickness] = 0.0;
     dark.CornerRadii[ThemeCornerRadius::Control] = NeoWPF::UI::CornerRadius(4);
     dark.CornerRadii[ThemeCornerRadius::Checkbox] = NeoWPF::UI::CornerRadius(2);
 
@@ -145,6 +177,10 @@ void ThemeManager::ApplyThemeResources(const ThemeDefinition& theme)
 
     for (const auto& [borderThickness, value] : theme.BorderThicknesses) {
         m_borderThicknesses[borderThickness] = value;
+    }
+
+    for (const auto& [metric, value] : theme.Metrics) {
+        m_metrics[metric] = value;
     }
 
     for (const auto& [cornerRadius, value] : theme.CornerRadii) {
@@ -228,6 +264,17 @@ bool ThemeManager::TryGetBorderThickness(ThemeBorderThickness borderThickness, N
     return true;
 }
 
+bool ThemeManager::TryGetMetric(ThemeMetric metric, double& outValue) const
+{
+    const auto it = m_metrics.find(metric);
+    if (it == m_metrics.end()) {
+        return false;
+    }
+
+    outValue = it->second;
+    return true;
+}
+
 bool ThemeManager::TryGetCornerRadius(ThemeCornerRadius cornerRadius, NeoWPF::UI::CornerRadius& outValue) const
 {
     const auto it = m_cornerRadii.find(cornerRadius);
@@ -257,6 +304,7 @@ void ThemeManager::Clear()
     m_fontSizes.clear();
     m_paddings.clear();
     m_borderThicknesses.clear();
+    m_metrics.clear();
     m_cornerRadii.clear();
     m_activeThemeName.clear();
 }

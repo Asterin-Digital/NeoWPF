@@ -10,6 +10,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Core/Collections/DoubleCollection.h>
 #include <NeoWPF/UI/Layout/Placement/Orientation.h>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 
@@ -308,6 +309,7 @@ private:
     bool m_isSelectionRangeEnabled = false;
     double m_selectionStart = 0.0;
     double m_selectionEnd = 0.0;
+    std::size_t m_themeAppliedSubscriptionId = 0;
 };
 
 class SliderTemplate : public Templates::ControlTemplate {

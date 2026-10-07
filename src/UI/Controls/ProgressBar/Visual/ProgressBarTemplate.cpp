@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/ProgressBar/ProgressBar.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 
@@ -10,12 +11,14 @@ ProgressBarTemplate::ProgressBarTemplate()
     SetVisualTree(root);
 
     auto track = std::make_shared<Templates::TemplateVisual>("PART_Track");
-    track->SetFillColor(0xFFEAEAEAu);
+    track->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+        NeoWPF::Core::ApplicationThemes::PaletteColor::Track).ToArgb());
     track->SetBorderColor(0x00000000u);
     track->SetBorderThickness(0);
 
     auto indicator = std::make_shared<Templates::TemplateVisual>("PART_Indicator");
-    indicator->SetFillColor(0xFF4F8CC9u);
+    indicator->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+        NeoWPF::Core::ApplicationThemes::PaletteColor::Accent).ToArgb());
     indicator->SetBorderColor(0x00000000u);
     indicator->SetBorderThickness(0);
 

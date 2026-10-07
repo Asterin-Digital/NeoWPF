@@ -1,7 +1,0 @@
-<Style TargetType="ListBox">
-    <Setter Property="Foreground" Value="#FF000000" />
-    <Setter Property="Background" Value="#FFFFFFFF" />
-    <Setter Property="BorderBrush" Value="#FF202020" />
-    <Setter Property="Padding" Value="4" />
-    <Setter Property="FontSize" Value="14" />
-</Style>

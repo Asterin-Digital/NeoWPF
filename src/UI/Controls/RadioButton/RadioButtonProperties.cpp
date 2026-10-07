@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/RadioButton/RadioButton.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
@@ -20,18 +21,24 @@ void RegisterRadioButtonProperties()
         metadata.Flags = PropertyFlags::AffectsRender;
         return metadata;
     };
-    RegisterProperty<UI::RadioButton, UI::Color>("Foreground", &UI::RadioButton::GetTextColor, &UI::RadioButton::SetTextColor, colorMetadata(UI::Color::FromArgb(0xFF000000u)));
-    RegisterProperty<UI::RadioButton, UI::Color>("Background", &UI::RadioButton::GetBackgroundColor, &UI::RadioButton::SetBackgroundColor, colorMetadata(UI::Color::FromArgb(0xFFFFFFFFu)));
-    RegisterProperty<UI::RadioButton, UI::Color>("BorderBrush", &UI::RadioButton::GetBorderColor, &UI::RadioButton::SetBorderColor, colorMetadata(UI::Color::FromArgb(0xFF202020u)));
+    RegisterProperty<UI::RadioButton, UI::Color>("Foreground", &UI::RadioButton::GetTextColor, &UI::RadioButton::SetTextColor, colorMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground)));
+    RegisterProperty<UI::RadioButton, UI::Color>("Background", &UI::RadioButton::GetBackgroundColor, &UI::RadioButton::SetBackgroundColor, colorMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Surface)));
+    RegisterProperty<UI::RadioButton, UI::Color>("BorderBrush", &UI::RadioButton::GetBorderColor, &UI::RadioButton::SetBorderColor, colorMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Border)));
 
     PropertyMetadata padding;
-    padding.DefaultValue = std::any(UI::Thickness(8));
+    NeoWPF::UI::Thickness defaultPadding;
+    NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().TryGetPadding(
+        NeoWPF::Core::ApplicationThemes::ThemePadding::RadioButton, defaultPadding);
+    padding.DefaultValue = std::any(defaultPadding);
     padding.Converter = GetThicknessConverter();
     padding.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsArrange | PropertyFlags::AffectsRender;
     RegisterProperty<UI::RadioButton, UI::Thickness>("Padding", &UI::RadioButton::GetPadding, &UI::RadioButton::SetPadding, padding);
 
     PropertyMetadata fontSize;
-    fontSize.DefaultValue = std::any(14);
+    int defaultFontSize = 14;
+    NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().TryGetFontSize(
+        NeoWPF::Core::ApplicationThemes::ThemeFontSize::Control, defaultFontSize);
+    fontSize.DefaultValue = std::any(defaultFontSize);
     fontSize.Converter = GetIntConverter();
     fontSize.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsRender;
     RegisterProperty<UI::RadioButton, int>("FontSize", &UI::RadioButton::GetFontSize, &UI::RadioButton::SetFontSize, fontSize);

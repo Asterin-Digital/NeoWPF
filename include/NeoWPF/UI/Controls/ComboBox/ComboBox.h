@@ -10,6 +10,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Controls/Selector/Selector.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
+#include <cstddef>
 #include <memory>
 
 namespace NeoWPF::UI {
@@ -46,6 +47,7 @@ public:
 private:
     void OnSelectionStateChanged() override;
     void ApplyVisualStates(bool useTransitions);
+    void ApplyTheme() override;
 };
 
 class ComboBoxItemTemplate : public Templates::ControlTemplate {
@@ -144,6 +146,7 @@ public:
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
 protected:
+    void OnPaddingChanged(Thickness padding) override;
     void OnSelectionChanged(int oldIndex, int newIndex, const std::any& oldItem, const std::any& newItem) override;
     void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
     void OnBorderColorChanged(NeoWPF::UI::Color color) override;
@@ -155,6 +158,7 @@ private:
     std::shared_ptr<Content::ContentPresenter> m_display;
     std::shared_ptr<Popup> m_popup;
     std::shared_ptr<ListBox> m_dropDown;
+    std::size_t m_themeAppliedSubscriptionId = 0;
 };
 
 }

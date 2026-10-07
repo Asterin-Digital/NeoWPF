@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/ListBox/ListBox.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
@@ -11,12 +12,35 @@ namespace NeoWPF::UI {
 ListBoxItem::ListBoxItem()
 {
     SetPresenter(std::make_shared<NeoWPF::UI::Content::ContentPresenter>());
+    ApplyTheme();
+    m_themeAppliedSubscriptionId = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().SubscribeThemeApplied([this]() {
+        ApplyTheme();
+    });
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ListBox,
         NeoWPF::Diagnostics::Level::Trace,
         "[ListBoxItem] Constructed item=%p presenter=%p", this, GetPresenter().get());
 }
 
-ListBoxItem::~ListBoxItem() = default;
+ListBoxItem::~ListBoxItem()
+{
+    NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().UnsubscribeThemeApplied(m_themeAppliedSubscriptionId);
+}
+
+void ListBoxItem::ApplyTheme()
+{
+    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::ThemeManager;
+    using NeoWPF::Core::ApplicationThemes::ThemePadding;
+
+    auto& themeManager = ThemeManager::Instance();
+    SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
+    SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+
+    NeoWPF::UI::Thickness padding;
+    if (themeManager.TryGetPadding(ThemePadding::ListBoxItem, padding)) {
+        SetThemePropertyValue("Padding", padding);
+    }
+}
 
 void ListBoxItem::SetOwner(ListBox* owner) noexcept
 {

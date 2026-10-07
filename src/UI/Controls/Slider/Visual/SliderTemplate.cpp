@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/Slider/Slider.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Controls/Thumb/Thumb.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
@@ -11,13 +12,15 @@ SliderTemplate::SliderTemplate()
     SetVisualTree(root);
 
     auto track = std::make_shared<Templates::TemplateVisual>("PART_Track");
-    track->SetFillColor(0xFFEAEAEAu);
+    track->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+        NeoWPF::Core::ApplicationThemes::PaletteColor::Track).ToArgb());
     track->SetBorderColor(0x00000000u);
     track->SetBorderThickness(0);
 
     auto thumb = std::make_shared<Thumb>();
     thumb->SetOrientation(Orientation::Horizontal);
-    thumb->SetBackgroundColor(0xFFCDCDCDu);
+    thumb->SetBackgroundColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+        NeoWPF::Core::ApplicationThemes::PaletteColor::Thumb));
     thumb->SetBorderColor(0x00000000u);
     thumb->SetBorderThickness(0);
 

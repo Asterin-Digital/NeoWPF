@@ -1,4 +1,0 @@
-<Style TargetType="Slider">
-    <Setter Property="Background" Value="#FFEAEAEA" />
-    <Setter Property="BorderThickness" Value="0" />
-</Style>

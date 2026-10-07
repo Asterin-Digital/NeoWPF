@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/Slider/Slider.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/Input/Keyboard.h>
 #include <NeoWPF/Input/Core/Events.h>
@@ -13,18 +14,48 @@
 
 namespace NeoWPF::UI {
 
+namespace {
+
+void ApplySliderTheme(Slider& slider)
+{
+    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::ThemeBorderThickness;
+    using NeoWPF::Core::ApplicationThemes::ThemeManager;
+    using NeoWPF::Core::ApplicationThemes::ThemeMetric;
+    using NeoWPF::Core::ApplicationThemes::ThemePadding;
+
+    auto& themeManager = ThemeManager::Instance();
+    slider.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Track));
+    slider.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+
+    double borderThickness = 0.0;
+    if (themeManager.TryGetMetric(ThemeMetric::SliderBorderThickness, borderThickness)) {
+        slider.SetThemePropertyValue("BorderThickness", borderThickness);
+    }
+
+    NeoWPF::UI::Thickness padding;
+    if (themeManager.TryGetPadding(ThemePadding::Slider, padding)) {
+        slider.SetThemePropertyValue("Padding", padding);
+    }
+}
+
+}
+
 Slider::Slider()
 {
     SetHorizontalAlignment(HorizontalAlignment::Left);
     SetVerticalAlignment(VerticalAlignment::Top);
     SetTemplate(std::make_shared<SliderTemplate>());
-    SetPadding(0);
-    SetBackgroundColor(Color::FromArgb(0xFFEAEAEAu));
-    SetBorderColor(Color::FromArgb(0xFF707070u));
-    SetBorderThickness(0);
+    ApplySliderTheme(*this);
+    m_themeAppliedSubscriptionId = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().SubscribeThemeApplied([this]() {
+        ApplySliderTheme(*this);
+    });
 }
 
-Slider::~Slider() = default;
+Slider::~Slider()
+{
+    NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().UnsubscribeThemeApplied(m_themeAppliedSubscriptionId);
+}
 
 void Slider::SetOrientation(Orientation orientation) noexcept
 {
@@ -231,7 +262,11 @@ double Slider::GetTrackLength() const noexcept
 
 double Slider::GetThumbLength() const noexcept
 {
-    return 16.0;
+    double thumbLength = 16.0;
+    NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().TryGetMetric(
+        NeoWPF::Core::ApplicationThemes::ThemeMetric::SliderThumbLength,
+        thumbLength);
+    return thumbLength;
 }
 
 double Slider::GetThumbPosition() const noexcept
@@ -296,15 +331,21 @@ void Slider::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     UpdateThumbVisualState();
 
     if (track) {
+        track->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+            NeoWPF::Core::ApplicationThemes::PaletteColor::Track).ToArgb());
         track->SetRect(absX, absY, isVertical ? trackThickness : trackLength, isVertical ? trackLength : trackThickness);
         track->SetClipRect(clip);
         track->BuildRenderCommands(commands);
     }
 
     if (auto thumbControl = std::dynamic_pointer_cast<Thumb>(FindTemplateChild("PART_Thumb"))) {
+        thumbControl->SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+            NeoWPF::Core::ApplicationThemes::PaletteColor::Thumb));
         thumbControl->InvalidateVisual();
         thumbControl->BuildRenderCommands(commands);
     } else if (thumb) {
+        thumb->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+            NeoWPF::Core::ApplicationThemes::PaletteColor::Thumb).ToArgb());
         thumb->SetRect(absX + (isVertical ? 0.0 : thumbPosition), absY + (isVertical ? thumbPosition : 0.0),
                        isVertical ? trackThickness : thumbLength, isVertical ? thumbLength : trackThickness);
         thumb->SetClipRect(clip);

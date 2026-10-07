@@ -298,9 +298,6 @@ option(NEOWPF_STATIC_DEPENDENCIES
     "Merge static NeoWPF dependencies into the NeoWPF archive"
     ON) 
 message(STATUS "Using the platform archive merger")
-option(APPLY_CONTROL_STYLES
-    "Apply generated XAML styles from control constructors"
-    ON)
 
 if(NEOWPF_BUILD_MEDIA)
     include(FetchContent)
@@ -337,8 +334,6 @@ target_include_directories(NeoNaml
 )
 target_link_libraries(NeoNaml PUBLIC Cudev)
 
-include(cmake/NeoWPFXamlCommands.cmake)
-
 add_library(NeoWPF.Foundation OBJECT ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})
 add_library(NeoWPF::Foundation ALIAS NeoWPF.Foundation
 )
@@ -353,70 +348,10 @@ target_include_directories(NeoWPF.Foundation
 )
 target_compile_definitions(NeoWPF.Foundation
     PUBLIC
-        NEOWPF_ENABLE_CONTROL_STYLES=$<BOOL:${APPLY_CONTROL_STYLES}>
-    NEOWPF_VERSION_STRING="${PROJECT_VERSION}"
-    NEOWPF_BUILD_CONFIGURATION="$<CONFIG>"
+        NEOWPF_VERSION_STRING="${PROJECT_VERSION}"
+        NEOWPF_BUILD_CONFIGURATION="$<CONFIG>"
 )
 
-neowpf_add_xaml(
-    NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/RadioButton/Visual/RadioButtonStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated
-    COMPONENT RadioButtonStyles
-    PUBLIC_HEADER NeoWPF/UI/Controls/RadioButtonStyles.h
-)
-neowpf_add_xaml(
-    NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ScrollBar/Visual/ScrollBarStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated
-    COMPONENT ScrollBarStyles
-    PUBLIC_HEADER NeoWPF/UI/Controls/ScrollBarStyles.h
-)
-neowpf_add_xaml(
-    NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ListBox/Visual/ListBoxStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated
-    COMPONENT ListBoxStyles
-    PUBLIC_HEADER NeoWPF/UI/Controls/ListBoxStyles.h
-)
-neowpf_add_xaml(
-    NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ListBox/Visual/ListBoxItemStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated
-    COMPONENT ListBoxItemStyles
-    PUBLIC_HEADER NeoWPF/UI/Controls/ListBoxItemStyles.h
-)
-neowpf_add_xaml(
-    NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ComboBox/Visual/ComboBoxItemStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated
-    COMPONENT ComboBoxItemStyles
-    PUBLIC_HEADER NeoWPF/UI/Controls/ComboBoxItemStyles.h
-)
-neowpf_add_xaml(
-    NeoWPF.Foundation
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/UI/Controls/ComboBox/Visual/ComboBoxStyles.xaml"
-    NAMESPACE NeoWPF::UI::Generated
-    COMPONENT ComboBoxStyles
-    PUBLIC_HEADER NeoWPF/UI/Controls/ComboBoxStyles.h
-)
-set(NEOWPF_STYLE_UMBRELLA "${CMAKE_CURRENT_BINARY_DIR}/generated/xaml/NeoWPF/ControlStyles.h")
-file(GENERATE OUTPUT "${NEOWPF_STYLE_UMBRELLA}" CONTENT [=[
-#pragma once
-
-#if defined(NEOWPF_ENABLE_CONTROL_STYLES) && NEOWPF_ENABLE_CONTROL_STYLES
-#define APPLY_CONTROL_STYLES(style_type, element) \
-do { \
-    style_type generated_styles; \
-    generated_styles.InitializeComponent(); \
-    if (generated_styles.Root) { \
-        generated_styles.Root->ApplyTo(element); \
-    } \
-} while (false)
-#else
-#define APPLY_CONTROL_STYLES(...) do { } while (false)
-#endif
-]=])
 if(WIN32)
     target_include_directories(NeoWPF.Foundation PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include")
     target_include_directories(NeoWPF.Foundation PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include/harfbuzz")

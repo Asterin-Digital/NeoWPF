@@ -162,26 +162,6 @@ public:
 
     /*
         @summary
-        Sets the padding around the item area.
-
-        @param padding
-        The padding in pixels.
-    */
-    void SetPadding(Thickness padding) noexcept {
-        m_padding = padding.Left;
-        InvalidateMeasure();
-        InvalidateArrange();
-        InvalidateVisual();
-    }
-
-    /*
-        @summary
-        Returns the padding around the item area.
-    */
-    Thickness GetPadding() const noexcept { return Thickness(m_padding); }
-
-    /*
-        @summary
         Returns whether the control participates in hit testing.
     */
     bool IsHitTestVisible() const noexcept override { return false; }
@@ -258,7 +238,6 @@ public:
 
 private:
     std::vector<std::shared_ptr<FrameworkElement>> m_items;
-    double m_padding = 0.0;
     std::shared_ptr<Controls::ItemsControl::Virtualization::ItemsControlVirtualizer> m_virtualization;
     std::vector<std::any> m_itemsSource;
     bool m_hasItemsSource = false;

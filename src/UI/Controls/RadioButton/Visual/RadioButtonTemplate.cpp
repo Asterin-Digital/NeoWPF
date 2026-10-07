@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/RadioButton/RadioButton.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 
@@ -9,8 +10,10 @@ RadioButtonTemplate::RadioButtonTemplate()
     auto root = std::make_shared<Visual>();
     SetVisualTree(root);
     auto circle = std::make_shared<Templates::TemplateVisual>("PART_Circle");
-    circle->SetFillColor(0xFFFFFFFFu);
-    circle->SetBorderColor(0xFF202020u);
+    circle->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+        NeoWPF::Core::ApplicationThemes::PaletteColor::Surface).ToArgb());
+    circle->SetBorderColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
+        NeoWPF::Core::ApplicationThemes::PaletteColor::Border).ToArgb());
     circle->SetBorderThickness(1);
     auto contentHost = std::make_shared<Templates::TemplateVisual>("PART_ContentHost");
     contentHost->SetFillColor(0x00000000u);
