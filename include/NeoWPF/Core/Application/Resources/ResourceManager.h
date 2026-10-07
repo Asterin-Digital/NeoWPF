@@ -6,6 +6,7 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -29,9 +30,9 @@ public:
     ResourceBlob FindRaw(const ResourceKey& key);
 
 private:
-    std::vector<std::unique_ptr<IResourceProvider>> m_providers;
+    mutable std::mutex m_mutex;
+    std::vector<std::shared_ptr<IResourceProvider>> m_providers;
     std::vector<IResourceProvider*> m_providerReferences;
-    std::unordered_map<uint64_t, std::shared_ptr<void>> m_decodedCache;
 };
 
 }

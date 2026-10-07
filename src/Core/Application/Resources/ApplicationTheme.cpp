@@ -123,22 +123,30 @@ void ThemeManager::RegisterTheme(const ThemeDefinition& theme)
         return;
     }
 
-    m_themes[theme.Name] = theme;
+    auto snapshot = std::make_shared<const ThemeDefinition>(theme);
+    std::unique_lock lock(m_mutex);
+    m_themes[theme.Name] = std::move(snapshot);
 }
 
 bool ThemeManager::HasTheme(const std::string& name) const
 {
+    std::shared_lock lock(m_mutex);
     return m_themes.find(name) != m_themes.end();
 }
 
 bool ThemeManager::ApplyTheme(const std::string& name)
 {
-    const auto it = m_themes.find(name);
-    if (it == m_themes.end()) {
-        return false;
+    std::shared_ptr<const ThemeDefinition> theme;
+    {
+        std::shared_lock lock(m_mutex);
+        const auto it = m_themes.find(name);
+        if (it == m_themes.end()) {
+            return false;
+        }
+        theme = it->second;
     }
 
-    return ApplyTheme(it->second);
+    return ApplyTheme(*theme);
 }
 
 bool ThemeManager::ApplyTheme(const ThemeDefinition& theme)
@@ -154,51 +162,37 @@ bool ThemeManager::ApplyTheme(const ThemeDefinition& theme)
 
 void ThemeManager::ApplyThemeResources(const ThemeDefinition& theme)
 {
+    std::unordered_map<std::string, std::any> resources;
+    resources.reserve(theme.Palette.size() + theme.Resources.size());
+
     for (const auto& [paletteColor, value] : theme.Palette) {
         const auto* key = GetPaletteResourceKey(paletteColor);
-        if (!key) {
-            continue;
+        if (key) {
+            resources.emplace(key, value);
         }
-        NeoWPF::Core::ApplicationResources::Resources::SetResource(key, value);
-        m_paletteColors[paletteColor] = value;
     }
 
-    for (const auto& [key, value] : theme.Resources) {
-        NeoWPF::Core::ApplicationResources::Resources::SetResource(key, value);
-    }
-
-    for (const auto& [fontSize, value] : theme.FontSizes) {
-        m_fontSizes[fontSize] = value;
-    }
-
-    for (const auto& [padding, value] : theme.Paddings) {
-        m_paddings[padding] = value;
-    }
-
-    for (const auto& [borderThickness, value] : theme.BorderThicknesses) {
-        m_borderThicknesses[borderThickness] = value;
-    }
-
-    for (const auto& [metric, value] : theme.Metrics) {
-        m_metrics[metric] = value;
-    }
-
-    for (const auto& [cornerRadius, value] : theme.CornerRadii) {
-        m_cornerRadii[cornerRadius] = value;
-    }
+    resources.insert(theme.Resources.begin(), theme.Resources.end());
+    NeoWPF::Core::ApplicationResources::Resources::SetResources(resources);
 
     NeoWPF::Diagnostics::LogInfo(("Applied application theme: " + theme.Name).c_str());
 }
 
 bool ThemeManager::SetActiveTheme(const std::string& name)
 {
-    const auto it = m_themes.find(name);
-    if (it == m_themes.end() || it->second.Name.empty()) {
-        return false;
+    std::shared_ptr<const ThemeDefinition> themeSnapshot;
+    {
+        std::unique_lock lock(m_mutex);
+        const auto it = m_themes.find(name);
+        if (it == m_themes.end() || !it->second || it->second->Name.empty()) {
+            return false;
+        }
+
+        themeSnapshot = it->second;
+        m_activeTheme = themeSnapshot;
     }
 
-    m_activeThemeName = name;
-    ApplyThemeResources(it->second);
+    ApplyThemeResources(*themeSnapshot);
     m_themeApplied.Publish();
     return true;
 }
@@ -215,8 +209,18 @@ void ThemeManager::UnsubscribeThemeApplied(std::size_t subscriptionId)
 
 bool ThemeManager::TryGetPaletteColor(PaletteColor paletteColor, NeoWPF::UI::Color& outColor) const
 {
-    const auto it = m_paletteColors.find(paletteColor);
-    if (it == m_paletteColors.end()) {
+    std::shared_ptr<const ThemeDefinition> activeTheme;
+    {
+        std::shared_lock lock(m_mutex);
+        activeTheme = m_activeTheme;
+    }
+
+    if (!activeTheme) {
+        return false;
+    }
+
+    const auto it = activeTheme->Palette.find(paletteColor);
+    if (it == activeTheme->Palette.end()) {
         return false;
     }
 
@@ -233,8 +237,18 @@ NeoWPF::UI::Color GetPaletteColor(PaletteColor paletteColor)
 
 bool ThemeManager::TryGetFontSize(ThemeFontSize fontSize, int& outValue) const
 {
-    const auto it = m_fontSizes.find(fontSize);
-    if (it == m_fontSizes.end()) {
+    std::shared_ptr<const ThemeDefinition> activeTheme;
+    {
+        std::shared_lock lock(m_mutex);
+        activeTheme = m_activeTheme;
+    }
+
+    if (!activeTheme) {
+        return false;
+    }
+
+    const auto it = activeTheme->FontSizes.find(fontSize);
+    if (it == activeTheme->FontSizes.end()) {
         return false;
     }
 
@@ -244,8 +258,18 @@ bool ThemeManager::TryGetFontSize(ThemeFontSize fontSize, int& outValue) const
 
 bool ThemeManager::TryGetPadding(ThemePadding padding, NeoWPF::UI::Thickness& outValue) const
 {
-    const auto it = m_paddings.find(padding);
-    if (it == m_paddings.end()) {
+    std::shared_ptr<const ThemeDefinition> activeTheme;
+    {
+        std::shared_lock lock(m_mutex);
+        activeTheme = m_activeTheme;
+    }
+
+    if (!activeTheme) {
+        return false;
+    }
+
+    const auto it = activeTheme->Paddings.find(padding);
+    if (it == activeTheme->Paddings.end()) {
         return false;
     }
 
@@ -255,8 +279,18 @@ bool ThemeManager::TryGetPadding(ThemePadding padding, NeoWPF::UI::Thickness& ou
 
 bool ThemeManager::TryGetBorderThickness(ThemeBorderThickness borderThickness, NeoWPF::UI::Thickness& outValue) const
 {
-    const auto it = m_borderThicknesses.find(borderThickness);
-    if (it == m_borderThicknesses.end()) {
+    std::shared_ptr<const ThemeDefinition> activeTheme;
+    {
+        std::shared_lock lock(m_mutex);
+        activeTheme = m_activeTheme;
+    }
+
+    if (!activeTheme) {
+        return false;
+    }
+
+    const auto it = activeTheme->BorderThicknesses.find(borderThickness);
+    if (it == activeTheme->BorderThicknesses.end()) {
         return false;
     }
 
@@ -266,8 +300,18 @@ bool ThemeManager::TryGetBorderThickness(ThemeBorderThickness borderThickness, N
 
 bool ThemeManager::TryGetMetric(ThemeMetric metric, double& outValue) const
 {
-    const auto it = m_metrics.find(metric);
-    if (it == m_metrics.end()) {
+    std::shared_ptr<const ThemeDefinition> activeTheme;
+    {
+        std::shared_lock lock(m_mutex);
+        activeTheme = m_activeTheme;
+    }
+
+    if (!activeTheme) {
+        return false;
+    }
+
+    const auto it = activeTheme->Metrics.find(metric);
+    if (it == activeTheme->Metrics.end()) {
         return false;
     }
 
@@ -277,8 +321,18 @@ bool ThemeManager::TryGetMetric(ThemeMetric metric, double& outValue) const
 
 bool ThemeManager::TryGetCornerRadius(ThemeCornerRadius cornerRadius, NeoWPF::UI::CornerRadius& outValue) const
 {
-    const auto it = m_cornerRadii.find(cornerRadius);
-    if (it == m_cornerRadii.end()) {
+    std::shared_ptr<const ThemeDefinition> activeTheme;
+    {
+        std::shared_lock lock(m_mutex);
+        activeTheme = m_activeTheme;
+    }
+
+    if (!activeTheme) {
+        return false;
+    }
+
+    const auto it = activeTheme->CornerRadii.find(cornerRadius);
+    if (it == activeTheme->CornerRadii.end()) {
         return false;
     }
 
@@ -286,27 +340,27 @@ bool ThemeManager::TryGetCornerRadius(ThemeCornerRadius cornerRadius, NeoWPF::UI
     return true;
 }
 
-const std::string& ThemeManager::GetActiveThemeName() const noexcept
+std::string ThemeManager::GetActiveThemeName() const
 {
-    return m_activeThemeName;
+    std::shared_ptr<const ThemeDefinition> activeTheme;
+    {
+        std::shared_lock lock(m_mutex);
+        activeTheme = m_activeTheme;
+    }
+    return activeTheme ? activeTheme->Name : std::string{};
 }
 
-const ThemeDefinition* ThemeManager::GetActiveTheme() const noexcept
+std::shared_ptr<const ThemeDefinition> ThemeManager::GetActiveTheme() const
 {
-    const auto it = m_themes.find(m_activeThemeName);
-    return it != m_themes.end() ? &it->second : nullptr;
+    std::shared_lock lock(m_mutex);
+    return m_activeTheme;
 }
 
 void ThemeManager::Clear()
 {
+    std::unique_lock lock(m_mutex);
     m_themes.clear();
-    m_paletteColors.clear();
-    m_fontSizes.clear();
-    m_paddings.clear();
-    m_borderThicknesses.clear();
-    m_metrics.clear();
-    m_cornerRadii.clear();
-    m_activeThemeName.clear();
+    m_activeTheme.reset();
 }
 
 }

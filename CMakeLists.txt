@@ -780,6 +780,7 @@ if(BUILD_TESTING)
         tests/Automated/NamlArtifactTests.cpp
         tests/Automated/NotificationTests.cpp
         tests/Automated/LocalizationTests.cpp
+        tests/Automated/ApplicationThemeTests.cpp
         tests/Automated/EventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
         tests/Automated/ControlThemeTests.cpp

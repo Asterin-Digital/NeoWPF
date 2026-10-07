@@ -6,6 +6,7 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <cstddef>
+#include <memory>
 
 #include <NeoWPF/Core/Application/Resources/ResourceKey.h>
 
@@ -22,6 +23,7 @@ struct ResourceBlob {
     const unsigned char* Data = nullptr;
     size_t Size = 0;
     ResourceType Type = ResourceType::Raw;
+    std::shared_ptr<const void> Owner;
 };
 
 class IResourceProvider {

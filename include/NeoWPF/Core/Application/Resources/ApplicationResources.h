@@ -8,6 +8,7 @@ See LICENSE file in the project root for full license text.
 #include <any>
 #include <memory>
 #include <NeoWPF/UI/Core/Media/Color.h>
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <typeindex>
@@ -23,6 +24,7 @@ public:
     bool Contains(const std::string& key) const;
     bool TryGet(const std::string& key, std::any& outValue) const;
     void Set(const std::string& key, std::any value);
+    void SetMany(const std::unordered_map<std::string, std::any>& values);
     void SetImplicitStyle(const std::type_index& targetType,
                           std::shared_ptr<NeoWPF::UI::Styling::Style> style);
     bool TryGetImplicitStyle(
@@ -33,6 +35,7 @@ public:
     void Clear();
 
 private:
+    mutable std::shared_mutex m_mutex;
     std::unordered_map<std::string, std::any> m_resources;
     std::unordered_map<std::type_index, std::shared_ptr<NeoWPF::UI::Styling::Style>> m_implicitStyles;
 };
@@ -47,6 +50,7 @@ public:
     static bool TryGetColor(const std::string& key, NeoWPF::UI::Color& outColor);
     static std::any FindResource(const std::string& key);
     static void SetResource(const std::string& key, std::any value);
+    static void SetResources(const std::unordered_map<std::string, std::any>& values);
     static void SetImplicitStyle(
         const std::type_index& targetType,
         std::shared_ptr<NeoWPF::UI::Styling::Style> style);

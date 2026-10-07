@@ -32,6 +32,11 @@ void LocaleExpression::Attach()
     }
 
     const auto lifetimeState = m_lifetimeState;
+    {
+        std::lock_guard lock(lifetimeState->mutex);
+        lifetimeState->active = true;
+    }
+
     m_subscriptionId = LocalizationManager::Get().Subscribe([this, lifetimeState] {
         std::lock_guard lock(lifetimeState->mutex);
         if (!lifetimeState->active) {
@@ -51,8 +56,12 @@ void LocaleExpression::Detach()
         return;
     }
 
-    std::lock_guard lock(m_lifetimeState->mutex);
-    m_lifetimeState->active = false;
+    const auto lifetimeState = m_lifetimeState;
+    {
+        std::lock_guard lock(lifetimeState->mutex);
+        lifetimeState->active = false;
+    }
+
     LocalizationManager::Get().Unsubscribe(m_subscriptionId);
     m_subscriptionId = 0;
     m_isAttached = false;
@@ -75,12 +84,10 @@ void LocaleExpression::Refresh()
         element = dynamic_cast<NeoWPF::UI::UIElement*>(element->GetParent());
     }
 
-    if (LocalizationManager::Get().TryResolve(m_key, value)) {
-        m_target.SetValueExpression(m_targetProperty, value);
-        return;
+    if (!LocalizationManager::Get().TryResolve(m_key, value)) {
+        value = LocalizationManager::Get().Resolve(m_key);
     }
-
-    m_target.SetValueExpression(m_targetProperty, LocalizationManager::Get().Resolve(m_key));
+    m_target.SetValueExpression(m_targetProperty, value);
 }
 
 }

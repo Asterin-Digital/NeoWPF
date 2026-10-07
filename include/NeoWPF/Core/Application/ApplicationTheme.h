@@ -13,6 +13,9 @@ See LICENSE file in the project root for full license text.
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <memory>
+#include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 
@@ -350,18 +353,18 @@ public:
         Returns the name of the active theme.
 
         @returns
-        The active theme name, or an empty string when no theme is active.
+        An owned copy of the active theme name, or an empty string when no theme is active.
     */
-    const std::string& GetActiveThemeName() const noexcept;
+    std::string GetActiveThemeName() const;
 
     /*
         @summary
-        Returns the registered definition for the active theme.
+        Returns a retained snapshot of the registered active theme.
 
         @returns
-        A pointer to the active definition, or null when no registered theme is active.
+        A shared pointer to the active definition, or null when no registered theme is active.
     */
-    const ThemeDefinition* GetActiveTheme() const noexcept;
+    std::shared_ptr<const ThemeDefinition> GetActiveTheme() const;
 
     /*
         @summary
@@ -383,14 +386,9 @@ private:
     */
     void ApplyThemeResources(const ThemeDefinition& theme);
 
-    std::unordered_map<std::string, ThemeDefinition> m_themes;
-    std::unordered_map<PaletteColor, std::uint32_t> m_paletteColors;
-    std::unordered_map<ThemeFontSize, int> m_fontSizes;
-    std::unordered_map<ThemePadding, NeoWPF::UI::Thickness> m_paddings;
-    std::unordered_map<ThemeBorderThickness, NeoWPF::UI::Thickness> m_borderThicknesses;
-    std::unordered_map<ThemeMetric, double> m_metrics;
-    std::unordered_map<ThemeCornerRadius, NeoWPF::UI::CornerRadius> m_cornerRadii;
-    std::string m_activeThemeName;
+    mutable std::shared_mutex m_mutex;
+    std::unordered_map<std::string, std::shared_ptr<const ThemeDefinition>> m_themes;
+    std::shared_ptr<const ThemeDefinition> m_activeTheme;
     NeoWPF::Core::Notification<> m_themeApplied;
 };
 

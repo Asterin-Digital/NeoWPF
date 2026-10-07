@@ -14,6 +14,8 @@ ExternalFileResourceProvider::ExternalFileResourceProvider(std::filesystem::path
 
 bool ExternalFileResourceProvider::TryGet(const ResourceKey& key, ResourceBlob& outBlob)
 {
+    std::lock_guard lock(m_mutex);
+
     if (m_baseDirectory.empty()) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
             "[ExternalFileResourceProvider] Missing base directory for resource '%s'", key.Name());
@@ -74,12 +76,11 @@ bool ExternalFileResourceProvider::TryGet(const ResourceKey& key, ResourceBlob& 
         return false;
     }
 
-    static std::vector<unsigned char> s_storage;
-    s_storage = std::move(buffer);
-
-    outBlob.Data = s_storage.data();
-    outBlob.Size = s_storage.size();
+    const auto owner = std::make_shared<std::vector<unsigned char>>(std::move(buffer));
+    outBlob.Data = owner->data();
+    outBlob.Size = owner->size();
     outBlob.Type = ResourceType::Raw;
+    outBlob.Owner = owner;
 
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
         "[ExternalFileResourceProvider] Loaded resource '%s' from '%ls' (%zu bytes)",

@@ -19,18 +19,28 @@ ResourceManager& ResourceManager::Instance()
 void ResourceManager::RegisterProvider(std::unique_ptr<IResourceProvider> provider)
 {
     if (provider) {
+        std::lock_guard lock(m_mutex);
         m_providers.emplace_back(std::move(provider));
     }
 }
 
 void ResourceManager::RegisterProviderReference(IResourceProvider& provider)
 {
+    std::lock_guard lock(m_mutex);
     m_providerReferences.emplace_back(&provider);
 }
 
 bool ResourceManager::TryGetBlob(const ResourceKey& key, ResourceBlob& outBlob)
 {
-    for (const auto& provider : m_providers) {
+    std::vector<std::shared_ptr<IResourceProvider>> providers;
+    std::vector<IResourceProvider*> providerReferences;
+    {
+        std::lock_guard lock(m_mutex);
+        providers = m_providers;
+        providerReferences = m_providerReferences;
+    }
+
+    for (const auto& provider : providers) {
         if (provider && provider->TryGet(key, outBlob)) {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Debug,
                 "[ResourceManager] Resolved resource '%s' via provider %p (%zu bytes)",
@@ -39,7 +49,7 @@ bool ResourceManager::TryGetBlob(const ResourceKey& key, ResourceBlob& outBlob)
         }
     }
 
-    for (const auto& provider : m_providerReferences) {
+    for (const auto& provider : providerReferences) {
         if (provider && provider->TryGet(key, outBlob)) {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Debug,
                 "[ResourceManager] Resolved resource '%s' via provider %p (%zu bytes)",
@@ -73,12 +83,7 @@ std::shared_ptr<UI::Core::Media::BitmapSource> ResourceManager::FindImage(const 
         return nullptr;
     }
 
-    auto result = UI::Core::Media::BitmapSource::Create(width, height, std::move(pixels));
-    if (result) {
-        const auto hash = key.Hash();
-        m_decodedCache[hash] = result;
-    }
-    return result;
+    return UI::Core::Media::BitmapSource::Create(width, height, std::move(pixels));
 }
 
 std::shared_ptr<IDWriteFontFace> ResourceManager::FindFont(const ResourceKey& key)

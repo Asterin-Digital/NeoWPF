@@ -5,6 +5,7 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
+#include <mutex>
 #include <unordered_map>
 #include <utility>
 
@@ -23,6 +24,7 @@ public:
     bool TryGet(const ResourceKey& key, ResourceBlob& outBlob) override;
 
 private:
+    mutable std::mutex m_mutex;
     std::unordered_map<uint64_t, ResourceBlob> m_blobs;
 };
 

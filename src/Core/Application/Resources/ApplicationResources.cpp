@@ -8,11 +8,13 @@ ResourceDictionary Resources::s_applicationResources;
 
 bool ResourceDictionary::Contains(const std::string& key) const
 {
+    std::shared_lock lock(m_mutex);
     return m_resources.find(key) != m_resources.end();
 }
 
 bool ResourceDictionary::TryGet(const std::string& key, std::any& outValue) const
 {
+    std::shared_lock lock(m_mutex);
     const auto it = m_resources.find(key);
     if (it != m_resources.end()) {
         outValue = it->second;
@@ -23,13 +25,23 @@ bool ResourceDictionary::TryGet(const std::string& key, std::any& outValue) cons
 
 void ResourceDictionary::Set(const std::string& key, std::any value)
 {
+    std::unique_lock lock(m_mutex);
     m_resources[key] = std::move(value);
+}
+
+void ResourceDictionary::SetMany(const std::unordered_map<std::string, std::any>& values)
+{
+    std::unique_lock lock(m_mutex);
+    for (const auto& [key, value] : values) {
+        m_resources[key] = value;
+    }
 }
 
 void ResourceDictionary::SetImplicitStyle(
     const std::type_index& targetType,
     std::shared_ptr<NeoWPF::UI::Styling::Style> style)
 {
+    std::unique_lock lock(m_mutex);
     m_implicitStyles[targetType] = std::move(style);
 }
 
@@ -37,6 +49,7 @@ bool ResourceDictionary::TryGetImplicitStyle(
     const std::type_index& targetType,
     std::shared_ptr<NeoWPF::UI::Styling::Style>& outStyle) const
 {
+    std::shared_lock lock(m_mutex);
     const auto it = m_implicitStyles.find(targetType);
     if (it == m_implicitStyles.end()) {
         return false;
@@ -47,6 +60,7 @@ bool ResourceDictionary::TryGetImplicitStyle(
 
 std::any ResourceDictionary::Get(const std::string& key) const
 {
+    std::shared_lock lock(m_mutex);
     const auto it = m_resources.find(key);
     if (it != m_resources.end()) {
         return it->second;
@@ -56,6 +70,7 @@ std::any ResourceDictionary::Get(const std::string& key) const
 
 void ResourceDictionary::Merge(const ResourceDictionary& dictionary)
 {
+    std::unique_lock lock(m_mutex);
     for (const auto& [key, value] : dictionary.m_resources) {
         m_resources[key] = value;
     }
@@ -63,6 +78,7 @@ void ResourceDictionary::Merge(const ResourceDictionary& dictionary)
 
 void ResourceDictionary::Clear()
 {
+    std::unique_lock lock(m_mutex);
     m_resources.clear();
     m_implicitStyles.clear();
 }
@@ -128,6 +144,11 @@ std::any Resources::FindResource(const std::string& key)
 void Resources::SetResource(const std::string& key, std::any value)
 {
     s_applicationResources.Set(key, std::move(value));
+}
+
+void Resources::SetResources(const std::unordered_map<std::string, std::any>& values)
+{
+    s_applicationResources.SetMany(values);
 }
 
 void Resources::SetImplicitStyle(
