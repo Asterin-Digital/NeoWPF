@@ -288,7 +288,7 @@ option(NEOWPF_BUILD_SAMPLES
     OFF)
 option(NEOWPF_BUILD_DOTNET
     "Build the optional .NET interop layer"
-    OFF)
+    ON)
 set(NEOWPF_LUAUDIO_GIT_REPOSITORY "https://github.com/Past-Horizon/LuAudio.git" CACHE STRING
     "LuAudio Git repository used by NeoWPF.Media")
 set(NEOWPF_LUAUDIO_GIT_TAG "main" CACHE STRING
@@ -806,6 +806,7 @@ if(BUILD_TESTING)
         tests/Automated/RadioButtonTests.cpp
         tests/Automated/ThreadingTests.cpp
         tests/Automated/XamlParserTests.cpp
+        tests/Automated/DotNetHostTests.cpp
     )
 
     if(UNIX)
@@ -818,6 +819,7 @@ if(BUILD_TESTING)
     target_link_libraries(NeoWPF.AutomatedTests
         PRIVATE
             NeoWPF::NeoWPF
+            NeoWPF::DotNet
             GTest::gtest_main
     )
 
