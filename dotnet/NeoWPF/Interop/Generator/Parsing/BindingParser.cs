@@ -98,7 +98,8 @@ public sealed class BindingParser
         if (Match("returns"))
         {
             isAsync = Match("async");
-            returnOwnership = MatchOwnership();
+            if (!isAsync)
+                returnOwnership = MatchOwnership();
             returnType = ParseTypeExpression();
         }
         var items = ParseMemberBlockOrSemicolon();
@@ -187,7 +188,7 @@ public sealed class BindingParser
     {
         var location = Expect("returns").Location;
         var isAsync = Match("async");
-        var ownership = MatchOwnership();
+        var ownership = isAsync ? null : MatchOwnership();
         var type = ParseTypeExpression();
         ExpectSymbol(";");
         return new ReturnDeclaration(type, isAsync, ownership, location);
@@ -296,7 +297,7 @@ public sealed class BindingParser
         if (passing is not null) Advance();
         var type = ParseTypeExpression();
         string? name = forcedName;
-        if (name is null && Check(BindingTokenKind.Identifier)) name = Advance().Text;
+        if (name is null && Check(BindingTokenKind.Identifier)) name = ExpectIdentifier("parameter name").Text;
         if (requireName && name is null) throw Error("NWB1010", "Parameter declarations require a name in a signature.");
         return new ParameterSyntax(passing, type, name, location);
     }
@@ -315,12 +316,27 @@ public sealed class BindingParser
         }
         else
         {
-            var name = ParseQualifiedName(allowTypeKeywords: true);
-            if (BindingGrammar.CSharpAliases.TryGetValue(name, out var replacement))
-                throw Error("NWB1030", $"C# keyword alias '{name}' is not a primitive type; use '{replacement}'.");
-            type = BindingGrammar.IsPrimitiveType(name) ? new PrimitiveTypeSyntax(name, location) : new NamedTypeSyntax(name, Array.Empty<TypeSyntax>(), location);
+            string? name = null;
+            var token = Current;
+            if (!token.IsEscapedIdentifier && BindingGrammar.CSharpAliases.TryGetValue(token.Text, out var replacement))
+                throw Error("NWB1030", $"C# keyword alias '{token.Text}' is not a primitive type; use '{replacement}'.");
+
+            if (!token.IsEscapedIdentifier && BindingGrammar.IsPrimitiveType(token.Text))
+            {
+                Advance();
+                type = new PrimitiveTypeSyntax(token.Text, location);
+            }
+            else
+            {
+                name = ParseQualifiedName();
+                type = new NamedTypeSyntax(name, Array.Empty<TypeSyntax>(), location);
+            }
+
             if (Match("<"))
             {
+                if (name is null)
+                    throw Error("NWB1010", "Generic arguments require a named type.");
+
                 var arguments = new List<TypeSyntax> { ParseTypeExpression() };
                 while (Match(",")) arguments.Add(ParseTypeExpression());
                 ExpectSymbol(">");
@@ -343,14 +359,12 @@ public sealed class BindingParser
         return type;
     }
 
-    private string ParseQualifiedName(bool allowTypeKeywords = false)
+    private string ParseQualifiedName()
     {
-        var name = (allowTypeKeywords ? ExpectTypeIdentifier("qualified name") : ExpectIdentifier("qualified name")).Text;
-        while (Match(".")) name += "." + (allowTypeKeywords ? ExpectTypeIdentifier("qualified name segment") : ExpectIdentifier("qualified name segment")).Text;
+        var name = ExpectIdentifier("qualified name").Text;
+        while (Match(".")) name += "." + ExpectIdentifier("qualified name segment").Text;
         return name;
     }
-
-    private BindingToken ExpectTypeIdentifier(string description) => Expect(BindingTokenKind.Identifier, description);
 
     private string ExpectContextualValue(string description) => Expect(BindingTokenKind.Identifier, description).Text;
 
@@ -393,9 +407,9 @@ public sealed class BindingParser
     private BindingToken ExpectIdentifier(string description)
     {
         var token = Expect(BindingTokenKind.Identifier, description);
-        if (BindingGrammar.ReservedWords.Contains(token.Text))
+        if (!token.IsEscapedIdentifier && BindingGrammar.ReservedWords.Contains(token.Text))
             throw new BindingParseException(new BindingDiagnostic("NWB1012", BindingDiagnosticSeverity.Error, $"'{token.Text}' is reserved here; use an @-escaped identifier.", token.Location));
-        return token;
+        return token.IsEscapedIdentifier ? token with { Text = token.Text[1..] } : token;
     }
     private void ExpectSymbol(string symbol) => Expect(symbol);
     private BindingParseException Error(string id, string message) => new(new BindingDiagnostic(id, BindingDiagnosticSeverity.Error, message, Current.Location));

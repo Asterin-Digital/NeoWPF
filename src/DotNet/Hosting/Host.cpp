@@ -14,8 +14,9 @@ HostStatus Host::Start(const HostOptions& options)
     if (!hostStatus.Succeeded())
         return hostStatus;
 
-    m_started = true;
-    return HostStatus(HostStatusCode::Ok);
+    return HostStatus(HostStatusCode::HostFxrLoadFailed)
+        .SetMessage("Hostfxr was located, but its loader is unavailable.")
+        .SetHint("Complete hostfxr loading and bridge initialization before starting the host.");
 }
 
 bool Host::Stop()

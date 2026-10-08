@@ -12,7 +12,11 @@ public enum BindingTokenKind
     End,
 }
 
-public readonly record struct BindingToken(BindingTokenKind Kind, string Text, SourceLocation Location);
+public readonly record struct BindingToken(
+    BindingTokenKind Kind,
+    string Text,
+    SourceLocation Location,
+    bool IsEscapedIdentifier = false);
 
 public sealed class BindingLexer
 {
@@ -61,13 +65,14 @@ public sealed class BindingLexer
             if (IsIdentifierStart(Current) || Current == '@')
             {
                 var value = ReadIdentifier();
+                var isEscapedIdentifier = value[0] == '@';
                 var kind = value switch
                 {
                     "true" => BindingTokenKind.True,
                     "false" => BindingTokenKind.False,
                     _ => BindingTokenKind.Identifier,
                 };
-                tokens.Add(new BindingToken(kind, value, location));
+                tokens.Add(new BindingToken(kind, value, location, isEscapedIdentifier));
                 continue;
             }
 
@@ -165,8 +170,11 @@ public sealed class BindingLexer
     private char Current => AtEnd ? '\0' : _text[_offset];
     private char Peek() => _offset + 1 >= _text.Length ? '\0' : _text[_offset + 1];
     private SourceLocation Location => new(_file, _line, _column);
-    private static bool IsIdentifierStart(char value) => char.IsLetter(value) || value == '_';
-    private static bool IsIdentifierPart(char value) => char.IsLetterOrDigit(value) || value == '_';
+    private static bool IsIdentifierStart(char value) =>
+        value is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or '_';
+
+    private static bool IsIdentifierPart(char value) =>
+        IsIdentifierStart(value) || value is >= '0' and <= '9';
 
     private void Advance()
     {

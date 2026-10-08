@@ -36,9 +36,10 @@ internal static class NativeBindingEmitter
         BindingModel model,
         CanonicalType type,
         InspectedMethod method,
+        string nativeMethodName,
         string fingerprint)
     {
-        var simpleTypeName = type.Name.Split('.').Last();
+        var simpleTypeName = model.Types.Single(candidate => candidate.ManagedName == type.Name).NativeName;
         var returnTypeName = GetNativeTypeName(method.ReturnTypeName);
         var parameters = string.Join(", ", method.Parameters.Select(GetNativeParameter));
 
@@ -58,7 +59,7 @@ class {{simpleTypeName}}Binding
 {
 public:
     static constexpr const char* ContractFingerprint = "{{fingerprint}}";
-    static NeoWPF::DotNet::ManagedResult<{{returnTypeName}}> {{method.Name}}({{parameters}});
+    static NeoWPF::DotNet::ManagedResult<{{returnTypeName}}> {{nativeMethodName}}({{parameters}});
 };
 }
 """;
@@ -68,9 +69,10 @@ public:
         BindingModel model,
         CanonicalType type,
         InspectedMethod method,
+        string nativeMethodName,
         string fingerprint)
     {
-        var simpleTypeName = type.Name.Split('.').Last();
+        var simpleTypeName = model.Types.Single(candidate => candidate.ManagedName == type.Name).NativeName;
         var returnTypeName = GetNativeTypeName(method.ReturnTypeName);
         var parameters = string.Join(", ", method.Parameters.Select(GetNativeParameter));
 
@@ -79,7 +81,7 @@ public:
 
 namespace {{model.Name}}
 {
-NeoWPF::DotNet::ManagedResult<{{returnTypeName}}> {{simpleTypeName}}Binding::{{method.Name}}({{parameters}})
+NeoWPF::DotNet::ManagedResult<{{returnTypeName}}> {{simpleTypeName}}Binding::{{nativeMethodName}}({{parameters}})
 {
     return NeoWPF::DotNet::ManagedResult<{{returnTypeName}}>::Error("Not implemented");
 }

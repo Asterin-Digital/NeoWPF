@@ -11,7 +11,7 @@ internal static class ManagedBindingEmitter
         InspectedMethod method,
         string fingerprint)
     {
-        var simpleTypeName = type.Name.Split('.').Last();
+        var simpleTypeName = model.Types.Single(candidate => candidate.ManagedName == type.Name).NativeName;
         var parameters = string.Join(", ", method.Parameters.Select(parameter =>
             $"{parameter.TypeName} {parameter.Name}"));
 
@@ -44,7 +44,7 @@ public static class {{simpleTypeName}}Bindings
     <RootNamespace>{{model.Name}}</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BasicAssembly">
+    <Reference Include="{{identity.Name}}">
       <HintPath>{{identity.Location}}</HintPath>
     </Reference>
   </ItemGroup>

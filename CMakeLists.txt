@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
     "Export compile_commands.json for tooling such as NeoLint")
 
@@ -288,7 +292,7 @@ option(NEOWPF_BUILD_SAMPLES
     OFF)
 option(NEOWPF_BUILD_DOTNET
     "Build the optional .NET interop layer"
-    ON)
+    OFF)
 set(NEOWPF_LUAUDIO_GIT_REPOSITORY "https://github.com/Past-Horizon/LuAudio.git" CACHE STRING
     "LuAudio Git repository used by NeoWPF.Media")
 set(NEOWPF_LUAUDIO_GIT_TAG "main" CACHE STRING
@@ -806,8 +810,6 @@ if(BUILD_TESTING)
         tests/Automated/RadioButtonTests.cpp
         tests/Automated/ThreadingTests.cpp
         tests/Automated/XamlParserTests.cpp
-        tests/Automated/DotNetHostTests.cpp
-        tests/Automated/DotNetValueTests.cpp
     )
 
     if(UNIX)
@@ -820,7 +822,6 @@ if(BUILD_TESTING)
     target_link_libraries(NeoWPF.AutomatedTests
         PRIVATE
             NeoWPF::NeoWPF
-            NeoWPF::DotNet
             GTest::gtest_main
     )
 
@@ -833,6 +834,20 @@ if(BUILD_TESTING)
     gtest_discover_tests(NeoWPF.AutomatedTests)
 
     if(NEOWPF_BUILD_DOTNET)
+        add_executable(NeoWPF.DotNet.AutomatedTests
+            tests/Automated/DotNetHostTests.cpp
+            tests/Automated/DotNetValueTests.cpp
+        )
+        target_link_libraries(NeoWPF.DotNet.AutomatedTests
+            PRIVATE
+                NeoWPF::DotNet
+                GTest::gtest_main
+        )
+        target_compile_definitions(NeoWPF.DotNet.AutomatedTests PRIVATE
+            NEOWPF_INTERNAL_BUILD
+        )
+        gtest_discover_tests(NeoWPF.DotNet.AutomatedTests)
+
         set(NEOWPF_DOTNET_TEST_SCRIPT
             "${CMAKE_CURRENT_BINARY_DIR}/RunNeoWPFDotNetTests.cmake")
         configure_file(

@@ -16,12 +16,27 @@ public sealed class BindingModelBuilderTests
                 type Acme.Service
                 {
                     nativeName "Service";
-                    method Calculate(Acme.Request request) returns async owned System.Threading.Tasks.Task<int32>
+                    method Calculate(Acme.Request request) returns owned System.Threading.Tasks.Task<int32>
                     {
                         execution Background;
+                        managedName "ManagedCalculate";
+                        nativeName "NativeCalculate";
                         adapter "ServiceAdapter.cs";
                     }
-                    property decimal Total readonly;
+                    property Total
+                    {
+                        type decimal;
+                        readable false;
+                        writable true;
+                        managedName "ManagedTotal";
+                        nativeName "NativeTotal";
+                    }
+                    event Changed
+                    {
+                        callback Background;
+                        managedName "ManagedChanged";
+                        nativeName "NativeChanged";
+                    }
                 }
             }
             """, "Acme.nwbind").ParseDocument().Bindings[0];
@@ -30,13 +45,22 @@ public sealed class BindingModelBuilderTests
         var type = Assert.Single(model.Types);
         var method = Assert.Single(type.Methods);
         var property = Assert.Single(type.Properties);
+        var @event = Assert.Single(type.Events);
 
         Assert.Equal("Acme.dll", model.AssemblyPath);
+        Assert.Equal("ManagedCalculate", method.ManagedName);
+        Assert.Equal("NativeCalculate", method.NativeName);
         Assert.Equal(ManagedExecutionPolicy.Background, method.Execution);
         Assert.Equal(ManagedOwnership.Owned, method.ReturnOwnership);
         Assert.Equal(CanonicalTypeKind.Task, method.ReturnType!.Kind);
+        Assert.Equal("ManagedTotal", property.ManagedName);
+        Assert.Equal("NativeTotal", property.NativeName);
         Assert.Equal(CanonicalTypeKind.Decimal, property.Type!.Kind);
-        Assert.False(property.Writable);
+        Assert.False(property.Readable);
+        Assert.True(property.Writable);
+        Assert.Equal("ManagedChanged", @event.ManagedName);
+        Assert.Equal("NativeChanged", @event.NativeName);
+        Assert.Equal(ManagedCallbackPolicy.Background, @event.Callback);
     }
 
     [Fact]

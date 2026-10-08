@@ -17,10 +17,11 @@ public sealed class BindingGenerationTests
                 assembly "BasicAssembly.dll";
                 type BasicAssembly.Domain.InvoiceService
                 {
-                    nativeName "InvoiceService";
-                    method Calculate(BasicAssembly.Domain.InvoiceRequest request)
+                    nativeName "RequestFactory";
+                    method CreateRequest(decimal subtotal)
                     {
-                        returns decimal;
+                        nativeName "BuildRequest";
+                        returns BasicAssembly.Domain.InvoiceRequest;
                         execution Managed;
                     }
                 }
@@ -55,6 +56,10 @@ public sealed class BindingGenerationTests
             Assert.Equal(2, first.NativeFiles.Count);
             Assert.Equal(2, first.ManagedFiles.Count);
             Assert.True(File.Exists(Path.Combine(workspace, "BasicAssembly.contract")));
+            Assert.Contains("native-type=RequestFactory", first.ContractText);
+            Assert.Contains("native-method=BuildRequest", first.ContractText);
+            Assert.Contains("execution=Managed", first.ContractText);
+            Assert.Contains($"assembly={Path.GetFullPath(assemblyPath)}", first.ContractText);
             Assert.Equal(
                 firstFiles.Keys.OrderBy(path => path, StringComparer.Ordinal),
                 secondFiles.Keys.OrderBy(path => path, StringComparer.Ordinal));
@@ -62,27 +67,27 @@ public sealed class BindingGenerationTests
                 Assert.Equal(firstFiles[path], secondFiles[path]);
             Assert.Equal(first.NativeFiles.Select(file => file.Content), second.NativeFiles.Select(file => file.Content));
             Assert.Equal(first.ManagedFiles.Select(file => file.Content), second.ManagedFiles.Select(file => file.Content));
-            Assert.Contains(first.NativeFiles, file => file.Path.EndsWith("InvoiceService.g.h", StringComparison.Ordinal));
-            Assert.Contains(first.ManagedFiles, file => file.Path.EndsWith("InvoiceService.Bindings.g.cs", StringComparison.Ordinal));
+            Assert.Contains(first.NativeFiles, file => file.Path.EndsWith("RequestFactory.g.h", StringComparison.Ordinal));
+            Assert.Contains(first.ManagedFiles, file => file.Path.EndsWith("RequestFactory.Bindings.g.cs", StringComparison.Ordinal));
             var nativeHeader = first.NativeFiles
-                .Single(file => file.Path.EndsWith("InvoiceService.g.h", StringComparison.Ordinal))
+                .Single(file => file.Path.EndsWith("RequestFactory.g.h", StringComparison.Ordinal))
                 .Content;
             Assert.Contains(
-                "ManagedResult<NeoWPF::DotNet::ManagedDecimal> Calculate(const NeoWPF::DotNet::ManagedObjectReference& request)",
+                "ManagedResult<NeoWPF::DotNet::ManagedObjectReference> BuildRequest(const NeoWPF::DotNet::ManagedDecimal& subtotal)",
                 nativeHeader);
             var nativeImplementation = first.NativeFiles
-                .Single(file => file.Path.EndsWith("InvoiceService.g.cpp", StringComparison.Ordinal))
+                .Single(file => file.Path.EndsWith("RequestFactory.g.cpp", StringComparison.Ordinal))
                 .Content;
-            Assert.Contains("#include \"InvoiceService.g.h\"", nativeImplementation);
+            Assert.Contains("#include \"RequestFactory.g.h\"", nativeImplementation);
             Assert.Contains(
-                "InvoiceServiceBinding::Calculate(const NeoWPF::DotNet::ManagedObjectReference& request)",
+                "RequestFactoryBinding::BuildRequest(const NeoWPF::DotNet::ManagedDecimal& subtotal)",
                 nativeImplementation);
             Assert.Contains(
-                "public static System.Decimal Calculate(BasicAssembly.Domain.InvoiceRequest request)",
-                first.ManagedFiles.Single(file => file.Path.EndsWith("InvoiceService.Bindings.g.cs", StringComparison.Ordinal)).Content);
+                "public static BasicAssembly.Domain.InvoiceRequest CreateRequest(System.Decimal subtotal)",
+                first.ManagedFiles.Single(file => file.Path.EndsWith("RequestFactory.Bindings.g.cs", StringComparison.Ordinal)).Content);
 
             var managedProject = first.ManagedFiles
-                .Single(file => file.Path.EndsWith("InvoiceService.Bindings.csproj", StringComparison.Ordinal))
+                .Single(file => file.Path.EndsWith("BasicAssembly.Bindings.csproj", StringComparison.Ordinal))
                 .Path;
             var build = Process.Start(new ProcessStartInfo
             {

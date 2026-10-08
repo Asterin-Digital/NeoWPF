@@ -7,8 +7,7 @@ internal static class BindingGrammar
         "binding", "assembly", "dependency", "adapter", "version", "nativeName", "managedName", "type", "constructible",
         "constructor", "method", "property", "event", "parameter", "returns", "async", "execution", "ownership", "callback",
         "readable", "writable", "readonly", "writeonly", "ref", "in", "out", "owned", "borrowed", "shared", "true", "false",
-        "void", "bool", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64", "float", "double", "decimal", "string", "bytes",
-        "Managed", "Calling", "Application", "Background"
+        "void", "bool", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64", "float", "double", "decimal", "string", "bytes"
     };
 
     public static IReadOnlySet<string> OwnershipKinds { get; } = new HashSet<string>(StringComparer.Ordinal)

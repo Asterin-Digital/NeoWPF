@@ -34,8 +34,26 @@ public:
     HostStatusCode Code() const noexcept { return m_code; }
     bool Succeeded() const noexcept { return m_code == HostStatusCode::Ok; }
 
+    /*
+        @summary
+        Gets the raw hostfxr result associated with this status.
+    */
+    std::int32_t GetRawHostFxrResult() const noexcept { return m_rawHostFxrResult; }
+
     const std::string& Message() const noexcept { return m_message; }
     const std::string& Hint() const noexcept { return m_hint; }
+
+    /*
+        @summary
+        Sets the raw hostfxr result associated with this status.
+
+        @param result
+        Result returned by a hostfxr operation, or zero when unavailable.
+    */
+    HostStatus& SetRawHostFxrResult(std::int32_t result) noexcept {
+        m_rawHostFxrResult = result;
+        return *this;
+    }
 
     HostStatus& SetMessage(std::string message) {
         m_message = std::move(message);
@@ -49,6 +67,7 @@ public:
 
 private:
     HostStatusCode m_code = HostStatusCode::Ok;
+    std::int32_t m_rawHostFxrResult = 0;
     std::string m_message;
     std::string m_hint;
 };

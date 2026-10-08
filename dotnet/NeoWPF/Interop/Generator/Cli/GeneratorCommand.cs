@@ -31,17 +31,22 @@ public static class GeneratorCommand
             throw new BindingParseException(diagnostics[0]);
 
         var assembly = new AssemblyReader().Read(options.AssemblyPath);
+        var bindingType = model.Types.Single();
         var type = new CanonicalTypeResolver().Resolve(
-            CanonicalType.Named(CanonicalTypeKind.NamedClass, model.Types[0].ManagedName, [], null, model.Location),
+            CanonicalType.Named(CanonicalTypeKind.NamedClass, bindingType.ManagedName, [], null, bindingType.Location),
             assembly);
         var inspectedType = assembly.Types.Single(candidate => candidate.FullName == type.Name);
+        var bindingMethod = bindingType.Methods.Single();
+        var parameterTypes = bindingMethod.Parameters
+            .Select(parameter => GetReflectionTypeName(parameter.Type))
+            .ToArray();
         var method = inspectedType.Methods
-            .Single(candidate => candidate.Name == "Calculate" &&
+            .Single(candidate => candidate.Name == bindingMethod.ManagedName &&
                 !candidate.IsConstructor &&
                 candidate.Parameters.Select(parameter => parameter.TypeName)
-                    .SequenceEqual(["BasicAssembly.Domain.InvoiceRequest"], StringComparer.Ordinal));
+                    .SequenceEqual(parameterTypes, StringComparer.Ordinal));
 
-        var contract = BuildContract(model, type, method, assembly.Identity);
+        var contract = BuildContract(model, bindingType, bindingMethod, type, method, assembly.Identity);
         var fingerprint = ComputeFingerprint(contract);
         var nativeFiles = new List<GeneratorFile>();
         var managedFiles = new List<GeneratorFile>();
@@ -50,20 +55,20 @@ public static class GeneratorCommand
         if (options.GenerateNative)
         {
             nativeFiles.Add(new GeneratorFile(
-                Path.Combine(options.OutputDirectory, "InvoiceService.g.h"),
-                NativeBindingEmitter.Emit(model, type, method, fingerprint)));
+                Path.Combine(options.OutputDirectory, $"{bindingType.NativeName}.g.h"),
+                NativeBindingEmitter.Emit(model, type, method, bindingMethod.NativeName, fingerprint)));
             nativeFiles.Add(new GeneratorFile(
-                Path.Combine(options.OutputDirectory, "InvoiceService.g.cpp"),
-                NativeBindingEmitter.EmitImplementation(model, type, method, fingerprint)));
+                Path.Combine(options.OutputDirectory, $"{bindingType.NativeName}.g.cpp"),
+                NativeBindingEmitter.EmitImplementation(model, type, method, bindingMethod.NativeName, fingerprint)));
         }
 
         if (options.GenerateManaged)
         {
             managedFiles.Add(new GeneratorFile(
-                Path.Combine(options.OutputDirectory, "InvoiceService.Bindings.g.cs"),
+                Path.Combine(options.OutputDirectory, $"{bindingType.NativeName}.Bindings.g.cs"),
                 ManagedBindingEmitter.Emit(model, type, method, fingerprint)));
             managedFiles.Add(new GeneratorFile(
-                Path.Combine(options.OutputDirectory, "InvoiceService.Bindings.csproj"),
+                Path.Combine(options.OutputDirectory, $"{model.Name}.Bindings.csproj"),
                 ManagedBindingEmitter.EmitProject(model, assembly.Identity)));
         }
 
@@ -78,18 +83,24 @@ public static class GeneratorCommand
 
     private static string BuildContract(
         BindingModel model,
+        ManagedTypeModel bindingType,
+        ManagedMethodModel bindingMethod,
         CanonicalType type,
         InspectedMethod method,
         AssemblyIdentity identity)
     {
         var builder = new StringBuilder();
         builder.AppendLine($"binding={model.Name}");
-        builder.AppendLine($"assembly={model.AssemblyPath}");
+        builder.AppendLine($"assembly={Path.GetFullPath(identity.Location)}");
         builder.AppendLine($"assembly-name={identity.Name}");
         builder.AppendLine($"assembly-mvid={identity.ModuleVersionId}");
+        builder.AppendLine($"binding-version={model.Version ?? string.Empty}");
         builder.AppendLine($"type={type.Name}");
+        builder.AppendLine($"native-type={bindingType.NativeName}");
         builder.AppendLine($"method={method.Name}");
+        builder.AppendLine($"native-method={bindingMethod.NativeName}");
         builder.AppendLine($"return={method.ReturnTypeName}");
+        builder.AppendLine($"execution={bindingMethod.Execution}");
         foreach (var parameter in method.Parameters)
             builder.AppendLine($"parameter={parameter.TypeName}:{parameter.IsByReference}:{parameter.IsOut}:{parameter.IsIn}");
         builder.AppendLine("contract-version=1");
@@ -102,4 +113,40 @@ public static class GeneratorCommand
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(contract));
         return Convert.ToHexString(bytes);
     }
+
+    private static string GetReflectionTypeName(CanonicalType type) => type.Kind switch
+    {
+        CanonicalTypeKind.Void => "System.Void",
+        CanonicalTypeKind.Boolean => "System.Boolean",
+        CanonicalTypeKind.SignedInteger => type.IntegerWidth switch
+        {
+            IntegerWidth.Int8 => "System.SByte",
+            IntegerWidth.Int16 => "System.Int16",
+            IntegerWidth.Int32 => "System.Int32",
+            IntegerWidth.Int64 => "System.Int64",
+            _ => throw new NotSupportedException($"Integer width '{type.IntegerWidth}' is not supported."),
+        },
+        CanonicalTypeKind.UnsignedInteger => type.IntegerWidth switch
+        {
+            IntegerWidth.UInt8 => "System.Byte",
+            IntegerWidth.UInt16 => "System.UInt16",
+            IntegerWidth.UInt32 => "System.UInt32",
+            IntegerWidth.UInt64 => "System.UInt64",
+            _ => throw new NotSupportedException($"Integer width '{type.IntegerWidth}' is not supported."),
+        },
+        CanonicalTypeKind.FloatingPoint => type.Name switch
+        {
+            "float" => "System.Single",
+            "double" => "System.Double",
+            _ => throw new NotSupportedException($"Floating-point type '{type.Name}' is not supported."),
+        },
+        CanonicalTypeKind.Decimal => "System.Decimal",
+        CanonicalTypeKind.String => "System.String",
+        CanonicalTypeKind.NamedClass or
+        CanonicalTypeKind.NamedStruct or
+        CanonicalTypeKind.Enum or
+        CanonicalTypeKind.Delegate or
+        CanonicalTypeKind.Generic => type.Name,
+        _ => throw new NotSupportedException($"Parameter type '{type.Kind}' is not supported by this generator slice."),
+    };
 }

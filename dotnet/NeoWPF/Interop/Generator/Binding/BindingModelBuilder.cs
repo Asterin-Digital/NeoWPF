@@ -61,7 +61,7 @@ public sealed class BindingModelBuilder
         var returnOwnership = syntax.ReturnOwnership ?? returnDeclaration?.Ownership;
 
         return new ManagedMethodModel(
-            syntax.Name,
+            syntax.Items.OfType<ManagedNameDeclaration>().SingleOrDefault()?.Name ?? syntax.Name,
             syntax.Items.OfType<MemberNativeNameDeclaration>().SingleOrDefault()?.Name ?? syntax.Name,
             syntax.Parameters.Select(BuildParameter).ToArray(),
             returnType,
@@ -79,7 +79,7 @@ public sealed class BindingModelBuilder
             type = syntax.Items.OfType<MemberTypeDeclaration>().SingleOrDefault()?.Type;
 
         return new ManagedPropertyModel(
-            syntax.Name,
+            syntax.Items.OfType<ManagedNameDeclaration>().SingleOrDefault()?.Name ?? syntax.Name,
             syntax.Items.OfType<MemberNativeNameDeclaration>().SingleOrDefault()?.Name ?? syntax.Name,
             type is null ? null : BuildType(type),
             syntax.Readable,
@@ -90,7 +90,7 @@ public sealed class BindingModelBuilder
 
     private ManagedEventModel BuildEvent(EventDeclaration syntax) =>
         new(
-            syntax.Name,
+            syntax.Items.OfType<ManagedNameDeclaration>().SingleOrDefault()?.Name ?? syntax.Name,
             syntax.Items.OfType<MemberNativeNameDeclaration>().SingleOrDefault()?.Name ?? syntax.Name,
             ParseCallback(syntax.Items.OfType<CallbackDeclaration>().SingleOrDefault()?.Policy, syntax.Location),
             syntax.Items.OfType<ParameterDeclaration>().Select(item => item.Parameter).Select(BuildParameter).ToArray(),
