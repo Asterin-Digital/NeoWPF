@@ -25,9 +25,10 @@ struct TabDefinition {
     Ref<NeoWPF::UI::UIElement> (*CreatePanel)();
 };
 
-const std::array<TabDefinition, 2> kTabs{{
+const std::array<TabDefinition, 3> kTabs{{
     {L"Button", &CreateButtonPanel},
     {L"TextBox", &CreateTextBoxPanel},
+    {L"Checkbox", &CreateCheckboxPanel},
 }};
 
 Ref<Button> MakeTabButton(const std::wstring& label)
