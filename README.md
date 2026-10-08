@@ -47,7 +47,7 @@ int main()
     panel->SetHorizontalAlignment(HorizontalAlignment::Center);
     panel->SetVerticalAlignment(VerticalAlignment::Center);
 
-    auto title = std::make_shared<TextBlock>(L"Hello, NeoWPF!");
+    auto title = std::make_shared<TextBlock>(L"Hello, NeoWPF");
     title->SetFontSize(32);
     title->SetTextColor(0xFFFFFFFFu);
     panel->AddChild(title);
@@ -57,7 +57,7 @@ int main()
     button->SetHeight(45);
     button->SetBackgroundColor(0xFF4F86C6u);
     button->Clicked += []() {
-        // handle click
+        // ur click logic
     };
     panel->AddChild(button);
 

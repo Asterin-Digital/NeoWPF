@@ -40,15 +40,46 @@ public sealed class BindingGenerationTests
                 ContractFileName: "BasicAssembly.contract");
 
             var first = GeneratorCommand.Generate(options);
+            var firstFiles = Directory.GetFiles(workspace)
+                .ToDictionary(
+                    path => Path.GetRelativePath(workspace, path),
+                    path => Convert.ToHexString(File.ReadAllBytes(path)),
+                    StringComparer.Ordinal);
             var second = GeneratorCommand.Generate(options);
+            var secondFiles = Directory.GetFiles(workspace)
+                .ToDictionary(
+                    path => Path.GetRelativePath(workspace, path),
+                    path => Convert.ToHexString(File.ReadAllBytes(path)),
+                    StringComparer.Ordinal);
 
             Assert.Equal(2, first.NativeFiles.Count);
             Assert.Equal(2, first.ManagedFiles.Count);
             Assert.True(File.Exists(Path.Combine(workspace, "BasicAssembly.contract")));
+            Assert.Equal(
+                firstFiles.Keys.OrderBy(path => path, StringComparer.Ordinal),
+                secondFiles.Keys.OrderBy(path => path, StringComparer.Ordinal));
+            foreach (var path in firstFiles.Keys)
+                Assert.Equal(firstFiles[path], secondFiles[path]);
             Assert.Equal(first.NativeFiles.Select(file => file.Content), second.NativeFiles.Select(file => file.Content));
             Assert.Equal(first.ManagedFiles.Select(file => file.Content), second.ManagedFiles.Select(file => file.Content));
             Assert.Contains(first.NativeFiles, file => file.Path.EndsWith("InvoiceService.g.h", StringComparison.Ordinal));
             Assert.Contains(first.ManagedFiles, file => file.Path.EndsWith("InvoiceService.Bindings.g.cs", StringComparison.Ordinal));
+            var nativeHeader = first.NativeFiles
+                .Single(file => file.Path.EndsWith("InvoiceService.g.h", StringComparison.Ordinal))
+                .Content;
+            Assert.Contains(
+                "ManagedResult<NeoWPF::DotNet::ManagedDecimal> Calculate(const NeoWPF::DotNet::ManagedObjectReference& request)",
+                nativeHeader);
+            var nativeImplementation = first.NativeFiles
+                .Single(file => file.Path.EndsWith("InvoiceService.g.cpp", StringComparison.Ordinal))
+                .Content;
+            Assert.Contains("#include \"InvoiceService.g.h\"", nativeImplementation);
+            Assert.Contains(
+                "InvoiceServiceBinding::Calculate(const NeoWPF::DotNet::ManagedObjectReference& request)",
+                nativeImplementation);
+            Assert.Contains(
+                "public static System.Decimal Calculate(BasicAssembly.Domain.InvoiceRequest request)",
+                first.ManagedFiles.Single(file => file.Path.EndsWith("InvoiceService.Bindings.g.cs", StringComparison.Ordinal)).Content);
 
             var managedProject = first.ManagedFiles
                 .Single(file => file.Path.EndsWith("InvoiceService.Bindings.csproj", StringComparison.Ordinal))

@@ -807,6 +807,7 @@ if(BUILD_TESTING)
         tests/Automated/ThreadingTests.cpp
         tests/Automated/XamlParserTests.cpp
         tests/Automated/DotNetHostTests.cpp
+        tests/Automated/DotNetValueTests.cpp
     )
 
     if(UNIX)

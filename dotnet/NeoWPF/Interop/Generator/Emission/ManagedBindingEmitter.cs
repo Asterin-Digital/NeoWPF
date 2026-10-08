@@ -12,6 +12,8 @@ internal static class ManagedBindingEmitter
         string fingerprint)
     {
         var simpleTypeName = type.Name.Split('.').Last();
+        var parameters = string.Join(", ", method.Parameters.Select(parameter =>
+            $"{parameter.TypeName} {parameter.Name}"));
 
         return $$"""
 using System;
@@ -22,7 +24,7 @@ public static class {{simpleTypeName}}Bindings
 {
     public const string ContractFingerprint = "{{fingerprint}}";
 
-    public static decimal Calculate()
+    public static {{method.ReturnTypeName}} {{method.Name}}({{parameters}})
     {
         throw new NotSupportedException("This generated binding is only a compilation fixture.");
     }

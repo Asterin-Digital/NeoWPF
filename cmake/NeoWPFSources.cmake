@@ -51,9 +51,9 @@ if(NEOWPF_BUILD_DOTNET)
         "${CMAKE_CURRENT_SOURCE_DIR}/include/NeoWPF/DotNet/*.h"
     )
     if(NOT WIN32)
-        list(FILTER NEOWPF_DOTNET_SOURCES EXCLUDE REGEX "/src/DotNet/Windows/")
+        list(FILTER NEOWPF_DOTNET_SOURCES EXCLUDE REGEX "/src/DotNet/([^/]+/)*Windows/")
     else()
-        list(FILTER NEOWPF_DOTNET_SOURCES EXCLUDE REGEX "/src/DotNet/Linux/")
+        list(FILTER NEOWPF_DOTNET_SOURCES EXCLUDE REGEX "/src/DotNet/([^/]+/)*Linux/")
     endif()
     if(NOT NEOWPF_DOTNET_SOURCES)
         message(FATAL_ERROR
