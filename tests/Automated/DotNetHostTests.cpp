@@ -2,6 +2,7 @@
 
 #include <NeoWPF/DotNet/Hosting/Host.h>
 #include <NeoWPF/DotNet/Hosting/HostOptions.h>
+#include <NeoWPF/DotNet/Hosting/HostFxr/HostFxrLibrary.h>
 #include <NeoWPF/DotNet/Hosting/HostFxr/HostFxrPath.h>
 #include <NeoWPF/DotNet/Hosting/HostFxr/ManagedBridgeLocation.h>
 
@@ -53,6 +54,120 @@ TEST(DotNetHostTests, MissingHostFxrReturnsRuntimeNotFound)
 
     const auto status = NeoWPF::DotNet::Hosting::Host::ResolveHostFxrPathStatus(options);
     EXPECT_EQ(status.Code(), NeoWPF::DotNet::Hosting::HostStatusCode::RuntimeNotFound);
+}
+
+TEST(DotNetHostTests, HostFxrLibraryRejectsInvalidLibraryFile)
+{
+    const auto hostfxrPath = std::filesystem::temp_directory_path() /
+        "NeoWPF.DotNetHostTests.invalid-hostfxr";
+    std::ofstream(hostfxrPath).put(' ');
+
+    NeoWPF::DotNet::Hosting::HostFxr::HostFxrLibrary library;
+    const auto status = library.Load(hostfxrPath);
+
+    EXPECT_EQ(status.Code(), NeoWPF::DotNet::Hosting::HostStatusCode::HostFxrLoadFailed);
+    std::filesystem::remove(hostfxrPath);
+}
+
+TEST(DotNetHostTests, NethostFindsAndLoadsInstalledHostFxr)
+{
+    const NeoWPF::DotNet::Hosting::HostOptions options;
+    const auto path = NeoWPF::DotNet::Hosting::Host::ResolveHostFxrPath(options);
+    if (path.empty())
+        GTEST_SKIP() << "No .NET runtime is installed.";
+
+    NeoWPF::DotNet::Hosting::HostFxr::HostFxrLibrary library;
+    const auto status = library.Load(path);
+    if (!status.Succeeded())
+        GTEST_SKIP() << status.Message();
+
+    EXPECT_TRUE(library.HasExport("hostfxr_initialize_for_runtime_config"));
+    EXPECT_TRUE(library.HasExport("hostfxr_get_runtime_delegate"));
+    EXPECT_TRUE(library.HasExport("hostfxr_close"));
+    EXPECT_FALSE(library.HasExport("NeoWPF_Missing_HostFxr_Export"));
+}
+
+TEST(DotNetHostTests, FindsCurrentExecutableDirectory)
+{
+    const auto executableDirectory = NeoWPF::DotNet::Hosting::HostFxr::GetExecutableDirectory();
+
+    ASSERT_FALSE(executableDirectory.empty());
+    EXPECT_TRUE(std::filesystem::is_directory(executableDirectory));
+}
+
+TEST(DotNetHostTests, HostStartInitializesManagedBridge)
+{
+    const NeoWPF::DotNet::Hosting::HostOptions defaultOptions;
+    const auto hostfxrPath = NeoWPF::DotNet::Hosting::Host::ResolveHostFxrPath(defaultOptions);
+    if (hostfxrPath.empty())
+        GTEST_SKIP() << "No .NET runtime is installed.";
+
+    const auto bridgeDirectory = std::filesystem::temp_directory_path() /
+        "NeoWPF.DotNetHostTests.empty-bridge";
+    std::filesystem::create_directories(bridgeDirectory);
+
+    NeoWPF::DotNet::Hosting::Host host;
+    const NeoWPF::DotNet::Hosting::HostOptions options{
+        .hostfxrPath = hostfxrPath,
+        .bridgeDirectory = bridgeDirectory
+    };
+    const auto status = host.Start(options);
+
+    if (status.Code() == NeoWPF::DotNet::Hosting::HostStatusCode::RuntimeNotFound ||
+        status.Code() == NeoWPF::DotNet::Hosting::HostStatusCode::FrameworkMissing)
+    {
+        GTEST_SKIP() << status.Message();
+    }
+
+    ASSERT_EQ(status.Code(), NeoWPF::DotNet::Hosting::HostStatusCode::Ok) << status.Message();
+    EXPECT_TRUE(host.Stop());
+    std::filesystem::remove_all(bridgeDirectory);
+}
+
+TEST(DotNetHostTests, HostStartReportsMissingFrameworkWithRawHostFxrResult)
+{
+    const auto hostfxrPath = NeoWPF::DotNet::Hosting::Host::ResolveHostFxrPath({});
+    if (hostfxrPath.empty())
+        GTEST_SKIP() << "No hostfxr is installed.";
+
+    const auto bridgeDirectory = std::filesystem::temp_directory_path() /
+        "NeoWPF.DotNetHostTests.missing-framework";
+    CreateBridgeFiles(bridgeDirectory);
+    {
+        std::ofstream runtimeConfig(bridgeDirectory / "NeoWPF.DotNet.Bridge.runtimeconfig.json");
+        runtimeConfig << R"({"runtimeOptions":{"tfm":"net99.0","framework":{"name":"Microsoft.NETCore.App","version":"99.0.0","rollForward":"Disable"}}})";
+    }
+
+    NeoWPF::DotNet::Hosting::Host host;
+    const NeoWPF::DotNet::Hosting::HostOptions options{
+        .hostfxrPath = hostfxrPath,
+        .bridgeDirectory = bridgeDirectory
+    };
+    const auto status = host.Start(options);
+
+    EXPECT_EQ(status.Code(), NeoWPF::DotNet::Hosting::HostStatusCode::FrameworkMissing)
+        << status.Message() << " (hostfxr result " << status.GetRawHostFxrResult() << ")";
+    EXPECT_NE(status.GetRawHostFxrResult(), 0);
+    EXPECT_FALSE(host.Stop());
+    std::filesystem::remove_all(bridgeDirectory);
+}
+
+TEST(DotNetHostTests, HostStartReportsMissingHostFxrExports)
+{
+    const auto hostfxrPath = std::filesystem::path("C:/Windows/System32/kernel32.dll");
+    if (!std::filesystem::exists(hostfxrPath))
+        GTEST_SKIP() << "kernel32.dll is not available on this system.";
+
+    NeoWPF::DotNet::Hosting::Host host;
+    const NeoWPF::DotNet::Hosting::HostOptions options{
+        .hostfxrPath = hostfxrPath
+    };
+    const auto status = host.Start(options);
+
+    EXPECT_EQ(status.Code(), NeoWPF::DotNet::Hosting::HostStatusCode::HostFxrSymbolMissing)
+        << status.Message();
+    EXPECT_FALSE(status.Succeeded());
+    EXPECT_FALSE(host.Stop());
 }
 
 TEST(DotNetHostTests, HostStartDoesNotSucceedFromPathResolutionAlone)

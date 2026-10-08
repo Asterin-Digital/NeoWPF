@@ -34,6 +34,7 @@ public sealed record ConstructorDeclaration(
 public sealed record MethodDeclaration(
     string Name,
     IReadOnlyList<ParameterSyntax> Parameters,
+    bool HasExplicitSignature,
     TypeSyntax? ReturnType,
     bool IsAsync,
     string? ReturnOwnership,

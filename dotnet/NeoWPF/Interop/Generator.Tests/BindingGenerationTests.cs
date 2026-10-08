@@ -9,7 +9,7 @@ namespace NeoWPF.DotNet.Interop.Generator.Tests;
 public sealed class BindingGenerationTests
 {
     [Fact]
-    public void GeneratesDeterministicNativeAndManagedBindings()
+    public async Task GeneratesDeterministicNativeAndManagedBindings()
     {
         var source = """
             binding BasicAssembly
@@ -103,11 +103,63 @@ public sealed class BindingGenerationTests
             var errorText = output.StandardError.ReadToEnd();
             output.WaitForExit();
             Assert.True(output.ExitCode == 0, $"Generated managed project build failed: {outputText}{errorText}");
+
+            await CompileGeneratedNativeBinding(workspace);
         }
         finally
         {
             if (Directory.Exists(workspace))
                 Directory.Delete(workspace, recursive: true);
         }
+    }
+
+    private static async Task CompileGeneratedNativeBinding(string generatedDirectory)
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var processInfo = new ProcessStartInfo
+        {
+            FileName = "python",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        processInfo.ArgumentList.Add(Path.Combine(repositoryRoot, "private", "scripts", "Build.py"));
+        processInfo.ArgumentList.Add("--source");
+        processInfo.ArgumentList.Add(Path.Combine(repositoryRoot, "tests", "DotNetFixtures", "GeneratedNativeCompile"));
+        processInfo.ArgumentList.Add("--build");
+        processInfo.ArgumentList.Add(Path.Combine(generatedDirectory, "native-build"));
+        processInfo.ArgumentList.Add("--config");
+        processInfo.ArgumentList.Add("Debug");
+        processInfo.ArgumentList.Add("--generator");
+        processInfo.ArgumentList.Add("Ninja Multi-Config");
+        processInfo.ArgumentList.Add("--target");
+        processInfo.ArgumentList.Add("GeneratedNativeBinding");
+        processInfo.ArgumentList.Add("-DNEOWPF_GENERATED_DIR=" + generatedDirectory);
+        processInfo.ArgumentList.Add("-DNEOWPF_PUBLIC_INCLUDE_DIR=" + Path.Combine(repositoryRoot, "include"));
+
+        using var process = Process.Start(processInfo);
+        Assert.NotNull(process);
+        var outputTask = process.StandardOutput.ReadToEndAsync();
+        var errorTask = process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
+        var outputText = await outputTask;
+        var errorText = await errorTask;
+
+        Assert.True(
+            process.ExitCode == 0,
+            $"Generated native binding compilation failed: {outputText}{errorText}");
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        DirectoryInfo? directory = new(AppContext.BaseDirectory);
+        while (directory is not null &&
+            !File.Exists(Path.Combine(directory.FullName, "private", "scripts", "Build.py")))
+        {
+            directory = directory.Parent;
+        }
+
+        return directory?.FullName ?? throw new DirectoryNotFoundException(
+            "Could not locate the NeoWPF repository root.");
     }
 }

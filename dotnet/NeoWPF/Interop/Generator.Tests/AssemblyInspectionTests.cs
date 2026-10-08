@@ -92,4 +92,47 @@ public sealed class AssemblyInspectionTests
         Assert.True(update.Parameters[1].IsByReference);
         Assert.True(update.Parameters[1].IsIn);
     }
+
+    [Fact]
+    public void ResolvesMethodsByPassingModeAndGenericArity()
+    {
+        var reader = new AssemblyReader();
+        var service = reader.ResolveType(
+            reader.Read(typeof(InvoiceService).Assembly.Location),
+            "BasicAssembly.Domain.InvoiceService");
+
+        var tryGet = reader.ResolveMethod(
+            service,
+            "TryGetMoney",
+            ["System.Decimal", "BasicAssembly.Domain.Money"],
+            parameterPassingModes: [ParameterPassingMode.Value, ParameterPassingMode.Out]);
+        var update = reader.ResolveMethod(
+            service,
+            "UpdateMoney",
+            ["BasicAssembly.Domain.Money", "System.Decimal"],
+            parameterPassingModes: [ParameterPassingMode.Ref, ParameterPassingMode.In]);
+        var echo = reader.ResolveMethod(
+            service,
+            "Echo",
+            ["T"],
+            genericArity: 1);
+
+        Assert.True(tryGet.Parameters[1].IsOut);
+        Assert.True(update.Parameters[0].IsByReference);
+        Assert.True(update.Parameters[1].IsIn);
+        Assert.Equal(1, echo.GenericArity);
+
+        var wrongPassingMode = Assert.Throws<BindingParseException>(() => reader.ResolveMethod(
+            service,
+            "UpdateMoney",
+            ["BasicAssembly.Domain.Money", "System.Decimal"]));
+        var wrongGenericArity = Assert.Throws<BindingParseException>(() => reader.ResolveMethod(
+            service,
+            "Echo",
+            ["T"],
+            genericArity: 0));
+
+        Assert.Equal("NWB2014", wrongPassingMode.Diagnostic.Id);
+        Assert.Equal("NWB2014", wrongGenericArity.Diagnostic.Id);
+    }
 }

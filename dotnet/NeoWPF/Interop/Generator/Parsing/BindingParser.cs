@@ -91,7 +91,8 @@ public sealed class BindingParser
     {
         var location = Expect("method").Location;
         var name = ExpectIdentifier("method name").Text;
-        var parameters = CheckSymbol("(") ? ParseParameters() : Array.Empty<ParameterSyntax>();
+        var hasExplicitSignature = CheckSymbol("(");
+        var parameters = hasExplicitSignature ? ParseParameters() : Array.Empty<ParameterSyntax>();
         TypeSyntax? returnType = null;
         var isAsync = false;
         string? returnOwnership = null;
@@ -103,7 +104,7 @@ public sealed class BindingParser
             returnType = ParseTypeExpression();
         }
         var items = ParseMemberBlockOrSemicolon();
-        return new MethodDeclaration(name, parameters, returnType, isAsync, returnOwnership, items, location);
+        return new MethodDeclaration(name, parameters, hasExplicitSignature, returnType, isAsync, returnOwnership, items, location);
     }
 
     private PropertyDeclaration ParseProperty()

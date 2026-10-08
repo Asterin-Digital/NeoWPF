@@ -6,6 +6,8 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoWPF/DotNet/Hosting/HostOptions.h>
+#include <NeoWPF/DotNet/Hosting/HostFxr/HostFxrLibrary.h>
+#include <NeoWPF/DotNet/Abi/NwBridgeApi.h>
 
 #include <filesystem>
 
@@ -24,6 +26,9 @@ public:
 
 private:
     bool m_started = false;
+    std::uint32_t m_contextId = 0;
+    HostFxr::HostFxrLibrary m_hostFxrLibrary;
+    NwBridgeApi m_bridgeApi{};
 };
 
 }

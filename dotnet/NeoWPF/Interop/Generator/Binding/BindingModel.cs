@@ -31,6 +31,7 @@ public sealed record ManagedMethodModel(
     string ManagedName,
     string NativeName,
     IReadOnlyList<ManagedParameterModel> Parameters,
+    bool HasExplicitSignature,
     CanonicalType? ReturnType,
     bool IsAsync,
     ManagedOwnership? ReturnOwnership,

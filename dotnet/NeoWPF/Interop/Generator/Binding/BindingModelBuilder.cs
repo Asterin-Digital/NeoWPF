@@ -64,6 +64,7 @@ public sealed class BindingModelBuilder
             syntax.Items.OfType<ManagedNameDeclaration>().SingleOrDefault()?.Name ?? syntax.Name,
             syntax.Items.OfType<MemberNativeNameDeclaration>().SingleOrDefault()?.Name ?? syntax.Name,
             syntax.Parameters.Select(BuildParameter).ToArray(),
+            syntax.HasExplicitSignature,
             returnType,
             isAsync,
             ParseOwnership(returnOwnership, syntax.Location),

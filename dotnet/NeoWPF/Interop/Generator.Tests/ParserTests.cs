@@ -160,8 +160,11 @@ binding AcmeBusiness
         Assert.Equal(13, type.Items.OfType<MethodDeclaration>().Count());
         Assert.Equal(3, type.Items.OfType<PropertyDeclaration>().Count());
         Assert.Equal(3, type.Items.OfType<EventDeclaration>().Count());
-        Assert.Null(type.Items.OfType<MethodDeclaration>().Single(method => method.Name == "Unnamed").Parameters[0].Name);
-        Assert.True(type.Items.OfType<MethodDeclaration>().Single(method => method.Name == "GetAsync").IsAsync);
+        var methods = type.Items.OfType<MethodDeclaration>().ToArray();
+        Assert.Null(methods.Single(method => method.Name == "Unnamed").Parameters[0].Name);
+        Assert.True(methods.Single(method => method.Name == "GetAsync").IsAsync);
+        Assert.False(methods.Single(method => method.Name == "Reset").HasExplicitSignature);
+        Assert.True(methods.Single(method => method.Name == "GetVoid").HasExplicitSignature);
         var secondType = Assert.Single(document.Bindings[1].Items.OfType<TypeDeclaration>());
         Assert.Equal("Background", secondType.Items.OfType<MethodDeclaration>().Single().Name);
     }

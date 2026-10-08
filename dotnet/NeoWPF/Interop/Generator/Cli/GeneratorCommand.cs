@@ -30,7 +30,8 @@ public static class GeneratorCommand
         if (diagnostics.Count != 0)
             throw new BindingParseException(diagnostics[0]);
 
-        var assembly = new AssemblyReader().Read(options.AssemblyPath);
+        var assemblyReader = new AssemblyReader();
+        var assembly = assemblyReader.Read(options.AssemblyPath);
         var bindingType = model.Types.Single();
         var type = new CanonicalTypeResolver().Resolve(
             CanonicalType.Named(CanonicalTypeKind.NamedClass, bindingType.ManagedName, [], null, bindingType.Location),
@@ -40,11 +41,14 @@ public static class GeneratorCommand
         var parameterTypes = bindingMethod.Parameters
             .Select(parameter => GetReflectionTypeName(parameter.Type))
             .ToArray();
-        var method = inspectedType.Methods
-            .Single(candidate => candidate.Name == bindingMethod.ManagedName &&
-                !candidate.IsConstructor &&
-                candidate.Parameters.Select(parameter => parameter.TypeName)
-                    .SequenceEqual(parameterTypes, StringComparer.Ordinal));
+        var method = bindingMethod.HasExplicitSignature
+            ? assemblyReader.ResolveMethod(
+                inspectedType,
+                bindingMethod.ManagedName,
+                parameterTypes,
+                isStatic: null,
+                parameterPassingModes: bindingMethod.Parameters.Select(parameter => parameter.PassingMode).ToArray())
+            : assemblyReader.ResolveMethodByName(inspectedType, bindingMethod.ManagedName);
 
         var contract = BuildContract(model, bindingType, bindingMethod, type, method, assembly.Identity);
         var fingerprint = ComputeFingerprint(contract);

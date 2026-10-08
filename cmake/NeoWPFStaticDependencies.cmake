@@ -263,14 +263,22 @@ if(NEOWPF_STATIC_DEPENDENCIES)
     endif()
 
     function(neowpf_add_static_dependency_merge _target_name)
-        set(_extra_static_archives ${ARGN})
+        cmake_parse_arguments(NEOWPF_MERGE "EXTRA_ONLY" "" "" ${ARGN})
+        set(_extra_static_archives ${NEOWPF_MERGE_UNPARSED_ARGUMENTS})
 
         set(_merge_script "${CMAKE_CURRENT_BINARY_DIR}/merge-${_target_name}-$<CONFIG>.cmake")
         set(_merge_stamp "${CMAKE_CURRENT_BINARY_DIR}/.merge-${_target_name}-$<CONFIG>.stamp")
+        if(NEOWPF_MERGE_EXTRA_ONLY)
+            set(_merge_static_archives_debug)
+            set(_merge_static_archives_release)
+        else()
+            set(_merge_static_archives_debug "${NEOWPF_STATIC_ARCHIVES_DEBUG}")
+            set(_merge_static_archives_release "${NEOWPF_STATIC_ARCHIVES_RELEASE}")
+        endif()
         string(CONCAT _merge_script_content
             "set(NEOWPF_TARGET [==[$<TARGET_FILE:${_target_name}>]==])\n"
-            "set(NEOWPF_STATIC_ARCHIVES_DEBUG [==[${NEOWPF_STATIC_ARCHIVES_DEBUG}]==])\n"
-            "set(NEOWPF_STATIC_ARCHIVES_RELEASE [==[${NEOWPF_STATIC_ARCHIVES_RELEASE}]==])\n"
+            "set(NEOWPF_STATIC_ARCHIVES_DEBUG [==[${_merge_static_archives_debug}]==])\n"
+            "set(NEOWPF_STATIC_ARCHIVES_RELEASE [==[${_merge_static_archives_release}]==])\n"
             "set(NEOWPF_EXTRA_ARCHIVES [==[${_extra_static_archives}]==])\n"
             "set(NEOWPF_STAGED_TARGET \"\${NEOWPF_TARGET}.base\")\n"
             "if(\"$<CONFIG>\" STREQUAL \"Debug\")\n"
@@ -278,7 +286,7 @@ if(NEOWPF_STATIC_DEPENDENCIES)
             "else()\n"
             "    set(NEOWPF_INPUT_ARCHIVES \"\${NEOWPF_STATIC_ARCHIVES_RELEASE}\")\n"
             "endif()\n"
-            "if(NOT NEOWPF_INPUT_ARCHIVES)\n"
+            "if(NOT NEOWPF_INPUT_ARCHIVES AND NOT NEOWPF_EXTRA_ARCHIVES)\n"
             "    message(FATAL_ERROR \"No static archives were available for ${_target_name} in configuration $<CONFIG>.\")\n"
             "endif()\n"
             "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E copy \"\${NEOWPF_TARGET}\" \"\${NEOWPF_STAGED_TARGET}\" RESULT_VARIABLE NEOWPF_COPY_RESULT)\n"

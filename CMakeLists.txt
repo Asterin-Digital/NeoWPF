@@ -703,6 +703,51 @@ endif()
 if(NEOWPF_BUILD_DOTNET)
     find_program(NEOWPF_DOTNET_EXECUTABLE dotnet REQUIRED)
 
+    set(NEOWPF_DOTNET_NETHOST_DIR "" CACHE PATH
+        "Directory containing the .NET host pack nethost headers and library")
+    if(NOT NEOWPF_DOTNET_NETHOST_DIR)
+        if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+            message(FATAL_ERROR "NeoWPF.DotNet hosting requires a 64-bit target.")
+        endif()
+
+        if(WIN32)
+            set(NEOWPF_DOTNET_RID "win-x64")
+        elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+            set(NEOWPF_DOTNET_RID "linux-x64")
+        else()
+            message(FATAL_ERROR
+                "NEOWPF_BUILD_DOTNET requires an installed nethost pack for ${CMAKE_SYSTEM_NAME}; "
+                "set NEOWPF_DOTNET_NETHOST_DIR to its native directory.")
+        endif()
+
+        get_filename_component(NEOWPF_DOTNET_ROOT "${NEOWPF_DOTNET_EXECUTABLE}" DIRECTORY)
+        file(GLOB NEOWPF_DOTNET_NETHOST_CANDIDATES LIST_DIRECTORIES TRUE
+            "${NEOWPF_DOTNET_ROOT}/packs/Microsoft.NETCore.App.Host.${NEOWPF_DOTNET_RID}/*/runtimes/${NEOWPF_DOTNET_RID}/native")
+        list(SORT NEOWPF_DOTNET_NETHOST_CANDIDATES COMPARE NATURAL ORDER DESCENDING)
+        if(NEOWPF_DOTNET_NETHOST_CANDIDATES)
+            list(GET NEOWPF_DOTNET_NETHOST_CANDIDATES 0 NEOWPF_DOTNET_NETHOST_DIR)
+        endif()
+    endif()
+
+    if(WIN32)
+        set(NEOWPF_DOTNET_NETHOST_ARCHIVE "${NEOWPF_DOTNET_NETHOST_DIR}/libnethost.lib")
+    else()
+        set(NEOWPF_DOTNET_NETHOST_ARCHIVE "${NEOWPF_DOTNET_NETHOST_DIR}/libnethost.a")
+    endif()
+    set(NEOWPF_DOTNET_NETHOST_LINK_LIBRARY "${NEOWPF_DOTNET_NETHOST_ARCHIVE}")
+    if(MSVC AND BUILD_TESTING)
+        set(NEOWPF_DOTNET_NETHOST_LINK_LIBRARY "${NEOWPF_DOTNET_NETHOST_DIR}/nethost.lib")
+    endif()
+    if(NOT EXISTS "${NEOWPF_DOTNET_NETHOST_DIR}/nethost.h" OR
+       NOT EXISTS "${NEOWPF_DOTNET_NETHOST_DIR}/hostfxr.h" OR
+       NOT EXISTS "${NEOWPF_DOTNET_NETHOST_DIR}/coreclr_delegates.h" OR
+       NOT EXISTS "${NEOWPF_DOTNET_NETHOST_ARCHIVE}")
+        message(FATAL_ERROR
+            "Could not find nethost.h, hostfxr.h, coreclr_delegates.h, and the static nethost library. "
+            "Install the Microsoft.NETCore.App.Host.${NEOWPF_DOTNET_RID} pack or set "
+            "NEOWPF_DOTNET_NETHOST_DIR to its native directory.")
+    endif()
+
     add_library(NeoWPF.DotNet STATIC
         ${NEOWPF_DOTNET_SOURCES}
         ${NEOWPF_DOTNET_HEADERS}
@@ -717,11 +762,20 @@ if(NEOWPF_BUILD_DOTNET)
     target_link_libraries(NeoWPF.DotNet
         PUBLIC
             NeoWPF::NeoWPF
+        PRIVATE
+            "${NEOWPF_DOTNET_NETHOST_LINK_LIBRARY}"
+            ${CMAKE_DL_LIBS}
+    )
+    target_include_directories(NeoWPF.DotNet SYSTEM PRIVATE
+        "${NEOWPF_DOTNET_NETHOST_DIR}"
     )
     target_compile_definitions(NeoWPF.DotNet
         PRIVATE
             NEOWPF_INTERNAL_BUILD
     )
+    if(NOT (MSVC AND BUILD_TESTING))
+        target_compile_definitions(NeoWPF.DotNet PRIVATE NETHOST_USE_AS_STATIC)
+    endif()
     set_target_properties(NeoWPF.DotNet PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${NEOWPF_RELEASE_DIRECTORY}"
         ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${NEOWPF_RELEASE_DIRECTORY_DEBUG}"
@@ -729,6 +783,14 @@ if(NEOWPF_BUILD_DOTNET)
         ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${NEOWPF_RELEASE_DIRECTORY_RELWITHDEBINFO}"
         ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${NEOWPF_RELEASE_DIRECTORY_MINSIZEREL}"
     )
+
+    if(NEOWPF_STATIC_DEPENDENCIES AND NOT (MSVC AND BUILD_TESTING))
+        neowpf_add_static_dependency_merge(
+            NeoWPF.DotNet
+            EXTRA_ONLY
+            "${NEOWPF_DOTNET_NETHOST_ARCHIVE}"
+        )
+    endif()
 
     if(MSVC)
         target_compile_options(NeoWPF.DotNet PRIVATE
@@ -746,13 +808,24 @@ if(NEOWPF_BUILD_DOTNET)
         "${CMAKE_CURRENT_SOURCE_DIR}/dotnet/NeoWPF/Interop/Generator/Generator.csproj")
     set(NEOWPF_DOTNET_GENERATOR_TEST_PROJECT
         "${CMAKE_CURRENT_SOURCE_DIR}/dotnet/NeoWPF/Interop/Generator.Tests/Generator.Tests.csproj")
+    set(NEOWPF_DOTNET_BRIDGE_PROJECT
+        "${CMAKE_CURRENT_SOURCE_DIR}/dotnet/NeoWPF/Interop/Bridge/Bridge.csproj")
+    set(NEOWPF_DOTNET_BRIDGE_OUTPUT_DIR
+        "${CMAKE_CURRENT_BINARY_DIR}/generated/dotnet/bridge/$<CONFIG>")
 
     add_custom_target(NeoWPF.DotNet.Generator
         COMMAND "${NEOWPF_DOTNET_EXECUTABLE}" build "${NEOWPF_DOTNET_GENERATOR_PROJECT}" --configuration $<CONFIG>
         VERBATIM
         COMMENT "Building NeoWPF.DotNet generator"
     )
-    add_dependencies(NeoWPF.DotNet NeoWPF.DotNet.Generator)
+    add_custom_target(NeoWPF.DotNet.Bridge
+        COMMAND "${NEOWPF_DOTNET_EXECUTABLE}" build "${NEOWPF_DOTNET_BRIDGE_PROJECT}"
+            --configuration $<CONFIG>
+            --output "${NEOWPF_DOTNET_BRIDGE_OUTPUT_DIR}"
+        VERBATIM
+        COMMENT "Building NeoWPF.DotNet bridge"
+    )
+    add_dependencies(NeoWPF.DotNet NeoWPF.DotNet.Generator NeoWPF.DotNet.Bridge)
 endif()
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES
@@ -845,6 +918,22 @@ if(BUILD_TESTING)
         )
         target_compile_definitions(NeoWPF.DotNet.AutomatedTests PRIVATE
             NEOWPF_INTERNAL_BUILD
+        )
+        if(MSVC)
+            add_custom_command(TARGET NeoWPF.DotNet.AutomatedTests POST_BUILD
+                COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                    "${NEOWPF_DOTNET_NETHOST_DIR}/nethost.dll"
+                    "$<TARGET_FILE_DIR:NeoWPF.DotNet.AutomatedTests>"
+                VERBATIM
+            )
+        endif()
+        add_custom_command(TARGET NeoWPF.DotNet.AutomatedTests POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E make_directory
+                "$<TARGET_FILE_DIR:NeoWPF.DotNet.AutomatedTests>/NeoWPF.DotNet"
+            COMMAND "${CMAKE_COMMAND}" -E copy_directory
+                "${NEOWPF_DOTNET_BRIDGE_OUTPUT_DIR}"
+                "$<TARGET_FILE_DIR:NeoWPF.DotNet.AutomatedTests>/NeoWPF.DotNet"
+            VERBATIM
         )
         gtest_discover_tests(NeoWPF.DotNet.AutomatedTests)
 
