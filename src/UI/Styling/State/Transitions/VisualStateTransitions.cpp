@@ -4,9 +4,7 @@
 
 #include <unordered_map>
 
-namespace NeoWPF::UI::Styling {
-
-namespace detail {
+namespace NeoWPF::UI::Styling::State::Transitions {
 
 namespace {
 
@@ -46,8 +44,6 @@ bool ApplyVisualStateTransition(UIElement* element, const std::shared_ptr<Visual
     }
 
     return true;
-}
-
 }
 
 }

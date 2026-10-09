@@ -17,8 +17,13 @@ using namespace clang::ast_matchers;
 
 namespace
 {
-constexpr std::array<std::string_view, 4> kForbiddenComponents{
-    "detail", "implementation", "private", "internal"};
+constexpr std::array<std::string_view, 10> kForbiddenComponents{
+    "detail", "details",
+    "impl", "implementation",
+    "internal", "internals",
+    "private", "priv",
+    "aux", "auxiliary"
+};
 
 std::string Lowercase(std::string value)
 {

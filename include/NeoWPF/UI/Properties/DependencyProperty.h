@@ -133,7 +133,7 @@ using AnyEqualityComparer = bool (*)(const std::any&, const std::any&);
 void RegisterAnyEqualityComparer(const std::type_index& valueType,
                                  AnyEqualityComparer comparer) noexcept;
 
-namespace Detail {
+namespace TypeTraits {
 template<typename T, bool IsArray = std::is_array_v<T>>
 struct IsAnyEqualityComparable : std::false_type {};
 
@@ -143,7 +143,7 @@ struct IsAnyEqualityComparable<T, false>
 }
 
 template<typename T>
-requires Detail::IsAnyEqualityComparable<T>::value
+requires TypeTraits::IsAnyEqualityComparable<T>::value
 void RegisterAnyEqualityComparer() noexcept
 {
     RegisterAnyEqualityComparer(std::type_index(typeid(T)), [](const std::any& left,

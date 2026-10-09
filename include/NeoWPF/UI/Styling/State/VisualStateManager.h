@@ -20,7 +20,7 @@ namespace NeoWPF::UI::Styling {
 
 class VisualState;
 
-namespace detail {
+namespace State::Transitions {
 /*
     @summary
     Applies the transition logic for a visual state.

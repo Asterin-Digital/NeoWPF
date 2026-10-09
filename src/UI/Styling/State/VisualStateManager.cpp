@@ -92,7 +92,8 @@ bool VisualStateManager::GoToState(UIElement* element, const std::string& groupN
             }
 
             group->SetCurrentState(target);
-            return detail::ApplyVisualStateTransition(element, target, useTransitions);
+            return State::Transitions::ApplyVisualStateTransition(
+                element, target, useTransitions);
         }
     }
 
@@ -126,7 +127,8 @@ bool VisualStateManager::GoToState(UIElement* element, const std::string& stateN
 
         if (auto target = group->FindState(stateName)) {
             group->SetCurrentState(target);
-            return detail::ApplyVisualStateTransition(element, target, useTransitions);
+            return State::Transitions::ApplyVisualStateTransition(
+                element, target, useTransitions);
         }
     }
 

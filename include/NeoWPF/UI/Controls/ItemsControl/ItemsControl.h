@@ -73,7 +73,7 @@ public:
     void SetItemsSource(const std::vector<std::any>& source);
 
     template<typename T>
-    requires Properties::Detail::IsAnyEqualityComparable<T>::value
+    requires Properties::TypeTraits::IsAnyEqualityComparable<T>::value
     void SetItemsSource(const std::vector<T>& source)
     {
         Properties::RegisterAnyEqualityComparer<T>();

@@ -284,6 +284,39 @@ TEST(DPRegistrationLocationRuleTests, ReportsRegistrationOutsidePropertiesFile)
     EXPECT_EQ(diagnostics[0].severity, neolint::RuleSeverity::Warning);
 }
 
+TEST(DPRegistrationLocationRuleTests, HonorsPathOverrideForIncludedHeader)
+{
+    const auto headerPath = std::filesystem::temp_directory_path() /
+        "neolint-dp-registration-header.h";
+    std::ofstream(headerPath) << R"(
+namespace NeoWPF::UI::Properties
+{
+template<typename TOwner, typename TProperty = int>
+void RegisterProperty(const char*, TProperty = {}) {}
+}
+
+inline void RegisterButtonProperty()
+{
+    NeoWPF::UI::Properties::RegisterProperty<int>("Text");
+}
+)";
+
+    const auto configPath = std::filesystem::temp_directory_path() /
+        "neolint-dp-registration-path-override-test.json";
+    std::ofstream(configPath) << R"({"rules":{"neowpf-dp-registration-location":{"paths":{"*neolint-dp-registration-header.h":{"enabled":false}}}}})";
+    std::string error;
+    const auto config = neolint::RuleConfig::Load(configPath, error);
+    std::filesystem::remove(configPath);
+    ASSERT_TRUE(error.empty()) << error;
+
+    neolint::DiagnosticsSink diagnostics;
+    EXPECT_EQ(clang::tooling::runToolOnCodeWithArgs(
+        std::make_unique<DPAction>(config, diagnostics), "",
+        {"-std=c++20", "-include", headerPath.string()}, "Button.cpp"), true);
+    std::filesystem::remove(headerPath);
+    EXPECT_TRUE(diagnostics.Diagnostics().empty());
+}
+
 TEST(DPRegistrationLocationRuleTests, IgnoresRegisterCallsOnBindingExpressions)
 {
     const auto diagnostics = AnalyzeDPFixture("binding_expression.cpp", "BindingExpression.cpp");

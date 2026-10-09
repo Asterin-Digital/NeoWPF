@@ -57,11 +57,14 @@ RuleOptions RuleContext::OptionsFor(std::string_view ruleId) const
 void RuleContext::Report(std::string_view ruleId, clang::SourceLocation location,
                         RuleSeverity severity, std::string message) const
 {
-    if (severity == RuleSeverity::Info && !strict_) return;
-    if (suppression_.IsSuppressed(ruleId, location)) return;
     const auto& sourceManager = ast_.getSourceManager();
     const auto presumed = sourceManager.getPresumedLoc(location);
     if (presumed.isInvalid()) return;
+    const auto settings = config_.SettingsFor(ruleId, presumed.getFilename());
+    if (!settings.enabled) return;
+    if (config_.HasRule(ruleId)) severity = settings.severity;
+    if (severity == RuleSeverity::Info && !strict_) return;
+    if (suppression_.IsSuppressed(ruleId, location)) return;
     diagnostics_.Report({std::string(ruleId), severity,
                          {presumed.getFilename(), presumed.getLine(), presumed.getColumn()},
                          std::move(message)});
