@@ -281,9 +281,12 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# TODO: Remove deprecated internal XAML usage, it got replaced by C++ based themes making internal XAML usage obsolete now.
+
+# README: This can take a lot if it's a fresh build, preferably turn it off if you are frequently deleting cache; run it only when you are sure the binary is stable.
 option(NEOWPF_USE_NEOLINT
     "Run the NeoLint before compiling NeoWPF"
-    OFF)
+    ON)
 option(NEOWPF_BUILD_MEDIA
     "Build the optional NeoWPF.Media target and fetch LuAudio"
     OFF)

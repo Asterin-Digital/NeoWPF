@@ -56,12 +56,6 @@ if(NOT EXISTS "${NEOWPF_NEOLINT_CONFIG}")
     message(FATAL_ERROR "NeoLint configuration was not found: ${NEOWPF_NEOLINT_CONFIG}")
 endif()
 
-if(NOT EXISTS "${NEOWPF_NEOLINT_COMPILE_COMMANDS}")
-    message(WARNING
-        "NeoLint is enabled, but compile_commands.json does not exist. "
-        "Reconfigure NeoWPF before building.")
-endif()
-
 add_custom_target(NeoWPF.NeoLintCheck
     COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_NEOLINT_OUTPUT_DIR}"
     COMMAND "${NEOWPF_NEOLINT_EXECUTABLE}"
@@ -72,6 +66,7 @@ add_custom_target(NeoWPF.NeoLintCheck
         --cache "${NEOWPF_NEOLINT_CACHE}"
         --source-root "${CMAKE_CURRENT_SOURCE_DIR}/src"
         --source-root "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    DEPENDS "${NEOWPF_NEOLINT_EXECUTABLE}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     COMMENT "Running NeoLint checks before compiling NeoWPF"
     VERBATIM
