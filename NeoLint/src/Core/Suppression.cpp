@@ -21,6 +21,20 @@ std::string Trim(std::string value)
     if (first >= last) return {};
     return {first, last};
 }
+
+bool HasDirective(std::string_view line, std::string_view marker,
+                  std::string_view ruleId)
+{
+    const auto markerPosition = line.find(marker);
+    if (markerPosition == std::string_view::npos) return false;
+    const auto commentPosition = line.rfind("//", markerPosition);
+    if (commentPosition == std::string_view::npos) return false;
+    const auto declaration = Trim(std::string(line.substr(markerPosition + marker.size())));
+    const auto separator = declaration.find(':');
+    if (separator == std::string::npos) return false;
+    return Trim(declaration.substr(0, separator)) == ruleId &&
+        !Trim(declaration.substr(separator + 1)).empty();
+}
 }
 
 Suppression::Suppression(const clang::SourceManager& sourceManager) noexcept
@@ -30,39 +44,42 @@ Suppression::Suppression(const clang::SourceManager& sourceManager) noexcept
 
 bool Suppression::IsSuppressed(std::string_view ruleId, clang::SourceLocation location) const
 {
-    const auto presumed = sourceManager_.getPresumedLoc(location);
-    if (presumed.isInvalid() || presumed.getLine() <= 1) return false;
-
     const auto decomposed = sourceManager_.getDecomposedLoc(location);
     const auto buffer = sourceManager_.getBufferData(decomposed.first);
     const auto currentOffset = decomposed.second;
-    if (currentOffset == 0 || currentOffset > buffer.size()) return false;
+    if (currentOffset > buffer.size()) return false;
 
-    auto previousLineEnd = currentOffset;
-    while (previousLineEnd > 0 && buffer[previousLineEnd - 1] != '\n') --previousLineEnd;
-    if (previousLineEnd == 0) return false;
-    --previousLineEnd;
+    const std::string_view source(buffer.data(), buffer.size());
+    auto currentLineStart = currentOffset;
+    while (currentLineStart > 0 && source[currentLineStart - 1] != '\n') --currentLineStart;
+    auto currentLineEnd = currentOffset;
+    while (currentLineEnd < source.size() && source[currentLineEnd] != '\n') ++currentLineEnd;
+    const auto currentLine = source.substr(currentLineStart, currentLineEnd - currentLineStart);
+    if (HasDirective(currentLine, "neolint-disable-line", ruleId)) return true;
 
-    auto previousLineStart = previousLineEnd;
-    while (previousLineStart > 0 && buffer[previousLineStart - 1] != '\n') --previousLineStart;
+    if (currentLineStart > 0)
+    {
+        auto previousLineEnd = currentLineStart - 1;
+        if (previousLineEnd > 0 && source[previousLineEnd - 1] == '\r') --previousLineEnd;
+        auto previousLineStart = previousLineEnd;
+        while (previousLineStart > 0 && source[previousLineStart - 1] != '\n')
+        {
+            --previousLineStart;
+        }
+        const auto previousLine = source.substr(previousLineStart,
+                                                previousLineEnd - previousLineStart);
+        if (HasDirective(previousLine, "neolint-disable-next-line", ruleId)) return true;
+    }
 
-    const auto previousLine = sourceManager_.getLocForStartOfFile(decomposed.first)
-        .getLocWithOffset(static_cast<int>(previousLineStart));
-    const auto* lineStart = sourceManager_.getCharacterData(previousLine);
-    const auto* lineEnd = lineStart;
-    while (*lineEnd != '\0' && *lineEnd != '\r' && *lineEnd != '\n') ++lineEnd;
-
-    const std::string marker = "neolint-disable-next-line";
-    const std::string line(lineStart, lineEnd);
-    const auto markerPosition = line.find(marker);
-    if (markerPosition == std::string::npos) return false;
-
-    const auto declaration = Trim(line.substr(markerPosition + marker.size()));
-    const auto separator = declaration.find(':');
-    if (separator == std::string::npos) return false;
-
-    const auto declaredRule = Trim(declaration.substr(0, separator));
-    const auto reason = Trim(declaration.substr(separator + 1));
-    return declaredRule == ruleId && !reason.empty();
+    auto lineStart = std::size_t{0};
+    while (lineStart < source.size())
+    {
+        auto lineEnd = source.find('\n', lineStart);
+        if (lineEnd == std::string_view::npos) lineEnd = source.size();
+        if (HasDirective(source.substr(lineStart, lineEnd - lineStart),
+                         "neolint-disable-file", ruleId)) return true;
+        lineStart = lineEnd + 1;
+    }
+    return false;
 }
 }

@@ -42,6 +42,7 @@ public:
              neolint::DiagnosticsSink& diagnostics)
         : context_(ast, config, diagnostics), adapter_(rule_, context_)
     {
+        rule_.Configure(context_.OptionsFor(rule_.Id()));
         if (context_.SettingsFor(rule_.Id()).enabled)
         {
             rule_.RegisterMatchers(finder_, adapter_);
@@ -120,6 +121,7 @@ public:
                neolint::DiagnosticsSink& diagnostics)
         : context_(ast, config, diagnostics), adapter_(rule_, context_)
     {
+        rule_.Configure(context_.OptionsFor(rule_.Id()));
         if (context_.SettingsFor(rule_.Id()).enabled)
         {
             rule_.RegisterMatchers(finder_, adapter_);
@@ -155,7 +157,8 @@ private:
     neolint::DiagnosticsSink& diagnostics_;
 };
 
-neolint::DiagnosticList AnalyzeDPFixture(const char* fixture, const char* sourceName)
+    neolint::DiagnosticList AnalyzeDPFixture(const char* fixture, const char* sourceName,
+                         const neolint::RuleConfig& config = {})
 {
     const auto path = std::filesystem::path(NEOLINT_TEST_SOURCE_DIR) /
         "tests/fixtures/dp_registration_location" / fixture;
@@ -164,7 +167,6 @@ neolint::DiagnosticList AnalyzeDPFixture(const char* fixture, const char* source
     EXPECT_FALSE(code.empty());
 
     neolint::DiagnosticsSink diagnostics;
-    neolint::RuleConfig config;
     EXPECT_EQ(clang::tooling::runToolOnCodeWithArgs(
         std::make_unique<DPAction>(config, diagnostics), code,
         {"-std=c++20"}, sourceName), true);
@@ -214,6 +216,18 @@ TEST(PropertySourceTagRuleTests, HonorsPathScopedSeverity)
     const auto diagnostics = AnalyzeFixture("violates_wrapper.cpp", config);
     ASSERT_EQ(diagnostics.size(), 1u);
     EXPECT_EQ(diagnostics[0].severity, neolint::RuleSeverity::Error);
+}
+
+TEST(PropertySourceTagRuleTests, HonorsConfiguredWrapperMethodNames)
+{
+    const auto path = std::filesystem::temp_directory_path() /
+        "neolint-wrapper-options-test.json";
+    std::ofstream(path) << R"({"rules":{"neowpf-property-source-tag":{"options":{"wrapper_method_names":["CustomWrapper"]}}}})";
+    std::string error;
+    const auto config = neolint::RuleConfig::Load(path, error);
+    std::filesystem::remove(path);
+    ASSERT_TRUE(error.empty()) << error;
+    EXPECT_TRUE(AnalyzeFixture("violates_wrapper.cpp", config).empty());
 }
 
 TEST(PropertySourceTagRuleTests, HonorsInlineSuppressionWithReason)
@@ -274,4 +288,60 @@ TEST(DPRegistrationLocationRuleTests, IgnoresRegisterCallsOnBindingExpressions)
 {
     const auto diagnostics = AnalyzeDPFixture("binding_expression.cpp", "BindingExpression.cpp");
     EXPECT_TRUE(diagnostics.empty());
+}
+
+TEST(DPRegistrationLocationRuleTests, HonorsConfiguredFileSuffixes)
+{
+    const auto path = std::filesystem::temp_directory_path() /
+        "neolint-dp-suffix-options-test.json";
+    std::ofstream(path) << R"({"rules":{"neowpf-dp-registration-location":{"options":{"allowed_file_suffixes":["Special.cpp"]}}}})";
+    std::string error;
+    const auto config = neolint::RuleConfig::Load(path, error);
+    std::filesystem::remove(path);
+    ASSERT_TRUE(error.empty()) << error;
+    EXPECT_TRUE(AnalyzeDPFixture("violates.cpp", "ButtonSpecial.cpp", config).empty());
+}
+
+TEST(PropertySourceTagRuleTests, SupportsSameLineSuppression)
+{
+    const std::string code = R"(
+enum class PropertyValueSource { Local, Trigger };
+class UIElement
+{
+public:
+    void SetNamedPropertyValue(int, int, PropertyValueSource);
+    void SetTriggerPropertyValue(int property, int value)
+    {
+        SetNamedPropertyValue(property, value, PropertyValueSource::Local); // neolint-disable-line neowpf-property-source-tag: compatibility
+    }
+};
+)";
+    neolint::DiagnosticsSink diagnostics;
+    neolint::RuleConfig config;
+    ASSERT_TRUE(clang::tooling::runToolOnCodeWithArgs(
+        std::make_unique<Action>(config, diagnostics), code,
+        {"-std=c++20"}, "same-line.cpp"));
+    EXPECT_TRUE(diagnostics.Diagnostics().empty());
+}
+
+TEST(PropertySourceTagRuleTests, SupportsFileLevelSuppressionOnFirstLine)
+{
+    const std::string code = R"(// neolint-disable-file neowpf-property-source-tag: compatibility
+enum class PropertyValueSource { Local, Trigger };
+class UIElement
+{
+public:
+    void SetNamedPropertyValue(int, int, PropertyValueSource);
+    void SetTriggerPropertyValue(int property, int value)
+    {
+        SetNamedPropertyValue(property, value, PropertyValueSource::Local);
+    }
+};
+)";
+    neolint::DiagnosticsSink diagnostics;
+    neolint::RuleConfig config;
+    ASSERT_TRUE(clang::tooling::runToolOnCodeWithArgs(
+        std::make_unique<Action>(config, diagnostics), code,
+        {"-std=c++20"}, "file-level.cpp"));
+    EXPECT_TRUE(diagnostics.Diagnostics().empty());
 }

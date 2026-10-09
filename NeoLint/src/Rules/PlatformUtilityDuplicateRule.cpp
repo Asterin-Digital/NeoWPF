@@ -6,8 +6,11 @@
 
 #include <array>
 #include <cctype>
+#include <map>
+#include <ranges>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace neolint
 {
@@ -54,14 +57,6 @@ std::string NormalizeName(std::string value)
     return normalized;
 }
 
-const UtilityAlias* FindAlias(std::string_view name)
-{
-    for (const auto& alias : kUtilityAliases)
-    {
-        if (alias.name == name) return &alias;
-    }
-    return nullptr;
-}
 }
 
 std::string_view PlatformUtilityDuplicateRule::Id() const noexcept
@@ -79,11 +74,44 @@ RuleSeverity PlatformUtilityDuplicateRule::DefaultSeverity() const noexcept
     return RuleSeverity::Warning;
 }
 
+bool PlatformUtilityDuplicateRule::ValidateOptions(
+    const RuleOptions& options, std::string& error) const
+{
+    for (const auto& key : options.Keys())
+    {
+        const bool valid = (key == "aliases" &&
+                options.TypeOf(key) == RuleOptions::Type::StringMap) ||
+            (key == "ignored_names" &&
+                options.TypeOf(key) == RuleOptions::Type::StringList) ||
+            (key == "canonical_namespace" &&
+                options.TypeOf(key) == RuleOptions::Type::String);
+        if (valid) continue;
+        error = "rule '" + std::string(Id()) + "' has invalid option '" + key + "'";
+        return false;
+    }
+    return true;
+}
+
+void PlatformUtilityDuplicateRule::Configure(const RuleOptions& options)
+{
+    aliases_.clear();
+    for (const auto& alias : kUtilityAliases)
+    {
+        aliases_.emplace(alias.name, alias.canonical);
+    }
+    for (auto& [name, target] : options.GetStringMap("aliases"))
+    {
+        aliases_.insert_or_assign(NormalizeName(std::move(name)), std::move(target));
+    }
+    ignoredNames_ = options.GetStrings("ignored_names");
+    canonicalNamespace_ = options.GetString("canonical_namespace", "NeoWPF::Platform");
+}
+
 void PlatformUtilityDuplicateRule::RegisterMatchers(
     MatchFinder& finder, MatchFinder::MatchCallback& callback)
 {
     finder.addMatcher(
-        functionDecl(isDefinition(), unless(cxxMethodDecl()), isExpansionInMainFile())
+        functionDecl(isDefinition(), unless(cxxMethodDecl()))
             .bind("platform-utility-duplicate"),
         &callback);
 }
@@ -92,18 +120,19 @@ void PlatformUtilityDuplicateRule::OnMatch(
     const MatchFinder::MatchResult& result, RuleContext& context)
 {
     const auto* function = result.Nodes.getNodeAs<clang::FunctionDecl>("platform-utility-duplicate");
-    if (!function || !context.SourceMgr().isInMainFile(function->getLocation())) return;
+    if (!function) return;
 
     const auto qualifiedName = function->getQualifiedNameAsString();
-    if (qualifiedName.starts_with("NeoWPF::Platform::")) return;
+    if (qualifiedName.starts_with(canonicalNamespace_ + "::")) return;
 
     const auto normalizedName = NormalizeName(function->getNameAsString());
-    const auto* alias = FindAlias(normalizedName);
-    if (!alias) return;
+    if (std::ranges::find(ignoredNames_, normalizedName) != ignoredNames_.end()) return;
+    const auto alias = aliases_.find(normalizedName);
+    if (alias == aliases_.end()) return;
 
     context.Report(Id(), function->getLocation(), context.SettingsFor(Id()).severity,
                    "Local function '" + function->getNameAsString() +
-                       "' duplicates " + std::string(alias->canonical));
+                       "' duplicates " + alias->second);
 }
 
 namespace

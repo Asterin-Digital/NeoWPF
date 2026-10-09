@@ -31,20 +31,34 @@ if(NOT EXISTS "${NEOLINT_VCPKG_PREFIX}/share/nlohmann_json/nlohmann_jsonConfig.c
 endif()
 list(PREPEND CMAKE_PREFIX_PATH "${NEOLINT_VCPKG_PREFIX}")
 
-set(NEOLINT_LLVM_ROOT "$ENV{IREFLECT_LLVM_ROOT}" CACHE PATH
-  "External LLVM/Clang SDK prefix")
-if(NOT NEOLINT_LLVM_ROOT)
-  message(FATAL_ERROR
-    "NEOLINT_LLVM_ROOT must point to an external LLVM/Clang SDK. "
-    "The IREFLECT_LLVM_ROOT environment variable is accepted as the default.")
+if(WIN32)
+  set(NEOLINT_CLANG_ROOT_ENV_NAME "WINDOWS_CLANG_ROOT")
+  set(NEOLINT_CLANG_SDK_PATH "$ENV{WINDOWS_CLANG_ROOT}" CACHE PATH
+    "Windows LLVM/Clang SDK prefix")
+else()
+  set(NEOLINT_CLANG_ROOT_ENV_NAME "LINUX_CLANG_ROOT")
+  set(NEOLINT_CLANG_SDK_PATH "$ENV{LINUX_CLANG_ROOT}" CACHE PATH
+    "Linux LLVM/Clang SDK prefix")
 endif()
 
-set(LLVM_DIR "${NEOLINT_LLVM_ROOT}/share/llvm" CACHE PATH
+if(NOT NEOLINT_CLANG_SDK_PATH)
+  message(FATAL_ERROR
+    "${NEOLINT_CLANG_ROOT_ENV_NAME} must point to the external LLVM/Clang SDK")
+endif()
+
+if(NOT EXISTS "${NEOLINT_CLANG_SDK_PATH}/include/llvm/ADT/StringRef.h" OR
+   NOT EXISTS "${NEOLINT_CLANG_SDK_PATH}/include/clang/AST/ASTContext.h")
+  message(FATAL_ERROR
+    "${NEOLINT_CLANG_ROOT_ENV_NAME} does not contain the LLVM/Clang headers: ${NEOLINT_CLANG_SDK_PATH}")
+endif()
+
+set(LLVM_DIR "${NEOLINT_CLANG_SDK_PATH}/share/llvm" CACHE PATH
   "LLVM CMake package directory" FORCE)
-set(Clang_DIR "${NEOLINT_LLVM_ROOT}/share/clang" CACHE PATH
+set(Clang_DIR "${NEOLINT_CLANG_SDK_PATH}/share/clang" CACHE PATH
   "Clang CMake package directory" FORCE)
 find_package(LLVM CONFIG REQUIRED)
 find_package(Clang CONFIG REQUIRED)
+message(STATUS "LLVM/Clang SDK root: ${NEOLINT_CLANG_SDK_PATH}")
 find_package(nlohmann_json CONFIG REQUIRED)
 if(BUILD_TESTING)
   find_package(GTest CONFIG REQUIRED)
@@ -93,7 +107,7 @@ target_link_libraries(NeoLint PRIVATE
 )
 
 if(MSVC)
-  target_compile_options(NeoLint PRIVATE /W4 /permissive- /external:W0)
+  target_compile_options(NeoLint PRIVATE /W4 /permissive- /external:anglebrackets /external:W0 /wd4267)
 endif()
 
 if(BUILD_TESTING)
@@ -122,7 +136,7 @@ if(BUILD_TESTING)
     LLVMSupport
   )
   if(MSVC)
-    target_compile_options(NeoLint.Tests PRIVATE /W4 /permissive- /external:W0)
+    target_compile_options(NeoLint.Tests PRIVATE /W4 /permissive- /external:anglebrackets /external:W0 /wd4267)
   endif()
   include(GoogleTest)
   gtest_discover_tests(NeoLint.Tests)

@@ -7,6 +7,8 @@
 #include <clang/AST/ASTContext.h>
 #include <clang/Basic/SourceManager.h>
 
+#include <unordered_map>
+
 namespace neolint
 {
 class RuleContext
@@ -19,6 +21,7 @@ public:
     clang::SourceManager& SourceMgr() const noexcept;
     const RuleConfig& Config() const noexcept;
     RuleSettings SettingsFor(std::string_view ruleId) const;
+    RuleOptions OptionsFor(std::string_view ruleId) const;
     void Report(std::string_view ruleId, clang::SourceLocation location,
                 RuleSeverity severity, std::string message) const;
 
@@ -28,5 +31,6 @@ private:
     DiagnosticsSink& diagnostics_;
     Suppression suppression_;
     bool strict_ = false;
+    mutable std::unordered_map<std::string, RuleSettings> settingsCache_;
 };
 }

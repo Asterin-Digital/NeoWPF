@@ -4,7 +4,25 @@
 
 #include <clang/ASTMatchers/ASTMatchers.h>
 
+#include <algorithm>
+#include <ranges>
 #include <string>
+
+namespace clang::ast_matchers
+{
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4100)
+#endif
+AST_MATCHER_P(FunctionDecl, hasConfiguredRegistrationName,
+              std::vector<std::string>, Names)
+{
+    return std::ranges::find(Names, Node.getNameAsString()) != Names.end();
+}
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+}
 
 namespace neolint
 {
@@ -28,15 +46,32 @@ RuleSeverity DPRegistrationLocationRule::DefaultSeverity() const noexcept
 void DPRegistrationLocationRule::RegisterMatchers(
     MatchFinder& finder, MatchFinder::MatchCallback& callback)
 {
-    finder.addMatcher(
-        callExpr(
-            callee(functionDecl(anyOf(
-                hasName("RegisterProperty"),
-                hasName("RegisterAttachedProperty"),
-                hasName("RegisterStaticPropertyHandle"),
-                    allOf(hasAnyName("Register", "RegisterAttached"),
-                        cxxMethodDecl(ofClass(cxxRecordDecl(hasName("DependencyProperty"))))))))
-        ).bind("dependency-property-registration"), &callback);
+    finder.addMatcher(callExpr(callee(functionDecl(
+        hasConfiguredRegistrationName(registrationNames_))))
+        .bind("dependency-property-registration"), &callback);
+}
+
+bool DPRegistrationLocationRule::ValidateOptions(
+    const RuleOptions& options, std::string& error) const
+{
+    for (const auto& key : options.Keys())
+    {
+        const bool valid =
+            (key == "allowed_file_suffixes" &&
+                options.TypeOf(key) == RuleOptions::Type::StringList) ||
+            (key == "registration_function_names" &&
+                options.TypeOf(key) == RuleOptions::Type::StringList);
+        if (valid) continue;
+        error = "rule '" + std::string(Id()) + "' has invalid option '" + key + "'";
+        return false;
+    }
+    return true;
+}
+
+void DPRegistrationLocationRule::Configure(const RuleOptions& options)
+{
+    allowedSuffixes_ = options.GetStrings("allowed_file_suffixes", allowedSuffixes_);
+    registrationNames_ = options.GetStrings("registration_function_names", registrationNames_);
 }
 
 void DPRegistrationLocationRule::OnMatch(
@@ -45,16 +80,22 @@ void DPRegistrationLocationRule::OnMatch(
     const auto* call = result.Nodes.getNodeAs<clang::CallExpr>(
         "dependency-property-registration");
     if (!call) return;
-
-    if (!context.SourceMgr().isInMainFile(call->getExprLoc())) return;
+    const auto* function = call->getDirectCallee();
+    if (!function || std::ranges::find(registrationNames_, function->getNameAsString()) ==
+        registrationNames_.end()) return;
+    if (function->getName() == "Register" || function->getName() == "RegisterAttached")
+    {
+        const auto* method = llvm::dyn_cast<clang::CXXMethodDecl>(function);
+        if (!method || method->getParent()->getName() != "DependencyProperty") return;
+    }
 
     const auto presumed = context.SourceMgr().getPresumedLoc(call->getExprLoc());
     if (presumed.isInvalid()) return;
 
     const std::string filename = presumed.getFilename();
-    constexpr std::string_view propertiesSuffix = "Properties.cpp";
-    if (filename.size() >= propertiesSuffix.size() &&
-        filename.ends_with(propertiesSuffix))
+    if (std::ranges::any_of(allowedSuffixes_, [&](const std::string& suffix) {
+        return filename.ends_with(suffix);
+    }))
     {
         return;
     }

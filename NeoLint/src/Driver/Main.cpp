@@ -2,9 +2,11 @@
 #include <NeoLint/Core/DiagnosticsSink.h>
 #include <NeoLint/Core/RuleRegistry.h>
 
+#include <charconv>
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <string_view>
 
 namespace
 {
@@ -14,7 +16,7 @@ void PrintUsage(const char* executable)
               << " --compile-commands <compile_commands.json> [--config <.neolint.json>]"
               << " [--build-config <Debug|Release|RelWithDebInfo|MinSizeRel>]"
               << " [--report <report.json>] [--cache <cache.json>]"
-              << " [--source-root <src-or-include>]... [--strict]\n"
+              << " [--source-root <src-or-include>]... [--jobs N] [--strict]\n"
               << "       " << executable << " --list-rules\n";
 }
 }
@@ -22,6 +24,7 @@ void PrintUsage(const char* executable)
 int main(int argc, char** argv)
 {
     neolint::AnalysisOptions options;
+    options.executable = argv[0];
     bool listRules = false;
     for (int index = 1; index < argc; ++index)
     {
@@ -39,6 +42,26 @@ int main(int argc, char** argv)
         if (argument == "--strict")
         {
             options.strict = true;
+            continue;
+        }
+        if (argument == "--jobs" || argument == "-j")
+        {
+            if (index + 1 >= argc)
+            {
+                std::cerr << "NeoLint: unknown or incomplete argument: " << argument << '\n';
+                PrintUsage(argv[0]);
+                return EXIT_FAILURE;
+            }
+            const std::string_view value(argv[++index]);
+            std::size_t jobs = 0;
+            const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), jobs);
+            if (error != std::errc{} || end != value.data() + value.size() || jobs == 0)
+            {
+                std::cerr << "NeoLint: unknown or incomplete argument: " << argument << '\n';
+                PrintUsage(argv[0]);
+                return EXIT_FAILURE;
+            }
+            options.jobs = jobs;
             continue;
         }
         if ((argument == "--compile-commands" || argument == "--config" ||
@@ -60,7 +83,25 @@ int main(int argc, char** argv)
 
     if (listRules)
     {
-        for (const auto& id : neolint::RuleRegistry::Instance().Ids()) std::cout << id << '\n';
+        for (const auto& id : neolint::RuleRegistry::Instance().Ids())
+        {
+            if (auto rule = neolint::RuleRegistry::Instance().Create(id))
+            {
+                std::cout << id << " [AST, "
+                          << (rule->DefaultSeverity() == neolint::RuleSeverity::Error ?
+                              "error" : rule->DefaultSeverity() == neolint::RuleSeverity::Info ?
+                                  "info" : "warning")
+                          << "]: " << rule->Description() << '\n';
+            }
+            else if (auto treeRule = neolint::RuleRegistry::Instance().CreateTree(id))
+            {
+                std::cout << id << " [tree, "
+                          << (treeRule->DefaultSeverity() == neolint::RuleSeverity::Error ?
+                              "error" : treeRule->DefaultSeverity() == neolint::RuleSeverity::Info ?
+                                  "info" : "warning")
+                          << "]: " << treeRule->Description() << '\n';
+            }
+        }
         return EXIT_SUCCESS;
     }
     if (options.compilationDatabase.empty())

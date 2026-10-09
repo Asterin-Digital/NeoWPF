@@ -42,6 +42,7 @@ public:
              neolint::DiagnosticsSink& diagnostics)
         : context_(ast, config, diagnostics), adapter_(rule_, context_)
     {
+        rule_.Configure(context_.OptionsFor(rule_.Id()));
         if (context_.SettingsFor(rule_.Id()).enabled)
         {
             rule_.RegisterMatchers(finder_, adapter_);

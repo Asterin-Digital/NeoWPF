@@ -1,25 +1,17 @@
 #include <NeoLint/Rules/SourceLayoutRule.h>
-#include <NeoLint/Core/RuleContext.h>
 #include <NeoLint/Core/RuleRegistry.h>
 
-#include <clang/ASTMatchers/ASTMatchers.h>
-
 #include <algorithm>
-#include <array>
 #include <cctype>
 #include <filesystem>
+#include <ranges>
 #include <string>
 #include <string_view>
 
 namespace neolint
 {
-using namespace clang::ast_matchers;
-
 namespace
 {
-constexpr std::array kHeaderExtensions{".h"};
-constexpr std::array kSourceExtensions{".cpp"};
-
 std::string Lowercase(std::string value)
 {
     std::transform(value.begin(), value.end(), value.begin(), [](unsigned char character) {
@@ -28,20 +20,6 @@ std::string Lowercase(std::string value)
     return value;
 }
 
-bool HasExtension(const std::filesystem::path& path, const auto& extensions)
-{
-    const auto extension = Lowercase(path.extension().string());
-    return std::ranges::find(extensions, extension) != extensions.end();
-}
-
-bool HasDirectory(const std::filesystem::path& path, std::string_view directory)
-{
-    const auto expected = Lowercase(std::string(directory));
-    for (const auto& component : path) {
-        if (Lowercase(component.string()) == expected) return true;
-    }
-    return false;
-}
 }
 
 std::string_view SourceLayoutRule::Id() const noexcept
@@ -59,37 +37,66 @@ RuleSeverity SourceLayoutRule::DefaultSeverity() const noexcept
     return RuleSeverity::Error;
 }
 
-void SourceLayoutRule::RegisterMatchers(
-    MatchFinder& finder, MatchFinder::MatchCallback& callback)
+bool SourceLayoutRule::ValidateOptions(
+    const RuleOptions& options, std::string& error) const
 {
-    finder.addMatcher(translationUnitDecl().bind("source-layout-translation-unit"), &callback);
+    for (const auto& key : options.Keys())
+    {
+        const bool valid =
+            (key == "src_forbidden_extensions" ||
+             key == "include_forbidden_extensions") &&
+            options.TypeOf(key) == RuleOptions::Type::StringList;
+        if (valid) continue;
+        error = "rule '" + std::string(Id()) + "' has invalid option '" + key + "'";
+        return false;
+    }
+    return true;
 }
 
-void SourceLayoutRule::OnMatch(
-    const MatchFinder::MatchResult& result, RuleContext& context)
+void SourceLayoutRule::Run(
+    const std::vector<std::filesystem::path>& sourceRoots,
+    const RuleConfig& config, DiagnosticsSink& diagnostics)
 {
-    if (!result.Context || !result.SourceManager) return;
+    for (const auto& root : sourceRoots)
+    {
+        const auto rootName = Lowercase(root.filename().string());
+        const bool headersForbidden = rootName == "src";
+        const bool sourcesForbidden = rootName == "include";
+        if (!headersForbidden && !sourcesForbidden) continue;
 
-    const auto location = result.SourceManager->getLocForStartOfFile(
-        result.SourceManager->getMainFileID());
-    const std::filesystem::path filePath(
-        result.SourceManager->getFilename(location).str());
-    const bool underSource = HasDirectory(filePath, "src");
-    const bool underInclude = HasDirectory(filePath, "include");
-    const bool isHeader = HasExtension(filePath, kHeaderExtensions);
-    const bool isSource = HasExtension(filePath, kSourceExtensions);
-
-    if (underSource && isHeader) {
-        context.Report(Id(), location, context.SettingsFor(Id()).severity,
-                       "Header file is not allowed under src/: " + filePath.string());
-    } else if (underInclude && isSource) {
-        context.Report(Id(), location, context.SettingsFor(Id()).severity,
-                       "Source file is not allowed under include/: " + filePath.string());
+        std::error_code error;
+        std::filesystem::recursive_directory_iterator entry(root, error), end;
+        while (!error && entry != end)
+        {
+            const auto filePath = entry->path();
+            if (entry->is_regular_file(error))
+            {
+                auto settings = config.SettingsFor(Id(), filePath);
+                if (!config.HasRule(Id())) settings.severity = DefaultSeverity();
+                const auto extension = Lowercase(filePath.extension().string());
+                const auto forbiddenExtensions = settings.options.GetStrings(
+                    headersForbidden ? "src_forbidden_extensions" :
+                        "include_forbidden_extensions",
+                    headersForbidden ? RuleOptions::StringList{".h"} :
+                        RuleOptions::StringList{".cpp"});
+                const bool forbidden = std::ranges::any_of(forbiddenExtensions,
+                    [&](const std::string& item) { return Lowercase(item) == extension; });
+                if (settings.enabled && forbidden)
+                {
+                    diagnostics.Report({std::string(Id()), settings.severity,
+                        {filePath.generic_string(), 1, 1},
+                        std::string(headersForbidden ?
+                            "Header file is not allowed under src/: " :
+                            "Source file is not allowed under include/: ") + filePath.string()});
+                }
+            }
+            entry.increment(error);
+        }
     }
 }
 
 namespace
 {
-const RuleRegistrar<SourceLayoutRule> registrar;
+const TreeRuleRegistrar<SourceLayoutRule> registrar;
 }
 }

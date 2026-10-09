@@ -10,7 +10,11 @@ class DiagnosticsSink
 {
 public:
     void Report(RuleDiagnostic diagnostic);
-    void WriteHuman(std::string_view programName) const;
+    /*
+        @internal
+    */
+    void SortAndDeduplicate();
+    void WriteHuman() const;
     bool HasErrors() const noexcept;
     const DiagnosticList& Diagnostics() const noexcept;
 

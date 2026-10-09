@@ -1,11 +1,14 @@
 #include <NeoLint/Diagnostics/Logger.h>
 
 #include <iostream>
+#include <mutex>
 
 namespace neolint::diagnostics
 {
 void Logger::Write(Level level, std::string_view message)
 {
+    static std::mutex writeMutex;
+    const std::lock_guard<std::mutex> lock(writeMutex);
     auto& stream = level == Level::Info ? std::cout : std::cerr;
     const char* label = level == Level::Info ? "info" :
         level == Level::Warning ? "warning" : "error";

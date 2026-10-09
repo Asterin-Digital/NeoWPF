@@ -1,4 +1,5 @@
 #include <NeoLint/Core/RuleContext.h>
+#include <NeoLint/Core/RuleRegistry.h>
 
 namespace neolint
 {
@@ -32,9 +33,25 @@ const RuleConfig& RuleContext::Config() const noexcept
 
 RuleSettings RuleContext::SettingsFor(std::string_view ruleId) const
 {
+    const auto key = std::string(ruleId);
+    const auto cached = settingsCache_.find(key);
+    if (cached != settingsCache_.end()) return cached->second;
     const auto mainFile = SourceMgr().getLocForStartOfFile(SourceMgr().getMainFileID());
-    return config_.SettingsFor(ruleId,
-                               std::filesystem::path(SourceMgr().getFilename(mainFile).str()));
+    auto settings = config_.SettingsFor(ruleId,
+        std::filesystem::path(SourceMgr().getFilename(mainFile).str()));
+    if (!config_.HasRule(ruleId))
+    {
+        if (const auto rule = RuleRegistry::Instance().Create(ruleId))
+        {
+            settings.severity = rule->DefaultSeverity();
+        }
+    }
+    return settingsCache_.emplace(key, std::move(settings)).first->second;
+}
+
+RuleOptions RuleContext::OptionsFor(std::string_view ruleId) const
+{
+    return SettingsFor(ruleId).options;
 }
 
 void RuleContext::Report(std::string_view ruleId, clang::SourceLocation location,
