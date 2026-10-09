@@ -1,6 +1,5 @@
 #include <NeoWPF/UI/Styling/Triggers/Trigger.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
-#include "AnyEquals.h"
 
 namespace NeoWPF::UI::Styling::Triggers {
 
@@ -46,7 +45,7 @@ bool Trigger::Evaluate(UIElement* element) const {
         return false;
     }
 
-    return Detail::AnyEquals(*element, *property, m_value);
+    return NeoWPF::UI::Properties::ValuesEqual(*element, *property, m_value);
 }
 
 }

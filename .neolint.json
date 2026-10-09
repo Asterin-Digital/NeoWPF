@@ -6,11 +6,27 @@
     },
     "neowpf-dp-registration-location": {
       "enabled": true,
-      "severity": "error"
+      "severity": "error",
+      "paths": {
+        "*include/NeoWPF/UI/Properties/DependencyProperty.h": {
+          "enabled": false
+        },
+        "*include/NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h": {
+          "enabled": false
+        }
+      }
     },
     "neowpf-source-layout": {
       "enabled": true,
       "severity": "error"
+    },
+    "neowpf-forbidden-namespace": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "neowpf-virtual-destructor": {
+      "enabled": true,
+      "severity": "warning"
     },
     "neowpf-platform-utility-duplicate": {
       "enabled": true,
