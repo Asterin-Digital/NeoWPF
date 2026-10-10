@@ -140,6 +140,23 @@ internal struct NwResolveMemberRequest
 }
 
 [StructLayout(LayoutKind.Sequential)]
+internal struct NwCreateObjectRequest
+{
+    public NwRequestHeader Header;
+    public NwReference Constructor;
+    public nint Arguments;
+    public uint ArgumentCount;
+    public uint Policy;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct NwOperationSink
+{
+    public nint UserData;
+    public nint Completed;
+}
+
+[StructLayout(LayoutKind.Sequential)]
 internal struct NwInvokeRequest
 {
     public NwRequestHeader Header;
@@ -215,24 +232,73 @@ public struct NwBridgeInitInfo
 
 internal static class AbiLayouts
 {
+    [StructLayout(LayoutKind.Sequential)]
+    private struct AlignmentProbe<T> where T : struct
+    {
+        public byte Prefix;
+        public T Value;
+    }
+
+    private static int AlignmentOf<T>() where T : struct =>
+        Marshal.OffsetOf<AlignmentProbe<T>>(nameof(AlignmentProbe<T>.Value)).ToInt32();
+
     public static bool Validate() =>
+        AbiConstants.Validate() &&
         Marshal.SizeOf<NwReference>() == 16 &&
+        AlignmentOf<NwReference>() == 4 &&
         Marshal.OffsetOf<NwReference>(nameof(NwReference.Kind)).ToInt32() == 12 &&
         Marshal.SizeOf<NwStringView>() == 16 &&
+        AlignmentOf<NwStringView>() == 8 &&
         Marshal.OffsetOf<NwStringView>(nameof(NwStringView.Length)).ToInt32() == 8 &&
         Marshal.SizeOf<NwByteView>() == 16 &&
+        AlignmentOf<NwByteView>() == 8 &&
+        Marshal.OffsetOf<NwByteView>(nameof(NwByteView.Length)).ToInt32() == 8 &&
         Marshal.SizeOf<NwArrayView>() == 16 &&
+        AlignmentOf<NwArrayView>() == 8 &&
+        Marshal.OffsetOf<NwArrayView>(nameof(NwArrayView.Count)).ToInt32() == 8 &&
         Marshal.SizeOf<NwDecimal>() == 16 &&
+        AlignmentOf<NwDecimal>() == 4 &&
         Marshal.OffsetOf<NwDecimal>(nameof(NwDecimal.Flags)).ToInt32() == 12 &&
         Marshal.SizeOf<NwValue>() == 24 &&
+        AlignmentOf<NwValue>() == 8 &&
         Marshal.OffsetOf<NwValue>(nameof(NwValue.Payload)).ToInt32() == 8 &&
+        Marshal.SizeOf<NwError>() == 72 &&
+        AlignmentOf<NwError>() == 8 &&
+        Marshal.OffsetOf<NwError>(nameof(NwError.Message)).ToInt32() == 8 &&
+        Marshal.OffsetOf<NwError>(nameof(NwError.ManagedTypeName)).ToInt32() == 24 &&
+        Marshal.OffsetOf<NwError>(nameof(NwError.StackTrace)).ToInt32() == 40 &&
+        Marshal.OffsetOf<NwError>(nameof(NwError.Exception)).ToInt32() == 56 &&
+        Marshal.SizeOf<NwResult>() == 112 &&
+        AlignmentOf<NwResult>() == 8 &&
+        Marshal.OffsetOf<NwResult>(nameof(NwResult.Value)).ToInt32() == 16 &&
+        Marshal.OffsetOf<NwResult>(nameof(NwResult.Error)).ToInt32() == 40 &&
         Marshal.SizeOf<NwBridgeApi>() == 168 &&
+        AlignmentOf<NwBridgeApi>() == 8 &&
         Marshal.SizeOf<NwRequestHeader>() == 8 &&
+        AlignmentOf<NwRequestHeader>() == 4 &&
         Marshal.SizeOf<NwLoadAssemblyRequest>() == 48 &&
         Marshal.SizeOf<NwResolveTypeRequest>() == 80 &&
         Marshal.SizeOf<NwParameterDescriptor>() == 24 &&
         Marshal.SizeOf<NwResolveMemberRequest>() == 72 &&
+        Marshal.SizeOf<NwCreateObjectRequest>() == 40 &&
+        Marshal.SizeOf<NwOperationSink>() == 16 &&
+        Marshal.SizeOf<NwParameterDescriptor>() == 24 &&
+        AlignmentOf<NwParameterDescriptor>() == 4 &&
         Marshal.SizeOf<NwInvokeRequest>() == 88 &&
         Marshal.SizeOf<NwVerifyContractRequest>() == 48 &&
-        Marshal.SizeOf<NwBridgeInitInfo>() == 24;
+        Marshal.SizeOf<NwHostCallbacks>() == 24 &&
+        AlignmentOf<NwHostCallbacks>() == 8 &&
+        Marshal.OffsetOf<NwHostCallbacks>(nameof(NwHostCallbacks.Log)).ToInt32() == 16 &&
+        Marshal.OffsetOf<NwHostCallbacks>(nameof(NwHostCallbacks.UserData)).ToInt32() == 8 &&
+        Marshal.SizeOf<NwBridgeInitInfo>() == 24 &&
+        AlignmentOf<NwBridgeInitInfo>() == 8 &&
+        Marshal.OffsetOf<NwBridgeInitInfo>(nameof(NwBridgeInitInfo.ContextId)).ToInt32() == 8 &&
+        Marshal.OffsetOf<NwBridgeInitInfo>(nameof(NwBridgeInitInfo.Host)).ToInt32() == 16 &&
+        AlignmentOf<NwLoadAssemblyRequest>() == 8 &&
+        AlignmentOf<NwResolveTypeRequest>() == 8 &&
+        AlignmentOf<NwResolveMemberRequest>() == 8 &&
+        AlignmentOf<NwCreateObjectRequest>() == 8 &&
+        AlignmentOf<NwOperationSink>() == 8 &&
+        AlignmentOf<NwInvokeRequest>() == 8 &&
+        AlignmentOf<NwVerifyContractRequest>() == 8;
 }
