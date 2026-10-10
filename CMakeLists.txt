@@ -921,6 +921,54 @@ if(BUILD_TESTING)
         )
         target_compile_definitions(NeoWPF.DotNet.AutomatedTests PRIVATE
             NEOWPF_INTERNAL_BUILD
+            "NEOWPF_DOTNET_BINDING_DIRECTORY=\"${CMAKE_CURRENT_BINARY_DIR}/generated/dotnet/fixture-bindings/$<CONFIG>\""
+        )
+        set(NEOWPF_DOTNET_FIXTURE_BINDING_DIR
+            "${CMAKE_CURRENT_BINARY_DIR}/generated/dotnet/fixture-bindings/$<CONFIG>")
+        set(NEOWPF_DOTNET_GENERATED_BINDING_FILES
+            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/InvoiceService.g.h"
+            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/InvoiceService.g.cpp"
+            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/InvoiceService.Bindings.g.cs"
+            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/BasicAssembly.Bindings.csproj"
+            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/BasicAssembly.contract"
+            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/managed/BasicAssembly.dll"
+            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/managed/BasicAssembly.Bindings.dll"
+        )
+        set(NEOWPF_DOTNET_GENERATOR_DLL
+            "${CMAKE_CURRENT_SOURCE_DIR}/dotnet/NeoWPF/Interop/Generator/bin/$<CONFIG>/net10.0/NeoWPF.DotNet.Generator.dll")
+        add_custom_command(
+            OUTPUT ${NEOWPF_DOTNET_GENERATED_BINDING_FILES}
+            COMMAND "${CMAKE_COMMAND}" -E make_directory
+                "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/managed"
+            COMMAND "${NEOWPF_DOTNET_EXECUTABLE}" build
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/BasicAssembly/BasicAssembly.csproj"
+                --configuration $<CONFIG>
+                --output "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/managed"
+            COMMAND "${NEOWPF_DOTNET_EXECUTABLE}" exec "${NEOWPF_DOTNET_GENERATOR_DLL}"
+                generate
+                --binding "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/BasicAssembly/AddTen.nwbind"
+                --assembly "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/managed/BasicAssembly.dll"
+                --output "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}"
+            COMMAND "${NEOWPF_DOTNET_EXECUTABLE}" build
+                "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/BasicAssembly.Bindings.csproj"
+                --configuration $<CONFIG>
+                --output "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/managed"
+            DEPENDS
+                "${NEOWPF_DOTNET_GENERATOR_DLL}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/BasicAssembly/BasicAssembly.csproj"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/BasicAssembly/AddTen.nwbind"
+            VERBATIM
+        )
+        add_custom_target(NeoWPF.DotNet.GeneratedBinding
+            DEPENDS ${NEOWPF_DOTNET_GENERATED_BINDING_FILES}
+        )
+        add_dependencies(NeoWPF.DotNet.GeneratedBinding NeoWPF.DotNet.Generator)
+        add_dependencies(NeoWPF.DotNet.AutomatedTests NeoWPF.DotNet.GeneratedBinding)
+        target_sources(NeoWPF.DotNet.AutomatedTests PRIVATE
+            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/InvoiceService.g.cpp"
+        )
+        target_include_directories(NeoWPF.DotNet.AutomatedTests PRIVATE
+            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}"
         )
         if(MSVC)
             add_custom_command(TARGET NeoWPF.DotNet.AutomatedTests POST_BUILD
@@ -930,14 +978,16 @@ if(BUILD_TESTING)
                 VERBATIM
             )
         endif()
-        add_custom_command(TARGET NeoWPF.DotNet.AutomatedTests POST_BUILD
+        add_custom_target(NeoWPF.DotNet.BridgeDeployment
             COMMAND "${CMAKE_COMMAND}" -E make_directory
                 "$<TARGET_FILE_DIR:NeoWPF.DotNet.AutomatedTests>/NeoWPF.DotNet"
             COMMAND "${CMAKE_COMMAND}" -E copy_directory
                 "${NEOWPF_DOTNET_BRIDGE_OUTPUT_DIR}"
                 "$<TARGET_FILE_DIR:NeoWPF.DotNet.AutomatedTests>/NeoWPF.DotNet"
+            DEPENDS NeoWPF.DotNet.Bridge
             VERBATIM
         )
+        add_dependencies(NeoWPF.DotNet.AutomatedTests NeoWPF.DotNet.BridgeDeployment)
         gtest_discover_tests(NeoWPF.DotNet.AutomatedTests)
 
         set(NEOWPF_DOTNET_TEST_SCRIPT

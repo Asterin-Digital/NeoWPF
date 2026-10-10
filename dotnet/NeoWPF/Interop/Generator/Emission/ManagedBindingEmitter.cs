@@ -7,27 +7,16 @@ internal static class ManagedBindingEmitter
 {
     public static string Emit(
         BindingModel model,
-        CanonicalType type,
-        InspectedMethod method,
         string fingerprint)
     {
-        var simpleTypeName = model.Types.Single(candidate => candidate.ManagedName == type.Name).NativeName;
-        var parameters = string.Join(", ", method.Parameters.Select(parameter =>
-            $"{parameter.TypeName} {parameter.Name}"));
+        var simpleTypeName = model.Types.Single().NativeName;
 
         return $$"""
-using System;
-
 namespace {{model.Name}};
 
 public static class {{simpleTypeName}}Bindings
 {
     public const string ContractFingerprint = "{{fingerprint}}";
-
-    public static {{method.ReturnTypeName}} {{method.Name}}({{parameters}})
-    {
-        throw new NotSupportedException("This generated binding is only a compilation fixture.");
-    }
 }
 """;
     }
@@ -40,10 +29,12 @@ public static class {{simpleTypeName}}Bindings
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AssemblyName>{{model.Name}}.Bindings</AssemblyName>
     <RootNamespace>{{model.Name}}</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="{{model.Types.Single().NativeName}}.Bindings.g.cs" />
     <Reference Include="{{identity.Name}}">
       <HintPath>{{identity.Location}}</HintPath>
     </Reference>

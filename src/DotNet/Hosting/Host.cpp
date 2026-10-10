@@ -90,94 +90,112 @@ bool IsFrameworkMissingDiagnostic(const std::string& message)
 
 HostStatus Host::Start(const HostOptions& options)
 {
-    if (m_started)
+    if (m_session.IsAlive())
         return HostStatus(HostStatusCode::AlreadyStarted);
 
-    const auto hostStatus = ResolveHostFxrPathStatus(options);
-    if (!hostStatus.Succeeded())
-        return hostStatus;
-
-    const auto hostFxrPath = ResolveHostFxrPath(options);
-    const auto loadStatus = m_hostFxrLibrary.Load(hostFxrPath);
-    if (!loadStatus.Succeeded())
-        return loadStatus;
-
-    constexpr std::array<const char*, 3> requiredExports{
-        "hostfxr_initialize_for_runtime_config",
-        "hostfxr_get_runtime_delegate",
-        "hostfxr_close"
-    };
-    for (const auto* exportName : requiredExports)
+    std::filesystem::path bridgeDirectory;
+    if (!m_runtimeDelegate)
     {
-        if (!m_hostFxrLibrary.HasExport(exportName))
+        const auto hostStatus = ResolveHostFxrPathStatus(options);
+        if (!hostStatus.Succeeded())
+            return hostStatus;
+
+        const auto hostFxrPath = ResolveHostFxrPath(options);
+        const auto loadStatus = m_hostFxrLibrary.Load(hostFxrPath);
+        if (!loadStatus.Succeeded())
+            return loadStatus;
+
+        constexpr std::array<const char*, 3> requiredExports{
+            "hostfxr_initialize_for_runtime_config",
+            "hostfxr_get_runtime_delegate",
+            "hostfxr_close"
+        };
+        for (const auto* exportName : requiredExports)
         {
-            return HostStatus(HostStatusCode::HostFxrSymbolMissing)
-                .SetMessage("A required hostfxr export is missing.")
-                .SetHint(exportName);
+            if (!m_hostFxrLibrary.HasExport(exportName))
+            {
+                return HostStatus(HostStatusCode::HostFxrSymbolMissing)
+                    .SetMessage("A required hostfxr export is missing.")
+                    .SetHint(exportName);
+            }
+        }
+
+        bridgeDirectory = HostFxr::ResolveLocation(
+            HostFxr::GetExecutableDirectory(),
+            options.bridgeDirectory);
+        if (bridgeDirectory.empty())
+        {
+            return HostStatus(HostStatusCode::BridgeMissing)
+                .SetMessage("The managed bridge files could not be located.")
+                .SetHint("Deploy NeoWPF.DotNet.Bridge next to the application or set bridgeDirectory.");
+        }
+
+        const auto runtimeConfigPath = bridgeDirectory / "NeoWPF.DotNet.Bridge.runtimeconfig.json";
+        m_hostFxrLibrary.SetErrorWriter(m_hostFxrLibrary.GetExport("hostfxr_set_error_writer"));
+        const auto initialize = reinterpret_cast<hostfxr_initialize_for_runtime_config_fn>(
+            m_hostFxrLibrary.GetExport("hostfxr_initialize_for_runtime_config"));
+        const auto getRuntimeDelegate = reinterpret_cast<hostfxr_get_runtime_delegate_fn>(
+            m_hostFxrLibrary.GetExport("hostfxr_get_runtime_delegate"));
+        const auto close = reinterpret_cast<hostfxr_close_fn>(
+            m_hostFxrLibrary.GetExport("hostfxr_close"));
+
+        hostfxr_initialize_parameters initializationParameters{};
+        initializationParameters.size = sizeof(initializationParameters);
+        initializationParameters.host_path = hostFxrPath.c_str();
+        initializationParameters.dotnet_root = options.dotnetRoot.empty() ? nullptr : options.dotnetRoot.c_str();
+
+        hostfxr_handle context = nullptr;
+        const auto initializeResult = initialize(
+            runtimeConfigPath.c_str(),
+            &initializationParameters,
+            &context);
+        if (!IsSuccessfulInitialization(initializeResult) || !context)
+        {
+            if (context)
+                close(context);
+            const auto frameworkMissing = HasUnresolvedFrameworks(
+                m_hostFxrLibrary,
+                runtimeConfigPath,
+                hostFxrPath,
+                options.dotnetRoot) || IsFrameworkMissingDiagnostic(m_hostFxrLibrary.GetErrorMessage());
+            return RuntimeInitializationFailure(m_hostFxrLibrary, initializeResult, frameworkMissing);
+        }
+
+        void* runtimeDelegate = nullptr;
+        const auto delegateResult = getRuntimeDelegate(
+            context,
+            hdt_load_assembly_and_get_function_pointer,
+            &runtimeDelegate);
+        const auto closeResult = close(context);
+        if (delegateResult != 0 || closeResult != 0 || !runtimeDelegate)
+        {
+            const auto result = delegateResult != 0 ? delegateResult : closeResult;
+            const auto message = m_hostFxrLibrary.GetErrorMessage();
+            m_hostFxrLibrary.ClearErrorWriter();
+            return HostStatus(HostStatusCode::RuntimeInitFailed)
+                .SetRawHostFxrResult(result)
+                .SetMessage(message.empty() ? "hostfxr could not acquire the assembly-loading delegate." : message)
+                .SetHint("Install the .NET 10 runtime or later.");
+        }
+
+        m_hostFxrLibrary.ClearErrorWriter();
+        m_runtimeDelegate = runtimeDelegate;
+    }
+
+    if (bridgeDirectory.empty())
+    {
+        bridgeDirectory = HostFxr::ResolveLocation(
+            HostFxr::GetExecutableDirectory(),
+            options.bridgeDirectory);
+        if (bridgeDirectory.empty())
+        {
+            return HostStatus(HostStatusCode::BridgeMissing)
+                .SetMessage("The managed bridge files could not be located.")
+                .SetHint("Deploy NeoWPF.DotNet.Bridge next to the application or set bridgeDirectory.");
         }
     }
 
-    const auto bridgeDirectory = HostFxr::ResolveLocation(
-        HostFxr::GetExecutableDirectory(),
-        options.bridgeDirectory);
-    if (bridgeDirectory.empty())
-    {
-        return HostStatus(HostStatusCode::BridgeMissing)
-            .SetMessage("The managed bridge files could not be located.")
-            .SetHint("Deploy NeoWPF.DotNet.Bridge next to the application or set bridgeDirectory.");
-    }
-
-    const auto runtimeConfigPath = bridgeDirectory / "NeoWPF.DotNet.Bridge.runtimeconfig.json";
-    m_hostFxrLibrary.SetErrorWriter(m_hostFxrLibrary.GetExport("hostfxr_set_error_writer"));
-    const auto initialize = reinterpret_cast<hostfxr_initialize_for_runtime_config_fn>(
-        m_hostFxrLibrary.GetExport("hostfxr_initialize_for_runtime_config"));
-    const auto getRuntimeDelegate = reinterpret_cast<hostfxr_get_runtime_delegate_fn>(
-        m_hostFxrLibrary.GetExport("hostfxr_get_runtime_delegate"));
-    const auto close = reinterpret_cast<hostfxr_close_fn>(
-        m_hostFxrLibrary.GetExport("hostfxr_close"));
-
-    hostfxr_initialize_parameters initializationParameters{};
-    initializationParameters.size = sizeof(initializationParameters);
-    initializationParameters.host_path = hostFxrPath.c_str();
-    initializationParameters.dotnet_root = options.dotnetRoot.empty() ? nullptr : options.dotnetRoot.c_str();
-
-    hostfxr_handle context = nullptr;
-    const auto initializeResult = initialize(
-        runtimeConfigPath.c_str(),
-        &initializationParameters,
-        &context);
-    if (!IsSuccessfulInitialization(initializeResult) || !context)
-    {
-        if (context)
-            close(context);
-        const auto frameworkMissing = HasUnresolvedFrameworks(
-            m_hostFxrLibrary,
-            runtimeConfigPath,
-            hostFxrPath,
-            options.dotnetRoot) || IsFrameworkMissingDiagnostic(m_hostFxrLibrary.GetErrorMessage());
-        return RuntimeInitializationFailure(m_hostFxrLibrary, initializeResult, frameworkMissing);
-    }
-
-    void* runtimeDelegate = nullptr;
-    const auto delegateResult = getRuntimeDelegate(
-        context,
-        hdt_load_assembly_and_get_function_pointer,
-        &runtimeDelegate);
-    const auto closeResult = close(context);
-    context = nullptr;
-    if (delegateResult != 0 || closeResult != 0 || !runtimeDelegate)
-    {
-        const auto result = delegateResult != 0 ? delegateResult : closeResult;
-        const auto message = m_hostFxrLibrary.GetErrorMessage();
-        m_hostFxrLibrary.ClearErrorWriter();
-        return HostStatus(HostStatusCode::RuntimeInitFailed)
-            .SetRawHostFxrResult(result)
-            .SetMessage(message.empty() ? "hostfxr could not acquire the assembly-loading delegate." : message)
-            .SetHint("Install the .NET 10 runtime or later.");
-    }
-
-    m_hostFxrLibrary.ClearErrorWriter();
-    const auto loadAssembly = reinterpret_cast<load_assembly_and_get_function_pointer_fn>(runtimeDelegate);
+    const auto loadAssembly = reinterpret_cast<load_assembly_and_get_function_pointer_fn>(m_runtimeDelegate);
     const auto bridgeAssembly = bridgeDirectory / "NeoWPF.DotNet.Bridge.dll";
     const std::filesystem::path bridgeType(
         "NeoWPF.DotNet.Bridge.Runtime.EntryPoint, NeoWPF.DotNet.Bridge");
@@ -233,21 +251,22 @@ HostStatus Host::Start(const HostOptions& options)
             .SetMessage("The managed bridge function table is incompatible.");
     }
 
-    m_bridgeApi = *bridgeApi;
-    m_contextId = contextId;
-    m_started = true;
+    m_session.Start(contextId, *bridgeApi);
     return HostStatus(HostStatusCode::Ok);
 }
 
 bool Host::Stop()
 {
-    if (!m_started)
+    if (!m_session.IsAlive())
         return false;
 
-    m_started = false;
-    m_contextId = 0;
-    m_bridgeApi = {};
+    m_session.Stop(0);
     return true;
+}
+
+const HostSession& Host::GetSession() const noexcept
+{
+    return m_session;
 }
 
 std::filesystem::path Host::ResolveHostFxrPath(const HostOptions& options)

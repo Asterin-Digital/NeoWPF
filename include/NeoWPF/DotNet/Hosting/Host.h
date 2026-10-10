@@ -7,6 +7,7 @@ See LICENSE file in the project root for full license text.
 
 #include <NeoWPF/DotNet/Hosting/HostOptions.h>
 #include <NeoWPF/DotNet/Hosting/HostFxr/HostFxrLibrary.h>
+#include <NeoWPF/DotNet/Hosting/HostSession.h>
 #include <NeoWPF/DotNet/Abi/NwBridgeApi.h>
 
 #include <filesystem>
@@ -18,6 +19,8 @@ public:
     HostStatus Start(const HostOptions& options = {});
     bool Stop();
 
+    const HostSession& GetSession() const noexcept;
+
     static std::filesystem::path ResolveHostFxrPath(const HostOptions& options);
     static HostStatus ResolveHostFxrPathStatus(const HostOptions& options);
     static std::filesystem::path ResolveManagedBridgeDirectory(
@@ -25,10 +28,9 @@ public:
         const std::filesystem::path& bridgeDirectory = {});
 
 private:
-    bool m_started = false;
-    std::uint32_t m_contextId = 0;
+    HostSession m_session;
     HostFxr::HostFxrLibrary m_hostFxrLibrary;
-    NwBridgeApi m_bridgeApi{};
+    void* m_runtimeDelegate = nullptr;
 };
 
 }

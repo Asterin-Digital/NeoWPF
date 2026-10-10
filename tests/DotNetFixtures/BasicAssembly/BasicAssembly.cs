@@ -40,6 +40,11 @@ public sealed class NestedContainer
 
 public sealed class InvoiceService
 {
+    public static int AddTen(int value)
+    {
+        return value + 10;
+    }
+
     public InvoiceService(string accountName)
     {
         AccountName = accountName;

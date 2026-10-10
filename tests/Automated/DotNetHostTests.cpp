@@ -5,6 +5,7 @@
 #include <NeoWPF/DotNet/Hosting/HostFxr/HostFxrLibrary.h>
 #include <NeoWPF/DotNet/Hosting/HostFxr/HostFxrPath.h>
 #include <NeoWPF/DotNet/Hosting/HostFxr/ManagedBridgeLocation.h>
+#include "InvoiceService.g.h"
 
 #include <array>
 #include <fstream>
@@ -53,6 +54,19 @@ TEST(DotNetHostTests, MissingHostFxrReturnsRuntimeNotFound)
     };
 
     const auto status = NeoWPF::DotNet::Hosting::Host::ResolveHostFxrPathStatus(options);
+    EXPECT_EQ(status.Code(), NeoWPF::DotNet::Hosting::HostStatusCode::RuntimeNotFound);
+}
+
+TEST(DotNetHostTests, HostStartReportsRuntimeMissingBeforeBridgeMissing)
+{
+    NeoWPF::DotNet::Hosting::Host host;
+    const NeoWPF::DotNet::Hosting::HostOptions options{
+        .hostfxrPath = std::filesystem::path("C:/missing-dotnet/hostfxr.dll"),
+        .bridgeDirectory = std::filesystem::path("C:/missing-bridge")
+    };
+
+    const auto status = host.Start(options);
+
     EXPECT_EQ(status.Code(), NeoWPF::DotNet::Hosting::HostStatusCode::RuntimeNotFound);
 }
 
@@ -120,8 +134,46 @@ TEST(DotNetHostTests, HostStartInitializesManagedBridge)
     }
 
     ASSERT_EQ(status.Code(), NeoWPF::DotNet::Hosting::HostStatusCode::Ok) << status.Message();
+    EXPECT_TRUE(host.GetSession().IsAlive());
+    const auto firstContextId = host.GetSession().GetContextId();
+    EXPECT_NE(firstContextId, 0u);
+    EXPECT_TRUE(host.Stop());
+    EXPECT_FALSE(host.GetSession().IsAlive());
+    EXPECT_EQ(host.GetSession().GetBridgeApi(), nullptr);
+
+    const auto restartStatus = host.Start(options);
+    ASSERT_EQ(restartStatus.Code(), NeoWPF::DotNet::Hosting::HostStatusCode::Ok)
+        << restartStatus.Message();
+    EXPECT_NE(host.GetSession().GetContextId(), firstContextId);
     EXPECT_TRUE(host.Stop());
     std::filesystem::remove_all(bridgeDirectory);
+}
+
+TEST(DotNetHostTests, GeneratedBindingInvokesStaticInt32Method)
+{
+    NeoWPF::DotNet::Hosting::Host host;
+    const auto status = host.Start();
+    if (status.Code() == NeoWPF::DotNet::Hosting::HostStatusCode::RuntimeNotFound ||
+        status.Code() == NeoWPF::DotNet::Hosting::HostStatusCode::FrameworkMissing)
+    {
+        GTEST_SKIP() << status.Message();
+    }
+
+    ASSERT_EQ(status.Code(), NeoWPF::DotNet::Hosting::HostStatusCode::Ok) << status.Message();
+    const auto binding = BasicAssembly::InvoiceServiceBinding::Load(
+        host.GetSession(),
+        NEOWPF_DOTNET_BINDING_DIRECTORY);
+    if (!binding.Succeeded())
+    {
+        host.Stop();
+        FAIL() << binding.GetMessage();
+    }
+
+    const auto result = binding.GetValue()->AddTen(5);
+    EXPECT_TRUE(result.Succeeded()) << result.GetMessage();
+    if (result.Succeeded())
+        EXPECT_EQ(result.GetValue().value(), 15);
+    EXPECT_TRUE(host.Stop());
 }
 
 TEST(DotNetHostTests, HostStartReportsMissingFrameworkWithRawHostFxrResult)

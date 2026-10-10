@@ -23,8 +23,12 @@ public static unsafe class EntryPoint
         if (info->AbiVersion >> 16 != AbiMajor || !AbiLayouts.Validate())
             return AbiMismatch;
 
+        BridgeState.Initialize(info->ContextId);
         var functionTable = FunctionTable.Get();
-        if (functionTable is null || functionTable->Shutdown == 0)
+        if (functionTable is null || functionTable->LoadAssembly == 0 ||
+            functionTable->ResolveType == 0 || functionTable->ResolveMember == 0 ||
+            functionTable->InvokeMember == 0 || functionTable->VerifyContract == 0 ||
+            functionTable->ReleaseResult == 0 || functionTable->Shutdown == 0)
             return InternalError;
 
         *api = functionTable;

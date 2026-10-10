@@ -87,6 +87,87 @@ internal struct NwResult
 }
 
 [StructLayout(LayoutKind.Sequential)]
+internal struct NwRequestHeader
+{
+    public uint StructSize;
+    public uint AbiVersion;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct NwLoadAssemblyRequest
+{
+    public NwRequestHeader Header;
+    public NwStringView Path;
+    public NwStringView LoadContextName;
+    public uint Flags;
+    public uint Reserved;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct NwResolveTypeRequest
+{
+    public NwRequestHeader Header;
+    public NwReference Assembly;
+    public NwStringView FullName;
+    public nint TypeArguments;
+    public uint TypeArgumentCount;
+    public uint Shape;
+    public uint ArrayRank;
+    public uint Reserved;
+    public NwReference ElementType;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct NwParameterDescriptor
+{
+    public NwReference Type;
+    public uint Passing;
+    public uint Reserved;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct NwResolveMemberRequest
+{
+    public NwRequestHeader Header;
+    public NwReference Type;
+    public NwStringView Name;
+    public uint MemberKind;
+    public uint Flags;
+    public uint GenericArity;
+    public uint ParameterCount;
+    public nint Parameters;
+    public nint GenericArguments;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct NwInvokeRequest
+{
+    public NwRequestHeader Header;
+    public NwReference Member;
+    public NwReference Target;
+    public nint Arguments;
+    public uint ArgumentCount;
+    public uint Policy;
+    public uint Flags;
+    public uint Reserved;
+    public nint Sink;
+    public nint Outputs;
+    public uint OutputCount;
+    public uint Reserved2;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct NwVerifyContractRequest
+{
+    public NwRequestHeader Header;
+    public NwStringView BindingName;
+    public nint Fingerprint;
+    public uint AssemblyCount;
+    public uint Reserved;
+    public nint AssemblyMvids;
+}
+
+[StructLayout(LayoutKind.Sequential)]
 public struct NwBridgeApi
 {
     public uint StructSize;
@@ -146,5 +227,12 @@ internal static class AbiLayouts
         Marshal.SizeOf<NwValue>() == 24 &&
         Marshal.OffsetOf<NwValue>(nameof(NwValue.Payload)).ToInt32() == 8 &&
         Marshal.SizeOf<NwBridgeApi>() == 168 &&
+        Marshal.SizeOf<NwRequestHeader>() == 8 &&
+        Marshal.SizeOf<NwLoadAssemblyRequest>() == 48 &&
+        Marshal.SizeOf<NwResolveTypeRequest>() == 80 &&
+        Marshal.SizeOf<NwParameterDescriptor>() == 24 &&
+        Marshal.SizeOf<NwResolveMemberRequest>() == 72 &&
+        Marshal.SizeOf<NwInvokeRequest>() == 88 &&
+        Marshal.SizeOf<NwVerifyContractRequest>() == 48 &&
         Marshal.SizeOf<NwBridgeInitInfo>() == 24;
 }

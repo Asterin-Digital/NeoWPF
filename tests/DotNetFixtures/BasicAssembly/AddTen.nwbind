@@ -1,0 +1,9 @@
+binding BasicAssembly
+{
+    assembly "BasicAssembly.dll";
+    type BasicAssembly.Domain.InvoiceService
+    {
+        nativeName "InvoiceService";
+        method AddTen(int32 value) returns int32;
+    }
+}

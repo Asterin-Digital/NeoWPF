@@ -50,6 +50,14 @@ public static class GeneratorCommand
                 parameterPassingModes: bindingMethod.Parameters.Select(parameter => parameter.PassingMode).ToArray())
             : assemblyReader.ResolveMethodByName(inspectedType, bindingMethod.ManagedName);
 
+        if (!method.IsStatic || method.ReturnTypeName != "System.Int32" ||
+            method.Parameters.Count != 1 || method.Parameters[0].TypeName != "System.Int32" ||
+            method.Parameters[0].IsByReference)
+        {
+            throw new NotSupportedException(
+                "This generator slice supports only static methods with one int32 parameter and an int32 return value.");
+        }
+
         var contract = BuildContract(model, bindingType, bindingMethod, type, method, assembly.Identity);
         var fingerprint = ComputeFingerprint(contract);
         var nativeFiles = new List<GeneratorFile>();
@@ -63,14 +71,20 @@ public static class GeneratorCommand
                 NativeBindingEmitter.Emit(model, type, method, bindingMethod.NativeName, fingerprint)));
             nativeFiles.Add(new GeneratorFile(
                 Path.Combine(options.OutputDirectory, $"{bindingType.NativeName}.g.cpp"),
-                NativeBindingEmitter.EmitImplementation(model, type, method, bindingMethod.NativeName, fingerprint)));
+                NativeBindingEmitter.EmitImplementation(
+                    model,
+                    type,
+                    method,
+                    bindingMethod.NativeName,
+                    fingerprint,
+                    assembly.Identity)));
         }
 
         if (options.GenerateManaged)
         {
             managedFiles.Add(new GeneratorFile(
                 Path.Combine(options.OutputDirectory, $"{bindingType.NativeName}.Bindings.g.cs"),
-                ManagedBindingEmitter.Emit(model, type, method, fingerprint)));
+                ManagedBindingEmitter.Emit(model, fingerprint)));
             managedFiles.Add(new GeneratorFile(
                 Path.Combine(options.OutputDirectory, $"{model.Name}.Bindings.csproj"),
                 ManagedBindingEmitter.EmitProject(model, assembly.Identity)));
@@ -102,6 +116,7 @@ public static class GeneratorCommand
         builder.AppendLine($"type={type.Name}");
         builder.AppendLine($"native-type={bindingType.NativeName}");
         builder.AppendLine($"method={method.Name}");
+        builder.AppendLine($"method-static={method.IsStatic.ToString().ToLowerInvariant()}");
         builder.AppendLine($"native-method={bindingMethod.NativeName}");
         builder.AppendLine($"return={method.ReturnTypeName}");
         builder.AppendLine($"execution={bindingMethod.Execution}");

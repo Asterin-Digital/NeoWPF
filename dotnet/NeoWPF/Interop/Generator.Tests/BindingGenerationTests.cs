@@ -9,6 +9,43 @@ namespace NeoWPF.DotNet.Interop.Generator.Tests;
 public sealed class BindingGenerationTests
 {
     [Fact]
+    public void IncludesStaticMethodShapeInContract()
+    {
+        var source = """
+            binding BasicAssembly
+            {
+                assembly "BasicAssembly.dll";
+                type BasicAssembly.Domain.InvoiceService
+                {
+                    nativeName "InvoiceService";
+                    method AddTen(int32 value) returns int32;
+                }
+            }
+            """;
+        var assemblyPath = typeof(InvoiceService).Assembly.Location;
+        var workspace = Path.Combine(Path.GetTempPath(), $"neowpf-generator-{Guid.NewGuid():N}");
+
+        try
+        {
+            var output = GeneratorCommand.Generate(new GeneratorOptions(
+                source,
+                assemblyPath,
+                workspace,
+                GenerateManaged: true,
+                GenerateNative: true,
+                ContractFileName: "BasicAssembly.contract"));
+
+            Assert.Contains("method-static=true", output.ContractText);
+            Assert.Contains("AddTen", output.NativeFiles.Single(file => file.Path.EndsWith(".g.cpp", StringComparison.Ordinal)).Content);
+        }
+        finally
+        {
+            if (Directory.Exists(workspace))
+                Directory.Delete(workspace, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task GeneratesDeterministicNativeAndManagedBindings()
     {
         var source = """
@@ -18,12 +55,7 @@ public sealed class BindingGenerationTests
                 type BasicAssembly.Domain.InvoiceService
                 {
                     nativeName "RequestFactory";
-                    method CreateRequest(decimal subtotal)
-                    {
-                        nativeName "BuildRequest";
-                        returns BasicAssembly.Domain.InvoiceRequest;
-                        execution Managed;
-                    }
+                    method AddTen(int32 value) returns int32;
                 }
             }
             """;
@@ -57,8 +89,8 @@ public sealed class BindingGenerationTests
             Assert.Equal(2, first.ManagedFiles.Count);
             Assert.True(File.Exists(Path.Combine(workspace, "BasicAssembly.contract")));
             Assert.Contains("native-type=RequestFactory", first.ContractText);
-            Assert.Contains("native-method=BuildRequest", first.ContractText);
-            Assert.Contains("execution=Managed", first.ContractText);
+            Assert.Contains("native-method=AddTen", first.ContractText);
+            Assert.Contains("method-static=true", first.ContractText);
             Assert.Contains($"assembly={Path.GetFullPath(assemblyPath)}", first.ContractText);
             Assert.Equal(
                 firstFiles.Keys.OrderBy(path => path, StringComparer.Ordinal),
@@ -72,23 +104,24 @@ public sealed class BindingGenerationTests
             var nativeHeader = first.NativeFiles
                 .Single(file => file.Path.EndsWith("RequestFactory.g.h", StringComparison.Ordinal))
                 .Content;
-            Assert.Contains(
-                "ManagedResult<NeoWPF::DotNet::ManagedObjectReference> BuildRequest(const NeoWPF::DotNet::ManagedDecimal& subtotal)",
-                nativeHeader);
+            Assert.Contains("NeoWPF::DotNet::ManagedResult<std::int32_t> AddTen(", nativeHeader);
+            Assert.Contains("std::int32_t value) const;", nativeHeader);
             var nativeImplementation = first.NativeFiles
                 .Single(file => file.Path.EndsWith("RequestFactory.g.cpp", StringComparison.Ordinal))
                 .Content;
             Assert.Contains("#include \"RequestFactory.g.h\"", nativeImplementation);
+            Assert.Contains("RequestFactoryBinding::AddTen(", nativeImplementation);
+            Assert.Contains("std::int32_t value) const", nativeImplementation);
             Assert.Contains(
-                "RequestFactoryBinding::BuildRequest(const NeoWPF::DotNet::ManagedDecimal& subtotal)",
-                nativeImplementation);
-            Assert.Contains(
-                "public static BasicAssembly.Domain.InvoiceRequest CreateRequest(System.Decimal subtotal)",
+                "public const string ContractFingerprint",
                 first.ManagedFiles.Single(file => file.Path.EndsWith("RequestFactory.Bindings.g.cs", StringComparison.Ordinal)).Content);
 
             var managedProject = first.ManagedFiles
                 .Single(file => file.Path.EndsWith("BasicAssembly.Bindings.csproj", StringComparison.Ordinal))
                 .Path;
+            var managedProjectContent = File.ReadAllText(managedProject);
+            Assert.Contains("<EnableDefaultCompileItems>false</EnableDefaultCompileItems>", managedProjectContent);
+            Assert.DoesNotContain("<Compile Remove=", managedProjectContent);
             var build = Process.Start(new ProcessStartInfo
             {
                 FileName = "dotnet",
