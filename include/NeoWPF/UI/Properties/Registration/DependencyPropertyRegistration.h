@@ -206,6 +206,22 @@ namespace NeoWPF::UI::Properties {
             return *property; \
         }
 
+    /*
+        @summary
+        Registers base brush dependency properties.
+
+        @internal
+    */
+    void RegisterBrushProperties();
+
+    /*
+        @summary
+        Registers SolidColorBrush dependency properties and XAML metadata.
+
+        @internal
+    */
+    void RegisterSolidColorBrushProperties();
+
     void RegisterUIElementProperties();
     void RegisterFrameworkElementProperties();
     void RegisterControlProperties();

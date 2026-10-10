@@ -863,6 +863,7 @@ if(BUILD_TESTING)
         tests/Automated/ApplicationThemeTests.cpp
         tests/Automated/EventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
+        tests/Automated/BrushTests.cpp
         tests/Automated/ControlThemeTests.cpp
         tests/Automated/ButtonTests.cpp
         tests/Automated/CommonConvertersTests.cpp

@@ -3,6 +3,8 @@
 namespace NeoWPF::UI::Properties {
 
 void RegisterCoreControlProperties() {
+    RegisterBrushProperties();
+    RegisterSolidColorBrushProperties();
     RegisterUIElementProperties();
     RegisterFrameworkElementProperties();
     RegisterControlProperties();
