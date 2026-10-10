@@ -7,6 +7,7 @@ See LICENSE file in the project root for full license text.
 
 #include <cstddef>
 #include <functional>
+#include <mutex>
 #include <shared_mutex>
 #include <unordered_map>
 #include <utility>

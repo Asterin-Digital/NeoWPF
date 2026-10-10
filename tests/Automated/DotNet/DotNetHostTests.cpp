@@ -768,9 +768,15 @@ TEST(DotNetHostTests, HostStartReportsMissingFrameworkWithRawHostFxrResult)
 
 TEST(DotNetHostTests, HostStartReportsMissingHostFxrExports)
 {
+#if defined(_WIN32)
     const auto hostfxrPath = std::filesystem::path("C:/Windows/System32/kernel32.dll");
+#elif defined(__linux__)
+    const auto hostfxrPath = std::filesystem::path("/lib/x86_64-linux-gnu/libm.so.6");
+#else
+    GTEST_SKIP() << "No portable system library is available for this platform.";
+#endif
     if (!std::filesystem::exists(hostfxrPath))
-        GTEST_SKIP() << "kernel32.dll is not available on this system.";
+        GTEST_SKIP() << "The system library is not available on this system.";
 
     NeoWPF::DotNet::Hosting::Host host;
     const NeoWPF::DotNet::Hosting::HostOptions options{

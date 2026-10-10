@@ -431,27 +431,70 @@ public sealed class BindingGenerationTests
     private static async Task CompileGeneratedNativeBinding(string generatedDirectory)
     {
         var repositoryRoot = FindRepositoryRoot();
-        var processInfo = new ProcessStartInfo
-        {
-            FileName = "python",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false
-        };
-        processInfo.ArgumentList.Add(Path.Combine(repositoryRoot, "private", "Scripts", "Build.py"));
-        processInfo.ArgumentList.Add("--source");
-        processInfo.ArgumentList.Add(Path.Combine(repositoryRoot, "tests", "DotNetFixtures", "GeneratedNativeCompile"));
-        processInfo.ArgumentList.Add("--build");
-        processInfo.ArgumentList.Add(Path.Combine(generatedDirectory, "native-build"));
-        processInfo.ArgumentList.Add("--config");
-        processInfo.ArgumentList.Add("Debug");
-        processInfo.ArgumentList.Add("--generator");
-        processInfo.ArgumentList.Add("Ninja Multi-Config");
-        processInfo.ArgumentList.Add("--target");
-        processInfo.ArgumentList.Add("GeneratedNativeBinding");
-        processInfo.ArgumentList.Add("-DNEOWPF_GENERATED_DIR=" + generatedDirectory);
-        processInfo.ArgumentList.Add("-DNEOWPF_PUBLIC_INCLUDE_DIR=" + Path.Combine(repositoryRoot, "include"));
+        var fixtureSource = Path.Combine(
+            repositoryRoot,
+            "tests",
+            "DotNetFixtures",
+            "GeneratedNativeCompile");
+        var buildDirectory = Path.Combine(generatedDirectory, "native-build");
 
+        if (OperatingSystem.IsWindows())
+        {
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = "python",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            processInfo.ArgumentList.Add(Path.Combine(repositoryRoot, "private", "scripts", "Build.py"));
+            processInfo.ArgumentList.Add("--source");
+            processInfo.ArgumentList.Add(fixtureSource);
+            processInfo.ArgumentList.Add("--build");
+            processInfo.ArgumentList.Add(buildDirectory);
+            processInfo.ArgumentList.Add("--config");
+            processInfo.ArgumentList.Add("Debug");
+            processInfo.ArgumentList.Add("--generator");
+            processInfo.ArgumentList.Add("Ninja Multi-Config");
+            processInfo.ArgumentList.Add("--target");
+            processInfo.ArgumentList.Add("GeneratedNativeBinding");
+            processInfo.ArgumentList.Add("-DNEOWPF_GENERATED_DIR=" + generatedDirectory);
+            processInfo.ArgumentList.Add("-DNEOWPF_PUBLIC_INCLUDE_DIR=" + Path.Combine(repositoryRoot, "include"));
+            await RunProcess(processInfo);
+            return;
+        }
+
+        var configureInfo = CreateProcessInfo("cmake");
+        configureInfo.ArgumentList.Add("-S");
+        configureInfo.ArgumentList.Add(fixtureSource);
+        configureInfo.ArgumentList.Add("-B");
+        configureInfo.ArgumentList.Add(buildDirectory);
+        configureInfo.ArgumentList.Add("-G");
+        configureInfo.ArgumentList.Add("Ninja Multi-Config");
+        configureInfo.ArgumentList.Add("-DNEOWPF_GENERATED_DIR=" + generatedDirectory);
+        configureInfo.ArgumentList.Add("-DNEOWPF_PUBLIC_INCLUDE_DIR=" + Path.Combine(repositoryRoot, "include"));
+        await RunProcess(configureInfo);
+
+        var buildInfo = CreateProcessInfo("cmake");
+        buildInfo.ArgumentList.Add("--build");
+        buildInfo.ArgumentList.Add(buildDirectory);
+        buildInfo.ArgumentList.Add("--config");
+        buildInfo.ArgumentList.Add("Debug");
+        buildInfo.ArgumentList.Add("--target");
+        buildInfo.ArgumentList.Add("GeneratedNativeBinding");
+        await RunProcess(buildInfo);
+    }
+
+    private static ProcessStartInfo CreateProcessInfo(string fileName) => new()
+    {
+        FileName = fileName,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false
+    };
+
+    private static async Task RunProcess(ProcessStartInfo processInfo)
+    {
         using var process = Process.Start(processInfo);
         Assert.NotNull(process);
         var outputTask = process.StandardOutput.ReadToEndAsync();
@@ -459,17 +502,20 @@ public sealed class BindingGenerationTests
         await process.WaitForExitAsync();
         var outputText = await outputTask;
         var errorText = await errorTask;
-
-        Assert.True(
-            process.ExitCode == 0,
-            $"Generated native binding compilation failed: {outputText}{errorText}");
+        Assert.True(process.ExitCode == 0, $"Process failed: {outputText}{errorText}");
     }
 
     private static string FindRepositoryRoot()
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);
         while (directory is not null &&
-            !File.Exists(Path.Combine(directory.FullName, "private", "Scripts", "Build.py")))
+            (!File.Exists(Path.Combine(directory.FullName, "CMakeLists.txt")) ||
+             !File.Exists(Path.Combine(
+                 directory.FullName,
+                 "tests",
+                 "DotNetFixtures",
+                 "GeneratedNativeCompile",
+                 "CMakeLists.txt"))))
         {
             directory = directory.Parent;
         }
