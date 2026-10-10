@@ -911,51 +911,106 @@ if(BUILD_TESTING)
 
     if(NEOWPF_BUILD_DOTNET)
         add_executable(NeoWPF.DotNet.AutomatedTests
-            tests/Automated/DotNetHostTests.cpp
-            tests/Automated/DotNetValueTests.cpp
+            tests/Automated/DotNet/DotNetHostTests.cpp
+            tests/Automated/DotNet/DotNetValueTests.cpp
         )
+        set(NEOWPF_DOTNET_PLUGIN_DIR
+            "${CMAKE_CURRENT_BINARY_DIR}/generated/dotnet/fixture-bindings/$<CONFIG>/plugin")
         target_link_libraries(NeoWPF.DotNet.AutomatedTests
             PRIVATE
                 NeoWPF::DotNet
                 GTest::gtest_main
         )
+        add_library(NeoWPF.DotNet.TestNativeDependency SHARED
+            tests/DotNetFixtures/PluginAssembly/NativeDependency.cpp
+        )
+        set_target_properties(NeoWPF.DotNet.TestNativeDependency PROPERTIES
+            OUTPUT_NAME "NeoWPF.DotNet.TestNativeDependency"
+        )
+        add_custom_command(TARGET NeoWPF.DotNet.TestNativeDependency POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E make_directory "${NEOWPF_DOTNET_PLUGIN_DIR}"
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "$<TARGET_FILE:NeoWPF.DotNet.TestNativeDependency>"
+                "${NEOWPF_DOTNET_PLUGIN_DIR}/$<TARGET_FILE_NAME:NeoWPF.DotNet.TestNativeDependency>"
+            VERBATIM
+        )
+        add_dependencies(NeoWPF.DotNet.AutomatedTests NeoWPF.DotNet.TestNativeDependency)
         target_compile_definitions(NeoWPF.DotNet.AutomatedTests PRIVATE
             NEOWPF_INTERNAL_BUILD
             "NEOWPF_DOTNET_BINDING_DIRECTORY=\"${CMAKE_CURRENT_BINARY_DIR}/generated/dotnet/fixture-bindings/$<CONFIG>\""
+            "NEOWPF_DOTNET_PLUGIN_DIRECTORY=\"${CMAKE_CURRENT_BINARY_DIR}/generated/dotnet/fixture-bindings/$<CONFIG>/plugin\""
         )
         set(NEOWPF_DOTNET_FIXTURE_BINDING_DIR
             "${CMAKE_CURRENT_BINARY_DIR}/generated/dotnet/fixture-bindings/$<CONFIG>")
+        set(NEOWPF_DOTNET_FIXTURE_PROJECT
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/BasicAssembly/BasicAssembly.csproj")
+        set(NEOWPF_DOTNET_FIXTURE_SOURCE
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/BasicAssembly/BasicAssembly.cs")
+        set(NEOWPF_DOTNET_FIXTURE_ASSEMBLY
+            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/managed/BasicAssembly.dll")
+        set(NEOWPF_DOTNET_PLUGIN_ASSEMBLY "${NEOWPF_DOTNET_PLUGIN_DIR}/PluginAssembly.dll")
         set(NEOWPF_DOTNET_GENERATED_BINDING_FILES
-            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/InvoiceService.g.h"
-            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/InvoiceService.g.cpp"
-            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/InvoiceService.Bindings.g.cs"
+            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/BasicAssembly.g.h"
+            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/BasicAssembly.g.cpp"
+            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/BasicAssembly.Contract.g.cs"
             "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/BasicAssembly.Bindings.csproj"
             "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/BasicAssembly.contract"
-            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/managed/BasicAssembly.dll"
             "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/managed/BasicAssembly.Bindings.dll"
         )
         set(NEOWPF_DOTNET_GENERATOR_DLL
             "${CMAKE_CURRENT_SOURCE_DIR}/dotnet/NeoWPF/Interop/Generator/bin/$<CONFIG>/net10.0/NeoWPF.DotNet.Generator.dll")
         add_custom_command(
-            OUTPUT ${NEOWPF_DOTNET_GENERATED_BINDING_FILES}
+            OUTPUT "${NEOWPF_DOTNET_FIXTURE_ASSEMBLY}"
             COMMAND "${CMAKE_COMMAND}" -E make_directory
                 "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/managed"
             COMMAND "${NEOWPF_DOTNET_EXECUTABLE}" build
-                "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/BasicAssembly/BasicAssembly.csproj"
+                "${NEOWPF_DOTNET_FIXTURE_PROJECT}"
                 --configuration $<CONFIG>
-                --output "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/managed"
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/BasicAssembly/bin/$<CONFIG>/net10.0/BasicAssembly.dll"
+                "${NEOWPF_DOTNET_FIXTURE_ASSEMBLY}"
+            DEPENDS
+                "${NEOWPF_DOTNET_FIXTURE_PROJECT}"
+                "${NEOWPF_DOTNET_FIXTURE_SOURCE}"
+            VERBATIM
+        )
+        add_custom_target(NeoWPF.DotNet.BasicAssembly
+            DEPENDS "${NEOWPF_DOTNET_FIXTURE_ASSEMBLY}"
+        )
+        add_custom_command(
+            OUTPUT "${NEOWPF_DOTNET_PLUGIN_ASSEMBLY}"
+            COMMAND "${CMAKE_COMMAND}" -E make_directory "${NEOWPF_DOTNET_PLUGIN_DIR}"
+            COMMAND "${NEOWPF_DOTNET_EXECUTABLE}" build
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/PluginAssembly/PluginAssembly.csproj"
+                --configuration $<CONFIG>
+                --output "${NEOWPF_DOTNET_PLUGIN_DIR}"
+            DEPENDS
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/PluginAssembly/PluginAssembly.csproj"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/PluginAssembly/PluginService.cs"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/SecondaryDependency/SecondaryDependency.csproj"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/SecondaryDependency/Calculator.cs"
+            VERBATIM
+        )
+        add_custom_target(NeoWPF.DotNet.PluginAssembly
+            DEPENDS "${NEOWPF_DOTNET_PLUGIN_ASSEMBLY}"
+        )
+        add_custom_command(
+            OUTPUT ${NEOWPF_DOTNET_GENERATED_BINDING_FILES}
             COMMAND "${NEOWPF_DOTNET_EXECUTABLE}" exec "${NEOWPF_DOTNET_GENERATOR_DLL}"
                 generate
                 --binding "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/BasicAssembly/AddTen.nwbind"
-                --assembly "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/managed/BasicAssembly.dll"
+                --assembly "${NEOWPF_DOTNET_FIXTURE_ASSEMBLY}"
                 --output "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}"
             COMMAND "${NEOWPF_DOTNET_EXECUTABLE}" build
                 "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/BasicAssembly.Bindings.csproj"
                 --configuration $<CONFIG>
                 --output "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/managed"
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/BasicAssembly/bin/$<CONFIG>/net10.0/BasicAssembly.dll"
+                "${NEOWPF_DOTNET_FIXTURE_ASSEMBLY}"
             DEPENDS
                 "${NEOWPF_DOTNET_GENERATOR_DLL}"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/BasicAssembly/BasicAssembly.csproj"
+                "${NEOWPF_DOTNET_FIXTURE_ASSEMBLY}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/DotNetFixtures/BasicAssembly/AddTen.nwbind"
             VERBATIM
         )
@@ -963,9 +1018,11 @@ if(BUILD_TESTING)
             DEPENDS ${NEOWPF_DOTNET_GENERATED_BINDING_FILES}
         )
         add_dependencies(NeoWPF.DotNet.GeneratedBinding NeoWPF.DotNet.Generator)
+        add_dependencies(NeoWPF.DotNet.GeneratedBinding NeoWPF.DotNet.BasicAssembly)
         add_dependencies(NeoWPF.DotNet.AutomatedTests NeoWPF.DotNet.GeneratedBinding)
+        add_dependencies(NeoWPF.DotNet.AutomatedTests NeoWPF.DotNet.PluginAssembly)
         target_sources(NeoWPF.DotNet.AutomatedTests PRIVATE
-            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/InvoiceService.g.cpp"
+            "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}/BasicAssembly.g.cpp"
         )
         target_include_directories(NeoWPF.DotNet.AutomatedTests PRIVATE
             "${NEOWPF_DOTNET_FIXTURE_BINDING_DIR}"

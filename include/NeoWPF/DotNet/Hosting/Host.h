@@ -11,6 +11,8 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/DotNet/Abi/NwBridgeApi.h>
 
 #include <filesystem>
+#include <functional>
+#include <string>
 
 namespace NeoWPF::DotNet::Hosting {
 
@@ -31,6 +33,7 @@ private:
     HostSession m_session;
     HostFxr::HostFxrLibrary m_hostFxrLibrary;
     void* m_runtimeDelegate = nullptr;
+    std::function<void(std::uint32_t, const std::string&, const std::string&)> m_log;
 };
 
 }

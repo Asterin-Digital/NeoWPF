@@ -108,6 +108,14 @@ enum NwValueFlags {
     NwValueFlags_ElementKindMask = 0x0000ff00u
 };
 
+enum NwExecutionPolicy {
+    NwExecutionPolicy_Unspecified = 0,
+    NwExecutionPolicy_Managed = 1,
+    NwExecutionPolicy_Calling = 2,
+    NwExecutionPolicy_Application = 3,
+    NwExecutionPolicy_Background = 4
+};
+
 typedef union NwValuePayload {
     uint8_t boolean;
     int64_t i64;

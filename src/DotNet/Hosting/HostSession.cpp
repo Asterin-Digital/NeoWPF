@@ -251,7 +251,7 @@ ManagedResult<std::int32_t> HostSession::InvokeInt32(
     request.member = ToAbiReference(member);
     request.arguments = &input;
     request.argumentCount = 1;
-    request.policy = 0;
+    request.policy = NwExecutionPolicy_Managed;
     NwResult result{};
     InitializeResult(result);
     const auto callStatus = bridgeApi->InvokeMember(&request, &result);

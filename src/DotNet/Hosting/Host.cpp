@@ -11,6 +11,7 @@
 #include <atomic>
 #include <cctype>
 #include <cstddef>
+#include <functional>
 #include <string>
 
 namespace NeoWPF::DotNet::Hosting {
@@ -18,6 +19,31 @@ namespace NeoWPF::DotNet::Hosting {
 namespace {
 
 std::atomic<std::uint32_t> nextContextId{ 1 };
+
+void NW_CALL CaptureManagedLog(
+    void* userData,
+    std::uint32_t level,
+    NwStringView category,
+    NwStringView message)
+{
+    auto* log = static_cast<std::function<void(std::uint32_t, const std::string&, const std::string&)>*>(userData);
+    if (!log || !*log)
+        return;
+
+    try
+    {
+        const std::string categoryText(
+            reinterpret_cast<const char*>(category.data),
+            static_cast<std::size_t>(category.length));
+        const std::string messageText(
+            reinterpret_cast<const char*>(message.data),
+            static_cast<std::size_t>(message.length));
+        (*log)(level, categoryText, messageText);
+    }
+    catch (...)
+    {
+    }
+}
 
 bool IsSuccessfulInitialization(std::int32_t result) noexcept
 {
@@ -92,6 +118,7 @@ HostStatus Host::Start(const HostOptions& options)
 {
     if (m_session.IsAlive())
         return HostStatus(HostStatusCode::AlreadyStarted);
+    m_log = options.log;
 
     std::filesystem::path bridgeDirectory;
     if (!m_runtimeDelegate)
@@ -219,6 +246,11 @@ HostStatus Host::Start(const HostOptions& options)
     NwHostCallbacks callbacks{};
     callbacks.structSize = sizeof(callbacks);
     callbacks.abiVersion = NW_ABI_VERSION;
+    if (m_log)
+    {
+        callbacks.userData = &m_log;
+        callbacks.log = &CaptureManagedLog;
+    }
     const auto contextId = nextContextId.fetch_add(1, std::memory_order_relaxed);
     if (contextId == 0)
     {
@@ -261,6 +293,7 @@ bool Host::Stop()
         return false;
 
     m_session.Stop(0);
+    m_log = {};
     return true;
 }
 
