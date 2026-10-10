@@ -7,39 +7,20 @@ internal static class ManagedBindingEmitter
 {
     public static string Emit(
         BindingModel model,
-        string fingerprint)
+        string fingerprint,
+        IReadOnlyList<AssemblyIdentity> identities)
     {
-        var simpleTypeName = model.Types.Single().NativeName;
-
+        var assemblyNames = string.Join(", ", identities.Select(identity => $"\"{identity.Name}\""));
+        var assemblyMvids = string.Join(", ", identities.Select(identity => $"\"{identity.ModuleVersionId:D}\""));
         return $$"""
 namespace {{model.Name}};
 
-public static class {{simpleTypeName}}Bindings
+public static class BindingContract
 {
     public const string ContractFingerprint = "{{fingerprint}}";
+    public static readonly string[] AssemblyNames = [{{assemblyNames}}];
+    public static readonly string[] AssemblyMvids = [{{assemblyMvids}}];
 }
-""";
-    }
-
-    public static string EmitProject(BindingModel model, AssemblyIdentity identity)
-    {
-        return $$"""
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <AssemblyName>{{model.Name}}.Bindings</AssemblyName>
-    <RootNamespace>{{model.Name}}</RootNamespace>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="{{model.Types.Single().NativeName}}.Bindings.g.cs" />
-    <Reference Include="{{identity.Name}}">
-      <HintPath>{{identity.Location}}</HintPath>
-    </Reference>
-  </ItemGroup>
-</Project>
 """;
     }
 }

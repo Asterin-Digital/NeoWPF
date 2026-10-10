@@ -6,6 +6,11 @@ public enum InvoiceState
     Paid,
 }
 
+public interface IInvoiceCalculator
+{
+    decimal Calculate(InvoiceRequest request);
+}
+
 public sealed class InvoiceRequest
 {
     public InvoiceRequest(decimal subtotal)
@@ -40,9 +45,40 @@ public sealed class NestedContainer
 
 public sealed class InvoiceService
 {
-    public static int AddTen(int value)
+    public InvoiceService()
     {
-        return value + 10;
+        AccountName = string.Empty;
+    }
+
+    public static int AddTen(int template)
+    {
+        return template + 10;
+    }
+
+    public static int Overloaded(int value)
+    {
+        return value;
+    }
+
+    public static int Overloaded(string value)
+    {
+        return value.Length;
+    }
+
+    public static int ThrowManagedException(int value)
+    {
+        throw new InvalidOperationException($"fixture failure: {value}");
+    }
+
+    public static Task<int> AddAsync(int value) => Task.FromResult(value + 5);
+
+    public static Task<int> FailAsync(int value) =>
+        Task.FromException<int>(new InvalidOperationException($"async failure: {value}"));
+
+    public static async Task<int> WaitAsync(int value, CancellationToken cancellationToken)
+    {
+        await Task.Delay(Timeout.Infinite, cancellationToken);
+        return value;
     }
 
     public InvoiceService(string accountName)
@@ -51,6 +87,12 @@ public sealed class InvoiceService
     }
 
     public string AccountName { get; }
+
+    public int this[int index]
+    {
+        get => index;
+        set { }
+    }
 
     public static int InstanceCount { get; private set; }
 
@@ -104,5 +146,28 @@ public sealed class InvoiceService
     public void RaiseStateChanged(InvoiceState state)
     {
         StateChanged?.Invoke(this, state);
+    }
+}
+
+public abstract class AbstractInvoiceService
+{
+    public abstract decimal Calculate(InvoiceRequest request);
+}
+
+public static class InvoiceMath
+{
+    public static int Double(int value) => value * 2;
+}
+
+public ref struct InvoiceSpan
+{
+    public int Value;
+}
+
+public sealed class UtilityService
+{
+    public static int Double(int value)
+    {
+        return value * 2;
     }
 }

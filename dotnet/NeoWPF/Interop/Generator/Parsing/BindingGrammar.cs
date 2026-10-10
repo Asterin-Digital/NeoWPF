@@ -2,6 +2,12 @@ namespace NeoWPF.DotNet.Interop.Generator.Parsing;
 
 internal static class BindingGrammar
 {
+    private static IReadOnlySet<string> PrimitiveTypeNames { get; } = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "void", "bool", "int8", "uint8", "int16", "uint16", "int32", "uint32",
+        "int64", "uint64", "float", "double", "decimal", "string", "bytes"
+    };
+
     public static IReadOnlySet<string> ReservedWords { get; } = new HashSet<string>(StringComparer.Ordinal)
     {
         "binding", "assembly", "dependency", "adapter", "version", "nativeName", "managedName", "type", "constructible",
@@ -30,13 +36,16 @@ internal static class BindingGrammar
         ["int"] = "int32",
         ["long"] = "int64",
         ["byte"] = "uint8",
-        ["object"] = "reference"
+        ["short"] = "int16",
+        ["ushort"] = "uint16",
+        ["uint"] = "uint32",
+        ["ulong"] = "uint64",
+        ["sbyte"] = "int8",
     };
 
-    private static IReadOnlySet<string> PrimitiveTypes { get; } = new HashSet<string>(StringComparer.Ordinal)
+    public static IReadOnlySet<string> UnsupportedCSharpAliases { get; } = new HashSet<string>(StringComparer.Ordinal)
     {
-        "void", "bool", "int8", "uint8", "int16", "uint16", "int32", "uint32",
-        "int64", "uint64", "float", "double", "decimal", "string", "bytes"
+        "char", "object"
     };
 
     private static IReadOnlySet<string> PropertyModifiers { get; } = new HashSet<string>(StringComparer.Ordinal)
@@ -44,7 +53,7 @@ internal static class BindingGrammar
         "readonly", "writeonly", "owned", "borrowed", "shared"
     };
 
-    public static bool IsPrimitiveType(string name) => PrimitiveTypes.Contains(name);
-
     public static bool IsPropertyModifier(string value) => PropertyModifiers.Contains(value);
+
+    public static bool IsPrimitiveTypeName(string value) => PrimitiveTypeNames.Contains(value);
 }

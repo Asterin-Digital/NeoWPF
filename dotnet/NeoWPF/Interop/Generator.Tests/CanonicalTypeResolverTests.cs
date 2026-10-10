@@ -1,6 +1,7 @@
 using BasicAssembly.Domain;
 using NeoWPF.DotNet.Interop.Generator.AssemblyInspection;
 using NeoWPF.DotNet.Interop.Generator.Binding;
+using NeoWPF.DotNet.Interop.Generator.Diagnostics;
 using NeoWPF.DotNet.Interop.Generator.Parsing;
 using Xunit;
 
@@ -20,12 +21,51 @@ public sealed class CanonicalTypeResolverTests
         var structType = resolver.Resolve(Named("BasicAssembly.Domain.Money"), assembly);
         var enumType = resolver.Resolve(Named("BasicAssembly.Domain.InvoiceState"), assembly);
         var delegateType = resolver.Resolve(Named("BasicAssembly.Domain.InvoiceCallback"), assembly);
+        var interfaceType = resolver.Resolve(Named("System.IDisposable"), assembly);
 
         Assert.Equal(CanonicalTypeKind.NamedClass, classType.Kind);
         Assert.Equal(CanonicalTypeKind.NamedStruct, structType.Kind);
         Assert.Equal(CanonicalTypeKind.Enum, enumType.Kind);
         Assert.Equal(CanonicalTypeKind.Delegate, delegateType.Kind);
+        Assert.Equal(CanonicalTypeKind.Interface, interfaceType.Kind);
         Assert.Equal("BasicAssembly", classType.AssemblyIdentity);
+    }
+
+    [Fact]
+    public void ResolvesGenericArityByClrDefinitionName()
+    {
+        var assembly = ReadAssembly();
+        var resolver = new CanonicalTypeResolver();
+        var list = CanonicalType.Named(
+            CanonicalTypeKind.Generic,
+            "System.Collections.Generic.List",
+            [CanonicalType.Primitive(CanonicalTypeKind.SignedInteger, "int32", IntegerWidth.Int32, Location)],
+            null,
+            Location);
+
+        var resolved = resolver.Resolve(list, assembly);
+
+        Assert.Equal(CanonicalTypeKind.Generic, resolved.Kind);
+        Assert.Equal("System.Collections.Generic.List`1", resolved.Name);
+        Assert.Equal("System.Private.CoreLib", resolved.AssemblyIdentity);
+        Assert.Single(resolved.Arguments);
+    }
+
+    [Fact]
+    public void RejectsArgumentsOnNonGenericTypes()
+    {
+        var assembly = ReadAssembly();
+        var type = CanonicalType.Named(
+            CanonicalTypeKind.Generic,
+            "System.String",
+            [CanonicalType.Primitive(CanonicalTypeKind.SignedInteger, "int32", IntegerWidth.Int32, Location)],
+            null,
+            Location);
+
+        var exception = Assert.Throws<BindingDiagnosticException>(() => new CanonicalTypeResolver().Resolve(type, assembly));
+
+        Assert.Equal(BindingDiagnosticIds.GenericArityMismatch, exception.Diagnostic.Id);
+        Assert.Equal(Location, exception.Diagnostic.Location);
     }
 
     [Fact]
@@ -61,8 +101,8 @@ public sealed class CanonicalTypeResolverTests
         var assembly = ReadAssembly();
         var resolver = new CanonicalTypeResolver();
 
-        var missing = Assert.Throws<BindingParseException>(() => resolver.Resolve(Named("BasicAssembly.Domain.Missing"), assembly));
-        var pointer = Assert.Throws<BindingParseException>(() => resolver.Resolve(
+        var missing = Assert.Throws<BindingDiagnosticException>(() => resolver.Resolve(Named("BasicAssembly.Domain.Missing"), assembly));
+        var pointer = Assert.Throws<BindingDiagnosticException>(() => resolver.Resolve(
             new CanonicalType(CanonicalTypeKind.Pointer, "pointer", IntegerWidth.None, [], null, 0, null, Location),
             assembly));
 

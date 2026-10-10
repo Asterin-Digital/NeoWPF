@@ -1,4 +1,5 @@
 using NeoWPF.DotNet.Interop.Generator.Binding;
+using NeoWPF.DotNet.Interop.Generator.Diagnostics;
 
 namespace NeoWPF.DotNet.Interop.Generator.Parsing;
 
@@ -83,7 +84,7 @@ public sealed class BindingLexer
                 continue;
             }
 
-            throw Error("NWB1010", $"Unexpected character '{Current}'.");
+            throw Error(BindingDiagnosticIds.UnexpectedToken, $"Unexpected character '{Current}'.");
         }
 
         tokens.Add(new BindingToken(BindingTokenKind.End, string.Empty, Location));
@@ -94,7 +95,7 @@ public sealed class BindingLexer
     {
         var start = _offset;
         if (Current == '@') Advance();
-        if (!IsIdentifierStart(Current)) throw Error("NWB1011", "Expected an identifier after '@'.");
+        if (!IsIdentifierStart(Current)) throw Error(BindingDiagnosticIds.ExpectedIdentifier, "Expected an identifier after '@'.");
         Advance();
         while (!AtEnd && IsIdentifierPart(Current)) Advance();
         return _text[start.._offset];
@@ -106,7 +107,7 @@ public sealed class BindingLexer
         var result = new System.Text.StringBuilder();
         while (!AtEnd && Current != '"')
         {
-            if (Current == '\n' || Current == '\r') throw Error("NWB1020", "String literals cannot contain a newline.");
+            if (Current == '\n' || Current == '\r') throw ErrorAt(BindingDiagnosticIds.NewlineInString, "String literals cannot contain a newline.", location);
             if (Current != '\\')
             {
                 result.Append(Current);
@@ -115,7 +116,7 @@ public sealed class BindingLexer
             }
 
             Advance();
-            if (AtEnd) throw Error("NWB1021", "Unterminated escape sequence.");
+            if (AtEnd) throw ErrorAt(BindingDiagnosticIds.UnterminatedEscape, "Unterminated escape sequence.", location);
             var escaped = Current;
             result.Append(escaped switch
             {
@@ -124,11 +125,11 @@ public sealed class BindingLexer
                 'n' => '\n',
                 't' => '\t',
                 'u' => ReadUnicodeEscape(),
-                _ => throw Error("NWB1022", $"Unsupported escape '\\{escaped}'."),
+                _ => throw Error(BindingDiagnosticIds.UnsupportedEscape, $"Unsupported escape '\\{escaped}'."),
             });
             if (escaped != 'u') Advance();
         }
-        if (AtEnd) throw Error("NWB1023", "Unterminated string literal.");
+        if (AtEnd) throw ErrorAt(BindingDiagnosticIds.UnterminatedString, "Unterminated string literal.", location);
         Advance();
         return result.ToString();
     }
@@ -136,10 +137,10 @@ public sealed class BindingLexer
     private char ReadUnicodeEscape()
     {
         Advance();
-        if (_offset + 4 > _text.Length) throw Error("NWB1024", "Unicode escape must contain four hexadecimal digits.");
+        if (_offset + 4 > _text.Length) throw Error(BindingDiagnosticIds.InvalidUnicodeEscape, "Unicode escape must contain four hexadecimal digits.");
         var hex = _text.Substring(_offset, 4);
-        if (!ushort.TryParse(hex, System.Globalization.NumberStyles.HexNumber, null, out var value))
-            throw Error("NWB1024", "Unicode escape must contain four hexadecimal digits.");
+        if (!ushort.TryParse(hex, System.Globalization.NumberStyles.AllowHexSpecifier, null, out var value))
+            throw Error(BindingDiagnosticIds.InvalidUnicodeEscape, "Unicode escape must contain four hexadecimal digits.");
         for (var index = 0; index < 4; index++) Advance();
         return (char)value;
     }
@@ -163,7 +164,7 @@ public sealed class BindingLexer
             }
             Advance();
         }
-        throw Error("NWB1030", "Unterminated block comment.");
+        throw Error(BindingDiagnosticIds.UnterminatedBlockComment, "Unterminated block comment.");
     }
 
     private bool AtEnd => _offset >= _text.Length;
@@ -190,6 +191,9 @@ public sealed class BindingLexer
         }
     }
 
-    private BindingParseException Error(string id, string message) =>
+    private BindingDiagnosticException Error(string id, string message) =>
         new(new BindingDiagnostic(id, BindingDiagnosticSeverity.Error, message, Location));
+
+    private static BindingDiagnosticException ErrorAt(string id, string message, SourceLocation location) =>
+        new(new BindingDiagnostic(id, BindingDiagnosticSeverity.Error, message, location));
 }

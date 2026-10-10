@@ -1,4 +1,5 @@
 using NeoWPF.DotNet.Interop.Generator.Parsing;
+using NeoWPF.DotNet.Interop.Generator.Diagnostics;
 
 namespace NeoWPF.DotNet.Interop.Generator.Binding;
 
@@ -14,6 +15,7 @@ public enum CanonicalTypeKind
     String,
     Bytes,
     Enum,
+    Interface,
     NamedClass,
     NamedStruct,
     Array,
@@ -84,35 +86,4 @@ public sealed record CanonicalType(
         IReadOnlyList<CanonicalType> elements,
         SourceLocation location) =>
         new(CanonicalTypeKind.Tuple, string.Empty, IntegerWidth.None, elements, null, 0, null, location);
-}
-
-public enum ParameterPassingMode
-{
-    Value,
-    Ref,
-    In,
-    Out,
-}
-
-public enum ManagedOwnership
-{
-    Owned,
-    Borrowed,
-    Shared,
-}
-
-public enum ManagedExecutionPolicy
-{
-    Unspecified,
-    Managed,
-    Calling,
-    Application,
-    Background,
-}
-
-public enum ManagedCallbackPolicy
-{
-    Application,
-    Managed,
-    Background,
 }

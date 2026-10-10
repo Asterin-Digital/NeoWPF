@@ -1,6 +1,6 @@
-namespace NeoWPF.DotNet.Interop.Generator.Parsing;
+using NeoWPF.DotNet.Interop.Generator.Diagnostics;
 
-public readonly record struct SourceLocation(string File, int Line, int Column);
+namespace NeoWPF.DotNet.Interop.Generator.Parsing;
 
 public abstract record BindingNode(SourceLocation Location);
 
@@ -37,7 +37,7 @@ public sealed record MethodDeclaration(
     bool HasExplicitSignature,
     TypeSyntax? ReturnType,
     bool IsAsync,
-    string? ReturnOwnership,
+    ManagedOwnership? ReturnOwnership,
     IReadOnlyList<MemberItem> Items,
     SourceLocation Location) : TypeItem(Location);
 public sealed record PropertyDeclaration(
@@ -45,7 +45,7 @@ public sealed record PropertyDeclaration(
     TypeSyntax? Type,
     bool Readable,
     bool Writable,
-    string? Ownership,
+    ManagedOwnership? Ownership,
     IReadOnlyList<MemberItem> Items,
     SourceLocation Location) : TypeItem(Location);
 public sealed record EventDeclaration(
@@ -54,19 +54,19 @@ public sealed record EventDeclaration(
     SourceLocation Location) : TypeItem(Location);
 
 public abstract record MemberItem(SourceLocation Location) : BindingNode(Location);
-public sealed record ReturnDeclaration(TypeSyntax Type, bool IsAsync, string? Ownership, SourceLocation Location) : MemberItem(Location);
+public sealed record ReturnDeclaration(TypeSyntax Type, bool IsAsync, ManagedOwnership? Ownership, SourceLocation Location) : MemberItem(Location);
 public sealed record ParameterDeclaration(ParameterSyntax Parameter, SourceLocation Location) : MemberItem(Location);
 public sealed record MemberTypeDeclaration(TypeSyntax Type, SourceLocation Location) : MemberItem(Location);
-public sealed record ExecutionDeclaration(string Policy, SourceLocation Location) : MemberItem(Location);
-public sealed record OwnershipDeclaration(string Ownership, SourceLocation Location) : MemberItem(Location);
-public sealed record CallbackDeclaration(string Policy, SourceLocation Location) : MemberItem(Location);
+public sealed record ExecutionDeclaration(ManagedExecutionPolicy Policy, SourceLocation Location) : MemberItem(Location);
+public sealed record OwnershipDeclaration(ManagedOwnership Ownership, SourceLocation Location) : MemberItem(Location);
+public sealed record CallbackDeclaration(ManagedCallbackPolicy Policy, SourceLocation Location) : MemberItem(Location);
 public sealed record ReadableDeclaration(bool Value, SourceLocation Location) : MemberItem(Location);
 public sealed record WritableDeclaration(bool Value, SourceLocation Location) : MemberItem(Location);
 public sealed record ManagedNameDeclaration(string Name, SourceLocation Location) : MemberItem(Location);
 public sealed record MemberNativeNameDeclaration(string Name, SourceLocation Location) : MemberItem(Location);
 public sealed record MemberAdapterDeclaration(string Path, SourceLocation Location) : MemberItem(Location);
 
-public sealed record ParameterSyntax(string? PassingMode, TypeSyntax Type, string? Name, SourceLocation Location);
+public sealed record ParameterSyntax(ParameterPassingMode PassingMode, TypeSyntax Type, string? Name, SourceLocation Location);
 
 public abstract record TypeSyntax(SourceLocation Location);
 public sealed record NamedTypeSyntax(string Name, IReadOnlyList<TypeSyntax> Arguments, SourceLocation Location) : TypeSyntax(Location);
@@ -75,3 +75,34 @@ public sealed record NullableTypeSyntax(TypeSyntax Element, SourceLocation Locat
 public sealed record ArrayTypeSyntax(TypeSyntax Element, int Rank, SourceLocation Location) : TypeSyntax(Location);
 public sealed record PointerTypeSyntax(TypeSyntax Element, SourceLocation Location) : TypeSyntax(Location);
 public sealed record TupleTypeSyntax(IReadOnlyList<TypeSyntax> Elements, SourceLocation Location) : TypeSyntax(Location);
+
+public enum ParameterPassingMode
+{
+    Value,
+    Ref,
+    In,
+    Out,
+}
+
+public enum ManagedOwnership
+{
+    Owned,
+    Borrowed,
+    Shared,
+}
+
+public enum ManagedExecutionPolicy
+{
+    Unspecified,
+    Managed,
+    Calling,
+    Application,
+    Background,
+}
+
+public enum ManagedCallbackPolicy
+{
+    Application,
+    Managed,
+    Background,
+}

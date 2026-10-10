@@ -1,6 +1,7 @@
 using BasicAssembly.Domain;
 using NeoWPF.DotNet.Interop.Generator.AssemblyInspection;
 using NeoWPF.DotNet.Interop.Generator.Binding;
+using NeoWPF.DotNet.Interop.Generator.Diagnostics;
 using NeoWPF.DotNet.Interop.Generator.Parsing;
 using Xunit;
 
@@ -39,8 +40,9 @@ public sealed class ResolutionTests
         var reader = new AssemblyReader();
         var service = reader.ResolveType(ReadAssembly(), "BasicAssembly.Domain.InvoiceService");
 
-        var method = reader.ResolveMethod(service, "CreateRequest", ["System.Decimal"], isStatic: true);
-        var exception = Assert.Throws<BindingParseException>(() => reader.ResolveMethod(service, "CreateRequest", ["System.Decimal"]));
+        var method = reader.ResolveMethod(service, "CreateRequest", ["System.Decimal"]);
+        var exception = Assert.Throws<BindingDiagnosticException>(() =>
+            reader.ResolveMethod(service, "CreateRequest", ["System.Decimal"], isStatic: false));
 
         Assert.True(method.IsStatic);
         Assert.Equal("NWB2012", exception.Diagnostic.Id);
@@ -52,8 +54,8 @@ public sealed class ResolutionTests
         var reader = new AssemblyReader();
         var service = reader.ResolveType(ReadAssembly(), "BasicAssembly.Domain.InvoiceService");
 
-        var missing = Assert.Throws<BindingParseException>(() => reader.ResolveMethod(service, "DoesNotExist", []));
-        var mismatch = Assert.Throws<BindingParseException>(() => reader.ResolveMethod(service, "Calculate", ["System.Int64"]));
+        var missing = Assert.Throws<BindingDiagnosticException>(() => reader.ResolveMethod(service, "DoesNotExist", []));
+        var mismatch = Assert.Throws<BindingDiagnosticException>(() => reader.ResolveMethod(service, "Calculate", ["System.Int64"]));
 
         Assert.Equal("NWB2012", missing.Diagnostic.Id);
         Assert.Equal("NWB2014", mismatch.Diagnostic.Id);
@@ -81,21 +83,27 @@ public sealed class ResolutionTests
     public void RejectsAmbiguousStaticStateWhenTheBindingDoesNotSpecifyIt()
     {
         var location = new SourceLocation("resolver.nwbind", 1, 1);
-        var parameter = new InspectedParameter("value", "System.Int32", false, false, false);
-        var method = new InspectedMethod("Convert", "System.String", [parameter], false, false, 0);
+        var parameter = new InspectedParameter("value", InspectedTypeRef.Named("System.Int32"), false, false, false);
+        var method = new InspectedMethod("Convert", InspectedTypeRef.Named("System.String"), [parameter], false, false, 0);
         var staticMethod = method with { IsStatic = true };
         var type = new InspectedType(
             "Acme.Converter",
+            "Acme",
             true,
             false,
             false,
             false,
+            false,
+            false,
+            false,
+            false,
+            true,
             0,
             [method, staticMethod],
             [],
             []);
 
-        var exception = Assert.Throws<BindingParseException>(() => new AssemblyReader().ResolveMethod(
+        var exception = Assert.Throws<BindingDiagnosticException>(() => new AssemblyReader().ResolveMethod(
             type,
             "Convert",
             ["System.Int32"],
@@ -111,7 +119,7 @@ public sealed class ResolutionTests
         var service = reader.ResolveType(ReadAssembly(), "BasicAssembly.Domain.InvoiceService");
 
         var unique = reader.ResolveMethodByName(service, "CreateRequest");
-        var ambiguous = Assert.Throws<BindingParseException>(() => reader.ResolveMethodByName(service, "Calculate"));
+        var ambiguous = Assert.Throws<BindingDiagnosticException>(() => reader.ResolveMethodByName(service, "Calculate"));
 
         Assert.Equal("CreateRequest", unique.Name);
         Assert.Equal("NWB2013", ambiguous.Diagnostic.Id);

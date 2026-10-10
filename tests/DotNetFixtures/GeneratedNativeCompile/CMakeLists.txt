@@ -5,7 +5,7 @@ project(NeoWPFGeneratedNativeCompile LANGUAGES CXX)
 set(NEOWPF_GENERATED_DIR "" CACHE PATH "Directory containing generated bindings")
 set(NEOWPF_PUBLIC_INCLUDE_DIR "" CACHE PATH "NeoWPF public include directory")
 
-if(NOT EXISTS "${NEOWPF_GENERATED_DIR}/RequestFactory.g.cpp")
+if(NOT EXISTS "${NEOWPF_GENERATED_DIR}/RequestBindings.g.cpp")
     message(FATAL_ERROR "The generated native binding source is missing.")
 endif()
 
@@ -14,7 +14,7 @@ if(NOT IS_DIRECTORY "${NEOWPF_PUBLIC_INCLUDE_DIR}/NeoWPF/DotNet")
 endif()
 
 add_library(GeneratedNativeBinding OBJECT
-    "${NEOWPF_GENERATED_DIR}/RequestFactory.g.cpp"
+    "${NEOWPF_GENERATED_DIR}/RequestBindings.g.cpp"
 )
 target_include_directories(GeneratedNativeBinding PRIVATE
     "${NEOWPF_GENERATED_DIR}"

@@ -1,5 +1,6 @@
 using NeoWPF.DotNet.Interop.Generator.Binding;
 using NeoWPF.DotNet.Interop.Generator.Parsing;
+using NeoWPF.DotNet.Interop.Generator.Diagnostics;
 
 namespace NeoWPF.DotNet.Interop.Generator.AssemblyInspection;
 
@@ -27,15 +28,15 @@ public sealed class CanonicalTypeResolver
             CanonicalTypeKind.Delegate or
             CanonicalTypeKind.Generic => ResolveNamed(type, assembly),
             CanonicalTypeKind.Pointer or CanonicalTypeKind.FunctionPointer or CanonicalTypeKind.Unsupported =>
-                throw Error("NWB3010", $"Type '{type.Name}' is unsupported.", type.Location),
-            _ => throw Error("NWB3011", $"Type '{type.Name}' cannot be resolved.", type.Location),
+                throw Error(BindingDiagnosticIds.UnsupportedType, $"Type '{type.Name}' is unsupported.", type.Location),
+            _ => throw Error(BindingDiagnosticIds.UnresolvedTypeShape, $"Type '{type.Name}' cannot be resolved.", type.Location),
         };
     }
 
     private CanonicalType ResolveArray(CanonicalType type, InspectedAssembly assembly)
     {
         if (type.Element is null || type.ArrayRank < 1)
-            throw Error("NWB3013", "Array types require an element type and a positive rank.", type.Location);
+            throw Error(BindingDiagnosticIds.InvalidArrayShape, "Array types require an element type and a positive rank.", type.Location);
 
         return CanonicalType.CreateArray(Resolve(type.Element, assembly), type.ArrayRank, type.Location);
     }
@@ -43,7 +44,7 @@ public sealed class CanonicalTypeResolver
     private CanonicalType ResolveWrapped(CanonicalType type, CanonicalTypeKind kind, InspectedAssembly assembly)
     {
         if (type.Element is null)
-            throw Error("NWB3014", "Wrapped types require an element type.", type.Location);
+            throw Error(BindingDiagnosticIds.InvalidWrappedType, "Wrapped types require an element type.", type.Location);
 
         return CanonicalType.Wrapped(kind, Resolve(type.Element, assembly), type.Location);
     }
@@ -51,7 +52,7 @@ public sealed class CanonicalTypeResolver
     private CanonicalType ResolveTuple(CanonicalType type, InspectedAssembly assembly)
     {
         if (type.Arguments.Count < 2)
-            throw Error("NWB3015", "Tuple types require at least two elements.", type.Location);
+            throw Error(BindingDiagnosticIds.InvalidTupleShape, "Tuple types require at least two elements.", type.Location);
 
         return CanonicalType.Tuple(type.Arguments.Select(argument => Resolve(argument, assembly)).ToArray(), type.Location);
     }
@@ -60,19 +61,46 @@ public sealed class CanonicalTypeResolver
     {
         var arguments = type.Arguments.Select(argument => Resolve(argument, assembly)).ToArray();
         if (arguments.Length > 1)
-            throw Error("NWB3016", "Task and ValueTask types accept at most one result type.", type.Location);
+            throw Error(BindingDiagnosticIds.InvalidTaskShape, "Task and ValueTask types accept at most one result type.", type.Location);
 
         return CanonicalType.Named(type.Kind, type.Name, arguments, null, type.Location);
     }
 
     private CanonicalType ResolveNamed(CanonicalType type, InspectedAssembly assembly)
     {
-        var inspected = assembly.Types.SingleOrDefault(candidate => candidate.FullName == type.Name);
-        if (inspected is null)
-            throw Error("NWB2011", $"Type '{type.Name}' was not found in '{assembly.Identity.Name}'.", type.Location);
+        var normalizedName = NormalizeName(type.Name);
+        var arguments = type.Arguments.Select(argument => Resolve(argument, assembly)).ToArray();
+        var nameCandidates = assembly.Types
+            .Where(candidate => NormalizeName(candidate.FullName) == normalizedName)
+            .Where(candidate => type.AssemblyIdentity is null || candidate.AssemblyName == type.AssemblyIdentity)
+            .ToArray();
+        var candidates = nameCandidates.Where(candidate => candidate.GenericArity == arguments.Length).ToArray();
+        if (candidates.Length == 0)
+        {
+            if (nameCandidates.Length != 0)
+            {
+                var arities = string.Join(", ", nameCandidates.Select(candidate => candidate.GenericArity).Distinct().Order());
+                throw Error(
+                    BindingDiagnosticIds.GenericArityMismatch,
+                    $"Type '{type.Name}' was given {arguments.Length} generic arguments; available arities: {arities}.",
+                    type.Location);
+            }
+            throw Error(BindingDiagnosticIds.TypeNotFound, $"Type '{type.Name}' was not found in '{assembly.Identity.Name}'.", type.Location);
+        }
+        if (candidates.Length > 1)
+            throw Error(
+                BindingDiagnosticIds.AmbiguousType,
+                $"Type '{type.Name}' is ambiguous across assemblies: {string.Join(", ", candidates.Select(candidate => candidate.AssemblyName).OrderBy(name => name, StringComparer.Ordinal))}.",
+                type.Location);
+
+        var inspected = candidates[0];
+        if (inspected.IsByRefLike)
+            throw Error(BindingDiagnosticIds.UnsupportedType, $"By-ref-like type '{type.Name}' is not supported.", type.Location);
 
         var kind = inspected.IsEnum
             ? CanonicalTypeKind.Enum
+            : inspected.IsInterface
+                ? CanonicalTypeKind.Interface
             : inspected.IsStruct
                 ? CanonicalTypeKind.NamedStruct
                 : inspected.IsDelegate
@@ -80,13 +108,16 @@ public sealed class CanonicalTypeResolver
                     : inspected.GenericArity > 0 || type.Arguments.Count > 0
                         ? CanonicalTypeKind.Generic
                         : CanonicalTypeKind.NamedClass;
-        var arguments = type.Arguments.Select(argument => Resolve(argument, assembly)).ToArray();
-        if (inspected.GenericArity != arguments.Length && inspected.GenericArity > 0)
-            throw Error("NWB3017", $"Type '{type.Name}' requires {inspected.GenericArity} generic arguments.", type.Location);
-
-        return CanonicalType.Named(kind, inspected.FullName, arguments, assembly.Identity.Name, type.Location);
+        return CanonicalType.Named(kind, inspected.FullName, arguments, inspected.AssemblyName, type.Location);
     }
 
-    private static BindingParseException Error(string id, string message, SourceLocation location) =>
+    private static string NormalizeName(string name) => string.Join('.', name.Replace('+', '.').Split('.')
+        .Select(segment =>
+        {
+            var arityMarker = segment.IndexOf('`');
+            return arityMarker < 0 ? segment : segment[..arityMarker];
+        }));
+
+    private static BindingDiagnosticException Error(string id, string message, SourceLocation location) =>
         new(new BindingDiagnostic(id, BindingDiagnosticSeverity.Error, message, location));
 }

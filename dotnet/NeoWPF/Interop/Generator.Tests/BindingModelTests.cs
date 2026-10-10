@@ -1,4 +1,5 @@
 using NeoWPF.DotNet.Interop.Generator.Binding;
+using NeoWPF.DotNet.Interop.Generator.Diagnostics;
 using NeoWPF.DotNet.Interop.Generator.Parsing;
 using Xunit;
 

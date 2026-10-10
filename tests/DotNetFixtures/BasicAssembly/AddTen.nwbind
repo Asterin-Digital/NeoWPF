@@ -6,4 +6,9 @@ binding BasicAssembly
         nativeName "InvoiceService";
         method AddTen(int32 value) returns int32;
     }
+    type BasicAssembly.Domain.UtilityService
+    {
+        nativeName "UtilityService";
+        method Double(int32 value) returns int32;
+    }
 }

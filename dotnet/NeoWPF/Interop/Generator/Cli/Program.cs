@@ -1,9 +1,10 @@
 using NeoWPF.DotNet.Interop.Generator.Cli;
+using NeoWPF.DotNet.Interop.Generator.Diagnostics;
 
-if (args.Length != 7 || args[0] != "generate")
+if (args.Length < 5 || args[0] != "generate" || args.Length % 2 == 0)
 {
     Console.Error.WriteLine(
-        "Usage: NeoWPF.DotNet.Generator generate --binding <path> --assembly <path> --output <path>");
+        "Usage: NeoWPF.DotNet.Generator generate --binding <path> --output <path> [--assembly <path>]");
     return 2;
 }
 
@@ -19,19 +20,33 @@ for (var index = 1; index < args.Length; index += 2)
 }
 
 if (!values.TryGetValue("--binding", out var bindingPath) ||
-    !values.TryGetValue("--assembly", out var assemblyPath) ||
     !values.TryGetValue("--output", out var outputDirectory))
 {
     Console.Error.WriteLine(
-        "Usage: NeoWPF.DotNet.Generator generate --binding <path> --assembly <path> --output <path>");
+        "Usage: NeoWPF.DotNet.Generator generate --binding <path> --output <path> [--assembly <path>]");
     return 2;
 }
+values.TryGetValue("--assembly", out var assemblyPath);
 
-GeneratorCommand.Generate(new GeneratorOptions(
-    File.ReadAllText(bindingPath),
-    assemblyPath,
-    outputDirectory,
-    GenerateManaged: true,
-    GenerateNative: true,
-    ContractFileName: "BasicAssembly.contract"));
-return 0;
+try
+{
+    var options = new GeneratorOptions(
+        bindingPath,
+        assemblyPath,
+        outputDirectory,
+        GenerateManaged: true,
+        GenerateNative: true,
+        ContractFileName: "BasicAssembly.contract");
+    var output = GeneratorCommand.Generate(options);
+    GeneratorOutputWriter.Write(options, output);
+    return 0;
+}
+catch (BindingDiagnosticException exception)
+{
+    foreach (var diagnostic in exception.Diagnostics)
+    {
+        Console.Error.WriteLine(
+            $"{diagnostic.Id} at {diagnostic.Location.File}:{diagnostic.Location.Line}:{diagnostic.Location.Column}: {diagnostic.Message}");
+    }
+    return 1;
+}

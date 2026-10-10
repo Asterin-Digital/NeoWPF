@@ -1,5 +1,6 @@
 using NeoWPF.DotNet.Interop.Generator.Binding;
 using NeoWPF.DotNet.Interop.Generator.Parsing;
+using NeoWPF.DotNet.Interop.Generator.Diagnostics;
 using Xunit;
 
 namespace NeoWPF.DotNet.Interop.Generator.Tests;
@@ -37,7 +38,7 @@ binding AcmeBusiness
     [Fact]
     public void ReportsInvalidSyntax()
     {
-        var exception = Assert.Throws<BindingParseException>(() =>
+        var exception = Assert.Throws<BindingDiagnosticException>(() =>
             new BindingParser("binding Broken { type Missing { method; } }").ParseDocument());
 
         Assert.Equal("NWB1010", exception.Diagnostic.Id);
@@ -103,7 +104,7 @@ binding AcmeBusiness
                     method GetHandle() returns Acme.Handle*;
                     method GetVoid() returns void;
                     method GetMatrix() returns int32[,];
-                    method GetAsync() returns async System.Threading.Tasks.Task<int32>;
+                    method GetAsync() returns async int32;
                     method ForApplication
                     {
                         execution Application;
@@ -195,10 +196,75 @@ binding AcmeBusiness
     [Fact]
     public void RejectsNonAsciiIdentifiers()
     {
-        var exception = Assert.Throws<BindingParseException>(() =>
+        var exception = Assert.Throws<BindingDiagnosticException>(() =>
             new BindingParser("binding Caf\u00e9 { assembly \"Cafe.dll\"; }").ParseDocument());
 
         Assert.Equal("NWB1010", exception.Diagnostic.Id);
+    }
+
+    [Theory]
+    [InlineData("int", "int32")]
+    [InlineData("long", "int64")]
+    [InlineData("byte", "uint8")]
+    [InlineData("short", "int16")]
+    [InlineData("ushort", "uint16")]
+    [InlineData("uint", "uint32")]
+    [InlineData("ulong", "uint64")]
+    [InlineData("sbyte", "int8")]
+    public void RejectsSupportedCSharpAliasesWithCanonicalSuggestion(string alias, string primitive)
+    {
+        var exception = Assert.Throws<BindingDiagnosticException>(() =>
+            new BindingParser($"binding Aliases {{ assembly \"input.dll\"; type Example {{ method Call({alias} value); }} }}")
+                .ParseDocument());
+
+        Assert.Equal(BindingDiagnosticIds.CSharpKeywordAlias, exception.Diagnostic.Id);
+        Assert.Contains(primitive, exception.Diagnostic.Message);
+    }
+
+    [Theory]
+    [InlineData("char")]
+    [InlineData("object")]
+    public void RejectsUnsupportedCSharpAliasesWithoutInvalidSuggestion(string alias)
+    {
+        var exception = Assert.Throws<BindingDiagnosticException>(() =>
+            new BindingParser($"binding Aliases {{ assembly \"input.dll\"; type Example {{ method Call({alias} value); }} }}")
+                .ParseDocument());
+
+        Assert.Equal(BindingDiagnosticIds.CSharpKeywordAlias, exception.Diagnostic.Id);
+        Assert.DoesNotContain("use '", exception.Diagnostic.Message);
+    }
+
+    [Theory]
+    [InlineData("assembly \"one.dll\"; assembly \"two.dll\";", "method Call;", "NWB2021")]
+    [InlineData("assembly \"input.dll\"; nativeName \"First\"; nativeName \"Second\";", "method Call;", "NWB2021")]
+    [InlineData("assembly \"input.dll\";", "method Call { execution Managed; execution Background; }", "NWB2020")]
+    [InlineData("assembly \"input.dll\";", "method Call { callback Background; }", "NWB1033")]
+    [InlineData("assembly \"input.dll\";", "method Call { parameter value: int32; }", "NWB1033")]
+    [InlineData("assembly \"input.dll\";", "method Call() returns int32 { returns int32; }", "NWB2020")]
+    [InlineData("assembly \"input.dll\";", "method Call; property string Name { type int32; }", "NWB2020")]
+    public void ReportsDuplicateAndInvalidOptionsWithSourceLocations(
+        string bindingOptions,
+        string typeMembers,
+        string expectedDiagnostic)
+    {
+        var source = $$"""
+            binding Options
+            {
+                {{bindingOptions}}
+                type Example
+                {
+                    {{typeMembers}}
+                }
+            }
+            """;
+
+        var exception = Assert.Throws<BindingDiagnosticException>(() =>
+            new BindingParser(source, "options.nwbind").ParseDocument());
+
+        Assert.Equal(expectedDiagnostic, exception.Diagnostic.Id);
+        Assert.Equal("options.nwbind", exception.Diagnostic.Location.File);
+        Assert.True(exception.Diagnostic.Location.Line > 0);
+        Assert.True(exception.Diagnostic.Location.Column > 0);
     }
 
     [Fact]
@@ -221,7 +287,7 @@ binding AcmeBusiness
     public void RejectsMalformedGrammarProductions(string body)
     {
         var source = $"binding Test {{ {body} }}";
-        var exception = Assert.Throws<BindingParseException>(() => new BindingParser(source).ParseDocument());
+        var exception = Assert.Throws<BindingDiagnosticException>(() => new BindingParser(source).ParseDocument());
 
         Assert.StartsWith("NWB", exception.Diagnostic.Id);
     }
@@ -277,7 +343,7 @@ binding AcmeBusiness
     [MemberData(nameof(InvalidLexicalInputs))]
     public void ReportsDiagnosticsForInvalidLexicalForms(string source, string expectedDiagnostic)
     {
-        var exception = Assert.Throws<BindingParseException>(() => new BindingParser(source).ParseDocument());
+        var exception = Assert.Throws<BindingDiagnosticException>(() => new BindingParser(source).ParseDocument());
 
         Assert.Equal(expectedDiagnostic, exception.Diagnostic.Id);
     }
@@ -286,9 +352,22 @@ binding AcmeBusiness
     {
         { "binding Test { assembly \"bad\\q\"; }", "NWB1022" },
         { "binding Test { assembly \"bad\\u12G4\"; }", "NWB1024" },
+        { "binding Test { assembly \"bad\\u 1F \"; }", "NWB1024" },
         { "binding Test { assembly \"bad; }", "NWB1023" },
         { "binding Test { assembly \"bad\nnext\"; }", "NWB1020" },
-        { "binding Test { /* unterminated", "NWB1030" },
+        { "binding Test { /* unterminated", "NWB1040" },
         { "binding @ { }", "NWB1011" }
     };
+
+    [Fact]
+    public void LocatesUnterminatedStringAtItsOpeningQuote()
+    {
+        const string source = "binding Broken { assembly \"unterminated";
+        var exception = Assert.Throws<BindingDiagnosticException>(() =>
+            new BindingParser(source, "unterminated.nwbind").ParseDocument());
+
+        Assert.Equal("NWB1023", exception.Diagnostic.Id);
+        Assert.Equal("unterminated.nwbind", exception.Diagnostic.Location.File);
+        Assert.Equal(source.IndexOf('"') + 1, exception.Diagnostic.Location.Column);
+    }
 }

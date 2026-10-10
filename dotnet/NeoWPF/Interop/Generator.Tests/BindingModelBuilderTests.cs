@@ -1,5 +1,6 @@
 using NeoWPF.DotNet.Interop.Generator.Binding;
 using NeoWPF.DotNet.Interop.Generator.Parsing;
+using NeoWPF.DotNet.Interop.Generator.Diagnostics;
 using Xunit;
 
 namespace NeoWPF.DotNet.Interop.Generator.Tests;
@@ -77,7 +78,7 @@ public sealed class BindingModelBuilderTests
             }
             """, "Acme.nwbind").ParseDocument().Bindings[0];
 
-        var exception = Assert.Throws<BindingParseException>(() => new BindingModelBuilder().Build(syntax));
+        var exception = Assert.Throws<BindingDiagnosticException>(() => new BindingModelBuilder().Build(syntax));
 
         Assert.Equal("NWB3010", exception.Diagnostic.Id);
     }
