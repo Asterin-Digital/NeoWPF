@@ -6,7 +6,6 @@
 
 namespace NeoWPF::UI::Properties {
     namespace UI = ::NeoWPF::UI;
-    using ::NeoWPF::UI::Color;
 }
 
 namespace {
@@ -26,20 +25,20 @@ namespace {
         return metadata;
     }
 
-    NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxTextColorMetadata() {
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxForegroundMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-            NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground));
-        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
+        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+            NeoWPF::Core::ApplicationThemes::PaletteBrush::Foreground));
+        metadata.Converter = NeoWPF::UI::Properties::GetBrushConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
 
-    NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxCaretColorMetadata() {
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBoxCaretBrushMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-            NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground));
-        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
+        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+            NeoWPF::Core::ApplicationThemes::PaletteBrush::Foreground));
+        metadata.Converter = NeoWPF::UI::Properties::GetBrushConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -100,14 +99,14 @@ namespace NeoWPF::UI::Properties {
             &UI::TextBox::GetPlaceholderText,
             &UI::TextBox::SetPlaceholderText,
             MakeTextBoxPlaceholderTextMetadata());
-        RegisterProperty<UI::TextBox, ::NeoWPF::UI::Color>("Foreground",
-            &UI::TextBox::GetTextColor,
-            static_cast<void (UI::TextBox::*)(::NeoWPF::UI::Color)>(&UI::TextBox::SetTextColor),
-            MakeTextBoxTextColorMetadata());
-        RegisterProperty<UI::TextBox, ::NeoWPF::UI::Color>("CaretBrush",
-            &UI::TextBox::GetCaretColor,
-            static_cast<void (UI::TextBox::*)(::NeoWPF::UI::Color)>(&UI::TextBox::SetCaretColor),
-            MakeTextBoxCaretColorMetadata());
+        RegisterProperty<UI::TextBox, std::shared_ptr<UI::Brush>>("Foreground",
+            &UI::TextBox::GetForeground,
+            &UI::TextBox::SetForeground,
+            MakeTextBoxForegroundMetadata());
+        RegisterProperty<UI::TextBox, std::shared_ptr<UI::Brush>>("CaretBrush",
+            &UI::TextBox::GetCaretBrush,
+            &UI::TextBox::SetCaretBrush,
+            MakeTextBoxCaretBrushMetadata());
         RegisterProperty<UI::TextBox, int>("FontSize",
             &UI::TextBox::GetFontSize,
             &UI::TextBox::SetFontSize,
@@ -155,21 +154,21 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBox::Placehold
     return *property;
 }
 
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBox::TextColorProperty() {
-    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::TextBox, NeoWPF::UI::Color>(
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBox::ForegroundProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::TextBox, std::shared_ptr<NeoWPF::UI::Brush>>(
         "Foreground",
-        &NeoWPF::UI::TextBox::GetTextColor,
-        static_cast<void (NeoWPF::UI::TextBox::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::TextBox::SetTextColor),
-        MakeTextBoxTextColorMetadata());
+        &NeoWPF::UI::TextBox::GetForeground,
+        &NeoWPF::UI::TextBox::SetForeground,
+        MakeTextBoxForegroundMetadata());
     return *property;
 }
 
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBox::CaretColorProperty() {
-    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::TextBox, NeoWPF::UI::Color>(
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBox::CaretBrushProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::TextBox, std::shared_ptr<NeoWPF::UI::Brush>>(
         "CaretBrush",
-        &NeoWPF::UI::TextBox::GetCaretColor,
-        static_cast<void (NeoWPF::UI::TextBox::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::TextBox::SetCaretColor),
-        MakeTextBoxCaretColorMetadata());
+        &NeoWPF::UI::TextBox::GetCaretBrush,
+        &NeoWPF::UI::TextBox::SetCaretBrush,
+        MakeTextBoxCaretBrushMetadata());
     return *property;
 }
 

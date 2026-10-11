@@ -10,7 +10,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Controls/Base/ToggleBase/ToggleBase.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/UI/Text/FontStyle.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 
@@ -31,9 +31,7 @@ class CheckboxTemplate;
 class Checkbox : public NeoWPF::UI::ToggleBase {
 public:
     static const Properties::DependencyProperty& TextProperty();
-    static const Properties::DependencyProperty& TextColorProperty();
-    static const Properties::DependencyProperty& BackgroundColorProperty();
-    static const Properties::DependencyProperty& BorderColorProperty();
+    static const Properties::DependencyProperty& ForegroundProperty();
     static const Properties::DependencyProperty& PaddingProperty();
     static const Properties::DependencyProperty& FontSizeProperty();
     static const Properties::DependencyProperty& FontWeightProperty();
@@ -96,39 +94,15 @@ public:
 
     /*
         @summary
-        Sets the text color.
+        Sets the foreground brush used for the label and check mark.
     */
-    void SetTextColor(NeoWPF::UI::Color color) noexcept;
+        void SetForeground(std::shared_ptr<Brush> brush);
 
     /*
         @summary
-        Returns the text color.
+        Returns the foreground brush used for the label and check mark.
     */
-    NeoWPF::UI::Color GetTextColor() const noexcept;
-
-    /*
-        @summary
-        Sets the background color.
-    */
-    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept;
-
-    /*
-        @summary
-        Returns the background color.
-    */
-    NeoWPF::UI::Color GetBackgroundColor() const noexcept;
-
-    /*
-        @summary
-        Sets the border color.
-    */
-    void SetBorderColor(NeoWPF::UI::Color color) noexcept;
-
-    /*
-        @summary
-        Returns the border color.
-    */
-    NeoWPF::UI::Color GetBorderColor() const noexcept;
+        std::shared_ptr<Brush> GetForeground() const;
 
     /*
         @summary

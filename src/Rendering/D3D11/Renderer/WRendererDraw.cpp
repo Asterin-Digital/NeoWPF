@@ -1,4 +1,5 @@
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/Rendering/Clipping.h>
 #include <d3d11.h>
 #include <wrl.h>
@@ -113,10 +114,12 @@ void ExecuteRendererDraw(const CommandList& cmd)
     if (cmd.hasClearColor) {
         bgColor = cmd.clearColor;
     } else {
-        NeoWPF::UI::Color resourceColor;
-        if (NeoWPF::Core::ApplicationResources::Resources::TryGetColor(
-                "Window.BackgroundColor", resourceColor)) {
-            bgColor = resourceColor.ToArgb();
+        std::shared_ptr<NeoWPF::UI::Brush> resourceBrush;
+        if (NeoWPF::Core::ApplicationResources::Resources::TryGetBrush(
+                "Window.BackgroundBrush", resourceBrush)) {
+            if (const auto solidBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(resourceBrush)) {
+                bgColor = solidBrush->GetArgb();
+            }
         }
     }
 

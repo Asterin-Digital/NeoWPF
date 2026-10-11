@@ -289,8 +289,6 @@ public:
 private:
     void OnValueChanged(double value) override;
     void OnPaddingChanged(Thickness padding) override;
-    void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
-    void OnBorderColorChanged(NeoWPF::UI::Color color) override;
     void OnBorderThicknessChanged(double thickness) override;
 
     double CoerceValueToTicks(double value) const noexcept;

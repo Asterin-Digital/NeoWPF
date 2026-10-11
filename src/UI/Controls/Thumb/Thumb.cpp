@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/Thumb/Thumb.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/Input/Core/Events.h>
 #include <NeoWPF/Diagnostics/Logger.h>
@@ -110,6 +111,11 @@ void Thumb::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     const auto clip = GetClipRect();
     const auto cornerRadius = GetCornerRadius();
+    const auto backgroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
+    if (!backgroundBrush) {
+        return;
+    }
+
     commands.DrawRoundedRect(
         absX,
         absY,
@@ -119,8 +125,8 @@ void Thumb::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         cornerRadius.TopRight,
         cornerRadius.BottomRight,
         cornerRadius.BottomLeft,
-        GetBackgroundColor().ToArgb(),
-        GetOpacity(),
+        backgroundBrush->GetArgb(),
+        static_cast<float>(GetOpacity() * backgroundBrush->GetOpacity()),
         clip,
         renderTransform.rotationRadians,
         renderTransform.pivot.X,

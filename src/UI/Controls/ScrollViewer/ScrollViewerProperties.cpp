@@ -3,7 +3,6 @@
 
 namespace NeoWPF::UI::Properties {
     namespace UI = ::NeoWPF::UI;
-    using ::NeoWPF::UI::Color;
 }
 
 namespace {

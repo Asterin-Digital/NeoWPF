@@ -13,6 +13,7 @@ See LICENSE file in the project root for full license text.
 #include <optional>
 #include <string>
 #include <typeindex>
+#include <type_traits>
 #include <typeinfo>
 #include <unordered_map>
 
@@ -316,7 +317,11 @@ namespace NeoWPF::UI::Properties {
     template<typename T>
     T DependencyObject::GetValue(const DependencyProperty& property) const
     {
-        return std::any_cast<T>(GetRawValue(property));
+        if constexpr (std::is_same_v<T, std::any>) {
+            return GetRawValue(property);
+        } else {
+            return std::any_cast<T>(GetRawValue(property));
+        }
     }
 
     template<typename T>

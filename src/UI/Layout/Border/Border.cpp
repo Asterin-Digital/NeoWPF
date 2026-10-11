@@ -2,6 +2,7 @@
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 
@@ -11,15 +12,17 @@ namespace {
 
 void ApplyBorderTheme(Border& border)
 {
-    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::PaletteBrush;
     using NeoWPF::Core::ApplicationThemes::ThemeBorderThickness;
     using NeoWPF::Core::ApplicationThemes::ThemeCornerRadius;
     using NeoWPF::Core::ApplicationThemes::ThemePadding;
     using NeoWPF::Core::ApplicationThemes::ThemeManager;
 
     auto& themeManager = ThemeManager::Instance();
-    border.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
-    border.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+    border.SetThemePropertyValue("Background",
+        NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Surface));
+    border.SetThemePropertyValue("BorderBrush",
+        NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Border));
 
     NeoWPF::UI::Thickness padding;
     if (themeManager.TryGetPadding(ThemePadding::Border, padding)) {
@@ -147,15 +150,18 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     const auto clip = GetClipRect();
 
-    if (GetBorderThickness() > 0 && GetBorderColor().ToArgb() != 0x00000000u) {
+    const auto borderBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBorderBrush());
+    const auto backgroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
+    if (GetBorderThickness() > 0 && borderBrush && borderBrush->GetArgb() != 0x00000000u) {
         const auto border = GetBorderThicknessValue();
-        if (border.Top > 0) commands.DrawRect(absX, absY, GetFinalWidth(), border.Top, GetBorderColor().ToArgb(), GetOpacity(), clip);
-        if (border.Bottom > 0) commands.DrawRect(absX, absY + GetFinalHeight() - border.Bottom, GetFinalWidth(), border.Bottom, GetBorderColor().ToArgb(), GetOpacity(), clip);
-        if (border.Left > 0) commands.DrawRect(absX, absY + border.Top, border.Left, (std::max)(0.0, GetFinalHeight() - border.Top - border.Bottom), GetBorderColor().ToArgb(), GetOpacity(), clip);
-        if (border.Right > 0) commands.DrawRect(absX + GetFinalWidth() - border.Right, absY + border.Top, border.Right, (std::max)(0.0, GetFinalHeight() - border.Top - border.Bottom), GetBorderColor().ToArgb(), GetOpacity(), clip);
+        const auto opacity = static_cast<float>(GetOpacity() * borderBrush->GetOpacity());
+        if (border.Top > 0) commands.DrawRect(absX, absY, GetFinalWidth(), border.Top, borderBrush->GetArgb(), opacity, clip);
+        if (border.Bottom > 0) commands.DrawRect(absX, absY + GetFinalHeight() - border.Bottom, GetFinalWidth(), border.Bottom, borderBrush->GetArgb(), opacity, clip);
+        if (border.Left > 0) commands.DrawRect(absX, absY + border.Top, border.Left, (std::max)(0.0, GetFinalHeight() - border.Top - border.Bottom), borderBrush->GetArgb(), opacity, clip);
+        if (border.Right > 0) commands.DrawRect(absX + GetFinalWidth() - border.Right, absY + border.Top, border.Right, (std::max)(0.0, GetFinalHeight() - border.Top - border.Bottom), borderBrush->GetArgb(), opacity, clip);
     }
 
-    if (GetBackgroundColor().ToArgb() != 0x00000000u) {
+    if (backgroundBrush && backgroundBrush->GetArgb() != 0x00000000u) {
         const auto border = GetBorderThicknessValue();
         const double inset = std::max({border.Left, border.Top, border.Right, border.Bottom});
         commands.DrawRoundedRect(
@@ -167,8 +173,8 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             std::max(0.0, cornerRadius.TopRight - inset),
             std::max(0.0, cornerRadius.BottomRight - inset),
             std::max(0.0, cornerRadius.BottomLeft - inset),
-            GetBackgroundColor().ToArgb(),
-            GetOpacity(),
+            backgroundBrush->GetArgb(),
+            static_cast<float>(GetOpacity() * backgroundBrush->GetOpacity()),
             clip,
             0.0f);
     }
@@ -211,44 +217,12 @@ Thickness Border::GetBorderThicknessValue() const noexcept
     return m_borderThicknesses;
 }
 
-void Border::SetBorderColor(NeoWPF::UI::Color color) noexcept
-{
-    Control::SetBorderColor(color);
-    InvalidateVisual();
-}
-
-NeoWPF::UI::Color Border::GetBorderColor() const noexcept
-{
-    return Control::GetBorderColor();
-}
-
-void Border::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
-{
-    Control::SetBackgroundColor(color);
-    InvalidateVisual();
-}
-
-NeoWPF::UI::Color Border::GetBackgroundColor() const noexcept
-{
-    return Control::GetBackgroundColor();
-}
-
 void Border::OnPaddingChanged(Thickness)
 {
     InvalidateVisual();
 }
 
 void Border::OnBorderThicknessChanged(double)
-{
-    InvalidateVisual();
-}
-
-void Border::OnBorderColorChanged(NeoWPF::UI::Color)
-{
-    InvalidateVisual();
-}
-
-void Border::OnBackgroundColorChanged(NeoWPF::UI::Color)
 {
     InvalidateVisual();
 }

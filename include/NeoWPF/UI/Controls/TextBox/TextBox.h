@@ -57,8 +57,8 @@ public:
     static bool s_textBoxDebug;
     static const Properties::DependencyProperty& TextProperty();
     static const Properties::DependencyProperty& PlaceholderTextProperty();
-    static const Properties::DependencyProperty& TextColorProperty();
-    static const Properties::DependencyProperty& CaretColorProperty();
+    static const Properties::DependencyProperty& ForegroundProperty();
+    static const Properties::DependencyProperty& CaretBrushProperty();
     static const Properties::DependencyProperty& FontSizeProperty();
     static const Properties::DependencyProperty& FontFamilyProperty();
     static const Properties::DependencyProperty& FontWeightProperty();
@@ -179,25 +179,13 @@ public:
 
     /*
         @summary
-        Text color used for rendering.
+        Brush used to render text.
 
-        @param color
-        ARGB color value.
+            @param brush
+            Foreground brush.
     */
-    void SetTextColor(NeoWPF::UI::Color color) noexcept;
-    void SetTextColor(std::uint32_t color) noexcept;
-    NeoWPF::UI::Color GetTextColor() const noexcept;
-
-    /*
-        @summary
-        Background color for the text box.
-
-        @param color
-        ARGB color value.
-    */
-    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept;
-    void SetBackgroundColor(std::uint32_t color) noexcept;
-    NeoWPF::UI::Color GetBackgroundColor() const noexcept;
+        void SetForeground(std::shared_ptr<Brush> brush);
+        std::shared_ptr<Brush> GetForeground() const;
 
     /*
         @summary
@@ -313,25 +301,13 @@ public:
 
     /*
         @summary
-        Border color for the control.
+        Brush used to render the caret.
 
-        @param color
-        ARGB color value.
+            @param brush
+            Caret brush.
     */
-    void SetBorderColor(NeoWPF::UI::Color color) noexcept;
-    void SetBorderColor(std::uint32_t color) noexcept;
-    NeoWPF::UI::Color GetBorderColor() const noexcept;
-
-    /*
-        @summary
-        Caret (cursor) color.
-
-        @param color
-        ARGB color value.
-    */
-    void SetCaretColor(NeoWPF::UI::Color color) noexcept;
-    void SetCaretColor(std::uint32_t color) noexcept;
-    NeoWPF::UI::Color GetCaretColor() const noexcept;
+        void SetCaretBrush(std::shared_ptr<Brush> brush);
+        std::shared_ptr<Brush> GetCaretBrush() const;
 
     /*
         @summary
@@ -357,8 +333,8 @@ protected:
                                      const std::any& oldValue,
                                      const std::any& newValue,
                                      Properties::PropertyValueSource source) override;
-    void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
-    void OnBorderColorChanged(NeoWPF::UI::Color color) override;
+    void OnBackgroundBrushChanged(const std::shared_ptr<Brush>& brush) override;
+    void OnBorderBrushChanged(const std::shared_ptr<Brush>& brush) override;
     void OnBorderThicknessChanged(double thickness) override;
 
     /*

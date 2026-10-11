@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 
 #include <algorithm>
 #include <atomic>
@@ -10,7 +10,7 @@
 
 namespace {
 
-using NeoWPF::Core::ApplicationThemes::PaletteColor;
+using NeoWPF::Core::ApplicationThemes::PaletteBrush;
 using NeoWPF::Core::ApplicationThemes::ThemeBorderThickness;
 using NeoWPF::Core::ApplicationThemes::ThemeCornerRadius;
 using NeoWPF::Core::ApplicationThemes::ThemeDefinition;
@@ -18,6 +18,17 @@ using NeoWPF::Core::ApplicationThemes::ThemeFontSize;
 using NeoWPF::Core::ApplicationThemes::ThemeManager;
 using NeoWPF::Core::ApplicationThemes::ThemeMetric;
 using NeoWPF::Core::ApplicationThemes::ThemePadding;
+
+std::shared_ptr<NeoWPF::UI::Brush> MakeSolidBrush(std::uint32_t argb)
+{
+    return std::make_shared<NeoWPF::UI::SolidColorBrush>(argb);
+}
+
+std::uint32_t GetSolidBrushArgb(const std::shared_ptr<NeoWPF::UI::Brush>& brush)
+{
+    const auto solidBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(brush);
+    return solidBrush ? solidBrush->GetArgb() : 0u;
+}
 
 class ApplicationThemeTests : public ::testing::Test {
 protected:
@@ -36,18 +47,18 @@ protected:
     {
         ThemeDefinition theme;
         theme.Name = name;
-        theme.Palette[PaletteColor::Background] = background;
-        theme.Palette[PaletteColor::Surface] = 0xFF202020u;
-        theme.Palette[PaletteColor::Foreground] = 0xFFE0E0E0u;
-        theme.Palette[PaletteColor::MutedForeground] = 0xFF808080u;
-        theme.Palette[PaletteColor::Border] = 0xFF606060u;
-        theme.Palette[PaletteColor::Accent] = accent;
-        theme.Palette[PaletteColor::AccentHover] = 0xFF404040u;
-        theme.Palette[PaletteColor::AccentPressed] = 0xFF303030u;
-        theme.Palette[PaletteColor::DisabledSurface] = 0xFF181818u;
-        theme.Palette[PaletteColor::Focus] = 0xFF909090u;
-        theme.Palette[PaletteColor::Track] = 0xFF505050u;
-        theme.Palette[PaletteColor::Thumb] = 0xFF707070u;
+        theme.Palette[PaletteBrush::Background] = MakeSolidBrush(background);
+        theme.Palette[PaletteBrush::Surface] = MakeSolidBrush(0xFF202020u);
+        theme.Palette[PaletteBrush::Foreground] = MakeSolidBrush(0xFFE0E0E0u);
+        theme.Palette[PaletteBrush::MutedForeground] = MakeSolidBrush(0xFF808080u);
+        theme.Palette[PaletteBrush::Border] = MakeSolidBrush(0xFF606060u);
+        theme.Palette[PaletteBrush::Accent] = MakeSolidBrush(accent);
+        theme.Palette[PaletteBrush::AccentHover] = MakeSolidBrush(0xFF404040u);
+        theme.Palette[PaletteBrush::AccentPressed] = MakeSolidBrush(0xFF303030u);
+        theme.Palette[PaletteBrush::DisabledSurface] = MakeSolidBrush(0xFF181818u);
+        theme.Palette[PaletteBrush::Focus] = MakeSolidBrush(0xFF909090u);
+        theme.Palette[PaletteBrush::Track] = MakeSolidBrush(0xFF505050u);
+        theme.Palette[PaletteBrush::Thumb] = MakeSolidBrush(0xFF707070u);
 
         theme.FontSizes[ThemeFontSize::Control] = 15;
         theme.Paddings[ThemePadding::Button] = NeoWPF::UI::Thickness(8);
@@ -91,10 +102,10 @@ TEST_F(ApplicationThemeTests, RegistersAppliesAndRetrievesThemeValues)
     ASSERT_NE(manager.GetActiveTheme(), nullptr);
     EXPECT_EQ(manager.GetActiveTheme()->Name, theme.Name);
 
-    NeoWPF::UI::Color color;
-    ASSERT_TRUE(manager.TryGetPaletteColor(PaletteColor::Background, color));
-    EXPECT_EQ(color, NeoWPF::UI::Color::FromArgb(0xFF101010u));
-    EXPECT_EQ(manager.GetActiveTheme()->Palette.at(PaletteColor::Accent), 0xFF112233u);
+    std::shared_ptr<NeoWPF::UI::Brush> brush;
+    ASSERT_TRUE(manager.TryGetPaletteBrush(PaletteBrush::Background, brush));
+    EXPECT_EQ(GetSolidBrushArgb(brush), 0xFF101010u);
+    EXPECT_EQ(GetSolidBrushArgb(manager.GetActiveTheme()->Palette.at(PaletteBrush::Accent)), 0xFF112233u);
 
     int fontSize = 0;
     ASSERT_TRUE(manager.TryGetFontSize(ThemeFontSize::Control, fontSize));
@@ -118,8 +129,8 @@ TEST_F(ApplicationThemeTests, RegistersAppliesAndRetrievesThemeValues)
 
     EXPECT_TRUE(manager.ApplyTheme(theme));
     EXPECT_EQ(manager.GetActiveThemeName(), theme.Name);
-    EXPECT_TRUE(manager.TryGetPaletteColor(PaletteColor::Accent, color));
-    EXPECT_EQ(color, NeoWPF::UI::Color::FromArgb(0xFF112233u));
+    EXPECT_TRUE(manager.TryGetPaletteBrush(PaletteBrush::Accent, brush));
+    EXPECT_EQ(GetSolidBrushArgb(brush), 0xFF112233u);
 }
 
 TEST_F(ApplicationThemeTests, RejectsInvalidThemeAndNotifiesOnApply)
@@ -159,9 +170,9 @@ TEST_F(ApplicationThemeTests, RegistersAndAppliesThemeDefinitionsRepeatedly)
         ASSERT_TRUE(manager.SetActiveTheme(theme.Name));
         EXPECT_EQ(manager.GetActiveThemeName(), theme.Name);
 
-        NeoWPF::UI::Color color;
-        ASSERT_TRUE(manager.TryGetPaletteColor(PaletteColor::Accent, color));
-        EXPECT_EQ(color, NeoWPF::UI::Color::FromArgb(static_cast<std::uint32_t>(0xFF010101u + index)));
+        std::shared_ptr<NeoWPF::UI::Brush> brush;
+        ASSERT_TRUE(manager.TryGetPaletteBrush(PaletteBrush::Accent, brush));
+        EXPECT_EQ(GetSolidBrushArgb(brush), static_cast<std::uint32_t>(0xFF010101u + index));
     }
 
     EXPECT_TRUE(manager.SetActiveTheme("Stress Theme 499"));
@@ -181,12 +192,12 @@ TEST_F(ApplicationThemeTests, AlternatesThemeStateAcrossRepeatedCycles)
         const auto& theme = useFirst ? first : second;
 
         ASSERT_TRUE(manager.SetActiveTheme(theme.Name));
-        NeoWPF::UI::Color color;
-        ASSERT_TRUE(manager.TryGetPaletteColor(PaletteColor::Background, color));
-        EXPECT_EQ(color, NeoWPF::UI::Color::FromArgb(useFirst ? 0xFF222222u : 0xFF444444u));
+        std::shared_ptr<NeoWPF::UI::Brush> brush;
+        ASSERT_TRUE(manager.TryGetPaletteBrush(PaletteBrush::Background, brush));
+        EXPECT_EQ(GetSolidBrushArgb(brush), useFirst ? 0xFF222222u : 0xFF444444u);
 
-        EXPECT_EQ(manager.GetActiveTheme()->Palette.at(PaletteColor::Accent),
-                  useFirst ? 0xFF111111u : 0xFF333333u);
+        EXPECT_EQ(GetSolidBrushArgb(manager.GetActiveTheme()->Palette.at(PaletteBrush::Accent)),
+              useFirst ? 0xFF111111u : 0xFF333333u);
 
         EXPECT_TRUE(manager.ApplyTheme(theme));
         EXPECT_EQ(manager.GetActiveThemeName(), useFirst ? first.Name : second.Name);
@@ -207,14 +218,13 @@ TEST_F(ApplicationThemeTests, ConcurrentThemeSwitchingRemainsConsistent)
         failure.compare_exchange_strong(expected, code, std::memory_order_relaxed);
     };
 
-    std::vector<NeoWPF::UI::Color> validAccents;
+    std::vector<std::uint32_t> validAccents;
     validAccents.reserve(kThemeCount);
     for (int index = 0; index < kThemeCount; ++index) {
         manager.RegisterTheme(MakeTheme("Theme " + std::to_string(index),
                                         kAccentBase + static_cast<std::uint32_t>(index),
                                         kBackgroundBase + static_cast<std::uint32_t>(index)));
-        validAccents.push_back(
-            NeoWPF::UI::Color::FromArgb(kAccentBase + static_cast<std::uint32_t>(index)));
+        validAccents.push_back(kAccentBase + static_cast<std::uint32_t>(index));
     }
 
     const auto subscription = manager.SubscribeThemeApplied([&notifications] {
@@ -239,8 +249,8 @@ TEST_F(ApplicationThemeTests, ConcurrentThemeSwitchingRemainsConsistent)
                     return;
                 }
 
-                const auto accent = snapshot->Palette.at(PaletteColor::Accent);
-                const auto background = snapshot->Palette.at(PaletteColor::Background);
+                const auto accent = GetSolidBrushArgb(snapshot->Palette.at(PaletteBrush::Accent));
+                const auto background = GetSolidBrushArgb(snapshot->Palette.at(PaletteBrush::Background));
                 const auto snapshotIndex = accent - kAccentBase;
                 if (accent < kAccentBase || snapshotIndex >= kThemeCount ||
                     background != kBackgroundBase + snapshotIndex ||
@@ -249,12 +259,12 @@ TEST_F(ApplicationThemeTests, ConcurrentThemeSwitchingRemainsConsistent)
                     return;
                 }
 
-                NeoWPF::UI::Color color;
-                if (!manager.TryGetPaletteColor(PaletteColor::Accent, color)) {
+                std::shared_ptr<NeoWPF::UI::Brush> brush;
+                if (!manager.TryGetPaletteBrush(PaletteBrush::Accent, brush)) {
                     fail(4);
                     return;
                 }
-                if (std::find(validAccents.begin(), validAccents.end(), color) == validAccents.end()) {
+                if (std::find(validAccents.begin(), validAccents.end(), GetSolidBrushArgb(brush)) == validAccents.end()) {
                     fail(5);
                     return;
                 }

@@ -3,6 +3,7 @@
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Element/Control.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <typeinfo>
 #include <sstream>
 #include <iomanip>
@@ -130,11 +131,20 @@ std::string VisualTreeDumper::GetTypeName(NeoWPF::UI::Visual* element)
     return name;
 }
 
-static std::string FormatColor(const NeoWPF::UI::Color& color)
+static std::string FormatArgb(std::uint32_t argb)
 {
     std::ostringstream oss;
-    oss << "0x" << std::hex << std::uppercase << std::setfill('0') << std::setw(8) << color.ToArgb();
+    oss << "0x" << std::hex << std::uppercase << std::setfill('0') << std::setw(8) << argb;
     return oss.str();
+}
+
+static std::string FormatBrush(const std::shared_ptr<NeoWPF::UI::Brush>& brush)
+{
+    if (!brush) return "null";
+    if (const auto solidBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(brush)) {
+        return FormatArgb(solidBrush->GetArgb());
+    }
+    return typeid(*brush).name();
 }
 
 std::string VisualTreeDumper::FormatLayoutInfo(NeoWPF::UI::Visual* element)
@@ -203,8 +213,8 @@ std::string VisualTreeDumper::FormatPropertiesInfo(NeoWPF::UI::Visual* element)
         oss << "VisualProps{";
         const auto padding = control->GetPadding();
         oss << "Padding=" << padding.Left << "," << padding.Top << "," << padding.Right << "," << padding.Bottom;
-        oss << ",Bg=" << FormatColor(control->GetBackgroundColor());
-        oss << ",Border=" << FormatColor(control->GetBorderColor());
+        oss << ",Bg=" << FormatBrush(control->GetBackgroundBrush());
+        oss << ",Border=" << FormatBrush(control->GetBorderBrush());
         oss << ",BorderThickness=" << control->GetBorderThickness();
         oss << "}";
         wroteAny = true;

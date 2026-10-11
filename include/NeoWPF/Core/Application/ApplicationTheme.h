@@ -7,6 +7,7 @@ See LICENSE file in the project root for full license text.
 
 #include <NeoWPF/Core/Events/Notification.h>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
 #include <NeoWPF/UI/Core/Media/Thickness.h>
 #include <any>
@@ -25,7 +26,7 @@ namespace NeoWPF::Core::ApplicationThemes {
     @summary
     Identifies a shared color role in an application theme.
 */
-enum class PaletteColor {
+enum class PaletteBrush {
     Background,
     Surface,
     Foreground,
@@ -116,9 +117,9 @@ struct ThemeDefinition {
 
     /*
         @summary
-        Shared color values keyed by palette role.
+        Shared brushes keyed by palette role.
     */
-    std::unordered_map<PaletteColor, std::uint32_t> Palette;
+    std::unordered_map<PaletteBrush, std::shared_ptr<NeoWPF::UI::Brush>> Palette;
 
     /*
         @summary
@@ -260,18 +261,19 @@ public:
 
     /*
         @summary
-        Retrieves the active color associated with a shared palette role.
+        Retrieves the active brush associated with a shared palette role.
 
         @param paletteColor
         Shared palette role to retrieve.
 
-        @param outColor
-        Receives the resolved color.
+        @param outBrush
+        Receives the resolved brush.
 
         @returns
         True when the active theme defines the requested role.
     */
-    bool TryGetPaletteColor(PaletteColor paletteColor, NeoWPF::UI::Color& outColor) const;
+    bool TryGetPaletteBrush(PaletteBrush paletteColor,
+                            std::shared_ptr<NeoWPF::UI::Brush>& outBrush) const;
 
     /*
         @summary
@@ -394,14 +396,14 @@ private:
 
 /*
     @summary
-    Returns the active color for a shared palette role.
+    Returns the active brush for a shared palette role.
 
     @param paletteColor
     Palette role to retrieve.
 
     @returns
-    The active color, or the default color when the role is not defined.
+    The active brush, or null when the role is not defined.
 */
-NeoWPF::UI::Color GetPaletteColor(PaletteColor paletteColor);
+std::shared_ptr<NeoWPF::UI::Brush> GetPaletteBrush(PaletteBrush paletteColor);
 
 }

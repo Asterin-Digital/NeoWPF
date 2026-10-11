@@ -2,6 +2,7 @@
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 
 namespace NeoWPF::UI {
 
@@ -11,15 +12,13 @@ ProgressBarTemplate::ProgressBarTemplate()
     SetVisualTree(root);
 
     auto track = std::make_shared<Templates::TemplateVisual>("PART_Track");
-    track->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-        NeoWPF::Core::ApplicationThemes::PaletteColor::Track).ToArgb());
-    track->SetBorderColor(0x00000000u);
+    track->SetFillBrush(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+        NeoWPF::Core::ApplicationThemes::PaletteBrush::Track));
     track->SetBorderThickness(0);
 
     auto indicator = std::make_shared<Templates::TemplateVisual>("PART_Indicator");
-    indicator->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-        NeoWPF::Core::ApplicationThemes::PaletteColor::Accent).ToArgb());
-    indicator->SetBorderColor(0x00000000u);
+    indicator->SetFillBrush(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+        NeoWPF::Core::ApplicationThemes::PaletteBrush::Accent));
     indicator->SetBorderThickness(0);
 
     root->AddVisualChild(track);

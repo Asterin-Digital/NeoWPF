@@ -6,7 +6,10 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
+
+#include <cstddef>
+#include <memory>
 
 namespace NeoWPF::UI {
 
@@ -14,12 +17,11 @@ class Control : public FrameworkElement {
 public:
     static const Properties::DependencyProperty& PaddingProperty();
     static const Properties::DependencyProperty& BackgroundProperty();
-    static const Properties::DependencyProperty& BackgroundColorProperty();
     static const Properties::DependencyProperty& BorderBrushProperty();
-    static const Properties::DependencyProperty& BorderColorProperty();
     static const Properties::DependencyProperty& BorderThicknessProperty();
 
     Control() = default;
+    ~Control() override;
 
     Thickness GetPadding() const noexcept;
     void SetPadding(Thickness padding) noexcept;
@@ -32,27 +34,28 @@ public:
     double GetPaddingHorizontal() const noexcept;
     double GetPaddingVertical() const noexcept;
 
-    NeoWPF::UI::Color GetBackgroundColor() const noexcept;
-    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept;
-    void SetBackgroundColor(std::uint32_t color) noexcept { SetBackgroundColor(NeoWPF::UI::Color::FromArgb(color)); }
+    std::shared_ptr<Brush> GetBackgroundBrush() const;
+    void SetBackgroundBrush(std::shared_ptr<Brush> brush);
 
-    NeoWPF::UI::Color GetBorderColor() const noexcept;
-    void SetBorderColor(NeoWPF::UI::Color color) noexcept;
-    void SetBorderColor(std::uint32_t color) noexcept { SetBorderColor(NeoWPF::UI::Color::FromArgb(color)); }
+    std::shared_ptr<Brush> GetBorderBrush() const;
+    void SetBorderBrush(std::shared_ptr<Brush> brush);
 
     double GetBorderThickness() const noexcept;
     void SetBorderThickness(double thickness) noexcept;
 
 protected:
     virtual void OnPaddingChanged(Thickness padding);
-    virtual void OnBackgroundColorChanged(NeoWPF::UI::Color color);
-    virtual void OnBorderColorChanged(NeoWPF::UI::Color color);
+    virtual void OnBackgroundBrushChanged(const std::shared_ptr<Brush>& brush);
+    virtual void OnBorderBrushChanged(const std::shared_ptr<Brush>& brush);
+
     virtual void OnBorderThicknessChanged(double thickness);
 
 protected:
     Thickness m_padding{};
-    NeoWPF::UI::Color m_backgroundColor = NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu);
-    NeoWPF::UI::Color m_borderColor = NeoWPF::UI::Color::FromArgb(0xFFABADB3u);
+    std::weak_ptr<Brush> m_subscribedBackgroundBrush;
+    std::weak_ptr<Brush> m_subscribedBorderBrush;
+    std::size_t m_backgroundBrushChangedHandlerId = 0;
+    std::size_t m_borderBrushChangedHandlerId = 0;
     double m_borderThickness = 0.0;
 };
 

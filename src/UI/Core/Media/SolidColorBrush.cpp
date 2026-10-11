@@ -4,19 +4,19 @@ namespace NeoWPF::UI {
 
 SolidColorBrush::SolidColorBrush() = default;
 
-SolidColorBrush::SolidColorBrush(Color color)
+SolidColorBrush::SolidColorBrush(std::uint32_t argb)
 {
-    SetColor(color);
+    SetArgb(argb);
 }
 
-Color SolidColorBrush::GetColor() const
+std::uint32_t SolidColorBrush::GetArgb() const
 {
-    return GetValue<Color>(ColorProperty());
+    return GetValue<std::uint32_t>(ArgbProperty());
 }
 
-void SolidColorBrush::SetColor(Color color)
+void SolidColorBrush::SetArgb(std::uint32_t argb)
 {
-    SetValue(ColorProperty(), color);
+    SetValue(ArgbProperty(), argb);
 }
 
 }

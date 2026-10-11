@@ -2,12 +2,13 @@
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <memory>
 
 namespace NeoWPF::UI {
 namespace {
-using NeoWPF::Core::ApplicationThemes::GetPaletteColor;
-using NeoWPF::Core::ApplicationThemes::PaletteColor;
+using NeoWPF::Core::ApplicationThemes::GetPaletteBrush;
+using NeoWPF::Core::ApplicationThemes::PaletteBrush;
 }
 
 ComboBoxItemTemplate::ComboBoxItemTemplate()
@@ -16,21 +17,17 @@ ComboBoxItemTemplate::ComboBoxItemTemplate()
     SetVisualTree(root);
 
     auto background = std::make_shared<Templates::TemplateVisual>("PART_Background");
-    background->SetFillColor(0x00000000u);
-    background->SetBorderColor(0x00000000u);
     background->SetBorderThickness(0);
 
     auto selectionOverlay = std::make_shared<Templates::TemplateVisual>("PART_SelectionOverlay");
-    selectionOverlay->SetFillColor(GetPaletteColor(PaletteColor::AccentPressed).ToArgb());
+    selectionOverlay->SetFillBrush(GetPaletteBrush(PaletteBrush::AccentPressed));
     selectionOverlay->SetOpacity(0.0f);
 
     auto highlightOverlay = std::make_shared<Templates::TemplateVisual>("PART_HighlightOverlay");
-    highlightOverlay->SetFillColor(GetPaletteColor(PaletteColor::AccentHover).ToArgb());
+    highlightOverlay->SetFillBrush(GetPaletteBrush(PaletteBrush::AccentHover));
     highlightOverlay->SetOpacity(0.0f);
 
     auto contentHost = std::make_shared<Templates::TemplateVisual>("PART_ContentHost");
-    contentHost->SetFillColor(0x00000000u);
-    contentHost->SetBorderColor(0x00000000u);
     contentHost->SetBorderThickness(0);
 
     AddTemplateChild("PART_Background", background);
@@ -44,8 +41,8 @@ ComboBoxItemTemplate::ComboBoxItemTemplate()
     auto normalState = std::make_shared<Styling::VisualState>("Normal");
     normalState->AddSetter("PART_Background", [](UIElement* element, Visual* visual) {
         if (auto part = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            part->SetFillColor(0x00000000u);
-            part->SetBorderColor(0x00000000u);
+            part->SetFillBrush(nullptr);
+            part->SetBorderBrush(nullptr);
             part->SetBorderThickness(0);
         }
         if (element) element->InvalidateVisual();
@@ -55,8 +52,8 @@ ComboBoxItemTemplate::ComboBoxItemTemplate()
     auto mouseOverState = std::make_shared<Styling::VisualState>("MouseOver");
     mouseOverState->AddSetter("PART_Background", [](UIElement* element, Visual* visual) {
         if (auto part = dynamic_cast<Templates::TemplateVisual*>(visual)) {
-            part->SetFillColor(GetPaletteColor(PaletteColor::AccentHover).ToArgb());
-            part->SetBorderColor(GetPaletteColor(PaletteColor::Focus).ToArgb());
+            part->SetFillBrush(GetPaletteBrush(PaletteBrush::AccentHover));
+            part->SetBorderBrush(GetPaletteBrush(PaletteBrush::Focus));
             part->SetBorderThickness(1);
         }
         if (element) element->InvalidateVisual();

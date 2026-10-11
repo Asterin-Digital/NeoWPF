@@ -2,6 +2,7 @@
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/Rendering/Clipping.h>
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/Rendering/Vulkan/VulkanRendering.h>
 #include <NeoWPF/Rendering/Vulkan/SurfaceAlpha.h>
 
@@ -64,10 +65,12 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
     if (commands.hasClearColor) {
         backgroundColor = commands.clearColor;
     } else {
-        NeoWPF::UI::Color resourceColor;
-        if (NeoWPF::Core::ApplicationResources::Resources::TryGetColor(
-                "Window.BackgroundColor", resourceColor)) {
-            backgroundColor = resourceColor.ToArgb();
+        std::shared_ptr<NeoWPF::UI::Brush> resourceBrush;
+        if (NeoWPF::Core::ApplicationResources::Resources::TryGetBrush(
+                "Window.BackgroundBrush", resourceBrush)) {
+            if (const auto solidBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(resourceBrush)) {
+                backgroundColor = solidBrush->GetArgb();
+            }
         }
     }
     const auto clearColor = ToSurfaceClearColor(backgroundColor, context->transparent);

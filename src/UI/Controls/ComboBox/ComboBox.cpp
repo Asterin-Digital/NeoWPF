@@ -4,6 +4,7 @@
 #include <NeoWPF/UI/Controls/ListBox/ListBox.h>
 #include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
@@ -92,12 +93,12 @@ private:
 
 void ApplyComboBoxTheme(ComboBox& comboBox)
 {
-    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::PaletteBrush;
     using NeoWPF::Core::ApplicationThemes::ThemePadding;
     using NeoWPF::Core::ApplicationThemes::ThemeManager;
 
-    comboBox.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
-    comboBox.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+    comboBox.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Surface));
+    comboBox.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Border));
 
     NeoWPF::UI::Thickness padding;
     if (ThemeManager::Instance().TryGetPadding(ThemePadding::ComboBox, padding)) {
@@ -107,13 +108,13 @@ void ApplyComboBoxTheme(ComboBox& comboBox)
 
 void ApplyComboBoxItemTheme(ComboBoxItem& item)
 {
-    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::PaletteBrush;
     using NeoWPF::Core::ApplicationThemes::ThemePadding;
     using NeoWPF::Core::ApplicationThemes::ThemeManager;
 
     auto& themeManager = ThemeManager::Instance();
-    item.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
-    item.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+    item.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Surface));
+    item.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Border));
     NeoWPF::UI::Thickness padding;
     if (themeManager.TryGetPadding(ThemePadding::ComboBoxItem, padding)) {
         item.SetThemePropertyValue("Padding", padding);
@@ -183,21 +184,21 @@ void ComboBoxItem::ApplyVisualStates(bool useTransitions)
     }
 
     if (auto part = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
-        part->SetFillColor(GetIsHighlighted()
-            ? NeoWPF::Core::ApplicationThemes::GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::AccentHover).ToArgb()
-            : NeoWPF::UI::Colors::Transparent.ToArgb());
-        part->SetBorderColor(GetIsHighlighted()
-            ? NeoWPF::Core::ApplicationThemes::GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Focus).ToArgb()
-            : NeoWPF::UI::Colors::Transparent.ToArgb());
+        part->SetFillBrush(GetIsHighlighted()
+            ? NeoWPF::Core::ApplicationThemes::GetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::AccentHover)
+            : nullptr);
+        part->SetBorderBrush(GetIsHighlighted()
+            ? NeoWPF::Core::ApplicationThemes::GetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::Focus)
+            : nullptr);
         part->SetBorderThickness(GetIsHighlighted() ? 1 : 0);
     }
     if (auto part = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_SelectionOverlay"))) {
-        part->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-            NeoWPF::Core::ApplicationThemes::PaletteColor::AccentPressed).ToArgb());
+        part->SetFillBrush(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+            NeoWPF::Core::ApplicationThemes::PaletteBrush::AccentPressed));
     }
     if (auto part = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_HighlightOverlay"))) {
-        part->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-            NeoWPF::Core::ApplicationThemes::PaletteColor::AccentHover).ToArgb());
+        part->SetFillBrush(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+            NeoWPF::Core::ApplicationThemes::PaletteBrush::AccentHover));
     }
     InvalidateVisual();
 }
@@ -271,22 +272,6 @@ void ComboBox::EnsurePopupTemplateParts()
     } else {
         m_popup->SetContent(m_dropDown);
     }
-}
-
-void ComboBox::OnBackgroundColorChanged(NeoWPF::UI::Color color)
-{
-    if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
-        background->SetFillColor(color.ToArgb());
-    }
-    InvalidateVisual();
-}
-
-void ComboBox::OnBorderColorChanged(NeoWPF::UI::Color color)
-{
-    if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
-        background->SetBorderColor(color.ToArgb());
-    }
-    InvalidateVisual();
 }
 
 bool ComboBox::GetIsDropDownOpen() const noexcept
@@ -445,8 +430,8 @@ void ComboBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"));
     if (background) {
         const auto commandsBefore = commands.commands.size();
-        background->SetFillColor(GetBackgroundColor().ToArgb());
-        background->SetBorderColor(GetBorderColor().ToArgb());
+        background->SetFillBrush(GetBackgroundBrush());
+        background->SetBorderBrush(GetBorderBrush());
         background->SetRect(x, y, width, height);
         background->SetOpacity(GetOpacity());
         background->BuildRenderCommands(commands);

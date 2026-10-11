@@ -6,11 +6,11 @@
 
 namespace NeoWPF::UI::Properties {
 
-PropertyMetadata MakeScrollBarColorMetadata(NeoWPF::UI::Color defaultColor)
+PropertyMetadata MakeScrollBarBrushMetadata(std::shared_ptr<NeoWPF::UI::Brush> defaultBrush)
 {
     PropertyMetadata metadata;
-    metadata.DefaultValue = std::any(defaultColor);
-    metadata.Converter = GetColorConverter();
+    metadata.DefaultValue = std::any(std::move(defaultBrush));
+    metadata.Converter = GetBrushConverter();
     metadata.Flags = PropertyFlags::AffectsRender;
     return metadata;
 }
@@ -29,19 +29,19 @@ PropertyMetadata MakeScrollBarThumbSizeMetadata()
 }
 
 void RegisterScrollBarProperties() {
-        RegisterProperty<UI::ScrollBar, ::NeoWPF::UI::Color>(
-            "TrackColor",
-            &UI::ScrollBar::GetTrackColor,
-            static_cast<void (UI::ScrollBar::*)(::NeoWPF::UI::Color)>(&UI::ScrollBar::SetTrackColor),
-            MakeScrollBarColorMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-                NeoWPF::Core::ApplicationThemes::PaletteColor::Track)));
+        RegisterProperty<UI::ScrollBar, std::shared_ptr<UI::Brush>>(
+            "TrackBrush",
+            &UI::ScrollBar::GetTrackBrush,
+            &UI::ScrollBar::SetTrackBrush,
+            MakeScrollBarBrushMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+                NeoWPF::Core::ApplicationThemes::PaletteBrush::Track)));
 
-        RegisterProperty<UI::ScrollBar, ::NeoWPF::UI::Color>(
-            "ThumbColor",
-            &UI::ScrollBar::GetThumbColor,
-            static_cast<void (UI::ScrollBar::*)(::NeoWPF::UI::Color)>(&UI::ScrollBar::SetThumbColor),
-            MakeScrollBarColorMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-                NeoWPF::Core::ApplicationThemes::PaletteColor::Thumb)));
+        RegisterProperty<UI::ScrollBar, std::shared_ptr<UI::Brush>>(
+            "ThumbBrush",
+            &UI::ScrollBar::GetThumbBrush,
+            &UI::ScrollBar::SetThumbBrush,
+            MakeScrollBarBrushMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+                NeoWPF::Core::ApplicationThemes::PaletteBrush::Thumb)));
 
         RegisterProperty<UI::ScrollBar, double>(
             "ThumbSize",
@@ -63,27 +63,27 @@ void RegisterScrollBarProperties() {
     }
 }
 
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::ScrollBar::TrackColorProperty()
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::ScrollBar::TrackBrushProperty()
 {
     static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<
-        NeoWPF::UI::ScrollBar, NeoWPF::UI::Color>(
-            "TrackColor",
-            &NeoWPF::UI::ScrollBar::GetTrackColor,
-            static_cast<void (NeoWPF::UI::ScrollBar::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::ScrollBar::SetTrackColor),
-            NeoWPF::UI::Properties::MakeScrollBarColorMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-                NeoWPF::Core::ApplicationThemes::PaletteColor::Track)));
+        NeoWPF::UI::ScrollBar, std::shared_ptr<NeoWPF::UI::Brush>>(
+            "TrackBrush",
+            &NeoWPF::UI::ScrollBar::GetTrackBrush,
+            &NeoWPF::UI::ScrollBar::SetTrackBrush,
+            NeoWPF::UI::Properties::MakeScrollBarBrushMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+                NeoWPF::Core::ApplicationThemes::PaletteBrush::Track)));
     return *property;
 }
 
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::ScrollBar::ThumbColorProperty()
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::ScrollBar::ThumbBrushProperty()
 {
     static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<
-        NeoWPF::UI::ScrollBar, NeoWPF::UI::Color>(
-            "ThumbColor",
-            &NeoWPF::UI::ScrollBar::GetThumbColor,
-            static_cast<void (NeoWPF::UI::ScrollBar::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::ScrollBar::SetThumbColor),
-            NeoWPF::UI::Properties::MakeScrollBarColorMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-                NeoWPF::Core::ApplicationThemes::PaletteColor::Thumb)));
+        NeoWPF::UI::ScrollBar, std::shared_ptr<NeoWPF::UI::Brush>>(
+            "ThumbBrush",
+            &NeoWPF::UI::ScrollBar::GetThumbBrush,
+            &NeoWPF::UI::ScrollBar::SetThumbBrush,
+            NeoWPF::UI::Properties::MakeScrollBarBrushMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+                NeoWPF::Core::ApplicationThemes::PaletteBrush::Thumb)));
     return *property;
 }
 

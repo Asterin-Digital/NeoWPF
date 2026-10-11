@@ -9,7 +9,7 @@ See LICENSE file in the project root for full license text.
 #include <string>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Core/Element/IContentAware.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
 #include <NeoWPF/UI/Layout/Placement/TextWrapping.h>
 #include <NeoWPF/UI/Text/TextRasterCache.h>
@@ -43,7 +43,6 @@ namespace NeoWPF::UI {
 class TextBlock : public FrameworkElement, public IContentAware {
 public:
     static const Properties::DependencyProperty& TextProperty();
-    static const Properties::DependencyProperty& TextColorProperty();
     static const Properties::DependencyProperty& ForegroundProperty();
     static const Properties::DependencyProperty& FontSizeProperty();
     static const Properties::DependencyProperty& FontFamilyProperty();
@@ -88,19 +87,18 @@ public:
 
     /*
         @summary
-        Sets the text color used when rendering.
+        Sets the brush used to render text.
 
-        @param color
-        The color to use.
+        @param brush
+        The foreground brush.
     */
-    void SetTextColor(NeoWPF::UI::Color color) noexcept;
-    void SetTextColor(std::uint32_t color) noexcept { SetTextColor(NeoWPF::UI::Color::FromArgb(color)); }
+    void SetForeground(std::shared_ptr<Brush> brush);
 
     /*
         @summary
-        Returns the current text color.
+        Returns the brush used to render text.
     */
-    NeoWPF::UI::Color GetTextColor() const noexcept { return GetValue<NeoWPF::UI::Color>(TextColorProperty()); }
+    std::shared_ptr<Brush> GetForeground() const;
 
     /*
         @summary

@@ -12,7 +12,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Controls/Base/ButtonBase/ButtonBase.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/UI/Text/FontStyle.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 
@@ -37,7 +37,6 @@ void RegisterButtonStyles();
 class Button : public NeoWPF::UI::ButtonBase {
 public:
     static const Properties::DependencyProperty& TextProperty();
-    static const Properties::DependencyProperty& TextColorProperty();
     static const Properties::DependencyProperty& ForegroundProperty();
     static const Properties::DependencyProperty& FontSizeProperty();
     static const Properties::DependencyProperty& FontFamilyProperty();
@@ -102,18 +101,18 @@ public:
 
     /*
         @summary
-        Sets the text color.
+        Sets the brush used to paint button text.
 
-        @param color
-        ARGB color value.
+            @param brush
+            The foreground brush.
     */
-    void SetTextColor(NeoWPF::UI::Color color) noexcept;
+        void SetForeground(std::shared_ptr<Brush> brush);
 
     /*
         @summary
-        Returns the current text color.
+            Returns the brush used to paint button text.
     */
-    NeoWPF::UI::Color GetTextColor() const noexcept { return m_textColor; }
+        std::shared_ptr<Brush> GetForeground() const;
 
     /*
         @summary
@@ -182,36 +181,6 @@ public:
 
     /*
         @summary
-        Sets the background color.
-
-        @param color
-        ARGB color value.
-    */
-    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept;
-
-    /*
-        @summary
-        Returns the current background color.
-    */
-    using Control::GetBackgroundColor;
-
-    /*
-        @summary
-        Sets the border color.
-
-        @param color
-        ARGB color value.
-    */
-    void SetBorderColor(NeoWPF::UI::Color color) noexcept;
-
-    /*
-        @summary
-        Returns the current border color.
-    */
-    using Control::GetBorderColor;
-
-    /*
-        @summary
         Measures the button and decides how much space it needs.
 
         @param availableWidth
@@ -248,8 +217,8 @@ public:
 
 protected:
     void OnPaddingChanged(Thickness padding) override;
-    void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
-    void OnBorderColorChanged(NeoWPF::UI::Color color) override;
+    void OnBackgroundBrushChanged(const std::shared_ptr<Brush>& brush) override;
+    void OnBorderBrushChanged(const std::shared_ptr<Brush>& brush) override;
     void OnBorderThicknessChanged(double thickness) override;
 
 private:
@@ -259,7 +228,8 @@ private:
 
 private:
     std::wstring m_text;
-    NeoWPF::UI::Color m_textColor;
+    std::weak_ptr<Brush> m_subscribedForeground;
+    std::size_t m_foregroundChangedHandlerId = 0;
     int m_fontSize = 16;
     std::wstring m_fontFamily;
     int m_fontWeight = 400;
@@ -269,6 +239,8 @@ private:
     int m_padding = 8;
     std::shared_ptr<NeoWPF::UI::TextBlock> m_textContent;
     std::size_t m_themeAppliedSubscriptionId = 0;
+
+    void UpdateForegroundBrush();
 };
 
 class ButtonTemplate : public Templates::ControlTemplate {

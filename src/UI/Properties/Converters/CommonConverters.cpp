@@ -3,7 +3,8 @@
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Core/Media/Thickness.h>
 #include <NeoWPF/UI/Core/Media/Spacing.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
@@ -354,7 +355,7 @@ bool BoolConverter::TryConvertToCode(const std::string& rawValue, std::string& e
     });
 }
 
-bool ColorConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+bool TryParseArgb(const std::string& rawValue, std::uint32_t& argb)
 {
     auto value = NeoWPF::Platform::Trim(rawValue);
     if (value.empty() || value.front() != '#') {
@@ -365,27 +366,36 @@ bool ColorConverter::ConvertFromString(const std::string& rawValue, std::any& co
         return false;
     }
     try {
-        auto argb = static_cast<std::uint32_t>(std::stoul(value, nullptr, 16));
+        argb = static_cast<std::uint32_t>(std::stoul(value, nullptr, 16));
         if (value.size() == 6) {
             argb |= 0xFF000000u;
         }
-        convertedValue = NeoWPF::UI::Color::FromArgb(argb);
         return true;
     } catch (...) {
         return false;
     }
 }
 
-bool ColorConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+bool BrushConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
-    std::any convertedValue;
-    if (!ConvertFromString(rawValue, convertedValue)) {
+    std::uint32_t argb = 0;
+    if (!TryParseArgb(rawValue, argb)) {
+        return false;
+    }
+    convertedValue = std::shared_ptr<NeoWPF::UI::Brush>(
+        std::make_shared<NeoWPF::UI::SolidColorBrush>(argb));
+    return true;
+}
+
+bool BrushConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    std::uint32_t argb = 0;
+    if (!TryParseArgb(rawValue, argb)) {
         expression.clear();
         return false;
     }
-
-    const auto color = std::any_cast<NeoWPF::UI::Color>(convertedValue);
-    expression = "NeoWPF::UI::Color::FromArgb(" + std::to_string(color.ToArgb()) + "u)";
+    expression = "std::shared_ptr<NeoWPF::UI::Brush>(std::make_shared<NeoWPF::UI::SolidColorBrush>(" +
+                 std::to_string(argb) + "u))";
     return true;
 }
 
@@ -604,7 +614,7 @@ DEFINE_CONVERTER_FACTORY(Int, IntConverter)
 DEFINE_CONVERTER_FACTORY(Double, DoubleConverter)
 DEFINE_CONVERTER_FACTORY(Float, FloatConverter)
 DEFINE_CONVERTER_FACTORY(Bool, BoolConverter)
-DEFINE_CONVERTER_FACTORY(Color, ColorConverter)
+DEFINE_CONVERTER_FACTORY(Brush, BrushConverter)
 DEFINE_CONVERTER_FACTORY(Thickness, ThicknessConverter)
 DEFINE_CONVERTER_FACTORY(Spacing, SpacingConverter)
 DEFINE_CONVERTER_FACTORY(HorizontalAlignment, HorizontalAlignmentConverter)

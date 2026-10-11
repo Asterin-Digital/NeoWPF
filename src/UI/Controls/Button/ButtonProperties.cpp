@@ -6,7 +6,6 @@
 
 namespace NeoWPF::UI::Properties {
     namespace UI = ::NeoWPF::UI;
-    using ::NeoWPF::UI::Color;
 }
 
 namespace {
@@ -18,11 +17,10 @@ namespace {
         return metadata;
     }
 
-    NeoWPF::UI::Properties::PropertyMetadata MakeButtonTextColorMetadata() {
+    NeoWPF::UI::Properties::PropertyMetadata MakeButtonForegroundMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-            NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground));
-        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
+        metadata.DefaultValue = std::any(std::shared_ptr<NeoWPF::UI::Brush>{});
+        metadata.Converter = NeoWPF::UI::Properties::GetBrushConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -82,10 +80,10 @@ namespace NeoWPF::UI::Properties {
             &UI::Button::GetText,
             &UI::Button::SetText,
             MakeButtonTextMetadata());
-        RegisterProperty<UI::Button, ::NeoWPF::UI::Color>("Foreground",
-            &UI::Button::GetTextColor,
-            static_cast<void (UI::Button::*)(::NeoWPF::UI::Color)>(&UI::Button::SetTextColor),
-            MakeButtonTextColorMetadata());
+        RegisterProperty<UI::Button, std::shared_ptr<UI::Brush>>("Foreground",
+            &UI::Button::GetForeground,
+            &UI::Button::SetForeground,
+            MakeButtonForegroundMetadata());
         RegisterProperty<UI::Button, int>("FontSize",
             &UI::Button::GetFontSize,
             &UI::Button::SetFontSize,
@@ -124,17 +122,13 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::TextProper
     return *property;
 }
 
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::TextColorProperty() {
-    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Button, NeoWPF::UI::Color>(
-        "Foreground",
-        &NeoWPF::UI::Button::GetTextColor,
-        static_cast<void (NeoWPF::UI::Button::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::Button::SetTextColor),
-        MakeButtonTextColorMetadata());
-    return *property;
-}
-
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::ForegroundProperty() {
-    return TextColorProperty();
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Button, std::shared_ptr<NeoWPF::UI::Brush>>(
+        "Foreground",
+        &NeoWPF::UI::Button::GetForeground,
+        &NeoWPF::UI::Button::SetForeground,
+        MakeButtonForegroundMetadata());
+    return *property;
 }
 
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Button::FontSizeProperty() {

@@ -3,17 +3,18 @@
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 
 namespace NeoWPF::UI {
 
 DefaultTitleBar::DefaultTitleBar()
 {
+    m_foregroundBrush = std::make_shared<SolidColorBrush>(0xFF1E1E1Eu);
     ApplyThemeResources();
 
     SetPadding(0);
     SetBorderThickness(2);
-    SetBorderColor(0xFFBDBDBDu);
-    SetBackgroundColor(m_backgroundColor);
+    SetBorderBrush(std::make_shared<SolidColorBrush>(0xFFBDBDBDu));
     SetHeight(32);
     SetVerticalAlignment(VerticalAlignment::Top);
 
@@ -23,28 +24,28 @@ DefaultTitleBar::DefaultTitleBar()
 
     m_titleText = std::make_shared<TextBlock>();
     m_titleText->SetText(L"NeoWPF");
-    m_titleText->SetTextColor(m_textColor);
+    m_titleText->SetForeground(m_foregroundBrush);
     m_titleText->SetFontSize(12);
     m_titleText->SetPadding(Thickness(12, 0, 8, 0));
     m_titleText->SetVerticalAlignment(VerticalAlignment::Center);
 
     m_minimizeButton = std::make_shared<Button>(L"_");
     m_minimizeButton->SetPadding(Thickness(10, 4, 10, 4));
-    m_minimizeButton->SetBackgroundColor(0x00000000u);
-    m_minimizeButton->SetBorderColor(0x00000000u);
-    m_minimizeButton->SetTextColor(NeoWPF::UI::Color::FromArgb(m_textColor));
+    m_minimizeButton->SetBackgroundBrush(nullptr);
+    m_minimizeButton->SetBorderBrush(nullptr);
+    m_minimizeButton->SetForeground(m_foregroundBrush);
 
     m_maximizeButton = std::make_shared<Button>(L"□");
     m_maximizeButton->SetPadding(Thickness(10, 4, 10, 4));
-    m_maximizeButton->SetBackgroundColor(0x00000000u);
-    m_maximizeButton->SetBorderColor(0x00000000u);
-    m_maximizeButton->SetTextColor(NeoWPF::UI::Color::FromArgb(m_textColor));
+    m_maximizeButton->SetBackgroundBrush(nullptr);
+    m_maximizeButton->SetBorderBrush(nullptr);
+    m_maximizeButton->SetForeground(m_foregroundBrush);
 
     m_closeButton = std::make_shared<Button>(L"X");
     m_closeButton->SetPadding(Thickness(10, 4, 10, 4));
-    m_closeButton->SetBackgroundColor(0x00000000u);
-    m_closeButton->SetBorderColor(0x00000000u);
-    m_closeButton->SetTextColor(NeoWPF::UI::Color::FromArgb(m_textColor));
+    m_closeButton->SetBackgroundBrush(nullptr);
+    m_closeButton->SetBorderBrush(nullptr);
+    m_closeButton->SetForeground(m_foregroundBrush);
 
     m_minimizeButton->AddHandler(NeoWPF::Input::Core::MouseEnterEvent(), [](NeoWPF::UI::UIElement*, NeoWPF::Input::Core::RoutedEventArgs*) {});
     m_minimizeButton->AddHandler(NeoWPF::Input::Core::MouseLeaveEvent(), [](NeoWPF::UI::UIElement*, NeoWPF::Input::Core::RoutedEventArgs*) {});
@@ -81,20 +82,19 @@ DefaultTitleBar::DefaultTitleBar()
     SetChild(m_root);
 
     SetTitle(m_title);
-    SetBackgroundColor(m_backgroundColor);
-    SetTextColor(m_textColor);
+    SetForeground(m_foregroundBrush);
 }
 
 void DefaultTitleBar::ApplyThemeResources()
 {
-    NeoWPF::UI::Color resourceColor;
-    if (NeoWPF::Core::ApplicationResources::Resources::TryGetColor(
-            "Chrome.BackgroundColor", resourceColor)) {
-        m_backgroundColor = resourceColor.ToArgb();
+    std::shared_ptr<Brush> resourceBrush;
+    if (NeoWPF::Core::ApplicationResources::Resources::TryGetBrush(
+            "Chrome.BackgroundBrush", resourceBrush)) {
+        SetBackgroundBrush(resourceBrush);
     }
-    if (NeoWPF::Core::ApplicationResources::Resources::TryGetColor(
-            "Chrome.ForegroundColor", resourceColor)) {
-        m_textColor = resourceColor.ToArgb();
+    if (NeoWPF::Core::ApplicationResources::Resources::TryGetBrush(
+            "Chrome.ForegroundBrush", resourceBrush)) {
+        m_foregroundBrush = resourceBrush;
     }
 }
 
@@ -111,37 +111,26 @@ const std::wstring& DefaultTitleBar::GetTitle() const noexcept
     return m_title;
 }
 
-void DefaultTitleBar::SetBackgroundColor(std::uint32_t argbColor) noexcept
+void DefaultTitleBar::SetForeground(std::shared_ptr<Brush> brush)
 {
-    m_backgroundColor = argbColor;
-    Border::SetBackgroundColor(argbColor);
-}
-
-std::uint32_t DefaultTitleBar::GetBackgroundColor() const noexcept
-{
-    return m_backgroundColor;
-}
-
-void DefaultTitleBar::SetTextColor(std::uint32_t argbColor) noexcept
-{
-    m_textColor = argbColor;
+    m_foregroundBrush = std::move(brush);
     if (m_titleText) {
-        m_titleText->SetTextColor(argbColor);
+        m_titleText->SetForeground(m_foregroundBrush);
     }
     if (m_minimizeButton) {
-        m_minimizeButton->SetTextColor(NeoWPF::UI::Color::FromArgb(argbColor));
+        m_minimizeButton->SetForeground(m_foregroundBrush);
     }
     if (m_maximizeButton) {
-        m_maximizeButton->SetTextColor(NeoWPF::UI::Color::FromArgb(argbColor));
+        m_maximizeButton->SetForeground(m_foregroundBrush);
     }
     if (m_closeButton) {
-        m_closeButton->SetTextColor(NeoWPF::UI::Color::FromArgb(argbColor));
+        m_closeButton->SetForeground(m_foregroundBrush);
     }
 }
 
-std::uint32_t DefaultTitleBar::GetTextColor() const noexcept
+std::shared_ptr<Brush> DefaultTitleBar::GetForeground() const
 {
-    return m_textColor;
+    return m_foregroundBrush;
 }
 
 void DefaultTitleBar::SetOnMinimizeClicked(std::function<void()> handler)

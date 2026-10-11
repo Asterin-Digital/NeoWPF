@@ -5,7 +5,6 @@
 
 namespace NeoWPF::UI::Properties {
     namespace UI = ::NeoWPF::UI;
-    using ::NeoWPF::UI::Color;
 }
 
 namespace {
@@ -17,18 +16,18 @@ namespace {
         return metadata;
     }
 
-    NeoWPF::UI::Properties::PropertyMetadata MakeControlBackgroundColorMetadata() {
+    NeoWPF::UI::Properties::PropertyMetadata MakeControlBackgroundBrushMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu));
-        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
+        metadata.DefaultValue = std::any(std::shared_ptr<NeoWPF::UI::Brush>{});
+        metadata.Converter = NeoWPF::UI::Properties::GetBrushConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
 
-    NeoWPF::UI::Properties::PropertyMetadata MakeControlBorderColorMetadata() {
+    NeoWPF::UI::Properties::PropertyMetadata MakeControlBorderBrushMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(NeoWPF::UI::Color::FromArgb(0xFFABADB3u));
-        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
+        metadata.DefaultValue = std::any(std::shared_ptr<NeoWPF::UI::Brush>{});
+        metadata.Converter = NeoWPF::UI::Properties::GetBrushConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -49,14 +48,14 @@ void RegisterControlProperties() {
         &UI::Control::GetPadding,
         static_cast<void (UI::Control::*)(UI::Thickness)>(&UI::Control::SetPadding),
         MakeControlPaddingMetadata());
-    RegisterProperty<UI::Control, ::NeoWPF::UI::Color>("Background",
-        &UI::Control::GetBackgroundColor,
-        static_cast<void (UI::Control::*)(::NeoWPF::UI::Color)>(&UI::Control::SetBackgroundColor),
-        MakeControlBackgroundColorMetadata());
-    RegisterProperty<UI::Control, ::NeoWPF::UI::Color>("BorderBrush",
-        &UI::Control::GetBorderColor,
-        static_cast<void (UI::Control::*)(::NeoWPF::UI::Color)>(&UI::Control::SetBorderColor),
-        MakeControlBorderColorMetadata());
+    RegisterProperty<UI::Control, std::shared_ptr<UI::Brush>>("Background",
+        &UI::Control::GetBackgroundBrush,
+        &UI::Control::SetBackgroundBrush,
+        MakeControlBackgroundBrushMetadata());
+    RegisterProperty<UI::Control, std::shared_ptr<UI::Brush>>("BorderBrush",
+        &UI::Control::GetBorderBrush,
+        &UI::Control::SetBorderBrush,
+        MakeControlBorderBrushMetadata());
     RegisterProperty<UI::Control, double>("BorderThickness",
         &UI::Control::GetBorderThickness,
         &UI::Control::SetBorderThickness,
@@ -76,30 +75,22 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Control::PaddingPr
     return *property;
 }
 
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Control::BackgroundColorProperty() {
-    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Control, NeoWPF::UI::Color>(
-        "Background",
-        &NeoWPF::UI::Control::GetBackgroundColor,
-        static_cast<void (NeoWPF::UI::Control::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::Control::SetBackgroundColor),
-        MakeControlBackgroundColorMetadata());
-    return *property;
-}
-
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Control::BackgroundProperty() {
-    return BackgroundColorProperty();
-}
-
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Control::BorderColorProperty() {
-    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Control, NeoWPF::UI::Color>(
-        "BorderBrush",
-        &NeoWPF::UI::Control::GetBorderColor,
-        static_cast<void (NeoWPF::UI::Control::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::Control::SetBorderColor),
-        MakeControlBorderColorMetadata());
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Control, std::shared_ptr<NeoWPF::UI::Brush>>(
+        "Background",
+        &NeoWPF::UI::Control::GetBackgroundBrush,
+        &NeoWPF::UI::Control::SetBackgroundBrush,
+        MakeControlBackgroundBrushMetadata());
     return *property;
 }
 
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Control::BorderBrushProperty() {
-    return BorderColorProperty();
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Control, std::shared_ptr<NeoWPF::UI::Brush>>(
+        "BorderBrush",
+        &NeoWPF::UI::Control::GetBorderBrush,
+        &NeoWPF::UI::Control::SetBorderBrush,
+        MakeControlBorderBrushMetadata());
+    return *property;
 }
 
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Control::BorderThicknessProperty() {

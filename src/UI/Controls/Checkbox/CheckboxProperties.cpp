@@ -6,7 +6,6 @@
 
 namespace NeoWPF::UI::Properties {
     namespace UI = ::NeoWPF::UI;
-    using ::NeoWPF::UI::Color;
 }
 
 namespace {
@@ -18,29 +17,11 @@ namespace {
         return metadata;
     }
 
-    NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxTextColorMetadata() {
+    NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxForegroundMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-            NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground));
-        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
-        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
-        return metadata;
-    }
-
-    NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxBackgroundColorMetadata() {
-        NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-            NeoWPF::Core::ApplicationThemes::PaletteColor::Surface));
-        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
-        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
-        return metadata;
-    }
-
-    NeoWPF::UI::Properties::PropertyMetadata MakeCheckboxBorderColorMetadata() {
-        NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-            NeoWPF::Core::ApplicationThemes::PaletteColor::Border));
-        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
+        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+            NeoWPF::Core::ApplicationThemes::PaletteBrush::Foreground));
+        metadata.Converter = NeoWPF::UI::Properties::GetBrushConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -92,18 +73,10 @@ namespace NeoWPF::UI::Properties {
             &UI::Checkbox::GetText,
             &UI::Checkbox::SetText,
             MakeCheckboxTextMetadata());
-        RegisterProperty<UI::Checkbox, ::NeoWPF::UI::Color>("Foreground",
-            &UI::Checkbox::GetTextColor,
-            static_cast<void (UI::Checkbox::*)(::NeoWPF::UI::Color)>(&UI::Checkbox::SetTextColor),
-            MakeCheckboxTextColorMetadata());
-        RegisterProperty<UI::Checkbox, ::NeoWPF::UI::Color>("Background",
-            &UI::Checkbox::GetBackgroundColor,
-            static_cast<void (UI::Checkbox::*)(::NeoWPF::UI::Color)>(&UI::Checkbox::SetBackgroundColor),
-            MakeCheckboxBackgroundColorMetadata());
-        RegisterProperty<UI::Checkbox, ::NeoWPF::UI::Color>("BorderBrush",
-            &UI::Checkbox::GetBorderColor,
-            static_cast<void (UI::Checkbox::*)(::NeoWPF::UI::Color)>(&UI::Checkbox::SetBorderColor),
-            MakeCheckboxBorderColorMetadata());
+        RegisterProperty<UI::Checkbox, std::shared_ptr<UI::Brush>>("Foreground",
+            &UI::Checkbox::GetForeground,
+            &UI::Checkbox::SetForeground,
+            MakeCheckboxForegroundMetadata());
         RegisterProperty<UI::Checkbox, UI::Thickness>("Padding",
             &UI::Checkbox::GetPadding,
             static_cast<void (UI::Checkbox::*)(UI::Thickness)>(&UI::Checkbox::SetPadding),
@@ -138,30 +111,12 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::TextProp
     return *property;
 }
 
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::TextColorProperty() {
-    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Checkbox, NeoWPF::UI::Color>(
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::ForegroundProperty() {
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Checkbox, std::shared_ptr<NeoWPF::UI::Brush>>(
         "Foreground",
-        &NeoWPF::UI::Checkbox::GetTextColor,
-        static_cast<void (NeoWPF::UI::Checkbox::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::Checkbox::SetTextColor),
-        MakeCheckboxTextColorMetadata());
-    return *property;
-}
-
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::BackgroundColorProperty() {
-    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Checkbox, NeoWPF::UI::Color>(
-        "Background",
-        &NeoWPF::UI::Checkbox::GetBackgroundColor,
-        static_cast<void (NeoWPF::UI::Checkbox::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::Checkbox::SetBackgroundColor),
-        MakeCheckboxBackgroundColorMetadata());
-    return *property;
-}
-
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::Checkbox::BorderColorProperty() {
-    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::Checkbox, NeoWPF::UI::Color>(
-        "BorderBrush",
-        &NeoWPF::UI::Checkbox::GetBorderColor,
-        static_cast<void (NeoWPF::UI::Checkbox::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::Checkbox::SetBorderColor),
-        MakeCheckboxBorderColorMetadata());
+        &NeoWPF::UI::Checkbox::GetForeground,
+        &NeoWPF::UI::Checkbox::SetForeground,
+        MakeCheckboxForegroundMetadata());
     return *property;
 }
 

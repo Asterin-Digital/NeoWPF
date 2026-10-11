@@ -17,30 +17,30 @@ bool Window::IsTransparent() const noexcept
     return GetValue<bool>(AllowsTransparencyProperty());
 }
 
-NeoWPF::UI::Color Window::GetBackgroundColor() const noexcept
+std::shared_ptr<Brush> Window::GetBackgroundBrush() const
 {
-    if (m_backgroundColor.has_value()) {
-        return *m_backgroundColor;
+    if (m_backgroundBrush.has_value()) {
+        return *m_backgroundBrush;
     }
 
-    NeoWPF::UI::Color resourceColor;
-    if (NeoWPF::Core::ApplicationResources::Resources::TryGetColor(
-            "Window.BackgroundColor", resourceColor)) {
-        return resourceColor;
+    std::shared_ptr<Brush> resourceBrush;
+    if (NeoWPF::Core::ApplicationResources::Resources::TryGetBrush(
+            "Window.BackgroundBrush", resourceBrush)) {
+        return resourceBrush;
     }
 
-    return NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-        NeoWPF::Core::ApplicationThemes::PaletteColor::Background);
+    return NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+        NeoWPF::Core::ApplicationThemes::PaletteBrush::Background);
 }
 
-void Window::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
+void Window::SetBackgroundBrush(std::shared_ptr<Brush> brush)
 {
-    if (IsApplyingPropertyValue()) {
-        m_backgroundColor = color;
+    if (!IsApplyingPropertyValue()) {
+        SetValue(BackgroundBrushProperty(), brush);
         return;
     }
 
-    SetValue(BackgroundColorProperty(), color);
+    m_backgroundBrush = std::move(brush);
 }
 
 void Window::AddOverlay(const std::shared_ptr<Visual>& overlay)

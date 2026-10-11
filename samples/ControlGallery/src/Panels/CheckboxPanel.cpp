@@ -4,8 +4,8 @@
 namespace Gallery {
 namespace {
 
-using NeoWPF::Core::ApplicationThemes::GetPaletteColor;
-using NeoWPF::Core::ApplicationThemes::PaletteColor;
+using NeoWPF::Core::ApplicationThemes::GetPaletteBrush;
+using NeoWPF::Core::ApplicationThemes::PaletteBrush;
 using NeoWPF::UI::Checkbox;
 using NeoWPF::UI::Orientation;
 using NeoWPF::UI::StackPanel;
@@ -36,8 +36,8 @@ Ref<NeoWPF::UI::Border> MakeSection(const std::wstring& title, const Ref<NeoWPF:
     section->SetPadding(18);
     section->SetBorderThickness(1);
     section->SetCornerRadius(NeoWPF::UI::CornerRadius(4));
-    section->SetBackgroundColor(GetPaletteColor(PaletteColor::Surface));
-    section->SetBorderColor(GetPaletteColor(PaletteColor::Border));
+    section->SetBackgroundColor(GetPaletteBrush(PaletteBrush::Surface));
+    section->SetBorderColor(GetPaletteBrush(PaletteBrush::Border));
     section->SetChild(sectionContent);
     return section;
 }

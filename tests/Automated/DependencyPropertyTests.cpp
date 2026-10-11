@@ -9,6 +9,7 @@
 #include <NeoWPF/UI/Core/Element/Control.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Core/Element/UIElement.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
@@ -374,14 +375,17 @@ TEST(DependencyPropertyTests, FrameworkElementExposesStaticPropertyHandles)
 TEST(DependencyPropertyTests, ControlExposesStaticPropertyHandles)
 {
     const auto& paddingProperty = NeoWPF::UI::Control::PaddingProperty();
-    const auto& backgroundColorProperty = NeoWPF::UI::Control::BackgroundColorProperty();
+    const auto& backgroundProperty = NeoWPF::UI::Control::BackgroundProperty();
+    const auto& borderBrushProperty = NeoWPF::UI::Control::BorderBrushProperty();
     const auto& borderThicknessProperty = NeoWPF::UI::Control::BorderThicknessProperty();
 
     EXPECT_EQ(paddingProperty.GetName(), "Padding");
     EXPECT_EQ(paddingProperty.GetOwnerType(), std::type_index(typeid(NeoWPF::UI::Control)));
     EXPECT_EQ(paddingProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::Thickness)));
-    EXPECT_EQ(backgroundColorProperty.GetName(), "Background");
-    EXPECT_EQ(backgroundColorProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::Color)));
+    EXPECT_EQ(backgroundProperty.GetName(), "Background");
+    EXPECT_EQ(backgroundProperty.GetPropertyType(), std::type_index(typeid(std::shared_ptr<NeoWPF::UI::Brush>)));
+    EXPECT_EQ(borderBrushProperty.GetName(), "BorderBrush");
+    EXPECT_EQ(borderBrushProperty.GetPropertyType(), std::type_index(typeid(std::shared_ptr<NeoWPF::UI::Brush>)));
     EXPECT_EQ(borderThicknessProperty.GetName(), "BorderThickness");
     EXPECT_EQ(borderThicknessProperty.GetPropertyType(), std::type_index(typeid(double)));
     EXPECT_EQ(NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", typeid(NeoWPF::UI::Control)), &paddingProperty);
@@ -390,15 +394,15 @@ TEST(DependencyPropertyTests, ControlExposesStaticPropertyHandles)
 TEST(DependencyPropertyTests, CheckboxExposesStaticPropertyHandles)
 {
     const auto& textProperty = NeoWPF::UI::Checkbox::TextProperty();
-    const auto& textColorProperty = NeoWPF::UI::Checkbox::TextColorProperty();
+    const auto& foregroundProperty = NeoWPF::UI::Checkbox::ForegroundProperty();
     const auto& fontSizeProperty = NeoWPF::UI::Checkbox::FontSizeProperty();
     const auto& isCheckedProperty = NeoWPF::UI::Checkbox::IsCheckedProperty();
 
     EXPECT_EQ(textProperty.GetName(), "Text");
     EXPECT_EQ(textProperty.GetOwnerType(), std::type_index(typeid(NeoWPF::UI::Checkbox)));
     EXPECT_EQ(textProperty.GetPropertyType(), std::type_index(typeid(std::wstring)));
-    EXPECT_EQ(textColorProperty.GetName(), "Foreground");
-    EXPECT_EQ(textColorProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::Color)));
+    EXPECT_EQ(foregroundProperty.GetName(), "Foreground");
+    EXPECT_EQ(foregroundProperty.GetPropertyType(), std::type_index(typeid(std::shared_ptr<NeoWPF::UI::Brush>)));
     EXPECT_EQ(fontSizeProperty.GetName(), "FontSize");
     EXPECT_EQ(fontSizeProperty.GetPropertyType(), std::type_index(typeid(int)));
     EXPECT_EQ(isCheckedProperty.GetName(), "IsChecked");
@@ -429,18 +433,18 @@ TEST(DependencyPropertyTests, BorderExposesStaticPropertyHandles)
 {
     const auto& paddingProperty = NeoWPF::UI::Border::PaddingProperty();
     const auto& borderThicknessProperty = NeoWPF::UI::Border::BorderThicknessProperty();
-    const auto& borderColorProperty = NeoWPF::UI::Border::BorderColorProperty();
-    const auto& backgroundColorProperty = NeoWPF::UI::Border::BackgroundColorProperty();
+    const auto& borderBrushProperty = NeoWPF::UI::Control::BorderBrushProperty();
+    const auto& backgroundProperty = NeoWPF::UI::Control::BackgroundProperty();
 
     EXPECT_EQ(paddingProperty.GetName(), "Padding");
     EXPECT_EQ(paddingProperty.GetOwnerType(), std::type_index(typeid(NeoWPF::UI::Border)));
     EXPECT_EQ(paddingProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::Thickness)));
     EXPECT_EQ(borderThicknessProperty.GetName(), "BorderThickness");
     EXPECT_EQ(borderThicknessProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::Thickness)));
-    EXPECT_EQ(borderColorProperty.GetName(), "BorderBrush");
-    EXPECT_EQ(borderColorProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::Color)));
-    EXPECT_EQ(backgroundColorProperty.GetName(), "Background");
-    EXPECT_EQ(backgroundColorProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::Color)));
+    EXPECT_EQ(borderBrushProperty.GetName(), "BorderBrush");
+    EXPECT_EQ(borderBrushProperty.GetPropertyType(), std::type_index(typeid(std::shared_ptr<NeoWPF::UI::Brush>)));
+    EXPECT_EQ(backgroundProperty.GetName(), "Background");
+    EXPECT_EQ(backgroundProperty.GetPropertyType(), std::type_index(typeid(std::shared_ptr<NeoWPF::UI::Brush>)));
     EXPECT_EQ(NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", typeid(NeoWPF::UI::Border)), &paddingProperty);
 }
 
@@ -449,8 +453,10 @@ TEST(BuilderTests, FluentBuilderSetsPropertiesAndAttachesChildren)
     using namespace NeoWPF::UI::Builder;
 
     bool clicked = false;
+    const std::shared_ptr<NeoWPF::UI::Brush> backgroundBrush =
+        std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF112233u);
     auto root = Build<NeoWPF::UI::StackPanel>()
-        .Set(NeoWPF::UI::Panel::BackgroundColorProperty(), NeoWPF::UI::Color::FromArgb(0xFF112233u))
+        .Set(NeoWPF::UI::Control::BackgroundProperty(), backgroundBrush)
         .Children(
             Build<NeoWPF::UI::TextBlock>().Set(NeoWPF::UI::TextBlock::TextProperty(), std::wstring(L"Hello")).Name("Message"),
             Build<NeoWPF::UI::Button>()
@@ -460,7 +466,9 @@ TEST(BuilderTests, FluentBuilderSetsPropertiesAndAttachesChildren)
         );
 
     ASSERT_NE(root, nullptr);
-    EXPECT_EQ(root->GetValue<NeoWPF::UI::Color>(NeoWPF::UI::Panel::BackgroundColorProperty()), NeoWPF::UI::Color::FromArgb(0xFF112233u));
+    const auto rootSolidBackground = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(root->GetBackgroundBrush());
+    ASSERT_NE(rootSolidBackground, nullptr);
+    EXPECT_EQ(rootSolidBackground->GetArgb(), 0xFF112233u);
     EXPECT_EQ(root->GetVisualChildren().size(), 2u);
 
     const auto children = root->GetVisualChildren();
@@ -480,12 +488,13 @@ TEST(BuilderTests, FluentBuilderSetsPropertiesAndAttachesChildren)
 
 TEST(DependencyPropertyTests, PanelExposesStaticPropertyHandles)
 {
-    const auto& backgroundColorProperty = NeoWPF::UI::Panel::BackgroundColorProperty();
+    NeoWPF::UI::Panel panel;
+    const auto& backgroundProperty = NeoWPF::UI::Control::BackgroundProperty();
 
-    EXPECT_EQ(backgroundColorProperty.GetName(), "Background");
-    EXPECT_EQ(backgroundColorProperty.GetOwnerType(), std::type_index(typeid(NeoWPF::UI::Panel)));
-    EXPECT_EQ(backgroundColorProperty.GetPropertyType(), std::type_index(typeid(NeoWPF::UI::Color)));
-    EXPECT_EQ(NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("Background", typeid(NeoWPF::UI::Panel)), &backgroundColorProperty);
+    EXPECT_EQ(backgroundProperty.GetName(), "Background");
+    EXPECT_EQ(backgroundProperty.GetOwnerType(), std::type_index(typeid(NeoWPF::UI::Control)));
+    EXPECT_EQ(backgroundProperty.GetPropertyType(), std::type_index(typeid(std::shared_ptr<NeoWPF::UI::Brush>)));
+    EXPECT_EQ(NeoWPF::UI::Properties::DependencyPropertyRegistry::Get().FindProperty("Background", panel), &backgroundProperty);
 }
 
 TEST(DependencyPropertyTests, ScrollViewerExposesStaticPropertyHandles)

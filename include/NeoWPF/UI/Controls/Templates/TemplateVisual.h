@@ -5,11 +5,11 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
-#include <cstdint>
 #include <string>
 
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 
@@ -82,21 +82,21 @@ public:
 
     /*
         @summary
-        Sets the fill color.
+        Sets the fill brush.
 
-        @param color
-        The fill color as an ARGB value.
+        @param brush
+        The brush used to paint the fill.
     */
-    void SetFillColor(std::uint32_t color) noexcept;
+    void SetFillBrush(std::shared_ptr<NeoWPF::UI::Brush> brush) noexcept;
 
     /*
         @summary
-        Sets the border color.
+        Sets the border brush.
 
-        @param color
-        The border color as an ARGB value.
+        @param brush
+        The brush used to paint the border.
     */
-    void SetBorderColor(std::uint32_t color) noexcept;
+    void SetBorderBrush(std::shared_ptr<NeoWPF::UI::Brush> brush) noexcept;
 
     /*
         @summary
@@ -193,8 +193,8 @@ private:
     double m_y = 0.0;
     double m_width = 0.0;
     double m_height = 0.0;
-    std::uint32_t m_fillColor = 0x00000000u;
-    std::uint32_t m_borderColor = 0x00000000u;
+    std::shared_ptr<NeoWPF::UI::Brush> m_fillBrush;
+    std::shared_ptr<NeoWPF::UI::Brush> m_borderBrush;
     int m_borderThickness = 0;
     NeoWPF::UI::CornerRadius m_cornerRadius;
     float m_opacity = 1.0f;

@@ -14,7 +14,8 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Animation/Definitions/DoubleAnimation.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
 #include <NeoWPF/UI/Styling/Triggers/EventTrigger.h>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
@@ -123,7 +124,6 @@ public:
     /*
         @summary
         Enables or disables the element for interaction.
-
         @param enabled
         True to enable input handling, false to disable it.
     */
@@ -931,11 +931,23 @@ protected:
                             const T& fromValue,
                             const T& toValue,
                             float progress) {
-        if constexpr (std::is_same_v<T, NeoWPF::UI::Color>) {
-            const auto fromArgb = static_cast<float>(fromValue.ToArgb());
-            const auto toArgb = static_cast<float>(toValue.ToArgb());
-            const auto currentArgb = std::lround(fromArgb + (toArgb - fromArgb) * progress);
-            SetValue(property, std::any(NeoWPF::UI::Color::FromArgb(static_cast<std::uint32_t>(currentArgb))));
+        if constexpr (std::is_same_v<T, std::shared_ptr<NeoWPF::UI::Brush>>) {
+            const auto fromBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(fromValue);
+            const auto toBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(toValue);
+            if (!fromBrush || !toBrush) {
+                SetValue(property, std::any(progress < 1.0f ? fromValue : toValue));
+                return;
+            }
+            std::uint32_t argb = 0;
+            for (unsigned int shift = 0; shift < 32; shift += 8) {
+                const auto fromChannel = static_cast<double>((fromBrush->GetArgb() >> shift) & 0xFFu);
+                const auto toChannel = static_cast<double>((toBrush->GetArgb() >> shift) & 0xFFu);
+                const auto channel = static_cast<std::uint32_t>(std::lround(
+                    fromChannel + (toChannel - fromChannel) * progress));
+                argb |= (channel & 0xFFu) << shift;
+            }
+            SetValue(property, std::any(std::shared_ptr<NeoWPF::UI::Brush>(
+                std::make_shared<NeoWPF::UI::SolidColorBrush>(argb))));
         } else if constexpr (std::is_same_v<T, NeoWPF::UI::CornerRadius>) {
             const auto fromTopLeft = fromValue.TopLeft + (toValue.TopLeft - fromValue.TopLeft) * progress;
             const auto fromTopRight = fromValue.TopRight + (toValue.TopRight - fromValue.TopRight) * progress;

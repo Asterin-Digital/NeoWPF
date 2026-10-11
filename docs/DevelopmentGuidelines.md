@@ -101,7 +101,7 @@ Keep Visual.h, UIElement.h, and FrameworkElement.h stable. Do not constantly mod
 
 7. ## Legacy Code
 
-NeoWPF is still young; we recommend not leaving any legacy code or preserving an old way of doing something unless lots of things use that API. That also depends - if it's internal code using that API, do not preserve it; simply do a refactor. If it's user code instead, you should gradually deprecate that API and in the end remove it.
+NeoWPF is still young; we recommend not leaving any legacy code or preserving an old way of doing something unless lots of things use that API. That also depends - if it's internal code using that API, do not preserve it; simply do a refactor. If it's user code instead, you should gradually deprecate that API and in the end remove it unless there is a reasonable decision to keep said code and it does not make the architecture worse.
 
 8. ## NeoWPF Dependencies
 

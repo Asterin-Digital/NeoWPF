@@ -163,13 +163,13 @@ TEST(CommonConvertersTests, ConvertsBasicStringValues)
     EXPECT_EQ(expression, "std::wstring(L\"hello\")");
 }
 
-TEST(CommonConvertersTests, ConvertsColorValuesToCode)
+TEST(CommonConvertersTests, ConvertsBrushValuesToCode)
 {
     std::string expression;
-    const auto converter = NeoWPF::UI::Properties::GetColorConverter();
+    const auto converter = NeoWPF::UI::Properties::GetBrushConverter();
 
     ASSERT_TRUE(converter->TryConvertToCode("#FF101820", expression));
-    EXPECT_EQ(expression, "NeoWPF::UI::Color::FromArgb(4279244832u)");
+    EXPECT_EQ(expression, "std::shared_ptr<NeoWPF::UI::Brush>(std::make_shared<NeoWPF::UI::SolidColorBrush>(4279244832u))");
 }
 
 TEST(CommonConvertersTests, ConvertsContentToTextBlock)
@@ -217,8 +217,11 @@ TEST(CommonConvertersTests, ConvertsColorThicknessAndSpacing)
     using namespace NeoWPF::UI::Properties;
 
     std::any converted;
-    ASSERT_TRUE(GetColorConverter()->ConvertFromString("#123456", converted));
-    EXPECT_EQ(std::any_cast<Color>(converted), Color(0xFF123456u));
+    ASSERT_TRUE(GetBrushConverter()->ConvertFromString("#123456", converted));
+    const auto brush = std::dynamic_pointer_cast<SolidColorBrush>(
+        std::any_cast<std::shared_ptr<Brush>>(converted));
+    ASSERT_NE(brush, nullptr);
+    EXPECT_EQ(brush->GetArgb(), 0xFF123456u);
 
     converted.reset();
     ASSERT_TRUE(GetThicknessConverter()->ConvertFromString("1, 2, 3, 4", converted));
@@ -231,6 +234,6 @@ TEST(CommonConvertersTests, ConvertsColorThicknessAndSpacing)
     std::string expression;
     EXPECT_TRUE(GetThicknessConverter()->TryConvertToCode("1,2,3,4", expression));
     EXPECT_EQ(expression, "NeoWPF::UI::Thickness(1, 2, 3, 4)");
-    EXPECT_TRUE(GetColorConverter()->TryConvertToCode("#123456", expression));
-    EXPECT_EQ(expression, "NeoWPF::UI::Color::FromArgb(4279383126u)");
+    EXPECT_TRUE(GetBrushConverter()->TryConvertToCode("#123456", expression));
+    EXPECT_EQ(expression, "std::shared_ptr<NeoWPF::UI::Brush>(std::make_shared<NeoWPF::UI::SolidColorBrush>(4279383126u))");
 }

@@ -7,7 +7,7 @@ See LICENSE file in the project root for full license text.
 
 #include <any>
 #include <memory>
-#include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
 #include <shared_mutex>
 #include <string>
 #include <unordered_map>
@@ -47,7 +47,8 @@ public:
 
     static ResourceDictionary& ApplicationResources();
     static bool TryFindResource(const std::string& key, std::any& outValue);
-    static bool TryGetColor(const std::string& key, NeoWPF::UI::Color& outColor);
+    static bool TryGetBrush(const std::string& key,
+                            std::shared_ptr<NeoWPF::UI::Brush>& outBrush);
     static std::any FindResource(const std::string& key);
     static void SetResource(const std::string& key, std::any value);
     static void SetResources(const std::unordered_map<std::string, std::any>& values);

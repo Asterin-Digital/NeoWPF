@@ -10,8 +10,8 @@
 namespace Gallery {
 namespace {
 
-using NeoWPF::Core::ApplicationThemes::GetPaletteColor;
-using NeoWPF::Core::ApplicationThemes::PaletteColor;
+using NeoWPF::Core::ApplicationThemes::GetPaletteBrush;
+using NeoWPF::Core::ApplicationThemes::PaletteBrush;
 using NeoWPF::Core::ApplicationThemes::ThemeManager;
 using NeoWPF::UI::Button;
 using NeoWPF::UI::Grid;
@@ -41,12 +41,12 @@ Ref<Button> MakeTabButton(const std::wstring& label)
 void SetTabAppearance(const Ref<Button>& button, bool selected)
 {
     const auto background = selected
-        ? GetPaletteColor(PaletteColor::Accent)
-        : GetPaletteColor(PaletteColor::Surface);
+        ? GetPaletteBrush(PaletteBrush::Accent)
+        : GetPaletteBrush(PaletteBrush::Surface);
     const auto foreground = selected
-        ? GetPaletteColor(PaletteColor::Surface)
-        : GetPaletteColor(PaletteColor::Foreground);
-    const auto border = GetPaletteColor(PaletteColor::Border);
+        ? GetPaletteBrush(PaletteBrush::Surface)
+        : GetPaletteBrush(PaletteBrush::Foreground);
+    const auto border = GetPaletteBrush(PaletteBrush::Border);
     button->SetStylePropertyValue(
         "Background",
         background);

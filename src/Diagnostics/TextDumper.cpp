@@ -1,6 +1,7 @@
 #include <NeoWPF/Diagnostics/TextDumper.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <sstream>
 #include <iomanip>
 
@@ -8,11 +9,20 @@ namespace NeoWPF::Diagnostics {
 
 namespace {
 
-std::string FormatColor(uint32_t color)
+std::string FormatArgb(uint32_t argb)
 {
     std::ostringstream oss;
-    oss << "0x" << std::hex << std::uppercase << std::setfill('0') << std::setw(8) << color;
+    oss << "0x" << std::hex << std::uppercase << std::setfill('0') << std::setw(8) << argb;
     return oss.str();
+}
+
+std::string FormatBrush(const std::shared_ptr<NeoWPF::UI::Brush>& brush)
+{
+    if (!brush) return "null";
+    if (const auto solidBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(brush)) {
+        return FormatArgb(solidBrush->GetArgb());
+    }
+    return typeid(*brush).name();
 }
 
 std::string SafeText(const std::wstring& text)
@@ -86,7 +96,9 @@ void TextDumper::DumpTextBlock(NeoWPF::UI::TextBlock* textBlock, const TextDumpO
         LogInfo("%s  padding=(%g,%g,%g,%g)", GetIndent(depth), pad.Left, pad.Top, pad.Right, pad.Bottom);
     }
     if (options.includeColors) {
-        LogInfo("%s  textColor=%s", GetIndent(depth), FormatColor(textBlock->GetTextColor().ToArgb()).c_str());
+        const auto foreground = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(textBlock->GetForeground());
+        LogInfo("%s  foreground=%s", GetIndent(depth),
+            foreground ? FormatArgb(foreground->GetArgb()).c_str() : "null");
     }
 }
 
@@ -104,7 +116,10 @@ void TextDumper::DumpTextBox(NeoWPF::UI::TextBox* textBox, const TextDumpOptions
         LogInfo("%s  padding=(%g,%g,%g,%g)", GetIndent(depth), pad.Left, pad.Top, pad.Right, pad.Bottom);
     }
     if (options.includeColors) {
-        LogInfo("%s  textColor=%s bg=%s", GetIndent(depth), FormatColor(textBox->GetTextColor().ToArgb()).c_str(), FormatColor(textBox->GetBackgroundColor().ToArgb()).c_str());
+        const auto foreground = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(textBox->GetForeground());
+        LogInfo("%s  foreground=%s bg=%s", GetIndent(depth),
+            foreground ? FormatArgb(foreground->GetArgb()).c_str() : "null",
+            FormatBrush(textBox->GetBackgroundBrush()).c_str());
     }
 }
 
@@ -122,7 +137,7 @@ void TextDumper::DumpButton(NeoWPF::UI::Button* button, const TextDumpOptions& o
         LogInfo("%s  padding=(%g,%g,%g,%g)", GetIndent(depth), pad.Left, pad.Top, pad.Right, pad.Bottom);
     }
     if (options.includeColors) {
-        LogInfo("%s  textColor=%s bg=%s border=%s", GetIndent(depth), FormatColor(button->GetTextColor().ToArgb()).c_str(), FormatColor(button->GetBackgroundColor().ToArgb()).c_str(), FormatColor(button->GetBorderColor().ToArgb()).c_str());
+        LogInfo("%s  foreground=%s bg=%s border=%s", GetIndent(depth), FormatBrush(button->GetForeground()).c_str(), FormatBrush(button->GetBackgroundBrush()).c_str(), FormatBrush(button->GetBorderBrush()).c_str());
     }
 }
 

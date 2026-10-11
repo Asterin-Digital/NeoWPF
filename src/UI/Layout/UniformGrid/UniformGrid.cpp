@@ -146,7 +146,6 @@ namespace NeoWPF::UI {
 
 UniformGrid::UniformGrid()
 {
-    SetBackgroundColor(Color::FromArgb(0x00000000u));
 }
 
 int UniformGrid::GetRows() const

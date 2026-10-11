@@ -29,7 +29,6 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Core/Element/Control.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Core/Media/BitmapSource.h>
@@ -56,7 +55,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Animation/AnimationController.h>
 #include <NeoWPF/UI/Animation/Definitions/AnimationTimeline.h>
 #include <NeoWPF/UI/Animation/Definitions/DoubleAnimation.h>
-#include <NeoWPF/UI/Animation/Definitions/ColorAnimation.h>
+#include <NeoWPF/UI/Animation/Definitions/BrushAnimation.h>
 #include <NeoWPF/UI/Animation/Easing/EasingFunctionBase.h>
 #include <NeoWPF/UI/Animation/Easing/EasingFunctions.h>
 #include <NeoWPF/UI/Animation/Core/AnimationClock.h>

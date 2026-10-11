@@ -29,7 +29,6 @@ double ResolvePosition(double leading, double trailing, double available, double
 
 Canvas::Canvas() noexcept
 {
-    SetBackgroundColor(0x00000000u);
 }
 
 void Canvas::Measure(double availableWidth, double availableHeight)

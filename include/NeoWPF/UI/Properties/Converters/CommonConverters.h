@@ -64,7 +64,7 @@ public:
     bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
 };
 
-class ColorConverter final : public TypeConverter {
+class BrushConverter final : public TypeConverter {
 public:
     bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
     bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
@@ -143,7 +143,7 @@ std::shared_ptr<const TypeConverter> GetIntConverter();
 std::shared_ptr<const TypeConverter> GetDoubleConverter();
 std::shared_ptr<const TypeConverter> GetFloatConverter();
 std::shared_ptr<const TypeConverter> GetBoolConverter();
-std::shared_ptr<const TypeConverter> GetColorConverter();
+std::shared_ptr<const TypeConverter> GetBrushConverter();
 std::shared_ptr<const TypeConverter> GetThicknessConverter();
 std::shared_ptr<const TypeConverter> GetSpacingConverter();
 std::shared_ptr<const TypeConverter> GetHorizontalAlignmentConverter();

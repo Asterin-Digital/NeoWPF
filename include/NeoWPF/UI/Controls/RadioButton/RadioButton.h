@@ -11,7 +11,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Controls/Base/GroupedToggleBase/GroupedToggleBase.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/UI/Text/FontStyle.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <cstddef>
@@ -33,9 +33,7 @@ class RadioButtonTemplate;
 class RadioButton : public GroupedToggleBase {
 public:
     static const Properties::DependencyProperty& TextProperty();
-    static const Properties::DependencyProperty& TextColorProperty();
-    static const Properties::DependencyProperty& BackgroundColorProperty();
-    static const Properties::DependencyProperty& BorderColorProperty();
+    static const Properties::DependencyProperty& ForegroundProperty();
     static const Properties::DependencyProperty& PaddingProperty();
     static const Properties::DependencyProperty& FontSizeProperty();
     static const Properties::DependencyProperty& FontFamilyProperty();
@@ -55,12 +53,8 @@ public:
     TextHorizontalAlignment GetTextHorizontalAlignment() const noexcept;
     void SetTextVerticalAlignment(TextVerticalAlignment alignment) noexcept;
     TextVerticalAlignment GetTextVerticalAlignment() const noexcept;
-    void SetTextColor(NeoWPF::UI::Color color) noexcept;
-    NeoWPF::UI::Color GetTextColor() const noexcept;
-    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept;
-    NeoWPF::UI::Color GetBackgroundColor() const noexcept;
-    void SetBorderColor(NeoWPF::UI::Color color) noexcept;
-    NeoWPF::UI::Color GetBorderColor() const noexcept;
+    void SetForeground(std::shared_ptr<Brush> brush);
+    std::shared_ptr<Brush> GetForeground() const;
     void SetPadding(Thickness padding) noexcept;
     Thickness GetPadding() const noexcept;
     void SetFontSize(int fontSize) noexcept;

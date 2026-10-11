@@ -15,15 +15,15 @@ namespace {
 
 void ApplyProgressBarTheme(ProgressBar& progressBar)
 {
-    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::PaletteBrush;
     using NeoWPF::Core::ApplicationThemes::ThemeBorderThickness;
     using NeoWPF::Core::ApplicationThemes::ThemeManager;
     using NeoWPF::Core::ApplicationThemes::ThemeMetric;
     using NeoWPF::Core::ApplicationThemes::ThemePadding;
 
     auto& themeManager = ThemeManager::Instance();
-    progressBar.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Track));
-    progressBar.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+    progressBar.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Track));
+    progressBar.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Border));
 
     double borderThickness = 0.0;
     if (themeManager.TryGetMetric(ThemeMetric::ProgressBarBorderThickness, borderThickness)) {
@@ -252,11 +252,6 @@ void ProgressBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     if (!track || !indicator || primaryLength <= 0.0 || crossLength <= 0.0) {
         return;
     }
-
-    track->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-        NeoWPF::Core::ApplicationThemes::PaletteColor::Track).ToArgb());
-    indicator->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-        NeoWPF::Core::ApplicationThemes::PaletteColor::Accent).ToArgb());
 
     track->SetRect(absX, absY, width, height);
     track->SetClipRect(clip);

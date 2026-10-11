@@ -10,6 +10,7 @@
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <algorithm>
 #include <memory>
 
@@ -79,7 +80,7 @@ std::shared_ptr<NeoWPF::UI::Popup> CreateDeveloperWarningPopup(
     overlay->AddColumn(NeoWPF::UI::SizeMode::Star, 1);
 
     auto backdrop = std::make_shared<NeoWPF::UI::Border>();
-    backdrop->SetBackgroundColor(0xB8000000u);
+    backdrop->SetBackgroundBrush(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xB8000000u));
     overlay->AddChild(backdrop);
 
     auto card = std::make_shared<NeoWPF::UI::Border>();
@@ -87,8 +88,8 @@ std::shared_ptr<NeoWPF::UI::Popup> CreateDeveloperWarningPopup(
     card->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Center);
     card->SetPadding(28);
     card->SetBorderThickness(1);
-    card->SetBorderColor(0xFF3A4655u);
-    card->SetBackgroundColor(0xFF202A36u);
+    card->SetBorderBrush(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF3A4655u));
+    card->SetBackgroundBrush(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF202A36u));
     card->SetCornerRadius(NeoWPF::UI::CornerRadius(16));
 
     auto content = std::make_shared<NeoWPF::UI::StackPanel>();
@@ -96,24 +97,24 @@ std::shared_ptr<NeoWPF::UI::Popup> CreateDeveloperWarningPopup(
 
     auto severity = std::make_shared<NeoWPF::UI::TextBlock>(severityText);
     severity->SetFontSize(12);
-    severity->SetTextColor(accentColor);
+    severity->SetForeground(std::make_shared<NeoWPF::UI::SolidColorBrush>(accentColor));
     severity->SetMargin(0, 0, 0, 8);
 
     auto title = std::make_shared<NeoWPF::UI::TextBlock>(warning.title);
     title->SetFontSize(25);
-    title->SetTextColor(0xFFF8FAFCu);
+    title->SetForeground(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFFF8FAFCu));
     title->SetMargin(0, 0, 0, 22);
 
     auto details = std::make_shared<NeoWPF::UI::Border>();
     details->SetPadding(20);
-    details->SetBackgroundColor(0xFF151D26u);
-    details->SetBorderColor(0xFF303C49u);
+    details->SetBackgroundBrush(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF151D26u));
+    details->SetBorderBrush(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF303C49u));
     details->SetBorderThickness(1);
     details->SetCornerRadius(NeoWPF::UI::CornerRadius(10));
 
     auto message = std::make_shared<NeoWPF::UI::TextBlock>(warning.message);
     message->SetFontSize(15);
-    message->SetTextColor(0xFFD6DEE8u);
+    message->SetForeground(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFFD6DEE8u));
     message->SetTextWrapping(NeoWPF::UI::TextWrapping::Wrap);
     details->SetContent(message);
 
@@ -127,17 +128,17 @@ std::shared_ptr<NeoWPF::UI::Popup> CreateDeveloperWarningPopup(
     copy->SetHeight(42);
     copy->SetMargin(0, 0, 10, 0);
     copy->SetPadding(12);
-    copy->SetBackgroundColor(0xFF2563EBu);
-    copy->SetBorderColor(0xFF2563EBu);
-    copy->SetTextColor(0xFFFFFFFFu);
+    copy->SetBackgroundBrush(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF2563EBu));
+    copy->SetBorderBrush(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF2563EBu));
+    copy->SetForeground(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFFFFFFFFu));
 
     auto close = std::make_shared<NeoWPF::UI::Button>(L"Close");
     close->SetWidth(112);
     close->SetHeight(42);
     close->SetPadding(12);
-    close->SetBackgroundColor(0xFF303C49u);
-    close->SetBorderColor(0xFF465365u);
-    close->SetTextColor(0xFFF8FAFCu);
+    close->SetBackgroundBrush(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF303C49u));
+    close->SetBorderBrush(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF465365u));
+    close->SetForeground(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFFF8FAFCu));
 
     const std::wstring copyText = warning.title + L"\n\n" + warning.message;
     std::weak_ptr<NeoWPF::UI::Button> weakCopy = copy;

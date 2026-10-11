@@ -2,6 +2,7 @@
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/UI/Localization/LocaleOperations.h>
 #include <NeoWPF/Diagnostics/Logger.h>
@@ -57,17 +58,17 @@ namespace {
 void ApplyTextBoxThemeStyle(
     TextBox& textBox)
 {
-    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::PaletteBrush;
     using NeoWPF::Core::ApplicationThemes::ThemeCornerRadius;
     using NeoWPF::Core::ApplicationThemes::ThemeFontSize;
     using NeoWPF::Core::ApplicationThemes::ThemePadding;
     using NeoWPF::Core::ApplicationThemes::ThemeManager;
     auto& themeManager = ThemeManager::Instance();
-    const auto foreground = NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Foreground);
+    const auto foreground = NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Foreground);
     textBox.SetThemePropertyValue("Foreground", foreground);
     textBox.SetThemePropertyValue("CaretBrush", foreground);
-    textBox.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
-    textBox.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+    textBox.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Surface));
+    textBox.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Border));
 
     int fontSize = 0;
     if (themeManager.TryGetFontSize(ThemeFontSize::Control, fontSize)) {
@@ -265,13 +266,13 @@ const std::wstring& TextBox::GetPlaceholderText() const noexcept
     return m_placeholderText;
 }
 
-void TextBox::SetTextColor(NeoWPF::UI::Color color) noexcept
+void TextBox::SetForeground(std::shared_ptr<Brush> brush)
 {
     if (IsApplyingPropertyValue()) {
         InvalidateVisual();
         return;
     }
-    SetValue(TextColorProperty(), color);
+    SetValue(ForegroundProperty(), brush);
 }
 
 void TextBox::SetFontFamily(const std::wstring& fontFamily) noexcept
@@ -380,20 +381,9 @@ TextVerticalAlignment TextBox::GetTextVerticalAlignment() const noexcept
     return m_textVerticalAlignment;
 }
 
-void TextBox::SetTextColor(std::uint32_t color) noexcept
+std::shared_ptr<Brush> TextBox::GetForeground() const
 {
-    SetTextColor(NeoWPF::UI::Color::FromArgb(color));
-}
-
-NeoWPF::UI::Color TextBox::GetTextColor() const noexcept
-{
-    return GetValue<NeoWPF::UI::Color>(TextColorProperty());
-}
-
-void TextBox::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
-{
-    Control::SetBackgroundColor(color);
-    InvalidateVisual();
+    return GetValue<std::shared_ptr<Brush>>(ForegroundProperty());
 }
 
 void TextBox::OnPaddingChanged(Thickness padding)
@@ -406,18 +396,18 @@ void TextBox::OnPaddingChanged(Thickness padding)
     InvalidateVisual();
 }
 
-void TextBox::OnBackgroundColorChanged(NeoWPF::UI::Color color)
+void TextBox::OnBackgroundBrushChanged(const std::shared_ptr<Brush>& brush)
 {
     if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
-        background->SetFillColor(color.ToArgb());
+        background->SetFillBrush(brush);
     }
     InvalidateVisual();
 }
 
-void TextBox::OnBorderColorChanged(NeoWPF::UI::Color color)
+void TextBox::OnBorderBrushChanged(const std::shared_ptr<Brush>& brush)
 {
     if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
-        background->SetBorderColor(color.ToArgb());
+        background->SetBorderBrush(brush);
     }
     InvalidateVisual();
 }
@@ -428,16 +418,6 @@ void TextBox::OnBorderThicknessChanged(double thickness)
         background->SetBorderThickness(std::lround(thickness));
     }
     InvalidateVisual();
-}
-
-void TextBox::SetBackgroundColor(std::uint32_t color) noexcept
-{
-    SetBackgroundColor(NeoWPF::UI::Color::FromArgb(color));
-}
-
-NeoWPF::UI::Color TextBox::GetBackgroundColor() const noexcept
-{
-    return Control::GetBackgroundColor();
 }
 
 void TextBox::SetFontSize(int fontSize) noexcept
@@ -477,39 +457,18 @@ Thickness TextBox::GetPadding() const noexcept
     return Control::GetPadding();
 }
 
-void TextBox::SetBorderColor(NeoWPF::UI::Color color) noexcept
-{
-    Control::SetBorderColor(color);
-    InvalidateVisual();
-}
-
-void TextBox::SetBorderColor(std::uint32_t color) noexcept
-{
-    SetBorderColor(NeoWPF::UI::Color::FromArgb(color));
-}
-
-NeoWPF::UI::Color TextBox::GetBorderColor() const noexcept
-{
-    return Control::GetBorderColor();
-}
-
-void TextBox::SetCaretColor(NeoWPF::UI::Color color) noexcept
+void TextBox::SetCaretBrush(std::shared_ptr<Brush> brush)
 {
     if (IsApplyingPropertyValue()) {
         InvalidateVisual();
         return;
     }
-    SetValue(CaretColorProperty(), color);
+    SetValue(CaretBrushProperty(), brush);
 }
 
-void TextBox::SetCaretColor(std::uint32_t color) noexcept
+std::shared_ptr<Brush> TextBox::GetCaretBrush() const
 {
-    SetCaretColor(NeoWPF::UI::Color::FromArgb(color));
-}
-
-NeoWPF::UI::Color TextBox::GetCaretColor() const noexcept
-{
-    return GetValue<NeoWPF::UI::Color>(CaretColorProperty());
+    return GetValue<std::shared_ptr<Brush>>(CaretBrushProperty());
 }
 
 void TextBox::Measure(double availableWidth, double availableHeight)
@@ -580,7 +539,9 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
     else {
         const auto cornerRadius = GetCornerRadius();
-        if (GetBorderColor().ToArgb() != 0x00000000u) {
+        const auto borderBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBorderBrush());
+        const auto backgroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
+        if (borderBrush && borderBrush->GetArgb() != 0x00000000u) {
             commands.DrawRoundedRect(
                 absX,
                 absY,
@@ -590,14 +551,14 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 cornerRadius.TopRight,
                 cornerRadius.BottomRight,
                 cornerRadius.BottomLeft,
-                m_borderColor.ToArgb(),
+                borderBrush->GetArgb(),
                 GetOpacity(),
                 NeoWPF::Rendering::ClipRect{},
                 renderTransform.rotationRadians,
                 renderTransform.pivot.X,
                 renderTransform.pivot.Y);
             }
-        if (GetBackgroundColor().ToArgb() != 0x00000000u) {
+        if (backgroundBrush && backgroundBrush->GetArgb() != 0x00000000u) {
             const double innerWidth = GetFinalWidth() - 2.0 > 0.0 ? GetFinalWidth() - 2.0 : 0.0;
             const double innerHeight = GetFinalHeight() - 2.0 > 0.0 ? GetFinalHeight() - 2.0 : 0.0;
             const float radiusTL = cornerRadius.TopLeft > 1.0f ? cornerRadius.TopLeft - 1.0f : 0.0f;
@@ -615,7 +576,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 radiusTR,
                 radiusBR,
                 radiusBL,
-                m_backgroundColor.ToArgb(),
+                backgroundBrush->GetArgb(),
                 GetOpacity(),
                 NeoWPF::Rendering::ClipRect{},
                 renderTransform.rotationRadians,
@@ -649,13 +610,12 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     const auto clip = NeoWPF::Rendering::ClipRect{ clipX, clipY, clipW, clipH, true };
 
     const bool showingPlaceholder = m_text.empty() && !m_placeholderText.empty();
-    auto drawColor = GetTextColor();
+    const auto textBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetForeground());
+    std::uint32_t drawArgb = textBrush ? textBrush->GetArgb() : 0u;
     if (showingPlaceholder) {
-        const auto textAlpha = GetTextColor().A / 2u;
-        drawColor.A = textAlpha > 0u ? textAlpha : 0u;
-        if (drawColor.A < 0x40u) {
-            drawColor.A = 0x40u;
-        }
+        const auto textAlpha = ((drawArgb >> 24) & 0xFFu) / 2u;
+        const auto placeholderAlpha = (std::max)(textAlpha, 0x40u);
+        drawArgb = (drawArgb & 0x00FFFFFFu) | (placeholderAlpha << 24);
     }
 
     const auto& lines = m_renderCache.GetLines();
@@ -689,7 +649,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             0.0f, 0.0f,
             1.0f, 1.0f,
             textureId,
-            drawColor.ToArgb(),
+            drawArgb,
             GetOpacity(),
             clip);
 
@@ -714,7 +674,9 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             0.0f, 0.0f,
             1.0f, 1.0f,
             caretTextureId,
-            GetCaretColor().ToArgb(),
+            (std::dynamic_pointer_cast<SolidColorBrush>(GetCaretBrush())
+                ? std::dynamic_pointer_cast<SolidColorBrush>(GetCaretBrush())->GetArgb()
+                : 0u),
             GetOpacity(),
             clip);
     }

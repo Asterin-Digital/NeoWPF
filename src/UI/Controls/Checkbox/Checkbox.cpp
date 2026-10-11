@@ -3,6 +3,7 @@
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Localization/LocaleOperations.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/Rendering/Renderer.h>
@@ -16,15 +17,15 @@ namespace {
 void ApplyCheckboxThemeStyle(
     Checkbox& checkbox)
 {
-    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::PaletteBrush;
     using NeoWPF::Core::ApplicationThemes::ThemeCornerRadius;
     using NeoWPF::Core::ApplicationThemes::ThemeFontSize;
     using NeoWPF::Core::ApplicationThemes::ThemePadding;
     using NeoWPF::Core::ApplicationThemes::ThemeManager;
     auto& themeManager = ThemeManager::Instance();
-    checkbox.SetThemePropertyValue("Foreground", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Foreground));
-    checkbox.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
-    checkbox.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+    checkbox.SetThemePropertyValue("Foreground", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Foreground));
+    checkbox.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Surface));
+    checkbox.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Border));
 
     int fontSize = 0;
     if (themeManager.TryGetFontSize(ThemeFontSize::Control, fontSize)) {
@@ -60,7 +61,7 @@ Checkbox::Checkbox()
     m_textContent->SetText(L"");
     m_textContent->SetTextHorizontalAlignment(TextHorizontalAlignment::Left);
     m_textContent->SetTextVerticalAlignment(TextVerticalAlignment::Center);
-    m_textContent->SetTextColor(GetTextColor().ToArgb());
+    m_textContent->SetForeground(GetForeground());
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
     ApplyCheckboxThemeStyle(*this);
@@ -141,32 +142,14 @@ TextVerticalAlignment Checkbox::GetTextVerticalAlignment() const noexcept
     return TextVerticalAlignment::Top;
 }
 
-void Checkbox::SetTextColor(NeoWPF::UI::Color color) noexcept
-{
-    if (IsApplyingPropertyValue()) {
-        if (m_textContent) {
-            m_textContent->SetTextColor(color.ToArgb());
-        }
-        InvalidateVisual();
-        return;
-    }
-    SetValue(TextColorProperty(), color);
-}
-
-void Checkbox::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
+void Checkbox::SetForeground(std::shared_ptr<Brush> brush)
 {
     if (!IsApplyingPropertyValue()) {
-        SetValue(BackgroundColorProperty(), color);
+        SetValue(ForegroundProperty(), brush);
         return;
     }
-    InvalidateVisual();
-}
-
-void Checkbox::SetBorderColor(NeoWPF::UI::Color color) noexcept
-{
-    if (!IsApplyingPropertyValue()) {
-        SetValue(BorderColorProperty(), color);
-        return;
+    if (m_textContent) {
+        m_textContent->SetForeground(brush);
     }
     InvalidateVisual();
 }
@@ -231,19 +214,9 @@ NeoWPF::UI::FontStyle Checkbox::GetFontStyle() const noexcept
     return GetValue<NeoWPF::UI::FontStyle>(FontStyleProperty());
 }
 
-NeoWPF::UI::Color Checkbox::GetTextColor() const noexcept
+std::shared_ptr<Brush> Checkbox::GetForeground() const
 {
-    return GetValue<NeoWPF::UI::Color>(TextColorProperty());
-}
-
-NeoWPF::UI::Color Checkbox::GetBackgroundColor() const noexcept
-{
-    return GetValue<NeoWPF::UI::Color>(BackgroundColorProperty());
-}
-
-NeoWPF::UI::Color Checkbox::GetBorderColor() const noexcept
-{
-    return GetValue<NeoWPF::UI::Color>(BorderColorProperty());
+    return GetValue<std::shared_ptr<Brush>>(ForegroundProperty());
 }
 
 Thickness Checkbox::GetPadding() const noexcept
@@ -329,12 +302,14 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
     else {
         const auto radius = GetCornerRadius();
-        commands.DrawRoundedRect(boxLeft, boxTop, boxSize, boxSize, radius.TopLeft, radius.TopRight, radius.BottomRight, radius.BottomLeft, GetBackgroundColor().ToArgb(), GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
-        commands.DrawRoundedRect(boxLeft, boxTop, boxSize, boxSize, radius.TopLeft, radius.TopRight, radius.BottomRight, radius.BottomLeft, GetBorderColor().ToArgb(), GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
+        const auto background = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
+        const auto border = std::dynamic_pointer_cast<SolidColorBrush>(GetBorderBrush());
+        commands.DrawRoundedRect(boxLeft, boxTop, boxSize, boxSize, radius.TopLeft, radius.TopRight, radius.BottomRight, radius.BottomLeft, background ? background->GetArgb() : 0u, GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
+        commands.DrawRoundedRect(boxLeft, boxTop, boxSize, boxSize, radius.TopLeft, radius.TopRight, radius.BottomRight, radius.BottomLeft, border ? border->GetArgb() : 0u, GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
     }
 
     if (IsChecked()) {
-        const auto checkColor = GetTextColor();
+        const auto foreground = std::dynamic_pointer_cast<SolidColorBrush>(GetForeground());
         const double checkCenterX = boxLeft + boxSize * 0.5;
         const double checkCenterY = boxTop + boxSize * 0.5;
         constexpr float kCheckAngle = 0.68f;
@@ -343,7 +318,7 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             const double x = checkCenterX + offsetX - width * 0.5;
             const double y = checkCenterY + offsetY - height * 0.5;
             commands.DrawRoundedRect(x, y, width, height, 0.0f, 0.0f, 0.0f, 0.0f,
-                                    checkColor.ToArgb(), GetOpacity(),
+                                    foreground ? foreground->GetArgb() : 0u, GetOpacity(),
                                     NeoWPF::Rendering::ClipRect{}, rotationRadians,
                                     renderTransform.pivot.X, renderTransform.pivot.Y);
         };

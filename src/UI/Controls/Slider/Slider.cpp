@@ -18,15 +18,15 @@ namespace {
 
 void ApplySliderTheme(Slider& slider)
 {
-    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::PaletteBrush;
     using NeoWPF::Core::ApplicationThemes::ThemeBorderThickness;
     using NeoWPF::Core::ApplicationThemes::ThemeManager;
     using NeoWPF::Core::ApplicationThemes::ThemeMetric;
     using NeoWPF::Core::ApplicationThemes::ThemePadding;
 
     auto& themeManager = ThemeManager::Instance();
-    slider.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Track));
-    slider.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+    slider.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Track));
+    slider.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Border));
 
     double borderThickness = 0.0;
     if (themeManager.TryGetMetric(ThemeMetric::SliderBorderThickness, borderThickness)) {
@@ -210,16 +210,6 @@ void Slider::OnPaddingChanged(Thickness)
     InvalidateVisual();
 }
 
-void Slider::OnBackgroundColorChanged(Color)
-{
-    InvalidateVisual();
-}
-
-void Slider::OnBorderColorChanged(Color)
-{
-    InvalidateVisual();
-}
-
 void Slider::OnBorderThicknessChanged(double)
 {
     InvalidateVisual();
@@ -331,21 +321,15 @@ void Slider::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     UpdateThumbVisualState();
 
     if (track) {
-        track->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-            NeoWPF::Core::ApplicationThemes::PaletteColor::Track).ToArgb());
         track->SetRect(absX, absY, isVertical ? trackThickness : trackLength, isVertical ? trackLength : trackThickness);
         track->SetClipRect(clip);
         track->BuildRenderCommands(commands);
     }
 
     if (auto thumbControl = std::dynamic_pointer_cast<Thumb>(FindTemplateChild("PART_Thumb"))) {
-        thumbControl->SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-            NeoWPF::Core::ApplicationThemes::PaletteColor::Thumb));
         thumbControl->InvalidateVisual();
         thumbControl->BuildRenderCommands(commands);
     } else if (thumb) {
-        thumb->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-            NeoWPF::Core::ApplicationThemes::PaletteColor::Thumb).ToArgb());
         thumb->SetRect(absX + (isVertical ? 0.0 : thumbPosition), absY + (isVertical ? thumbPosition : 0.0),
                        isVertical ? trackThickness : thumbLength, isVertical ? thumbLength : trackThickness);
         thumb->SetClipRect(clip);

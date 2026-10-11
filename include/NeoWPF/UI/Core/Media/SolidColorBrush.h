@@ -6,7 +6,8 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoWPF/UI/Core/Media/Brush.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
+
+#include <cstdint>
 
 namespace NeoWPF::UI {
 
@@ -17,27 +18,27 @@ namespace NeoWPF::UI {
 class SolidColorBrush final : public Brush {
 public:
     SolidColorBrush();
-    explicit SolidColorBrush(Color color);
+    explicit SolidColorBrush(std::uint32_t argb);
 
-    static const Properties::DependencyProperty& ColorProperty();
+    static const Properties::DependencyProperty& ArgbProperty();
 
     /*
         @summary
-        Gets the color used by this brush.
+        Gets the ARGB value used by this brush.
 
         @returns
-        The solid brush color.
+        The packed ARGB value.
     */
-    Color GetColor() const;
+        std::uint32_t GetArgb() const;
 
     /*
         @summary
-        Sets the color used by this brush.
+        Sets the ARGB value used by this brush.
 
-        @param color
-        The solid brush color.
+            @param argb
+            The packed ARGB value.
     */
-    void SetColor(Color color);
+        void SetArgb(std::uint32_t argb);
 };
 
 }

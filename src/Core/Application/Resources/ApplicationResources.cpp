@@ -105,27 +105,17 @@ bool Resources::TryFindResource(const std::string& key, std::any& outValue)
     return s_applicationResources.TryGet(key, outValue);
 }
 
-bool Resources::TryGetColor(const std::string& key, NeoWPF::UI::Color& outColor)
+bool Resources::TryGetBrush(
+    const std::string& key,
+    std::shared_ptr<NeoWPF::UI::Brush>& outBrush)
 {
     std::any value;
     if (!TryFindResource(key, value)) {
         return false;
     }
 
-    if (const auto* color = std::any_cast<NeoWPF::UI::Color>(&value)) {
-        outColor = *color;
-        return true;
-    }
-    if (const auto* argb = std::any_cast<std::uint32_t>(&value)) {
-        outColor = NeoWPF::UI::Color::FromArgb(*argb);
-        return true;
-    }
-    if (const auto* argb = std::any_cast<unsigned int>(&value)) {
-        outColor = NeoWPF::UI::Color::FromArgb(*argb);
-        return true;
-    }
-    if (const auto* argb = std::any_cast<int>(&value)) {
-        outColor = NeoWPF::UI::Color::FromArgb(static_cast<std::uint32_t>(*argb));
+    if (const auto* brush = std::any_cast<std::shared_ptr<NeoWPF::UI::Brush>>(&value)) {
+        outBrush = *brush;
         return true;
     }
 

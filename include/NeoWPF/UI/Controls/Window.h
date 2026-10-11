@@ -6,7 +6,7 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Localization/LocaleTable.h>
 #include <memory>
@@ -27,7 +27,7 @@ public:
     static const Properties::DependencyProperty& TitleBarProperty();
     static const Properties::DependencyProperty& TitleProperty();
     static const Properties::DependencyProperty& LocalesProperty();
-    static const Properties::DependencyProperty& BackgroundColorProperty();
+    static const Properties::DependencyProperty& BackgroundBrushProperty();
     static const Properties::DependencyProperty& AllowsTransparencyProperty();
 
     /*
@@ -80,27 +80,18 @@ public:
 
     /*
         @summary
-        Sets the renderer clear color for this window.
+        Sets the background brush used for the window clear surface.
 
-        @param color
-        ARGB clear color.
+            @param brush
+            Window background brush.
     */
-    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept;
+        void SetBackgroundBrush(std::shared_ptr<Brush> brush);
 
     /*
         @summary
-        Sets the renderer clear color from an ARGB value.
-
-        @param color
-        ARGB color.
+        Returns the effective window background brush.
     */
-    void SetBackgroundColor(std::uint32_t color) noexcept { SetBackgroundColor(NeoWPF::UI::Color::FromArgb(color)); }
-
-    /*
-        @summary
-        Returns the effective renderer clear color.
-    */
-    NeoWPF::UI::Color GetBackgroundColor() const noexcept;
+        std::shared_ptr<Brush> GetBackgroundBrush() const;
 
     /*
         @summary
@@ -202,7 +193,7 @@ private:
 
 private:
     std::wstring m_title = L"NeoWPF";
-    std::optional<NeoWPF::UI::Color> m_backgroundColor;
+    std::optional<std::shared_ptr<Brush>> m_backgroundBrush;
     std::shared_ptr<Visual> m_content;
     std::shared_ptr<Visual> m_titleBar;
     std::shared_ptr<Visual> m_visualRoot;

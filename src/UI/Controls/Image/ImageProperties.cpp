@@ -5,7 +5,6 @@
 
 namespace NeoWPF::UI::Properties {
     namespace UI = ::NeoWPF::UI;
-    using ::NeoWPF::UI::Color;
 
 void RegisterImageProperties() {
     PropertyMetadata sourceMetadata;

@@ -213,7 +213,7 @@ namespace NeoWPF {
 
     using Core::ApplicationThemes::ThemeDefinition;
     
-    using Core::ApplicationThemes::PaletteColor;
+    using Core::ApplicationThemes::PaletteBrush;
 
     using Core::ApplicationThemes::ThemeManager;
 

@@ -6,7 +6,6 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoWPF/UI/Content/ContentControl.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
 #include <cstddef>
 #include <memory>
 
@@ -25,8 +24,6 @@ class Border : public NeoWPF::UI::Content::ContentControl {
 public:
     static const NeoWPF::UI::Properties::DependencyProperty& PaddingProperty();
     static const NeoWPF::UI::Properties::DependencyProperty& BorderThicknessProperty();
-    static const NeoWPF::UI::Properties::DependencyProperty& BorderColorProperty();
-    static const NeoWPF::UI::Properties::DependencyProperty& BackgroundColorProperty();
 
     /*
         @summary
@@ -68,16 +65,6 @@ public:
     void SetBorderThickness(Thickness thickness) noexcept;
     Thickness GetBorderThicknessValue() const noexcept;
 
-    void SetBorderColor(NeoWPF::UI::Color color) noexcept;
-    void SetBorderColor(std::uint32_t color) noexcept { SetBorderColor(NeoWPF::UI::Color::FromArgb(color)); }
-
-    NeoWPF::UI::Color GetBorderColor() const noexcept;
-
-    void SetBackgroundColor(NeoWPF::UI::Color color) noexcept;
-    void SetBackgroundColor(std::uint32_t color) noexcept { SetBackgroundColor(NeoWPF::UI::Color::FromArgb(color)); }
-
-    NeoWPF::UI::Color GetBackgroundColor() const noexcept;
-
     /*
         @summary
         Measures the border and its content using the available space.
@@ -113,9 +100,6 @@ public:
 protected:
     void OnPaddingChanged(Thickness padding) override;
     void OnBorderThicknessChanged(double thickness) override;
-    void OnBorderColorChanged(NeoWPF::UI::Color color) override;
-    void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
-
 private:
     Thickness m_borderThicknesses{};
     std::size_t m_themeAppliedSubscriptionId = 0;

@@ -64,6 +64,20 @@ if(BUILD_TESTING)
   find_package(GTest CONFIG REQUIRED)
 endif()
 
+set(NEOLINT_TEST_CLANG_TOOL clang-tool)
+if(UNIX)
+  set(NEOLINT_TEST_CLANG_TOOL "${LLVM_TOOLS_BINARY_DIR}/clang++")
+endif()
+
+set(NEOLINT_RTTI_COMPILE_OPTION)
+if(NOT LLVM_ENABLE_RTTI)
+  if(MSVC)
+    set(NEOLINT_RTTI_COMPILE_OPTION /GR-)
+  else()
+    set(NEOLINT_RTTI_COMPILE_OPTION -fno-rtti)
+  endif()
+endif()
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoLintSources.cmake")
 
 add_executable(NeoLint ${NEOLINT_SOURCES})
@@ -97,6 +111,9 @@ target_include_directories(NeoLint SYSTEM PRIVATE
 )
 target_compile_definitions(NeoLint PRIVATE ${LLVM_DEFINITIONS})
 target_compile_features(NeoLint PRIVATE cxx_std_20)
+if(NEOLINT_RTTI_COMPILE_OPTION)
+  target_compile_options(NeoLint PRIVATE ${NEOLINT_RTTI_COMPILE_OPTION})
+endif()
 target_link_libraries(NeoLint PRIVATE
   clangTooling
   clangFrontend
@@ -119,8 +136,12 @@ if(BUILD_TESTING)
   )
   target_compile_definitions(NeoLint.Tests PRIVATE
     NEOLINT_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+    NEOLINT_TEST_CLANG_TOOL="${NEOLINT_TEST_CLANG_TOOL}"
   )
   target_compile_features(NeoLint.Tests PRIVATE cxx_std_20)
+  if(NEOLINT_RTTI_COMPILE_OPTION)
+    target_compile_options(NeoLint.Tests PRIVATE ${NEOLINT_RTTI_COMPILE_OPTION})
+  endif()
   target_include_directories(NeoLint.Tests SYSTEM PRIVATE
     ${LLVM_INCLUDE_DIRS}
     ${CLANG_INCLUDE_DIRS}

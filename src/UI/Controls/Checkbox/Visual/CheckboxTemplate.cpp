@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <memory>
 #include <string>
@@ -8,7 +9,7 @@
 namespace NeoWPF::UI {
 
 namespace {
-using NeoWPF::Core::ApplicationThemes::GetPaletteColor;
+using NeoWPF::Core::ApplicationThemes::GetPaletteBrush;
 
 void ApplyBoxState(UIElement* element, Visual* visual, const std::string& stateName)
 {
@@ -18,31 +19,31 @@ void ApplyBoxState(UIElement* element, Visual* visual, const std::string& stateN
         return;
     }
 
-    auto fill = checkbox->GetBackgroundColor();
-    auto border = checkbox->GetBorderColor();
-    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    auto fill = checkbox->GetBackgroundBrush();
+    auto border = checkbox->GetBorderBrush();
+    using NeoWPF::Core::ApplicationThemes::PaletteBrush;
     if (stateName == "Checked") {
-        fill = GetPaletteColor(PaletteColor::Accent);
-        border = GetPaletteColor(PaletteColor::Accent);
+        fill = GetPaletteBrush(PaletteBrush::Accent);
+        border = GetPaletteBrush(PaletteBrush::Accent);
     } else if (stateName == "CheckedMouseOver") {
-        fill = GetPaletteColor(PaletteColor::AccentHover);
-        border = GetPaletteColor(PaletteColor::Focus);
+        fill = GetPaletteBrush(PaletteBrush::AccentHover);
+        border = GetPaletteBrush(PaletteBrush::Focus);
     } else if (stateName == "CheckedPressed") {
-        fill = GetPaletteColor(PaletteColor::AccentPressed);
-        border = GetPaletteColor(PaletteColor::Accent);
+        fill = GetPaletteBrush(PaletteBrush::AccentPressed);
+        border = GetPaletteBrush(PaletteBrush::Accent);
     } else if (stateName == "Focused" || stateName == "MouseOver") {
-        fill = GetPaletteColor(PaletteColor::AccentHover);
-        border = GetPaletteColor(PaletteColor::Focus);
+        fill = GetPaletteBrush(PaletteBrush::AccentHover);
+        border = GetPaletteBrush(PaletteBrush::Focus);
     } else if (stateName == "Pressed") {
-        fill = GetPaletteColor(PaletteColor::AccentPressed);
-        border = GetPaletteColor(PaletteColor::Accent);
+        fill = GetPaletteBrush(PaletteBrush::AccentPressed);
+        border = GetPaletteBrush(PaletteBrush::Accent);
     } else if (stateName == "Disabled") {
-        fill = GetPaletteColor(PaletteColor::DisabledSurface);
-        border = GetPaletteColor(PaletteColor::Border);
+        fill = GetPaletteBrush(PaletteBrush::DisabledSurface);
+        border = GetPaletteBrush(PaletteBrush::Border);
     }
 
-    box->SetFillColor(fill.ToArgb());
-    box->SetBorderColor(border.ToArgb());
+    box->SetFillBrush(fill);
+    box->SetBorderBrush(border);
     box->SetCornerRadius(checkbox->GetCornerRadius());
     checkbox->InvalidateVisual();
 }
@@ -55,13 +56,11 @@ CheckboxTemplate::CheckboxTemplate()
     SetVisualTree(root);
 
     auto box = std::make_shared<Templates::TemplateVisual>("PART_Box");
-    box->SetFillColor(GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Surface).ToArgb());
-    box->SetBorderColor(GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Border).ToArgb());
+    box->SetFillBrush(GetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::Surface));
+    box->SetBorderBrush(GetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::Border));
     box->SetBorderThickness(1);
 
     auto contentHost = std::make_shared<Templates::TemplateVisual>("PART_ContentHost");
-    contentHost->SetFillColor(0x00000000u);
-    contentHost->SetBorderColor(0x00000000u);
     contentHost->SetBorderThickness(0);
 
     AddTemplateChild("PART_Box", box);

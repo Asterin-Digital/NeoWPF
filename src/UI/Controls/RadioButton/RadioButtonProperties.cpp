@@ -14,17 +14,17 @@ void RegisterRadioButtonProperties()
     text.Flags = PropertyFlags::AffectsMeasure | PropertyFlags::AffectsRender;
     RegisterProperty<UI::RadioButton, std::wstring>("Text", &UI::RadioButton::GetText, &UI::RadioButton::SetText, text);
 
-    auto colorMetadata = [](NeoWPF::UI::Color color) {
+    auto foregroundMetadata = [](std::shared_ptr<NeoWPF::UI::Brush> brush) {
         PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(color);
-        metadata.Converter = GetColorConverter();
+        metadata.DefaultValue = std::any(std::move(brush));
+        metadata.Converter = GetBrushConverter();
         metadata.Flags = PropertyFlags::AffectsRender;
         return metadata;
     };
-    RegisterProperty<UI::RadioButton, UI::Color>("Foreground", &UI::RadioButton::GetTextColor, &UI::RadioButton::SetTextColor, colorMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground)));
-    RegisterProperty<UI::RadioButton, UI::Color>("Background", &UI::RadioButton::GetBackgroundColor, &UI::RadioButton::SetBackgroundColor, colorMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Surface)));
-    RegisterProperty<UI::RadioButton, UI::Color>("BorderBrush", &UI::RadioButton::GetBorderColor, &UI::RadioButton::SetBorderColor, colorMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Border)));
-
+    RegisterProperty<UI::RadioButton, std::shared_ptr<UI::Brush>>(
+        "Foreground", &UI::RadioButton::GetForeground, &UI::RadioButton::SetForeground,
+        foregroundMetadata(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+            NeoWPF::Core::ApplicationThemes::PaletteBrush::Foreground)));
     PropertyMetadata padding;
     NeoWPF::UI::Thickness defaultPadding;
     NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().TryGetPadding(
@@ -83,24 +83,10 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::RadioButton::TextP
     return *property;
 }
 
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::RadioButton::TextColorProperty()
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::RadioButton::ForegroundProperty()
 {
-    static const auto& property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::RadioButton, NeoWPF::UI::Color>(
-        "Foreground", &NeoWPF::UI::RadioButton::GetTextColor, &NeoWPF::UI::RadioButton::SetTextColor);
-    return *property;
-}
-
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::RadioButton::BackgroundColorProperty()
-{
-    static const auto& property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::RadioButton, NeoWPF::UI::Color>(
-        "Background", &NeoWPF::UI::RadioButton::GetBackgroundColor, &NeoWPF::UI::RadioButton::SetBackgroundColor);
-    return *property;
-}
-
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::RadioButton::BorderColorProperty()
-{
-    static const auto& property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::RadioButton, NeoWPF::UI::Color>(
-        "BorderBrush", &NeoWPF::UI::RadioButton::GetBorderColor, &NeoWPF::UI::RadioButton::SetBorderColor);
+    static const auto& property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::RadioButton, std::shared_ptr<NeoWPF::UI::Brush>>(
+        "Foreground", &NeoWPF::UI::RadioButton::GetForeground, &NeoWPF::UI::RadioButton::SetForeground);
     return *property;
 }
 

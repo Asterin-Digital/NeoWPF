@@ -6,7 +6,6 @@
 
 namespace NeoWPF::UI::Properties {
     namespace UI = ::NeoWPF::UI;
-    using ::NeoWPF::UI::Color;
 }
 
 namespace {
@@ -18,11 +17,11 @@ namespace {
         return metadata;
     }
 
-    NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockTextColorMetadata() {
+    NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockForegroundMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-            NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground));
-        metadata.Converter = NeoWPF::UI::Properties::GetColorConverter();
+        metadata.DefaultValue = std::any(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+            NeoWPF::Core::ApplicationThemes::PaletteBrush::Foreground));
+        metadata.Converter = NeoWPF::UI::Properties::GetBrushConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -97,10 +96,10 @@ namespace NeoWPF::UI::Properties {
             &UI::TextBlock::GetText,
             &UI::TextBlock::SetText,
             MakeTextBlockTextMetadata());
-        RegisterProperty<UI::TextBlock, ::NeoWPF::UI::Color>("Foreground",
-            &UI::TextBlock::GetTextColor,
-            static_cast<void (UI::TextBlock::*)(::NeoWPF::UI::Color)>(&UI::TextBlock::SetTextColor),
-            MakeTextBlockTextColorMetadata());
+        RegisterProperty<UI::TextBlock, std::shared_ptr<UI::Brush>>("Foreground",
+            &UI::TextBlock::GetForeground,
+            &UI::TextBlock::SetForeground,
+            MakeTextBlockForegroundMetadata());
         RegisterProperty<UI::TextBlock, int>("FontSize",
             &UI::TextBlock::GetFontSize,
             &UI::TextBlock::SetFontSize,
@@ -147,17 +146,13 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBlock::TextPro
     return *property;
 }
 
-const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBlock::TextColorProperty() {
-    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::TextBlock, NeoWPF::UI::Color>(
-        "Foreground",
-        &NeoWPF::UI::TextBlock::GetTextColor,
-        static_cast<void (NeoWPF::UI::TextBlock::*)(NeoWPF::UI::Color)>(&NeoWPF::UI::TextBlock::SetTextColor),
-        MakeTextBlockTextColorMetadata());
-    return *property;
-}
-
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBlock::ForegroundProperty() {
-    return TextColorProperty();
+    static const auto* property = NeoWPF::UI::Properties::RegisterStaticPropertyHandle<NeoWPF::UI::TextBlock, std::shared_ptr<NeoWPF::UI::Brush>>(
+        "Foreground",
+        &NeoWPF::UI::TextBlock::GetForeground,
+        &NeoWPF::UI::TextBlock::SetForeground,
+        MakeTextBlockForegroundMetadata());
+    return *property;
 }
 
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::TextBlock::FontSizeProperty() {

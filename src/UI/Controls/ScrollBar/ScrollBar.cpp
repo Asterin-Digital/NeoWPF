@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
@@ -23,20 +24,20 @@ namespace {
 
 void ApplyScrollBarTheme(ScrollBar& scrollBar)
 {
-    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::PaletteBrush;
     using NeoWPF::Core::ApplicationThemes::ThemeManager;
     using NeoWPF::Core::ApplicationThemes::ThemeMetric;
     using NeoWPF::Core::ApplicationThemes::ThemePadding;
 
-    (void)ScrollBar::TrackColorProperty();
-    (void)ScrollBar::ThumbColorProperty();
+    (void)ScrollBar::TrackBrushProperty();
+    (void)ScrollBar::ThumbBrushProperty();
     (void)ScrollBar::ThumbSizeProperty();
 
     auto& themeManager = ThemeManager::Instance();
-    scrollBar.SetThemePropertyValue("TrackColor", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Track));
-    scrollBar.SetThemePropertyValue("ThumbColor", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Thumb));
-    scrollBar.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Track));
-    scrollBar.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+    scrollBar.SetThemePropertyValue("TrackBrush", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Track));
+    scrollBar.SetThemePropertyValue("ThumbBrush", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Thumb));
+    scrollBar.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Track));
+    scrollBar.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Border));
 
     double thumbSize = 24.0;
     if (themeManager.TryGetMetric(ThemeMetric::ScrollBarThumbSize, thumbSize)) {
@@ -73,32 +74,32 @@ ScrollBar::~ScrollBar()
     NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().UnsubscribeThemeApplied(m_themeAppliedSubscriptionId);
 }
 
-void ScrollBar::SetTrackColor(NeoWPF::UI::Color color) noexcept
+void ScrollBar::SetTrackBrush(std::shared_ptr<Brush> brush)
 {
     if (!IsApplyingPropertyValue()) {
-        static_cast<Properties::DependencyObject&>(*this).SetValue(TrackColorProperty(), color);
+        static_cast<Properties::DependencyObject&>(*this).SetValue(TrackBrushProperty(), brush);
         return;
     }
     InvalidateVisual();
 }
 
-NeoWPF::UI::Color ScrollBar::GetTrackColor() const noexcept
+std::shared_ptr<Brush> ScrollBar::GetTrackBrush() const
 {
-    return Properties::DependencyObject::GetValue<NeoWPF::UI::Color>(TrackColorProperty());
+    return Properties::DependencyObject::GetValue<std::shared_ptr<Brush>>(TrackBrushProperty());
 }
 
-void ScrollBar::SetThumbColor(NeoWPF::UI::Color color) noexcept
+void ScrollBar::SetThumbBrush(std::shared_ptr<Brush> brush)
 {
     if (!IsApplyingPropertyValue()) {
-        static_cast<Properties::DependencyObject&>(*this).SetValue(ThumbColorProperty(), color);
+        static_cast<Properties::DependencyObject&>(*this).SetValue(ThumbBrushProperty(), brush);
         return;
     }
     InvalidateVisual();
 }
 
-NeoWPF::UI::Color ScrollBar::GetThumbColor() const noexcept
+std::shared_ptr<Brush> ScrollBar::GetThumbBrush() const
 {
-    return Properties::DependencyObject::GetValue<NeoWPF::UI::Color>(ThumbColorProperty());
+    return Properties::DependencyObject::GetValue<std::shared_ptr<Brush>>(ThumbBrushProperty());
 }
 
 void ScrollBar::SetThumbSize(double size) noexcept
@@ -253,16 +254,6 @@ void ScrollBar::OnPaddingChanged(Thickness padding)
     InvalidateVisual();
 }
 
-void ScrollBar::OnBackgroundColorChanged(NeoWPF::UI::Color)
-{
-    InvalidateVisual();
-}
-
-void ScrollBar::OnBorderColorChanged(NeoWPF::UI::Color)
-{
-    InvalidateVisual();
-}
-
 void ScrollBar::OnBorderThicknessChanged(double)
 {
     InvalidateVisual();
@@ -334,9 +325,9 @@ void ScrollBar::UpdateThumbVisualState() noexcept
             static_cast<int>(std::lround(isVertical ? trackThickness : thumbLength)),
             static_cast<int>(std::lround(isVertical ? thumbLength : trackThickness)));
         thumbControl->SetOrientation(m_orientation);
-        thumbControl->SetThemePropertyValue("Background", GetThumbColor());
+        thumbControl->SetThemePropertyValue("Background", GetThumbBrush());
         thumbControl->SetThemePropertyValue("BorderBrush",
-            NeoWPF::Core::ApplicationThemes::GetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Border));
+            NeoWPF::Core::ApplicationThemes::GetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::Border));
         thumbControl->SetBorderThickness(0);
         thumbControl->SetOpacity(GetOpacity());
     }
@@ -385,17 +376,18 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         } else {
             track->SetRect(absX, absY, trackLength, trackThickness);
         }
-        track->SetFillColor(GetTrackColor().ToArgb());
-        track->SetBorderColor(0x00000000u);
+        track->SetFillBrush(GetTrackBrush());
         track->SetBorderThickness(0);
         track->SetCornerRadius(cornerRadius);
         track->SetOpacity(GetOpacity());
         track->SetClipRect(clip);
         track->BuildRenderCommands(commands);
     } else if (isVertical) {
-        commands.DrawRoundedRect(absX, absY, trackThickness, trackLength, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, GetTrackColor().ToArgb(), GetOpacity(), clip);
+        const auto trackBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetTrackBrush());
+        commands.DrawRoundedRect(absX, absY, trackThickness, trackLength, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, trackBrush ? trackBrush->GetArgb() : 0u, GetOpacity(), clip);
     } else {
-        commands.DrawRoundedRect(absX, absY, trackLength, trackThickness, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, GetTrackColor().ToArgb(), GetOpacity(), clip);
+        const auto trackBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetTrackBrush());
+        commands.DrawRoundedRect(absX, absY, trackLength, trackThickness, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, trackBrush ? trackBrush->GetArgb() : 0u, GetOpacity(), clip);
     }
 
     if (auto thumbControl = std::dynamic_pointer_cast<Thumb>(FindTemplateChild("PART_Thumb"))) {
@@ -407,8 +399,7 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         } else {
             thumb->SetRect(absX + thumbPosition, absY, thumbLength, trackThickness);
         }
-        thumb->SetFillColor(GetThumbColor().ToArgb());
-        thumb->SetBorderColor(0x00000000u);
+        thumb->SetFillBrush(GetThumbBrush());
         thumb->SetBorderThickness(0);
         thumb->SetCornerRadius(cornerRadius);
         thumb->SetOpacity(GetOpacity());

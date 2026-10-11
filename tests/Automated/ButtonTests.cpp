@@ -6,6 +6,7 @@
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Markup/Xaml/Parsing/XamlParser.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTreeBuilder.h>
 
@@ -51,6 +52,12 @@ bool ContainsRoundedRectColor(const NeoWPF::Rendering::CommandList& commands, st
     return false;
 }
 
+std::uint32_t GetSolidBrushColor(const std::shared_ptr<NeoWPF::UI::Brush>& brush)
+{
+    const auto solidBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(brush);
+    return solidBrush ? solidBrush->GetArgb() : 0u;
+}
+
 class RecordingCommand final : public NeoWPF::Input::ICommand {
 public:
     explicit RecordingCommand(bool canExecute = true)
@@ -84,7 +91,6 @@ TEST_F(ButtonTests, ExposesCompleteStaticPropertyContract)
 {
     const auto& text = NeoWPF::UI::Button::TextProperty();
     const auto& foreground = NeoWPF::UI::Button::ForegroundProperty();
-    const auto& textColor = NeoWPF::UI::Button::TextColorProperty();
     const auto& fontSize = NeoWPF::UI::Button::FontSizeProperty();
     const auto& fontFamily = NeoWPF::UI::Button::FontFamilyProperty();
     const auto& fontWeight = NeoWPF::UI::Button::FontWeightProperty();
@@ -92,7 +98,7 @@ TEST_F(ButtonTests, ExposesCompleteStaticPropertyContract)
     const auto& horizontal = NeoWPF::UI::Button::TextHorizontalAlignmentProperty();
     const auto& vertical = NeoWPF::UI::Button::TextVerticalAlignmentProperty();
 
-    EXPECT_EQ(&foreground, &textColor);
+    EXPECT_EQ(foreground.GetPropertyType(), std::type_index(typeid(std::shared_ptr<NeoWPF::UI::Brush>)));
     EXPECT_EQ(text.GetName(), "Text");
     EXPECT_EQ(foreground.GetName(), "Foreground");
     EXPECT_EQ(fontSize.GetName(), "FontSize");
@@ -107,10 +113,10 @@ TEST_F(ButtonTests, ExposesCompleteStaticPropertyContract)
 TEST_F(ButtonTests, DirectSettersKeepAllDependencyPropertiesAndGettersSynchronized)
 {
     NeoWPF::UI::Button button;
-    const auto textColor = NeoWPF::UI::Color::FromArgb(0xFF112233u);
+    const auto textColor = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF112233u);
 
     button.SetText(L"Save");
-    button.SetTextColor(textColor);
+    button.SetForeground(textColor);
     button.SetFontSize(21);
     button.SetFontFamily(L"Test Sans");
     button.SetFontWeight(700);
@@ -118,12 +124,12 @@ TEST_F(ButtonTests, DirectSettersKeepAllDependencyPropertiesAndGettersSynchroniz
     button.SetTextHorizontalAlignment(NeoWPF::UI::TextHorizontalAlignment::Right);
     button.SetTextVerticalAlignment(NeoWPF::UI::TextVerticalAlignment::Bottom);
     button.SetPadding(NeoWPF::UI::Thickness(1, 2, 3, 4));
-    button.SetBackgroundColor(NeoWPF::UI::Color::FromArgb(0xFF445566u));
-    button.SetBorderColor(NeoWPF::UI::Color::FromArgb(0xFF778899u));
+    button.SetBackgroundBrush(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF445566u));
+    button.SetBorderBrush(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF778899u));
     button.SetBorderThickness(3.0);
 
     EXPECT_EQ(button.GetValue<std::wstring>(NeoWPF::UI::Button::TextProperty()), L"Save");
-    EXPECT_EQ(button.GetValue<NeoWPF::UI::Color>(NeoWPF::UI::Button::ForegroundProperty()), textColor);
+    EXPECT_EQ(button.GetValue<std::shared_ptr<NeoWPF::UI::Brush>>(NeoWPF::UI::Button::ForegroundProperty()), textColor);
     EXPECT_EQ(button.GetValue<int>(NeoWPF::UI::Button::FontSizeProperty()), 21);
     EXPECT_EQ(button.GetValue<std::wstring>(NeoWPF::UI::Button::FontFamilyProperty()), L"Test Sans");
     EXPECT_EQ(button.GetValue<int>(NeoWPF::UI::Button::FontWeightProperty()), 700);
@@ -131,12 +137,12 @@ TEST_F(ButtonTests, DirectSettersKeepAllDependencyPropertiesAndGettersSynchroniz
     EXPECT_EQ(button.GetValue<NeoWPF::UI::TextHorizontalAlignment>(NeoWPF::UI::Button::TextHorizontalAlignmentProperty()), NeoWPF::UI::TextHorizontalAlignment::Right);
     EXPECT_EQ(button.GetValue<NeoWPF::UI::TextVerticalAlignment>(NeoWPF::UI::Button::TextVerticalAlignmentProperty()), NeoWPF::UI::TextVerticalAlignment::Bottom);
     EXPECT_EQ(button.GetPadding(), NeoWPF::UI::Thickness(1, 2, 3, 4));
-    EXPECT_EQ(button.GetBackgroundColor(), NeoWPF::UI::Color::FromArgb(0xFF445566u));
-    EXPECT_EQ(button.GetBorderColor(), NeoWPF::UI::Color::FromArgb(0xFF778899u));
+    EXPECT_EQ(GetSolidBrushColor(button.GetBackgroundBrush()), 0xFF445566u);
+    EXPECT_EQ(GetSolidBrushColor(button.GetBorderBrush()), 0xFF778899u);
     EXPECT_DOUBLE_EQ(button.GetBorderThickness(), 3.0);
 
     EXPECT_EQ(button.GetText(), L"Save");
-    EXPECT_EQ(button.GetTextColor(), textColor);
+    EXPECT_EQ(button.GetForeground(), textColor);
     EXPECT_EQ(button.GetFontSize(), 21);
     EXPECT_EQ(button.GetFontFamily(), L"Test Sans");
     EXPECT_EQ(button.GetFontWeight(), 700);
@@ -148,24 +154,28 @@ TEST_F(ButtonTests, DirectSettersKeepAllDependencyPropertiesAndGettersSynchroniz
 TEST_F(ButtonTests, StyleValuesAreVisibleAndLocalValuesWinThenClearBackToStyle)
 {
     NeoWPF::UI::Button button;
-    const auto background = NeoWPF::UI::Color::FromArgb(0xFF102030u);
-    const auto localBackground = NeoWPF::UI::Color::FromArgb(0xFF405060u);
+    const std::shared_ptr<NeoWPF::UI::Brush> background =
+        std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF102030u);
+    const std::shared_ptr<NeoWPF::UI::Brush> localBackground =
+        std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF405060u);
+    const std::shared_ptr<NeoWPF::UI::Brush> borderBrush =
+        std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF708090u);
 
     ASSERT_TRUE(button.SetStylePropertyValue("Background", background));
-    ASSERT_TRUE(button.SetStylePropertyValue("BorderBrush", NeoWPF::UI::Color::FromArgb(0xFF708090u)));
+    ASSERT_TRUE(button.SetStylePropertyValue("BorderBrush", borderBrush));
     ASSERT_TRUE(button.SetStylePropertyValue("FontSize", 19));
 
-    EXPECT_EQ(button.GetBackgroundColor(), background);
-    EXPECT_EQ(button.GetBorderColor(), NeoWPF::UI::Color::FromArgb(0xFF708090u));
+    EXPECT_EQ(button.GetBackgroundBrush(), background);
+    EXPECT_EQ(GetSolidBrushColor(button.GetBorderBrush()), 0xFF708090u);
     EXPECT_EQ(button.GetFontSize(), 19);
     EXPECT_EQ(button.GetValueSource(NeoWPF::UI::Control::BackgroundProperty()), NeoWPF::UI::Properties::PropertyValueSource::Style);
 
-    button.SetBackgroundColor(localBackground);
-    EXPECT_EQ(button.GetBackgroundColor(), localBackground);
+    button.SetBackgroundBrush(localBackground);
+    EXPECT_EQ(button.GetBackgroundBrush(), localBackground);
     EXPECT_EQ(button.GetValueSource(NeoWPF::UI::Control::BackgroundProperty()), NeoWPF::UI::Properties::PropertyValueSource::Local);
 
     button.ClearValue(NeoWPF::UI::Control::BackgroundProperty());
-    EXPECT_EQ(button.GetBackgroundColor(), background);
+    EXPECT_EQ(button.GetBackgroundBrush(), background);
     EXPECT_EQ(button.GetValueSource(NeoWPF::UI::Control::BackgroundProperty()), NeoWPF::UI::Properties::PropertyValueSource::Style);
 }
 
@@ -187,27 +197,27 @@ TEST_F(ButtonTests, UsesSharedPaletteForLightAndDarkThemes)
     auto& themeManager = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance();
     EXPECT_EQ(themeManager.GetActiveThemeName(), "Light Mint");
 
-    NeoWPF::UI::Color surface;
-    NeoWPF::UI::Color foreground;
-    NeoWPF::UI::Color border;
-    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Surface, surface));
-    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground, foreground));
-    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Border, border));
+    std::shared_ptr<NeoWPF::UI::Brush> surface;
+    std::shared_ptr<NeoWPF::UI::Brush> foreground;
+    std::shared_ptr<NeoWPF::UI::Brush> border;
+    ASSERT_TRUE(themeManager.TryGetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::Surface, surface));
+    ASSERT_TRUE(themeManager.TryGetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::Foreground, foreground));
+    ASSERT_TRUE(themeManager.TryGetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::Border, border));
 
     auto lightButton = std::make_shared<NeoWPF::UI::Button>();
-    EXPECT_EQ(lightButton->GetBackgroundColor(), surface);
-    EXPECT_EQ(lightButton->GetTextColor(), foreground);
-    EXPECT_EQ(lightButton->GetBorderColor(), border);
+    EXPECT_EQ(GetSolidBrushColor(lightButton->GetBackgroundBrush()), GetSolidBrushColor(surface));
+    EXPECT_EQ(GetSolidBrushColor(lightButton->GetForeground()), GetSolidBrushColor(foreground));
+    EXPECT_EQ(GetSolidBrushColor(lightButton->GetBorderBrush()), GetSolidBrushColor(border));
 
     ASSERT_TRUE(themeManager.SetActiveTheme("Dark Mint"));
-    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Surface, surface));
-    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground, foreground));
-    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Border, border));
+    ASSERT_TRUE(themeManager.TryGetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::Surface, surface));
+    ASSERT_TRUE(themeManager.TryGetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::Foreground, foreground));
+    ASSERT_TRUE(themeManager.TryGetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::Border, border));
 
     auto darkButton = std::make_shared<NeoWPF::UI::Button>();
-    EXPECT_EQ(darkButton->GetBackgroundColor(), surface);
-    EXPECT_EQ(darkButton->GetTextColor(), foreground);
-    EXPECT_EQ(darkButton->GetBorderColor(), border);
+    EXPECT_EQ(GetSolidBrushColor(darkButton->GetBackgroundBrush()), GetSolidBrushColor(surface));
+    EXPECT_EQ(GetSolidBrushColor(darkButton->GetForeground()), GetSolidBrushColor(foreground));
+    EXPECT_EQ(GetSolidBrushColor(darkButton->GetBorderBrush()), GetSolidBrushColor(border));
 }
 
 TEST_F(ButtonTests, ExistingButtonUpdatesWhenThemeIsApplied)
@@ -220,19 +230,19 @@ TEST_F(ButtonTests, ExistingButtonUpdatesWhenThemeIsApplied)
 
     ASSERT_TRUE(themeManager.ApplyTheme("Dark Mint"));
 
-    NeoWPF::UI::Color expectedSurface;
-    NeoWPF::UI::Color expectedForeground;
-    NeoWPF::UI::Color expectedBorder;
-    ASSERT_TRUE(themeManager.TryGetPaletteColor(
-        NeoWPF::Core::ApplicationThemes::PaletteColor::Surface, expectedSurface));
-    ASSERT_TRUE(themeManager.TryGetPaletteColor(
-        NeoWPF::Core::ApplicationThemes::PaletteColor::Foreground, expectedForeground));
-    ASSERT_TRUE(themeManager.TryGetPaletteColor(
-        NeoWPF::Core::ApplicationThemes::PaletteColor::Border, expectedBorder));
+    std::shared_ptr<NeoWPF::UI::Brush> expectedSurface;
+    std::shared_ptr<NeoWPF::UI::Brush> expectedForeground;
+    std::shared_ptr<NeoWPF::UI::Brush> expectedBorder;
+    ASSERT_TRUE(themeManager.TryGetPaletteBrush(
+        NeoWPF::Core::ApplicationThemes::PaletteBrush::Surface, expectedSurface));
+    ASSERT_TRUE(themeManager.TryGetPaletteBrush(
+        NeoWPF::Core::ApplicationThemes::PaletteBrush::Foreground, expectedForeground));
+    ASSERT_TRUE(themeManager.TryGetPaletteBrush(
+        NeoWPF::Core::ApplicationThemes::PaletteBrush::Border, expectedBorder));
 
-    EXPECT_EQ(button.GetBackgroundColor(), expectedSurface);
-    EXPECT_EQ(button.GetTextColor(), expectedForeground);
-    EXPECT_EQ(button.GetBorderColor(), expectedBorder);
+    EXPECT_EQ(GetSolidBrushColor(button.GetBackgroundBrush()), GetSolidBrushColor(expectedSurface));
+    EXPECT_EQ(GetSolidBrushColor(button.GetForeground()), GetSolidBrushColor(expectedForeground));
+    EXPECT_EQ(GetSolidBrushColor(button.GetBorderBrush()), GetSolidBrushColor(expectedBorder));
     EXPECT_EQ(button.GetPadding(), customPadding);
     EXPECT_EQ(button.GetFontSize(), 19);
 }
@@ -281,8 +291,8 @@ TEST_F(ButtonTests, ActiveThemeUpdatesFontSizeAndButtonPadding)
 TEST_F(ButtonTests, NormalStateUsesDependencyPropertyColorsAndHonorsBorderThickness)
 {
     auto button = MakeSizedButton();
-    button->SetBackgroundColor(NeoWPF::UI::Color::FromArgb(0xFF112233u));
-    button->SetBorderColor(NeoWPF::UI::Color::FromArgb(0xFF445566u));
+    button->SetBackgroundBrush(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF112233u));
+    button->SetBorderBrush(std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF445566u));
     button->SetBorderThickness(4.0);
 
     NeoWPF::Rendering::CommandList commands;
@@ -302,31 +312,31 @@ TEST_F(ButtonTests, NormalStateUsesDependencyPropertyColorsAndHonorsBorderThickn
 TEST_F(ButtonTests, VisualStatesProduceDeterministicStateColors)
 {
     auto button = MakeSizedButton();
-    NeoWPF::UI::Color hover;
-    NeoWPF::UI::Color accent;
-    NeoWPF::UI::Color pressed;
+    std::shared_ptr<NeoWPF::UI::Brush> hover;
+    std::shared_ptr<NeoWPF::UI::Brush> accent;
+    std::shared_ptr<NeoWPF::UI::Brush> pressed;
     auto& themeManager = NeoWPF::Core::ApplicationThemes::ThemeManager::Instance();
-    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::AccentHover, hover));
-    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::Accent, accent));
-    ASSERT_TRUE(themeManager.TryGetPaletteColor(NeoWPF::Core::ApplicationThemes::PaletteColor::AccentPressed, pressed));
+    ASSERT_TRUE(themeManager.TryGetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::AccentHover, hover));
+    ASSERT_TRUE(themeManager.TryGetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::Accent, accent));
+    ASSERT_TRUE(themeManager.TryGetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::AccentPressed, pressed));
 
     button->OnMouseEnter(nullptr);
     NeoWPF::Rendering::CommandList mouseOverCommands;
     button->BuildRenderCommands(mouseOverCommands);
-    EXPECT_TRUE(ContainsRoundedRectColor(mouseOverCommands, hover.ToArgb()));
-    EXPECT_TRUE(ContainsRoundedRectColor(mouseOverCommands, accent.ToArgb()));
+    EXPECT_TRUE(ContainsRoundedRectColor(mouseOverCommands, GetSolidBrushColor(hover)));
+    EXPECT_TRUE(ContainsRoundedRectColor(mouseOverCommands, GetSolidBrushColor(accent)));
 
     button->OnMouseDown(10, 10, 0x01u);
     NeoWPF::Rendering::CommandList pressedCommands;
     button->BuildRenderCommands(pressedCommands);
-    EXPECT_TRUE(ContainsRoundedRectColor(pressedCommands, pressed.ToArgb()));
-    EXPECT_TRUE(ContainsRoundedRectColor(pressedCommands, accent.ToArgb()));
+    EXPECT_TRUE(ContainsRoundedRectColor(pressedCommands, GetSolidBrushColor(pressed)));
+    EXPECT_TRUE(ContainsRoundedRectColor(pressedCommands, GetSolidBrushColor(accent)));
 
     button->OnMouseLeave(nullptr);
     NeoWPF::Rendering::CommandList normalCommands;
     button->BuildRenderCommands(normalCommands);
-    EXPECT_TRUE(ContainsRoundedRectColor(normalCommands, button->GetBackgroundColor().ToArgb()));
-    EXPECT_TRUE(ContainsRoundedRectColor(normalCommands, button->GetBorderColor().ToArgb()));
+    EXPECT_TRUE(ContainsRoundedRectColor(normalCommands, GetSolidBrushColor(button->GetBackgroundBrush())));
+    EXPECT_TRUE(ContainsRoundedRectColor(normalCommands, GetSolidBrushColor(button->GetBorderBrush())));
 }
 
 TEST_F(ButtonTests, DisabledButtonDoesNotRaiseClickOrExecuteCommand)
@@ -374,9 +384,9 @@ TEST_F(ButtonTests, XamlPropertiesMatchEquivalentCppValues)
     ASSERT_NE(button, nullptr);
 
     EXPECT_EQ(button->GetText(), L"Apply");
-    EXPECT_EQ(button->GetTextColor(), NeoWPF::UI::Color::FromArgb(0xFF102030u));
-    EXPECT_EQ(button->GetBackgroundColor(), NeoWPF::UI::Color::FromArgb(0xFF203040u));
-    EXPECT_EQ(button->GetBorderColor(), NeoWPF::UI::Color::FromArgb(0xFF304050u));
+    EXPECT_EQ(GetSolidBrushColor(button->GetForeground()), 0xFF102030u);
+    EXPECT_EQ(GetSolidBrushColor(button->GetBackgroundBrush()), 0xFF203040u);
+    EXPECT_EQ(GetSolidBrushColor(button->GetBorderBrush()), 0xFF304050u);
     EXPECT_DOUBLE_EQ(button->GetBorderThickness(), 3.0);
     EXPECT_EQ(button->GetPadding(), NeoWPF::UI::Thickness(1, 2, 3, 4));
     EXPECT_EQ(button->GetFontSize(), 22);

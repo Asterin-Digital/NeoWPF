@@ -61,13 +61,13 @@ ListBox::~ListBox()
 
 void ListBox::ApplyTheme()
 {
-    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::PaletteBrush;
     using NeoWPF::Core::ApplicationThemes::ThemeManager;
     using NeoWPF::Core::ApplicationThemes::ThemePadding;
 
     auto& themeManager = ThemeManager::Instance();
-    SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
-    SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+    SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Surface));
+    SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Border));
     NeoWPF::UI::Thickness padding;
     if (themeManager.TryGetPadding(ThemePadding::ListBox, padding)) {
         SetThemePropertyValue("Padding", padding);

@@ -15,8 +15,8 @@ TEST(BrushTests, RegistersWpfShapedBaseAndSolidProperties)
               typeid(std::shared_ptr<NeoWPF::UI::Core::Transform>));
     EXPECT_EQ(NeoWPF::UI::Brush::RelativeTransformProperty().GetPropertyType(),
               typeid(std::shared_ptr<NeoWPF::UI::Core::Transform>));
-    EXPECT_EQ(NeoWPF::UI::SolidColorBrush::ColorProperty().GetPropertyType(),
-              typeid(NeoWPF::UI::Color));
+    EXPECT_EQ(NeoWPF::UI::SolidColorBrush::ArgbProperty().GetPropertyType(),
+              typeid(std::uint32_t));
 }
 
 TEST(BrushTests, ProvidesDefaultsAndStoresSolidBrushValues)
@@ -24,15 +24,15 @@ TEST(BrushTests, ProvidesDefaultsAndStoresSolidBrushValues)
     NeoWPF::UI::SolidColorBrush brush;
 
     EXPECT_DOUBLE_EQ(brush.GetOpacity(), 1.0);
-    EXPECT_EQ(brush.GetColor(), NeoWPF::UI::Colors::Transparent);
+    EXPECT_EQ(brush.GetArgb(), 0u);
     EXPECT_FALSE(brush.GetTransform());
     EXPECT_FALSE(brush.GetRelativeTransform());
 
-    const auto color = NeoWPF::UI::Color::FromArgb(0xFF123456u);
-    brush.SetColor(color);
+    constexpr std::uint32_t argb = 0xFF123456u;
+    brush.SetArgb(argb);
     brush.SetOpacity(0.5);
 
-    EXPECT_EQ(brush.GetColor(), color);
+    EXPECT_EQ(brush.GetArgb(), argb);
     EXPECT_DOUBLE_EQ(brush.GetOpacity(), 0.5);
 }
 
@@ -46,7 +46,7 @@ TEST(BrushTests, NotifiesAndCanRemoveChangedHandlersDuringNotification)
         brush.RemoveChangedHandler(handlerId);
     });
 
-    brush.SetColor(NeoWPF::UI::Colors::Red);
+    brush.SetArgb(0xFFFF0000u);
     brush.SetOpacity(0.25);
 
     EXPECT_EQ(notificationCount, 1u);

@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
@@ -18,14 +19,14 @@ namespace {
 void ApplyTextBlockThemeStyle(
     TextBlock& textBlock)
 {
-    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::PaletteBrush;
     using NeoWPF::Core::ApplicationThemes::ThemeFontSize;
     using NeoWPF::Core::ApplicationThemes::ThemePadding;
     using NeoWPF::Core::ApplicationThemes::ThemeManager;
     auto& themeManager = ThemeManager::Instance();
     textBlock.SetThemePropertyValue(
         "Foreground",
-        NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Foreground));
+        NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Foreground));
 
     int fontSize = 0;
     if (themeManager.TryGetFontSize(ThemeFontSize::Control, fontSize)) {
@@ -62,14 +63,19 @@ TextBlock::~TextBlock()
     NeoWPF::UI::Localization::LocaleOperations::ClearLocale(*this, TextProperty());
 }
 
-void TextBlock::SetTextColor(NeoWPF::UI::Color color) noexcept
+void TextBlock::SetForeground(std::shared_ptr<Brush> brush)
 {
     if (!IsApplyingPropertyValue()) {
-        SetValue(TextColorProperty(), color);
+        SetValue(ForegroundProperty(), brush);
         return;
     }
 
     InvalidateVisual();
+}
+
+std::shared_ptr<Brush> TextBlock::GetForeground() const
+{
+    return GetValue<std::shared_ptr<Brush>>(ForegroundProperty());
 }
 
 void TextBlock::SetFontSize(int fontSize) noexcept
@@ -369,9 +375,18 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const double drawWidth = std::abs(right - drawX);
         const double drawHeight = std::abs(bottom - drawY);
 
+        const auto foregroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetForeground());
+        std::uint32_t foregroundArgb = foregroundBrush ? foregroundBrush->GetArgb() : 0u;
+        const auto brushOpacity = foregroundBrush
+            ? (std::clamp)(foregroundBrush->GetOpacity(), 0.0, 1.0)
+            : 0.0;
+        const auto alpha = static_cast<std::uint32_t>(
+            ((foregroundArgb >> 24) & 0xFFu) * brushOpacity);
+        foregroundArgb = (foregroundArgb & 0x00FFFFFFu) | (alpha << 24);
         commands.DrawTexturedQuad(drawX, drawY, drawWidth, drawHeight,
-                                   0.0f, 0.0f, 1.0f, 1.0f,
-                                textureId, GetTextColor().ToArgb(), GetOpacity(), clip, rotationRadians, pivotX, pivotY);
+                                  0.0f, 0.0f, 1.0f, 1.0f,
+                                  textureId, foregroundArgb, GetOpacity(), clip,
+                                  rotationRadians, pivotX, pivotY);
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
             NeoWPF::Diagnostics::Level::Debug,
             "[TextBlock] draw line=%zu textureId=%u pos=%.1f,%.1f size=%.1fx%.1f opacity=%.2f",

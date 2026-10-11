@@ -4,6 +4,7 @@
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 
 #include <algorithm>
 
@@ -28,13 +29,13 @@ ListBoxItem::~ListBoxItem()
 
 void ListBoxItem::ApplyTheme()
 {
-    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::PaletteBrush;
     using NeoWPF::Core::ApplicationThemes::ThemeManager;
     using NeoWPF::Core::ApplicationThemes::ThemePadding;
 
     auto& themeManager = ThemeManager::Instance();
-    SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
-    SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
+    SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Surface));
+    SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Border));
 
     NeoWPF::UI::Thickness padding;
     if (themeManager.TryGetPadding(ThemePadding::ListBoxItem, padding)) {
@@ -100,6 +101,8 @@ void ListBoxItem::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const double height = (std::max)(0.0, GetFinalHeight());
 
         if (width > 0.0f && height > 0.0f) {
+            const auto borderBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBorderBrush());
+            const auto backgroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
                 commands.DrawRoundedRect(
                     absoluteX,
                     absoluteY,
@@ -109,7 +112,7 @@ void ListBoxItem::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                     0.0f,
                     0.0f,
                     0.0f,
-                    GetBorderColor().ToArgb(),
+                    borderBrush ? borderBrush->GetArgb() : 0x00000000u,
                     GetOpacity(),
                     GetClipRect(),
                     renderTransform.rotationRadians,
@@ -124,7 +127,7 @@ void ListBoxItem::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                     0.0f,
                     0.0f,
                     0.0f,
-                    GetBackgroundColor().ToArgb(),
+                    backgroundBrush ? backgroundBrush->GetArgb() : 0x00000000u,
                     GetOpacity(),
                     GetClipRect(),
                     renderTransform.rotationRadians,

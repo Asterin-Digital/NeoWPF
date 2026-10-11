@@ -3,6 +3,7 @@
 #include <NeoWPF/UI/Controls/Thumb/Thumb.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 
 namespace NeoWPF::UI {
 
@@ -12,16 +13,15 @@ SliderTemplate::SliderTemplate()
     SetVisualTree(root);
 
     auto track = std::make_shared<Templates::TemplateVisual>("PART_Track");
-    track->SetFillColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-        NeoWPF::Core::ApplicationThemes::PaletteColor::Track).ToArgb());
-    track->SetBorderColor(0x00000000u);
+    track->SetFillBrush(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+        NeoWPF::Core::ApplicationThemes::PaletteBrush::Track));
     track->SetBorderThickness(0);
 
     auto thumb = std::make_shared<Thumb>();
     thumb->SetOrientation(Orientation::Horizontal);
-    thumb->SetBackgroundColor(NeoWPF::Core::ApplicationThemes::GetPaletteColor(
-        NeoWPF::Core::ApplicationThemes::PaletteColor::Thumb));
-    thumb->SetBorderColor(0x00000000u);
+    thumb->SetBackgroundBrush(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+        NeoWPF::Core::ApplicationThemes::PaletteBrush::Thumb));
+    thumb->SetBorderBrush(nullptr);
     thumb->SetBorderThickness(0);
 
     root->AddVisualChild(track);

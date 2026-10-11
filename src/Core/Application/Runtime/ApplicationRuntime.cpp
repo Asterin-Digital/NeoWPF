@@ -7,6 +7,7 @@
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
@@ -114,7 +115,9 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
     NEO_WPF_STARTUP_ACTION("BuildWindowVisualTree");
     const auto layoutStart = std::chrono::steady_clock::now();
     windowState.buildCommandList.Clear();
-    windowState.buildCommandList.clearColor = windowState.windowHost->GetBackgroundColor().ToArgb();
+    const auto clearBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(
+        windowState.windowHost->GetBackgroundBrush());
+    windowState.buildCommandList.clearColor = clearBrush ? clearBrush->GetArgb() : 0u;
     windowState.buildCommandList.hasClearColor = true;
 
     auto rootVisual = windowState.windowHost->GetContent();

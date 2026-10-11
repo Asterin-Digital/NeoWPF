@@ -438,7 +438,4 @@ template void DependencyObject::SetValue<HorizontalAlignment>(const DependencyPr
 template void DependencyObject::SetValue<VerticalAlignment>(const DependencyProperty&, const VerticalAlignment&);
 template NeoWPF::UI::FrameworkElement* DependencyObject::GetValue<NeoWPF::UI::FrameworkElement*>(const DependencyProperty&) const;
 template void DependencyObject::SetValue<NeoWPF::UI::FrameworkElement*>(const DependencyProperty&, NeoWPF::UI::FrameworkElement* const&);
-template NeoWPF::UI::Color DependencyObject::GetValue<NeoWPF::UI::Color>(const DependencyProperty&) const;
-template void DependencyObject::SetValue<NeoWPF::UI::Color>(const DependencyProperty&, const NeoWPF::UI::Color&);
-
 }

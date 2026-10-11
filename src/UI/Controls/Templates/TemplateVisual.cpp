@@ -1,17 +1,8 @@
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <algorithm>
 
-#ifdef max
-#undef max
-#endif
-
-#ifdef min
-#undef min
-#endif
-
 namespace NeoWPF::UI::Templates {
-
-
 
 TemplateVisual::TemplateVisual(const std::string& name)
     : m_name(name)
@@ -26,14 +17,14 @@ void TemplateVisual::SetRect(double x, double y, double width, double height) no
     m_height = height;
 }
 
-void TemplateVisual::SetFillColor(std::uint32_t color) noexcept
+void TemplateVisual::SetFillBrush(std::shared_ptr<NeoWPF::UI::Brush> brush) noexcept
 {
-    m_fillColor = color;
+    m_fillBrush = std::move(brush);
 }
 
-void TemplateVisual::SetBorderColor(std::uint32_t color) noexcept
+void TemplateVisual::SetBorderBrush(std::shared_ptr<NeoWPF::UI::Brush> brush) noexcept
 {
-    m_borderColor = color;
+    m_borderBrush = std::move(brush);
 }
 
 void TemplateVisual::SetBorderThickness(int thickness) noexcept
@@ -93,8 +84,24 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
     const double y = m_y;
     const double width = m_width;
     const double height = m_height;
+    std::uint32_t borderColor = 0x00000000u;
+    std::uint32_t fillColor = 0x00000000u;
+    auto borderOpacity = m_opacity;
+    auto fillOpacity = m_opacity;
+    if (const auto solidBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(m_borderBrush)) {
+        borderColor = solidBrush->GetArgb();
+        borderOpacity *= static_cast<float>((std::clamp)(solidBrush->GetOpacity(), 0.0, 1.0));
+    } else if (m_borderBrush) {
+        borderColor = 0x00000000u;
+    }
+    if (const auto solidBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(m_fillBrush)) {
+        fillColor = solidBrush->GetArgb();
+        fillOpacity *= static_cast<float>((std::clamp)(solidBrush->GetOpacity(), 0.0, 1.0));
+    } else if (m_fillBrush) {
+        fillColor = 0x00000000u;
+    }
 
-    if (m_borderThickness > 0 && m_borderColor != 0x00000000u) {
+    if (m_borderThickness > 0 && borderColor != 0x00000000u) {
         commands.DrawRoundedRect(
             x,
             y,
@@ -104,15 +111,15 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
             m_cornerRadius.TopRight,
             m_cornerRadius.BottomRight,
             m_cornerRadius.BottomLeft,
-            m_borderColor,
-            m_opacity,
+            borderColor,
+            borderOpacity,
             m_clip,
             m_rotation,
             m_rotationPivotX,
             m_rotationPivotY);
     }
 
-    if (m_fillColor != 0x00000000u) {
+    if (fillColor != 0x00000000u) {
         const double inset = std::max<double>(0.0, m_borderThickness);
         const double innerX = x + inset;
         const double innerY = y + inset;
@@ -128,8 +135,8 @@ void TemplateVisual::BuildRenderCommands(NeoWPF::Rendering::CommandList& command
                 std::max(0.0, m_cornerRadius.TopRight - inset),
                 std::max(0.0, m_cornerRadius.BottomRight - inset),
                 std::max(0.0, m_cornerRadius.BottomLeft - inset),
-                m_fillColor,
-                m_opacity,
+                fillColor,
+                fillOpacity,
                 m_clip,
                 m_rotation,
                 m_rotationPivotX,

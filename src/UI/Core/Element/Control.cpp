@@ -5,6 +5,18 @@
 
 namespace NeoWPF::UI {
 
+Control::~Control()
+{
+    if (const auto brush = m_subscribedBackgroundBrush.lock();
+        brush && m_backgroundBrushChangedHandlerId != 0) {
+        brush->RemoveChangedHandler(m_backgroundBrushChangedHandlerId);
+    }
+    if (const auto brush = m_subscribedBorderBrush.lock();
+        brush && m_borderBrushChangedHandlerId != 0) {
+        brush->RemoveChangedHandler(m_borderBrushChangedHandlerId);
+    }
+}
+
 Thickness Control::GetPadding() const noexcept {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", *this);
     if (property) {
@@ -54,59 +66,76 @@ void Control::OnPaddingChanged(Thickness)
 {
 }
 
-NeoWPF::UI::Color Control::GetBackgroundColor() const noexcept {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Background", *this);
-    if (property) {
-        try { return GetValue<NeoWPF::UI::Color>(*property); } catch (const std::bad_any_cast&) {}
-    }
-    return m_backgroundColor;
+std::shared_ptr<Brush> Control::GetBackgroundBrush() const {
+    return GetValue<std::shared_ptr<Brush>>(BackgroundProperty());
 }
 
-void Control::SetBackgroundColor(NeoWPF::UI::Color color) noexcept {
-    if (IsApplyingPropertyValue()) {
-        m_backgroundColor = color;
-        OnBackgroundColorChanged(color);
-        return;
-    }
-
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Background", *this);
-    if (property) {
-        if (GetBackgroundColor() != color) {
-            SetValue(*property, color);
+void Control::SetBackgroundBrush(std::shared_ptr<Brush> brush) {
+    if (!IsApplyingPropertyValue()) {
+        if (GetBackgroundBrush() != brush) {
+            SetValue(BackgroundProperty(), brush);
         }
         return;
     }
 
-    m_backgroundColor = color;
-    OnBackgroundColorChanged(color);
-}
-
-NeoWPF::UI::Color Control::GetBorderColor() const noexcept {
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderBrush", *this);
-    if (property) {
-        try { return GetValue<NeoWPF::UI::Color>(*property); } catch (const std::bad_any_cast&) {}
-    }
-    return m_borderColor;
-}
-
-void Control::SetBorderColor(NeoWPF::UI::Color color) noexcept {
-    if (IsApplyingPropertyValue()) {
-        m_borderColor = color;
-        OnBorderColorChanged(color);
+    if (m_subscribedBackgroundBrush.lock() == brush) {
+        OnBackgroundBrushChanged(brush);
         return;
     }
+    if (const auto oldBrush = m_subscribedBackgroundBrush.lock();
+        oldBrush && m_backgroundBrushChangedHandlerId != 0) {
+        oldBrush->RemoveChangedHandler(m_backgroundBrushChangedHandlerId);
+        m_backgroundBrushChangedHandlerId = 0;
+    }
+    m_subscribedBackgroundBrush = brush;
+    if (brush) {
+        m_backgroundBrushChangedHandlerId = brush->AddChangedHandler([this] {
+            OnBackgroundBrushChanged(GetBackgroundBrush());
+            InvalidateVisual();
+        });
+    }
+    OnBackgroundBrushChanged(brush);
+}
 
-    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderBrush", *this);
-    if (property) {
-        if (GetBorderColor() != color) {
-            SetValue(*property, color);
+std::shared_ptr<Brush> Control::GetBorderBrush() const {
+    return GetValue<std::shared_ptr<Brush>>(BorderBrushProperty());
+}
+
+void Control::SetBorderBrush(std::shared_ptr<Brush> brush) {
+    if (!IsApplyingPropertyValue()) {
+        if (GetBorderBrush() != brush) {
+            SetValue(BorderBrushProperty(), brush);
         }
         return;
     }
 
-    m_borderColor = color;
-    OnBorderColorChanged(color);
+    if (m_subscribedBorderBrush.lock() == brush) {
+        OnBorderBrushChanged(brush);
+        return;
+    }
+    if (const auto oldBrush = m_subscribedBorderBrush.lock();
+        oldBrush && m_borderBrushChangedHandlerId != 0) {
+        oldBrush->RemoveChangedHandler(m_borderBrushChangedHandlerId);
+        m_borderBrushChangedHandlerId = 0;
+    }
+    m_subscribedBorderBrush = brush;
+    if (brush) {
+        m_borderBrushChangedHandlerId = brush->AddChangedHandler([this] {
+            OnBorderBrushChanged(GetBorderBrush());
+            InvalidateVisual();
+        });
+    }
+    OnBorderBrushChanged(brush);
 }
+
+void Control::OnBackgroundBrushChanged(const std::shared_ptr<Brush>& brush)
+{
+}
+
+void Control::OnBorderBrushChanged(const std::shared_ptr<Brush>& brush)
+{
+}
+
 
 double Control::GetBorderThickness() const noexcept {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("BorderThickness", *this);
@@ -135,8 +164,6 @@ void Control::SetBorderThickness(double thickness) noexcept {
     OnBorderThicknessChanged(thickness);
 }
 
-void Control::OnBackgroundColorChanged(NeoWPF::UI::Color) {}
-void Control::OnBorderColorChanged(NeoWPF::UI::Color) {}
 void Control::OnBorderThicknessChanged(double) {}
 
 }

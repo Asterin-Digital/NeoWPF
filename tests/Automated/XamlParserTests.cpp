@@ -6,6 +6,7 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
 #include <NeoWPF/UI/Controls/Window.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Data/INotifyPropertyChanged.h>
 #include <NeoWPF/UI/Content/ContentControl.h>
 #include <NeoWPF/UI/Layout/Border/Border.h>
@@ -33,6 +34,21 @@
 #include <string>
 
 namespace {
+
+std::shared_ptr<NeoWPF::UI::Brush> MakeSolidColorBrush(std::uint32_t argb)
+{
+    return std::make_shared<NeoWPF::UI::SolidColorBrush>(
+        argb);
+}
+
+void ExpectSolidColorBrush(const std::shared_ptr<NeoWPF::UI::Brush>& brush,
+                           std::uint32_t argb)
+{
+    ASSERT_NE(brush, nullptr);
+    const auto solidBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(brush);
+    ASSERT_NE(solidBrush, nullptr);
+    EXPECT_EQ(solidBrush->GetArgb(), argb);
+}
 
 void ExpectLayoutParity(const NeoWPF::UI::Visual& xamlRoot,
                         const NeoWPF::UI::Visual& cppRoot)
@@ -920,7 +936,7 @@ TEST(XamlParserTests, ParsesCommonScalarPropertiesViaPropertyMetadata)
 
     EXPECT_EQ(panel->GetWidth(), 120);
     EXPECT_EQ(panel->GetHeight(), 40);
-    EXPECT_EQ(panel->GetBackgroundColor().ToArgb(), 0xFF202020u);
+    ExpectSolidColorBrush(panel->GetBackgroundBrush(), 0xFF202020u);
 
     const auto children = AsVisual(liveTree)->GetLogicalChildren();
     ASSERT_EQ(children.size(), 1u);
@@ -964,7 +980,7 @@ TEST(XamlParserTests, BuildsGridWithDefinitionsAndAttachedLayoutProperties)
     auto* grid = dynamic_cast<NeoWPF::UI::Grid*>(liveTree.get());
     ASSERT_NE(grid, nullptr);
 
-    EXPECT_EQ(grid->GetBackgroundColor().ToArgb(), 0xFF101418u);
+    ExpectSolidColorBrush(grid->GetBackgroundBrush(), 0xFF101418u);
     EXPECT_EQ(grid->GetVisualChildren().size(), 4u);
 
     NeoWPF::Core::Application::Shutdown();
@@ -1046,16 +1062,19 @@ TEST(XamlParserTests, XamlAndCppMatchControlAppearanceProperties)
 
     auto cppButton = std::make_shared<NeoWPF::UI::Button>();
     cppButton->SetText(L"Run");
-    cppButton->SetTextColor(NeoWPF::UI::Color::FromArgb(0xFF112233u));
-    cppButton->SetBackgroundColor(NeoWPF::UI::Color::FromArgb(0xFF445566u));
-    cppButton->SetBorderColor(NeoWPF::UI::Color::FromArgb(0xFF778899u));
+    cppButton->SetForeground(MakeSolidColorBrush(0xFF112233u));
+    cppButton->SetBackgroundBrush(MakeSolidColorBrush(0xFF445566u));
+    cppButton->SetBorderBrush(MakeSolidColorBrush(0xFF778899u));
     cppButton->SetPadding(NeoWPF::UI::Thickness(2, 3, 4, 5));
     cppButton->SetFontSize(18);
 
     EXPECT_EQ(xamlButton->GetText(), cppButton->GetText());
-    EXPECT_EQ(xamlButton->GetTextColor(), cppButton->GetTextColor());
-    EXPECT_EQ(xamlButton->GetBackgroundColor(), cppButton->GetBackgroundColor());
-    EXPECT_EQ(xamlButton->GetBorderColor(), cppButton->GetBorderColor());
+    ExpectSolidColorBrush(xamlButton->GetForeground(), 0xFF112233u);
+    ExpectSolidColorBrush(cppButton->GetForeground(), 0xFF112233u);
+    ExpectSolidColorBrush(xamlButton->GetBackgroundBrush(), 0xFF445566u);
+    ExpectSolidColorBrush(cppButton->GetBackgroundBrush(), 0xFF445566u);
+    ExpectSolidColorBrush(xamlButton->GetBorderBrush(), 0xFF778899u);
+    ExpectSolidColorBrush(cppButton->GetBorderBrush(), 0xFF778899u);
     EXPECT_EQ(xamlButton->GetPadding(), cppButton->GetPadding());
     EXPECT_EQ(xamlButton->GetFontSize(), cppButton->GetFontSize());
 
@@ -1436,7 +1455,7 @@ TEST(XamlParserTests, RaspyCppAndXamlLayoutsMatchEverySemanticNode)
     ASSERT_NE(xamlTree, nullptr);
 
     auto content = std::make_shared<NeoWPF::UI::Grid>();
-    content->SetBackgroundColor(0xFF0B1324u);
+    content->SetBackgroundBrush(MakeSolidColorBrush(0xFF0B1324u));
     content->SetPadding(32);
     content->AddRow(NeoWPF::UI::SizeMode::Auto);
     content->AddRow(NeoWPF::UI::SizeMode::Star, 1);
@@ -1445,24 +1464,24 @@ TEST(XamlParserTests, RaspyCppAndXamlLayoutsMatchEverySemanticNode)
     auto header = std::make_shared<NeoWPF::UI::StackPanel>();
     header->SetMargin(0, 0, 0, 24);
     auto title = std::make_shared<NeoWPF::UI::TextBlock>(L"NeoWPF Binding Laboratory");
-    title->SetFontSize(32); title->SetTextColor(0xFFF8FAFCu); header->AddChild(title);
+    title->SetFontSize(32); title->SetForeground(MakeSolidColorBrush(0xFFF8FAFCu)); header->AddChild(title);
     auto subtitle = std::make_shared<NeoWPF::UI::TextBlock>(L"Edit a bound value and watch the preview answer immediately.");
-    subtitle->SetFontSize(15); subtitle->SetTextColor(0xFF9FB0C7u); subtitle->SetMargin(0, 7, 0, 0); header->AddChild(subtitle);
+    subtitle->SetFontSize(15); subtitle->SetForeground(MakeSolidColorBrush(0xFF9FB0C7u)); subtitle->SetMargin(0, 7, 0, 0); header->AddChild(subtitle);
     content->AddChild(header, 0, 0);
 
     auto body = std::make_shared<NeoWPF::UI::Grid>();
     body->AddColumn(NeoWPF::UI::SizeMode::Fixed, 320);
     body->AddColumn(NeoWPF::UI::SizeMode::Star, 1);
     auto leftBorder = std::make_shared<NeoWPF::UI::Border>();
-    leftBorder->SetBackgroundColor(0xFF16233Au); leftBorder->SetBorderColor(0xFF2D4263u);
+    leftBorder->SetBackgroundBrush(MakeSolidColorBrush(0xFF16233Au)); leftBorder->SetBorderBrush(MakeSolidColorBrush(0xFF2D4263u));
     leftBorder->SetBorderThickness(NeoWPF::UI::Thickness(1)); leftBorder->SetPadding(20); leftBorder->SetMargin(0, 0, 24, 0);
     auto leftStack = std::make_shared<NeoWPF::UI::StackPanel>();
     auto inputTitle = std::make_shared<NeoWPF::UI::TextBlock>(L"Change the input");
-    inputTitle->SetFontSize(20); inputTitle->SetTextColor(0xFFE5EDF8u); inputTitle->SetMargin(0, 0, 0, 18); leftStack->AddChild(inputTitle);
+    inputTitle->SetFontSize(20); inputTitle->SetForeground(MakeSolidColorBrush(0xFFE5EDF8u)); inputTitle->SetMargin(0, 0, 0, 18); leftStack->AddChild(inputTitle);
     auto inputDescription = std::make_shared<NeoWPF::UI::TextBlock>(L"The values below are TwoWay bindings.");
-    inputDescription->SetFontSize(13); inputDescription->SetTextColor(0xFF9FB0C7u); inputDescription->SetMargin(0, 0, 0, 18); leftStack->AddChild(inputDescription);
+    inputDescription->SetFontSize(13); inputDescription->SetForeground(MakeSolidColorBrush(0xFF9FB0C7u)); inputDescription->SetMargin(0, 0, 0, 18); leftStack->AddChild(inputDescription);
     auto messageLabel = std::make_shared<NeoWPF::UI::TextBlock>(L"Message");
-    messageLabel->SetFontSize(12); messageLabel->SetTextColor(0xFF9FB0C7u); leftStack->AddChild(messageLabel);
+    messageLabel->SetFontSize(12); messageLabel->SetForeground(MakeSolidColorBrush(0xFF9FB0C7u)); leftStack->AddChild(messageLabel);
     auto queryBox = std::make_shared<NeoWPF::UI::TextBox>();
     queryBox->SetText(L"Hello from the view model"); queryBox->SetPlaceholderText(L"Type a message"); queryBox->SetHeight(40); queryBox->SetMargin(0, 6, 0, 20); leftStack->AddChild(queryBox);
     auto checkbox = std::make_shared<NeoWPF::UI::Checkbox>();
@@ -1471,18 +1490,18 @@ TEST(XamlParserTests, RaspyCppAndXamlLayoutsMatchEverySemanticNode)
     leftBorder->SetChild(leftStack); body->AddChild(leftBorder, 0, 0);
 
     auto previewBorder = std::make_shared<NeoWPF::UI::Border>();
-    previewBorder->SetBackgroundColor(0xFF12304Au); previewBorder->SetBorderColor(0xFF5EEAD4u); previewBorder->SetBorderThickness(NeoWPF::UI::Thickness(2)); previewBorder->SetPadding(28);
+    previewBorder->SetBackgroundBrush(MakeSolidColorBrush(0xFF12304Au)); previewBorder->SetBorderBrush(MakeSolidColorBrush(0xFF5EEAD4u)); previewBorder->SetBorderThickness(NeoWPF::UI::Thickness(2)); previewBorder->SetPadding(28);
     auto previewStack = std::make_shared<NeoWPF::UI::StackPanel>(); previewStack->SetVerticalAlignment(NeoWPF::UI::VerticalAlignment::Center);
-    auto previewLabel = std::make_shared<NeoWPF::UI::TextBlock>(L"LIVE PREVIEW"); previewLabel->SetFontSize(12); previewLabel->SetTextColor(0xFF5EEAD4u); previewStack->AddChild(previewLabel);
-    auto previewTitle = std::make_shared<NeoWPF::UI::TextBlock>(L"Preview is active"); previewTitle->SetFontSize(34); previewTitle->SetTextColor(0xFFF8FAFCu); previewTitle->SetMargin(0, 10, 0, 8); previewStack->AddChild(previewTitle);
-    auto previewDetail = std::make_shared<NeoWPF::UI::TextBlock>(L"This panel is driven by properties on the bound view model."); previewDetail->SetFontSize(17); previewDetail->SetTextColor(0xFFD7E2F2u); previewDetail->SetTextWrapping(NeoWPF::UI::TextWrapping::Wrap); previewStack->AddChild(previewDetail);
-    auto queryPreview = std::make_shared<NeoWPF::UI::TextBlock>(L"Hello from the view model"); queryPreview->SetFontSize(22); queryPreview->SetTextColor(0xFF5EEAD4u); queryPreview->SetMargin(0, 24, 0, 0); previewStack->AddChild(queryPreview);
-    auto status = std::make_shared<NeoWPF::UI::TextBlock>(L"Bindings are connected"); status->SetFontSize(14); status->SetTextColor(0xFF9FB0C7u); status->SetMargin(0, 8, 0, 0); previewStack->AddChild(status);
+    auto previewLabel = std::make_shared<NeoWPF::UI::TextBlock>(L"LIVE PREVIEW"); previewLabel->SetFontSize(12); previewLabel->SetForeground(MakeSolidColorBrush(0xFF5EEAD4u)); previewStack->AddChild(previewLabel);
+    auto previewTitle = std::make_shared<NeoWPF::UI::TextBlock>(L"Preview is active"); previewTitle->SetFontSize(34); previewTitle->SetForeground(MakeSolidColorBrush(0xFFF8FAFCu)); previewTitle->SetMargin(0, 10, 0, 8); previewStack->AddChild(previewTitle);
+    auto previewDetail = std::make_shared<NeoWPF::UI::TextBlock>(L"This panel is driven by properties on the bound view model."); previewDetail->SetFontSize(17); previewDetail->SetForeground(MakeSolidColorBrush(0xFFD7E2F2u)); previewDetail->SetTextWrapping(NeoWPF::UI::TextWrapping::Wrap); previewStack->AddChild(previewDetail);
+    auto queryPreview = std::make_shared<NeoWPF::UI::TextBlock>(L"Hello from the view model"); queryPreview->SetFontSize(22); queryPreview->SetForeground(MakeSolidColorBrush(0xFF5EEAD4u)); queryPreview->SetMargin(0, 24, 0, 0); previewStack->AddChild(queryPreview);
+    auto status = std::make_shared<NeoWPF::UI::TextBlock>(L"Bindings are connected"); status->SetFontSize(14); status->SetForeground(MakeSolidColorBrush(0xFF9FB0C7u)); status->SetMargin(0, 8, 0, 0); previewStack->AddChild(status);
     previewBorder->SetChild(previewStack); body->AddChild(previewBorder, 0, 1); content->AddChild(body, 1, 0);
 
     auto footerGrid = std::make_shared<NeoWPF::UI::Grid>(); footerGrid->AddColumn(NeoWPF::UI::SizeMode::Star, 1); footerGrid->AddColumn(NeoWPF::UI::SizeMode::Auto); footerGrid->SetMargin(0, 24, 0, 0);
-    auto footer = std::make_shared<NeoWPF::UI::TextBlock>(L"TextBox and Checkbox use TwoWay bindings"); footer->SetFontSize(13); footer->SetTextColor(0xFF9FB0C7u); footerGrid->AddChild(footer, 0, 0);
-    auto lastUpdated = std::make_shared<NeoWPF::UI::TextBlock>(L"Initial snapshot"); lastUpdated->SetFontSize(13); lastUpdated->SetTextColor(0xFF7183A1u); footerGrid->AddChild(lastUpdated, 0, 1); content->AddChild(footerGrid, 2, 0);
+    auto footer = std::make_shared<NeoWPF::UI::TextBlock>(L"TextBox and Checkbox use TwoWay bindings"); footer->SetFontSize(13); footer->SetForeground(MakeSolidColorBrush(0xFF9FB0C7u)); footerGrid->AddChild(footer, 0, 0);
+    auto lastUpdated = std::make_shared<NeoWPF::UI::TextBlock>(L"Initial snapshot"); lastUpdated->SetFontSize(13); lastUpdated->SetForeground(MakeSolidColorBrush(0xFF7183A1u)); footerGrid->AddChild(lastUpdated, 0, 1); content->AddChild(footerGrid, 2, 0);
 
     auto* xamlGrid = dynamic_cast<NeoWPF::UI::Grid*>(xamlTree.get());
     ASSERT_NE(xamlGrid, nullptr);

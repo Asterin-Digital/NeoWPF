@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <algorithm>
 
 namespace NeoWPF::UI {
@@ -87,7 +88,8 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     double absY = 0.0;
     GetAbsolutePosition(absX, absY);
 
-    if (GetBackgroundColor().ToArgb() != 0x00000000u) {
+    if (const auto backgroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
+        backgroundBrush && backgroundBrush->GetArgb() != 0x00000000u) {
         const auto cornerRadius = GetCornerRadius();
         commands.DrawRoundedRect(
             absX,
@@ -98,8 +100,8 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             cornerRadius.TopRight,
             cornerRadius.BottomRight,
             cornerRadius.BottomLeft,
-            GetBackgroundColor().ToArgb(),
-            GetOpacity());
+                backgroundBrush->GetArgb(),
+                static_cast<float>(GetOpacity() * backgroundBrush->GetOpacity()));
     }
 
     for (auto child : GetVisualChildrenInZOrder()) {
@@ -111,22 +113,6 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
         child->BuildRenderCommands(commands);
     }
-}
-
-void Panel::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
-{
-    Control::SetBackgroundColor(color);
-    InvalidateVisual();
-}
-
-NeoWPF::UI::Color Panel::GetBackgroundColor() const noexcept
-{
-    return Control::GetBackgroundColor();
-}
-
-void Panel::OnBackgroundColorChanged(NeoWPF::UI::Color)
-{
-    InvalidateVisual();
 }
 
 }

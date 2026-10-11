@@ -10,7 +10,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Controls/Base/RangeBase/RangeBase.h>
 #include <NeoWPF/UI/Controls/Templates/ControlTemplate.h>
 #include <NeoWPF/UI/Controls/Thumb/Thumb.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/UI/Layout/Placement/Orientation.h>
 #include <cstddef>
 #include <cstdint>
@@ -32,8 +32,8 @@ namespace NeoWPF::UI {
 */
 class ScrollBar : public NeoWPF::UI::RangeBase {
 public:
-    static const NeoWPF::UI::Properties::DependencyProperty& TrackColorProperty();
-    static const NeoWPF::UI::Properties::DependencyProperty& ThumbColorProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& TrackBrushProperty();
+    static const NeoWPF::UI::Properties::DependencyProperty& ThumbBrushProperty();
     static const NeoWPF::UI::Properties::DependencyProperty& ThumbSizeProperty();
 
     ScrollBar();
@@ -60,35 +60,33 @@ public:
 
     /*
         @summary
-        Sets the track color behind the thumb.
+        Sets the brush used to paint the track behind the thumb.
 
-        @param color
-        ARGB color value.
+            @param brush
+            Track brush.
     */
-    void SetTrackColor(NeoWPF::UI::Color color) noexcept;
-    void SetTrackColor(std::uint32_t color) noexcept { SetTrackColor(NeoWPF::UI::Color::FromArgb(color)); }
+        void SetTrackBrush(std::shared_ptr<Brush> brush);
 
     /*
         @summary
-        Returns the current track color.
+        Returns the current track brush.
     */
-    NeoWPF::UI::Color GetTrackColor() const noexcept;
+        std::shared_ptr<Brush> GetTrackBrush() const;
 
     /*
         @summary
-        Sets the thumb color.
+        Sets the brush used to paint the thumb.
 
-        @param color
-        ARGB color value.
+            @param brush
+            Thumb brush.
     */
-    void SetThumbColor(NeoWPF::UI::Color color) noexcept;
-    void SetThumbColor(std::uint32_t color) noexcept { SetThumbColor(NeoWPF::UI::Color::FromArgb(color)); }
+        void SetThumbBrush(std::shared_ptr<Brush> brush);
 
     /*
         @summary
-        Returns the current thumb color.
+        Returns the current thumb brush.
     */
-    NeoWPF::UI::Color GetThumbColor() const noexcept;
+        std::shared_ptr<Brush> GetThumbBrush() const;
 
     /*
         @summary
@@ -223,8 +221,6 @@ private:
 
     void OnValueChanged(double value) override;
     void OnPaddingChanged(Thickness padding) override;
-    void OnBackgroundColorChanged(NeoWPF::UI::Color color) override;
-    void OnBorderColorChanged(NeoWPF::UI::Color color) override;
     void OnBorderThicknessChanged(double thickness) override;
 
     /*

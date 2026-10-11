@@ -9,6 +9,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/UI/Layout/Border/Border.h>
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
@@ -40,23 +41,13 @@ public:
 
     /*
         @summary
-        Sets the title bar background color.
+        Sets the title text foreground brush.
 
-        @param argbColor
-        ARGB color value.
+            @param brush
+            Brush used for the title text and window controls.
     */
-    void SetBackgroundColor(std::uint32_t argbColor) noexcept;
-    std::uint32_t GetBackgroundColor() const noexcept;
-
-    /*
-        @summary
-        Sets the title text color.
-
-        @param argbColor
-        ARGB color value.
-    */
-    void SetTextColor(std::uint32_t argbColor) noexcept;
-    std::uint32_t GetTextColor() const noexcept;
+        void SetForeground(std::shared_ptr<Brush> brush);
+        std::shared_ptr<Brush> GetForeground() const;
 
     /*
         @summary
@@ -99,8 +90,7 @@ private:
     std::function<void()> m_onClose;
 
     std::wstring m_title = L"NeoWPF";
-    std::uint32_t m_backgroundColor = 0xFFFFFFFFu;
-    std::uint32_t m_textColor = 0xFF1E1E1Eu;
+    std::shared_ptr<Brush> m_foregroundBrush;
 };
 
 }

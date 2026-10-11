@@ -28,7 +28,6 @@ namespace NeoWPF::UI {
 class StackPanel : public Panel {
 public:
     StackPanel() noexcept {
-        SetBackgroundColor(NeoWPF::UI::Color::FromArgb(0x00000000u));
     }
 
     void Measure(double availableWidth, double availableHeight) override;

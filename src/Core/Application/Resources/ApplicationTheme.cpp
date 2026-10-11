@@ -1,5 +1,6 @@
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 
 #include <cstdint>
 #include <utility>
@@ -8,21 +9,21 @@ namespace NeoWPF::Core::ApplicationThemes {
 
 namespace {
 
-const char* GetPaletteResourceKey(PaletteColor paletteColor) noexcept
+const char* GetPaletteResourceKey(PaletteBrush paletteColor) noexcept
 {
     switch (paletteColor) {
-    case PaletteColor::Background: return "Palette.Background";
-    case PaletteColor::Surface: return "Palette.Surface";
-    case PaletteColor::Foreground: return "Palette.Foreground";
-    case PaletteColor::MutedForeground: return "Palette.MutedForeground";
-    case PaletteColor::Border: return "Palette.Border";
-    case PaletteColor::Accent: return "Palette.Accent";
-    case PaletteColor::AccentHover: return "Palette.AccentHover";
-    case PaletteColor::AccentPressed: return "Palette.AccentPressed";
-    case PaletteColor::DisabledSurface: return "Palette.DisabledSurface";
-    case PaletteColor::Focus: return "Palette.Focus";
-    case PaletteColor::Track: return "Palette.Track";
-    case PaletteColor::Thumb: return "Palette.Thumb";
+    case PaletteBrush::Background: return "Palette.Background";
+    case PaletteBrush::Surface: return "Palette.Surface";
+    case PaletteBrush::Foreground: return "Palette.Foreground";
+    case PaletteBrush::MutedForeground: return "Palette.MutedForeground";
+    case PaletteBrush::Border: return "Palette.Border";
+    case PaletteBrush::Accent: return "Palette.Accent";
+    case PaletteBrush::AccentHover: return "Palette.AccentHover";
+    case PaletteBrush::AccentPressed: return "Palette.AccentPressed";
+    case PaletteBrush::DisabledSurface: return "Palette.DisabledSurface";
+    case PaletteBrush::Focus: return "Palette.Focus";
+    case PaletteBrush::Track: return "Palette.Track";
+    case PaletteBrush::Thumb: return "Palette.Thumb";
     }
     return nullptr;
 }
@@ -39,18 +40,18 @@ void ThemeManager::RegisterBuiltInThemes()
 {
     ThemeDefinition light;
     light.Name = "Light Mint";
-    light.Palette[PaletteColor::Background] = 0xFFF1F2EFu;
-    light.Palette[PaletteColor::Surface] = 0xFFF8F9F7u;
-    light.Palette[PaletteColor::Foreground] = 0xFF252925u;
-    light.Palette[PaletteColor::MutedForeground] = 0xFF737A74u;
-    light.Palette[PaletteColor::Border] = 0xFF9AA19Bu;
-    light.Palette[PaletteColor::Accent] = 0xFF708A74u;
-    light.Palette[PaletteColor::AccentHover] = 0xFFE4EBE3u;
-    light.Palette[PaletteColor::AccentPressed] = 0xFFD6E1D6u;
-    light.Palette[PaletteColor::DisabledSurface] = 0xFFE9ECE9u;
-    light.Palette[PaletteColor::Focus] = 0xFF718C76u;
-    light.Palette[PaletteColor::Track] = 0xFFEAEAEAu;
-    light.Palette[PaletteColor::Thumb] = 0xFFCDCDCDu;
+    light.Palette[PaletteBrush::Background] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFFF1F2EFu);
+    light.Palette[PaletteBrush::Surface] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFFF8F9F7u);
+    light.Palette[PaletteBrush::Foreground] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF252925u);
+    light.Palette[PaletteBrush::MutedForeground] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF737A74u);
+    light.Palette[PaletteBrush::Border] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF9AA19Bu);
+    light.Palette[PaletteBrush::Accent] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF708A74u);
+    light.Palette[PaletteBrush::AccentHover] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFFE4EBE3u);
+    light.Palette[PaletteBrush::AccentPressed] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFFD6E1D6u);
+    light.Palette[PaletteBrush::DisabledSurface] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFFE9ECE9u);
+    light.Palette[PaletteBrush::Focus] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF718C76u);
+    light.Palette[PaletteBrush::Track] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFFEAEAEAu);
+    light.Palette[PaletteBrush::Thumb] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFFCDCDCDu);
     //////////////////////////////////////////////////////////
     light.FontSizes[ThemeFontSize::Control] = 14;
     light.Paddings[ThemePadding::Button] = NeoWPF::UI::Thickness(8);
@@ -77,18 +78,18 @@ void ThemeManager::RegisterBuiltInThemes()
 
     ThemeDefinition dark;
     dark.Name = "Dark Mint";
-    dark.Palette[PaletteColor::Background] = 0xFF131313u;
-    dark.Palette[PaletteColor::Surface] = 0xFF1D1D1Du;
-    dark.Palette[PaletteColor::Foreground] = 0xFFE6E6E6u;
-    dark.Palette[PaletteColor::MutedForeground] = 0xFF9B9B9Bu;
-    dark.Palette[PaletteColor::Border] = 0xFF686868u;
-    dark.Palette[PaletteColor::Accent] = 0xFF8A9B8Bu;
-    dark.Palette[PaletteColor::AccentHover] = 0xFF252B26u;
-    dark.Palette[PaletteColor::AccentPressed] = 0xFF303730u;
-    dark.Palette[PaletteColor::DisabledSurface] = 0xFF222222u;
-    dark.Palette[PaletteColor::Focus] = 0xFF849786u;
-    dark.Palette[PaletteColor::Track] = 0xFF242624u;
-    dark.Palette[PaletteColor::Thumb] = 0xFF5A625Bu;
+    dark.Palette[PaletteBrush::Background] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF131313u);
+    dark.Palette[PaletteBrush::Surface] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF1D1D1Du);
+    dark.Palette[PaletteBrush::Foreground] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFFE6E6E6u);
+    dark.Palette[PaletteBrush::MutedForeground] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF9B9B9Bu);
+    dark.Palette[PaletteBrush::Border] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF686868u);
+    dark.Palette[PaletteBrush::Accent] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF8A9B8Bu);
+    dark.Palette[PaletteBrush::AccentHover] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF252B26u);
+    dark.Palette[PaletteBrush::AccentPressed] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF303730u);
+    dark.Palette[PaletteBrush::DisabledSurface] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF222222u);
+    dark.Palette[PaletteBrush::Focus] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF849786u);
+    dark.Palette[PaletteBrush::Track] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF242624u);
+    dark.Palette[PaletteBrush::Thumb] = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF5A625Bu);
     //////////////////////////////////////////////////////////
     dark.FontSizes[ThemeFontSize::Control] = 14;
     dark.Paddings[ThemePadding::Button] = NeoWPF::UI::Thickness(8);
@@ -207,7 +208,9 @@ void ThemeManager::UnsubscribeThemeApplied(std::size_t subscriptionId)
     m_themeApplied.Unsubscribe(subscriptionId);
 }
 
-bool ThemeManager::TryGetPaletteColor(PaletteColor paletteColor, NeoWPF::UI::Color& outColor) const
+bool ThemeManager::TryGetPaletteBrush(
+    PaletteBrush paletteColor,
+    std::shared_ptr<NeoWPF::UI::Brush>& outBrush) const
 {
     std::shared_ptr<const ThemeDefinition> activeTheme;
     {
@@ -224,15 +227,15 @@ bool ThemeManager::TryGetPaletteColor(PaletteColor paletteColor, NeoWPF::UI::Col
         return false;
     }
 
-    outColor = NeoWPF::UI::Color::FromArgb(it->second);
+    outBrush = it->second;
     return true;
 }
 
-NeoWPF::UI::Color GetPaletteColor(PaletteColor paletteColor)
+std::shared_ptr<NeoWPF::UI::Brush> GetPaletteBrush(PaletteBrush paletteColor)
 {
-    NeoWPF::UI::Color color;
-    ThemeManager::Instance().TryGetPaletteColor(paletteColor, color);
-    return color;
+    std::shared_ptr<NeoWPF::UI::Brush> brush;
+    ThemeManager::Instance().TryGetPaletteBrush(paletteColor, brush);
+    return brush;
 }
 
 bool ThemeManager::TryGetFontSize(ThemeFontSize fontSize, int& outValue) const

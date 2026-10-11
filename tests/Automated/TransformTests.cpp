@@ -12,6 +12,7 @@
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Controls/TextBox/TextBox.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <cmath>
 #include <utility>
@@ -152,7 +153,10 @@ TEST_F(TextBlockRenderCommandTest, TextBoxRefreshesAndRendersItsTextCache)
 
     ASSERT_NE(textQuad, nullptr);
     EXPECT_GT(textQuad->textureId, 0u);
-    EXPECT_EQ(textQuad->tintColor, NeoWPF::UI::Color::FromArgb(0xFF252925u).ToArgb());
+    const auto foregroundBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(textBox.GetForeground());
+    ASSERT_NE(foregroundBrush, nullptr);
+    EXPECT_EQ(foregroundBrush->GetArgb(), 0xFF252925u);
+    EXPECT_EQ(textQuad->tintColor, foregroundBrush->GetArgb());
 }
 
 TEST_F(TextBlockRenderCommandTest, ButtonBackgroundAndBitmapTextShareScaleTransform)

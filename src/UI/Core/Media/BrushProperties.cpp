@@ -34,14 +34,14 @@ const Properties::DependencyProperty& Brush::RelativeTransformProperty()
     return property;
 }
 
-const Properties::DependencyProperty& SolidColorBrush::ColorProperty()
+const Properties::DependencyProperty& SolidColorBrush::ArgbProperty()
 {
     static const auto& property = []() -> const Properties::DependencyProperty& {
         Properties::PropertyMetadata metadata;
-        metadata.DefaultValue = Colors::Transparent;
-        metadata.Converter = Properties::GetColorConverter();
+        metadata.DefaultValue = std::uint32_t{};
+        metadata.Converter = Properties::GetIntConverter();
         metadata.Flags = Properties::PropertyFlags::AffectsRender;
-        return Properties::DependencyProperty::Register<SolidColorBrush, Color>("Color", metadata);
+        return Properties::DependencyProperty::Register<SolidColorBrush, std::uint32_t>("Argb", metadata);
     }();
     return property;
 }
@@ -60,7 +60,7 @@ void RegisterBrushProperties()
 void RegisterSolidColorBrushProperties()
 {
     RegisterBrushProperties();
-    (void)UI::SolidColorBrush::ColorProperty();
+    (void)UI::SolidColorBrush::ArgbProperty();
     UI::Markup::Xaml::RegisterXamlType<UI::SolidColorBrush>(
         "SolidColorBrush", "", "NeoWPF::UI::SolidColorBrush",
         "NeoWPF/UI/Core/Media/SolidColorBrush.h");

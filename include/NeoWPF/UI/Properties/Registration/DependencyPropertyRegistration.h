@@ -6,7 +6,6 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
-#include <NeoWPF/UI/Core/Media/Color.h>
 #include <any>
 #include <cstring>
 #include <string>
@@ -55,15 +54,10 @@ namespace NeoWPF::UI::Properties {
         if (!registrationMetadata.PropertyChangedCallback) {
             registrationMetadata.PropertyChangedCallback = [setter](DependencyObject* sender, const DependencyPropertyChangedEventArgs& args) {
                 if (auto owner = dynamic_cast<TOwner*>(sender)) {
-                    try {
+                    if constexpr (std::is_same_v<std::remove_cvref_t<TProperty>, std::any>) {
+                        std::invoke(setter, owner, args.NewValue);
+                    } else {
                         std::invoke(setter, owner, std::any_cast<TProperty>(args.NewValue));
-                    } catch (const std::bad_any_cast&) {
-                        if constexpr (std::is_same_v<TProperty, ::NeoWPF::UI::Color>) {
-                            if (args.NewValue.type() == typeid(std::uint32_t)) {
-                                const auto value = std::any_cast<std::uint32_t>(args.NewValue);
-                                std::invoke(setter, owner, ::NeoWPF::UI::Color::FromArgb(value));
-                            }
-                        }
                     }
                 }
             };
@@ -104,15 +98,10 @@ namespace NeoWPF::UI::Properties {
         if (!registrationMetadata.PropertyChangedCallback) {
             registrationMetadata.PropertyChangedCallback = [setter](DependencyObject* sender, const DependencyPropertyChangedEventArgs& args) {
                 if (auto owner = dynamic_cast<TOwner*>(sender)) {
-                    try {
+                    if constexpr (std::is_same_v<std::remove_cvref_t<TProperty>, std::any>) {
+                        std::invoke(setter, owner, args.NewValue);
+                    } else {
                         std::invoke(setter, owner, std::any_cast<TProperty>(args.NewValue));
-                    } catch (const std::bad_any_cast&) {
-                        if constexpr (std::is_same_v<TProperty, ::NeoWPF::UI::Color>) {
-                            if (args.NewValue.type() == typeid(std::uint32_t)) {
-                                const auto value = std::any_cast<std::uint32_t>(args.NewValue);
-                                std::invoke(setter, owner, ::NeoWPF::UI::Color::FromArgb(value));
-                            }
-                        }
                     }
                 }
             };
@@ -206,22 +195,8 @@ namespace NeoWPF::UI::Properties {
             return *property; \
         }
 
-    /*
-        @summary
-        Registers base brush dependency properties.
-
-        @internal
-    */
     void RegisterBrushProperties();
-
-    /*
-        @summary
-        Registers SolidColorBrush dependency properties and XAML metadata.
-
-        @internal
-    */
     void RegisterSolidColorBrushProperties();
-
     void RegisterUIElementProperties();
     void RegisterFrameworkElementProperties();
     void RegisterControlProperties();

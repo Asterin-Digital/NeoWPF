@@ -90,7 +90,7 @@ neolint::DiagnosticList AnalyzeFixture(const char* fixture)
     neolint::RuleConfig config;
     EXPECT_TRUE(clang::tooling::runToolOnCodeWithArgs(
         std::make_unique<Action>(config, diagnostics), code,
-        {"-std=c++20"}, fixture));
+        {"-std=c++20"}, fixture, NEOLINT_TEST_CLANG_TOOL));
     return diagnostics.Diagnostics();
 }
 }

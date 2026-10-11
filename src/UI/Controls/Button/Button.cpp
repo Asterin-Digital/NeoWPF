@@ -3,6 +3,7 @@
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
@@ -20,14 +21,17 @@ namespace {
 void ApplyThemeStyle(
     NeoWPF::UI::Button& button)
 {
-    using NeoWPF::Core::ApplicationThemes::PaletteColor;
+    using NeoWPF::Core::ApplicationThemes::PaletteBrush;
     using NeoWPF::Core::ApplicationThemes::ThemeFontSize;
     using NeoWPF::Core::ApplicationThemes::ThemePadding;
     using NeoWPF::Core::ApplicationThemes::ThemeManager;
     auto& themeManager = ThemeManager::Instance();
-    button.SetThemePropertyValue("Background", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Surface));
-    button.SetThemePropertyValue("BorderBrush", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Border));
-    button.SetThemePropertyValue("Foreground", NeoWPF::Core::ApplicationThemes::GetPaletteColor(PaletteColor::Foreground));
+    button.SetThemePropertyValue("Background",
+        NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Surface));
+    button.SetThemePropertyValue("BorderBrush",
+        NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Border));
+    button.SetThemePropertyValue("Foreground",
+        NeoWPF::Core::ApplicationThemes::GetPaletteBrush(PaletteBrush::Foreground));
 
     int fontSize = 0;
     if (themeManager.TryGetFontSize(ThemeFontSize::Control, fontSize)) {
@@ -58,7 +62,7 @@ Button::Button()
     m_textContent->SetText(L"");
     m_textContent->SetTextHorizontalAlignment(TextHorizontalAlignment::Center);
     m_textContent->SetTextVerticalAlignment(TextVerticalAlignment::Center);
-    m_textContent->SetTextColor(m_textColor.ToArgb());
+    m_textContent->SetForeground(nullptr);
     m_textContent->SetFontSize(m_fontSize);
     SetContent(m_textContent);
 
@@ -78,6 +82,10 @@ Button::Button(const std::wstring& text)
 
 Button::~Button()
 {
+    if (const auto brush = m_subscribedForeground.lock();
+        brush && m_foregroundChangedHandlerId != 0) {
+        brush->RemoveChangedHandler(m_foregroundChangedHandlerId);
+    }
     NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().UnsubscribeThemeApplied(
         m_themeAppliedSubscriptionId);
     NeoWPF::UI::Localization::LocaleOperations::ClearLocale(*this, TextProperty());
@@ -144,18 +152,39 @@ TextVerticalAlignment Button::GetTextVerticalAlignment() const noexcept
     return TextVerticalAlignment::Top;
 }
 
-void Button::SetTextColor(NeoWPF::UI::Color color) noexcept
+void Button::SetForeground(std::shared_ptr<Brush> brush)
 {
     if (!IsApplyingPropertyValue()) {
-        SetValue(TextColorProperty(), color);
+        SetValue(ForegroundProperty(), brush);
         return;
     }
 
-    m_textColor = color;
-    if (m_textContent) {
-        m_textContent->SetTextColor(color.ToArgb());
+    if (const auto oldBrush = m_subscribedForeground.lock();
+        oldBrush && m_foregroundChangedHandlerId != 0) {
+        oldBrush->RemoveChangedHandler(m_foregroundChangedHandlerId);
+        m_foregroundChangedHandlerId = 0;
     }
+    m_subscribedForeground = brush;
+    if (brush) {
+        m_foregroundChangedHandlerId = brush->AddChangedHandler([this] {
+            UpdateForegroundBrush();
+            InvalidateVisual();
+        });
+    }
+    UpdateForegroundBrush();
     InvalidateVisual();
+}
+
+std::shared_ptr<Brush> Button::GetForeground() const
+{
+    return GetValue<std::shared_ptr<Brush>>(ForegroundProperty());
+}
+
+void Button::UpdateForegroundBrush()
+{
+    if (m_textContent) {
+        m_textContent->SetForeground(GetForeground());
+    }
 }
 
 void Button::SetFontSize(int fontSize) noexcept
@@ -225,16 +254,6 @@ Thickness Button::GetPadding() const noexcept
     return Control::GetPadding();
 }
 
-void Button::SetBackgroundColor(NeoWPF::UI::Color color) noexcept
-{
-    Control::SetBackgroundColor(color);
-}
-
-void Button::SetBorderColor(NeoWPF::UI::Color color) noexcept
-{
-    Control::SetBorderColor(color);
-}
-
 void Button::OnPaddingChanged(Thickness padding)
 {
     if (auto presenter = GetPresenter()) {
@@ -243,19 +262,19 @@ void Button::OnPaddingChanged(Thickness padding)
     InvalidateVisual();
 }
 
-void Button::OnBackgroundColorChanged(NeoWPF::UI::Color color)
+void Button::OnBackgroundBrushChanged(const std::shared_ptr<Brush>& brush)
 {
     if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
-        background->SetFillColor(color.ToArgb());
+        background->SetFillBrush(brush);
     }
 
     InvalidateVisual();
 }
 
-void Button::OnBorderColorChanged(NeoWPF::UI::Color color)
+void Button::OnBorderBrushChanged(const std::shared_ptr<Brush>& brush)
 {
     if (auto background = std::dynamic_pointer_cast<Templates::TemplateVisual>(FindTemplateChild("PART_Background"))) {
-        background->SetBorderColor(color.ToArgb());
+        background->SetBorderBrush(brush);
     }
 
     InvalidateVisual();
@@ -312,7 +331,9 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
     else {
         const double borderThickness = 1.0;
-        const uint32_t borderColor = GetBorderColor().ToArgb();
+        const auto borderBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBorderBrush());
+        const auto backgroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
+        const uint32_t borderColor = borderBrush ? borderBrush->GetArgb() : 0x00000000u;
         const double borderInset = borderThickness * 0.5;
         const double borderX = drawX + borderInset;
         const double borderY = drawY + borderInset;
@@ -358,7 +379,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 innerTR,
                 innerBR,
                 innerBL,
-                GetBackgroundColor().ToArgb(),
+                backgroundBrush ? backgroundBrush->GetArgb() : 0x00000000u,
                 GetOpacity(),
                 NeoWPF::Rendering::ClipRect{},
                 rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);

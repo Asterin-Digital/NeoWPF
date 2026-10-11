@@ -65,7 +65,6 @@ public:
     };
 
     Grid() {
-        SetBackgroundColor(0x00000000u);
     }
 
     static const NeoWPF::UI::Properties::DependencyProperty& RowProperty();
