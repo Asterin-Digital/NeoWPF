@@ -55,8 +55,8 @@ void SetTabAppearance(const Ref<Button>& button, bool selected)
 
     if (auto backgroundVisual = std::dynamic_pointer_cast<NeoWPF::UI::Templates::TemplateVisual>(
             button->FindTemplateChild("PART_Background"))) {
-        backgroundVisual->SetFillColor(background.ToArgb());
-        backgroundVisual->SetBorderColor(border.ToArgb());
+        backgroundVisual->SetFillBrush(background);
+        backgroundVisual->SetBorderBrush(border);
     }
     button->InvalidateVisual();
 }

@@ -270,6 +270,8 @@ namespace NeoWPF {
     }
 
     namespace UI {
+        using SolidBrush = ::NeoWPF::UI::SolidColorBrush;
+
         namespace Media {
             using BitmapImage = ::NeoWPF::UI::Core::Media::BitmapImage;
 

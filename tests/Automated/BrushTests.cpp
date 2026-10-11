@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
@@ -34,6 +35,22 @@ TEST(BrushTests, ProvidesDefaultsAndStoresSolidBrushValues)
 
     EXPECT_EQ(brush.GetArgb(), argb);
     EXPECT_DOUBLE_EQ(brush.GetOpacity(), 0.5);
+}
+
+TEST(BrushTests, ColorPresetsAreSolidBrushes)
+{
+    static_assert(std::is_same_v<decltype(NeoWPF::UI::Colors::Red()),
+                                 std::shared_ptr<NeoWPF::UI::Brush>>);
+
+    const auto red = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(
+        NeoWPF::UI::Colors::Red());
+    ASSERT_NE(red, nullptr);
+    EXPECT_EQ(red->GetArgb(), 0xFFFF0000u);
+
+    const auto transparent = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(
+        NeoWPF::UI::Colors::Transparent());
+    ASSERT_NE(transparent, nullptr);
+    EXPECT_EQ(transparent->GetArgb(), 0x00000000u);
 }
 
 TEST(BrushTests, NotifiesAndCanRemoveChangedHandlersDuringNotification)

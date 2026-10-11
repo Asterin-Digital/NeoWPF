@@ -44,8 +44,8 @@ Ref<NeoWPF::UI::Border> MakeSection(const std::wstring& title, const Ref<NeoWPF:
     section->SetPadding(18);
     section->SetBorderThickness(1);
     section->SetCornerRadius(NeoWPF::UI::CornerRadius(4));
-    section->SetBackgroundColor(GetPaletteBrush(PaletteBrush::Surface));
-    section->SetBorderColor(GetPaletteBrush(PaletteBrush::Border));
+    section->SetBackgroundBrush(GetPaletteBrush(PaletteBrush::Surface));
+    section->SetBorderBrush(GetPaletteBrush(PaletteBrush::Border));
     section->SetChild(sectionContent);
     return section;
 }

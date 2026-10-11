@@ -33,9 +33,9 @@ Ref<NeoWPF::UI::Border> MakeSection(const std::wstring& title, const Ref<NeoWPF:
     section->SetPadding(18);
     section->SetBorderThickness(1);
     section->SetCornerRadius(NeoWPF::UI::CornerRadius(4));
-    section->SetBackgroundColor(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+    section->SetBackgroundBrush(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
         NeoWPF::Core::ApplicationThemes::PaletteBrush::Surface));
-    section->SetBorderColor(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+    section->SetBorderBrush(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
         NeoWPF::Core::ApplicationThemes::PaletteBrush::Border));
     section->SetChild(sectionContent);
     return section;

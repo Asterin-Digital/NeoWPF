@@ -31,6 +31,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Core/Element/Control.h>
 #include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
+#include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Core/Media/BitmapSource.h>
 #include <NeoWPF/UI/Core/Media/BitmapImage.h>
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
