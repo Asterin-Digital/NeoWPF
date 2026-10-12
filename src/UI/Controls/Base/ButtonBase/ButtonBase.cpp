@@ -2,9 +2,6 @@
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
-// hai hai!! if you need a base for an UI control that has button behavior, please use this
-// instead of reimplementing behavior and state from scratch
-
 namespace NeoWPF::UI {
 
 ButtonBase::ButtonBase()

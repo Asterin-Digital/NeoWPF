@@ -864,6 +864,7 @@ if(BUILD_TESTING)
         tests/Automated/EventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
         tests/Automated/BrushTests.cpp
+        tests/Automated/CheckboxTests.cpp
         tests/Automated/ControlThemeTests.cpp
         tests/Automated/ButtonTests.cpp
         tests/Automated/CommonConvertersTests.cpp

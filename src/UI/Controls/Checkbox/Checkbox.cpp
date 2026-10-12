@@ -298,6 +298,7 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         box->SetCornerRadius(GetCornerRadius());
         box->SetBorderThickness(1);
         box->SetOpacity(GetOpacity());
+        box->SetRotation(renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
         box->BuildRenderCommands(commands);
     }
     else {
@@ -315,12 +316,20 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         constexpr float kCheckAngle = 0.68f;
 
         auto drawCheckStroke = [&](double width, double height, float rotationRadians, double offsetX, double offsetY) {
-            const double x = checkCenterX + offsetX - width * 0.5;
-            const double y = checkCenterY + offsetY - height * 0.5;
+            double strokeCenterX = checkCenterX + offsetX;
+            double strokeCenterY = checkCenterY + offsetY;
+            const double relativeX = strokeCenterX - renderTransform.pivot.X;
+            const double relativeY = strokeCenterY - renderTransform.pivot.Y;
+            const double cosine = std::cos(renderTransform.rotationRadians);
+            const double sine = std::sin(renderTransform.rotationRadians);
+            strokeCenterX = renderTransform.pivot.X + relativeX * cosine - relativeY * sine;
+            strokeCenterY = renderTransform.pivot.Y + relativeX * sine + relativeY * cosine;
+            const double x = strokeCenterX - width * 0.5;
+            const double y = strokeCenterY - height * 0.5;
             commands.DrawRoundedRect(x, y, width, height, 0.0f, 0.0f, 0.0f, 0.0f,
                                     foreground ? foreground->GetArgb() : 0u, GetOpacity(),
-                                    NeoWPF::Rendering::ClipRect{}, rotationRadians,
-                                    renderTransform.pivot.X, renderTransform.pivot.Y);
+                                    NeoWPF::Rendering::ClipRect{}, rotationRadians + renderTransform.rotationRadians,
+                                    strokeCenterX, strokeCenterY);
         };
 
         drawCheckStroke(2.0f, 5.0f, -kCheckAngle, -2.5f, 1.0f);

@@ -37,10 +37,10 @@ int main()
     NeoWPF::Core::Application::Initialize();
 
     auto& app = NeoWPF::Core::Application::Current();
-    auto window = app.CreateWindow(L"Hello NeoWPF", 800, 600);
+    auto window = app.CreateWindow(L"NeoWPF", 800, 600);
 
     auto root = std::make_shared<Grid>();
-    root->SetBackgroundColor(0xFF1E1E1Eu);
+    root->SetBackgroundBrush(std::make_shared<SolidColorBrush>(0xFF1E1E1Eu));
 
     auto panel = std::make_shared<StackPanel>();
     panel->SetSpacing(16);
@@ -49,14 +49,14 @@ int main()
 
     auto title = std::make_shared<TextBlock>(L"Hello, NeoWPF");
     title->SetFontSize(32);
-    title->SetTextColor(0xFFFFFFFFu);
+    title->SetForeground(std::make_shared<SolidColorBrush>(0xFFFFFFFFu));
     panel->AddChild(title);
 
     auto button = std::make_shared<Button>(L"Click me");
     button->SetWidth(200);
     button->SetHeight(45);
-    button->SetBackgroundColor(0xFF4F86C6u);
-    button->Clicked += []() {
+    button->SetBackgroundBrush(std::make_shared<SolidColorBrush>(0xFF4F86C6u));
+    button->Click += []() {
         // ur click logic
     };
     panel->AddChild(button);

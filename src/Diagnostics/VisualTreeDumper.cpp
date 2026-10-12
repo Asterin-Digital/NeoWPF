@@ -144,7 +144,8 @@ static std::string FormatBrush(const std::shared_ptr<NeoWPF::UI::Brush>& brush)
     if (const auto solidBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(brush)) {
         return FormatArgb(solidBrush->GetArgb());
     }
-    return typeid(*brush).name();
+    const auto* brushPointer = brush.get();
+    return typeid(*brushPointer).name();
 }
 
 std::string VisualTreeDumper::FormatLayoutInfo(NeoWPF::UI::Visual* element)
