@@ -86,43 +86,17 @@ I believe NeoWPF has a lot of potential to become widely used across its support
 
 With more developers contributing to the project, I see NeoWPF eventually being able to live alongside WPF and Qt without becoming bloated.
 
-### Features 
+### Features
 
-I managed to port many features from WPF, including innovating in areas where WPF is weak and annoying to use.
+NeoWPF implements the WPF development model natively in C++: XAML, dependency properties, data binding, triggers, and Visual State Manager.
 
-Going from:
-- Button
-- TextBox
-- ScrollViewer/ScrollBar
-- Checkbox
-- ComboBox
-- ListBox
-- ItemsControl
-- Popup
-- Thumb
-- Image (bitmap, etc)
-- Grid
-- Panel
-- Border
-- and more, see UI/Controls and UI/Layout
+· Visual tree is thread-safe, and custom window chrome is built in
+· XAML is compiled at build time by NeoCM rather than parsed at runtime
+· NeoPM handles project setup, resources, and builds
+· Controls cover Button, TextBox, ComboBox, ListBox, Image, ScrollViewer, and Popup, with Grid, Panel, and Border for layout
+· Localization, animation, routed input events, and video and audio playback are included
 
-and many other features like:
-- Custom window chrome
-- Localization
-- Dependency Property
-- Data Binding
-- Triggers
-- Visual State Manager
-- Media foundation (video/audio)
-- Thread-safe Visual Tree
-- Animations
-- Input (routed events, mouse/keyboard, etc)
-- XAML
-- Project manager (NeoPM)
-- XAML Compiler (NeoCM)
-- And many more features that aren't mentioned here (see UI/, Renderer/, Platform/)
-
-With a cross-platform foundation, NeoWPF intends to make usage as smooth as possible while adding as many features as possible without bloating the base.
+Full control listings are in UI/Controls and UI/Layout; the remaining subsystems are under UI/, Renderer/, and Platform/.
 
 ### Documentation
 
