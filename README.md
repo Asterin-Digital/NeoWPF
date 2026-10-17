@@ -90,11 +90,15 @@ With more developers contributing to the project, I see NeoWPF eventually being 
 
 NeoWPF implements the WPF development model natively in C++: XAML, dependency properties, data binding, triggers, and Visual State Manager.
 
-· Visual tree is thread-safe, and custom window chrome is built in
-· XAML is compiled at build time by NeoCM rather than parsed at runtime
-· NeoPM handles project setup, resources, and builds
-· Controls cover Button, TextBox, ComboBox, ListBox, Image, ScrollViewer, and Popup, with Grid, Panel, and Border for layout
-· Localization, animation, routed input events, and video and audio playback are included
+* Visual tree is thread-safe, and custom window chrome is built in
+
+* XAML is compiled at build time by NeoCM rather than parsed at runtime
+
+* NeoPM handles project setup, resources, and builds
+
+* Controls cover Button, TextBox, ComboBox, ListBox, Image, ScrollViewer, and Popup, with Grid, Panel, and Border for layout
+
+* Localization, animation, routed input events, and video and audio playback are included
 
 Full control listings are in UI/Controls and UI/Layout; the remaining subsystems are under UI/, Renderer/, and Platform/.
 
