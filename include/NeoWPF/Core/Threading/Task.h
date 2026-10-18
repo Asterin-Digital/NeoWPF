@@ -123,11 +123,11 @@ private:
                 return;
             }
             setter(*m_state);
-            m_state->completed = true;
             continuations = std::move(m_state->continuations);
-        }
-        for (auto& continuation : continuations) {
-            continuation();
+            for (auto& continuation : continuations) {
+                continuation();
+            }
+            m_state->completed = true;
         }
         m_state->condition.notify_all();
     }
@@ -235,11 +235,11 @@ private:
                 return;
             }
             setter(*m_state);
-            m_state->completed = true;
             continuations = std::move(m_state->continuations);
-        }
-        for (auto& continuation : continuations) {
-            continuation();
+            for (auto& continuation : continuations) {
+                continuation();
+            }
+            m_state->completed = true;
         }
         m_state->condition.notify_all();
     }
