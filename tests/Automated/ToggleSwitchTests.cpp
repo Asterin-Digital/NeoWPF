@@ -176,11 +176,10 @@ TEST_F(ToggleSwitchTests, CheckedStateUsesTheThemeAccentTrack)
 TEST_F(ToggleSwitchTests, DisabledStateUsesTheThemeDisabledSurface)
 {
     NeoWPF::UI::ToggleSwitch toggleSwitch;
+    toggleSwitch.SetEnabled(false);
     toggleSwitch.ApplyTemplate();
     toggleSwitch.Initialize();
     toggleSwitch.Arrange(36.0, 20.0);
-    toggleSwitch.SetEnabled(false);
-    toggleSwitch.OnMouseUp(0, 0, 0x00);
 
     NeoWPF::Rendering::CommandList commands;
     toggleSwitch.BuildRenderCommands(commands);
@@ -215,11 +214,43 @@ TEST_F(ToggleSwitchTests, PointerVisualStatesUseThemePaletteRoles)
     toggleSwitch.OnMouseUp(0, 0, 0x00);
     ASSERT_TRUE(toggleSwitch.IsChecked());
     EXPECT_EQ(GetRenderedTrackColor(toggleSwitch),
-              GetBrushColor(GetPaletteBrush(PaletteBrush::AccentHover)));
+              GetBrushColor(GetPaletteBrush(PaletteBrush::Accent)));
 
     toggleSwitch.OnMouseLeave(nullptr);
     EXPECT_EQ(GetRenderedTrackColor(toggleSwitch),
               GetBrushColor(GetPaletteBrush(PaletteBrush::Accent)));
+
+    toggleSwitch.OnMouseEnter(nullptr);
+    toggleSwitch.OnMouseDown(0, 0, 0x01);
+    EXPECT_EQ(GetRenderedTrackColor(toggleSwitch),
+              GetBrushColor(GetPaletteBrush(PaletteBrush::Accent)));
+}
+
+TEST_F(ToggleSwitchTests, PointerStateChangesInvalidateTheVisualTree)
+{
+    NeoWPF::UI::ToggleSwitch toggleSwitch;
+    toggleSwitch.ApplyTemplate();
+    toggleSwitch.Initialize();
+    toggleSwitch.Arrange(36.0, 20.0);
+
+    toggleSwitch.OnMouseEnter(nullptr);
+    toggleSwitch.ClearDirty();
+    toggleSwitch.OnMouseLeave(nullptr);
+
+    EXPECT_TRUE(toggleSwitch.IsTreeDirty());
+    EXPECT_EQ(GetRenderedTrackColor(toggleSwitch), GetBrushColor(
+        NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+            NeoWPF::Core::ApplicationThemes::PaletteBrush::Track)));
+
+    toggleSwitch.SetChecked(true);
+    toggleSwitch.OnMouseEnter(nullptr);
+    toggleSwitch.ClearDirty();
+    toggleSwitch.OnMouseLeave(nullptr);
+
+    EXPECT_TRUE(toggleSwitch.IsTreeDirty());
+    EXPECT_EQ(GetRenderedTrackColor(toggleSwitch), GetBrushColor(
+        NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+            NeoWPF::Core::ApplicationThemes::PaletteBrush::Accent)));
 }
 
 TEST_F(ToggleSwitchTests, ContentTextUpdatesTheLabelAndDesiredSize)
@@ -340,4 +371,25 @@ TEST_F(ToggleSwitchTests, XamlRegistrationCreatesTheControlWithProperties)
     ASSERT_NE(toggleSwitch, nullptr);
     EXPECT_EQ(toggleSwitch->GetContentText(), L"Wi-Fi");
     EXPECT_TRUE(toggleSwitch->IsChecked());
+}
+
+TEST_F(ToggleSwitchTests, FocusChangesPreserveCheckedVisualState)
+{
+    NeoWPF::UI::ToggleSwitch toggleSwitch;
+    toggleSwitch.ApplyTemplate();
+    toggleSwitch.Initialize();
+    toggleSwitch.Arrange(36.0, 20.0);
+    toggleSwitch.SetChecked(true);
+
+    const auto accentColor = GetBrushColor(
+        NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+            NeoWPF::Core::ApplicationThemes::PaletteBrush::Accent));
+
+    toggleSwitch.OnGotFocus();
+    EXPECT_TRUE(toggleSwitch.IsChecked());
+    EXPECT_EQ(GetRenderedTrackColor(toggleSwitch), accentColor);
+
+    toggleSwitch.OnLostFocus();
+    EXPECT_TRUE(toggleSwitch.IsChecked());
+    EXPECT_EQ(GetRenderedTrackColor(toggleSwitch), accentColor);
 }

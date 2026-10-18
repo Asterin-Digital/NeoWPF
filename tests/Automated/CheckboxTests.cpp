@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <NeoWPF/Core/Application/Application.h>
+#include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
 #include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
@@ -141,6 +142,27 @@ TEST_F(CheckboxTests, CheckmarkAndBoxFollowCheckboxRotation)
         EXPECT_NEAR(boxCenter.y, expectedBoxCenter.y, 0.0001);
     }
     EXPECT_EQ(boxCommandCount, 2u);
+}
+
+TEST_F(CheckboxTests, FocusChangesPreserveCheckedVisualState)
+{
+    constexpr std::uint32_t checkColor = 0xFF010203u;
+    const auto accentBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(
+        NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+            NeoWPF::Core::ApplicationThemes::PaletteBrush::Accent));
+    ASSERT_NE(accentBrush, nullptr);
+
+    auto checkbox = MakeCheckedCheckbox(checkColor);
+    NeoWPF::Rendering::CommandList commands;
+
+    checkbox->OnGotFocus();
+    checkbox->BuildRenderCommands(commands);
+    EXPECT_EQ(FindRoundedRects(commands, accentBrush->GetArgb()).size(), 2u);
+
+    commands.Clear();
+    checkbox->OnLostFocus();
+    checkbox->BuildRenderCommands(commands);
+    EXPECT_EQ(FindRoundedRects(commands, accentBrush->GetArgb()).size(), 2u);
 }
 
 }

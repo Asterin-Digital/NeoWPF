@@ -13,12 +13,31 @@ ToggleBase::ToggleBase()
 void ToggleBase::OnInitialize()
 {
     UIElement::OnInitialize();
-    ApplyVisualState(m_isChecked ? "Checked" : "Unchecked", false);
+    RefreshVisualState();
 }
 
 void ToggleBase::InitializeVisualStates()
 {
     m_visualStateManager = std::make_shared<Styling::VisualStateManager>();
+}
+
+std::string ToggleBase::ComputeVisualState() const
+{
+    if (!IsEnabled()) {
+        return "Disabled";
+    }
+    if (m_isPressed) {
+        return m_isChecked ? "CheckedPressed" : "Pressed";
+    }
+    if (m_isMouseOver) {
+        return m_isChecked ? "CheckedMouseOver" : "MouseOver";
+    }
+    return m_isChecked ? "Checked" : "Unchecked";
+}
+
+void ToggleBase::RefreshVisualState()
+{
+    ApplyVisualState(ComputeVisualState(), false);
 }
 
 void ToggleBase::ApplyVisualState(const std::string& stateName, bool useTransitions)
@@ -37,6 +56,7 @@ void ToggleBase::ApplyVisualState(const std::string& stateName, bool useTransiti
     }
 
     OnVisualStateApplied(stateName);
+    InvalidateVisual();
 }
 
 void ToggleBase::OnVisualStateApplied(const std::string& stateName)
@@ -65,16 +85,13 @@ void ToggleBase::SetChecked(bool value) noexcept
     }
 
     m_isChecked = value;
+    RefreshVisualState();
     if (m_isChecked) {
-        ApplyVisualState("Checked", false);
         RaiseChecked();
     }
     else {
-        ApplyVisualState("Unchecked", false);
         RaiseUnchecked();
     }
-
-    InvalidateVisual();
 }
 
 void ToggleBase::Toggle() noexcept
@@ -112,42 +129,43 @@ void ToggleBase::RaiseClick()
 
 void ToggleBase::OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args)
 {
-    if (IsEnabled()) {
-        ApplyVisualState(m_isChecked ? "CheckedMouseOver" : "MouseOver", false);
-    }
+    m_isMouseOver = true;
+    RefreshVisualState();
 }
 
 void ToggleBase::OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args)
 {
+    m_isMouseOver = false;
     m_isPressed = false;
-    if (IsEnabled()) {
-        ApplyVisualState(m_isChecked ? "Checked" : "Unchecked", false);
-    }
+    RefreshVisualState();
 }
 
 void ToggleBase::OnMouseDown(int x, int y, std::uint32_t buttonState)
 {
-    if (IsEnabled()) {
-        m_isPressed = (buttonState & 0x01) != 0;
-        ApplyVisualState(m_isChecked ? "CheckedPressed" : "Pressed", false);
-    }
+    m_isMouseOver = true;
+    m_isPressed = IsEnabled() && (buttonState & 0x01) != 0;
+    RefreshVisualState();
 }
 
 void ToggleBase::OnMouseUp(int x, int y, std::uint32_t buttonState)
 {
-    if (IsEnabled()) {
-        const bool shouldToggle = m_isPressed && ((buttonState & 0x01) == 0);
-        m_isPressed = false;
-        if (shouldToggle) {
-            Toggle();
-            RaiseClick();
-        }
-        ApplyVisualState(m_isChecked ? "CheckedMouseOver" : "MouseOver", false);
+    const bool shouldToggle = IsEnabled() && m_isPressed && ((buttonState & 0x01) == 0);
+    m_isPressed = false;
+    if (shouldToggle) {
+        Toggle();
+        RaiseClick();
     }
-    else {
-        m_isPressed = false;
-        ApplyVisualState("Disabled", false);
-    }
+    RefreshVisualState();
+}
+
+void ToggleBase::OnGotFocus()
+{
+    RefreshVisualState();
+}
+
+void ToggleBase::OnLostFocus()
+{
+    RefreshVisualState();
 }
 
 }

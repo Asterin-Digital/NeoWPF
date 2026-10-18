@@ -41,6 +41,8 @@ public:
     virtual void OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args) override;
     virtual void OnMouseDown(int x, int y, std::uint32_t buttonState) override;
     virtual void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
+    void OnGotFocus() override;
+    void OnLostFocus() override;
 
     NeoWPF::Core::Event<> Checked;
     NeoWPF::Core::Event<> Unchecked;
@@ -49,6 +51,18 @@ public:
 protected:
     void OnInitialize() override;
     void InitializeVisualStates();
+    /*
+        @internal
+        @summary
+        Computes the visual state from the toggle's current interaction state.
+    */
+    std::string ComputeVisualState() const;
+    /*
+        @internal
+        @summary
+        Applies the visual state matching the toggle's current state.
+    */
+    void RefreshVisualState();
     void ApplyVisualState(const std::string& stateName, bool useTransitions = false);
     void RaiseChecked();
     void RaiseUnchecked();
@@ -61,6 +75,7 @@ protected:
     std::string m_currentVisualState;
     bool m_isChecked = false;
     bool m_isPressed = false;
+    bool m_isMouseOver = false;
     std::wstring m_contentText;
 };
 

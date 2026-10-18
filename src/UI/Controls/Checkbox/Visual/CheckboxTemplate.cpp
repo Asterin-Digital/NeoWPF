@@ -31,7 +31,7 @@ void ApplyBoxState(UIElement* element, Visual* visual, const std::string& stateN
     } else if (stateName == "CheckedPressed") {
         fill = GetPaletteBrush(PaletteBrush::AccentPressed);
         border = GetPaletteBrush(PaletteBrush::Accent);
-    } else if (stateName == "Focused" || stateName == "MouseOver") {
+    } else if (stateName == "MouseOver") {
         fill = GetPaletteBrush(PaletteBrush::AccentHover);
         border = GetPaletteBrush(PaletteBrush::Focus);
     } else if (stateName == "Pressed") {
@@ -45,7 +45,6 @@ void ApplyBoxState(UIElement* element, Visual* visual, const std::string& stateN
     box->SetFillBrush(fill);
     box->SetBorderBrush(border);
     box->SetCornerRadius(checkbox->GetCornerRadius());
-    checkbox->InvalidateVisual();
 }
 
 }
@@ -69,10 +68,6 @@ CheckboxTemplate::CheckboxTemplate()
     auto visualStateManager = std::make_shared<Styling::VisualStateManager>();
     auto commonStates = std::make_shared<Styling::VisualStateGroup>("CommonStates");
 
-    auto normalState = std::make_shared<Styling::VisualState>("Normal");
-    normalState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) { ApplyBoxState(element, visual, "Normal"); });
-    commonStates->AddState(normalState);
-
     auto checkedState = std::make_shared<Styling::VisualState>("Checked");
     checkedState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) { ApplyBoxState(element, visual, "Checked"); });
     commonStates->AddState(checkedState);
@@ -80,10 +75,6 @@ CheckboxTemplate::CheckboxTemplate()
     auto uncheckedState = std::make_shared<Styling::VisualState>("Unchecked");
     uncheckedState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) { ApplyBoxState(element, visual, "Unchecked"); });
     commonStates->AddState(uncheckedState);
-
-    auto focusedState = std::make_shared<Styling::VisualState>("Focused");
-    focusedState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) { ApplyBoxState(element, visual, "Focused"); });
-    commonStates->AddState(focusedState);
 
     auto mouseOverState = std::make_shared<Styling::VisualState>("MouseOver");
     mouseOverState->AddSetter("PART_Box", [](UIElement* element, Visual* visual) { ApplyBoxState(element, visual, "MouseOver"); });

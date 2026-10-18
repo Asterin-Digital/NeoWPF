@@ -15,13 +15,14 @@ std::shared_ptr<Brush> GetTrackBrush(const std::string& stateName)
     if (stateName == "Disabled") {
         return GetPaletteBrush(PaletteBrush::DisabledSurface);
     }
-    if (stateName == "Pressed" || stateName == "CheckedPressed") {
+    if (stateName == "Pressed") {
         return GetPaletteBrush(PaletteBrush::AccentPressed);
     }
-    if (stateName == "Checked") {
+    if (stateName == "Checked" || stateName == "CheckedMouseOver" ||
+        stateName == "CheckedPressed") {
         return GetPaletteBrush(PaletteBrush::Accent);
     }
-    if (stateName == "MouseOver" || stateName == "CheckedMouseOver" || stateName == "Focused") {
+    if (stateName == "MouseOver") {
         return GetPaletteBrush(PaletteBrush::AccentHover);
     }
     return GetPaletteBrush(PaletteBrush::Track);
@@ -80,8 +81,8 @@ ToggleSwitchTemplate::ToggleSwitchTemplate()
 
     auto manager = std::make_shared<Styling::VisualStateManager>();
     auto states = std::make_shared<Styling::VisualStateGroup>("CommonStates");
-    for (const char* name : {"Normal", "Unchecked", "Checked", "MouseOver", "Pressed",
-                             "CheckedMouseOver", "CheckedPressed", "Focused", "Disabled"}) {
+    for (const char* name : {"Unchecked", "Checked", "MouseOver", "Pressed",
+                             "CheckedMouseOver", "CheckedPressed", "Disabled"}) {
         const std::string stateName(name);
         auto state = std::make_shared<Styling::VisualState>(stateName);
         state->AddSetter("PART_Track", [stateName](UIElement* element, Visual* visual) {
