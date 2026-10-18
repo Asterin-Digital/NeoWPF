@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -u
+
+message_file=$1
+
+if ! grep -v '^[[:space:]]*#' "$message_file" | grep -q '[^[:space:]]'; then
+    echo "NeoWPF commit-msg: empty commit messages are not allowed." >&2
+    exit 1
+fi
+
+if grep -Fq '<type> (<project>): <summary>' "$message_file"; then
+    echo "NeoWPF commit-msg: replace the .gitmessage template placeholder." >&2
+    exit 1
+fi
+
+exit 0

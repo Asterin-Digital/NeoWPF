@@ -1,13 +1,5 @@
 #!/bin/sh
 
-#############################################################################################################
-## README BEFORE COMMITTING
-#
-# This can generally take a lot depending on what tests will run inside NeoWPF during pre-commit.
-# If you already ran tests and now you need to commit, you should bypass pre-commit and commit your changes,
-# only if you have ran tests before comitting and none of them failed.
-#############################################################################################################
-
 set -u
 
 repo_root=$(git rev-parse --show-toplevel) || exit 1
