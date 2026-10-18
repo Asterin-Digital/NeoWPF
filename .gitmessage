@@ -1,0 +1,11 @@
+<type> (<project>): <summary>
+
+# Allowed types: Feat, Chore, Refactor, Fix
+# Project tags: NeoPM, NeoWPF, NeoLint, NeoCM, NeoWPF.DotNet
+# Use the project that owns the change. Components such as NeoWPF.Media use NeoWPF.
+# For changes spanning projects, include each applicable project tag, comma-separated.
+# Control and layout additions use this form, for example:
+# Feat (NeoWPF): Add base implementation for ToggleSwitch
+# If an LLM helped write code in a primarily human-authored commit, add this exact
+# marker as the final line of the description; otherwise, omit it:
+# AI Assisted
