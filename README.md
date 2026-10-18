@@ -1,13 +1,12 @@
 ## NeoWPF — A Modern C++ UI Framework
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20Android-lightgrey)](Compile.md)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey)](Compile.md)
 [![C++](https://img.shields.io/badge/C%2B%2B-20-blue)](Compile.md)
 [![Docs](https://img.shields.io/badge/docs-website-informational)](https://neowpf.github.io/Docs/)
 [![Docs Source](https://img.shields.io/badge/docs-source-lightgrey)](https://github.com/NeoWPF/Docs)
 
 ### Design Goals
-
 There's a myriad of frameworks out there, and each may have their own reason to exist. NeoWPF has these design goals:
 
 - Familiar : bring the WPF development model to native C++, including XAML, dependency properties, resources, and data binding
