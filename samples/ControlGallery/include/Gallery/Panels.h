@@ -10,4 +10,6 @@ Ref<NeoWPF::UI::UIElement> CreateTextBoxPanel();
 
 Ref<NeoWPF::UI::UIElement> CreateCheckboxPanel();
 
+Ref<NeoWPF::UI::UIElement> CreateToggleSwitchPanel();
+
 }
