@@ -73,6 +73,10 @@ void ThemeManager::RegisterBuiltInThemes()
     light.Metrics[ThemeMetric::SliderBorderThickness] = 0.0;
     light.Metrics[ThemeMetric::SliderThumbLength] = 16.0;
     light.Metrics[ThemeMetric::ScrollBarBorderThickness] = 0.0;
+    light.Metrics[ThemeMetric::ToggleSwitchTrackWidth] = 36.0;
+    light.Metrics[ThemeMetric::ToggleSwitchTrackHeight] = 20.0;
+    light.Metrics[ThemeMetric::ToggleSwitchThumbInset] = 2.0;
+    light.Metrics[ThemeMetric::ToggleSwitchLabelSpacing] = 8.0;
     light.CornerRadii[ThemeCornerRadius::Control] = NeoWPF::UI::CornerRadius(4);
     light.CornerRadii[ThemeCornerRadius::Checkbox] = NeoWPF::UI::CornerRadius(2);
 
@@ -111,6 +115,10 @@ void ThemeManager::RegisterBuiltInThemes()
     dark.Metrics[ThemeMetric::SliderBorderThickness] = 0.0;
     dark.Metrics[ThemeMetric::SliderThumbLength] = 16.0;
     dark.Metrics[ThemeMetric::ScrollBarBorderThickness] = 0.0;
+    dark.Metrics[ThemeMetric::ToggleSwitchTrackWidth] = 36.0;
+    dark.Metrics[ThemeMetric::ToggleSwitchTrackHeight] = 20.0;
+    dark.Metrics[ThemeMetric::ToggleSwitchThumbInset] = 2.0;
+    dark.Metrics[ThemeMetric::ToggleSwitchLabelSpacing] = 8.0;
     dark.CornerRadii[ThemeCornerRadius::Control] = NeoWPF::UI::CornerRadius(4);
     dark.CornerRadii[ThemeCornerRadius::Checkbox] = NeoWPF::UI::CornerRadius(2);
 

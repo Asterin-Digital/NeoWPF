@@ -19,6 +19,7 @@ void RegisterCoreControlProperties() {
     RegisterRangeBaseProperties();
     RegisterThumbProperties();
     RegisterCheckboxProperties();
+    RegisterToggleSwitchProperties();
     RegisterRadioButtonProperties();
     RegisterItemsControlProperties();
     RegisterSelectorProperties();

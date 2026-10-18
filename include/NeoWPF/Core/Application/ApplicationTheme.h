@@ -79,6 +79,10 @@ enum class ThemeMetric {
     SliderBorderThickness,
     SliderThumbLength,
     ScrollBarBorderThickness,
+    ToggleSwitchTrackWidth,
+    ToggleSwitchTrackHeight,
+    ToggleSwitchThumbInset,
+    ToggleSwitchLabelSpacing,
 };
 
 /*
