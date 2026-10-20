@@ -61,6 +61,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeTextBlockTextWrappingMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(::NeoWPF::UI::TextWrapping::NoWrap);
+        metadata.Converter = NeoWPF::UI::Properties::GetTextWrappingConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }

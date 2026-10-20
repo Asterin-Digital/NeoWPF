@@ -166,6 +166,7 @@ if(BUILD_TESTING)
     add_executable(NeoCM.Tests
         tests/NamlArtifactTests.cpp
         tests/NamlCompilerTests.cpp
+        tests/XamlPropertyCompilerTests.cpp
         tests/GeneratedComponentCompileTests.cpp
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/Generated/App.xaml.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/Generated/App.xaml.g.cpp"

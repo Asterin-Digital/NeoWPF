@@ -13,8 +13,12 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::UI {
 enum class PopupPlacement;
+enum class LayoutSizeMode;
+enum class Orientation;
+enum class TextWrapping;
 enum class TextHorizontalAlignment;
 enum class TextVerticalAlignment;
+struct CornerRadius;
 }
 
 namespace NeoWPF::UI::Properties {
@@ -77,6 +81,30 @@ public:
 };
 
 class SpacingConverter final : public TypeConverter {
+public:
+    bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
+};
+
+class CornerRadiusConverter final : public TypeConverter {
+public:
+    bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
+};
+
+class TextWrappingConverter final : public TypeConverter {
+public:
+    bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
+};
+
+class LayoutSizeModeConverter final : public TypeConverter {
+public:
+    bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
+    bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
+};
+
+class OrientationConverter final : public TypeConverter {
 public:
     bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const override;
     bool TryConvertToCode(const std::string& rawValue, std::string& expression) const override;
@@ -146,6 +174,10 @@ std::shared_ptr<const TypeConverter> GetBoolConverter();
 std::shared_ptr<const TypeConverter> GetBrushConverter();
 std::shared_ptr<const TypeConverter> GetThicknessConverter();
 std::shared_ptr<const TypeConverter> GetSpacingConverter();
+std::shared_ptr<const TypeConverter> GetCornerRadiusConverter();
+std::shared_ptr<const TypeConverter> GetTextWrappingConverter();
+std::shared_ptr<const TypeConverter> GetLayoutSizeModeConverter();
+std::shared_ptr<const TypeConverter> GetOrientationConverter();
 std::shared_ptr<const TypeConverter> GetHorizontalAlignmentConverter();
 std::shared_ptr<const TypeConverter> GetVerticalAlignmentConverter();
 std::shared_ptr<const TypeConverter> GetTextHorizontalAlignmentConverter();

@@ -23,6 +23,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementWidthModeMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::LayoutSizeMode::Auto);
+        metadata.Converter = NeoWPF::UI::Properties::GetLayoutSizeModeConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -30,6 +31,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementHeightModeMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::LayoutSizeMode::Auto);
+        metadata.Converter = NeoWPF::UI::Properties::GetLayoutSizeModeConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
@@ -77,6 +79,7 @@ namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementCornerRadiusMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::CornerRadius{});
+        metadata.Converter = NeoWPF::UI::Properties::GetCornerRadiusConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }

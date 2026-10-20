@@ -3,11 +3,15 @@
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
+#include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Core/Media/Thickness.h>
 #include <NeoWPF/UI/Core/Media/Spacing.h>
+#include <NeoWPF/UI/Core/Media/CornerRadius.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
+#include <NeoWPF/UI/Layout/Placement/TextWrapping.h>
+#include <NeoWPF/UI/Layout/Placement/Orientation.h>
 #include <NeoWPF/UI/Controls/Selector/Selector.h>
 #include <NeoWPF/UI/Controls/Popup/Popup.h>
 #include <NeoWPF/UI/Text/FontStyle.h>
@@ -166,6 +170,24 @@ constexpr std::array<ConversionEntry<NeoWPF::UI::FontStyle>, 3> FontStyleEntries
     {"normal", NeoWPF::UI::FontStyle::Normal, "NeoWPF::UI::FontStyle::Normal"},
     {"italic", NeoWPF::UI::FontStyle::Italic, "NeoWPF::UI::FontStyle::Italic"},
     {"oblique", NeoWPF::UI::FontStyle::Oblique, "NeoWPF::UI::FontStyle::Oblique"},
+}};
+
+constexpr std::array<ConversionEntry<NeoWPF::UI::TextWrapping>, 3> TextWrappingEntries{{
+    {"nowrap", NeoWPF::UI::TextWrapping::NoWrap, "NeoWPF::UI::TextWrapping::NoWrap"},
+    {"wrap", NeoWPF::UI::TextWrapping::Wrap, "NeoWPF::UI::TextWrapping::Wrap"},
+    {"wrapwithoverflow", NeoWPF::UI::TextWrapping::WrapWithOverflow, "NeoWPF::UI::TextWrapping::WrapWithOverflow"},
+}};
+
+constexpr std::array<ConversionEntry<NeoWPF::UI::LayoutSizeMode>, 2> LayoutSizeModeEntries{{
+    {"auto", NeoWPF::UI::LayoutSizeMode::Auto, "NeoWPF::UI::LayoutSizeMode::Auto"},
+    {"stretch", NeoWPF::UI::LayoutSizeMode::Stretch, "NeoWPF::UI::LayoutSizeMode::Stretch"},
+}};
+
+constexpr std::array<ConversionEntry<int>, 2> OrientationEntries{{
+    {"horizontal", static_cast<int>(NeoWPF::UI::Orientation::Horizontal),
+     "static_cast<int>(NeoWPF::UI::Orientation::Horizontal)"},
+    {"vertical", static_cast<int>(NeoWPF::UI::Orientation::Vertical),
+     "static_cast<int>(NeoWPF::UI::Orientation::Vertical)"},
 }};
 
 constexpr std::array<ConversionEntry<int>, 9> FontWeightEntries {{
@@ -487,6 +509,81 @@ bool SpacingConverter::TryConvertToCode(const std::string& rawValue, std::string
     return true;
 }
 
+bool CornerRadiusConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+{
+    const auto parts = NeoWPF::Platform::Split(NeoWPF::Platform::Trim(rawValue), ',');
+    if (parts.size() != 1 && parts.size() != 4) {
+        return false;
+    }
+
+    try {
+        std::vector<float> values;
+        for (const auto& part : parts) {
+            std::size_t parsed = 0;
+            const auto input = NeoWPF::Platform::Trim(part);
+            const auto value = std::stof(input, &parsed);
+            if (parsed != input.size() || !std::isfinite(value)) {
+                return false;
+            }
+            values.push_back(value);
+        }
+
+        convertedValue = values.size() == 1
+            ? NeoWPF::UI::CornerRadius(values[0])
+            : NeoWPF::UI::CornerRadius(values[0], values[1], values[2], values[3]);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+bool CornerRadiusConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    std::any convertedValue;
+    if (!ConvertFromString(rawValue, convertedValue)) {
+        expression.clear();
+        return false;
+    }
+
+    const auto radius = std::any_cast<NeoWPF::UI::CornerRadius>(convertedValue);
+    expression = "NeoWPF::UI::CornerRadius(" +
+        FormatCodeNumber(radius.TopLeft) + ", " +
+        FormatCodeNumber(radius.TopRight) + ", " +
+        FormatCodeNumber(radius.BottomRight) + ", " +
+        FormatCodeNumber(radius.BottomLeft) + ")";
+    return true;
+}
+
+bool TextWrappingConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+{
+    return ConvertMappedValue(rawValue, TextWrappingEntries, convertedValue);
+}
+
+bool TextWrappingConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    return ConvertMappedValueToCode(*this, rawValue, TextWrappingEntries, expression);
+}
+
+bool LayoutSizeModeConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+{
+    return ConvertMappedValue(rawValue, LayoutSizeModeEntries, convertedValue);
+}
+
+bool LayoutSizeModeConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    return ConvertMappedValueToCode(*this, rawValue, LayoutSizeModeEntries, expression);
+}
+
+bool OrientationConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
+{
+    return ConvertMappedValue(rawValue, OrientationEntries, convertedValue);
+}
+
+bool OrientationConverter::TryConvertToCode(const std::string& rawValue, std::string& expression) const
+{
+    return ConvertMappedValueToCode(*this, rawValue, OrientationEntries, expression);
+}
+
 bool HorizontalAlignmentConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
     return ConvertMappedValue(rawValue, HorizontalAlignmentEntries, convertedValue);
@@ -617,6 +714,10 @@ DEFINE_CONVERTER_FACTORY(Bool, BoolConverter)
 DEFINE_CONVERTER_FACTORY(Brush, BrushConverter)
 DEFINE_CONVERTER_FACTORY(Thickness, ThicknessConverter)
 DEFINE_CONVERTER_FACTORY(Spacing, SpacingConverter)
+DEFINE_CONVERTER_FACTORY(CornerRadius, CornerRadiusConverter)
+DEFINE_CONVERTER_FACTORY(TextWrapping, TextWrappingConverter)
+DEFINE_CONVERTER_FACTORY(LayoutSizeMode, LayoutSizeModeConverter)
+DEFINE_CONVERTER_FACTORY(Orientation, OrientationConverter)
 DEFINE_CONVERTER_FACTORY(HorizontalAlignment, HorizontalAlignmentConverter)
 DEFINE_CONVERTER_FACTORY(VerticalAlignment, VerticalAlignmentConverter)
 DEFINE_CONVERTER_FACTORY(TextHorizontalAlignment, TextHorizontalAlignmentConverter)
@@ -657,6 +758,18 @@ bool TryConvertValue(const DependencyProperty& property,
         text = NeoWPF::Platform::WideToUtf8(std::any_cast<std::wstring>(value));
     } else if (value.type() == typeid(std::string)) {
         text = std::any_cast<std::string>(value);
+    } else if (value.type() == typeid(const char*)) {
+        const auto stringValue = std::any_cast<const char*>(value);
+        if (!stringValue) {
+            return false;
+        }
+        text = stringValue;
+    } else if (value.type() == typeid(char*)) {
+        const auto stringValue = std::any_cast<char*>(value);
+        if (!stringValue) {
+            return false;
+        }
+        text = stringValue;
     } else if (value.type() == typeid(const wchar_t*)) {
         const auto stringValue = std::any_cast<const wchar_t*>(value);
         if (!stringValue) {

@@ -11,6 +11,7 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
 #include <any>
@@ -105,6 +106,20 @@ TEST(GeneratedComponentCompileTests, GeneratedImplicitStyleInitializesAndRemains
         std::type_index(typeid(NeoWPF::UI::Button)), implicitStyle));
     ASSERT_NE(implicitStyle, nullptr);
     ASSERT_EQ(implicitStyle->GetSetters().size(), 1u);
+    ASSERT_EQ(implicitStyle->GetTargetType(), std::type_index(typeid(NeoWPF::UI::Button)));
+
+    const auto& setter = implicitStyle->GetSetters().front();
+    ASSERT_EQ(setter->GetProperty(), "Text");
+    ASSERT_EQ(setter->GetValue().type(), typeid(std::string));
+    std::any parsedValue;
+    ASSERT_TRUE(NeoWPF::UI::Properties::TryConvertValue(
+        NeoWPF::UI::Button::TextProperty(), setter->GetValue(), parsedValue));
+    ASSERT_EQ(parsedValue.type(), typeid(std::wstring));
+    EXPECT_EQ(std::any_cast<std::wstring>(parsedValue), L"Compiled implicit");
+
+    auto styleProbe = std::make_shared<NeoWPF::UI::Button>();
+    EXPECT_TRUE(implicitStyle->ApplyTo(*styleProbe));
+    EXPECT_EQ(styleProbe->GetText(), L"Compiled implicit");
 
     component.Root->Initialize();
     EXPECT_EQ(component.StyledButton->GetText(), L"Compiled implicit");

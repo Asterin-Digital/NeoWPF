@@ -898,6 +898,7 @@ if(BUILD_TESTING)
         tests/Automated/RadioButtonTests.cpp
         tests/Automated/ThreadingTests.cpp
         tests/Automated/XamlParserTests.cpp
+        tests/Automated/XamlElementPropertyTests.cpp
     )
 
     if(UNIX)

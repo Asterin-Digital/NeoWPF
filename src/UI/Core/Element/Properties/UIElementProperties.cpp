@@ -1,11 +1,14 @@
 #include <NeoWPF/UI/Core/Element/UIElement.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/UI/Styling/Style.h>
 
 namespace {
     NeoWPF::UI::Properties::PropertyMetadata MakeUIElementOpacityMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(1.0f);
+        metadata.Converter = NeoWPF::UI::Properties::GetFloatConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
     }
