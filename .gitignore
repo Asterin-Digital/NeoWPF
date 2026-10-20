@@ -31,7 +31,10 @@ Testing/
 # Things that should not get commited, private details
 private/
 .vscode/
-.github
+.github/*
+!.github/workflows/
+.github/workflows/*
+!.github/workflows/performance-benchmarks.yml
 NeoWPF.code-workspace
 ToDo.md
 Designing

@@ -48,6 +48,7 @@ configure_file(
 )
 
 include(CTest)
+option(NEOWPF_BUILD_BENCHMARKS "Build local NeoWPF performance benchmarks" OFF)
 
 if(WIN32)
     set(NEOWPF_PLATFORM "Windows")
@@ -635,6 +636,10 @@ target_link_libraries(NeoWPF.Foundation PUBLIC Cudev)
 target_link_libraries(NeoWPF PUBLIC Cudev)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoWPFStaticDependencies.cmake")
+
+if(NEOWPF_BUILD_BENCHMARKS)
+    add_subdirectory(benchmarks)
+endif()
 
 if(WIN32 AND NEOWPF_BUILD_SAMPLES)
     add_executable(NeoWPF.WindowsTransparencySample

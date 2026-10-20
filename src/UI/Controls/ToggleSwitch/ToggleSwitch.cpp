@@ -155,7 +155,7 @@ void ToggleSwitch::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const auto clip = GetClipRect();
 
         track->SetRect(absoluteX, trackY, trackWidth, trackHeight);
-        track->SetCornerRadius(CornerRadius(trackHeight * 0.5));
+        track->SetCornerRadius(CornerRadius(static_cast<float>(trackHeight * 0.5)));
         track->SetOpacity(GetOpacity());
         track->SetRotation(renderTransform.rotationRadians,
                            renderTransform.pivot.X, renderTransform.pivot.Y);
@@ -163,7 +163,7 @@ void ToggleSwitch::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         track->BuildRenderCommands(commands);
 
         thumb->SetRect(thumbX, thumbY, thumbDiameter, thumbDiameter);
-        thumb->SetCornerRadius(CornerRadius(thumbDiameter * 0.5));
+        thumb->SetCornerRadius(CornerRadius(static_cast<float>(thumbDiameter * 0.5)));
         thumb->SetOpacity(GetOpacity());
         thumb->SetRotation(renderTransform.rotationRadians,
                            renderTransform.pivot.X, renderTransform.pivot.Y);

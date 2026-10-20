@@ -67,12 +67,12 @@ ToggleSwitchTemplate::ToggleSwitchTemplate()
     auto track = std::make_shared<Templates::TemplateVisual>("PART_Track");
     track->SetFillBrush(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
         NeoWPF::Core::ApplicationThemes::PaletteBrush::Track));
-    track->SetBorderThickness(0.0);
+    track->SetBorderThickness(0);
 
     auto thumb = std::make_shared<Templates::TemplateVisual>("PART_Thumb");
     thumb->SetFillBrush(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
         NeoWPF::Core::ApplicationThemes::PaletteBrush::Thumb));
-    thumb->SetBorderThickness(0.0);
+    thumb->SetBorderThickness(0);
 
     root->AddVisualChild(track);
     root->AddVisualChild(thumb);

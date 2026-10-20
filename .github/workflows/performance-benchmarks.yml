@@ -1,0 +1,82 @@
+name: Performance Benchmarks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      VCPKG_DISABLE_METRICS: 1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            git \
+            glslang-tools \
+            libfontconfig1-dev \
+            libfreetype6-dev \
+            libharfbuzz-dev \
+            libpng-dev \
+            libvulkan-dev \
+            libwayland-dev \
+            libxkbcommon-dev \
+            ninja-build \
+            pkg-config \
+            wayland-protocols \
+            zlib1g-dev
+
+      - name: Cache vcpkg packages
+        id: vcpkg-cache
+        uses: actions/cache@v4
+        with:
+          path: vcpkg_installed
+          key: ubuntu-24.04-vcpkg-x64-linux-${{ hashFiles('vcpkg.json') }}
+
+      - name: Install vcpkg dependencies
+        if: steps.vcpkg-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git "$RUNNER_TEMP/vcpkg"
+          "$RUNNER_TEMP/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
+          "$RUNNER_TEMP/vcpkg/vcpkg" install \
+            --x-manifest-root "$GITHUB_WORKSPACE" \
+            --triplet x64-linux
+
+      - name: Build performance benchmarks
+        run: |
+          cmake -S . -B build/performance-benchmarks \
+            -G "Ninja Multi-Config" \
+            -DCMAKE_TOOLCHAIN_FILE="$RUNNER_TEMP/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET=x64-linux \
+            -DNEOWPF_RENDERER_BACKEND=Vulkan \
+            -DNEOWPF_BUILD_BENCHMARKS=ON \
+            -DNEOWPF_USE_NEOLINT=OFF
+          cmake --build build/performance-benchmarks \
+            --config Release \
+            --target NeoWPF.PerformanceBenchmarks
+
+      - name: Run performance benchmarks
+        run: |
+          build/performance-benchmarks/benchmarks/Release/NeoWPF.PerformanceBenchmarks \
+            --benchmark_min_time=0.1s \
+            --benchmark_out=benchmark-results.json \
+            --benchmark_out_format=json
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-benchmarks-${{ github.sha }}
+          path: benchmark-results.json
+          if-no-files-found: error
