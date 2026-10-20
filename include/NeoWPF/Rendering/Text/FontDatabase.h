@@ -8,6 +8,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/Rendering/Text/TextTypes.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -29,6 +30,14 @@ public:
                         std::string familyUtf8);
     std::shared_ptr<const FontRecord> Resolve(FontRequest request) const;
     std::vector<std::shared_ptr<const FontRecord>> Records() const;
+
+    /*
+        @summary
+        Returns the generation incremented when a font is registered.
+
+        @internal
+    */
+    std::uint64_t Generation() const noexcept;
 
 private:
     struct Impl;

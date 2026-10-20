@@ -32,9 +32,12 @@ Testing/
 private/
 .vscode/
 .github/*
+# Keep things we want
 !.github/workflows/
 .github/workflows/*
 !.github/workflows/performance-benchmarks.yml
+
+# Private
 NeoWPF.code-workspace
 ToDo.md
 Designing

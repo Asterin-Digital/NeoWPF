@@ -880,6 +880,7 @@ if(BUILD_TESTING)
         tests/Automated/FileDialogTests.cpp
         tests/Automated/TransformTests.cpp
         tests/Automated/LayoutTests.cpp
+        tests/Automated/TextFlowTests.cpp
         tests/Automated/TransformCompositionTests.cpp
         tests/Automated/RenderCommandTests.cpp
         tests/Automated/GridTests.cpp

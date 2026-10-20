@@ -5,6 +5,7 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
+#include <NeoWPF/Rendering/Text/FontDatabase.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
@@ -303,8 +304,12 @@ void TextBlock::Measure(double availableWidth, double availableHeight)
         widthConstraint = std::max(0.0, availableWidth - padding.Horizontal());
     }
 
-    auto flow = NeoWPF::UI::Text::BreakText(m_text, m_fontSize, GetFontFamily(), widthConstraint, m_textWrapping, m_fontWeight, m_fontStyle);
-    SetDesiredSize(flow.contentWidth + padding.Horizontal(), flow.contentHeight + padding.Vertical());
+    const auto& flow = m_textCache.GetFlow(
+        m_text, m_fontSize, GetFontFamily(), widthConstraint,
+        m_textWrapping, m_fontWeight, m_fontStyle);
+    SetDesiredSize(
+        flow.contentWidth + padding.Horizontal(),
+        flow.contentHeight + padding.Vertical());
 }
 
 void TextBlock::Arrange(double finalWidth, double finalHeight)
@@ -312,7 +317,9 @@ void TextBlock::Arrange(double finalWidth, double finalHeight)
     FrameworkElement::Arrange(finalWidth, finalHeight);
     const auto padding = GetPadding();
     const double innerWidth = std::max(0.0, finalWidth - padding.Horizontal());
-    if (m_textDirty || innerWidth != m_lastArrangeWidth) {
+    const auto fontGeneration = NeoWPF::Rendering::Text::GetFontDatabase().Generation();
+    if (m_textDirty || innerWidth != m_lastArrangeWidth ||
+        fontGeneration != m_lastTextFontGeneration) {
         EnsureTextTexture(std::lround(innerWidth), std::lround(finalHeight));
         m_lastArrangeWidth = std::lround(innerWidth);
     }
@@ -398,7 +405,9 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
 void TextBlock::EnsureTextTexture(int availableWidth, int)
 {
-    if (!m_textDirty && availableWidth == m_lastArrangeWidth) {
+    const auto fontGeneration = NeoWPF::Rendering::Text::GetFontDatabase().Generation();
+    if (!m_textDirty && availableWidth == m_lastArrangeWidth &&
+        fontGeneration == m_lastTextFontGeneration) {
         return;
     }
 
@@ -407,8 +416,16 @@ void TextBlock::EnsureTextTexture(int availableWidth, int)
         widthConstraint = availableWidth;
     }
 
-    m_textCache.Refresh(m_text, m_fontSize, GetFontFamily(), widthConstraint, m_textWrapping, m_fontWeight, m_fontStyle);
+    m_textCache.Refresh(
+        m_text,
+        m_fontSize,
+        GetFontFamily(),
+        widthConstraint,
+        m_textWrapping,
+        m_fontWeight,
+        m_fontStyle);
     m_lastArrangeWidth = availableWidth;
+    m_lastTextFontGeneration = fontGeneration;
     m_textDirty = false;
 }
 

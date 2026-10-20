@@ -12,6 +12,13 @@ FetchContent_MakeAvailable(googlebenchmark)
 
 add_executable(NeoWPF.PerformanceBenchmarks
     Main.cpp
+    BenchmarkSupport.cpp
+    GridLayoutBenchmarks.cpp
+    StackPanelBenchmarks.cpp
+    RenderCommandBenchmarks.cpp
+    HitTestBenchmarks.cpp
+    TextBlockBenchmarks.cpp
+    DependencyPropertyBenchmarks.cpp
 )
 
 target_link_libraries(NeoWPF.PerformanceBenchmarks

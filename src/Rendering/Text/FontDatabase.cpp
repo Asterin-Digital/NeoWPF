@@ -4,6 +4,7 @@
 #include FT_FREETYPE_H
 
 #include <algorithm>
+#include <atomic>
 #include <cctype>
 #include <fstream>
 #include <mutex>
@@ -46,6 +47,7 @@ struct FontDatabase::Impl {
     FT_Library library = nullptr;
     std::vector<Entry> entries;
     mutable std::mutex mutex;
+    std::atomic<std::uint64_t> generation = 0;
 };
 
 FontDatabase::FontDatabase()
@@ -152,6 +154,9 @@ bool FontDatabase::RegisterMemory(std::shared_ptr<const std::vector<std::byte>> 
         m_impl->entries.push_back({std::move(record), face, data});
         registered = true;
     }
+    if (registered) {
+        m_impl->generation.fetch_add(1, std::memory_order_release);
+    }
     return registered;
 }
 
@@ -199,6 +204,11 @@ std::vector<std::shared_ptr<const FontRecord>> FontDatabase::Records() const
         records.push_back(entry.record);
     }
     return records;
+}
+
+std::uint64_t FontDatabase::Generation() const noexcept
+{
+    return m_impl->generation.load(std::memory_order_acquire);
 }
 
 FontDatabase& GetFontDatabase()

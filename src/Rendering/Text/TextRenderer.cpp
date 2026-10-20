@@ -9,6 +9,7 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <filesystem>
 #include <mutex>
 #include <unordered_map>
@@ -23,10 +24,12 @@ struct MetricsCacheKey {
     int fontSize = 0;
     int weight = 0;
     NeoWPF::UI::FontStyle style = NeoWPF::UI::FontStyle::Normal;
+    std::uint64_t fontGeneration = 0;
 
     bool operator==(const MetricsCacheKey& other) const noexcept
     {
         return fontSize == other.fontSize && weight == other.weight && style == other.style &&
+            fontGeneration == other.fontGeneration &&
             text == other.text && family == other.family;
     }
 };
@@ -42,7 +45,8 @@ struct MetricsCacheKeyHash {
         hash = combine(hash, std::hash<std::wstring>{}(key.family));
         hash = combine(hash, std::hash<int>{}(key.fontSize));
         hash = combine(hash, std::hash<int>{}(key.weight));
-        return combine(hash, std::hash<int>{}(static_cast<int>(key.style)));
+        hash = combine(hash, std::hash<int>{}(static_cast<int>(key.style)));
+        return combine(hash, std::hash<std::uint64_t>{}(key.fontGeneration));
     }
 };
 
@@ -123,7 +127,8 @@ TextMetrics Measure(const std::wstring& text, int fontSize, const std::wstring& 
 {
     const int effectiveFontSize = fontSize > 0 ? fontSize : 16;
     const int effectiveWeight = weight > 0 ? weight : 400;
-    const MetricsCacheKey key{text, family, effectiveFontSize, effectiveWeight, style};
+    const MetricsCacheKey key{
+        text, family, effectiveFontSize, effectiveWeight, style, GetFontDatabase().Generation()};
 
     TextMetrics metrics;
     {

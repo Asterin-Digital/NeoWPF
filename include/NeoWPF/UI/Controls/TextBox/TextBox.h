@@ -441,6 +441,7 @@ private:
 
     NeoWPF::UI::Text::TextRasterCache m_renderCache;
     bool m_textDirty = true;
+    std::uint64_t m_lastTextFontGeneration = 0;
     bool m_isFocused = false;
     CaretState m_caret;
     int m_scrollOffsetX = 0;

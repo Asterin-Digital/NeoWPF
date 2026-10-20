@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Text/TextRasterCache.h>
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/Rendering/Text/FontDatabase.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 
@@ -10,6 +11,14 @@ TextRasterCache::~TextRasterCache() {
 }
 
 void TextRasterCache::Clear() {
+    ClearLineTextures();
+    m_flow = {};
+    m_cachedText.clear();
+    m_cachedFontFamily.clear();
+    m_flowValid = false;
+}
+
+void TextRasterCache::ClearLineTextures() {
     if (NeoWPF::Rendering::Renderer_IsInitialized()) {
         for (auto textureId : m_lineTextureIds) {
             if (textureId != 0) {
@@ -18,20 +27,59 @@ void TextRasterCache::Clear() {
         }
     }
     m_lineTextureIds.clear();
-    m_flow = {};
+}
+
+const FlowResult& TextRasterCache::GetFlow(
+    const std::wstring& text,
+    int fontSize,
+    const std::wstring& fontFamily,
+    double availableWidth,
+    TextWrapping wrapping,
+    int fontWeight,
+    NeoWPF::UI::FontStyle fontStyle)
+{
+    const auto fontGeneration = NeoWPF::Rendering::Text::GetFontDatabase().Generation();
+    if (m_flowValid &&
+        m_cachedText == text &&
+        m_cachedFontFamily == fontFamily &&
+        m_cachedFontSize == fontSize &&
+        m_cachedFontWeight == fontWeight &&
+        m_cachedAvailableWidth == availableWidth &&
+        m_cachedWrapping == wrapping &&
+        m_cachedFontStyle == fontStyle &&
+        m_cachedFontGeneration == fontGeneration) {
+        return m_flow;
+    }
+
+    m_flowValid = false;
+    m_flow = BreakText(text, fontSize, fontFamily, availableWidth, wrapping, fontWeight, fontStyle);
+    if (fontGeneration == NeoWPF::Rendering::Text::GetFontDatabase().Generation()) {
+        m_cachedText = text;
+        m_cachedFontFamily = fontFamily;
+        m_cachedFontSize = fontSize;
+        m_cachedFontWeight = fontWeight;
+        m_cachedAvailableWidth = availableWidth;
+        m_cachedWrapping = wrapping;
+        m_cachedFontStyle = fontStyle;
+        m_cachedFontGeneration = fontGeneration;
+        m_flowValid = true;
+    }
+    return m_flow;
 }
 
 bool TextRasterCache::Refresh(const std::wstring& text, int fontSize, const std::wstring& fontFamily,
                               double availableWidth, TextWrapping wrapping,
                               int fontWeight,
                               NeoWPF::UI::FontStyle fontStyle) {
-    Clear();
+    ClearLineTextures();
 
     if (text.empty()) {
+        m_flow = {};
+        m_flowValid = false;
         return true;
     }
 
-    m_flow = BreakText(text, fontSize, fontFamily, availableWidth, wrapping, fontWeight, fontStyle);
+    GetFlow(text, fontSize, fontFamily, availableWidth, wrapping, fontWeight, fontStyle);
     m_lineTextureIds.reserve(m_flow.lines.size());
 
     for (auto& line : m_flow.lines) {

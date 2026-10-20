@@ -8,6 +8,7 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
+#include <NeoWPF/Rendering/Text/FontDatabase.h>
 #include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
 #include <NeoWPF/Input/Core/Events.h>
 #include <algorithm>
@@ -686,7 +687,8 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
 void TextBox::EnsureTextTexture()
 {
-    if (!m_textDirty) {
+    const auto fontGeneration = NeoWPF::Rendering::Text::GetFontDatabase().Generation();
+    if (!m_textDirty && fontGeneration == m_lastTextFontGeneration) {
         return;
     }
 
@@ -710,6 +712,7 @@ void TextBox::EnsureTextTexture()
         m_textWrapping,
         m_fontWeight,
         m_fontStyle);
+    m_lastTextFontGeneration = fontGeneration;
     m_textDirty = false;
     InvalidateVisual();
 }
