@@ -25,6 +25,11 @@
 using Microsoft::WRL::ComPtr;
 using namespace NeoWPF::Rendering;
 
+/* @note
+/  Do know that I will not be changing any of the functionality in here
+/  related to globals unless it literally stops the app from rendering
+*/
+
 namespace NeoWPF::Rendering::D3D11 {
     extern ComPtr<ID3D11Device> g_device;
     extern ComPtr<ID3D11DeviceContext> g_context;
