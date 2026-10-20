@@ -1,6 +1,6 @@
 <type> (<project>): <summary>
 
-# Allowed types: Feat, Chore, Refactor, Fix
+# Allowed types: Feat, Chore, Refactor, Fix, Perf
 # Project tags: NeoPM, NeoWPF, NeoLint, NeoCM, NeoWPF.DotNet
 # Use the project that owns the change. Components such as NeoWPF.Media use NeoWPF.
 # For changes spanning projects, include each applicable project tag, comma-separated.
