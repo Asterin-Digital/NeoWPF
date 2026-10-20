@@ -3,9 +3,28 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 
 #include <fstream>
+#include <system_error>
 #include <vector>
 
 namespace NeoWPF {
+
+namespace {
+
+bool IsWithinDirectory(
+    const std::filesystem::path& directory,
+    const std::filesystem::path& candidate)
+{
+    auto directoryPart = directory.begin();
+    auto candidatePart = candidate.begin();
+    for (; directoryPart != directory.end(); ++directoryPart, ++candidatePart) {
+        if (candidatePart == candidate.end() || *directoryPart != *candidatePart) {
+            return false;
+        }
+    }
+    return true;
+}
+
+}
 
 ExternalFileResourceProvider::ExternalFileResourceProvider(std::filesystem::path baseDirectory)
     : m_baseDirectory(std::move(baseDirectory))
@@ -19,6 +38,15 @@ bool ExternalFileResourceProvider::TryGet(const ResourceKey& key, ResourceBlob& 
     if (m_baseDirectory.empty()) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
             "[ExternalFileResourceProvider] Missing base directory for resource '%s'", key.Name());
+        return false;
+    }
+
+    std::error_code error;
+    const auto canonicalBaseDirectory = std::filesystem::canonical(m_baseDirectory, error);
+    if (error) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
+            "[ExternalFileResourceProvider] Unable to resolve base directory '%ls'",
+            m_baseDirectory.wstring().c_str());
         return false;
     }
 
@@ -48,13 +76,28 @@ bool ExternalFileResourceProvider::TryGet(const ResourceKey& key, ResourceBlob& 
         return false;
     }
 
-    if (chosenCandidate.extension() == ".naml") {
+    const auto canonicalCandidate = std::filesystem::canonical(chosenCandidate, error);
+    if (error) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
+            "[ExternalFileResourceProvider] Unable to resolve resource path '%ls'",
+            chosenCandidate.wstring().c_str());
+        return false;
+    }
+
+    if (!IsWithinDirectory(canonicalBaseDirectory, canonicalCandidate)) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
+            "[ExternalFileResourceProvider] Resource path escapes base directory '%ls'",
+            key.Name());
+        return false;
+    }
+
+    if (chosenCandidate.extension() == ".naml" || canonicalCandidate.extension() == ".naml") {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
             "[ExternalFileResourceProvider] External XAML resource is not allowed '%s'", key.Name());
         return false;
     }
 
-    std::ifstream file(chosenCandidate, std::ios::binary | std::ios::ate);
+    std::ifstream file(canonicalCandidate, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
             "[ExternalFileResourceProvider] Unable to open resource file '%ls'", chosenCandidate.wstring().c_str());

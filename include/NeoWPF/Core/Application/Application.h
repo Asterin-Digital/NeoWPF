@@ -5,6 +5,11 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
+#ifndef NEOWPF_SLOW_ENV
+#define NEOWPF_SLOW_ENV 2
+#endif
+
+#include <chrono>
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -59,10 +64,17 @@ public:
         @summary
         Runs the application message loop.
 
+        @details
+        The default render initialization timeout is controlled by NEOWPF_SLOW_ENV.
+
+        @param renderInitializationTimeout
+        Maximum time to wait for render initialization.
+
         @returns
         The application exit code.
     */
-    static int Run();
+    static int Run(
+        std::chrono::seconds renderInitializationTimeout = std::chrono::seconds(NEOWPF_SLOW_ENV));
 
     /*
         @summary

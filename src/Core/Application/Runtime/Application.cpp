@@ -21,10 +21,6 @@
 
 #include <atomic>
 
-#ifndef NEOWPF_SLOW_ENV
-#define NEOWPF_SLOW_ENV 2
-#endif
-
 namespace NeoWPF::Core {
 
 namespace {
@@ -148,7 +144,7 @@ bool Application::IsConsoleVisible()
     return GetAppState().consoleVisible.load();
 }
 
-int Application::Run()
+int Application::Run(std::chrono::seconds renderInitializationTimeout)
 {
     auto& appState = GetAppState();
     if (!NeoWPF::Platform::HasPlatform()) {
@@ -162,7 +158,6 @@ int Application::Run()
 
     StartRenderThread();
 
-    constexpr auto renderInitializationTimeout = std::chrono::seconds(NEOWPF_SLOW_ENV);
     std::unique_lock<std::mutex> lock(appState.renderInitMutex);
     if (!appState.renderInitCondition.wait_for(lock, renderInitializationTimeout, [] {
             return GetAppState().renderThreadInitialized.load() || GetAppState().renderThreadInitFailed.load();
