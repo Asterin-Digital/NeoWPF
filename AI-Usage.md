@@ -1,14 +1,23 @@
-## AI Usage In NeoWPF
+# AI Usage and Policy
 
-TL;DR
-AI usage in contributions or code in NeoWPF is allowed to be AI generated, bust most of the work must be done by a human and all changes by an AI model must be reviewed before any commits
+## Where is AI allowed?
 
-## Contribution
+You are generally allowed to use LLM's everywhere in the codebase, there are no restrictions unless the NeoWPF author explicitly mentions that there are.
 
-Generally, it is allowed to use an AI model to contribute to NeoWPF, but most of your work (80%/90% depending on how important that change is) must be done by a human.
-When an AI model does help you make changes to NeoWPF and you want to contribute back to the repository, all changes done by said AI model must be reviewed and checked to ensure it is correct, respect's naming convention's, does not duplicate code and respects DevelopmentGuidelines.md
+## Understanding 
 
-## Developers
+You must deeply understand everything that the LLM wrote/assisted you with. LLM-written code must be tested and reviewed before publishing or committing to the repository or otherwise your contribution will face rejections.
 
-I use AI as well to assist me with changes, but I review every change it makes in the project. I still write most of the code (I follow the same exact rules as above) by myself to ensure it's clean, and stable.
+To enforce this rule, you may be asked certain questions to ensure you actually understand said written code.
 
+## Crediting
+
+When an LLM assists you with writing code in a certain part in NeoWPF, you must mention so that you were assisted by AI when that code was written according to .gittemplate conventions.
+
+## Code Conventions
+
+All LLMs that you use during the writing of the code must respect all of NeoWPF's conventions and rules under docs/ instead of inventing new ones. Including coding cleanliness, testing and naming conventions.
+
+## Licensing
+
+All code written by the LLM must match NeoWPF's license or at least be compatible in a way with it. Preferred licenses are MIT, Apache 2.0 and other permissive licenses that don't force consumer's into weird situations.
