@@ -891,6 +891,7 @@ if(BUILD_TESTING)
         tests/Automated/ItemsControlTests.cpp
         tests/Automated/ListBoxTests.cpp
         tests/Automated/PopupTests.cpp
+        tests/Automated/ProgressBarTests.cpp
         tests/Automated/LImageDecodingTests.cpp
         tests/Automated/TriggerTests.cpp
         tests/Automated/VisualTests.cpp
@@ -899,6 +900,7 @@ if(BUILD_TESTING)
         tests/Automated/ThreadingTests.cpp
         tests/Automated/XamlParserTests.cpp
         tests/Automated/XamlElementPropertyTests.cpp
+        tests/Automated/ClippingTests.cpp
     )
 
     if(UNIX)

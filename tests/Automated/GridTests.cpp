@@ -99,6 +99,70 @@ TEST(GridTests, ArrangesSpanningChildAcrossMultipleCells)
     EXPECT_EQ(cell->GetFinalHeight(), 30);
 }
 
+TEST(GridTests, AutoTracksUseLargestChildSizeIncludingMargins)
+{
+    NeoWPF::UI::Grid grid;
+    grid.SetSpacing(NeoWPF::UI::Spacing(6, 0));
+    grid.AddRow(NeoWPF::UI::SizeMode::Auto);
+    grid.AddColumn(NeoWPF::UI::SizeMode::Auto);
+    grid.AddColumn(NeoWPF::UI::SizeMode::Auto);
+
+    auto first = std::make_shared<FixedGridChild>(20, 10);
+    first->SetMargin(2, 1, 3, 2);
+    auto second = std::make_shared<FixedGridChild>(35, 14);
+    second->SetMargin(4, 0, 1, 0);
+    grid.AddChild(first, 0, 0);
+    grid.AddChild(second, 0, 1);
+
+    grid.Measure(200, 100);
+    grid.Arrange(71, 14);
+
+    EXPECT_DOUBLE_EQ(grid.GetDesiredWidth(), 71.0);
+    EXPECT_DOUBLE_EQ(grid.GetDesiredHeight(), 14.0);
+    EXPECT_DOUBLE_EQ(first->GetLayoutOffsetX(), 2.0);
+    EXPECT_DOUBLE_EQ(first->GetLayoutOffsetY(), 1.0);
+    EXPECT_DOUBLE_EQ(first->GetFinalWidth(), 20.0);
+    EXPECT_DOUBLE_EQ(first->GetFinalHeight(), 11.0);
+    EXPECT_DOUBLE_EQ(second->GetLayoutOffsetX(), 35.0);
+    EXPECT_DOUBLE_EQ(second->GetLayoutOffsetY(), 0.0);
+    EXPECT_DOUBLE_EQ(second->GetFinalWidth(), 35.0);
+    EXPECT_DOUBLE_EQ(second->GetFinalHeight(), 14.0);
+}
+
+TEST(GridTests, WeightedStarTracksReallocateRemainingSpaceWhenResized)
+{
+    NeoWPF::UI::Grid grid;
+    grid.SetSpacing(NeoWPF::UI::Spacing(5, 0));
+    grid.AddRow(NeoWPF::UI::SizeMode::Fixed, 20);
+    grid.AddColumn(NeoWPF::UI::SizeMode::Auto);
+    grid.AddColumn(NeoWPF::UI::SizeMode::Star, 1);
+    grid.AddColumn(NeoWPF::UI::SizeMode::Star, 2);
+
+    auto autoChild = std::make_shared<FixedGridChild>(30, 10);
+    auto firstStarChild = std::make_shared<FixedGridChild>(10, 10);
+    auto secondStarChild = std::make_shared<FixedGridChild>(20, 10);
+    grid.AddChild(autoChild, 0, 0);
+    grid.AddChild(firstStarChild, 0, 1);
+    grid.AddChild(secondStarChild, 0, 2);
+
+    grid.Measure(160, 20);
+    grid.Arrange(160, 20);
+
+    EXPECT_DOUBLE_EQ(autoChild->GetFinalWidth(), 30.0);
+    EXPECT_DOUBLE_EQ(firstStarChild->GetLayoutOffsetX(), 35.0);
+    EXPECT_DOUBLE_EQ(firstStarChild->GetFinalWidth(), 40.0);
+    EXPECT_DOUBLE_EQ(secondStarChild->GetLayoutOffsetX(), 80.0);
+    EXPECT_DOUBLE_EQ(secondStarChild->GetFinalWidth(), 80.0);
+
+    grid.Measure(190, 20);
+    grid.Arrange(190, 20);
+
+    EXPECT_DOUBLE_EQ(firstStarChild->GetLayoutOffsetX(), 35.0);
+    EXPECT_DOUBLE_EQ(firstStarChild->GetFinalWidth(), 50.0);
+    EXPECT_DOUBLE_EQ(secondStarChild->GetLayoutOffsetX(), 90.0);
+    EXPECT_DOUBLE_EQ(secondStarChild->GetFinalWidth(), 100.0);
+}
+
 TEST(GridTests, AppliesHorizontalAndVerticalSpacingBetweenCells)
 {
     NeoWPF::UI::Grid grid;

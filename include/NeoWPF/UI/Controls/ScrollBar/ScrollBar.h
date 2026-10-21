@@ -24,11 +24,6 @@ namespace NeoWPF::UI {
 
     @details
     Drop this on a panel or content surface when you want scrolling.
-    @example
-    auto scrollBar = std::make_shared<NeoWPF::UI::ScrollBar>();
-    scrollBar->SetOrientation(Orientation::Vertical);
-    scrollBar->SetScrollTarget(contentHost);
-    scrollBar->SetViewportElement(viewport);
 */
 class ScrollBar : public NeoWPF::UI::RangeBase {
 public:

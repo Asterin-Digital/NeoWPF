@@ -15,6 +15,43 @@ TEST(ProgressBarTests, UsesExpectedDefaults)
     EXPECT_FALSE(progressBar.GetIsIndeterminate());
 }
 
+TEST(ProgressBarTests, MeasuresHorizontalLengthFromAvailableWidth)
+{
+    NeoWPF::UI::ProgressBar progressBar;
+
+    progressBar.Measure(120.0, 80.0);
+
+    EXPECT_DOUBLE_EQ(progressBar.GetDesiredWidth(), 120.0);
+    EXPECT_DOUBLE_EQ(progressBar.GetDesiredHeight(), 16.0);
+}
+
+TEST(ProgressBarTests, MeasuresVerticalLengthFromAvailableHeight)
+{
+    NeoWPF::UI::ProgressBar progressBar;
+    progressBar.SetOrientation(NeoWPF::UI::Orientation::Vertical);
+
+    progressBar.Measure(120.0, 80.0);
+
+    EXPECT_DOUBLE_EQ(progressBar.GetDesiredWidth(), 16.0);
+    EXPECT_DOUBLE_EQ(progressBar.GetDesiredHeight(), 80.0);
+}
+
+TEST(ProgressBarTests, KeepsMinimumPrimaryLengthWhenAvailableSpaceIsSmall)
+{
+    NeoWPF::UI::ProgressBar progressBar;
+
+    progressBar.Measure(10.0, 8.0);
+
+    EXPECT_DOUBLE_EQ(progressBar.GetDesiredWidth(), 24.0);
+    EXPECT_DOUBLE_EQ(progressBar.GetDesiredHeight(), 16.0);
+
+    progressBar.SetOrientation(NeoWPF::UI::Orientation::Vertical);
+    progressBar.Measure(10.0, 8.0);
+
+    EXPECT_DOUBLE_EQ(progressBar.GetDesiredWidth(), 16.0);
+    EXPECT_DOUBLE_EQ(progressBar.GetDesiredHeight(), 24.0);
+}
+
 TEST(ProgressBarTests, ClampsProgressValues)
 {
     NeoWPF::UI::ProgressBar progressBar;
@@ -38,6 +75,31 @@ TEST(ProgressBarTests, ConfiguresOrientationAndIndeterminateMode)
 
     progressBar.SetIsIndeterminate(false);
     EXPECT_FALSE(progressBar.GetIsIndeterminate());
+}
+
+TEST(ProgressBarTests, ClampsAnimationProgressToUnitInterval)
+{
+    NeoWPF::UI::ProgressBar progressBar;
+
+    progressBar.SetAnimationProgress(-0.5f);
+    EXPECT_FLOAT_EQ(progressBar.GetAnimationProgress(), 0.0f);
+
+    progressBar.SetAnimationProgress(1.5f);
+    EXPECT_FLOAT_EQ(progressBar.GetAnimationProgress(), 1.0f);
+}
+
+TEST(ProgressBarTests, WrapsIndeterminatePhaseIntoUnitInterval)
+{
+    NeoWPF::UI::ProgressBar progressBar;
+
+    progressBar.SetIndeterminatePhase(1.25f);
+    EXPECT_FLOAT_EQ(progressBar.GetIndeterminatePhase(), 0.25f);
+
+    progressBar.SetIndeterminatePhase(-0.25f);
+    EXPECT_FLOAT_EQ(progressBar.GetIndeterminatePhase(), 0.75f);
+
+    progressBar.SetIndeterminatePhase(2.0f);
+    EXPECT_FLOAT_EQ(progressBar.GetIndeterminatePhase(), 0.0f);
 }
 
 TEST(ProgressBarTests, HandlesDegenerateRange)
