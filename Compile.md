@@ -111,7 +111,7 @@ vcpkg version
 
 ```powershell
 cd C:\
-git clone https://github.com/NeoWPF/NeoWPF.git
+git clone https://github.com/Asterin-Digital/NeoWPF.git
 cd NeoWPF
 ```
 
@@ -120,7 +120,7 @@ cd NeoWPF
 NeoWPF uses the `x64-windows-static-md` vcpkg triplet on Windows.
 
 ```powershell
-vcpkg install --triplet x64-windows-static-md #M1
+vcpkg install --triplet x64-windows-static-md #
 ```
 
 The triplet must match the architecture used to build NeoWPF. vcpkg supports selecting a triplet with `--triplet`, and CMake can also select the target triplet with `VCPKG_TARGET_TRIPLET`.
@@ -295,7 +295,7 @@ A working Vulkan driver is also required to actually run NeoWPF applications.
 ### Clone NeoWPF
 
 ```bash
-git clone https://github.com/NeoWPF/NeoWPF.git
+git clone https://github.com/Asterin-Digital/NeoWPF.git
 cd NeoWPF
 ```
 

@@ -7,6 +7,36 @@
 
 namespace {
 
+class LifecycleTestApplication final : public NeoWPF::Core::Application {
+public:
+    int initializeCount = 0;
+    int quitCount = 0;
+
+protected:
+    void InitializeOnLoad() override { ++initializeCount; }
+    void OnApplicationQuit() override { ++quitCount; }
+};
+
+TEST(ApplicationTests, LifecycleHooksRunOncePerLifecycle)
+{
+    auto application = std::make_shared<LifecycleTestApplication>();
+    NeoWPF::Core::Application::SetCurrent(application);
+
+    NeoWPF::Core::Application::Initialize();
+    EXPECT_EQ(application->initializeCount, 1);
+    EXPECT_EQ(application->quitCount, 0);
+
+    NeoWPF::Core::Application::Shutdown();
+    EXPECT_EQ(application->quitCount, 1);
+
+    NeoWPF::Core::Application::Initialize();
+    EXPECT_EQ(application->initializeCount, 2);
+
+    NeoWPF::Core::Application::Shutdown();
+    EXPECT_EQ(application->quitCount, 2);
+    NeoWPF::Core::Application::SetCurrent(nullptr);
+}
+
 TEST(ApplicationTests, ApplicationStartsUnder700msWithColdStartup)
 {
     NeoWPF::Diagnostics::PerformanceMetrics::SetEnabled(true);

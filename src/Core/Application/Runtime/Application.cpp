@@ -79,9 +79,12 @@ void Application::Initialize()
     NeoWPF::UI::Properties::RegisterCoreControlProperties();
     NeoWPF::UI::Markup::Xaml::ValidateXamlRegistrations();
     NeoWPF::UI::Markup::Xaml::RegisterXamlMarkupExtensions();
-    s_initialized.store(true, std::memory_order_release);
+    const bool wasInitialized = s_initialized.exchange(true, std::memory_order_acq_rel);
 
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application::Initialize complete");
+    if (!wasInitialized && s_current) {
+        s_current->InitializeOnLoad();
+    }
 }
 
 NeoWPF::Platform::Window Application::CreateWindow(const wchar_t* title, int width, int height)
@@ -186,6 +189,10 @@ int Application::Run(std::chrono::seconds renderInitializationTimeout)
 
 void Application::Shutdown()
 {
+    if (s_initialized.load(std::memory_order_acquire) && s_current) {
+        s_current->OnApplicationQuit();
+    }
+
     auto& appState = GetAppState();
     if (appState.backgroundExecutor) {
         appState.backgroundExecutor->Stop();
@@ -201,6 +208,14 @@ void Application::Shutdown()
     NeoWPF::Core::ApplicationResources::Resources::Shutdown();
     NeoWPF::Diagnostics::PerformanceMetrics::Shutdown();
     ShutdownApplication();
+}
+
+void Application::InitializeOnLoad()
+{
+}
+
+void Application::OnApplicationQuit()
+{
 }
 
 void Application::SetResource(const std::string& key, std::any value)

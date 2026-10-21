@@ -443,6 +443,19 @@ public:
     */
     static void ClearDeveloperMessages();
 
+protected:
+    /*
+        @summary
+        Runs after the application core has completed initialization.
+    */
+    virtual void InitializeOnLoad();
+
+    /*
+        @summary
+        Runs before application runtime resources are shut down.
+    */
+    virtual void OnApplicationQuit();
+
 private:
     std::shared_ptr<NeoWPF::UI::Window> m_mainWindow;
     std::vector<std::shared_ptr<NeoWPF::UI::Localization::LocaleTable>> m_locales;
