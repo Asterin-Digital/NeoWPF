@@ -891,8 +891,10 @@ if(BUILD_TESTING)
         tests/Automated/CanvasTests.cpp
         tests/Automated/ItemsControlTests.cpp
         tests/Automated/ListBoxTests.cpp
+        tests/Automated/ContentPresenterTests.cpp
         tests/Automated/PopupTests.cpp
         tests/Automated/ProgressBarTests.cpp
+        tests/Automated/ProgressRingTests.cpp
         tests/Automated/LImageDecodingTests.cpp
         tests/Automated/TriggerTests.cpp
         tests/Automated/VisualTests.cpp

@@ -223,6 +223,7 @@ namespace NeoWPF::UI::Properties {
     void RegisterScrollBarProperties();
     void RegisterSliderProperties();
     void RegisterProgressBarProperties();
+    void RegisterProgressRingProperties();
     void RegisterTextBlockProperties();
     void RegisterTextBoxProperties();
     void RegisterImageProperties();

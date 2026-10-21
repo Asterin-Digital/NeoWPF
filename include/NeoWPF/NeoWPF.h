@@ -1,25 +1,70 @@
 /*
-Apache 2.0 License — Copyright (c) 2026 Asterin Digital
-See LICENSE file in the project root for full license text.
-*/
-
-/*
-============================================================
-
-███╗   ██╗███████╗ ██████╗ ██╗    ██╗██████╗ ███████╗
-████╗  ██║██╔════╝██╔═══██╗██║    ██║██╔══██╗██╔════╝
-██╔██╗ ██║█████╗  ██║   ██║██║ █╗ ██║██████╔╝█████╗
-██║╚██╗██║██╔══╝  ██║   ██║██║███╗██║██╔═══╝ ██╔══╝
-██║ ╚████║███████╗╚██████╔╝╚███╔███╔╝██║     ██║
-╚═╝  ╚═══╝╚══════╝ ╚═════╝  ╚══╝╚══╝ ╚═╝     ╚═╝
-
-A C++ UI framework meant to bring WPF familiarity to a fast, native and portable language.
-
-Review the project's README.md, DevelopmentGuidelines.md and AI.md 
-for details related to AI usage, contributing, and other information.
-
-============================================================
-*/
+ *============================================================*
+ *
+ * ███╗   ██╗███████╗ ██████╗ ██╗    ██╗██████╗ ███████╗
+ * ████╗  ██║██╔════╝██╔═══██╗██║    ██║██╔══██╗██╔════╝
+ * ██╔██╗ ██║█████╗  ██║   ██║██║ █╗ ██║██████╔╝█████╗
+ * ██║╚██╗██║██╔══╝  ██║   ██║██║███╗██║██╔═══╝ ██╔══╝
+ * ██║ ╚████║███████╗╚██████╔╝╚███╔███╔╝██║   ██║███████╗
+ * ╚═╝  ╚═══╝╚══════╝ ╚═════╝  ╚══╝╚══╝ ╚══╝   ╚══════╝
+ *
+ * A C++ UI framework inspired by WPF, built for native
+ * performance and cross-platform development.
+ *
+ * GETTING STARTED
+ *
+ * NeoWPF projects use NeoPM for project creation and build
+ * management. See the NeoPM documentation to get started.
+ *
+ * BASIC APPLICATION STRUCTURE
+ *
+ * #include <NeoWPF/NeoWPF.h>
+ * #include <MyApp/Xaml.h>
+ *
+ * int main()
+ * {
+ *     auto app = std::make_shared<MyApp::App>();
+ *     NeoWPF::Core::Application::SetCurrent(app);
+ *     NeoWPF::Core::Application::Initialize();
+ *
+ *     auto& runtimeApp = NeoWPF::Core::Application::Current();
+ *     auto mainWindow =
+ *         std::make_shared<MyApp::MainWindow>();
+ *
+ *     runtimeApp.CreateWindow(mainWindow, 900, 680);
+ *
+ *     const auto result = NeoWPF::Core::Application::Run();
+ *     NeoWPF::Core::Application::Shutdown();
+ *     return result;
+ * }
+ *
+ * CONTROLS
+ *
+ * auto button = New<NeoWPF::Button>(L"Click me");
+ * button->SetPadding(8);
+ * button->Click += []() {
+ *     // Handle the click.
+ * };
+ *
+ * auto label = New<NeoWPF::TextBlock>(L"Hello!");
+ * label->SetFontSize(18);
+ *
+ * RESOURCES
+ *
+ * Documentation: https://neowpf.vercel.app
+ * Project information: README.md
+ * Development guidelines: DevelopmentGuidelines.md
+ * AI usage guidelines: AI-Usage.md
+ *
+ * Media support is optional and requires enabling
+ * NEOWPF_ENABLE_MEDIA when building NeoWPF or using NeoPM to enable it.
+ *
+ * Apache-2.0 License
+ * Copyright (c) 2026 Asterin Digital
+ * See LICENSE in the project root for the full license text.
+ *
+ *============================================================*
+ */
 
 #pragma once
 

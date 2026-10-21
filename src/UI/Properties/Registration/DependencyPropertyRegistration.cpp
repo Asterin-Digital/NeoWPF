@@ -31,6 +31,7 @@ void RegisterCoreControlProperties() {
     RegisterScrollBarProperties();
     RegisterSliderProperties();
     RegisterProgressBarProperties();
+    RegisterProgressRingProperties();
     RegisterTextBlockProperties();
     RegisterTextBoxProperties();
     RegisterImageProperties();
