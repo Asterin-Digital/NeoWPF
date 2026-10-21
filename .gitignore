@@ -25,8 +25,9 @@ tools/
 out.txt
 output.txt
 
-# CTest output
+# Private testing
 Testing/
+/tests/Manual/UI/Internal/
 
 # Things that should not get commited, private details
 private/

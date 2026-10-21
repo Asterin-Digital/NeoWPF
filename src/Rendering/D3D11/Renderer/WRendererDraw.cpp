@@ -1,4 +1,5 @@
 #include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/Rendering/ArcTessellation.h>
 #include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/Rendering/Clipping.h>
 #include <d3d11.h>
@@ -72,27 +73,33 @@ void ExecuteRendererDraw(const CommandList& cmd)
         }
     }
     std::size_t roundedRectCount = 0;
+    std::size_t arcCount = 0;
     std::size_t rectCount = 0;
     for (const auto& command : cmd.commands) {
         if (command.kind == CommandList::CommandKind::RoundedRect) {
             ++roundedRectCount;
+        } else if (command.kind == CommandList::CommandKind::Arc) {
+            ++arcCount;
         } else if (command.kind == CommandList::CommandKind::Rect) {
             ++rectCount;
         }
     }
     static std::size_t lastCommandCount = std::numeric_limits<std::size_t>::max();
     static std::size_t lastRoundedRectCount = std::numeric_limits<std::size_t>::max();
+    static std::size_t lastArcCount = std::numeric_limits<std::size_t>::max();
     static std::size_t lastTextCommandCount = std::numeric_limits<std::size_t>::max();
     const bool commandShapeChanged = cmd.commands.size() != lastCommandCount ||
         roundedRectCount != lastRoundedRectCount ||
+        arcCount != lastArcCount ||
         textCommandCount != lastTextCommandCount;
     if (commandShapeChanged) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
             NeoWPF::Diagnostics::Level::Debug,
-            "[D3D11] Command shape changed commands=%zu rects=%zu roundedRects=%zu texturedQuads=%zu target=%p",
-            cmd.commands.size(), rectCount, roundedRectCount, textCommandCount, rtv);
+            "[D3D11] Command shape changed commands=%zu rects=%zu roundedRects=%zu arcs=%zu texturedQuads=%zu target=%p",
+            cmd.commands.size(), rectCount, roundedRectCount, arcCount, textCommandCount, rtv);
         lastCommandCount = cmd.commands.size();
         lastRoundedRectCount = roundedRectCount;
+        lastArcCount = arcCount;
         lastTextCommandCount = textCommandCount;
         for (std::size_t index = 0; index < cmd.commands.size(); ++index) {
             const auto& command = cmd.commands[index];
@@ -160,7 +167,7 @@ void ExecuteRendererDraw(const CommandList& cmd)
 
     struct Vertex { float x, y; float r, g, b, a; };
     constexpr size_t kVertexBufferCapacity = 1 << 20;
-    constexpr size_t kMaxRectVertices = kVertexBufferCapacity / sizeof(Vertex);
+    constexpr size_t kMaxSolidVertices = (kVertexBufferCapacity / sizeof(Vertex) / 3) * 3;
     std::vector<Vertex> rectVerts;
     rectVerts.reserve(cmd.commands.size() * 2);
 
@@ -271,6 +278,32 @@ void ExecuteRendererDraw(const CommandList& cmd)
         }
     };
 
+    auto pushArc = [&](const CommandList::ArcData& arc) {
+        const float baseAlpha = ((arc.color >> 24) & 0xFF) / 255.0f;
+        const float red = ((arc.color >> 16) & 0xFF) / 255.0f;
+        const float green = ((arc.color >> 8) & 0xFF) / 255.0f;
+        const float blue = (arc.color & 0xFF) / 255.0f;
+        const auto vertices = TessellateAnnularArc(
+            arc.centerX,
+            arc.centerY,
+            arc.radius,
+            arc.thickness,
+            arc.startAngleRadians,
+            arc.sweepAngleRadians,
+            arc.clip);
+        rectVerts.reserve(rectVerts.size() + vertices.size());
+        for (const auto& vertex : vertices) {
+            rectVerts.push_back({
+                static_cast<float>(vertex.x),
+                static_cast<float>(vertex.y),
+                red,
+                green,
+                blue,
+                baseAlpha * arc.opacity,
+            });
+        }
+    };
+
     struct TextVertex { float x, y; float u, v; float r, g, b, a; };
     constexpr size_t kMaxTextVertices = kVertexBufferCapacity / sizeof(TextVertex);
     std::vector<TextVertex> textVerts;
@@ -348,7 +381,7 @@ void ExecuteRendererDraw(const CommandList& cmd)
         size_t remainingVertices = rectVerts.size();
         size_t vertexOffset = 0;
         while (remainingVertices > 0) {
-            size_t chunkVertices = std::min(remainingVertices, kMaxRectVertices);
+            size_t chunkVertices = std::min(remainingVertices, kMaxSolidVertices);
             D3D11_MAPPED_SUBRESOURCE vmap = {};
             if (SUCCEEDED(g_context->Map(g_vertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &vmap))) {
                 memcpy(vmap.pData, rectVerts.data() + vertexOffset, chunkVertices * sizeof(Vertex));
@@ -500,6 +533,12 @@ void ExecuteRendererDraw(const CommandList& cmd)
             } else {
                 pushRoundedRect(static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h), static_cast<float>(r.topLeft), static_cast<float>(r.topRight), static_cast<float>(r.bottomRight), static_cast<float>(r.bottomLeft), red, green, blue, alpha, r.rotationRadians, static_cast<float>(r.pivotX), static_cast<float>(r.pivotY));
             }
+            lastKind = command.kind;
+            hasPendingKind = true;
+            break;
+        }
+        case CommandList::CommandKind::Arc: {
+            pushArc(command.arc);
             lastKind = command.kind;
             hasPendingKind = true;
             break;

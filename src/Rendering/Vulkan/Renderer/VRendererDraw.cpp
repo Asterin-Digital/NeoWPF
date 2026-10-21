@@ -1,6 +1,7 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/Rendering/Clipping.h>
+#include <NeoWPF/Rendering/ArcTessellation.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/Rendering/Vulkan/VulkanRendering.h>
@@ -32,6 +33,7 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
 
     std::size_t rectCount = 0;
     std::size_t roundedRectCount = 0;
+    std::size_t arcCount = 0;
     std::size_t texturedQuadCount = 0;
     for (const auto& command : commands.commands) {
         switch (command.kind) {
@@ -41,6 +43,9 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
         case NeoWPF::Rendering::CommandList::CommandKind::RoundedRect:
             ++roundedRectCount;
             break;
+        case NeoWPF::Rendering::CommandList::CommandKind::Arc:
+            ++arcCount;
+            break;
         case NeoWPF::Rendering::CommandList::CommandKind::TexturedQuad:
             ++texturedQuadCount;
             break;
@@ -48,16 +53,19 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
     }
     static std::size_t lastCommandCount = std::numeric_limits<std::size_t>::max();
     static std::size_t lastRoundedRectCount = std::numeric_limits<std::size_t>::max();
+    static std::size_t lastArcCount = std::numeric_limits<std::size_t>::max();
     static std::size_t lastTexturedQuadCount = std::numeric_limits<std::size_t>::max();
     if (commands.commands.size() != lastCommandCount ||
         roundedRectCount != lastRoundedRectCount ||
+        arcCount != lastArcCount ||
         texturedQuadCount != lastTexturedQuadCount) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
             NeoWPF::Diagnostics::Level::Debug,
-            "[Vulkan] Command shape changed commands=%zu rects=%zu roundedRects=%zu texturedQuads=%zu",
-            commands.commands.size(), rectCount, roundedRectCount, texturedQuadCount);
+            "[Vulkan] Command shape changed commands=%zu rects=%zu roundedRects=%zu arcs=%zu texturedQuads=%zu",
+            commands.commands.size(), rectCount, roundedRectCount, arcCount, texturedQuadCount);
         lastCommandCount = commands.commands.size();
         lastRoundedRectCount = roundedRectCount;
+        lastArcCount = arcCount;
         lastTexturedQuadCount = texturedQuadCount;
     }
 
@@ -154,6 +162,25 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
         }
     };
     for (const auto& command : commands.commands) {
+        if (command.kind == NeoWPF::Rendering::CommandList::CommandKind::Arc) {
+            const auto& arc = command.arc;
+            const float alpha = ((arc.color >> 24) & 0xFF) / 255.0f * arc.opacity;
+            const float red = ((arc.color >> 16) & 0xFF) / 255.0f;
+            const float green = ((arc.color >> 8) & 0xFF) / 255.0f;
+            const float blue = (arc.color & 0xFF) / 255.0f;
+            const auto arcVertices = TessellateAnnularArc(
+                arc.centerX,
+                arc.centerY,
+                arc.radius,
+                arc.thickness,
+                arc.startAngleRadians,
+                arc.sweepAngleRadians,
+                arc.clip);
+            for (const auto& vertex : arcVertices) {
+                appendVertex(vertex.x, vertex.y, red, green, blue, alpha);
+            }
+            continue;
+        }
         if (command.kind != NeoWPF::Rendering::CommandList::CommandKind::Rect &&
             command.kind != NeoWPF::Rendering::CommandList::CommandKind::RoundedRect) {
             continue;

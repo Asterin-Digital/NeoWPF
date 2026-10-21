@@ -882,6 +882,7 @@ if(BUILD_TESTING)
         tests/Automated/LayoutTests.cpp
         tests/Automated/TextFlowTests.cpp
         tests/Automated/TransformCompositionTests.cpp
+        tests/Automated/ArcCommandTests.cpp
         tests/Automated/RenderCommandTests.cpp
         tests/Automated/GridTests.cpp
         tests/Automated/PanelTests.cpp

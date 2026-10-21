@@ -26,6 +26,7 @@ struct CommandList {
     enum class CommandKind {
         Rect,
         RoundedRect,
+        Arc,
         TexturedQuad,
     };
 
@@ -47,6 +48,14 @@ struct CommandList {
 
     /*
         @summary
+        Describes a filled annular-arc draw command.
+
+        @internal
+    */
+    struct ArcData { double centerX; double centerY; double radius; double thickness; double startAngleRadians; double sweepAngleRadians; uint32_t color; float opacity; ClipRect clip; };
+
+    /*
+        @summary
         Describes a textured quad draw command.
 
         @internal
@@ -58,6 +67,7 @@ struct CommandList {
         DrawRect rect{};
         DrawRoundedRect roundedRect{};
         DrawTexturedQuad texturedQuad{};
+        ArcData arc{};
     };
 
     std::vector<Command> commands;
@@ -166,6 +176,43 @@ struct CommandList {
 
     /*
         @summary
+        Adds a filled annular arc to the draw queue.
+
+        @param centerX
+        The horizontal coordinate of the arc center.
+
+        @param centerY
+        The vertical coordinate of the arc center.
+
+        @param radius
+        The distance from the center to the middle of the arc thickness.
+
+        @param thickness
+        The radial thickness of the arc.
+
+        @param startAngleRadians
+        The clockwise angle from the top of the circle where the arc begins.
+
+        @param sweepAngleRadians
+        The signed sweep angle, clamped to one revolution in either direction.
+
+        @param color
+        The fill color, encoded as an ARGB value.
+
+        @param opacity
+        The opacity applied to the draw.
+
+        @param clip
+        The clipping rectangle to constrain the draw.
+
+        @internal
+    */
+    void DrawArc(double centerX, double centerY, double radius, double thickness, double startAngleRadians, double sweepAngleRadians, uint32_t color, float opacity = 1.0f, const ClipRect& clip = ClipRect{}) {
+        commands.push_back({CommandKind::Arc, {}, {}, {}, {centerX, centerY, radius, thickness, startAngleRadians, sweepAngleRadians, color, opacity, clip}});
+    }
+
+    /*
+        @summary
         Adds a textured quad to the draw queue.
 
         @param x
@@ -200,9 +247,6 @@ struct CommandList {
 
         @param clip
         The clipping rectangle to constrain the draw.
-
-       @note
-       Always submit the full quad. The renderer takes care of clipping and UV remapping.
 
         @internal
     */
