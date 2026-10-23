@@ -317,11 +317,11 @@ void Window::SetWindowContent(void* nativeHandle, std::shared_ptr<NeoWPF::UI::Vi
     auto& app = NeoWPF::Core::GetAppState();
     std::shared_ptr<NeoWPF::UI::Window> host;
     {
-        std::lock_guard<std::mutex> lock(app.windowsMutex);
-        for (auto& windowState : app.windows) {
-            if (windowState.nativeWindowHandle == nativeHandle && windowState.windowHost) {
-                windowState.contentRoot = content.get();
-                host = windowState.windowHost;
+        std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+        for (auto& windowSession : app.windowSessions) {
+            if (windowSession.nativeWindowHandle == nativeHandle && windowSession.windowHost) {
+                windowSession.contentRoot = content.get();
+                host = windowSession.windowHost;
                 break;
             }
         }
@@ -335,10 +335,10 @@ void Window::SetWindowContent(void* nativeHandle, std::shared_ptr<NeoWPF::UI::Vi
 std::shared_ptr<NeoWPF::UI::Visual> Window::GetWindowContent(void* nativeHandle)
 {
     auto& app = NeoWPF::Core::GetAppState();
-    std::lock_guard<std::mutex> lock(app.windowsMutex);
-    for (const auto& windowState : app.windows) {
-        if (windowState.nativeWindowHandle == nativeHandle && windowState.windowHost) {
-            return windowState.windowHost->GetContent();
+    std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+    for (const auto& windowSession : app.windowSessions) {
+        if (windowSession.nativeWindowHandle == nativeHandle && windowSession.windowHost) {
+            return windowSession.windowHost->GetContent();
         }
     }
     return nullptr;
@@ -350,10 +350,10 @@ void Window::SetWindowTitleBar(void* nativeHandle, std::shared_ptr<NeoWPF::UI::V
     bool hasTitleBar = static_cast<bool>(titleBar);
     std::shared_ptr<NeoWPF::UI::Window> host;
     {
-        std::lock_guard<std::mutex> lock(app.windowsMutex);
-        for (auto& windowState : app.windows) {
-            if (windowState.nativeWindowHandle == nativeHandle && windowState.windowHost) {
-                host = windowState.windowHost;
+        std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+        for (auto& windowSession : app.windowSessions) {
+            if (windowSession.nativeWindowHandle == nativeHandle && windowSession.windowHost) {
+                host = windowSession.windowHost;
                 break;
             }
         }
@@ -374,10 +374,10 @@ void Window::SetWindowTitleBar(void* nativeHandle, std::shared_ptr<NeoWPF::UI::V
 std::shared_ptr<NeoWPF::UI::Visual> Window::GetWindowTitleBar(void* nativeHandle)
 {
     auto& app = NeoWPF::Core::GetAppState();
-    std::lock_guard<std::mutex> lock(app.windowsMutex);
-    for (const auto& windowState : app.windows) {
-        if (windowState.nativeWindowHandle == nativeHandle && windowState.windowHost) {
-            return windowState.windowHost->GetTitleBar();
+    std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+    for (const auto& windowSession : app.windowSessions) {
+        if (windowSession.nativeWindowHandle == nativeHandle && windowSession.windowHost) {
+            return windowSession.windowHost->GetTitleBar();
         }
     }
     return nullptr;

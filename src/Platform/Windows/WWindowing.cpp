@@ -40,21 +40,21 @@ void* WWindowing::CreateWindow(
         return nullptr;
     }
 
-    NeoWPF::Core::WindowState windowState;
-    windowState.nativeWindowHandle = nativeHandle;
-    windowState.width = width;
-    windowState.height = height;
-    windowState.needsLayout = true;
-    windowState.isPrimaryWindow = app.windows.empty();
-    windowState.windowHost = windowHost ? std::move(windowHost) : std::make_shared<NeoWPF::UI::Window>();
-    windowState.contentRoot = nullptr;
+    NeoWPF::Core::WindowSession windowSession;
+    windowSession.nativeWindowHandle = nativeHandle;
+    windowSession.width = width;
+    windowSession.height = height;
+    windowSession.needsLayout = true;
+    windowSession.isPrimaryWindow = app.windowSessions.empty();
+    windowSession.windowHost = windowHost ? std::move(windowHost) : std::make_shared<NeoWPF::UI::Window>();
+    windowSession.contentRoot = nullptr;
 
     {
-        std::lock_guard<std::mutex> lock(app.windowsMutex);
-        app.windows.push_back(windowState);
+        std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+        app.windowSessions.push_back(windowSession);
     }
 
-    if (windowState.windowHost->GetTitleBar()) {
+    if (windowSession.windowHost->GetTitleBar()) {
         if (auto* platform = NeoWPF::Platform::CurrentPlatform()) {
             if (auto* chrome = platform->Chrome()) {
                 chrome->SetChromeMode(nativeHandle, NeoWPF::Contracts::ChromeMode::Custom);

@@ -23,15 +23,21 @@ bool CloseApplicationWindow(void* nativeWindowHandle)
     }
 
     std::shared_ptr<NeoWPF::UI::Window> windowHost;
+    bool removed = false;
     {
-        std::lock_guard<std::mutex> lock(App().windowsMutex);
-        auto it = std::find_if(App().windows.begin(), App().windows.end(), [nativeWindowHandle](const WindowState& windowState) {
-            return windowState.nativeWindowHandle == nativeWindowHandle;
+        std::lock_guard<std::mutex> lock(App().windowSessionsMutex);
+        auto it = std::find_if(App().windowSessions.begin(), App().windowSessions.end(), [nativeWindowHandle](const WindowSession& windowSession) {
+            return windowSession.nativeWindowHandle == nativeWindowHandle;
         });
-        if (it != App().windows.end()) {
+        if (it != App().windowSessions.end()) {
             windowHost = it->windowHost;
-            App().windows.erase(it);
+            App().windowSessions.erase(it);
+            removed = true;
         }
+    }
+
+    if (!removed) {
+        return false;
     }
 
     if (windowHost) {

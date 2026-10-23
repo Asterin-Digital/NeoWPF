@@ -33,12 +33,12 @@ void SetInputRootForWindow(void* nativeWindowHandle)
         return;
     }
 
-    std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
-    for (auto& windowState : s_appState.windows) {
-        if (windowState.nativeWindowHandle == nativeWindowHandle) {
-            auto rootVisual = windowState.windowHost->GetContent();
+    std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
+    for (auto& windowSession : s_appState.windowSessions) {
+        if (windowSession.nativeWindowHandle == nativeWindowHandle) {
+            auto rootVisual = windowSession.windowHost->GetContent();
             NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual.get()));
-            NeoWPF::Input::InputManager::GetInstance().SetOverlayElements(windowState.windowHost->GetOverlays());
+            NeoWPF::Input::InputManager::GetInstance().SetOverlayElements(windowSession.windowHost->GetOverlays());
             return;
         }
     }
@@ -110,17 +110,17 @@ bool OverlayLayoutDirty(const NeoWPF::UI::Window& window)
 
 }
 
-void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigned int height, bool layoutRequired)
+void BuildWindowVisualTree(WindowSession& windowSession, unsigned int width, unsigned int height, bool layoutRequired)
 {
     NEO_WPF_STARTUP_ACTION("BuildWindowVisualTree");
     const auto layoutStart = std::chrono::steady_clock::now();
-    windowState.buildCommandList.Clear();
+    windowSession.buildCommandList.Clear();
     const auto clearBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(
-        windowState.windowHost->GetBackgroundBrush());
-    windowState.buildCommandList.clearColor = clearBrush ? clearBrush->GetArgb() : 0u;
-    windowState.buildCommandList.hasClearColor = true;
+        windowSession.windowHost->GetBackgroundBrush());
+    windowSession.buildCommandList.clearColor = clearBrush ? clearBrush->GetArgb() : 0u;
+    windowSession.buildCommandList.hasClearColor = true;
 
-    auto rootVisual = windowState.windowHost->GetContent();
+    auto rootVisual = windowSession.windowHost->GetContent();
     {
         NEO_WPF_ACTION("BuildWindowVisualTree.Initialize");
         if (rootVisual) {
@@ -130,7 +130,7 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
     if (layoutRequired) {
         NEO_WPF_ACTION("BuildWindowVisualTree.MeasureArrange");
         LayoutVisualTree(rootVisual.get(), width, height);
-        for (const auto& overlay : windowState.windowHost->GetOverlays()) {
+        for (const auto& overlay : windowSession.windowHost->GetOverlays()) {
             if (!overlay) {
                 continue;
             }
@@ -145,9 +145,9 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
     }
     {
         NEO_WPF_ACTION("BuildWindowVisualTree.BuildRenderCommands");
-        BuildVisualTreeCommands(rootVisual.get(), windowState.buildCommandList);
-        for (const auto& overlay : windowState.windowHost->GetOverlays()) {
-            BuildVisualTreeCommands(overlay.get(), windowState.buildCommandList);
+        BuildVisualTreeCommands(rootVisual.get(), windowSession.buildCommandList);
+        for (const auto& overlay : windowSession.windowHost->GetOverlays()) {
+            BuildVisualTreeCommands(overlay.get(), windowSession.buildCommandList);
         }
     }
     const auto layoutElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - layoutStart).count();
@@ -155,9 +155,9 @@ void BuildWindowVisualTree(WindowState& windowState, unsigned int width, unsigne
     {
         NEO_WPF_ACTION("BuildWindowVisualTree.PublishCommandList");
         std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
-        windowState.renderCommandList = windowState.buildCommandList;
+        windowSession.renderCommandList = windowSession.buildCommandList;
     }
-    windowState.commandListInitialized = true;
+    windowSession.commandListInitialized = true;
     {
         std::lock_guard<std::mutex> lock(s_appState.renderRequestMutex);
         s_appState.renderRequested = true;
@@ -177,9 +177,9 @@ void StartRenderThread()
         auto* platform = NeoWPF::Platform::CurrentPlatform();
         try {
             {
-                std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
-                for (const auto& windowState : s_appState.windows) {
-                    if (!platform || !platform->Rendering().Initialize(windowState.nativeWindowHandle)) {
+                std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
+                for (const auto& windowSession : s_appState.windowSessions) {
+                    if (!platform || !platform->Rendering().Initialize(windowSession.nativeWindowHandle)) {
                         NeoWPF::Diagnostics::LogError("Render backend initialization failed");
                         std::lock_guard<std::mutex> initLock(s_appState.renderInitMutex);
                         s_appState.renderThreadInitFailed = true;
@@ -232,23 +232,23 @@ void StartRenderThread()
                 s_appState.renderRequested = false;
             }
 
-            std::vector<WindowState> windowsSnapshot;
+            std::vector<WindowSession> windowSessionsSnapshot;
             {
-                std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
-                windowsSnapshot = s_appState.windows;
+                std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
+                windowSessionsSnapshot = s_appState.windowSessions;
             }
 
-            for (auto& windowState : windowsSnapshot) {
+            for (auto& windowSession : windowSessionsSnapshot) {
                 unsigned int w = 0;
                 unsigned int h = 0;
-                if (!platform->Windowing().IsWindowAlive(windowState.nativeWindowHandle)) {
+                if (!platform->Windowing().IsWindowAlive(windowSession.nativeWindowHandle)) {
                     continue;
                 }
-                platform->Windowing().GetWindowSize(windowState.nativeWindowHandle, w, h);
+                platform->Windowing().GetWindowSize(windowSession.nativeWindowHandle, w, h);
 
                 if (w > 0 && h > 0) {
                     try {
-                        NeoWPF::Rendering::Renderer_BindWindow(windowState.nativeWindowHandle);
+                        NeoWPF::Rendering::Renderer_BindWindow(windowSession.nativeWindowHandle);
                         NeoWPF::Rendering::Renderer_Resize(w, h);
                         const auto renderStart = std::chrono::steady_clock::now();
                         NeoWPF::Rendering::Renderer_BeginFrame();
@@ -256,7 +256,7 @@ void StartRenderThread()
                         NeoWPF::Rendering::CommandList toRender;
                         {
                             std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
-                            toRender = windowState.renderCommandList;
+                            toRender = windowSession.renderCommandList;
                         }
 
                         NeoWPF::Rendering::Renderer_Execute(toRender);
@@ -268,7 +268,7 @@ void StartRenderThread()
                     } catch (...) {
                         NeoWPF::Diagnostics::LogError("Render frame failed with unknown error");
                     }
-                    NeoWPF::Rendering::Renderer_ReleaseWindow(windowState.nativeWindowHandle);
+                    NeoWPF::Rendering::Renderer_ReleaseWindow(windowSession.nativeWindowHandle);
                 }
             }
 
@@ -293,9 +293,9 @@ int RunApplicationMessageLoop()
     auto& windowing = platform->Windowing();
     void* primaryWindow = nullptr;
     {
-        std::lock_guard<std::mutex> wlock(s_appState.windowsMutex);
-        if (!s_appState.windows.empty()) {
-            primaryWindow = s_appState.windows[0].nativeWindowHandle;
+        std::lock_guard<std::mutex> wlock(s_appState.windowSessionsMutex);
+        if (!s_appState.windowSessions.empty()) {
+            primaryWindow = s_appState.windowSessions[0].nativeWindowHandle;
         }
     }
 
@@ -311,26 +311,26 @@ int RunApplicationMessageLoop()
     windowing.GetWindowSize(primaryWindow, clientWidth, clientHeight);
 
     {
-        std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
-        for (auto& windowState : s_appState.windows) {
+        std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
+        for (auto& windowSession : s_appState.windowSessions) {
             unsigned int windowWidth = 0;
             unsigned int windowHeight = 0;
-            if (!windowing.IsWindowAlive(windowState.nativeWindowHandle)) {
+            if (!windowing.IsWindowAlive(windowSession.nativeWindowHandle)) {
                 continue;
             }
-            windowing.GetWindowSize(windowState.nativeWindowHandle, windowWidth, windowHeight);
+            windowing.GetWindowSize(windowSession.nativeWindowHandle, windowWidth, windowHeight);
             if (windowWidth == 0 || windowHeight == 0) {
                 windowWidth = clientWidth;
                 windowHeight = clientHeight;
             }
-            BuildWindowVisualTree(windowState, windowWidth, windowHeight, true);
-            windowState.width = windowWidth;
-            windowState.height = windowHeight;
+            BuildWindowVisualTree(windowSession, windowWidth, windowHeight, true);
+            windowSession.width = windowWidth;
+            windowSession.height = windowHeight;
         }
     }
 
-    if (!s_appState.windows.empty()) {
-        auto rootVisual = s_appState.windows[0].windowHost->GetContent();
+    if (!s_appState.windowSessions.empty()) {
+        auto rootVisual = s_appState.windowSessions[0].windowHost->GetContent();
         NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual.get()));
     }
 
@@ -372,9 +372,9 @@ int RunApplicationMessageLoop()
         NeoWPF::Diagnostics::PerformanceMetrics::EmitPeriodicSummary();
 
         {
-            std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
+            std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
             bool anyWindowOpen = false;
-            for (const auto& window : s_appState.windows) {
+            for (const auto& window : s_appState.windowSessions) {
                 if (windowing.IsWindowAlive(window.nativeWindowHandle)) {
                     anyWindowOpen = true;
                     break;
@@ -387,9 +387,9 @@ int RunApplicationMessageLoop()
 
         bool needsUpdate = false;
         bool anyTopLevelDirty = false;
-        for (const auto& windowState : s_appState.windows) {
-            if (windowState.windowHost &&
-                (windowState.windowHost->IsTreeDirty() || OverlayDirty(*windowState.windowHost))) {
+        for (const auto& windowSession : s_appState.windowSessions) {
+            if (windowSession.windowHost &&
+                (windowSession.windowHost->IsTreeDirty() || OverlayDirty(*windowSession.windowHost))) {
                 anyTopLevelDirty = true;
                 break;
             }
@@ -405,20 +405,20 @@ int RunApplicationMessageLoop()
         }
 
         {
-            std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
-            for (auto& windowState : s_appState.windows) {
+            std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
+            for (auto& windowSession : s_appState.windowSessions) {
                 unsigned int windowWidth = 0;
                 unsigned int windowHeight = 0;
-                if (!windowing.IsWindowAlive(windowState.nativeWindowHandle)) {
+                if (!windowing.IsWindowAlive(windowSession.nativeWindowHandle)) {
                     continue;
                 }
-                windowing.GetWindowSize(windowState.nativeWindowHandle, windowWidth, windowHeight);
+                windowing.GetWindowSize(windowSession.nativeWindowHandle, windowWidth, windowHeight);
                 if (windowWidth == 0 || windowHeight == 0) {
                     windowWidth = currentClientWidth;
                     windowHeight = currentClientHeight;
                 }
 
-                if (!windowState.commandListInitialized || windowState.width != windowWidth || windowState.height != windowHeight) {
+                if (!windowSession.commandListInitialized || windowSession.width != windowWidth || windowSession.height != windowHeight) {
                     needsUpdate = true;
                     break;
                 }
@@ -429,31 +429,31 @@ int RunApplicationMessageLoop()
 
         if (needsUpdate) {
             NeoWPF::Diagnostics::ProcessPendingDeveloperWarnings();
-            std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
-            for (auto& windowState : s_appState.windows) {
+            std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
+            for (auto& windowSession : s_appState.windowSessions) {
                 unsigned int windowWidth = 0;
                 unsigned int windowHeight = 0;
-                if (!windowing.IsWindowAlive(windowState.nativeWindowHandle)) {
+                if (!windowing.IsWindowAlive(windowSession.nativeWindowHandle)) {
                     continue;
                 }
-                windowing.GetWindowSize(windowState.nativeWindowHandle, windowWidth, windowHeight);
+                windowing.GetWindowSize(windowSession.nativeWindowHandle, windowWidth, windowHeight);
                 if (windowWidth == 0 || windowHeight == 0) {
                     windowWidth = currentClientWidth;
                     windowHeight = currentClientHeight;
                 }
-                auto rootVisual = windowState.windowHost ? windowState.windowHost->GetContent() : nullptr;
+                auto rootVisual = windowSession.windowHost ? windowSession.windowHost->GetContent() : nullptr;
                 const bool layoutRequired = sizeChanged ||
-                    !windowState.commandListInitialized ||
+                    !windowSession.commandListInitialized ||
                     (rootVisual && rootVisual->IsLayoutDirty()) ||
-                    OverlayLayoutDirty(*windowState.windowHost);
-                BuildWindowVisualTree(windowState, windowWidth, windowHeight, layoutRequired);
-                windowState.width = windowWidth;
-                windowState.height = windowHeight;
+                    OverlayLayoutDirty(*windowSession.windowHost);
+                BuildWindowVisualTree(windowSession, windowWidth, windowHeight, layoutRequired);
+                windowSession.width = windowWidth;
+                windowSession.height = windowHeight;
             }
-            for (auto& windowState : s_appState.windows) {
-                if (windowState.windowHost) {
-                    ClearVisualTreeDirtyForRoot(windowState.windowHost.get());
-                    for (const auto& overlay : windowState.windowHost->GetOverlays()) {
+            for (auto& windowSession : s_appState.windowSessions) {
+                if (windowSession.windowHost) {
+                    ClearVisualTreeDirtyForRoot(windowSession.windowHost.get());
+                    for (const auto& overlay : windowSession.windowHost->GetOverlays()) {
                         ClearVisualTreeDirtyForRoot(overlay.get());
                     }
                 }
@@ -470,8 +470,8 @@ int RunApplicationMessageLoop()
     }
 
     {
-        std::lock_guard<std::mutex> lock(s_appState.windowsMutex);
-        s_appState.windows.clear();
+        std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
+        s_appState.windowSessions.clear();
     }
 
     return s_appState.exitCode;

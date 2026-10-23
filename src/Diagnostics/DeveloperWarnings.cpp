@@ -174,13 +174,13 @@ void AttachDeveloperWarningPopup(const DeveloperWarningMessage& warning)
     std::shared_ptr<NeoWPF::UI::Window> targetWindow;
     NeoWPF::UI::FrameworkElement* placementTarget = nullptr;
 
-    for (const auto& windowState : appState.windows) {
-        if (windowState.windowHost && windowState.windowHost->GetContent()) {
-            targetWindow = windowState.windowHost;
+    for (const auto& windowSession : appState.windowSessions) {
+        if (windowSession.windowHost && windowSession.windowHost->GetContent()) {
+            targetWindow = windowSession.windowHost;
             placementTarget = dynamic_cast<NeoWPF::UI::FrameworkElement*>(
-                windowState.windowHost->GetContent().get());
+                windowSession.windowHost->GetContent().get());
             if (!placementTarget) {
-                placementTarget = windowState.windowHost.get();
+                placementTarget = windowSession.windowHost.get();
             }
             break;
         }

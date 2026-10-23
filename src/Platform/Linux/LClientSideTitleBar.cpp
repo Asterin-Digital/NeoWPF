@@ -67,16 +67,16 @@ void EnsureClientTitleBar(void* nativeHandle, NeoWPF::Contracts::ChromeMode mode
     }
 
     auto& app = NeoWPF::Core::GetAppState();
-    std::lock_guard<std::mutex> lock(app.windowsMutex);
+    std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
 
-    for (auto& windowState : app.windows) {
-        if (windowState.nativeWindowHandle != nativeHandle || !windowState.windowHost) {
+    for (auto& windowSession : app.windowSessions) {
+        if (windowSession.nativeWindowHandle != nativeHandle || !windowSession.windowHost) {
             continue;
         }
 
         if ((mode == NeoWPF::Contracts::ChromeMode::Native || mode == NeoWPF::Contracts::ChromeMode::Custom) &&
-            !windowState.windowHost->GetTitleBar()) {
-            const auto* titleText = windowState.windowHost->GetTitle();
+            !windowSession.windowHost->GetTitleBar()) {
+            const auto* titleText = windowSession.windowHost->GetTitle();
             const std::wstring title = titleText ? std::wstring(titleText) : std::wstring(L"NeoWPF");
             NeoWPF::Diagnostics::Log(
                 NeoWPF::Diagnostics::Category::Application,
@@ -85,7 +85,7 @@ void EnsureClientTitleBar(void* nativeHandle, NeoWPF::Contracts::ChromeMode mode
                 nativeHandle,
                 title.c_str(),
                 static_cast<int>(mode));
-            windowState.windowHost->SetTitleBar(CreateDefaultClientTitleBar(nativeHandle, title));
+            windowSession.windowHost->SetTitleBar(CreateDefaultClientTitleBar(nativeHandle, title));
             return;
         }
 
@@ -96,7 +96,7 @@ void EnsureClientTitleBar(void* nativeHandle, NeoWPF::Contracts::ChromeMode mode
                 "[LinuxClientTitleBar] Clearing client-side titlebar for window=%p mode=%d",
                 nativeHandle,
                 static_cast<int>(mode));
-            windowState.windowHost->SetTitleBar(nullptr);
+            windowSession.windowHost->SetTitleBar(nullptr);
         }
         return;
     }

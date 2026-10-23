@@ -126,24 +126,24 @@ void* LWindowing::CreateWindow(
 
     void* nativeHandle = window.get();
     auto& app = NeoWPF::Core::GetAppState();
-    NeoWPF::Core::WindowState windowState;
-    windowState.nativeWindowHandle = nativeHandle;
-    windowState.width = static_cast<unsigned int>(window->Width());
-    windowState.height = static_cast<unsigned int>(window->Height());
-    windowState.needsLayout = true;
-    windowState.isPrimaryWindow = app.windows.empty();
-    windowState.windowHost = windowHost ? std::move(windowHost) : std::make_shared<NeoWPF::UI::Window>();
+    NeoWPF::Core::WindowSession windowSession;
+    windowSession.nativeWindowHandle = nativeHandle;
+    windowSession.width = static_cast<unsigned int>(window->Width());
+    windowSession.height = static_cast<unsigned int>(window->Height());
+    windowSession.needsLayout = true;
+    windowSession.isPrimaryWindow = app.windowSessions.empty();
+    windowSession.windowHost = windowHost ? std::move(windowHost) : std::make_shared<NeoWPF::UI::Window>();
 
     {
-        std::lock_guard<std::mutex> lock(app.windowsMutex);
-        app.windows.push_back(windowState);
+        std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+        app.windowSessions.push_back(windowSession);
     }
     m_windows.push_back(std::move(window));
 
     if (!transparent) {
         EnsureClientTitleBar(
             nativeHandle,
-            windowState.windowHost->GetTitleBar()
+            windowSession.windowHost->GetTitleBar()
                 ? NeoWPF::Contracts::ChromeMode::Custom
                 : NeoWPF::Contracts::ChromeMode::Native);
     }

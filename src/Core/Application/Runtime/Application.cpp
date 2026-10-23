@@ -153,7 +153,7 @@ int Application::Run(std::chrono::seconds renderInitializationTimeout)
     if (!NeoWPF::Platform::HasPlatform()) {
         NeoWPF::Platform::ExitForMissingPlatform();
     }
-    if (appState.windows.empty()) {
+    if (appState.windowSessions.empty()) {
         NeoWPF::Platform::CurrentPlatform()->Windowing().ShowFatalError(
             L"NeoWPF Error", L"No windows created. Call CreateWindow() before Run().");
         return -1;
@@ -358,14 +358,14 @@ void Application::DumpLayoutTree()
 void Application::DumpTextTree(const NeoWPF::Diagnostics::TextDumpOptions& options)
 {
     auto& appState = GetAppState();
-    if (appState.windows.empty()) {
+    if (appState.windowSessions.empty()) {
         NeoWPF::Diagnostics::LogWarn("No text tree to dump, no windows have content attached");
         return;
     }
 
-    for (const auto& windowState : appState.windows) {
-        if (windowState.windowHost && windowState.windowHost->GetContent()) {
-            auto rootVisual = windowState.windowHost->GetContent();
+    for (const auto& windowSession : appState.windowSessions) {
+        if (windowSession.windowHost && windowSession.windowHost->GetContent()) {
+            auto rootVisual = windowSession.windowHost->GetContent();
             rootVisual->Initialize();
             NeoWPF::Diagnostics::TextDumper::Dump(rootVisual.get(), options);
         }

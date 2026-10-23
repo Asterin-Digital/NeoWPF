@@ -28,7 +28,7 @@ class Visual;
 
 namespace NeoWPF::Core {
 
-struct WindowState {
+struct WindowSession {
     void* nativeWindowHandle = nullptr;
     unsigned int width = 0;
     unsigned int height = 0;
@@ -43,7 +43,7 @@ struct WindowState {
 
 struct AppState {
     void* hInst = nullptr;
-    std::vector<WindowState> windows;
+    std::vector<WindowSession> windowSessions;
     std::atomic<bool> running{false};
     std::atomic<bool> consoleVisible{false};
     std::shared_ptr<NeoWPF::UI::Visual> developerWarningOverlayHost;
@@ -62,7 +62,7 @@ struct AppState {
     std::condition_variable renderRequestCondition;
     bool renderRequested = false;
 
-    std::mutex windowsMutex;
+    std::mutex windowSessionsMutex;
     std::mutex commandListMutex;
     std::vector<NeoWPF::Diagnostics::DeveloperWarningMessage> pendingDeveloperMessages;
     std::vector<std::shared_ptr<NeoWPF::UI::Visual>> developerOverlayVisuals;
