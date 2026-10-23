@@ -10,6 +10,7 @@ See LICENSE file in the project root for full license text.
 #include <any>
 #include <functional>
 #include <memory>
+#include <type_traits>
 
 namespace NeoWPF::UI {
 class UIElement;
@@ -44,6 +45,18 @@ public:
         Content value.
     */
     void SetContentData(const std::any& content);
+    /*
+        @summary
+        Sets a UI element as content.
+
+        @param content
+        Content visual.
+    */
+    template <typename T, std::enable_if_t<std::is_base_of_v<NeoWPF::UI::UIElement, T>, int> = 0>
+    void SetContentData(const std::shared_ptr<T>& content)
+    {
+        SetContentData(std::any(std::static_pointer_cast<NeoWPF::UI::UIElement>(content)));
+    }
     const std::any& GetContent() const noexcept { return m_content; }
     std::shared_ptr<NeoWPF::UI::UIElement> GetContentElement() const noexcept { return m_contentElement; }
     /*

@@ -10,7 +10,7 @@ TEST(ContentPresenterTests, SetContentData_AttachesDerivedUIElementSharedPointer
     auto presenter = std::make_shared<NeoWPF::UI::Content::ContentPresenter>();
     auto content = std::make_shared<NeoWPF::UI::TextBlock>(L"content");
 
-    presenter->SetContentData(std::any(content));
+    presenter->SetContentData(content);
     presenter->Measure(100.0, 100.0);
 
     EXPECT_EQ(content->GetParent(), presenter.get());
