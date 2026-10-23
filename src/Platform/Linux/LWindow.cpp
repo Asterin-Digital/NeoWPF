@@ -319,7 +319,7 @@ void Window::SetWindowContent(void* nativeHandle, std::shared_ptr<NeoWPF::UI::Vi
     {
         std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
         for (auto& windowSession : app.windowSessions) {
-            if (windowSession.nativeWindowHandle == nativeHandle && windowSession.windowHost) {
+            if (windowSession.renderSurface.nativeWindowHandle == nativeHandle && windowSession.windowHost) {
                 windowSession.contentRoot = content.get();
                 host = windowSession.windowHost;
                 break;
@@ -337,7 +337,7 @@ std::shared_ptr<NeoWPF::UI::Visual> Window::GetWindowContent(void* nativeHandle)
     auto& app = NeoWPF::Core::GetAppState();
     std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
     for (const auto& windowSession : app.windowSessions) {
-        if (windowSession.nativeWindowHandle == nativeHandle && windowSession.windowHost) {
+        if (windowSession.renderSurface.nativeWindowHandle == nativeHandle && windowSession.windowHost) {
             return windowSession.windowHost->GetContent();
         }
     }
@@ -352,7 +352,7 @@ void Window::SetWindowTitleBar(void* nativeHandle, std::shared_ptr<NeoWPF::UI::V
     {
         std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
         for (auto& windowSession : app.windowSessions) {
-            if (windowSession.nativeWindowHandle == nativeHandle && windowSession.windowHost) {
+            if (windowSession.renderSurface.nativeWindowHandle == nativeHandle && windowSession.windowHost) {
                 host = windowSession.windowHost;
                 break;
             }
@@ -376,7 +376,7 @@ std::shared_ptr<NeoWPF::UI::Visual> Window::GetWindowTitleBar(void* nativeHandle
     auto& app = NeoWPF::Core::GetAppState();
     std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
     for (const auto& windowSession : app.windowSessions) {
-        if (windowSession.nativeWindowHandle == nativeHandle && windowSession.windowHost) {
+        if (windowSession.renderSurface.nativeWindowHandle == nativeHandle && windowSession.windowHost) {
             return windowSession.windowHost->GetTitleBar();
         }
     }

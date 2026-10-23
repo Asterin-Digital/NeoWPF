@@ -70,7 +70,7 @@ void EnsureClientTitleBar(void* nativeHandle, NeoWPF::Contracts::ChromeMode mode
     std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
 
     for (auto& windowSession : app.windowSessions) {
-        if (windowSession.nativeWindowHandle != nativeHandle || !windowSession.windowHost) {
+        if (windowSession.renderSurface.nativeWindowHandle != nativeHandle || !windowSession.windowHost) {
             continue;
         }
 

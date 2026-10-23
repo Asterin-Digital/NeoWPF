@@ -27,7 +27,7 @@ bool CloseApplicationWindow(void* nativeWindowHandle)
     {
         std::lock_guard<std::mutex> lock(App().windowSessionsMutex);
         auto it = std::find_if(App().windowSessions.begin(), App().windowSessions.end(), [nativeWindowHandle](const WindowSession& windowSession) {
-            return windowSession.nativeWindowHandle == nativeWindowHandle;
+            return windowSession.renderSurface.nativeWindowHandle == nativeWindowHandle;
         });
         if (it != App().windowSessions.end()) {
             windowHost = it->windowHost;

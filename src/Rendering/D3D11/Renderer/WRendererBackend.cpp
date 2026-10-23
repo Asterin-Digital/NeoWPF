@@ -21,12 +21,12 @@ namespace NeoWPF::Rendering::D3D11 {
 
     void InitializeRendererWindowing(HWND hwnd);
     void ShutdownRendererWindowing();
-    void ResizeRendererWindowing(unsigned int w, unsigned int h);
-    bool PresentRendererWindowing();
-    unsigned int GetCurrentRendererWidth();
-    unsigned int GetCurrentRendererHeight();
-    ID3D11RenderTargetView* GetCurrentRendererTargetView();
-    void ExecuteRendererDraw(const CommandList& cmd);
+    void ResizeRendererWindowing(HWND hwnd, unsigned int w, unsigned int h);
+    bool PresentRendererWindowing(HWND hwnd);
+    unsigned int GetRendererWidth(HWND hwnd);
+    unsigned int GetRendererHeight(HWND hwnd);
+    ID3D11RenderTargetView* GetRendererTargetView(HWND hwnd);
+    void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd);
     void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain);
     HRESULT CreateSwapChainForWindow(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain);
     void InitializeCommonResources();
@@ -64,23 +64,23 @@ bool IsInitialized()
     return static_cast<bool>(g_device);
 }
 
-void Resize(unsigned int w, unsigned int h)
+void Resize(HWND hwnd, unsigned int w, unsigned int h)
 {
-    ResizeRendererWindowing(w, h);
+    ResizeRendererWindowing(hwnd, w, h);
 }
 
-void BeginFrame()
+void BeginFrame(HWND)
 { // leave it
 }
 
-void Execute(const CommandList& cmd)
+void Execute(HWND hwnd, const CommandList& cmd)
 {
-    ExecuteRendererDraw(cmd);
+    ExecuteRendererDraw(hwnd, cmd);
 }
 
-void Present()
+void Present(HWND hwnd)
 {
-    PresentRendererWindowing();
+    PresentRendererWindowing(hwnd);
 }
 
 }

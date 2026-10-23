@@ -30,7 +30,7 @@ protected:
         ASSERT_NE(testWindow.Handle(), nullptr);
 
         ::ShowWindow(static_cast<HWND>(testWindow.Handle()), SW_HIDE);
-        NeoWPF::Rendering::Renderer_Initialize(testWindow.Handle());
+        NeoWPF::Rendering::Renderer_Initialize(NeoWPF::Rendering::RenderSurface{testWindow.Handle()});
         ASSERT_TRUE(NeoWPF::Rendering::Renderer_IsInitialized());
     }
 

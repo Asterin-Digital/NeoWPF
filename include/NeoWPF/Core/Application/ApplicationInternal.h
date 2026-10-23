@@ -29,7 +29,7 @@ class Visual;
 namespace NeoWPF::Core {
 
 struct WindowSession {
-    void* nativeWindowHandle = nullptr;
+    NeoWPF::Rendering::RenderSurface renderSurface;
     unsigned int width = 0;
     unsigned int height = 0;
     bool needsLayout = true;

@@ -76,7 +76,7 @@ TEST(TransformCompositionTests, TextBlockUsesUnrotatedAbsoluteOriginWhenParentRo
     auto testWindow = NeoWPF::Core::Application::Current().CreateWindow(L"NeoWPF transform composition test", 320, 240);
     ASSERT_NE(testWindow.Handle(), nullptr);
     ::ShowWindow(static_cast<HWND>(testWindow.Handle()), SW_HIDE);
-    NeoWPF::Rendering::Renderer_Initialize(testWindow.Handle());
+    NeoWPF::Rendering::Renderer_Initialize(NeoWPF::Rendering::RenderSurface{testWindow.Handle()});
     ASSERT_TRUE(NeoWPF::Rendering::Renderer_IsInitialized());
 
     auto parent = std::make_shared<TestElement>();

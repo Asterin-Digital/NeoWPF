@@ -18,7 +18,6 @@ struct WindowFrameState {
     bool frameSubmitted = false;
 };
 
-thread_local void* s_boundWindowHandle = nullptr;
 std::unordered_map<void*, WindowFrameState> s_windowStates;
 
 WindowFrameState& GetWindowFrameState(void* nativeWindowHandle)
@@ -52,31 +51,12 @@ NeoWPF::Contracts::IRendering* CurrentRendering() noexcept
 
 }
 
-void NeoWPF::Rendering::Renderer_Initialize(void* nativeWindowHandle)
+void NeoWPF::Rendering::Renderer_Initialize(const RenderSurface& surface)
 {
-    if (nativeWindowHandle) {
-        s_boundWindowHandle = nativeWindowHandle;
-    }
-    if (auto* rendering = CurrentRendering()) {
-        rendering->Initialize(nativeWindowHandle);
-    }
-}
-
-void NeoWPF::Rendering::Renderer_BindWindow(void* nativeWindowHandle)
-{
-    s_boundWindowHandle = nativeWindowHandle;
-    if (!nativeWindowHandle) {
-        return;
-    }
-    if (auto* rendering = CurrentRendering()) {
-        rendering->Initialize(nativeWindowHandle);
-    }
-}
-
-void NeoWPF::Rendering::Renderer_ReleaseWindow(void* nativeWindowHandle)
-{
-    if (s_boundWindowHandle == nativeWindowHandle) {
-        s_boundWindowHandle = nullptr;
+    if (surface.nativeWindowHandle) {
+        if (auto* rendering = CurrentRendering()) {
+            rendering->Initialize(surface);
+        }
     }
 }
 
@@ -86,12 +66,11 @@ void NeoWPF::Rendering::Renderer_Shutdown()
         rendering->Shutdown();
     }
     s_windowStates.clear();
-    s_boundWindowHandle = nullptr;
 }
 
-void NeoWPF::Rendering::Renderer_Resize(unsigned int w, unsigned int h)
+void NeoWPF::Rendering::Renderer_Resize(const RenderSurface& surface, unsigned int w, unsigned int h)
 {
-    auto* nativeWindowHandle = s_boundWindowHandle;
+    auto* nativeWindowHandle = surface.nativeWindowHandle;
     if (!nativeWindowHandle) {
         return;
     }
@@ -105,13 +84,13 @@ void NeoWPF::Rendering::Renderer_Resize(unsigned int w, unsigned int h)
     state.lastHeight = h;
     state.hasSize = true;
     if (auto* rendering = CurrentRendering()) {
-        rendering->Resize(w, h);
+        rendering->Resize(surface, w, h);
     }
 }
 
-void NeoWPF::Rendering::Renderer_BeginFrame()
+void NeoWPF::Rendering::Renderer_BeginFrame(const RenderSurface& surface)
 {
-    auto* nativeWindowHandle = s_boundWindowHandle;
+    auto* nativeWindowHandle = surface.nativeWindowHandle;
     if (!nativeWindowHandle) {
         return;
     }
@@ -121,9 +100,9 @@ void NeoWPF::Rendering::Renderer_BeginFrame()
     state.frameSubmitted = false;
 }
 
-void NeoWPF::Rendering::Renderer_Execute(const CommandList& cmd)
+void NeoWPF::Rendering::Renderer_Execute(const RenderSurface& surface, const CommandList& cmd)
 {
-    auto* nativeWindowHandle = s_boundWindowHandle;
+    auto* nativeWindowHandle = surface.nativeWindowHandle;
     if (!nativeWindowHandle) {
         return;
     }
@@ -138,8 +117,8 @@ void NeoWPF::Rendering::Renderer_Execute(const CommandList& cmd)
         return;
     }
     if (auto* rendering = CurrentRendering()) {
-        rendering->BeginFrame();
-        rendering->Execute(cmd);
+        rendering->BeginFrame(surface);
+        rendering->Execute(surface, cmd);
         state.lastCommandHash = commandHash;
         state.hasCommandHash = true;
         state.frameSubmitted = true;
@@ -147,9 +126,9 @@ void NeoWPF::Rendering::Renderer_Execute(const CommandList& cmd)
     state.framePending = false;
 }
 
-void NeoWPF::Rendering::Renderer_Present()
+void NeoWPF::Rendering::Renderer_Present(const RenderSurface& surface)
 {
-    auto* nativeWindowHandle = s_boundWindowHandle;
+    auto* nativeWindowHandle = surface.nativeWindowHandle;
     if (!nativeWindowHandle) {
         return;
     }
@@ -157,7 +136,7 @@ void NeoWPF::Rendering::Renderer_Present()
     auto& state = GetWindowFrameState(nativeWindowHandle);
     if (state.frameSubmitted) {
         if (auto* rendering = CurrentRendering()) {
-            rendering->Present();
+            rendering->Present(surface);
         }
     }
     state.frameSubmitted = false;

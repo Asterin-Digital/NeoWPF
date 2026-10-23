@@ -35,7 +35,7 @@ void SetInputRootForWindow(void* nativeWindowHandle)
 
     std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
     for (auto& windowSession : s_appState.windowSessions) {
-        if (windowSession.nativeWindowHandle == nativeWindowHandle) {
+        if (windowSession.renderSurface.nativeWindowHandle == nativeWindowHandle) {
             auto rootVisual = windowSession.windowHost->GetContent();
             NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual.get()));
             NeoWPF::Input::InputManager::GetInstance().SetOverlayElements(windowSession.windowHost->GetOverlays());
@@ -179,7 +179,7 @@ void StartRenderThread()
             {
                 std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
                 for (const auto& windowSession : s_appState.windowSessions) {
-                    if (!platform || !platform->Rendering().Initialize(windowSession.nativeWindowHandle)) {
+                    if (!platform || !platform->Rendering().Initialize(windowSession.renderSurface)) {
                         NeoWPF::Diagnostics::LogError("Render backend initialization failed");
                         std::lock_guard<std::mutex> initLock(s_appState.renderInitMutex);
                         s_appState.renderThreadInitFailed = true;
@@ -241,17 +241,16 @@ void StartRenderThread()
             for (auto& windowSession : windowSessionsSnapshot) {
                 unsigned int w = 0;
                 unsigned int h = 0;
-                if (!platform->Windowing().IsWindowAlive(windowSession.nativeWindowHandle)) {
+                if (!platform->Windowing().IsWindowAlive(windowSession.renderSurface.nativeWindowHandle)) {
                     continue;
                 }
-                platform->Windowing().GetWindowSize(windowSession.nativeWindowHandle, w, h);
+                platform->Windowing().GetWindowSize(windowSession.renderSurface.nativeWindowHandle, w, h);
 
                 if (w > 0 && h > 0) {
                     try {
-                        NeoWPF::Rendering::Renderer_BindWindow(windowSession.nativeWindowHandle);
-                        NeoWPF::Rendering::Renderer_Resize(w, h);
+                        NeoWPF::Rendering::Renderer_Resize(windowSession.renderSurface, w, h);
                         const auto renderStart = std::chrono::steady_clock::now();
-                        NeoWPF::Rendering::Renderer_BeginFrame();
+                        NeoWPF::Rendering::Renderer_BeginFrame(windowSession.renderSurface);
 
                         NeoWPF::Rendering::CommandList toRender;
                         {
@@ -259,8 +258,8 @@ void StartRenderThread()
                             toRender = windowSession.renderCommandList;
                         }
 
-                        NeoWPF::Rendering::Renderer_Execute(toRender);
-                        NeoWPF::Rendering::Renderer_Present();
+                        NeoWPF::Rendering::Renderer_Execute(windowSession.renderSurface, toRender);
+                        NeoWPF::Rendering::Renderer_Present(windowSession.renderSurface);
                         const auto renderElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - renderStart).count();
                         NeoWPF::Diagnostics::PerformanceMetrics::RecordRenderPass(renderElapsed);
                     } catch (const std::exception& ex) {
@@ -268,7 +267,6 @@ void StartRenderThread()
                     } catch (...) {
                         NeoWPF::Diagnostics::LogError("Render frame failed with unknown error");
                     }
-                    NeoWPF::Rendering::Renderer_ReleaseWindow(windowSession.nativeWindowHandle);
                 }
             }
 
@@ -295,7 +293,7 @@ int RunApplicationMessageLoop()
     {
         std::lock_guard<std::mutex> wlock(s_appState.windowSessionsMutex);
         if (!s_appState.windowSessions.empty()) {
-            primaryWindow = s_appState.windowSessions[0].nativeWindowHandle;
+            primaryWindow = s_appState.windowSessions[0].renderSurface.nativeWindowHandle;
         }
     }
 
@@ -315,10 +313,10 @@ int RunApplicationMessageLoop()
         for (auto& windowSession : s_appState.windowSessions) {
             unsigned int windowWidth = 0;
             unsigned int windowHeight = 0;
-            if (!windowing.IsWindowAlive(windowSession.nativeWindowHandle)) {
+            if (!windowing.IsWindowAlive(windowSession.renderSurface.nativeWindowHandle)) {
                 continue;
             }
-            windowing.GetWindowSize(windowSession.nativeWindowHandle, windowWidth, windowHeight);
+            windowing.GetWindowSize(windowSession.renderSurface.nativeWindowHandle, windowWidth, windowHeight);
             if (windowWidth == 0 || windowHeight == 0) {
                 windowWidth = clientWidth;
                 windowHeight = clientHeight;
@@ -375,7 +373,7 @@ int RunApplicationMessageLoop()
             std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
             bool anyWindowOpen = false;
             for (const auto& window : s_appState.windowSessions) {
-                if (windowing.IsWindowAlive(window.nativeWindowHandle)) {
+                if (windowing.IsWindowAlive(window.renderSurface.nativeWindowHandle)) {
                     anyWindowOpen = true;
                     break;
                 }
@@ -409,10 +407,10 @@ int RunApplicationMessageLoop()
             for (auto& windowSession : s_appState.windowSessions) {
                 unsigned int windowWidth = 0;
                 unsigned int windowHeight = 0;
-                if (!windowing.IsWindowAlive(windowSession.nativeWindowHandle)) {
+                if (!windowing.IsWindowAlive(windowSession.renderSurface.nativeWindowHandle)) {
                     continue;
                 }
-                windowing.GetWindowSize(windowSession.nativeWindowHandle, windowWidth, windowHeight);
+                windowing.GetWindowSize(windowSession.renderSurface.nativeWindowHandle, windowWidth, windowHeight);
                 if (windowWidth == 0 || windowHeight == 0) {
                     windowWidth = currentClientWidth;
                     windowHeight = currentClientHeight;
@@ -433,10 +431,10 @@ int RunApplicationMessageLoop()
             for (auto& windowSession : s_appState.windowSessions) {
                 unsigned int windowWidth = 0;
                 unsigned int windowHeight = 0;
-                if (!windowing.IsWindowAlive(windowSession.nativeWindowHandle)) {
+                if (!windowing.IsWindowAlive(windowSession.renderSurface.nativeWindowHandle)) {
                     continue;
                 }
-                windowing.GetWindowSize(windowSession.nativeWindowHandle, windowWidth, windowHeight);
+                windowing.GetWindowSize(windowSession.renderSurface.nativeWindowHandle, windowWidth, windowHeight);
                 if (windowWidth == 0 || windowHeight == 0) {
                     windowWidth = currentClientWidth;
                     windowHeight = currentClientHeight;

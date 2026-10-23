@@ -15,7 +15,7 @@ public:
         : m_nativeWindowHandle(nativeWindowHandle)
     {
         NeoWPF::Core::WindowSession session;
-        session.nativeWindowHandle = nativeWindowHandle;
+        session.renderSurface.nativeWindowHandle = nativeWindowHandle;
         session.windowHost = std::make_shared<NeoWPF::UI::Window>();
 
         auto& appState = NeoWPF::Core::GetAppState();
@@ -38,7 +38,7 @@ bool HasWindowSession(void* nativeWindowHandle)
     std::lock_guard<std::mutex> lock(appState.windowSessionsMutex);
     return std::any_of(appState.windowSessions.begin(), appState.windowSessions.end(),
         [nativeWindowHandle](const NeoWPF::Core::WindowSession& session) {
-            return session.nativeWindowHandle == nativeWindowHandle;
+            return session.renderSurface.nativeWindowHandle == nativeWindowHandle;
         });
 }
 

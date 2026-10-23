@@ -43,18 +43,18 @@ namespace NeoWPF::Rendering::D3D11 {
     extern ComPtr<ID3D11SamplerState> g_samplerState;
     extern ComPtr<ID3D11Buffer> g_vertexBuffer;
     extern ComPtr<ID3D11Buffer> g_constantBuffer;
-    unsigned int GetCurrentRendererWidth();
-    unsigned int GetCurrentRendererHeight();
-    ID3D11RenderTargetView* GetCurrentRendererTargetView();
-    bool IsCurrentRendererTransparent();
+    unsigned int GetRendererWidth(HWND hwnd);
+    unsigned int GetRendererHeight(HWND hwnd);
+    ID3D11RenderTargetView* GetRendererTargetView(HWND hwnd);
+    bool IsRendererTransparent(HWND hwnd);
     ComPtr<ID3D11ShaderResourceView> GetTextureShaderResourceView(uint32_t id);
 }
 
 namespace NeoWPF::Rendering::D3D11 {
 
-void ExecuteRendererDraw(const CommandList& cmd)
+void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
 {
-    ID3D11RenderTargetView* rtv = GetCurrentRendererTargetView();
+    ID3D11RenderTargetView* rtv = GetRendererTargetView(hwnd);
     static bool loggedMissingTarget = false;
     if (!rtv) {
         if (!loggedMissingTarget) {
@@ -115,8 +115,8 @@ void ExecuteRendererDraw(const CommandList& cmd)
         }
     }
 
-    const unsigned int width = GetCurrentRendererWidth();
-    const unsigned int height = GetCurrentRendererHeight();
+    const unsigned int width = GetRendererWidth(hwnd);
+    const unsigned int height = GetRendererHeight(hwnd);
 
     g_context->OMSetRenderTargets(1, &rtv, nullptr);
     D3D11_VIEWPORT vp = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
@@ -139,7 +139,7 @@ void ExecuteRendererDraw(const CommandList& cmd)
     float r = ((bgColor >> 16) & 0xFF) / 255.0f;
     float g = ((bgColor >> 8) & 0xFF) / 255.0f;
     float b = (bgColor & 0xFF) / 255.0f;
-    if (IsCurrentRendererTransparent()) {
+    if (IsRendererTransparent(hwnd)) {
         r *= a;
         g *= a;
         b *= a;

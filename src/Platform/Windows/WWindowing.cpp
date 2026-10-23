@@ -41,7 +41,7 @@ void* WWindowing::CreateWindow(
     }
 
     NeoWPF::Core::WindowSession windowSession;
-    windowSession.nativeWindowHandle = nativeHandle;
+    windowSession.renderSurface.nativeWindowHandle = nativeHandle;
     windowSession.width = width;
     windowSession.height = height;
     windowSession.needsLayout = true;

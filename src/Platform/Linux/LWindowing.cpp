@@ -127,7 +127,7 @@ void* LWindowing::CreateWindow(
     void* nativeHandle = window.get();
     auto& app = NeoWPF::Core::GetAppState();
     NeoWPF::Core::WindowSession windowSession;
-    windowSession.nativeWindowHandle = nativeHandle;
+    windowSession.renderSurface.nativeWindowHandle = nativeHandle;
     windowSession.width = static_cast<unsigned int>(window->Width());
     windowSession.height = static_cast<unsigned int>(window->Height());
     windowSession.needsLayout = true;

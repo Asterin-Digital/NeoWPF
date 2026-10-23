@@ -78,27 +78,26 @@ TEST(WindowRenderLifecycleTests, CreatesTwoIndependentWindowsAndBindsEachRenderT
     ::ShowWindow(static_cast<HWND>(leftWindow.Handle()), SW_HIDE);
     ::ShowWindow(static_cast<HWND>(rightWindow.Handle()), SW_HIDE);
 
-    NeoWPF::Rendering::Renderer_Initialize(leftWindow.Handle());
+    const NeoWPF::Rendering::RenderSurface leftSurface{leftWindow.Handle()};
+    const NeoWPF::Rendering::RenderSurface rightSurface{rightWindow.Handle()};
+    NeoWPF::Rendering::Renderer_Initialize(leftSurface);
     ASSERT_TRUE(NeoWPF::Rendering::Renderer_IsInitialized());
 
-    NeoWPF::Rendering::Renderer_BindWindow(leftWindow.Handle());
-    NeoWPF::Rendering::Renderer_Resize(320, 240);
+    NeoWPF::Rendering::Renderer_Resize(leftSurface, 320, 240);
     NeoWPF::Rendering::CommandList leftCommands;
     leftCommands.DrawRect(10.0, 10.0, 100.0, 80.0, 0xFF336699u);
-    NeoWPF::Rendering::Renderer_BeginFrame();
-    NeoWPF::Rendering::Renderer_Execute(leftCommands);
-    NeoWPF::Rendering::Renderer_Present();
+    NeoWPF::Rendering::Renderer_BeginFrame(leftSurface);
+    NeoWPF::Rendering::Renderer_Execute(leftSurface, leftCommands);
+    NeoWPF::Rendering::Renderer_Present(leftSurface);
 
-    NeoWPF::Rendering::Renderer_BindWindow(rightWindow.Handle());
-    NeoWPF::Rendering::Renderer_Resize(640, 480);
+    NeoWPF::Rendering::Renderer_Initialize(rightSurface);
+    NeoWPF::Rendering::Renderer_Resize(rightSurface, 640, 480);
     NeoWPF::Rendering::CommandList rightCommands;
     rightCommands.DrawRect(20.0, 20.0, 200.0, 160.0, 0xFF993366u);
-    NeoWPF::Rendering::Renderer_BeginFrame();
-    NeoWPF::Rendering::Renderer_Execute(rightCommands);
-    NeoWPF::Rendering::Renderer_Present();
+    NeoWPF::Rendering::Renderer_BeginFrame(rightSurface);
+    NeoWPF::Rendering::Renderer_Execute(rightSurface, rightCommands);
+    NeoWPF::Rendering::Renderer_Present(rightSurface);
 
-    NeoWPF::Rendering::Renderer_ReleaseWindow(rightWindow.Handle());
-    NeoWPF::Rendering::Renderer_ReleaseWindow(leftWindow.Handle());
     NeoWPF::Rendering::Renderer_Shutdown();
     NeoWPF::Core::Application::Shutdown();
 }
@@ -147,7 +146,7 @@ TEST(VulkanRenderingTests, RejectsInvalidWaylandWindowHandle)
 {
     NeoWPF::Rendering::Vulkan::VulkanRendering rendering;
 
-    EXPECT_FALSE(rendering.Initialize(nullptr));
+    EXPECT_FALSE(rendering.Initialize(NeoWPF::Rendering::RenderSurface{}));
     EXPECT_FALSE(rendering.IsInitialized());
 }
 
@@ -166,9 +165,10 @@ TEST(VulkanRenderingTests, FrameAndTextureOperationsAreSafeBeforeInitialization)
     NeoWPF::Rendering::Vulkan::VulkanRendering rendering;
     NeoWPF::Rendering::CommandList commands;
 
-    rendering.BeginFrame();
-    rendering.Execute(commands);
-    rendering.Present();
+    const NeoWPF::Rendering::RenderSurface surface{};
+    rendering.BeginFrame(surface);
+    rendering.Execute(surface, commands);
+    rendering.Present(surface);
     rendering.DestroyTexture(1);
     rendering.ClearTextures();
 

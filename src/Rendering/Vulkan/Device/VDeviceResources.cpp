@@ -102,7 +102,7 @@ bool SubmitImmediate(VkDevice device, VkCommandPool commandPool, VkQueue queue,
 
 bool VulkanRendering::CreateTexturedPipeline()
 {
-    auto* context = CurrentWindowContext();
+    auto* context = FirstWindowContext();
     if (!context) {
         return false;
     }
@@ -231,7 +231,7 @@ void VulkanRendering::DestroyTextureResources() noexcept
 std::uint32_t VulkanRendering::CreateTexture(unsigned int width, unsigned int height, const void* rgbaData)
 {
     std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
-    auto* context = CurrentWindowContext();
+    auto* context = FirstWindowContext();
     NeoWPF::Diagnostics::Log(
         NeoWPF::Diagnostics::Category::TextRendering,
         NeoWPF::Diagnostics::Level::Debug,

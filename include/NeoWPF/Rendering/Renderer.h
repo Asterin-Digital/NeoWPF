@@ -6,6 +6,7 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoWPF/Rendering/Clipping.h>
+#include <NeoWPF/Rendering/RenderSurface.h>
 #include <vector>
 #include <cstdint>
 
@@ -259,34 +260,12 @@ struct CommandList {
     @summary
     Sets up the renderer for the target window.
 
-    @param nativeWindowHandle
-    The native window handle that owns the rendering surface.
+    @param surface
+    The rendering surface to initialize.
 
     @internal
 */
-void Renderer_Initialize(void* nativeWindowHandle);
-
-/*
-    @summary
-    Binds the renderer to a specific native window for the upcoming render pass.
-
-    @param nativeWindowHandle
-    The native window handle that owns the rendering surface.
-
-    @internal
-*/
-void Renderer_BindWindow(void* nativeWindowHandle);
-
-/*
-    @summary
-    Releases the renderer's binding to a native window.
-
-    @param nativeWindowHandle
-    The native window handle being released.
-
-    @internal
-*/
-void Renderer_ReleaseWindow(void* nativeWindowHandle);
+void Renderer_Initialize(const RenderSurface& surface);
 
 /*
     @summary
@@ -300,6 +279,9 @@ void Renderer_Shutdown();
     @summary
     Resizes the renderer's output surface.
 
+    @param surface
+    The rendering surface to resize.
+
     @param w
     The new width of the render target.
 
@@ -308,34 +290,43 @@ void Renderer_Shutdown();
 
     @internal
 */
-void Renderer_Resize(unsigned int w, unsigned int h);
+void Renderer_Resize(const RenderSurface& surface, unsigned int w, unsigned int h);
 
 /*
     @summary
     Starts a new frame for the renderer.
 
+    @param surface
+    The rendering surface for the frame.
+
     @internal
 */
-void Renderer_BeginFrame();
+void Renderer_BeginFrame(const RenderSurface& surface);
 
 /*
     @summary
     Runs the queued draw commands.
+
+    @param surface
+    The rendering surface for the commands.
 
     @param cmd
     The command list containing the draw operations to execute.
 
     @internal
 */
-void Renderer_Execute(const CommandList& cmd);
+void Renderer_Execute(const RenderSurface& surface, const CommandList& cmd);
 
 /*
     @summary
     Pushes the current frame to the display.
 
+    @param surface
+    The rendering surface to present.
+
     @internal
 */
-void Renderer_Present();
+void Renderer_Present(const RenderSurface& surface);
 
 /*
     @summary

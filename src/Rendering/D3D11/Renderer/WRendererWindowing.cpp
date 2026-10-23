@@ -34,7 +34,6 @@ struct RendererWindowContext {
     ComPtr<IDCompositionVisual> compositionVisual;
 };
 
-thread_local HWND g_currentWindow = nullptr;
 std::unordered_map<HWND, std::shared_ptr<RendererWindowContext>> g_windowContexts;
 std::mutex g_windowContextsMutex;
 
@@ -44,16 +43,6 @@ std::shared_ptr<RendererWindowContext> FindContext(HWND hwnd)
     std::lock_guard<std::mutex> lock(g_windowContextsMutex);
     auto it = g_windowContexts.find(hwnd);
     return it == g_windowContexts.end() ? nullptr : it->second;
-}
-
-std::shared_ptr<RendererWindowContext> CurrentContext()
-{
-    return FindContext(g_currentWindow);
-}
-
-void SetCurrentWindow(HWND hwnd)
-{
-    g_currentWindow = hwnd;
 }
 
 HRESULT AttachComposition(HWND hwnd, IDXGISwapChain* swapChain,
@@ -103,7 +92,6 @@ void InitializeRendererWindowing(HWND hwnd)
 {
     if (!hwnd) return;
     if (FindContext(hwnd)) {
-        SetCurrentWindow(hwnd);
         return;
     }
 
@@ -156,7 +144,6 @@ void InitializeRendererWindowing(HWND hwnd)
         g_windowContexts[hwnd] = ctx;
     }
 
-    SetCurrentWindow(hwnd);
     InitializeCommonResources();
 }
 
@@ -168,13 +155,11 @@ void ShutdownRendererWindowing()
         pair.second->swapChain.Reset();
     }
     g_windowContexts.clear();
-    g_currentWindow = nullptr;
 }
 
-void ResizeRendererWindowing(unsigned int w, unsigned int h)
+void ResizeRendererWindowing(HWND hwnd, unsigned int w, unsigned int h)
 {
-    if (!g_currentWindow) return;
-    auto ctx = FindContext(g_currentWindow);
+    auto ctx = FindContext(hwnd);
     if (!ctx) return;
 
     if (w == 0) w = 1;
@@ -346,9 +331,9 @@ void ResizeRendererWindowing(unsigned int w, unsigned int h)
     ctx->height = h;
 }
 
-bool PresentRendererWindowing()
+bool PresentRendererWindowing(HWND hwnd)
 {
-    auto ctx = CurrentContext();
+    auto ctx = FindContext(hwnd);
     if (!ctx || !ctx->swapChain || !ctx->rtv) return false;
 
     HRESULT hr = ctx->swapChain->Present(1, 0);
@@ -389,27 +374,27 @@ bool PresentRendererWindowing()
     return true;
 }
 
-unsigned int GetCurrentRendererWidth()
+unsigned int GetRendererWidth(HWND hwnd)
 {
-    auto ctx = CurrentContext();
+    auto ctx = FindContext(hwnd);
     return ctx ? ctx->width : 0;
 }
 
-unsigned int GetCurrentRendererHeight()
+unsigned int GetRendererHeight(HWND hwnd)
 {
-    auto ctx = CurrentContext();
+    auto ctx = FindContext(hwnd);
     return ctx ? ctx->height : 0;
 }
 
-ID3D11RenderTargetView* GetCurrentRendererTargetView()
+ID3D11RenderTargetView* GetRendererTargetView(HWND hwnd)
 {
-    auto ctx = CurrentContext();
+    auto ctx = FindContext(hwnd);
     return ctx && ctx->rtv ? ctx->rtv.Get() : nullptr;
 }
 
-bool IsCurrentRendererTransparent()
+bool IsRendererTransparent(HWND hwnd)
 {
-    const auto ctx = CurrentContext();
+    const auto ctx = FindContext(hwnd);
     return ctx && ctx->transparent;
 }
 

@@ -11,13 +11,15 @@ namespace NeoWPF::Rendering::D3D11 {
 
 class WRendering final : public NeoWPF::Contracts::IRendering {
 public:
-    bool Initialize(void* nativeWindowHandle) override;
+    bool Initialize(const NeoWPF::Rendering::RenderSurface& surface) override;
     void Shutdown() noexcept override;
     bool IsInitialized() const noexcept override;
-    void Resize(unsigned int width, unsigned int height) noexcept override;
-    void BeginFrame() override;
-    void Execute(const NeoWPF::Rendering::CommandList& commands) override;
-    void Present() override;
+    void Resize(const NeoWPF::Rendering::RenderSurface& surface,
+                unsigned int width, unsigned int height) noexcept override;
+    void BeginFrame(const NeoWPF::Rendering::RenderSurface& surface) override;
+    void Execute(const NeoWPF::Rendering::RenderSurface& surface,
+                 const NeoWPF::Rendering::CommandList& commands) override;
+    void Present(const NeoWPF::Rendering::RenderSurface& surface) override;
     std::uint32_t CreateTexture(unsigned int width, unsigned int height, const void* rgbaData) override;
     void DestroyTexture(std::uint32_t id) noexcept override;
     void ClearTextures() noexcept override;

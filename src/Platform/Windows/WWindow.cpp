@@ -360,7 +360,7 @@ void Window::SetWindowContent(void* nativeHandle, std::shared_ptr<NeoWPF::UI::Vi
 
     auto& windows = NeoWPF::Core::GetAppState().windowSessions;
     for (auto& windowSession : windows) {
-        if (windowSession.nativeWindowHandle == hwnd) {
+        if (windowSession.renderSurface.nativeWindowHandle == hwnd) {
             windowSession.contentRoot = content.get();
             windowSession.windowHost->SetContent(content);
             NeoWPF::Core::SetInputRootForWindow(hwnd);
@@ -378,7 +378,7 @@ std::shared_ptr<NeoWPF::UI::Visual> Window::GetWindowContent(void* nativeHandle)
 
     const auto& windows = NeoWPF::Core::GetAppState().windowSessions;
     for (const auto& windowSession : windows) {
-        if (windowSession.nativeWindowHandle == hwnd) {
+        if (windowSession.renderSurface.nativeWindowHandle == hwnd) {
             return windowSession.windowHost->GetContent();
         }
     }
@@ -399,7 +399,7 @@ void Window::SetWindowTitleBar(void* nativeHandle, std::shared_ptr<NeoWPF::UI::V
 
     auto& windows = NeoWPF::Core::GetAppState().windowSessions;
     for (auto& windowSession : windows) {
-        if (windowSession.nativeWindowHandle == hwnd) {
+        if (windowSession.renderSurface.nativeWindowHandle == hwnd) {
             windowSession.windowHost->SetTitleBar(titleBar);
 
             if (chrome) {
@@ -423,7 +423,7 @@ std::shared_ptr<NeoWPF::UI::Visual> Window::GetWindowTitleBar(void* nativeHandle
 
     const auto& windows = NeoWPF::Core::GetAppState().windowSessions;
     for (const auto& windowSession : windows) {
-        if (windowSession.nativeWindowHandle == hwnd) {
+        if (windowSession.renderSurface.nativeWindowHandle == hwnd) {
             return windowSession.windowHost->GetTitleBar();
         }
     }

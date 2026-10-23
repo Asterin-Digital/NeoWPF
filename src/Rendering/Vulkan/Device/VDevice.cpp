@@ -80,9 +80,9 @@ VkShaderModule CreateShaderModule(VkDevice device, const std::uint32_t* code, st
 
 }
 
-bool VulkanRendering::InitializeDevice()
+bool VulkanRendering::InitializeDevice(void* nativeWindowHandle)
 {
-    auto* windowContext = CurrentWindowContext();
+    auto* windowContext = FindWindowContext(nativeWindowHandle);
     if (!windowContext) {
         return false;
     }
@@ -200,7 +200,7 @@ void VulkanRendering::DestroySolidPipeline() noexcept
 
 bool VulkanRendering::CreateSolidPipeline()
 {
-    auto* context = CurrentWindowContext();
+    auto* context = FirstWindowContext();
     if (!context) {
         return false;
     }

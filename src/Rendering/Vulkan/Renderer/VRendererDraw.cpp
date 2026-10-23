@@ -16,10 +16,11 @@
 
 namespace NeoWPF::Rendering::Vulkan {
 
-void VulkanRendering::Execute(const NeoWPF::Rendering::CommandList& commands)
+void VulkanRendering::Execute(const NeoWPF::Rendering::RenderSurface& surface,
+                              const NeoWPF::Rendering::CommandList& commands)
 {
     std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
-    auto* context = CurrentWindowContext();
+    auto* context = FindWindowContext(surface.nativeWindowHandle);
     if (!context || !context->frameActive) {
         static bool loggedInactiveContext = false;
         if (!loggedInactiveContext) {

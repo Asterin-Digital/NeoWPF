@@ -16,8 +16,6 @@
 namespace NeoWPF::Rendering::Vulkan {
 namespace {
 
-thread_local void* g_currentWindowHandle = nullptr;
-
 const char* VkResultName(VkResult result)
 {
     switch (result) {
@@ -50,30 +48,36 @@ bool HasExtension(const std::vector<VkExtensionProperties>& extensions, const ch
 
 }
 
-VulkanRendering::WindowContext* VulkanRendering::CurrentWindowContext() noexcept
+VulkanRendering::WindowContext* VulkanRendering::FindWindowContext(void* nativeWindowHandle) noexcept
 {
     std::lock_guard<std::mutex> lock(m_windowContextsMutex);
-    const auto iterator = m_windowContexts.find(g_currentWindowHandle);
-    if (iterator != m_windowContexts.end()) {
-        return iterator->second.get();
-    }
+    const auto iterator = m_windowContexts.find(nativeWindowHandle);
+    return iterator == m_windowContexts.end() ? nullptr : iterator->second.get();
+}
+
+const VulkanRendering::WindowContext* VulkanRendering::FindWindowContext(void* nativeWindowHandle) const noexcept
+{
+    std::lock_guard<std::mutex> lock(m_windowContextsMutex);
+    const auto iterator = m_windowContexts.find(nativeWindowHandle);
+    return iterator == m_windowContexts.end() ? nullptr : iterator->second.get();
+}
+
+VulkanRendering::WindowContext* VulkanRendering::FirstWindowContext() noexcept
+{
+    std::lock_guard<std::mutex> lock(m_windowContextsMutex);
     return m_windowContexts.empty() ? nullptr : m_windowContexts.begin()->second.get();
 }
 
-const VulkanRendering::WindowContext* VulkanRendering::CurrentWindowContext() const noexcept
+const VulkanRendering::WindowContext* VulkanRendering::FirstWindowContext() const noexcept
 {
     std::lock_guard<std::mutex> lock(m_windowContextsMutex);
-    const auto iterator = m_windowContexts.find(g_currentWindowHandle);
-    if (iterator != m_windowContexts.end()) {
-        return iterator->second.get();
-    }
     return m_windowContexts.empty() ? nullptr : m_windowContexts.begin()->second.get();
 }
 
-bool VulkanRendering::Initialize(void* nativeWindowHandle)
+bool VulkanRendering::Initialize(const NeoWPF::Rendering::RenderSurface& surface)
 {
     std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
-    g_currentWindowHandle = nativeWindowHandle;
+    void* nativeWindowHandle = surface.nativeWindowHandle;
 
     NeoWPF::Contracts::NativeWindowInfo windowInfo;
     auto* platform = NeoWPF::Platform::CurrentPlatform();
@@ -89,7 +93,7 @@ bool VulkanRendering::Initialize(void* nativeWindowHandle)
         std::lock_guard<std::mutex> lock(m_windowContextsMutex);
         m_windowContexts.try_emplace(nativeWindowHandle, std::make_shared<WindowContext>());
     }
-    auto* windowContext = CurrentWindowContext();
+    auto* windowContext = FindWindowContext(nativeWindowHandle);
     if (!windowContext) {
         return false;
     }
@@ -200,7 +204,7 @@ bool VulkanRendering::Initialize(void* nativeWindowHandle)
     }
     NeoWPF::Diagnostics::LogInfo("[Vulkan] Surface created: %p", static_cast<void*>(windowContext->surface));
 
-    if (!InitializeDevice()) {
+    if (!InitializeDevice(nativeWindowHandle)) {
         Shutdown();
         return false;
     }
@@ -249,10 +253,11 @@ void VulkanRendering::Shutdown() noexcept
 
 bool VulkanRendering::IsInitialized() const noexcept { return m_initialized; }
 
-void VulkanRendering::Resize(unsigned int width, unsigned int height) noexcept
+void VulkanRendering::Resize(const NeoWPF::Rendering::RenderSurface& surface,
+                             unsigned int width, unsigned int height) noexcept
 {
     std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
-    auto* context = CurrentWindowContext();
+    auto* context = FindWindowContext(surface.nativeWindowHandle);
     if (m_initialized && context && width > 0 && height > 0 &&
         (context->swapchainExtent.width != width || context->swapchainExtent.height != height)) {
         vkDeviceWaitIdle(m_device);
@@ -264,10 +269,10 @@ void VulkanRendering::Resize(unsigned int width, unsigned int height) noexcept
     }
 }
 
-void VulkanRendering::BeginFrame()
+void VulkanRendering::BeginFrame(const NeoWPF::Rendering::RenderSurface& surface)
 {
     std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
-    auto* context = CurrentWindowContext();
+    auto* context = FindWindowContext(surface.nativeWindowHandle);
     if (!m_initialized || !context || context->swapchainExtent.width == 0 || context->swapchainExtent.height == 0) {
         return;
     }
@@ -314,10 +319,10 @@ void VulkanRendering::BeginFrame()
     context->frameActive = true;
 }
 
-void VulkanRendering::Present()
+void VulkanRendering::Present(const NeoWPF::Rendering::RenderSurface& surface)
 {
     std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
-    auto* context = CurrentWindowContext();
+    auto* context = FindWindowContext(surface.nativeWindowHandle);
     if (!context || !context->frameActive) {
         return;
     }
