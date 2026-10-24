@@ -335,7 +335,14 @@ void ShutdownApplication()
 {
     s_appState.running = false;
     s_appState.renderRequestCondition.notify_all();
-    NeoWPF::Platform::CurrentPlatform()->Windowing().RequestQuit(0);
+    {
+        std::lock_guard<std::mutex> lock(s_appState.applicationHostMutex);
+        if (s_appState.applicationHost) {
+            s_appState.applicationHost->RequestQuit(0);
+        } else {
+            NeoWPF::Platform::CurrentPlatform()->Windowing().RequestQuit(0);
+        }
+    }
 }
 
 int RunApplicationMessageLoop()
@@ -391,26 +398,13 @@ int RunApplicationMessageLoop()
     NeoWPF::Diagnostics::PerformanceMetrics::RecordStartup();
 
     unsigned int lastLayoutWidth = 0, lastLayoutHeight = 0;
-    constexpr auto frameInterval = std::chrono::milliseconds(16);
-    auto nextFrame = std::chrono::steady_clock::now();
-    bool quitRequested = false;
-
-    while (!quitRequested) {
-        const auto now = std::chrono::steady_clock::now();
-        if (now < nextFrame) {
-            const auto waitMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(nextFrame - now);
-            if (!windowing.PumpMessages(waitMilliseconds)) {
-                quitRequested = true;
-            }
-        } else if (!windowing.PumpMessages(std::chrono::milliseconds(0))) {
-            quitRequested = true;
-        }
-
-        if (quitRequested) {
-            break;
-        }
-
-        nextFrame = std::chrono::steady_clock::now() + frameInterval;
+    auto applicationHost = std::make_unique<NeoWPF::Core::DesktopApplicationHost>(windowing);
+    NeoWPF::Core::IApplicationHost* applicationHostPointer = applicationHost.get();
+    {
+        std::lock_guard<std::mutex> lock(s_appState.applicationHostMutex);
+        s_appState.applicationHost = std::move(applicationHost);
+    }
+    s_appState.exitCode = applicationHostPointer->Run([&] {
 
         if (s_appState.mainThreadExecutor) {
             s_appState.mainThreadExecutor->Drain(std::chrono::milliseconds(2));
@@ -433,7 +427,7 @@ int RunApplicationMessageLoop()
                 }
             }
             if (!anyWindowOpen) {
-                break;
+                return false;
             }
         }
 
@@ -511,10 +505,14 @@ int RunApplicationMessageLoop()
                 }
             }
         }
+        return true;
+    });
+    {
+        std::lock_guard<std::mutex> lock(s_appState.applicationHostMutex);
+        s_appState.applicationHost.reset();
     }
 
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application message loop exiting");
-    s_appState.exitCode = windowing.ExitCode();
     s_appState.running = false;
     s_appState.renderRequestCondition.notify_all();
     if (s_appState.renderThread.joinable()) {

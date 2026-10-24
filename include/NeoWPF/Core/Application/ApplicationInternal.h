@@ -12,6 +12,7 @@ See LICENSE file in the project root for full license text.
 #include <thread>
 #include <vector>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
+#include <NeoWPF/Core/Application/ApplicationHostInternal.h>
 #include <NeoWPF/Core/Threading/MainThreadExecutor.h>
 #include <NeoWPF/Core/Threading/BackgroundExecutor.h>
 #include <NeoWPF/Rendering/Renderer.h>
@@ -59,6 +60,8 @@ struct AppState {
     bool renderThreadShuttingDown = false;
     std::atomic<bool> layoutDebugLogging{false};
     std::thread renderThread;
+    std::unique_ptr<NeoWPF::Core::IApplicationHost> applicationHost;
+    std::mutex applicationHostMutex;
     std::unique_ptr<NeoWPF::Core::Threading::MainThreadExecutor> mainThreadExecutor;
     std::unique_ptr<NeoWPF::Core::Threading::BackgroundExecutor> backgroundExecutor;
     int exitCode = 0;

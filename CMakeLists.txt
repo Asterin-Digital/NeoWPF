@@ -861,6 +861,7 @@ if(BUILD_TESTING)
 
     add_executable(NeoWPF.AutomatedTests
         tests/Automated/ApplicationTests.cpp
+        tests/Automated/ApplicationHostTests.cpp
         tests/Automated/ApplicationWindowSessionTests.cpp
         tests/Automated/ApplicationResourcesTests.cpp
         tests/Automated/EmbeddedResourceProviderTests.cpp
