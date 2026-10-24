@@ -49,11 +49,14 @@ jobs:
           path: vcpkg_installed
           key: ubuntu-24.04-vcpkg-x64-linux-${{ hashFiles('vcpkg.json') }}
 
-      - name: Install vcpkg dependencies
-        if: steps.vcpkg-cache.outputs.cache-hit != 'true'
+      - name: Set up vcpkg toolchain
         run: |
           git clone --depth 1 https://github.com/microsoft/vcpkg.git "$RUNNER_TEMP/vcpkg"
           "$RUNNER_TEMP/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
+
+      - name: Install vcpkg dependencies
+        if: steps.vcpkg-cache.outputs.cache-hit != 'true'
+        run: |
           "$RUNNER_TEMP/vcpkg/vcpkg" install \
             --x-manifest-root "$GITHUB_WORKSPACE" \
             --triplet x64-linux
