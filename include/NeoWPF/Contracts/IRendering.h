@@ -18,7 +18,19 @@ class IRendering {
 public:
     virtual ~IRendering() = default;
 
-    virtual bool Initialize(const NeoWPF::Rendering::RenderSurface& surface) = 0;
+    /*
+        @summary
+        Initializes renderer resources that outlive individual surfaces.
+
+        @param surface
+        A surface used to select a compatible rendering device.
+
+        @returns
+        True when device resources are ready.
+
+        @internal
+    */
+    virtual bool InitializeDevice(const NeoWPF::Rendering::RenderSurface& surface) = 0;
 
     /*
         @summary
@@ -44,7 +56,13 @@ public:
         @internal
     */
     virtual void DestroySurface(const NeoWPF::Rendering::RenderSurface& surface) noexcept = 0;
-    virtual void Shutdown() noexcept = 0;
+    /*
+        @summary
+        Releases renderer device resources and any remaining surfaces.
+
+        @internal
+    */
+    virtual void ShutdownDevice() noexcept = 0;
     virtual bool IsInitialized() const noexcept = 0;
     virtual void Resize(const NeoWPF::Rendering::RenderSurface& surface,
                         unsigned int width, unsigned int height) noexcept = 0;

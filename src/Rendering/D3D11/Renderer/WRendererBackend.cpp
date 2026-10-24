@@ -28,7 +28,7 @@ namespace NeoWPF::Rendering::D3D11 {
     unsigned int GetRendererHeight(HWND hwnd);
     ID3D11RenderTargetView* GetRendererTargetView(HWND hwnd);
     void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd);
-    void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain);
+    void CreateDevice();
     HRESULT CreateSwapChainForWindow(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain);
     void InitializeCommonResources();
     ComPtr<ID3D11ShaderResourceView> GetTextureShaderResourceView(uint32_t id);
@@ -38,9 +38,13 @@ namespace NeoWPF::Rendering::D3D11 {
 
 namespace NeoWPF::Rendering::D3D11 {
 
-void Initialize(HWND hwnd)
+bool InitializeDevice()
 {
-    InitializeRendererWindowing(hwnd);
+    if (!g_device) {
+        CreateDevice();
+        InitializeCommonResources();
+    }
+    return IsInitialized();
 }
 
 bool CreateSurface(HWND hwnd)
@@ -54,7 +58,7 @@ void DestroySurface(HWND hwnd) noexcept
     DestroyRendererWindowing(hwnd);
 }
 
-void Shutdown()
+void ShutdownDevice()
 {
     ShutdownRendererWindowing();
     ClearTextures();

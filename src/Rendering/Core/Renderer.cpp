@@ -65,9 +65,10 @@ bool NeoWPF::Rendering::Renderer_Initialize(const RenderSurface& surface)
     if (!rendering) {
         return false;
     }
-    state.surfaceCreated = rendering->IsInitialized()
-        ? rendering->CreateSurface(surface)
-        : rendering->Initialize(surface);
+    if (!rendering->IsInitialized() && !rendering->InitializeDevice(surface)) {
+        return false;
+    }
+    state.surfaceCreated = rendering->CreateSurface(surface);
     return state.surfaceCreated;
 }
 
@@ -91,7 +92,7 @@ void NeoWPF::Rendering::Renderer_DestroySurface(const RenderSurface& surface)
 void NeoWPF::Rendering::Renderer_Shutdown()
 {
     if (auto* rendering = CurrentRendering()) {
-        rendering->Shutdown();
+        rendering->ShutdownDevice();
     }
     s_windowStates.clear();
 }

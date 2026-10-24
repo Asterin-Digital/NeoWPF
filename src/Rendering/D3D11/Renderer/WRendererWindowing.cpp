@@ -16,9 +16,7 @@ using namespace NeoWPF::Rendering;
 namespace NeoWPF::Rendering::D3D11 {
     extern ComPtr<ID3D11Device> g_device;
     extern ComPtr<ID3D11DeviceContext> g_context;
-    void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain);
     HRESULT CreateSwapChainForWindow(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain);
-    void InitializeCommonResources();
 }
 
 namespace {
@@ -104,18 +102,17 @@ void InitializeRendererWindowing(HWND hwnd)
         height = 1;
     }
 
-    ComPtr<IDXGISwapChain> swapChain;
     if (!g_device) {
-        CreateDeviceAndSwapChain(hwnd, width, height, &swapChain);
-    } else {
-        HRESULT hr = CreateSwapChainForWindow(hwnd, width, height, &swapChain);
-        if (FAILED(hr)) {
-            throw std::runtime_error("Failed to create swap chain for window");
-        }
+        throw std::runtime_error("D3D11 device must be initialized before creating a surface");
+    }
+    ComPtr<IDXGISwapChain> swapChain;
+    HRESULT hr = CreateSwapChainForWindow(hwnd, width, height, &swapChain);
+    if (FAILED(hr)) {
+        throw std::runtime_error("Failed to create swap chain for window");
     }
 
     ComPtr<ID3D11Texture2D> backBuffer;
-    HRESULT hr = swapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+    hr = swapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
     if (FAILED(hr)) {
         throw std::runtime_error("Failed to get back buffer");
     }
@@ -143,8 +140,6 @@ void InitializeRendererWindowing(HWND hwnd)
         std::lock_guard<std::mutex> lock(g_windowContextsMutex);
         g_windowContexts[hwnd] = ctx;
     }
-
-    InitializeCommonResources();
 }
 
 void ShutdownRendererWindowing()

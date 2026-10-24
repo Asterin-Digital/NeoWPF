@@ -11,10 +11,10 @@ namespace NeoWPF::Rendering::D3D11 {
 
 class WRendering final : public NeoWPF::Contracts::IRendering {
 public:
-    bool Initialize(const NeoWPF::Rendering::RenderSurface& surface) override;
+    bool InitializeDevice(const NeoWPF::Rendering::RenderSurface& surface) override;
     bool CreateSurface(const NeoWPF::Rendering::RenderSurface& surface) override;
     void DestroySurface(const NeoWPF::Rendering::RenderSurface& surface) noexcept override;
-    void Shutdown() noexcept override;
+    void ShutdownDevice() noexcept override;
     bool IsInitialized() const noexcept override;
     void Resize(const NeoWPF::Rendering::RenderSurface& surface,
                 unsigned int width, unsigned int height) noexcept override;

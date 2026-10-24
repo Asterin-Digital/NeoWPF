@@ -80,10 +80,9 @@ VkShaderModule CreateShaderModule(VkDevice device, const std::uint32_t* code, st
 
 }
 
-bool VulkanRendering::InitializeDevice(void* nativeWindowHandle)
+bool VulkanRendering::InitializeDeviceForSurface(VkSurfaceKHR surface)
 {
-    auto* windowContext = FindWindowContext(nativeWindowHandle);
-    if (!windowContext) {
+    if (surface == VK_NULL_HANDLE) {
         return false;
     }
     std::uint32_t deviceCount = 0;
@@ -126,7 +125,7 @@ bool VulkanRendering::InitializeDevice(void* nativeWindowHandle)
             }
             VkBool32 presentSupported = VK_FALSE;
             const VkResult presentResult = vkGetPhysicalDeviceSurfaceSupportKHR(
-                device, index, windowContext->surface, &presentSupported);
+                device, index, surface, &presentSupported);
             NeoWPF::Diagnostics::LogInfo("[Vulkan] Device[%u] queue[%u]: flags=0x%X graphics=%s present=%s result=%s",
                 deviceIndex, index, queues[index].queueFlags,
                 (queues[index].queueFlags & VK_QUEUE_GRAPHICS_BIT) ? "yes" : "no",

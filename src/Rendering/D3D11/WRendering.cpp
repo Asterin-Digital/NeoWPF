@@ -4,10 +4,10 @@
 
 namespace NeoWPF::Rendering::D3D11 {
 
-void Initialize(HWND hwnd);
+bool InitializeDevice();
 bool CreateSurface(HWND hwnd);
 void DestroySurface(HWND hwnd) noexcept;
-void Shutdown();
+void ShutdownDevice();
 void Resize(HWND hwnd, unsigned int width, unsigned int height);
 void BeginFrame(HWND hwnd);
 void Execute(HWND hwnd, const NeoWPF::Rendering::CommandList& commands);
@@ -21,10 +21,9 @@ bool IsInitialized();
 
 namespace NeoWPF::Rendering::D3D11 {
 
-bool WRendering::Initialize(const NeoWPF::Rendering::RenderSurface& surface)
+bool WRendering::InitializeDevice(const NeoWPF::Rendering::RenderSurface&)
 {
-    NeoWPF::Rendering::D3D11::Initialize(static_cast<HWND>(surface.nativeWindowHandle));
-    return NeoWPF::Rendering::D3D11::IsInitialized();
+    return NeoWPF::Rendering::D3D11::InitializeDevice();
 }
 
 bool WRendering::CreateSurface(const NeoWPF::Rendering::RenderSurface& surface)
@@ -37,9 +36,9 @@ void WRendering::DestroySurface(const NeoWPF::Rendering::RenderSurface& surface)
     NeoWPF::Rendering::D3D11::DestroySurface(static_cast<HWND>(surface.nativeWindowHandle));
 }
 
-void WRendering::Shutdown() noexcept
+void WRendering::ShutdownDevice() noexcept
 {
-    NeoWPF::Rendering::D3D11::Shutdown();
+    NeoWPF::Rendering::D3D11::ShutdownDevice();
 }
 
 bool WRendering::IsInitialized() const noexcept

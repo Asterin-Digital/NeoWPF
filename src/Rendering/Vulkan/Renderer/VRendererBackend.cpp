@@ -74,10 +74,16 @@ const VulkanRendering::WindowContext* VulkanRendering::FirstWindowContext() cons
     return m_windowContexts.empty() ? nullptr : m_windowContexts.begin()->second.get();
 }
 
-bool VulkanRendering::Initialize(const NeoWPF::Rendering::RenderSurface& surface)
+bool VulkanRendering::InitializeDevice(const NeoWPF::Rendering::RenderSurface& surface)
 {
     std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
     void* nativeWindowHandle = surface.nativeWindowHandle;
+    if (!nativeWindowHandle) {
+        return false;
+    }
+    if (m_initialized) {
+        return true;
+    }
 
     NeoWPF::Contracts::NativeWindowInfo windowInfo;
     auto* platform = NeoWPF::Platform::CurrentPlatform();
@@ -88,33 +94,6 @@ bool VulkanRendering::Initialize(const NeoWPF::Rendering::RenderSurface& surface
             platform, windowInfo.window, windowInfo.display,
             reinterpret_cast<void*>(windowInfo.createVulkanSurface));
         return false;
-    }
-    {
-        std::lock_guard<std::mutex> lock(m_windowContextsMutex);
-        m_windowContexts.try_emplace(nativeWindowHandle, std::make_shared<WindowContext>());
-    }
-    auto* windowContext = FindWindowContext(nativeWindowHandle);
-    if (!windowContext) {
-        return false;
-    }
-    windowContext->transparent = windowInfo.surfaceAlpha == NeoWPF::Contracts::SurfaceAlpha::Premultiplied;
-    if (m_initialized && windowContext->surface != VK_NULL_HANDLE) {
-        return true;
-    }
-    if (m_initialized) {
-        if (!windowInfo.createVulkanSurface(
-                windowInfo.vulkanSurfaceUserData, m_instance, windowInfo.window,
-                windowInfo.display, &windowContext->surface) ||
-            !CreateSwapchainResources(*windowContext, 1, 1)) {
-            NeoWPF::Diagnostics::LogError("[Vulkan] Failed to initialize additional window context");
-            DestroySwapchainResources(*windowContext);
-            if (windowContext->surface != VK_NULL_HANDLE) {
-                vkDestroySurfaceKHR(m_instance, windowContext->surface, nullptr);
-                windowContext->surface = VK_NULL_HANDLE;
-            }
-            return false;
-        }
-        return true;
     }
     NeoWPF::Diagnostics::LogInfo(
         "[Vulkan] Native window info: system=%d window=%p display=%p requestedExtensions=%zu",
@@ -194,34 +173,75 @@ bool VulkanRendering::Initialize(const NeoWPF::Rendering::RenderSurface& surface
     }
     NeoWPF::Diagnostics::LogInfo("[Vulkan] Instance created: %p", static_cast<void*>(m_instance));
 
-    NeoWPF::Diagnostics::LogInfo("[Vulkan] Creating platform surface");
-    if (!windowInfo.createVulkanSurface(
+    VkSurfaceKHR compatibilitySurface = VK_NULL_HANDLE;
+    NeoWPF::Diagnostics::LogInfo("[Vulkan] Creating temporary surface for device selection");
+    const bool compatibilitySurfaceCreated = windowInfo.createVulkanSurface(
             windowInfo.vulkanSurfaceUserData, m_instance, windowInfo.window,
-            windowInfo.display, &windowContext->surface)) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Platform surface creation failed");
-        Shutdown();
-        return false;
-    }
-    NeoWPF::Diagnostics::LogInfo("[Vulkan] Surface created: %p", static_cast<void*>(windowContext->surface));
-
-    if (!InitializeDevice(nativeWindowHandle)) {
-        Shutdown();
+            windowInfo.display, &compatibilitySurface);
+    if (!compatibilitySurfaceCreated || compatibilitySurface == VK_NULL_HANDLE) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Temporary surface creation failed");
+        if (compatibilitySurface != VK_NULL_HANDLE) {
+            vkDestroySurfaceKHR(m_instance, compatibilitySurface, nullptr);
+        }
+        ShutdownDevice();
         return false;
     }
 
-    if (!CreateSwapchainResources(*windowContext, 1, 1)) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Swapchain resource creation failed during initialization");
-        Shutdown();
+    if (!InitializeDeviceForSurface(compatibilitySurface)) {
+        if (compatibilitySurface != VK_NULL_HANDLE) {
+            vkDestroySurfaceKHR(m_instance, compatibilitySurface, nullptr);
+        }
+        ShutdownDevice();
         return false;
     }
+    vkDestroySurfaceKHR(m_instance, compatibilitySurface, nullptr);
     m_initialized = true;
-    NeoWPF::Diagnostics::LogInfo("[Vulkan] Initialize complete");
+    NeoWPF::Diagnostics::LogInfo("[Vulkan] Device initialization complete");
     return true;
 }
 
 bool VulkanRendering::CreateSurface(const NeoWPF::Rendering::RenderSurface& surface)
 {
-    return Initialize(surface);
+    std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
+    if (!m_initialized || !surface.nativeWindowHandle) {
+        return false;
+    }
+    {
+        std::lock_guard<std::mutex> lock(m_windowContextsMutex);
+        if (m_windowContexts.find(surface.nativeWindowHandle) != m_windowContexts.end()) {
+            return true;
+        }
+    }
+
+    NeoWPF::Contracts::NativeWindowInfo windowInfo;
+    auto* platform = NeoWPF::Platform::CurrentPlatform();
+    if (!platform || !platform->Windowing().GetNativeWindowInfo(surface.nativeWindowHandle, windowInfo) ||
+        !windowInfo.window || !windowInfo.createVulkanSurface) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Invalid surface factory for rendering surface");
+        return false;
+    }
+
+    auto context = std::make_shared<WindowContext>();
+    context->transparent = windowInfo.surfaceAlpha == NeoWPF::Contracts::SurfaceAlpha::Premultiplied;
+    const bool nativeSurfaceCreated = windowInfo.createVulkanSurface(
+            windowInfo.vulkanSurfaceUserData, m_instance, windowInfo.window,
+            windowInfo.display, &context->surface);
+    if (!nativeSurfaceCreated || context->surface == VK_NULL_HANDLE) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Platform surface creation failed");
+        if (context->surface != VK_NULL_HANDLE) {
+            vkDestroySurfaceKHR(m_instance, context->surface, nullptr);
+        }
+        return false;
+    }
+    if (!CreateSwapchainResources(*context, 1, 1)) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Swapchain resource creation failed for rendering surface");
+        DestroySwapchainResources(*context);
+        vkDestroySurfaceKHR(m_instance, context->surface, nullptr);
+        return false;
+    }
+    std::lock_guard<std::mutex> lock(m_windowContextsMutex);
+    m_windowContexts.emplace(surface.nativeWindowHandle, std::move(context));
+    return true;
 }
 
 void VulkanRendering::DestroySurface(const NeoWPF::Rendering::RenderSurface& surface) noexcept
@@ -247,7 +267,7 @@ void VulkanRendering::DestroySurface(const NeoWPF::Rendering::RenderSurface& sur
     }
 }
 
-void VulkanRendering::Shutdown() noexcept
+void VulkanRendering::ShutdownDevice() noexcept
 {
     std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
     if (m_device != VK_NULL_HANDLE) {

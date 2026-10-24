@@ -99,6 +99,7 @@ TEST(WindowRenderLifecycleTests, CreatesTwoIndependentWindowsAndBindsEachRenderT
     NeoWPF::Rendering::Renderer_Present(rightSurface);
 
     NeoWPF::Rendering::Renderer_DestroySurface(rightSurface);
+    ASSERT_TRUE(NeoWPF::Rendering::Renderer_IsInitialized());
     ASSERT_TRUE(NeoWPF::Rendering::Renderer_Initialize(rightSurface));
     NeoWPF::Rendering::Renderer_Resize(rightSurface, 640, 480);
     NeoWPF::Rendering::Renderer_BeginFrame(rightSurface);
@@ -149,11 +150,11 @@ TEST(VulkanRenderingTests, PremultipliesOnlyTransparentClearColors)
     EXPECT_FLOAT_EQ(opaque[3], 128.0f / 255.0f);
 }
 
-TEST(VulkanRenderingTests, RejectsInvalidWaylandWindowHandle)
+TEST(VulkanRenderingTests, RejectsMissingSurfaceDuringDeviceInitialization)
 {
     NeoWPF::Rendering::Vulkan::VulkanRendering rendering;
 
-    EXPECT_FALSE(rendering.Initialize(NeoWPF::Rendering::RenderSurface{}));
+    EXPECT_FALSE(rendering.InitializeDevice(NeoWPF::Rendering::RenderSurface{}));
     EXPECT_FALSE(rendering.CreateSurface(NeoWPF::Rendering::RenderSurface{}));
     rendering.DestroySurface(NeoWPF::Rendering::RenderSurface{});
     EXPECT_FALSE(rendering.IsInitialized());
@@ -163,8 +164,8 @@ TEST(VulkanRenderingTests, ShutdownIsIdempotentBeforeInitialization)
 {
     NeoWPF::Rendering::Vulkan::VulkanRendering rendering;
 
-    rendering.Shutdown();
-    rendering.Shutdown();
+    rendering.ShutdownDevice();
+    rendering.ShutdownDevice();
 
     EXPECT_FALSE(rendering.IsInitialized());
 }

@@ -38,8 +38,8 @@ namespace NeoWPF::Rendering::D3D11 {
     std::mutex g_deviceMutex;
 
     HMODULE g_d3d11Dll = nullptr;
-    using PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN = decltype(&D3D11CreateDeviceAndSwapChain);
-    PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN g_D3D11CreateDeviceAndSwapChain = nullptr;
+    using PFN_D3D11_CREATE_DEVICE = decltype(&D3D11CreateDevice);
+    PFN_D3D11_CREATE_DEVICE g_D3D11CreateDevice = nullptr;
 
     const char* GetRectVertexShaderSource();
     const char* GetRectPixelShaderSource();
@@ -132,12 +132,12 @@ static HRESULT CreateCompositionSwapChain(unsigned int width, unsigned int heigh
     return baseSwapChain.CopyTo(swapChain);
 }
 
-void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain)
+void CreateDevice()
 {
-    NEO_WPF_STARTUP_ACTION("D3D11.CreateDeviceAndSwapChain");
+    NEO_WPF_STARTUP_ACTION("D3D11.CreateDevice");
     std::lock_guard<std::mutex> deviceLock(g_deviceMutex);
     ::NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
-        "[D3D11] CreateDeviceAndSwapChain: begin (hwnd=%p size=%ux%u)", hwnd, width, height);
+        "[D3D11] CreateDevice: begin");
     if (!g_d3d11Dll) {
         if (::NeoWPF::Diagnostics::GetFailureHookPoint() == ::NeoWPF::Diagnostics::FailureHookPoint::LoadD3D11Dll) {
             ::NeoWPF::Diagnostics::LogError("Injected failure: Failed to load d3d11.dll");
@@ -149,44 +149,40 @@ void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height
         }
         {
             NEO_WPF_STARTUP_ACTION("D3D11.ResolveProc");
-            LoadProcOrThrow(g_d3d11Dll, reinterpret_cast<void**>(&g_D3D11CreateDeviceAndSwapChain), "D3D11CreateDeviceAndSwapChain", "Failed to locate D3D11CreateDeviceAndSwapChain");
+            LoadProcOrThrow(g_d3d11Dll, reinterpret_cast<void**>(&g_D3D11CreateDevice), "D3D11CreateDevice", "Failed to locate D3D11CreateDevice");
         }
     }
-
-    width = (width == 0) ? 1 : width;
-    height = (height == 0) ? 1 : height;
-    DXGI_SWAP_CHAIN_DESC sd = CreateSwapChainDesc(hwnd, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL);
 
     const UINT baseCreateFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
     HRESULT hr = E_FAIL;
     const auto hookPoint = ::NeoWPF::Diagnostics::GetFailureHookPoint();
     const bool injectedCreateDeviceFailure = hookPoint == ::NeoWPF::Diagnostics::FailureHookPoint::CreateD3D11Device;
-    const bool injectedCreateSwapChainFailure = hookPoint == ::NeoWPF::Diagnostics::FailureHookPoint::CreateD3D11SwapChain;
 
-    const auto createDeviceAndSwapChain = [&](UINT createFlags, D3D_DRIVER_TYPE driverType) {
-        if (injectedCreateDeviceFailure || injectedCreateSwapChainFailure) {
-            ::NeoWPF::Diagnostics::LogWarn("Injected failure: CreateD3D11Device%s", injectedCreateSwapChainFailure ? "/SwapChain" : "");
+    const auto createDevice = [&](UINT createFlags, D3D_DRIVER_TYPE driverType) {
+        if (injectedCreateDeviceFailure) {
+            ::NeoWPF::Diagnostics::LogWarn("Injected failure: CreateD3D11Device");
             return E_FAIL;
         }
-        return g_D3D11CreateDeviceAndSwapChain(nullptr, driverType, nullptr, createFlags, nullptr, 0, D3D11_SDK_VERSION, &sd, swapChain, &g_device, &g_featureLevel, &g_context);
+        return g_D3D11CreateDevice(nullptr, driverType, nullptr, createFlags, nullptr, 0,
+            D3D11_SDK_VERSION, &g_device, &g_featureLevel, &g_context);
     };
 
 #if defined(_DEBUG)
     {
         NEO_WPF_STARTUP_ACTION("D3D11.CreateDevice.Hardware.debug");
-        hr = createDeviceAndSwapChain(baseCreateFlags | D3D11_CREATE_DEVICE_DEBUG, D3D_DRIVER_TYPE_HARDWARE);
+        hr = createDevice(baseCreateFlags | D3D11_CREATE_DEVICE_DEBUG, D3D_DRIVER_TYPE_HARDWARE);
     }
     if (FAILED(hr)) {
         ::NeoWPF::Diagnostics::LogWarn("Hardware device creation failed (0x%08X). retrying without debug flags", static_cast<unsigned int>(hr));
         {
             NEO_WPF_STARTUP_ACTION("D3D11.CreateDevice.Hardware.retry");
-            hr = createDeviceAndSwapChain(baseCreateFlags, D3D_DRIVER_TYPE_HARDWARE);
+            hr = createDevice(baseCreateFlags, D3D_DRIVER_TYPE_HARDWARE);
         }
     }
 #else
     {
         NEO_WPF_STARTUP_ACTION("D3D11.CreateDevice.Hardware");
-        hr = createDeviceAndSwapChain(baseCreateFlags, D3D_DRIVER_TYPE_HARDWARE);
+        hr = createDevice(baseCreateFlags, D3D_DRIVER_TYPE_HARDWARE);
     }
 #endif
 
@@ -194,19 +190,12 @@ void CreateDeviceAndSwapChain(HWND hwnd, unsigned int width, unsigned int height
         ::NeoWPF::Diagnostics::LogWarn("Hardware D3D11 device creation failed (0x%08X); falling back to WARP.", static_cast<unsigned int>(hr));
         {
             NEO_WPF_STARTUP_ACTION("D3D11.CreateDevice.WARP");
-            hr = createDeviceAndSwapChain(baseCreateFlags, D3D_DRIVER_TYPE_WARP);
+            hr = createDevice(baseCreateFlags, D3D_DRIVER_TYPE_WARP);
         }
     }
-    ThrowIfFailed(hr, "D3D11 device/swapchain creation failed");
-    if (IsTransparentWindow(hwnd)) {
-        ComPtr<IDXGISwapChain> compositionSwapChain;
-        ThrowIfFailed(CreateCompositionSwapChain(width, height, &compositionSwapChain),
-            "Failed to create transparent composition swapchain");
-        (*swapChain)->Release();
-        *swapChain = compositionSwapChain.Detach();
-    }
+    ThrowIfFailed(hr, "D3D11 device creation failed");
     ::NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
-        "[D3D11] CreateDeviceAndSwapChain: success (device ready)");
+        "[D3D11] CreateDevice: success (device ready)");
 }
 
 HRESULT CreateSwapChainForWindow(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain)
