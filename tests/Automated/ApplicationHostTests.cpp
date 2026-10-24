@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Core/Application/ApplicationHost.h>
+#include <NeoWPF/UI/Controls/Window.h>
 
 #include <deque>
 #include <memory>
@@ -66,9 +68,10 @@ public:
 TEST(DesktopApplicationHostTests, DoesNotRunAFrameAfterMessagePumpRequestsExit)
 {
     TestWindowing windowing;
+    NeoWPF::Core::ApplicationHostSession session;
     windowing.exitCode = 12;
     windowing.pumpResults.push_back(false);
-    NeoWPF::Core::DesktopApplicationHost host(windowing);
+    NeoWPF::Core::DesktopApplicationHost host(windowing, session);
     int frameCount = 0;
 
     const int exitCode = host.Run([&frameCount] {
@@ -84,8 +87,9 @@ TEST(DesktopApplicationHostTests, DoesNotRunAFrameAfterMessagePumpRequestsExit)
 TEST(DesktopApplicationHostTests, PumpsBeforeEachFrameAndStopsWhenFrameRequestsExit)
 {
     TestWindowing windowing;
+    NeoWPF::Core::ApplicationHostSession session;
     windowing.exitCode = 23;
-    NeoWPF::Core::DesktopApplicationHost host(windowing);
+    NeoWPF::Core::DesktopApplicationHost host(windowing, session);
     int frameCount = 0;
 
     const int exitCode = host.Run([&frameCount] {
@@ -100,7 +104,8 @@ TEST(DesktopApplicationHostTests, PumpsBeforeEachFrameAndStopsWhenFrameRequestsE
 TEST(DesktopApplicationHostTests, RequestQuitForwardsExitCodeToWindowing)
 {
     TestWindowing windowing;
-    NeoWPF::Core::DesktopApplicationHost host(windowing);
+    NeoWPF::Core::ApplicationHostSession session;
+    NeoWPF::Core::DesktopApplicationHost host(windowing, session);
 
     host.RequestQuit(42);
 
@@ -112,7 +117,8 @@ TEST(DesktopApplicationHostTests, RequestQuitForwardsExitCodeToWindowing)
 TEST(DesktopApplicationHostTests, RunDeactivatesHostWithoutShuttingItDown)
 {
     TestWindowing windowing;
-    NeoWPF::Core::DesktopApplicationHost host(windowing);
+    NeoWPF::Core::ApplicationHostSession session;
+    NeoWPF::Core::DesktopApplicationHost host(windowing, session);
     int frameCount = 0;
 
     EXPECT_EQ(host.Run([&] {
@@ -130,7 +136,8 @@ TEST(DesktopApplicationHostTests, RunDeactivatesHostWithoutShuttingItDown)
 TEST(DesktopApplicationHostTests, ShutdownPreventsActivationAndFrames)
 {
     TestWindowing windowing;
-    NeoWPF::Core::DesktopApplicationHost host(windowing);
+    NeoWPF::Core::ApplicationHostSession session;
+    NeoWPF::Core::DesktopApplicationHost host(windowing, session);
     int frameCount = 0;
 
     host.Shutdown();
@@ -143,6 +150,52 @@ TEST(DesktopApplicationHostTests, ShutdownPreventsActivationAndFrames)
     }), 0);
     EXPECT_EQ(frameCount, 0);
     EXPECT_EQ(windowing.pumpCount, 0);
+}
+
+TEST(ApplicationHostSessionTests, PreservesContentAcrossPauseAndResume)
+{
+    auto contentHost = std::make_shared<NeoWPF::UI::Window>();
+    NeoWPF::Core::ApplicationHostSession session(contentHost);
+
+    EXPECT_TRUE(session.Activate());
+    session.Deactivate();
+    EXPECT_EQ(session.GetContentHost(), contentHost);
+    EXPECT_TRUE(session.Activate());
+    EXPECT_EQ(session.GetContentHost(), contentHost);
+}
+
+TEST(ApplicationHostSessionTests, MainWindowPropertyAndSessionStaySynchronized)
+{
+    NeoWPF::Core::Application application;
+    auto firstContentHost = std::make_shared<NeoWPF::UI::Window>();
+    auto replacementContentHost = std::make_shared<NeoWPF::UI::Window>();
+
+    application.SetMainWindow(firstContentHost);
+
+    EXPECT_EQ(application.GetMainWindow(), firstContentHost);
+    EXPECT_EQ(
+        application.GetValue<std::shared_ptr<NeoWPF::UI::Window>>(
+            NeoWPF::Core::Application::MainWindowProperty()),
+        firstContentHost);
+
+    application.SetValue(
+        NeoWPF::Core::Application::MainWindowProperty(), replacementContentHost);
+
+    EXPECT_EQ(application.GetMainWindow(), replacementContentHost);
+    application.SetMainWindow({});
+}
+
+TEST(ApplicationHostSessionTests, ShutdownPreventsReactivationUntilNewRunBegins)
+{
+    NeoWPF::Core::ApplicationHostSession session;
+
+    session.Shutdown();
+
+    EXPECT_TRUE(session.IsShutdown());
+    EXPECT_FALSE(session.Activate());
+    session.Begin();
+    EXPECT_FALSE(session.IsShutdown());
+    EXPECT_TRUE(session.Activate());
 }
 
 }

@@ -126,7 +126,7 @@ public:
         @param window
         The window associated with this application.
     */
-    void SetMainWindow(const std::shared_ptr<NeoWPF::UI::Window>& window) { m_mainWindow = window; }
+    void SetMainWindow(const std::shared_ptr<NeoWPF::UI::Window>& window);
 
     /*
         @summary
@@ -135,7 +135,7 @@ public:
         @returns
         A reference to the stored main-window shared pointer.
     */
-    const std::shared_ptr<NeoWPF::UI::Window>& GetMainWindow() const noexcept { return m_mainWindow; }
+    const std::shared_ptr<NeoWPF::UI::Window>& GetMainWindow() const noexcept;
 
     void AddLocale(std::shared_ptr<NeoWPF::UI::Localization::LocaleTable> table);
     const std::vector<std::shared_ptr<NeoWPF::UI::Localization::LocaleTable>>& GetLocales() const noexcept { return m_locales; }
@@ -457,7 +457,6 @@ protected:
     virtual void OnApplicationQuit();
 
 private:
-    std::shared_ptr<NeoWPF::UI::Window> m_mainWindow;
     std::vector<std::shared_ptr<NeoWPF::UI::Localization::LocaleTable>> m_locales;
     static std::shared_ptr<Application> s_current;
 };

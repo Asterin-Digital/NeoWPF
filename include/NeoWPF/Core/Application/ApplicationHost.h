@@ -10,16 +10,22 @@ See LICENSE file in the project root for full license text.
 #include <atomic>
 #include <cstdint>
 #include <functional>
+#include <memory>
+#include <utility>
+
+namespace NeoWPF::UI {
+class Window;
+}
 
 namespace NeoWPF::Core {
 
 /*
     @summary
-    Tracks whether a presentation host is active or permanently shut down.
+    Owns application-host lifecycle state and the stable main content host.
 
     @internal
 */
-class ApplicationHostLifecycle {
+class ApplicationHostSession {
 public:
     enum class State : std::uint8_t {
         Inactive,
@@ -27,12 +33,17 @@ public:
         Shutdown,
     };
 
+    explicit ApplicationHostSession(std::shared_ptr<NeoWPF::UI::Window> contentHost = {}) noexcept
+        : m_contentHost(std::move(contentHost))
+    {
+    }
+
     /*
         @summary
-        Activates the host unless it has been shut down.
+        Activates the host session unless it has been shut down.
 
         @returns
-        True when the host is active after the operation.
+        True when the host session is active after the operation.
 
         @internal
     */
@@ -54,7 +65,7 @@ public:
 
     /*
         @summary
-        Deactivates the host without shutting it down.
+        Deactivates the host session without shutting it down.
 
         @internal
     */
@@ -70,7 +81,7 @@ public:
 
     /*
         @summary
-        Permanently shuts down the host.
+        Permanently shuts down the host session.
 
         @internal
     */
@@ -78,7 +89,7 @@ public:
 
     /*
         @summary
-        Indicates whether the host is currently active.
+        Indicates whether the host session is currently active.
 
         @internal
     */
@@ -86,14 +97,45 @@ public:
 
     /*
         @summary
-        Indicates whether the host has been permanently shut down.
+        Indicates whether the host session has been permanently shut down.
 
         @internal
     */
     bool IsShutdown() const noexcept { return m_state.load(std::memory_order_acquire) == State::Shutdown; }
 
+    /*
+        @summary
+        Resets lifecycle state for a new application run.
+
+        @internal
+    */
+    void Begin() noexcept { m_state.store(State::Inactive, std::memory_order_release); }
+
+    /*
+        @summary
+        Replaces the stable main content host.
+
+        @param contentHost
+        The new main content host.
+
+        @internal
+    */
+    void SetContentHost(std::shared_ptr<NeoWPF::UI::Window> contentHost) noexcept
+    {
+        m_contentHost = std::move(contentHost);
+    }
+
+    /*
+        @summary
+        Returns the stable main content host.
+
+        @internal
+    */
+    const std::shared_ptr<NeoWPF::UI::Window>& GetContentHost() const noexcept { return m_contentHost; }
+
 private:
     std::atomic<State> m_state{State::Inactive};
+    std::shared_ptr<NeoWPF::UI::Window> m_contentHost;
 };
 
 /*
@@ -166,7 +208,9 @@ public:
 */
 class DesktopApplicationHost final : public IApplicationHost {
 public:
-    explicit DesktopApplicationHost(NeoWPF::Contracts::IWindowing& windowing) noexcept;
+    DesktopApplicationHost(
+        NeoWPF::Contracts::IWindowing& windowing,
+        ApplicationHostSession& session) noexcept;
 
     /*
         @summary
@@ -210,7 +254,7 @@ public:
 
 private:
     NeoWPF::Contracts::IWindowing& m_windowing;
-    ApplicationHostLifecycle m_lifecycle;
+    ApplicationHostSession& m_session;
 };
 
 }

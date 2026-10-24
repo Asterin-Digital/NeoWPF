@@ -74,6 +74,7 @@ void Application::Initialize()
         s_current = std::make_shared<Application>();
     }
     auto& appState = GetAppState();
+    appState.applicationHostSession.Begin();
     appState.mainThreadExecutor = std::make_unique<NeoWPF::Core::Threading::MainThreadExecutor>();
     appState.backgroundExecutor = std::make_unique<NeoWPF::Core::Threading::BackgroundExecutor>();
     NeoWPF::UI::Properties::RegisterCoreControlProperties();
@@ -122,6 +123,20 @@ NeoWPF::Platform::Window Application::CreateWindow(
         return NeoWPF::Platform::Window();
     }
     return CreateWindow(windowHost->GetTitle(), width, height, windowHost);
+}
+
+void Application::SetMainWindow(const std::shared_ptr<NeoWPF::UI::Window>& window)
+{
+    if (IsApplyingPropertyValue()) {
+        GetAppState().applicationHostSession.SetContentHost(window);
+        return;
+    }
+    SetValue(MainWindowProperty(), window);
+}
+
+const std::shared_ptr<NeoWPF::UI::Window>& Application::GetMainWindow() const noexcept
+{
+    return GetAppState().applicationHostSession.GetContentHost();
 }
 
 void Application::ShowConsole(bool visible)

@@ -49,6 +49,7 @@ struct RenderSurfaceDestructionRequest {
 
 struct AppState {
     void* hInst = nullptr;
+    NeoWPF::Core::ApplicationHostSession applicationHostSession;
     std::vector<WindowSession> windowSessions;
     std::vector<std::shared_ptr<RenderSurfaceDestructionRequest>> pendingRenderSurfaceDestruction;
     std::atomic<bool> running{false};

@@ -4,21 +4,23 @@
 
 namespace NeoWPF::Core {
 
-DesktopApplicationHost::DesktopApplicationHost(NeoWPF::Contracts::IWindowing& windowing) noexcept
-    : m_windowing(windowing)
+DesktopApplicationHost::DesktopApplicationHost(
+    NeoWPF::Contracts::IWindowing& windowing,
+    ApplicationHostSession& session) noexcept
+    : m_windowing(windowing), m_session(session)
 {
 }
 
 int DesktopApplicationHost::Run(const FrameCallback& frameCallback)
 {
-    if (!frameCallback || !m_lifecycle.Activate()) {
+    if (!frameCallback || !m_session.Activate()) {
         return m_windowing.ExitCode();
     }
 
     constexpr auto frameInterval = std::chrono::milliseconds(16);
     auto nextFrame = std::chrono::steady_clock::now();
     try {
-        while (!m_lifecycle.IsShutdown()) {
+        while (!m_session.IsShutdown()) {
             const auto now = std::chrono::steady_clock::now();
             const auto timeout = now < nextFrame
                 ? std::chrono::duration_cast<std::chrono::milliseconds>(nextFrame - now)
@@ -33,11 +35,11 @@ int DesktopApplicationHost::Run(const FrameCallback& frameCallback)
             }
         }
     } catch (...) {
-        m_lifecycle.Deactivate();
+        m_session.Deactivate();
         throw;
     }
 
-    m_lifecycle.Deactivate();
+    m_session.Deactivate();
     return m_windowing.ExitCode();
 }
 
@@ -48,17 +50,17 @@ void DesktopApplicationHost::RequestQuit(int exitCode) noexcept
 
 void DesktopApplicationHost::Shutdown() noexcept
 {
-    m_lifecycle.Shutdown();
+    m_session.Shutdown();
 }
 
 bool DesktopApplicationHost::IsActive() const noexcept
 {
-    return m_lifecycle.IsActive();
+    return m_session.IsActive();
 }
 
 bool DesktopApplicationHost::IsShutdown() const noexcept
 {
-    return m_lifecycle.IsShutdown();
+    return m_session.IsShutdown();
 }
 
 }
