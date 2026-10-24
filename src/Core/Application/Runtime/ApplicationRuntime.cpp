@@ -338,6 +338,7 @@ void ShutdownApplication()
     {
         std::lock_guard<std::mutex> lock(s_appState.applicationHostMutex);
         if (s_appState.applicationHost) {
+            s_appState.applicationHost->Shutdown();
             s_appState.applicationHost->RequestQuit(0);
         } else {
             NeoWPF::Platform::CurrentPlatform()->Windowing().RequestQuit(0);

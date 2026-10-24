@@ -106,6 +106,43 @@ TEST(DesktopApplicationHostTests, RequestQuitForwardsExitCodeToWindowing)
 
     EXPECT_EQ(windowing.requestedExitCode, 42);
     EXPECT_EQ(windowing.ExitCode(), 42);
+    EXPECT_FALSE(host.IsShutdown());
+}
+
+TEST(DesktopApplicationHostTests, RunDeactivatesHostWithoutShuttingItDown)
+{
+    TestWindowing windowing;
+    NeoWPF::Core::DesktopApplicationHost host(windowing);
+    int frameCount = 0;
+
+    EXPECT_EQ(host.Run([&] {
+        EXPECT_TRUE(host.IsActive());
+        return ++frameCount < 2;
+    }), 0);
+
+    EXPECT_EQ(frameCount, 2);
+    EXPECT_FALSE(host.IsActive());
+    EXPECT_FALSE(host.IsShutdown());
+    EXPECT_EQ(host.Run([&] { return ++frameCount < 3; }), 0);
+    EXPECT_EQ(frameCount, 3);
+}
+
+TEST(DesktopApplicationHostTests, ShutdownPreventsActivationAndFrames)
+{
+    TestWindowing windowing;
+    NeoWPF::Core::DesktopApplicationHost host(windowing);
+    int frameCount = 0;
+
+    host.Shutdown();
+
+    EXPECT_TRUE(host.IsShutdown());
+    EXPECT_FALSE(host.IsActive());
+    EXPECT_EQ(host.Run([&] {
+        ++frameCount;
+        return true;
+    }), 0);
+    EXPECT_EQ(frameCount, 0);
+    EXPECT_EQ(windowing.pumpCount, 0);
 }
 
 }
