@@ -80,7 +80,7 @@ TEST(WindowRenderLifecycleTests, CreatesTwoIndependentWindowsAndBindsEachRenderT
 
     const NeoWPF::Rendering::RenderSurface leftSurface{leftWindow.Handle()};
     const NeoWPF::Rendering::RenderSurface rightSurface{rightWindow.Handle()};
-    NeoWPF::Rendering::Renderer_Initialize(leftSurface);
+    ASSERT_TRUE(NeoWPF::Rendering::Renderer_Initialize(leftSurface));
     ASSERT_TRUE(NeoWPF::Rendering::Renderer_IsInitialized());
 
     NeoWPF::Rendering::Renderer_Resize(leftSurface, 320, 240);
@@ -90,10 +90,17 @@ TEST(WindowRenderLifecycleTests, CreatesTwoIndependentWindowsAndBindsEachRenderT
     NeoWPF::Rendering::Renderer_Execute(leftSurface, leftCommands);
     NeoWPF::Rendering::Renderer_Present(leftSurface);
 
-    NeoWPF::Rendering::Renderer_Initialize(rightSurface);
+    ASSERT_TRUE(NeoWPF::Rendering::Renderer_Initialize(rightSurface));
     NeoWPF::Rendering::Renderer_Resize(rightSurface, 640, 480);
     NeoWPF::Rendering::CommandList rightCommands;
     rightCommands.DrawRect(20.0, 20.0, 200.0, 160.0, 0xFF993366u);
+    NeoWPF::Rendering::Renderer_BeginFrame(rightSurface);
+    NeoWPF::Rendering::Renderer_Execute(rightSurface, rightCommands);
+    NeoWPF::Rendering::Renderer_Present(rightSurface);
+
+    NeoWPF::Rendering::Renderer_DestroySurface(rightSurface);
+    ASSERT_TRUE(NeoWPF::Rendering::Renderer_Initialize(rightSurface));
+    NeoWPF::Rendering::Renderer_Resize(rightSurface, 640, 480);
     NeoWPF::Rendering::Renderer_BeginFrame(rightSurface);
     NeoWPF::Rendering::Renderer_Execute(rightSurface, rightCommands);
     NeoWPF::Rendering::Renderer_Present(rightSurface);
@@ -147,6 +154,8 @@ TEST(VulkanRenderingTests, RejectsInvalidWaylandWindowHandle)
     NeoWPF::Rendering::Vulkan::VulkanRendering rendering;
 
     EXPECT_FALSE(rendering.Initialize(NeoWPF::Rendering::RenderSurface{}));
+    EXPECT_FALSE(rendering.CreateSurface(NeoWPF::Rendering::RenderSurface{}));
+    rendering.DestroySurface(NeoWPF::Rendering::RenderSurface{});
     EXPECT_FALSE(rendering.IsInitialized());
 }
 

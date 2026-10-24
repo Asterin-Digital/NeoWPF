@@ -172,36 +172,46 @@ void StartRenderThread()
     s_appState.running = true;
     s_appState.renderThreadInitialized = false;
     s_appState.renderThreadInitFailed = false;
+    s_appState.renderThreadShuttingDown = false;
     s_appState.renderThread = std::thread([]() {
     NeoWPF::Core::Threading::ThreadAffinity::RegisterRenderThread();
         auto* platform = NeoWPF::Platform::CurrentPlatform();
         try {
+            bool surfacesInitialized = true;
             {
                 std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
                 for (const auto& windowSession : s_appState.windowSessions) {
-                    if (!platform || !platform->Rendering().Initialize(windowSession.renderSurface)) {
+                    if (!platform || !NeoWPF::Rendering::Renderer_Initialize(windowSession.renderSurface)) {
                         NeoWPF::Diagnostics::LogError("Render backend initialization failed");
-                        std::lock_guard<std::mutex> initLock(s_appState.renderInitMutex);
-                        s_appState.renderThreadInitFailed = true;
-                        s_appState.renderThreadInitialized = false;
-                        s_appState.running = false;
-                        s_appState.renderInitCondition.notify_one();
-                        NeoWPF::Core::Threading::ThreadAffinity::ClearRenderThread();
-                        return;
+                        surfacesInitialized = false;
+                        break;
                     }
                 }
+                if (surfacesInitialized) {
+                    s_appState.renderThreadInitialized = true;
+                }
             }
-            {
-                std::lock_guard<std::mutex> lock(s_appState.renderInitMutex);
-                s_appState.renderThreadInitialized = true;
+            if (!surfacesInitialized) {
+                NeoWPF::Rendering::Renderer_Shutdown();
+                {
+                    std::lock_guard<std::mutex> lock(s_appState.renderInitMutex);
+                    s_appState.renderThreadInitFailed = true;
+                    s_appState.renderThreadInitialized = false;
+                }
+                s_appState.running = false;
+                s_appState.renderInitCondition.notify_one();
+                NeoWPF::Core::Threading::ThreadAffinity::ClearRenderThread();
+                return;
             }
             s_appState.renderInitCondition.notify_one();
         }
         catch (const std::exception& ex) {
+            NeoWPF::Rendering::Renderer_Shutdown();
             NeoWPF::Diagnostics::LogError("Render thread initialization failed: %s", ex.what());
             {
                 std::lock_guard<std::mutex> lock(s_appState.renderInitMutex);
                 s_appState.renderThreadInitFailed = true;
+                s_appState.renderThreadInitialized = false;
             }
             s_appState.renderInitCondition.notify_one();
             s_appState.running = false;
@@ -209,10 +219,12 @@ void StartRenderThread()
             return;
         }
         catch (...) {
+            NeoWPF::Rendering::Renderer_Shutdown();
             NeoWPF::Diagnostics::LogError("Render thread initialization failed with unknown error");
             {
                 std::lock_guard<std::mutex> lock(s_appState.renderInitMutex);
                 s_appState.renderThreadInitFailed = true;
+                s_appState.renderThreadInitialized = false;
             }
             s_appState.renderInitCondition.notify_one();
             s_appState.running = false;
@@ -220,30 +232,66 @@ void StartRenderThread()
             return;
         }
 
-        while (s_appState.running.load()) {
+        while (true) {
+            bool keepRendering = false;
             {
                 std::unique_lock<std::mutex> lock(s_appState.renderRequestMutex);
                 s_appState.renderRequestCondition.wait(lock, [] {
                     return !s_appState.running.load() || s_appState.renderRequested;
                 });
-                if (!s_appState.running.load()) {
-                    break;
+                keepRendering = s_appState.running.load();
+                if (keepRendering) {
+                    s_appState.renderRequested = false;
                 }
-                s_appState.renderRequested = false;
             }
 
             std::vector<WindowSession> windowSessionsSnapshot;
+            std::vector<std::shared_ptr<RenderSurfaceDestructionRequest>> surfacesToDestroy;
             {
                 std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
-                windowSessionsSnapshot = s_appState.windowSessions;
+                surfacesToDestroy.swap(s_appState.pendingRenderSurfaceDestruction);
+                if (keepRendering) {
+                    windowSessionsSnapshot = s_appState.windowSessions;
+                }
+            }
+
+            for (const auto& request : surfacesToDestroy) {
+                NeoWPF::Rendering::Renderer_DestroySurface(request->surface);
+                {
+                    std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
+                    request->completed = true;
+                }
+                s_appState.renderSurfaceDestructionCondition.notify_all();
+            }
+            if (!keepRendering) {
+                std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
+                if (!s_appState.pendingRenderSurfaceDestruction.empty()) {
+                    continue;
+                }
+                s_appState.renderThreadShuttingDown = true;
+                break;
             }
 
             for (auto& windowSession : windowSessionsSnapshot) {
-                unsigned int w = 0;
-                unsigned int h = 0;
                 if (!platform->Windowing().IsWindowAlive(windowSession.renderSurface.nativeWindowHandle)) {
                     continue;
                 }
+                bool surfaceInitialized = false;
+                try {
+                    surfaceInitialized = NeoWPF::Rendering::Renderer_Initialize(windowSession.renderSurface);
+                } catch (const std::exception& ex) {
+                    NeoWPF::Diagnostics::LogError("Render surface initialization failed: %s", ex.what());
+                    continue;
+                } catch (...) {
+                    NeoWPF::Diagnostics::LogError("Render surface initialization failed with unknown error");
+                    continue;
+                }
+                if (!surfaceInitialized) {
+                    NeoWPF::Diagnostics::LogError("Render surface initialization failed");
+                    continue;
+                }
+                unsigned int w = 0;
+                unsigned int h = 0;
                 platform->Windowing().GetWindowSize(windowSession.renderSurface.nativeWindowHandle, w, h);
 
                 if (w > 0 && h > 0) {
@@ -272,7 +320,13 @@ void StartRenderThread()
 
         }
 
-        platform->Rendering().Shutdown();
+        NeoWPF::Rendering::Renderer_Shutdown();
+        {
+            std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
+            s_appState.renderThreadInitialized = false;
+            s_appState.renderThreadShuttingDown = false;
+        }
+        s_appState.renderSurfaceDestructionCondition.notify_all();
         NeoWPF::Core::Threading::ThreadAffinity::ClearRenderThread();
     });
 }

@@ -157,6 +157,20 @@ void ShutdownRendererWindowing()
     g_windowContexts.clear();
 }
 
+void DestroyRendererWindowing(HWND hwnd) noexcept
+{
+    auto context = FindContext(hwnd);
+    if (!context) {
+        return;
+    }
+    if (NeoWPF::Rendering::D3D11::g_context) {
+        NeoWPF::Rendering::D3D11::g_context->OMSetRenderTargets(0, nullptr, nullptr);
+        NeoWPF::Rendering::D3D11::g_context->Flush();
+    }
+    std::lock_guard<std::mutex> lock(g_windowContextsMutex);
+    g_windowContexts.erase(hwnd);
+}
+
 void ResizeRendererWindowing(HWND hwnd, unsigned int w, unsigned int h)
 {
     auto ctx = FindContext(hwnd);

@@ -219,6 +219,34 @@ bool VulkanRendering::Initialize(const NeoWPF::Rendering::RenderSurface& surface
     return true;
 }
 
+bool VulkanRendering::CreateSurface(const NeoWPF::Rendering::RenderSurface& surface)
+{
+    return Initialize(surface);
+}
+
+void VulkanRendering::DestroySurface(const NeoWPF::Rendering::RenderSurface& surface) noexcept
+{
+    std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
+    std::shared_ptr<WindowContext> context;
+    {
+        std::lock_guard<std::mutex> lock(m_windowContextsMutex);
+        const auto iterator = m_windowContexts.find(surface.nativeWindowHandle);
+        if (iterator == m_windowContexts.end()) {
+            return;
+        }
+        context = std::move(iterator->second);
+        m_windowContexts.erase(iterator);
+    }
+    if (m_device != VK_NULL_HANDLE) {
+        vkDeviceWaitIdle(m_device);
+    }
+    DestroySwapchainResources(*context);
+    if (context->surface != VK_NULL_HANDLE && m_instance != VK_NULL_HANDLE) {
+        vkDestroySurfaceKHR(m_instance, context->surface, nullptr);
+        context->surface = VK_NULL_HANDLE;
+    }
+}
+
 void VulkanRendering::Shutdown() noexcept
 {
     std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);

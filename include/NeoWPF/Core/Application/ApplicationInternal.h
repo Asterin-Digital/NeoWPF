@@ -41,15 +41,22 @@ struct WindowSession {
     bool commandListInitialized = false;
 };
 
+struct RenderSurfaceDestructionRequest {
+    NeoWPF::Rendering::RenderSurface surface;
+    bool completed = false;
+};
+
 struct AppState {
     void* hInst = nullptr;
     std::vector<WindowSession> windowSessions;
+    std::vector<std::shared_ptr<RenderSurfaceDestructionRequest>> pendingRenderSurfaceDestruction;
     std::atomic<bool> running{false};
     std::atomic<bool> consoleVisible{false};
     std::shared_ptr<NeoWPF::UI::Visual> developerWarningOverlayHost;
     std::shared_ptr<NeoWPF::UI::Visual> textInspectionOverlayHost;
     std::atomic<bool> renderThreadInitialized{false};
     std::atomic<bool> renderThreadInitFailed{false};
+    bool renderThreadShuttingDown = false;
     std::atomic<bool> layoutDebugLogging{false};
     std::thread renderThread;
     std::unique_ptr<NeoWPF::Core::Threading::MainThreadExecutor> mainThreadExecutor;
@@ -61,6 +68,7 @@ struct AppState {
     std::mutex renderRequestMutex;
     std::condition_variable renderRequestCondition;
     bool renderRequested = false;
+    std::condition_variable renderSurfaceDestructionCondition;
 
     std::mutex windowSessionsMutex;
     std::mutex commandListMutex;

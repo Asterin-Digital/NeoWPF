@@ -19,6 +19,8 @@ namespace NeoWPF::Rendering::Vulkan {
 class VulkanRendering final : public NeoWPF::Contracts::IRendering {
 public:
     bool Initialize(const NeoWPF::Rendering::RenderSurface& surface) override;
+    bool CreateSurface(const NeoWPF::Rendering::RenderSurface& surface) override;
+    void DestroySurface(const NeoWPF::Rendering::RenderSurface& surface) noexcept override;
     void Shutdown() noexcept override;
     bool IsInitialized() const noexcept override;
     void Resize(const NeoWPF::Rendering::RenderSurface& surface,

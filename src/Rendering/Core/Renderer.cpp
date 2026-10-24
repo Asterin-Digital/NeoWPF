@@ -16,6 +16,7 @@ struct WindowFrameState {
     bool hasSize = false;
     bool framePending = false;
     bool frameSubmitted = false;
+    bool surfaceCreated = false;
 };
 
 std::unordered_map<void*, WindowFrameState> s_windowStates;
@@ -51,13 +52,40 @@ NeoWPF::Contracts::IRendering* CurrentRendering() noexcept
 
 }
 
-void NeoWPF::Rendering::Renderer_Initialize(const RenderSurface& surface)
+bool NeoWPF::Rendering::Renderer_Initialize(const RenderSurface& surface)
 {
-    if (surface.nativeWindowHandle) {
+    if (!surface.nativeWindowHandle) {
+        return false;
+    }
+    auto& state = GetWindowFrameState(surface.nativeWindowHandle);
+    if (state.surfaceCreated) {
+        return true;
+    }
+    auto* rendering = CurrentRendering();
+    if (!rendering) {
+        return false;
+    }
+    state.surfaceCreated = rendering->IsInitialized()
+        ? rendering->CreateSurface(surface)
+        : rendering->Initialize(surface);
+    return state.surfaceCreated;
+}
+
+void NeoWPF::Rendering::Renderer_DestroySurface(const RenderSurface& surface)
+{
+    if (!surface.nativeWindowHandle) {
+        return;
+    }
+    const auto state = s_windowStates.find(surface.nativeWindowHandle);
+    if (state == s_windowStates.end()) {
+        return;
+    }
+    if (state->second.surfaceCreated) {
         if (auto* rendering = CurrentRendering()) {
-            rendering->Initialize(surface);
+            rendering->DestroySurface(surface);
         }
     }
+    s_windowStates.erase(state);
 }
 
 void NeoWPF::Rendering::Renderer_Shutdown()

@@ -19,6 +19,31 @@ public:
     virtual ~IRendering() = default;
 
     virtual bool Initialize(const NeoWPF::Rendering::RenderSurface& surface) = 0;
+
+    /*
+        @summary
+        Creates an additional surface on the initialized renderer.
+
+        @param surface
+        The rendering surface to create.
+
+        @returns
+        True when the surface is ready for rendering.
+
+        @internal
+    */
+    virtual bool CreateSurface(const NeoWPF::Rendering::RenderSurface& surface) = 0;
+
+    /*
+        @summary
+        Releases the resources owned by a rendering surface.
+
+        @param surface
+        The rendering surface to release.
+
+        @internal
+    */
+    virtual void DestroySurface(const NeoWPF::Rendering::RenderSurface& surface) noexcept = 0;
     virtual void Shutdown() noexcept = 0;
     virtual bool IsInitialized() const noexcept = 0;
     virtual void Resize(const NeoWPF::Rendering::RenderSurface& surface,

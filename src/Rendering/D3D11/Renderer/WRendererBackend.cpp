@@ -21,6 +21,7 @@ namespace NeoWPF::Rendering::D3D11 {
 
     void InitializeRendererWindowing(HWND hwnd);
     void ShutdownRendererWindowing();
+    void DestroyRendererWindowing(HWND hwnd) noexcept;
     void ResizeRendererWindowing(HWND hwnd, unsigned int w, unsigned int h);
     bool PresentRendererWindowing(HWND hwnd);
     unsigned int GetRendererWidth(HWND hwnd);
@@ -40,6 +41,17 @@ namespace NeoWPF::Rendering::D3D11 {
 void Initialize(HWND hwnd)
 {
     InitializeRendererWindowing(hwnd);
+}
+
+bool CreateSurface(HWND hwnd)
+{
+    InitializeRendererWindowing(hwnd);
+    return IsInitialized();
+}
+
+void DestroySurface(HWND hwnd) noexcept
+{
+    DestroyRendererWindowing(hwnd);
 }
 
 void Shutdown()

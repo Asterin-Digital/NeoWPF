@@ -263,9 +263,23 @@ struct CommandList {
     @param surface
     The rendering surface to initialize.
 
+    @returns
+    True when the surface is ready for rendering.
+
     @internal
 */
-void Renderer_Initialize(const RenderSurface& surface);
+bool Renderer_Initialize(const RenderSurface& surface);
+
+/*
+    @summary
+    Releases the renderer resources owned by a surface.
+
+    @param surface
+    The rendering surface to release.
+
+    @internal
+*/
+void Renderer_DestroySurface(const RenderSurface& surface);
 
 /*
     @summary
