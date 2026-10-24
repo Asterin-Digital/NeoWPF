@@ -9,6 +9,7 @@
 namespace {
 
 struct WindowFrameState {
+    std::uint64_t generationId = 0;
     std::uint64_t lastCommandHash = 0;
     bool hasCommandHash = false;
     unsigned int lastWidth = 0;
@@ -28,6 +29,18 @@ WindowFrameState& GetWindowFrameState(void* nativeWindowHandle)
         return nullState;
     }
     return s_windowStates[nativeWindowHandle];
+}
+
+WindowFrameState* FindWindowFrameState(const NeoWPF::Rendering::RenderSurface& surface) noexcept
+{
+    if (!surface.IsValid()) {
+        return nullptr;
+    }
+    const auto state = s_windowStates.find(surface.nativeWindowHandle);
+    if (state == s_windowStates.end() || state->second.generationId != surface.GetGenerationId()) {
+        return nullptr;
+    }
+    return &state->second;
 }
 
 std::uint64_t HashCommandList(const NeoWPF::Rendering::CommandList& commands) noexcept
@@ -54,10 +67,20 @@ NeoWPF::Contracts::IRendering* CurrentRendering() noexcept
 
 bool NeoWPF::Rendering::Renderer_Initialize(const RenderSurface& surface)
 {
-    if (!surface.nativeWindowHandle) {
+    auto surfaceUse = surface.TryAcquireUse();
+    if (!surfaceUse.owns_lock()) {
         return false;
     }
+    const auto existingState = s_windowStates.find(surface.nativeWindowHandle);
+    if (existingState != s_windowStates.end() &&
+        existingState->second.generationId != surface.GetGenerationId()) {
+        if (existingState->second.surfaceCreated) {
+            return false;
+        }
+        s_windowStates.erase(existingState);
+    }
     auto& state = GetWindowFrameState(surface.nativeWindowHandle);
+    state.generationId = surface.GetGenerationId();
     if (state.surfaceCreated) {
         return true;
     }
@@ -74,11 +97,15 @@ bool NeoWPF::Rendering::Renderer_Initialize(const RenderSurface& surface)
 
 void NeoWPF::Rendering::Renderer_DestroySurface(const RenderSurface& surface)
 {
-    if (!surface.nativeWindowHandle) {
+    if (!surface.nativeWindowHandle || !surface.generation) {
+        return;
+    }
+    auto surfaceDestruction = surface.LockForDestruction();
+    if (!surfaceDestruction.owns_lock()) {
         return;
     }
     const auto state = s_windowStates.find(surface.nativeWindowHandle);
-    if (state == s_windowStates.end()) {
+    if (state == s_windowStates.end() || state->second.generationId != surface.GetGenerationId()) {
         return;
     }
     if (state->second.surfaceCreated) {
@@ -99,19 +126,22 @@ void NeoWPF::Rendering::Renderer_Shutdown()
 
 void NeoWPF::Rendering::Renderer_Resize(const RenderSurface& surface, unsigned int w, unsigned int h)
 {
-    auto* nativeWindowHandle = surface.nativeWindowHandle;
-    if (!nativeWindowHandle) {
+    auto surfaceUse = surface.TryAcquireUse();
+    if (!surfaceUse.owns_lock()) {
+        return;
+    }
+    auto* state = FindWindowFrameState(surface);
+    if (!state) {
         return;
     }
 
-    auto& state = GetWindowFrameState(nativeWindowHandle);
-    if (state.hasSize && w == state.lastWidth && h == state.lastHeight) {
+    if (state->hasSize && w == state->lastWidth && h == state->lastHeight) {
         return;
     }
-    state.hasCommandHash = false;
-    state.lastWidth = w;
-    state.lastHeight = h;
-    state.hasSize = true;
+    state->hasCommandHash = false;
+    state->lastWidth = w;
+    state->lastHeight = h;
+    state->hasSize = true;
     if (auto* rendering = CurrentRendering()) {
         rendering->Resize(surface, w, h);
     }
@@ -119,56 +149,65 @@ void NeoWPF::Rendering::Renderer_Resize(const RenderSurface& surface, unsigned i
 
 void NeoWPF::Rendering::Renderer_BeginFrame(const RenderSurface& surface)
 {
-    auto* nativeWindowHandle = surface.nativeWindowHandle;
-    if (!nativeWindowHandle) {
+    auto surfaceUse = surface.TryAcquireUse();
+    if (!surfaceUse.owns_lock()) {
+        return;
+    }
+    auto* state = FindWindowFrameState(surface);
+    if (!state) {
         return;
     }
 
-    auto& state = GetWindowFrameState(nativeWindowHandle);
-    state.framePending = true;
-    state.frameSubmitted = false;
+    state->framePending = true;
+    state->frameSubmitted = false;
 }
 
 void NeoWPF::Rendering::Renderer_Execute(const RenderSurface& surface, const CommandList& cmd)
 {
-    auto* nativeWindowHandle = surface.nativeWindowHandle;
-    if (!nativeWindowHandle) {
+    auto surfaceUse = surface.TryAcquireUse();
+    if (!surfaceUse.owns_lock()) {
+        return;
+    }
+    auto* state = FindWindowFrameState(surface);
+    if (!state) {
         return;
     }
 
-    auto& state = GetWindowFrameState(nativeWindowHandle);
-    if (!state.framePending) {
+    if (!state->framePending) {
         return;
     }
     const auto commandHash = HashCommandList(cmd);
-    if (state.hasCommandHash && commandHash == state.lastCommandHash) {
-        state.framePending = false;
+    if (state->hasCommandHash && commandHash == state->lastCommandHash) {
+        state->framePending = false;
         return;
     }
     if (auto* rendering = CurrentRendering()) {
         rendering->BeginFrame(surface);
         rendering->Execute(surface, cmd);
-        state.lastCommandHash = commandHash;
-        state.hasCommandHash = true;
-        state.frameSubmitted = true;
+        state->lastCommandHash = commandHash;
+        state->hasCommandHash = true;
+        state->frameSubmitted = true;
     }
-    state.framePending = false;
+    state->framePending = false;
 }
 
 void NeoWPF::Rendering::Renderer_Present(const RenderSurface& surface)
 {
-    auto* nativeWindowHandle = surface.nativeWindowHandle;
-    if (!nativeWindowHandle) {
+    auto surfaceUse = surface.TryAcquireUse();
+    if (!surfaceUse.owns_lock()) {
+        return;
+    }
+    auto* state = FindWindowFrameState(surface);
+    if (!state) {
         return;
     }
 
-    auto& state = GetWindowFrameState(nativeWindowHandle);
-    if (state.frameSubmitted) {
+    if (state->frameSubmitted) {
         if (auto* rendering = CurrentRendering()) {
             rendering->Present(surface);
         }
     }
-    state.frameSubmitted = false;
+    state->frameSubmitted = false;
 }
 
 uint32_t NeoWPF::Rendering::Renderer_CreateTexture(unsigned int w, unsigned int h, const void* rgbaData)

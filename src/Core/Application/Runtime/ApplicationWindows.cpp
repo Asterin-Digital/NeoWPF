@@ -34,6 +34,7 @@ bool CloseApplicationWindow(void* nativeWindowHandle)
         });
         if (it != App().windowSessions.end()) {
             windowHost = it->windowHost;
+            it->renderSurface.Invalidate();
             if (App().renderThreadInitialized.load()) {
                 waitForRendererShutdown = App().renderThreadShuttingDown;
                 rendererInitialized = !waitForRendererShutdown;

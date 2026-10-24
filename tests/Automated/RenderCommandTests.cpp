@@ -100,11 +100,15 @@ TEST(WindowRenderLifecycleTests, CreatesTwoIndependentWindowsAndBindsEachRenderT
 
     NeoWPF::Rendering::Renderer_DestroySurface(rightSurface);
     ASSERT_TRUE(NeoWPF::Rendering::Renderer_IsInitialized());
-    ASSERT_TRUE(NeoWPF::Rendering::Renderer_Initialize(rightSurface));
-    NeoWPF::Rendering::Renderer_Resize(rightSurface, 640, 480);
+    EXPECT_FALSE(NeoWPF::Rendering::Renderer_Initialize(rightSurface));
+    const NeoWPF::Rendering::RenderSurface recreatedRightSurface{rightWindow.Handle()};
+    ASSERT_TRUE(NeoWPF::Rendering::Renderer_Initialize(recreatedRightSurface));
+    NeoWPF::Rendering::Renderer_Resize(recreatedRightSurface, 640, 480);
     NeoWPF::Rendering::Renderer_BeginFrame(rightSurface);
     NeoWPF::Rendering::Renderer_Execute(rightSurface, rightCommands);
-    NeoWPF::Rendering::Renderer_Present(rightSurface);
+    NeoWPF::Rendering::Renderer_BeginFrame(recreatedRightSurface);
+    NeoWPF::Rendering::Renderer_Execute(recreatedRightSurface, rightCommands);
+    NeoWPF::Rendering::Renderer_Present(recreatedRightSurface);
 
     NeoWPF::Rendering::Renderer_Shutdown();
     NeoWPF::Core::Application::Shutdown();
