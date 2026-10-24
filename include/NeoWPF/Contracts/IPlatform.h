@@ -26,7 +26,6 @@ class IPlatform {
 public:
     virtual ~IPlatform() = default;
 
-    virtual const char* Name() const noexcept = 0;
     virtual IClipboard& Clipboard() noexcept = 0;
     virtual IWindowing& Windowing() noexcept = 0;
     virtual IRendering& Rendering() noexcept = 0;

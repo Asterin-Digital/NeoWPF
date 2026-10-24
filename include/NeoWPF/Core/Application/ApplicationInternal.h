@@ -12,7 +12,7 @@ See LICENSE file in the project root for full license text.
 #include <thread>
 #include <vector>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
-#include <NeoWPF/Core/Application/ApplicationHostInternal.h>
+#include <NeoWPF/Core/Application/ApplicationHost.h>
 #include <NeoWPF/Core/Threading/MainThreadExecutor.h>
 #include <NeoWPF/Core/Threading/BackgroundExecutor.h>
 #include <NeoWPF/Rendering/Renderer.h>

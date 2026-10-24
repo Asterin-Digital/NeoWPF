@@ -19,7 +19,6 @@ class WPlatform final : public NeoWPF::Contracts::IPlatform {
 public:
     WPlatform();
 
-    const char* Name() const noexcept override;
     NeoWPF::Contracts::IClipboard& Clipboard() noexcept override;
     NeoWPF::Contracts::IWindowing& Windowing() noexcept override;
     NeoWPF::Contracts::IRendering& Rendering() noexcept override;

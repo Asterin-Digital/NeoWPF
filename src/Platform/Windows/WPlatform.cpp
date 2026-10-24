@@ -159,11 +159,6 @@ WPlatform::WPlatform()
     }
 }
 
-const char* WPlatform::Name() const noexcept
-{
-    return "Windows";
-}
-
 NeoWPF::Contracts::IClipboard& WPlatform::Clipboard() noexcept
 {
     return m_clipboard;

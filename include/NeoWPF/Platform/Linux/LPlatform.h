@@ -21,7 +21,6 @@ public:
     LPlatform();
     ~LPlatform() override;
 
-    const char* Name() const noexcept override;
     NeoWPF::Contracts::IClipboard& Clipboard() noexcept override;
     NeoWPF::Contracts::IWindowing& Windowing() noexcept override;
     NeoWPF::Contracts::IRendering& Rendering() noexcept override;

@@ -5,8 +5,8 @@
  * ████╗  ██║██╔════╝██╔═══██╗██║    ██║██╔══██╗██╔════╝
  * ██╔██╗ ██║█████╗  ██║   ██║██║ █╗ ██║██████╔╝█████╗
  * ██║╚██╗██║██╔══╝  ██║   ██║██║███╗██║██╔═══╝ ██╔══╝
- * ██║ ╚████║███████╗╚██████╔╝╚███╔███╔╝██║   ██║███████╗
- * ╚═╝  ╚═══╝╚══════╝ ╚═════╝  ╚══╝╚══╝ ╚══╝   ╚══════╝
+ * ██║ ╚████║███████╗╚██████╔╝╚███╔███╔╝██║     ██║
+ * ╚═╝  ╚═══╝╚══════╝ ╚═════╝  ╚══╝╚══╝ ╚═╝     ╚═╝
  *
  * A C++ UI framework inspired by WPF, built for native
  * performance and cross-platform development.
@@ -79,7 +79,6 @@
 #include <NeoWPF/Core/Threading/MainThreadExecutor.h>
 #include <NeoWPF/Core/Threading/Task.h>
 #include <NeoWPF/Core/Threading/ThreadAffinity.h>
-#include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/Platform/NativeWindow.h>
 #include <NeoWPF/Rendering/Renderer.h>

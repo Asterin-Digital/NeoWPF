@@ -2,6 +2,7 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 
 #include <memory>
+#include <filesystem>
 
 namespace {
 
@@ -207,7 +208,7 @@ int main()
     auto& app = NeoWPF::Core::Application::Current();
     app.Resources().RegisterProvider(
         std::make_unique<NeoWPF::ExternalFileResourceProvider>(
-            NeoWPF::Platform::CurrentPlatform()->GetExecutableDirectory()));
+            std::filesystem::current_path()));
 
     auto window = app.CreateWindow(L"NeoWPF Trigger Test", 420, 220);
     window.SetContent(CreateWindowContent());

@@ -101,7 +101,6 @@ LPlatform::LPlatform()
 
 LPlatform::~LPlatform() = default;
 
-const char* LPlatform::Name() const noexcept { return "Linux"; }
 NeoWPF::Contracts::IClipboard& LPlatform::Clipboard() noexcept { return m_clipboard; }
 NeoWPF::Contracts::IWindowing& LPlatform::Windowing() noexcept { return m_windowing; }
 NeoWPF::Contracts::IRendering& LPlatform::Rendering() noexcept { return m_rendering; }

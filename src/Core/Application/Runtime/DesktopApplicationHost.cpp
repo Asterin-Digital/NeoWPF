@@ -1,4 +1,4 @@
-#include <NeoWPF/Core/Application/ApplicationHostInternal.h>
+#include <NeoWPF/Core/Application/ApplicationHost.h>
 
 #include <chrono>
 
