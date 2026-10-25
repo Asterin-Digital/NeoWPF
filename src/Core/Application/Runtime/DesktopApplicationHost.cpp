@@ -6,7 +6,7 @@ namespace NeoWPF::Core {
 
 DesktopApplicationHost::DesktopApplicationHost(
     NeoWPF::Contracts::IWindowing& windowing,
-    ApplicationHostSession& session) noexcept
+    ApplicationSession& session) noexcept
     : m_windowing(windowing), m_session(session)
 {
 }

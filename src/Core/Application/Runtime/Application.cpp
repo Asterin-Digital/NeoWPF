@@ -74,7 +74,7 @@ void Application::Initialize()
         s_current = std::make_shared<Application>();
     }
     auto& appState = GetAppState();
-    appState.applicationHostSession.Begin();
+    appState.applicationSession.Begin();
     appState.mainThreadExecutor = std::make_unique<NeoWPF::Core::Threading::MainThreadExecutor>();
     appState.backgroundExecutor = std::make_unique<NeoWPF::Core::Threading::BackgroundExecutor>();
     NeoWPF::UI::Properties::RegisterCoreControlProperties();
@@ -109,8 +109,18 @@ NeoWPF::Platform::Window Application::CreateWindow(
     if (!platform) {
         return NeoWPF::Platform::Window();
     }
+
+    auto& appState = GetAppState();
+    std::lock_guard<std::mutex> creationLock(appState.windowCreationMutex);
+    bool isPrimaryWindow = false;
+    {
+        std::lock_guard<std::mutex> lock(appState.windowSessionsMutex);
+        isPrimaryWindow = appState.windowSessions.empty();
+    }
+    auto selectedHost = appState.applicationSession.SelectContentHost(windowHost, isPrimaryWindow);
+
     NEO_WPF_STARTUP_ACTION("Application.CreateWindow");    NeoWPF::Diagnostics::PerformanceMetrics::RecordWindowCreate();
-    void* nativeHandle = platform->Windowing().CreateWindow(title, width, height, windowHost);
+    void* nativeHandle = platform->Windowing().CreateWindow(title, width, height, std::move(selectedHost));
     return NeoWPF::Platform::Window(nativeHandle);
 }
 
@@ -128,7 +138,7 @@ NeoWPF::Platform::Window Application::CreateWindow(
 void Application::SetMainWindow(const std::shared_ptr<NeoWPF::UI::Window>& window)
 {
     if (IsApplyingPropertyValue()) {
-        GetAppState().applicationHostSession.SetContentHost(window);
+        GetAppState().applicationSession.SetContentHost(window);
         return;
     }
     SetValue(MainWindowProperty(), window);
@@ -136,7 +146,7 @@ void Application::SetMainWindow(const std::shared_ptr<NeoWPF::UI::Window>& windo
 
 const std::shared_ptr<NeoWPF::UI::Window>& Application::GetMainWindow() const noexcept
 {
-    return GetAppState().applicationHostSession.GetContentHost();
+    return GetAppState().applicationSession.GetContentHost();
 }
 
 void Application::ShowConsole(bool visible)

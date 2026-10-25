@@ -68,7 +68,7 @@ public:
 TEST(DesktopApplicationHostTests, DoesNotRunAFrameAfterMessagePumpRequestsExit)
 {
     TestWindowing windowing;
-    NeoWPF::Core::ApplicationHostSession session;
+    NeoWPF::Core::ApplicationSession session;
     windowing.exitCode = 12;
     windowing.pumpResults.push_back(false);
     NeoWPF::Core::DesktopApplicationHost host(windowing, session);
@@ -87,7 +87,7 @@ TEST(DesktopApplicationHostTests, DoesNotRunAFrameAfterMessagePumpRequestsExit)
 TEST(DesktopApplicationHostTests, PumpsBeforeEachFrameAndStopsWhenFrameRequestsExit)
 {
     TestWindowing windowing;
-    NeoWPF::Core::ApplicationHostSession session;
+    NeoWPF::Core::ApplicationSession session;
     windowing.exitCode = 23;
     NeoWPF::Core::DesktopApplicationHost host(windowing, session);
     int frameCount = 0;
@@ -104,7 +104,7 @@ TEST(DesktopApplicationHostTests, PumpsBeforeEachFrameAndStopsWhenFrameRequestsE
 TEST(DesktopApplicationHostTests, RequestQuitForwardsExitCodeToWindowing)
 {
     TestWindowing windowing;
-    NeoWPF::Core::ApplicationHostSession session;
+    NeoWPF::Core::ApplicationSession session;
     NeoWPF::Core::DesktopApplicationHost host(windowing, session);
 
     host.RequestQuit(42);
@@ -117,7 +117,7 @@ TEST(DesktopApplicationHostTests, RequestQuitForwardsExitCodeToWindowing)
 TEST(DesktopApplicationHostTests, RunDeactivatesHostWithoutShuttingItDown)
 {
     TestWindowing windowing;
-    NeoWPF::Core::ApplicationHostSession session;
+    NeoWPF::Core::ApplicationSession session;
     NeoWPF::Core::DesktopApplicationHost host(windowing, session);
     int frameCount = 0;
 
@@ -136,7 +136,7 @@ TEST(DesktopApplicationHostTests, RunDeactivatesHostWithoutShuttingItDown)
 TEST(DesktopApplicationHostTests, ShutdownPreventsActivationAndFrames)
 {
     TestWindowing windowing;
-    NeoWPF::Core::ApplicationHostSession session;
+    NeoWPF::Core::ApplicationSession session;
     NeoWPF::Core::DesktopApplicationHost host(windowing, session);
     int frameCount = 0;
 
@@ -152,10 +152,10 @@ TEST(DesktopApplicationHostTests, ShutdownPreventsActivationAndFrames)
     EXPECT_EQ(windowing.pumpCount, 0);
 }
 
-TEST(ApplicationHostSessionTests, PreservesContentAcrossPauseAndResume)
+TEST(ApplicationSessionTests, PreservesContentAcrossPauseAndResume)
 {
     auto contentHost = std::make_shared<NeoWPF::UI::Window>();
-    NeoWPF::Core::ApplicationHostSession session(contentHost);
+    NeoWPF::Core::ApplicationSession session(contentHost);
 
     EXPECT_TRUE(session.Activate());
     session.Deactivate();
@@ -164,7 +164,7 @@ TEST(ApplicationHostSessionTests, PreservesContentAcrossPauseAndResume)
     EXPECT_EQ(session.GetContentHost(), contentHost);
 }
 
-TEST(ApplicationHostSessionTests, MainWindowPropertyAndSessionStaySynchronized)
+TEST(ApplicationSessionTests, MainWindowPropertyAndSessionStaySynchronized)
 {
     NeoWPF::Core::Application application;
     auto firstContentHost = std::make_shared<NeoWPF::UI::Window>();
@@ -185,9 +185,20 @@ TEST(ApplicationHostSessionTests, MainWindowPropertyAndSessionStaySynchronized)
     application.SetMainWindow({});
 }
 
-TEST(ApplicationHostSessionTests, ShutdownPreventsReactivationUntilNewRunBegins)
+TEST(ApplicationSessionTests, MainWindowIsUsedForPrimaryDesktopWindowOnly)
 {
-    NeoWPF::Core::ApplicationHostSession session;
+    auto mainWindow = std::make_shared<NeoWPF::UI::Window>();
+    auto explicitWindow = std::make_shared<NeoWPF::UI::Window>();
+    NeoWPF::Core::ApplicationSession session(mainWindow);
+
+    EXPECT_EQ(session.SelectContentHost({}, true), mainWindow);
+    EXPECT_EQ(session.SelectContentHost(explicitWindow, true), explicitWindow);
+    EXPECT_FALSE(session.SelectContentHost({}, false));
+}
+
+TEST(ApplicationSessionTests, ShutdownPreventsReactivationUntilNewRunBegins)
+{
+    NeoWPF::Core::ApplicationSession session;
 
     session.Shutdown();
 

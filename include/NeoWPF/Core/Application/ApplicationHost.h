@@ -25,7 +25,7 @@ namespace NeoWPF::Core {
 
     @internal
 */
-class ApplicationHostSession {
+class ApplicationSession {
 public:
     enum class State : std::uint8_t {
         Inactive,
@@ -33,7 +33,7 @@ public:
         Shutdown,
     };
 
-    explicit ApplicationHostSession(std::shared_ptr<NeoWPF::UI::Window> contentHost = {}) noexcept
+    explicit ApplicationSession(std::shared_ptr<NeoWPF::UI::Window> contentHost = {}) noexcept
         : m_contentHost(std::move(contentHost))
     {
     }
@@ -133,6 +133,31 @@ public:
     */
     const std::shared_ptr<NeoWPF::UI::Window>& GetContentHost() const noexcept { return m_contentHost; }
 
+    /*
+        @summary
+        Selects the content host for a desktop window.
+
+        @param explicitHost
+        The content host explicitly supplied by the caller.
+
+        @param isPrimary
+        True when the window will become the primary application window.
+
+        @returns
+        The explicit host, the configured main host for the primary window, or an empty pointer.
+
+        @internal
+    */
+    std::shared_ptr<NeoWPF::UI::Window> SelectContentHost(
+        const std::shared_ptr<NeoWPF::UI::Window>& explicitHost,
+        bool isPrimary) const noexcept
+    {
+        if (explicitHost) {
+            return explicitHost;
+        }
+        return isPrimary ? m_contentHost : nullptr;
+    }
+
 private:
     std::atomic<State> m_state{State::Inactive};
     std::shared_ptr<NeoWPF::UI::Window> m_contentHost;
@@ -210,7 +235,7 @@ class DesktopApplicationHost final : public IApplicationHost {
 public:
     DesktopApplicationHost(
         NeoWPF::Contracts::IWindowing& windowing,
-        ApplicationHostSession& session) noexcept;
+        ApplicationSession& session) noexcept;
 
     /*
         @summary
@@ -254,7 +279,7 @@ public:
 
 private:
     NeoWPF::Contracts::IWindowing& m_windowing;
-    ApplicationHostSession& m_session;
+    ApplicationSession& m_session;
 };
 
 }

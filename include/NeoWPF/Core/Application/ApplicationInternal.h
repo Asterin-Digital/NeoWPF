@@ -49,7 +49,7 @@ struct RenderSurfaceDestructionRequest {
 
 struct AppState {
     void* hInst = nullptr;
-    NeoWPF::Core::ApplicationHostSession applicationHostSession;
+    NeoWPF::Core::ApplicationSession applicationSession;
     std::vector<WindowSession> windowSessions;
     std::vector<std::shared_ptr<RenderSurfaceDestructionRequest>> pendingRenderSurfaceDestruction;
     std::atomic<bool> running{false};
@@ -75,6 +75,7 @@ struct AppState {
     std::condition_variable renderSurfaceDestructionCondition;
 
     std::mutex windowSessionsMutex;
+    std::mutex windowCreationMutex;
     std::mutex commandListMutex;
     std::vector<NeoWPF::Diagnostics::DeveloperWarningMessage> pendingDeveloperMessages;
     std::vector<std::shared_ptr<NeoWPF::UI::Visual>> developerOverlayVisuals;

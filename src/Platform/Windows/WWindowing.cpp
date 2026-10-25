@@ -45,12 +45,12 @@ void* WWindowing::CreateWindow(
     windowSession.width = width;
     windowSession.height = height;
     windowSession.needsLayout = true;
-    windowSession.isPrimaryWindow = app.windowSessions.empty();
     windowSession.windowHost = windowHost ? std::move(windowHost) : std::make_shared<NeoWPF::UI::Window>();
     windowSession.contentRoot = nullptr;
 
     {
         std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+        windowSession.isPrimaryWindow = app.windowSessions.empty();
         app.windowSessions.push_back(windowSession);
     }
 

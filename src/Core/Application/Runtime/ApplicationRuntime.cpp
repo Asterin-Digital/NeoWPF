@@ -335,7 +335,7 @@ void ShutdownApplication()
 {
     s_appState.running = false;
     s_appState.renderRequestCondition.notify_all();
-    s_appState.applicationHostSession.Shutdown();
+    s_appState.applicationSession.Shutdown();
     {
         std::lock_guard<std::mutex> lock(s_appState.applicationHostMutex);
         if (s_appState.applicationHost) {
@@ -401,7 +401,7 @@ int RunApplicationMessageLoop()
 
     unsigned int lastLayoutWidth = 0, lastLayoutHeight = 0;
     auto applicationHost = std::make_unique<NeoWPF::Core::DesktopApplicationHost>(
-        windowing, s_appState.applicationHostSession);
+        windowing, s_appState.applicationSession);
     NeoWPF::Core::IApplicationHost* applicationHostPointer = applicationHost.get();
     {
         std::lock_guard<std::mutex> lock(s_appState.applicationHostMutex);

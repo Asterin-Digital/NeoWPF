@@ -131,11 +131,11 @@ void* LWindowing::CreateWindow(
     windowSession.width = static_cast<unsigned int>(window->Width());
     windowSession.height = static_cast<unsigned int>(window->Height());
     windowSession.needsLayout = true;
-    windowSession.isPrimaryWindow = app.windowSessions.empty();
     windowSession.windowHost = windowHost ? std::move(windowHost) : std::make_shared<NeoWPF::UI::Window>();
 
     {
         std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+        windowSession.isPrimaryWindow = app.windowSessions.empty();
         app.windowSessions.push_back(windowSession);
     }
     m_windows.push_back(std::move(window));
