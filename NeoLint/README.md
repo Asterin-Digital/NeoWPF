@@ -2,7 +2,7 @@
 
 ### What is it?
 
-NeoLint is an internal tool used by NeoWPF during post-compile to do checks on the code, this ensures that
+NeoLint is an internal tool used by NeoWPF during post-compile to do checks on it's code, this ensures that
 all code written by a developer passes common standards and does not violate cleanliness or conventions.
 
 ### Can I reuse it?

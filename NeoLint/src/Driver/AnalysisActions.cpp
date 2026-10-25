@@ -3,6 +3,7 @@
 #include <NeoLint/Core/IRule.h>
 #include <NeoLint/Core/RuleContext.h>
 #include <NeoLint/Core/RuleRegistry.h>
+#include <NeoLint/Rules/PlatformDependencyIsolationRule.h>
 
 #include <clang/AST/ASTConsumer.h>
 #include <clang/Frontend/CompilerInstance.h>
@@ -128,8 +129,19 @@ public:
     std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
         clang::CompilerInstance& compiler, llvm::StringRef) override
     {
+        auto& sourceManager = compiler.getSourceManager();
         compiler.getPreprocessor().addPPCallbacks(
-            std::make_unique<DependencyCollector>(compiler.getSourceManager(), dependencies_));
+            std::make_unique<DependencyCollector>(sourceManager, dependencies_));
+        const auto mainFile = sourceManager.getLocForStartOfFile(sourceManager.getMainFileID());
+        const auto mainFilename = sourceManager.getFilename(mainFile).str();
+        const auto settings = config_.SettingsFor(
+            "neowpf-platform-dependency-isolation", mainFilename);
+        if (settings.enabled)
+        {
+            compiler.getPreprocessor().addPPCallbacks(
+                PlatformDependencyIsolationRule::CreatePreprocessorCallbacks(
+                    settings.options, config_, diagnostics_, sourceManager, strict_));
+        }
         return std::make_unique<Consumer>(compiler.getASTContext(), config_, diagnostics_, strict_,
                                           sourceRoots_);
     }

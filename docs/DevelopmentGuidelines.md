@@ -106,3 +106,12 @@ NeoWPF is still young; we recommend not leaving any legacy code or preserving an
 8. ## NeoWPF Dependencies
 
 Do not add huge libraries to NeoWPF unless we really need them, but even then, if it's not difficult to make, don't bring that in and instead make our own version of it.
+
+9. ## Performance
+
+Performance matters, even more in hot paths.
+- Avoid unnecessary allocations, repeated conversions, and redundant calculations in layout, rendering, hit testing, and dependency property operations.
+- Do not introduce expensive work into frequently called methods when it can be performed once or reused.
+- Cache results only when invalidation and lifetime management remain correct.
+- Avoid adding locks to frequently executed paths without a concrete need.
+- Prefer benchmarks and profiling evidence over speculative micro optimizations.

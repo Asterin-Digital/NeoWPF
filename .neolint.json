@@ -31,6 +31,36 @@
     "neowpf-platform-utility-duplicate": {
       "enabled": true,
       "severity": "error"
+    },
+    "neowpf-platform-dependency-isolation": {
+      "enabled": true,
+      "severity": "error",
+      "options": {
+        "platforms": ["windows", "linux", "android"],
+        "path_platforms": {
+          "*Platform/Windows/*": "windows",
+          "*Platform/Linux/*": "linux",
+          "*Platform/Android/*": "android",
+          "*Platform/Posix/*": "linux,android"
+        }
+      },
+      "paths": {
+        "*src/Platform/PlatformRegistry.cpp": {
+          "enabled": false
+        }
+      }
+    },
+    "neowpf-platform-code-location": {
+      "enabled": true,
+      "severity": "error",
+      "options": {
+        "platform_macros": {
+          "_WIN32": "windows",
+          "_WIN64": "windows",
+          "__linux__": "linux",
+          "__ANDROID__": "android"
+        }
+      }
     }
   }
 }

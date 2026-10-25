@@ -12,6 +12,7 @@
 #include <string>
 #include <thread>
 #ifdef _WIN32
+// neolint-disable-next-line neowpf-platform-dependency-isolation: Windows SDK access is guarded by _WIN32.
 #include <windows.h>
 #endif
 
@@ -39,10 +40,12 @@ static LoggerState& GetLoggerState()
 
 static void WriteOutput(std::string message)
 {
+// neolint-disable-next-line neowpf-platform-code-location: a logger contract is not worth adding for this small Windows-only block.
 #ifdef _WIN32
+    // neolint-disable-next-line neowpf-platform-dependency-isolation: Windows console output is guarded by _WIN32.
     const HANDLE consoleHandle = ::GetStdHandle(STD_ERROR_HANDLE);
     DWORD consoleMode = 0;
-    if (consoleHandle != INVALID_HANDLE_VALUE &&
+    if (consoleHandle != INVALID_HANDLE_VALUE && // neolint-disable-line neowpf-platform-dependency-isolation: Windows console output is guarded by _WIN32.
         consoleHandle != nullptr &&
         ::GetConsoleMode(consoleHandle, &consoleMode)) {
         DWORD written = 0;

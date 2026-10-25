@@ -43,6 +43,7 @@ std::vector<std::string> RuleRegistry::Ids() const
         ids.push_back(entry.first);
     }
     std::sort(ids.begin(), ids.end());
+    ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
     return ids;
 }
 
