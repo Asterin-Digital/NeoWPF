@@ -172,20 +172,37 @@ bool Application::IsConsoleVisible()
     return GetAppState().consoleVisible.load();
 }
 
-int Application::Run(std::chrono::seconds renderInitializationTimeout)
+int Application::Run(std::chrono::seconds startupTimeout)
 {
-    auto& appState = GetAppState();
-    if (!NeoWPF::Platform::HasPlatform()) {
+    auto* platform = NeoWPF::Platform::CurrentPlatform();
+    if (!platform) {
         NeoWPF::Platform::ExitForMissingPlatform();
     }
+    return platform->RunApplication(startupTimeout);
+}
+
+DeviceCategory Application::GetDeviceCategory() const noexcept
+{
+    auto* platform = NeoWPF::Platform::CurrentPlatform();
+    if (!platform) {
+        NeoWPF::Platform::ExitForMissingPlatform();
+    }
+    return platform->GetDeviceCategory();
+}
+
+int RunDesktopApplication(std::chrono::seconds renderInitializationTimeout)
+{
+    auto& appState = GetAppState();
     if (appState.windowSessions.empty()) {
-        NeoWPF::Platform::CurrentPlatform()->Windowing().ShowFatalError(
-            L"NeoWPF Error", L"No windows created. Call CreateWindow() before Run().");
+        auto* platform = NeoWPF::Platform::CurrentPlatform();
+        if (platform) {
+            platform->Windowing().ShowFatalError(
+                L"NeoWPF Error", L"No windows created. Call CreateWindow() before Run().");
+        }
         return -1;
     }
 
     StartRenderThread();
-
     std::unique_lock<std::mutex> lock(appState.renderInitMutex);
     if (!appState.renderInitCondition.wait_for(lock, renderInitializationTimeout, [] {
             return GetAppState().renderThreadInitialized.load() || GetAppState().renderThreadInitFailed.load();

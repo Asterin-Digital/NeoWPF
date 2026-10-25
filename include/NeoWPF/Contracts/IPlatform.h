@@ -6,11 +6,13 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <cstddef>
+#include <chrono>
 #include <cstdint>
 #include <filesystem>
 #include <string>
 #include <vector>
 
+#include <NeoWPF/Core/Application/DeviceCategory.h>
 #include <NeoWPF/Contracts/IGeneral.h>
 #include <NeoWPF/Contracts/IWindowChrome.h>
 #include <NeoWPF/Contracts/IRendering.h>
@@ -30,6 +32,28 @@ public:
     virtual IWindowing& Windowing() noexcept = 0;
     virtual IRendering& Rendering() noexcept = 0;
     virtual IWindowChrome* Chrome() noexcept = 0;
+
+    /*
+        @summary
+        Returns the broad device category hosted by this platform.
+
+        @internal
+    */
+    virtual NeoWPF::Core::DeviceCategory GetDeviceCategory() const noexcept = 0;
+
+    /*
+        @summary
+        Runs the application using this platform's lifecycle behavior.
+
+        @param startupTimeout
+        Maximum time allowed for platform-specific startup.
+
+        @returns
+        The application exit code.
+
+        @internal
+    */
+    virtual int RunApplication(std::chrono::seconds startupTimeout) = 0;
 
     virtual bool LoadResourceData(const std::wstring& resourcePath, std::vector<std::uint8_t>& outData) = 0;
     virtual std::filesystem::path GetExecutableDirectory() const = 0;

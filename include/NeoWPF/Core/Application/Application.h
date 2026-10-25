@@ -16,6 +16,7 @@ See LICENSE file in the project root for full license text.
 #include <any>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/Core/Application/Resources/ResourceManager.h>
+#include <NeoWPF/Core/Application/DeviceCategory.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
 #include <NeoWPF/Diagnostics/TextDumper.h>
@@ -62,19 +63,28 @@ public:
 
     /*
         @summary
-        Runs the application message loop.
+        Runs the application using its platform lifecycle.
 
         @details
-        The default render initialization timeout is controlled by NEOWPF_SLOW_ENV.
+        The platform controls how the application is activated and stopped. The default startup timeout is controlled by NEOWPF_SLOW_ENV.
 
-        @param renderInitializationTimeout
-        Maximum time to wait for render initialization.
+        @param startupTimeout
+        Maximum time allowed for platform startup.
 
         @returns
         The application exit code.
     */
     static int Run(
-        std::chrono::seconds renderInitializationTimeout = std::chrono::seconds(NEOWPF_SLOW_ENV));
+        std::chrono::seconds startupTimeout = std::chrono::seconds(NEOWPF_SLOW_ENV));
+
+    /*
+        @summary
+        Returns the device category hosting the application.
+
+        @returns
+        Desktop or Mobile.
+    */
+    DeviceCategory GetDeviceCategory() const noexcept;
 
     /*
         @summary

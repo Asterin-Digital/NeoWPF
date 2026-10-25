@@ -1,5 +1,6 @@
 #include <NeoWPF/Platform/Linux/LPlatform.h>
 
+#include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Core/Application/Resources/Embedded/FallbackFont.h>
 #include <NeoWPF/Platform/Linux/LWindow.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
@@ -105,6 +106,14 @@ NeoWPF::Contracts::IClipboard& LPlatform::Clipboard() noexcept { return m_clipbo
 NeoWPF::Contracts::IWindowing& LPlatform::Windowing() noexcept { return m_windowing; }
 NeoWPF::Contracts::IRendering& LPlatform::Rendering() noexcept { return m_rendering; }
 NeoWPF::Contracts::IWindowChrome* LPlatform::Chrome() noexcept { return &m_chrome; }
+NeoWPF::Core::DeviceCategory LPlatform::GetDeviceCategory() const noexcept
+{
+    return NeoWPF::Core::DeviceCategory::Desktop;
+}
+int LPlatform::RunApplication(std::chrono::seconds startupTimeout)
+{
+    return NeoWPF::Core::RunDesktopApplication(startupTimeout);
+}
 
 bool LPlatform::LoadResourceData(const std::wstring&, std::vector<std::uint8_t>&) { return false; }
 std::filesystem::path LPlatform::GetExecutableDirectory() const { return std::filesystem::current_path(); }

@@ -1,5 +1,6 @@
 #include <NeoWPF/Platform/Windows/WPlatform.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
+#include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Core/Application/Resources/Embedded/FallbackFont.h>
 #include <NeoWPF/Diagnostics/CallStackTracer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
@@ -177,6 +178,16 @@ NeoWPF::Contracts::IRendering& WPlatform::Rendering() noexcept
 NeoWPF::Contracts::IWindowChrome* WPlatform::Chrome() noexcept
 {
     return &m_chrome;
+}
+
+NeoWPF::Core::DeviceCategory WPlatform::GetDeviceCategory() const noexcept
+{
+    return NeoWPF::Core::DeviceCategory::Desktop;
+}
+
+int WPlatform::RunApplication(std::chrono::seconds startupTimeout)
+{
+    return NeoWPF::Core::RunDesktopApplication(startupTimeout);
 }
 
 bool WPlatform::LoadResourceData(const std::wstring& resourcePath, std::vector<std::uint8_t>& outData)

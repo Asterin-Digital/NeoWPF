@@ -6,6 +6,7 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -85,6 +86,7 @@ struct AppState {
 
 AppState& GetAppState();
 void StartRenderThread();
+int RunDesktopApplication(std::chrono::seconds renderInitializationTimeout);
 bool CloseApplicationWindow(void* nativeWindowHandle);
 int RunApplicationMessageLoop();
 void ShutdownApplication();

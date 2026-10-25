@@ -1,9 +1,12 @@
 #include <gtest/gtest.h>
 
 #include <NeoWPF/Core/Application/Application.h>
+#include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
+#include <NeoWPF/Rendering/Renderer.h>
 
 #include <chrono>
+#include <mutex>
 
 namespace {
 
@@ -35,6 +38,25 @@ TEST(ApplicationTests, LifecycleHooksRunOncePerLifecycle)
     NeoWPF::Core::Application::Shutdown();
     EXPECT_EQ(application->quitCount, 2);
     NeoWPF::Core::Application::SetCurrent(nullptr);
+}
+
+TEST(ApplicationTests, InitializesSessionWithoutRenderSurface)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    auto& appState = NeoWPF::Core::GetAppState();
+    {
+        std::lock_guard<std::mutex> lock(appState.windowSessionsMutex);
+        EXPECT_TRUE(appState.windowSessions.empty());
+    }
+    EXPECT_FALSE(appState.applicationSession.IsActive());
+    EXPECT_FALSE(appState.applicationSession.IsShutdown());
+    EXPECT_FALSE(NeoWPF::Rendering::Renderer_IsInitialized());
+    EXPECT_EQ(
+        NeoWPF::Core::Application::Current().GetDeviceCategory(),
+        NeoWPF::Core::DeviceCategory::Desktop);
+
+    NeoWPF::Core::Application::Shutdown();
 }
 
 TEST(ApplicationTests, ApplicationStartsUnder700msWithColdStartup)

@@ -25,6 +25,8 @@ public:
     NeoWPF::Contracts::IWindowing& Windowing() noexcept override;
     NeoWPF::Contracts::IRendering& Rendering() noexcept override;
     NeoWPF::Contracts::IWindowChrome* Chrome() noexcept override;
+    NeoWPF::Core::DeviceCategory GetDeviceCategory() const noexcept override;
+    int RunApplication(std::chrono::seconds startupTimeout) override;
     bool LoadResourceData(const std::wstring& resourcePath, std::vector<std::uint8_t>& outData) override;
     std::filesystem::path GetExecutableDirectory() const override;
     bool FetchHttpResource(const std::wstring& url, std::vector<std::uint8_t>& outData) override;
