@@ -20,12 +20,23 @@ public:
         Sets the starting value.
     */
     void SetFrom(float value) noexcept { m_from = value; }
+
+    /*
+        @summary
+        Returns the starting value of the animation.
+    */
+    float GetFrom() const noexcept { return m_from; }
+
     /*
         @summary
         Sets the ending value.
     */
     void SetTo(float value) noexcept { m_to = value; }
-    float GetFrom() const noexcept { return m_from; }
+
+    /*
+        @summary
+        Returns the ending value of the animation.
+    */
     float GetTo() const noexcept { return m_to; }
     std::any GetCurrentValue(double progress) const override;
 

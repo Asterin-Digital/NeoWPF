@@ -81,6 +81,17 @@ public:
         tb->SetText(L"Paste this in");
     */
     void SetText(const std::wstring& text);
+
+    /*
+        @summary
+        Replaces the current text while optionally resetting the scroll offset.
+
+        @param text
+        New text to display.
+
+        @param resetScrollOffset
+        `true` to reset the scroll position to the start of the text.
+    */
     void SetText(const std::wstring& text, bool resetScrollOffset);
 
     /*
@@ -145,6 +156,11 @@ public:
         The text to render when the box has no real content.
     */
     void SetPlaceholderText(const std::wstring& placeholder);
+
+    /*
+        @summary
+        Returns the ghost text shown while the box is empty.
+    */
     const std::wstring& GetPlaceholderText() const noexcept;
 
     /*
@@ -177,6 +193,11 @@ public:
             Foreground brush.
     */
         void SetForeground(std::shared_ptr<Brush> brush);
+
+        /*
+            @summary
+            Returns the brush used to render text.
+        */
         std::shared_ptr<Brush> GetForeground() const;
 
     /*
@@ -187,6 +208,11 @@ public:
         Size in pixels.
     */
     void SetFontSize(int fontSize) noexcept;
+
+    /*
+        @summary
+        Returns the current font size used for text rendering.
+    */
     int GetFontSize() const noexcept;
 
     /*
@@ -264,6 +290,11 @@ public:
         Pixels of padding on all sides.
     */
     void SetPadding(Thickness padding) noexcept;
+
+    /*
+        @summary
+        Returns the current padding applied around the text.
+    */
     Thickness GetPadding() const noexcept;
 
     /*
@@ -277,6 +308,11 @@ public:
         tb->SetAcceptsReturn(true); // multiline input when used inside a taller container
     */
     void SetAcceptsReturn(bool value) noexcept { m_acceptsReturn = value; InvalidateVisual(); }
+
+    /*
+        @summary
+        Returns whether the control accepts newline input.
+    */
     bool GetAcceptsReturn() const noexcept { return m_acceptsReturn; }
 
     /*
@@ -286,9 +322,34 @@ public:
         @param value
         `true` to wrap long lines, `false` to keep a single line.
     */
+    /*
+        @summary
+        Enables or disables text wrapping.
+
+        @param value
+        The wrapping mode to apply.
+    */
     void SetTextWrapping(TextWrapping value) noexcept { m_textWrapping = value; m_textDirty = true; InvalidateVisual(); }
+
+    /*
+        @summary
+        Returns the current text wrapping mode.
+    */
     TextWrapping GetTextWrappingMode() const noexcept { return m_textWrapping; }
+
+    /*
+        @summary
+        Enables or disables text wrapping using a boolean switch.
+
+        @param value
+        `true` to wrap long lines, `false` to keep a single line.
+    */
     void SetTextWrapping(bool value) noexcept { SetTextWrapping(value ? TextWrapping::Wrap : TextWrapping::NoWrap); }
+
+    /*
+        @summary
+        Returns whether text wrapping is enabled.
+    */
     bool GetTextWrapping() const noexcept { return GetTextWrappingMode() != TextWrapping::NoWrap; }
 
     /*
@@ -299,6 +360,11 @@ public:
             Caret brush.
     */
         void SetCaretBrush(std::shared_ptr<Brush> brush);
+
+        /*
+            @summary
+            Returns the brush used to render the caret.
+        */
         std::shared_ptr<Brush> GetCaretBrush() const;
 
     /*

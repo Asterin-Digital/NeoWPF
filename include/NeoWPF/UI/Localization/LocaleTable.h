@@ -61,6 +61,11 @@ public:
         Culture name.
     */
     void SetCulture(const std::wstring& culture);
+
+    /*
+        @summary
+        Returns the locale strings contained in this table.
+    */
     const std::vector<std::shared_ptr<LocaleString>>& GetLocaleStrings() const noexcept { return m_localeStrings; }
 
     void AddLocaleString(std::shared_ptr<LocaleString> value);
@@ -71,6 +76,11 @@ public:
     }
 
     bool IsValid() const noexcept { return m_culture.IsValid(); }
+
+    /*
+        @summary
+        Returns the culture represented by this locale table.
+    */
     const Culture& GetCulture() const noexcept { return m_culture; }
 
     /*

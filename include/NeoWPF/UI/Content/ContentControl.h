@@ -59,6 +59,11 @@ public:
     {
         SetContentData(std::any(std::static_pointer_cast<NeoWPF::UI::UIElement>(content)));
     }
+
+    /*
+        @summary
+        Returns the current content value.
+    */
     const std::any& GetContent() const noexcept { return m_content; }
     std::shared_ptr<NeoWPF::UI::UIElement> GetContentElement() const noexcept;
     /*
@@ -75,6 +80,11 @@ public:
         Content presenter.
     */
     void SetPresenter(const std::shared_ptr<ContentPresenter>& presenter);
+
+    /*
+        @summary
+        Returns the presenter used to display the current content.
+    */
     const std::shared_ptr<ContentPresenter>& GetPresenter() const noexcept { return m_presenter; }
 
     void Measure(double availableWidth, double availableHeight) override;

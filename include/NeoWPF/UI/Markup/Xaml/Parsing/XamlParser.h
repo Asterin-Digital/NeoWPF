@@ -12,14 +12,14 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::UI::Markup::Xaml {
 
-/* @note
-/ Runtime XAML is used by developer's to debug XAML layout/UI issues.
-/ NeoCM (Neo Compiler) may produce bad NAML which could lead to issues.
-/ NeoPM (Neo Project Manager) may package the XAML in a bad way, which can also lead to issues.
-/ With this, we can just pass plain XAML at runtime to see in what layer the issue is in, it is not 
-/ meant for public usage and can change in the future.
-/* ////////////////////////////////////////////////////
-/ It's also used by NeoWPF internally and the compiler, so we need to keep it.
+/*
+    @summary
+    Internal runtime XAML parser used for debugging and internal tooling.
+
+    @details
+    Runtime XAML is intended for development diagnostics and is not a public API contract.
+    NeoCM, NeoPM, and other tooling may still rely on the parser behavior while the feature
+    remains under active evolution.
 */
 
 #if defined(NEOWPF_ENABLE_RUNTIME_XAML)

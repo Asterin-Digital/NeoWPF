@@ -39,6 +39,11 @@ public:
         Highlight state.
     */
     void SetIsHighlighted(bool highlighted) noexcept;
+
+    /*
+        @summary
+        Returns whether the item is highlighted.
+    */
     bool GetIsHighlighted() const noexcept;
 
     void OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args) override;
@@ -90,6 +95,10 @@ public:
     */
     void SetIsDropDownOpen(bool isOpen);
 
+    /*
+        @summary
+        Returns whether the drop-down is currently open.
+    */
     bool GetIsDropDownOpen() const noexcept;
 
     /*
@@ -101,6 +110,10 @@ public:
     */
     void SetPlacement(PopupPlacement placement);
 
+    /*
+        @summary
+        Returns the current placement of the drop-down.
+    */
     PopupPlacement GetPlacement() const noexcept;
 
     std::any GetSelectionBoxItem() const noexcept;
@@ -146,7 +159,7 @@ public:
         Item template callback.
     */
     void SetItemTemplate(const Controls::ItemsControl::Virtualization::ItemTemplate& templ);
-    
+
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
 protected:

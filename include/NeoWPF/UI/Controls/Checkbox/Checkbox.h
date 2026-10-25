@@ -81,6 +81,11 @@ public:
         Sets the horizontal alignment used for the checkbox label.
     */
     void SetTextHorizontalAlignment(TextHorizontalAlignment alignment) noexcept;
+
+    /*
+        @summary
+        Returns the current horizontal alignment used for the checkbox label.
+    */
     TextHorizontalAlignment GetTextHorizontalAlignment() const noexcept;
 
     /*
@@ -88,6 +93,11 @@ public:
         Sets the vertical alignment used for the checkbox label.
     */
     void SetTextVerticalAlignment(TextVerticalAlignment alignment) noexcept;
+
+    /*
+        @summary
+        Returns the current vertical alignment used for the checkbox label.
+    */
     TextVerticalAlignment GetTextVerticalAlignment() const noexcept;
 
     /*

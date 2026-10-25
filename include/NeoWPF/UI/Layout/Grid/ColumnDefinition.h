@@ -38,7 +38,20 @@ public:
         The sizing mode.
     */
     void SetWidth(Grid::GridLength width);
+
+    /*
+        @summary
+        Returns the width assigned to this column.
+    */
     Grid::GridLength GetWidth() const;
+
+    /*
+        @summary
+        Sets the sizing mode for this column.
+
+        @param mode
+        The sizing mode to apply.
+    */
     void SetMode(int mode);
 
     /*

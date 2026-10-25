@@ -41,6 +41,11 @@ public:
         Property name.
     */
     void SetProperty(const std::string& propertyName) noexcept;
+
+    /*
+        @summary
+        Returns the property name observed by the trigger.
+    */
     std::string GetProperty() const;
 
     /*
@@ -51,6 +56,11 @@ public:
         Activation value.
     */
     void SetValue(const std::any& value);
+
+    /*
+        @summary
+        Returns the activation value for the trigger.
+    */
     std::any GetValue() const;
 
     bool Evaluate(UIElement* element) const override;

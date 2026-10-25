@@ -34,6 +34,10 @@ public:
     Selector();
     ~Selector() override;
 
+    /*
+        @summary
+        Returns the index of the currently selected item.
+    */
     int GetSelectedIndex() const noexcept;
 
     /*
@@ -45,6 +49,10 @@ public:
     */
     void SetSelectedIndex(int index);
 
+    /*
+        @summary
+        Returns the currently selected item value.
+    */
     std::any GetSelectedItem() const noexcept;
 
     /*
@@ -56,6 +64,10 @@ public:
     */
     void SetSelectedItem(const std::any& item);
 
+    /*
+        @summary
+        Returns the mode that controls how selection behaves.
+    */
     SelectionMode GetSelectionMode() const noexcept;
 
     /*

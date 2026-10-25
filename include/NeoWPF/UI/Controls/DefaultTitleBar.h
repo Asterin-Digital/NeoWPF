@@ -37,6 +37,11 @@ public:
         Title text.
     */
     void SetTitle(const std::wstring& title);
+
+    /*
+        @summary
+        Returns the current title bar text.
+    */
     const std::wstring& GetTitle() const noexcept;
 
     /*
@@ -47,6 +52,11 @@ public:
             Brush used for the title text and window controls.
     */
         void SetForeground(std::shared_ptr<Brush> brush);
+
+        /*
+            @summary
+            Returns the foreground brush used for the title text.
+        */
         std::shared_ptr<Brush> GetForeground() const;
 
     /*

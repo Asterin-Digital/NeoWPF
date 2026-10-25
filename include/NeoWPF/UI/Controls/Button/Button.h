@@ -88,6 +88,11 @@ public:
         Sets the horizontal alignment used for the button text.
     */
     void SetTextHorizontalAlignment(TextHorizontalAlignment alignment) noexcept;
+
+    /*
+        @summary
+        Returns the current horizontal alignment used for the button text.
+    */
     TextHorizontalAlignment GetTextHorizontalAlignment() const noexcept;
 
     /*
@@ -95,6 +100,11 @@ public:
         Sets the vertical alignment used for the button text.
     */
     void SetTextVerticalAlignment(TextVerticalAlignment alignment) noexcept;
+
+    /*
+        @summary
+        Returns the current vertical alignment used for the button text.
+    */
     TextVerticalAlignment GetTextVerticalAlignment() const noexcept;
 
     /*
@@ -128,7 +138,11 @@ public:
     int GetFontSize() const noexcept { return m_fontSize; }
 
     /*
-    * @todo Verify if this is correct later
+        @summary
+        Sets the font family used to measure and render the button text.
+
+        @param fontFamily
+        The font family name, such as `Segoe UI`.
     */
     void SetFontFamily(const std::wstring& fontFamily) noexcept;
 

@@ -41,6 +41,11 @@ public:
         Routed event name.
     */
     void SetRoutedEventName(const std::string& routedEventName) noexcept;
+
+    /*
+        @summary
+        Returns the routed event name observed by the trigger.
+    */
     std::string GetRoutedEventName() const;
 
     /*

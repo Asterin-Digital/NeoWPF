@@ -57,6 +57,11 @@ public:
     {
         SetContentData(std::any(std::static_pointer_cast<NeoWPF::UI::UIElement>(content)));
     }
+
+    /*
+        @summary
+        Returns the current content value supplied to the presenter.
+    */
     const std::any& GetContent() const noexcept { return m_content; }
     std::shared_ptr<NeoWPF::UI::UIElement> GetContentElement() const noexcept { return m_contentElement; }
     /*
@@ -73,8 +78,17 @@ public:
         Content factory.
     */
     void SetContentTemplate(ContentTemplate contentTemplate);
+
+    /*
+        @summary
+        Returns the factory used to create content visuals.
+    */
     const ContentTemplate& GetContentTemplate() const noexcept { return m_contentTemplate; }
 
+    /*
+        @summary
+        Returns the padding around the presenter content.
+    */
     Thickness GetPadding() const noexcept { return m_padding; }
     /*
         @summary

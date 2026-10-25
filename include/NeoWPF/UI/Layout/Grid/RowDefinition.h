@@ -38,7 +38,20 @@ public:
         The sizing mode.
     */
     void SetHeight(Grid::GridLength height);
+
+    /*
+        @summary
+        Returns the height assigned to this row.
+    */
     Grid::GridLength GetHeight() const;
+
+    /*
+        @summary
+        Sets the sizing mode for this row.
+
+        @param mode
+        The sizing mode to apply.
+    */
     void SetMode(int mode);
 
     /*

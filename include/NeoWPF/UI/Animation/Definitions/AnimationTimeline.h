@@ -69,6 +69,36 @@ public:
 
     /*
         @summary
+        Returns the current animation duration in seconds.
+    */
+    float GetDuration() const noexcept { return m_duration; }
+
+    /*
+        @summary
+        Returns the current animation start delay in seconds.
+    */
+    float GetBeginTime() const noexcept { return m_beginTime; }
+
+    /*
+        @summary
+        Returns whether the animation reverses automatically after each pass.
+    */
+    bool GetAutoReverse() const noexcept { return m_autoReverse; }
+
+    /*
+        @summary
+        Returns the current repeat behavior.
+    */
+    RepeatBehavior GetRepeatBehavior() const noexcept { return m_repeatBehavior; }
+
+    /*
+        @summary
+        Returns the current repeat count.
+    */
+    int GetRepeatCount() const noexcept { return m_repeatCount; }
+
+    /*
+        @summary
         Sets the behavior after the animation completes.
 
         @param behavior
@@ -85,11 +115,10 @@ public:
     */
     void SetEasingFunction(std::shared_ptr<Easing::EasingFunctionBase> easing) noexcept { m_easingFunction = std::move(easing); }
 
-    float GetDuration() const noexcept { return m_duration; }
-    float GetBeginTime() const noexcept { return m_beginTime; }
-    bool GetAutoReverse() const noexcept { return m_autoReverse; }
-    RepeatBehavior GetRepeatBehavior() const noexcept { return m_repeatBehavior; }
-    int GetRepeatCount() const noexcept { return m_repeatCount; }
+    /*
+        @summary
+        Returns the fill behavior after the animation completes.
+    */
     FillBehavior GetFillBehavior() const noexcept { return m_fillBehavior; }
 
 protected:

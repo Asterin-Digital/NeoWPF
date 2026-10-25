@@ -55,8 +55,19 @@ public:
     /*
         @summary
         Sets the active locale and refreshes attached localization expressions.
+
+        @param culture
+        The locale to activate.
     */
     bool SetActiveLocale(const Culture& culture);
+
+    /*
+        @summary
+        Sets the active locale by culture string and refreshes attached localization expressions.
+
+        @param culture
+        Culture identifier to activate.
+    */
     bool SetActiveLocale(const std::wstring& culture);
 
     /*
@@ -68,21 +79,32 @@ public:
     /*
         @summary
         Sets the locale used when the active locale has no matching translation.
+
+        @param culture
+        The fallback locale to use.
     */
     bool SetFallbackLocale(const Culture& culture);
-    bool SetFallbackLocale(const std::wstring& culture);
 
     /*
         @summary
-        Removes the configured fallback locale.
+        Sets the fallback locale by culture string when the active locale has no matching translation.
+
+        @param culture
+        Culture identifier to use as fallback.
     */
-    void ClearFallbackLocale();
+    bool SetFallbackLocale(const std::wstring& culture);
 
     /*
         @summary
         Returns the configured fallback locale.
     */
     Culture GetFallbackLocale() const;
+
+    /*
+        @summary
+        Removes the configured fallback locale.
+    */
+    void ClearFallbackLocale();
 
     /*
         @summary

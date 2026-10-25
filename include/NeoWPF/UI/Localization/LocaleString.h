@@ -73,7 +73,16 @@ public:
     */
     void SetValue(const std::wstring& value);
 
+    /*
+        @summary
+        Returns the localization key.
+    */
     const std::wstring& GetKey() const noexcept { return m_key; }
+
+    /*
+        @summary
+        Returns the localized text value.
+    */
     const std::wstring& GetValue() const noexcept { return m_value; }
 
 private:

@@ -33,6 +33,10 @@ public:
     static const Properties::DependencyProperty& TargetTypeProperty();
     static const Properties::DependencyProperty& SettersProperty();
 
+    /*
+        @summary
+        Returns the type targeted by the style.
+    */
     std::type_index GetTargetType() const;
     /*
         @summary
@@ -43,6 +47,10 @@ public:
     */
     void SetTargetType(const std::type_index& targetType);
 
+    /*
+        @summary
+        Returns the setters currently registered on the style.
+    */
     const std::vector<std::shared_ptr<Setter>>& GetSetters() const noexcept;
     /*
         @summary

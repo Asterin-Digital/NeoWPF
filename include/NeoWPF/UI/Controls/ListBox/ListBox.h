@@ -82,6 +82,10 @@ public:
     */
     void SetOwner(ListBox* owner) noexcept;
 
+    /*
+        @summary
+        Returns the list that owns this item.
+    */
     ListBox* GetOwner() const noexcept;
 
     /*
@@ -92,7 +96,11 @@ public:
         Selection state.
     */
     void SetIsSelected(bool selected) noexcept;
-    
+
+    /*
+        @summary
+        Returns whether the item is currently selected.
+    */
     bool GetIsSelected() const noexcept;
 
     void OnMouseUp(int x, int y, std::uint32_t buttonState) override;

@@ -48,6 +48,11 @@ public:
         Property name.
     */
     void SetProperty(const std::string& propertyName) noexcept;
+
+    /*
+        @summary
+        Returns the dependency property name targeted by the setter.
+    */
     const std::string& GetProperty() const noexcept;
 
     /*
@@ -58,6 +63,11 @@ public:
         Value to assign.
     */
     void SetValue(const std::any& value);
+
+    /*
+        @summary
+        Returns the value applied by the setter.
+    */
     const std::any& GetValue() const noexcept;
 
     /*
