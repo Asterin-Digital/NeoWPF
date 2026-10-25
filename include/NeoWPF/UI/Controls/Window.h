@@ -58,8 +58,6 @@ public:
         @param allowsTransparency
         True to request per-pixel transparency when the native window is created.
 
-        @note
-        The value must be set before the native window is created.
     */
     void SetAllowsTransparency(bool allowsTransparency) noexcept;
 
@@ -82,16 +80,16 @@ public:
         @summary
         Sets the background brush used for the window clear surface.
 
-            @param brush
-            Window background brush.
+        @param brush
+        Window background brush.
     */
-        void SetBackgroundBrush(std::shared_ptr<Brush> brush);
+    void SetBackgroundBrush(std::shared_ptr<Brush> brush);
 
     /*
         @summary
         Returns the effective window background brush.
     */
-        std::shared_ptr<Brush> GetBackgroundBrush() const;
+    std::shared_ptr<Brush> GetBackgroundBrush() const;
 
     /*
         @summary
@@ -120,6 +118,8 @@ public:
 
         @returns
         True when a value was found; otherwise false.
+
+        @internal
     */
     bool TryResolveLocale(const std::wstring& key, std::wstring& value) const;
 
@@ -168,8 +168,7 @@ public:
         @param overlay
         Overlay visual to add. Null and duplicate overlays are ignored.
 
-        @remarks
-        Used by popup controls.
+        @internal
     */
     void AddOverlay(const std::shared_ptr<Visual>& overlay);
 
@@ -179,12 +178,16 @@ public:
 
         @param overlay
         Overlay visual to remove.
+
+        @internal
     */
     void RemoveOverlay(const std::shared_ptr<Visual>& overlay);
 
     /*
         @summary
         Returns the window overlays.
+
+        @internal
     */
     const std::vector<std::shared_ptr<Visual>>& GetOverlays() const noexcept { return m_overlays; }
 

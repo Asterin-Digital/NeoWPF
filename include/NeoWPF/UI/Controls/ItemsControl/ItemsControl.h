@@ -34,7 +34,6 @@ public:
     static const Properties::DependencyProperty& ItemsProperty();
 
     ItemsControl();
-
     ~ItemsControl();
 
     /*
@@ -106,6 +105,8 @@ public:
         The index of the item in the source collection.
 
         @returns A custom container instance, or nullptr to use the item template.
+
+        @internal
     */
     virtual std::shared_ptr<FrameworkElement> GetContainerForItem(const std::any& data, int index);
 
@@ -121,6 +122,8 @@ public:
 
         @param index
         The index of the item in the source collection.
+
+        @internal
     */
     virtual void PrepareContainer(const std::shared_ptr<FrameworkElement>& container,
                                   const std::any& data,
@@ -136,6 +139,7 @@ public:
         Returns the current collection of items.
     */
     const std::vector<std::shared_ptr<FrameworkElement>>& GetItems() const noexcept { return m_items; }
+
     void SetItemsValue(const ItemCollection& items) { SetItems(items); }
 
     int GetItemCount() const noexcept { return static_cast<int>(m_hasItemsSource ? m_itemsSource.size() : m_items.size()); }
@@ -205,35 +209,28 @@ public:
     */
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
-    /* IScrollInfo: extent in device pixels */
     double GetExtentWidth() const noexcept override;
     double GetExtentHeight() const noexcept override;
 
-    /* IScrollInfo: viewport dimensions */
     double GetViewportWidth() const noexcept override;
     double GetViewportHeight() const noexcept override;
 
-    /* IScrollInfo: current scroll offsets */
     double GetHorizontalOffset() const noexcept override;
     double GetVerticalOffset() const noexcept override;
 
-    /* IScrollInfo: set scroll offsets */
     void SetHorizontalOffset(double offset) noexcept override;
     void SetVerticalOffset(double offset) noexcept override;
 
-    /* IScrollInfo: small-line scrolling commands */
     void LineLeft() noexcept override;
     void LineRight() noexcept override;
     void LineUp() noexcept override;
     void LineDown() noexcept override;
 
-    /* IScrollInfo: page scrolling commands */
     void PageLeft() noexcept override;
     void PageRight() noexcept override;
     void PageUp() noexcept override;
     void PageDown() noexcept override;
 
-    /* IScrollInfo: mouse wheel scroll delta */
     void MouseWheel(int delta) noexcept override;
 
 private:
@@ -252,20 +249,25 @@ private:
 
         @param first
         First index to realize (inclusive).
+
         @param last
-        Last index to realize (inclusive).
+        Last index to realize.
+
+        @internal
     */
     void RealizeRange(int first, int last);
 public:
     /*
         @summary
-        Access the item container generator used to acquire/recycle item visuals.
+        Get the item container generator used to acquire/recycle item visuals.
+
+        @internal
     */
     std::shared_ptr<Controls::ItemsControl::Virtualization::ItemContainerGenerator> GetGenerator() const noexcept { return m_generator; }
 
     /*
         @summary
-        Returns the configured item template.
+        Get the configured item template.
     */
     const Controls::ItemsControl::Virtualization::ItemTemplate& GetItemTemplate() const noexcept { return m_itemTemplate; }
 
@@ -277,13 +279,13 @@ public:
 
     /*
         @summary
-        Assign a custom virtualization engine instance.
+        Set a custom virtualization engine instance.
     */
     void SetVirtualization(const std::shared_ptr<Controls::ItemsControl::Virtualization::ItemsControlVirtualizer>& virtualization) noexcept { m_virtualization = virtualization; }
 
     /*
         @summary
-        Retrieve the assigned virtualization engine, or `nullptr` if none.
+        Get the assigned virtualization engine, or `nullptr` if none.
     */
     std::shared_ptr<Controls::ItemsControl::Virtualization::ItemsControlVirtualizer> GetVirtualization() const noexcept { return m_virtualization; }
 
@@ -292,8 +294,7 @@ public:
         Toggle a default virtualization engine on or off.
 
         @param enabled
-        `true` creates and assigns a default engine; `false` removes any
-        existing engine and the control will use non-virtualized behavior.
+        Enables or disables virtualization.
     */
     void SetVirtualization(bool enabled) noexcept;
 };

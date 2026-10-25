@@ -36,7 +36,7 @@ public:
         The text to place on the clipboard.
 
         @returns
-        `true` when the clipboard contents were replaced successfully; otherwise `false`.
+        `true` when the clipboard contents were replaced successfully otherwise false.
     */
     bool SetText(const std::wstring& text);
 
@@ -46,9 +46,6 @@ public:
 
         @param callback
         Callback invoked later on NeoWPF's main thread with the read result.
-
-        @note
-        The callback is not invoked before this method returns.
     */
     void TryGetText(TextCallback callback);
 

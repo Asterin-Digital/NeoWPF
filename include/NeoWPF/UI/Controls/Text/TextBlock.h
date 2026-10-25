@@ -73,8 +73,6 @@ public:
         @param key
         The application-owned localization key to resolve.
 
-        @details
-        The text updates when localization changes. Calling SetText replaces the locale value.
     */
     void SetLocale(const std::wstring& key);
 

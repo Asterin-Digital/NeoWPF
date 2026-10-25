@@ -78,6 +78,7 @@ public:
     ~ComboBox() override;
 
     bool IsHitTestVisible() const noexcept override { return true; }
+
     bool IsInteractable() const noexcept override { return IsEnabled(); }
 
     /*
@@ -88,6 +89,7 @@ public:
         True to open the drop-down.
     */
     void SetIsDropDownOpen(bool isOpen);
+
     bool GetIsDropDownOpen() const noexcept;
 
     /*
@@ -98,6 +100,7 @@ public:
         Placement direction.
     */
     void SetPlacement(PopupPlacement placement);
+
     PopupPlacement GetPlacement() const noexcept;
 
     std::any GetSelectionBoxItem() const noexcept;
@@ -143,6 +146,7 @@ public:
         Item template callback.
     */
     void SetItemTemplate(const Controls::ItemsControl::Virtualization::ItemTemplate& templ);
+    
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
 protected:

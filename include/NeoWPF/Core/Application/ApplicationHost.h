@@ -6,12 +6,14 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoWPF/Contracts/IWindowing.h>
+#include <NeoWPF/Rendering/RenderSurface.h>
 
 #include <atomic>
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <utility>
+#include <mutex>
+#include <optional>
 
 namespace NeoWPF::UI {
 class Window;
@@ -33,10 +35,7 @@ public:
         Shutdown,
     };
 
-    explicit ApplicationSession(std::shared_ptr<NeoWPF::UI::Window> contentHost = {}) noexcept
-        : m_contentHost(std::move(contentHost))
-    {
-    }
+    explicit ApplicationSession(std::shared_ptr<NeoWPF::UI::Window> contentHost = {}) noexcept;
 
     /*
         @summary
@@ -47,21 +46,7 @@ public:
 
         @internal
     */
-    bool Activate() noexcept
-    {
-        State state = m_state.load(std::memory_order_acquire);
-        while (state != State::Shutdown) {
-            if (state == State::Active ||
-                m_state.compare_exchange_weak(
-                    state,
-                    State::Active,
-                    std::memory_order_acq_rel,
-                    std::memory_order_acquire)) {
-                return true;
-            }
-        }
-        return false;
-    }
+    bool Activate() noexcept;
 
     /*
         @summary
@@ -69,15 +54,7 @@ public:
 
         @internal
     */
-    void Deactivate() noexcept
-    {
-        State active = State::Active;
-        m_state.compare_exchange_strong(
-            active,
-            State::Inactive,
-            std::memory_order_acq_rel,
-            std::memory_order_acquire);
-    }
+    void Deactivate() noexcept;
 
     /*
         @summary
@@ -85,7 +62,7 @@ public:
 
         @internal
     */
-    void Shutdown() noexcept { m_state.store(State::Shutdown, std::memory_order_release); }
+    void Shutdown() noexcept;
 
     /*
         @summary
@@ -93,7 +70,7 @@ public:
 
         @internal
     */
-    bool IsActive() const noexcept { return m_state.load(std::memory_order_acquire) == State::Active; }
+    bool IsActive() const noexcept;
 
     /*
         @summary
@@ -101,7 +78,7 @@ public:
 
         @internal
     */
-    bool IsShutdown() const noexcept { return m_state.load(std::memory_order_acquire) == State::Shutdown; }
+    bool IsShutdown() const noexcept;
 
     /*
         @summary
@@ -109,7 +86,7 @@ public:
 
         @internal
     */
-    void Begin() noexcept { m_state.store(State::Inactive, std::memory_order_release); }
+    void Begin() noexcept;
 
     /*
         @summary
@@ -120,10 +97,7 @@ public:
 
         @internal
     */
-    void SetContentHost(std::shared_ptr<NeoWPF::UI::Window> contentHost) noexcept
-    {
-        m_contentHost = std::move(contentHost);
-    }
+    void SetContentHost(std::shared_ptr<NeoWPF::UI::Window> contentHost) noexcept;
 
     /*
         @summary
@@ -131,7 +105,7 @@ public:
 
         @internal
     */
-    const std::shared_ptr<NeoWPF::UI::Window>& GetContentHost() const noexcept { return m_contentHost; }
+    const std::shared_ptr<NeoWPF::UI::Window>& GetContentHost() const noexcept;
 
     /*
         @summary
@@ -150,17 +124,46 @@ public:
     */
     std::shared_ptr<NeoWPF::UI::Window> SelectContentHost(
         const std::shared_ptr<NeoWPF::UI::Window>& explicitHost,
-        bool isPrimary) const noexcept
-    {
-        if (explicitHost) {
-            return explicitHost;
-        }
-        return isPrimary ? m_contentHost : nullptr;
-    }
+        bool isPrimary) const noexcept;
+
+    /*
+        @summary
+        Attaches a valid render surface to the application session.
+
+        @param surface
+        The generation-scoped render surface to attach.
+
+        @returns
+        True when the surface was attached.
+
+        @internal
+    */
+    bool AttachSurface(const NeoWPF::Rendering::RenderSurface& surface);
+
+    /*
+        @summary
+        Detaches and invalidates the current render surface.
+
+        @returns
+        The detached surface after active render use has drained, or an empty value.
+
+        @internal
+    */
+    std::optional<NeoWPF::Rendering::RenderSurface> DetachSurface();
+
+    /*
+        @summary
+        Returns the currently attached render surface, if present.
+
+        @internal
+    */
+    std::optional<NeoWPF::Rendering::RenderSurface> GetSurface() const;
 
 private:
     std::atomic<State> m_state{State::Inactive};
     std::shared_ptr<NeoWPF::UI::Window> m_contentHost;
+    mutable std::mutex m_surfaceMutex;
+    std::optional<NeoWPF::Rendering::RenderSurface> m_surface;
 };
 
 /*

@@ -41,8 +41,8 @@ class TextBoxTemplate;
 
     @details
     `TextBox` renders editable text, manages a caret, and fires `TextChanged` when the content
-    changes. It supports read-only mode, basic wrapping, and appearance options (colors, font
-    size, padding). Use this control for simple text input inside layouts.
+    changes. It supports read-only mode, wrapping, and appearance options (colors, font
+    size, padding).
 
     @example
     auto tb = std::make_shared<NeoWPF::UI::TextBox>();
@@ -66,16 +66,8 @@ public:
     static const Properties::DependencyProperty& TextHorizontalAlignmentProperty();
     static const Properties::DependencyProperty& TextVerticalAlignmentProperty();
 
-    /*
-        @summary
-        Creates a new TextBox with sensible defaults.
-    */
-    TextBox();
 
-    /*
-        @summary
-        Destroys the TextBox and frees any backing render resources.
-    */
+    TextBox();
     ~TextBox();
 
     /*

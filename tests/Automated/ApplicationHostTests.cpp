@@ -196,6 +196,28 @@ TEST(ApplicationSessionTests, MainWindowIsUsedForPrimaryDesktopWindowOnly)
     EXPECT_FALSE(session.SelectContentHost({}, false));
 }
 
+TEST(ApplicationSessionTests, SurfaceAttachesBeforeActivationAndReattachesWithNewGeneration)
+{
+    int nativeHandle = 0;
+    NeoWPF::Core::ApplicationSession session;
+    const NeoWPF::Rendering::RenderSurface firstSurface{&nativeHandle};
+
+    EXPECT_FALSE(session.IsActive());
+    EXPECT_TRUE(session.AttachSurface(firstSurface));
+    ASSERT_TRUE(session.GetSurface().has_value());
+    EXPECT_EQ(session.GetSurface()->GetGenerationId(), firstSurface.GetGenerationId());
+    EXPECT_FALSE(session.AttachSurface(firstSurface));
+
+    auto detachedSurface = session.DetachSurface();
+    ASSERT_TRUE(detachedSurface.has_value());
+    EXPECT_FALSE(detachedSurface->IsValid());
+    EXPECT_FALSE(session.GetSurface().has_value());
+
+    const NeoWPF::Rendering::RenderSurface replacementSurface{&nativeHandle};
+    EXPECT_NE(firstSurface.GetGenerationId(), replacementSurface.GetGenerationId());
+    EXPECT_TRUE(session.AttachSurface(replacementSurface));
+}
+
 TEST(ApplicationSessionTests, ShutdownPreventsReactivationUntilNewRunBegins)
 {
     NeoWPF::Core::ApplicationSession session;

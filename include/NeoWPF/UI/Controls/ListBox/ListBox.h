@@ -44,6 +44,8 @@ public:
 
         @param item
         Item to select.
+
+        @internal
     */
     virtual void SyncSelection(const std::any& item);
 
@@ -79,6 +81,7 @@ public:
         Owning list.
     */
     void SetOwner(ListBox* owner) noexcept;
+
     ListBox* GetOwner() const noexcept;
 
     /*
@@ -89,6 +92,7 @@ public:
         Selection state.
     */
     void SetIsSelected(bool selected) noexcept;
+    
     bool GetIsSelected() const noexcept;
 
     void OnMouseUp(int x, int y, std::uint32_t buttonState) override;

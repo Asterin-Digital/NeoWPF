@@ -4,6 +4,10 @@
       "enabled": true,
       "severity": "error"
     },
+    "neowpf-documentation": {
+      "enabled": true,
+      "severity": "warning"
+    },
     "neowpf-dp-registration-location": {
       "enabled": true,
       "severity": "error",
