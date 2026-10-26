@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <NeoWPF/Core/Application/Application.h>
+#include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Core/Application/ApplicationHost.h>
 #include <NeoWPF/UI/Controls/Window.h>
 
@@ -152,6 +153,13 @@ TEST(DesktopApplicationHostTests, ShutdownPreventsActivationAndFrames)
     EXPECT_EQ(windowing.pumpCount, 0);
 }
 
+TEST(DesktopApplicationHostTests, WaitsForFirstWindowButExitsAfterLastWindowCloses)
+{
+    EXPECT_TRUE(NeoWPF::Core::ShouldContinueDesktopLoop(false, false));
+    EXPECT_TRUE(NeoWPF::Core::ShouldContinueDesktopLoop(true, true));
+    EXPECT_FALSE(NeoWPF::Core::ShouldContinueDesktopLoop(true, false));
+}
+
 TEST(ApplicationSessionTests, PreservesContentAcrossPauseAndResume)
 {
     auto contentHost = std::make_shared<NeoWPF::UI::Window>();
@@ -196,26 +204,16 @@ TEST(ApplicationSessionTests, MainWindowIsUsedForPrimaryDesktopWindowOnly)
     EXPECT_FALSE(session.SelectContentHost({}, false));
 }
 
-TEST(ApplicationSessionTests, SurfaceAttachesBeforeActivationAndReattachesWithNewGeneration)
+TEST(SessionLifecycleTests, CopiesObserveTheSameStateTransitions)
 {
-    int nativeHandle = 0;
-    NeoWPF::Core::ApplicationSession session;
-    const NeoWPF::Rendering::RenderSurface firstSurface{&nativeHandle};
+    NeoWPF::Core::SessionLifecycle lifecycle;
+    auto sessionCopy = lifecycle;
 
-    EXPECT_FALSE(session.IsActive());
-    EXPECT_TRUE(session.AttachSurface(firstSurface));
-    ASSERT_TRUE(session.GetSurface().has_value());
-    EXPECT_EQ(session.GetSurface()->GetGenerationId(), firstSurface.GetGenerationId());
-    EXPECT_FALSE(session.AttachSurface(firstSurface));
-
-    auto detachedSurface = session.DetachSurface();
-    ASSERT_TRUE(detachedSurface.has_value());
-    EXPECT_FALSE(detachedSurface->IsValid());
-    EXPECT_FALSE(session.GetSurface().has_value());
-
-    const NeoWPF::Rendering::RenderSurface replacementSurface{&nativeHandle};
-    EXPECT_NE(firstSurface.GetGenerationId(), replacementSurface.GetGenerationId());
-    EXPECT_TRUE(session.AttachSurface(replacementSurface));
+    EXPECT_TRUE(lifecycle.Activate());
+    EXPECT_TRUE(sessionCopy.IsActive());
+    sessionCopy.Shutdown();
+    EXPECT_TRUE(lifecycle.IsShutdown());
+    EXPECT_FALSE(lifecycle.Activate());
 }
 
 TEST(ApplicationSessionTests, ShutdownPreventsReactivationUntilNewRunBegins)

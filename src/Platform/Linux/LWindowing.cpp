@@ -133,20 +133,11 @@ void* LWindowing::CreateWindow(
     windowSession.needsLayout = true;
     windowSession.windowHost = windowHost ? std::move(windowHost) : std::make_shared<NeoWPF::UI::Window>();
 
-    bool surfaceAttachmentFailed = false;
     {
         std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
-        windowSession.isPrimaryWindow = app.windowSessions.empty();
-        if (windowSession.isPrimaryWindow &&
-            !app.applicationSession.AttachSurface(windowSession.renderSurface)) {
-            surfaceAttachmentFailed = true;
-        } else {
-            app.windowSessions.push_back(windowSession);
-        }
-    }
-    if (surfaceAttachmentFailed) {
-        NeoWPF::Diagnostics::LogError("Failed to attach primary render surface to application session");
-        return nullptr;
+        windowSession.lifecycle.Activate();
+        app.windowSessions.push_back(windowSession);
+        app.hasCreatedWindow = true;
     }
     m_windows.push_back(std::move(window));
 

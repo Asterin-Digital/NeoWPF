@@ -21,6 +21,7 @@ public:
     {
         NeoWPF::Core::WindowSession session;
         session.renderSurface.nativeWindowHandle = nativeWindowHandle;
+        session.lifecycle.Activate();
         session.windowHost = std::make_shared<NeoWPF::UI::Window>();
 
         auto& appState = NeoWPF::Core::GetAppState();
@@ -142,7 +143,7 @@ TEST(ApplicationWindowSessionTests, CloseRemovesRegisteredSessionOnlyOnce)
     EXPECT_FALSE(NeoWPF::Core::CloseApplicationWindow(&nativeHandle));
 }
 
-TEST(ApplicationWindowSessionTests, ClosingPrimaryPromotesNextApplicationSurface)
+TEST(ApplicationWindowSessionTests, ClosingOneWindowShutsDownOnlyItsHostSession)
 {
     int primaryHandle = 0;
     int secondaryHandle = 0;
@@ -150,6 +151,7 @@ TEST(ApplicationWindowSessionTests, ClosingPrimaryPromotesNextApplicationSurface
     WindowSessionGuard secondarySession(&secondaryHandle);
     auto& appState = NeoWPF::Core::GetAppState();
     NeoWPF::Rendering::RenderSurface secondarySurface;
+    NeoWPF::Core::SessionLifecycle secondaryLifecycle;
     {
         std::lock_guard<std::mutex> lock(appState.windowSessionsMutex);
         auto primary = std::find_if(appState.windowSessions.begin(), appState.windowSessions.end(),
@@ -162,20 +164,15 @@ TEST(ApplicationWindowSessionTests, ClosingPrimaryPromotesNextApplicationSurface
             });
         ASSERT_NE(primary, appState.windowSessions.end());
         ASSERT_NE(secondary, appState.windowSessions.end());
-        primary->isPrimaryWindow = true;
-        secondary->isPrimaryWindow = false;
         secondarySurface = secondary->renderSurface;
+        secondaryLifecycle = secondary->lifecycle;
     }
-    ASSERT_TRUE(appState.applicationSession.AttachSurface(
-        NeoWPF::Rendering::RenderSurface{&primaryHandle}));
 
     EXPECT_TRUE(NeoWPF::Core::CloseApplicationWindow(&primaryHandle));
 
-    const auto applicationSurface = appState.applicationSession.GetSurface();
-    ASSERT_TRUE(applicationSurface.has_value());
-    EXPECT_EQ(applicationSurface->GetGenerationId(), secondarySurface.GetGenerationId());
-    EXPECT_TRUE(applicationSurface->IsValid());
-    (void)appState.applicationSession.DetachSurface();
+    EXPECT_FALSE(HasWindowSession(&primaryHandle));
+    EXPECT_TRUE(secondaryLifecycle.IsActive());
+    EXPECT_TRUE(secondarySurface.IsValid());
 }
 
 TEST(ApplicationWindowSessionTests, CloseQueuesRendererSurfaceReleaseAfterRendererStartup)

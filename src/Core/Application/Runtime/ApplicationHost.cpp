@@ -4,17 +4,12 @@
 
 namespace NeoWPF::Core {
 
-ApplicationSession::ApplicationSession(std::shared_ptr<NeoWPF::UI::Window> contentHost) noexcept
-    : m_contentHost(std::move(contentHost))
+bool SessionLifecycle::Activate() noexcept
 {
-}
-
-bool ApplicationSession::Activate() noexcept
-{
-    State state = m_state.load(std::memory_order_acquire);
+    State state = m_sharedState->state.load(std::memory_order_acquire);
     while (state != State::Shutdown) {
         if (state == State::Active ||
-            m_state.compare_exchange_weak(
+            m_sharedState->state.compare_exchange_weak(
                 state,
                 State::Active,
                 std::memory_order_acq_rel,
@@ -25,35 +20,69 @@ bool ApplicationSession::Activate() noexcept
     return false;
 }
 
-void ApplicationSession::Deactivate() noexcept
+void SessionLifecycle::Deactivate() noexcept
 {
     State active = State::Active;
-    m_state.compare_exchange_strong(
+    m_sharedState->state.compare_exchange_strong(
         active,
         State::Inactive,
         std::memory_order_acq_rel,
         std::memory_order_acquire);
 }
 
+void SessionLifecycle::Shutdown() noexcept
+{
+    m_sharedState->state.store(State::Shutdown, std::memory_order_release);
+}
+
+void SessionLifecycle::Begin() noexcept
+{
+    m_sharedState->state.store(State::Inactive, std::memory_order_release);
+}
+
+bool SessionLifecycle::IsActive() const noexcept
+{
+    return m_sharedState->state.load(std::memory_order_acquire) == State::Active;
+}
+
+bool SessionLifecycle::IsShutdown() const noexcept
+{
+    return m_sharedState->state.load(std::memory_order_acquire) == State::Shutdown;
+}
+
+ApplicationSession::ApplicationSession(std::shared_ptr<NeoWPF::UI::Window> contentHost) noexcept
+    : m_contentHost(std::move(contentHost))
+{
+}
+
+bool ApplicationSession::Activate() noexcept
+{
+    return m_lifecycle.Activate();
+}
+
+void ApplicationSession::Deactivate() noexcept
+{
+    m_lifecycle.Deactivate();
+}
+
 void ApplicationSession::Shutdown() noexcept
 {
-    m_state.store(State::Shutdown, std::memory_order_release);
-    (void)DetachSurface();
+    m_lifecycle.Shutdown();
 }
 
 bool ApplicationSession::IsActive() const noexcept
 {
-    return m_state.load(std::memory_order_acquire) == State::Active;
+    return m_lifecycle.IsActive();
 }
 
 bool ApplicationSession::IsShutdown() const noexcept
 {
-    return m_state.load(std::memory_order_acquire) == State::Shutdown;
+    return m_lifecycle.IsShutdown();
 }
 
 void ApplicationSession::Begin() noexcept
 {
-    m_state.store(State::Inactive, std::memory_order_release);
+    m_lifecycle.Begin();
 }
 
 void ApplicationSession::SetContentHost(std::shared_ptr<NeoWPF::UI::Window> contentHost) noexcept
@@ -74,37 +103,6 @@ std::shared_ptr<NeoWPF::UI::Window> ApplicationSession::SelectContentHost(
         return explicitHost;
     }
     return isPrimary ? m_contentHost : nullptr;
-}
-
-bool ApplicationSession::AttachSurface(const NeoWPF::Rendering::RenderSurface& surface)
-{
-    if (!surface.IsValid()) {
-        return false;
-    }
-    std::lock_guard<std::mutex> lock(m_surfaceMutex);
-    if (IsShutdown() || m_surface) {
-        return false;
-    }
-    m_surface = surface;
-    return true;
-}
-
-std::optional<NeoWPF::Rendering::RenderSurface> ApplicationSession::DetachSurface()
-{
-    std::lock_guard<std::mutex> lock(m_surfaceMutex);
-    if (!m_surface) {
-        return std::nullopt;
-    }
-    auto surface = std::move(m_surface);
-    m_surface.reset();
-    surface->Invalidate();
-    return surface;
-}
-
-std::optional<NeoWPF::Rendering::RenderSurface> ApplicationSession::GetSurface() const
-{
-    std::lock_guard<std::mutex> lock(m_surfaceMutex);
-    return m_surface;
 }
 
 }

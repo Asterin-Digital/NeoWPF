@@ -48,21 +48,11 @@ void* WWindowing::CreateWindow(
     windowSession.windowHost = windowHost ? std::move(windowHost) : std::make_shared<NeoWPF::UI::Window>();
     windowSession.contentRoot = nullptr;
 
-    bool surfaceAttachmentFailed = false;
     {
         std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
-        windowSession.isPrimaryWindow = app.windowSessions.empty();
-        if (windowSession.isPrimaryWindow &&
-            !app.applicationSession.AttachSurface(windowSession.renderSurface)) {
-            surfaceAttachmentFailed = true;
-        } else {
-            app.windowSessions.push_back(windowSession);
-        }
-    }
-    if (surfaceAttachmentFailed) {
-        NeoWPF::Diagnostics::LogError("Failed to attach primary render surface to application session");
-        ::DestroyWindow(static_cast<HWND>(nativeHandle));
-        return nullptr;
+        windowSession.lifecycle.Activate();
+        app.windowSessions.push_back(windowSession);
+        app.hasCreatedWindow = true;
     }
 
     if (windowSession.windowHost->GetTitleBar()) {

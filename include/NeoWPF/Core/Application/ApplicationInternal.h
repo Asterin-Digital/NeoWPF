@@ -32,10 +32,10 @@ namespace NeoWPF::Core {
 
 struct WindowSession {
     NeoWPF::Rendering::RenderSurface renderSurface;
+    SessionLifecycle lifecycle;
     unsigned int width = 0;
     unsigned int height = 0;
     bool needsLayout = true;
-    bool isPrimaryWindow = false;
     std::shared_ptr<NeoWPF::UI::Window> windowHost;
     NeoWPF::UI::Visual* contentRoot = nullptr;
     NeoWPF::Rendering::CommandList buildCommandList;
@@ -52,6 +52,7 @@ struct AppState {
     void* hInst = nullptr;
     NeoWPF::Core::ApplicationSession applicationSession;
     std::vector<WindowSession> windowSessions;
+    bool hasCreatedWindow = false;
     std::vector<std::shared_ptr<RenderSurfaceDestructionRequest>> pendingRenderSurfaceDestruction;
     std::atomic<bool> running{false};
     std::atomic<bool> consoleVisible{false};
@@ -85,6 +86,7 @@ struct AppState {
 };
 
 AppState& GetAppState();
+bool ShouldContinueDesktopLoop(bool hasCreatedWindow, bool anyWindowOpen) noexcept;
 void StartRenderThread();
 int RunDesktopApplication(std::chrono::seconds renderInitializationTimeout);
 bool CloseApplicationWindow(void* nativeWindowHandle);

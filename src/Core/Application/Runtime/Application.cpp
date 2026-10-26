@@ -20,6 +20,7 @@
 #include <NeoWPFBuildInfo.h>
 
 #include <atomic>
+#include <mutex>
 
 namespace NeoWPF::Core {
 
@@ -75,6 +76,10 @@ void Application::Initialize()
     }
     auto& appState = GetAppState();
     appState.applicationSession.Begin();
+    {
+        std::lock_guard<std::mutex> lock(appState.windowSessionsMutex);
+        appState.hasCreatedWindow = false;
+    }
     appState.mainThreadExecutor = std::make_unique<NeoWPF::Core::Threading::MainThreadExecutor>();
     appState.backgroundExecutor = std::make_unique<NeoWPF::Core::Threading::BackgroundExecutor>();
     NeoWPF::UI::Properties::RegisterCoreControlProperties();
@@ -193,15 +198,6 @@ DeviceCategory Application::GetDeviceCategory() const noexcept
 int RunDesktopApplication(std::chrono::seconds renderInitializationTimeout)
 {
     auto& appState = GetAppState();
-    if (appState.windowSessions.empty()) {
-        auto* platform = NeoWPF::Platform::CurrentPlatform();
-        if (platform) {
-            platform->Windowing().ShowFatalError(
-                L"NeoWPF Error", L"No windows created. Call CreateWindow() before Run().");
-        }
-        return -1;
-    }
-
     StartRenderThread();
     std::unique_lock<std::mutex> lock(appState.renderInitMutex);
     if (!appState.renderInitCondition.wait_for(lock, renderInitializationTimeout, [] {

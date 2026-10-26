@@ -6,14 +6,11 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoWPF/Contracts/IWindowing.h>
-#include <NeoWPF/Rendering/RenderSurface.h>
 
 #include <atomic>
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <mutex>
-#include <optional>
 
 namespace NeoWPF::UI {
 class Window;
@@ -23,11 +20,11 @@ namespace NeoWPF::Core {
 
 /*
     @summary
-    Owns application-host lifecycle state and the stable main content host.
+    Stores lifecycle state shared by copies of one application or host session.
 
     @internal
 */
-class ApplicationSession {
+class SessionLifecycle {
 public:
     enum class State : std::uint8_t {
         Inactive,
@@ -35,14 +32,12 @@ public:
         Shutdown,
     };
 
-    explicit ApplicationSession(std::shared_ptr<NeoWPF::UI::Window> contentHost = {}) noexcept;
-
     /*
         @summary
-        Activates the host session unless it has been shut down.
+        Activates the session unless it has been shut down.
 
         @returns
-        True when the host session is active after the operation.
+        True when the session is active after the operation.
 
         @internal
     */
@@ -50,7 +45,7 @@ public:
 
     /*
         @summary
-        Deactivates the host session without shutting it down.
+        Deactivates the session without shutting it down.
 
         @internal
     */
@@ -58,7 +53,7 @@ public:
 
     /*
         @summary
-        Permanently shuts down the host session.
+        Permanently shuts down the session.
 
         @internal
     */
@@ -66,7 +61,15 @@ public:
 
     /*
         @summary
-        Indicates whether the host session is currently active.
+        Resets the session for a new application run.
+
+        @internal
+    */
+    void Begin() noexcept;
+
+    /*
+        @summary
+        Indicates whether the session is active.
 
         @internal
     */
@@ -74,7 +77,68 @@ public:
 
     /*
         @summary
-        Indicates whether the host session has been permanently shut down.
+        Indicates whether the session has been shut down.
+
+        @internal
+    */
+    bool IsShutdown() const noexcept;
+
+private:
+    struct SharedState {
+        std::atomic<State> state{State::Inactive};
+    };
+
+    std::shared_ptr<SharedState> m_sharedState = std::make_shared<SharedState>();
+};
+
+/*
+    @summary
+    Owns application lifecycle state and the stable main content host.
+
+    @internal
+*/
+class ApplicationSession {
+public:
+    explicit ApplicationSession(std::shared_ptr<NeoWPF::UI::Window> contentHost = {}) noexcept;
+
+    /*
+        @summary
+        Activates the application session unless it has been shut down.
+
+        @returns
+        True when the application session is active after the operation.
+
+        @internal
+    */
+    bool Activate() noexcept;
+
+    /*
+        @summary
+        Deactivates the application session without shutting it down.
+
+        @internal
+    */
+    void Deactivate() noexcept;
+
+    /*
+        @summary
+        Permanently shuts down the application session.
+
+        @internal
+    */
+    void Shutdown() noexcept;
+
+    /*
+        @summary
+        Indicates whether the application session is currently active.
+
+        @internal
+    */
+    bool IsActive() const noexcept;
+
+    /*
+        @summary
+        Indicates whether the application session has been permanently shut down.
 
         @internal
     */
@@ -126,44 +190,9 @@ public:
         const std::shared_ptr<NeoWPF::UI::Window>& explicitHost,
         bool isPrimary) const noexcept;
 
-    /*
-        @summary
-        Attaches a valid render surface to the application session.
-
-        @param surface
-        The generation-scoped render surface to attach.
-
-        @returns
-        True when the surface was attached.
-
-        @internal
-    */
-    bool AttachSurface(const NeoWPF::Rendering::RenderSurface& surface);
-
-    /*
-        @summary
-        Detaches and invalidates the current render surface.
-
-        @returns
-        The detached surface after active render use has drained, or an empty value.
-
-        @internal
-    */
-    std::optional<NeoWPF::Rendering::RenderSurface> DetachSurface();
-
-    /*
-        @summary
-        Returns the currently attached render surface, if present.
-
-        @internal
-    */
-    std::optional<NeoWPF::Rendering::RenderSurface> GetSurface() const;
-
 private:
-    std::atomic<State> m_state{State::Inactive};
+    SessionLifecycle m_lifecycle;
     std::shared_ptr<NeoWPF::UI::Window> m_contentHost;
-    mutable std::mutex m_surfaceMutex;
-    std::optional<NeoWPF::Rendering::RenderSurface> m_surface;
 };
 
 /*

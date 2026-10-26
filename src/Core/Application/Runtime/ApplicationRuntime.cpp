@@ -27,6 +27,11 @@ AppState s_appState;
 
 AppState& GetAppState() { return s_appState; }
 
+bool ShouldContinueDesktopLoop(bool hasCreatedWindow, bool anyWindowOpen) noexcept
+{
+    return !hasCreatedWindow || anyWindowOpen;
+}
+
 void SetInputRootForWindow(void* nativeWindowHandle)
 {
     if (!nativeWindowHandle) {
@@ -178,20 +183,14 @@ void StartRenderThread()
         auto* platform = NeoWPF::Platform::CurrentPlatform();
         try {
             bool surfacesInitialized = true;
-            const auto applicationSurface = s_appState.applicationSession.GetSurface();
             {
                 std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
                 for (const auto& windowSession : s_appState.windowSessions) {
-                    const NeoWPF::Rendering::RenderSurface* surface = &windowSession.renderSurface;
-                    if (windowSession.isPrimaryWindow) {
-                        if (!applicationSurface ||
-                            applicationSurface->GetGenerationId() != windowSession.renderSurface.GetGenerationId()) {
-                            surfacesInitialized = false;
-                            break;
-                        }
-                        surface = &*applicationSurface;
+                    if (!windowSession.lifecycle.IsActive()) {
+                        continue;
                     }
-                    if (!platform || !NeoWPF::Rendering::Renderer_Initialize(*surface)) {
+                    if (!platform || !windowSession.renderSurface.IsValid() ||
+                        !NeoWPF::Rendering::Renderer_Initialize(windowSession.renderSurface)) {
                         NeoWPF::Diagnostics::LogError("Render backend initialization failed");
                         surfacesInitialized = false;
                         break;
@@ -282,22 +281,17 @@ void StartRenderThread()
                 break;
             }
 
-            const auto applicationSurface = s_appState.applicationSession.GetSurface();
             for (auto& windowSession : windowSessionsSnapshot) {
-                const NeoWPF::Rendering::RenderSurface* surface = &windowSession.renderSurface;
-                if (windowSession.isPrimaryWindow) {
-                    if (!applicationSurface || !applicationSurface->IsValid() ||
-                        applicationSurface->GetGenerationId() != windowSession.renderSurface.GetGenerationId()) {
-                        continue;
-                    }
-                    surface = &*applicationSurface;
+                if (!windowSession.lifecycle.IsActive() || !windowSession.renderSurface.IsValid()) {
+                    continue;
                 }
-                if (!platform->Windowing().IsWindowAlive(surface->nativeWindowHandle)) {
+                const auto& surface = windowSession.renderSurface;
+                if (!platform->Windowing().IsWindowAlive(surface.nativeWindowHandle)) {
                     continue;
                 }
                 bool surfaceInitialized = false;
                 try {
-                    surfaceInitialized = NeoWPF::Rendering::Renderer_Initialize(*surface);
+                    surfaceInitialized = NeoWPF::Rendering::Renderer_Initialize(surface);
                 } catch (const std::exception& ex) {
                     NeoWPF::Diagnostics::LogError("Render surface initialization failed: %s", ex.what());
                     continue;
@@ -311,13 +305,13 @@ void StartRenderThread()
                 }
                 unsigned int w = 0;
                 unsigned int h = 0;
-                platform->Windowing().GetWindowSize(surface->nativeWindowHandle, w, h);
+                platform->Windowing().GetWindowSize(surface.nativeWindowHandle, w, h);
 
                 if (w > 0 && h > 0) {
                     try {
-                        NeoWPF::Rendering::Renderer_Resize(*surface, w, h);
+                        NeoWPF::Rendering::Renderer_Resize(surface, w, h);
                         const auto renderStart = std::chrono::steady_clock::now();
-                        NeoWPF::Rendering::Renderer_BeginFrame(*surface);
+                        NeoWPF::Rendering::Renderer_BeginFrame(surface);
 
                         NeoWPF::Rendering::CommandList toRender;
                         {
@@ -325,8 +319,8 @@ void StartRenderThread()
                             toRender = windowSession.renderCommandList;
                         }
 
-                        NeoWPF::Rendering::Renderer_Execute(*surface, toRender);
-                        NeoWPF::Rendering::Renderer_Present(*surface);
+                        NeoWPF::Rendering::Renderer_Execute(surface, toRender);
+                        NeoWPF::Rendering::Renderer_Present(surface);
                         const auto renderElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - renderStart).count();
                         NeoWPF::Diagnostics::PerformanceMetrics::RecordRenderPass(renderElapsed);
                     } catch (const std::exception& ex) {
@@ -371,54 +365,36 @@ int RunApplicationMessageLoop()
     NeoWPF::Core::Threading::ThreadAffinity::RegisterMainThread();
     auto* platform = NeoWPF::Platform::CurrentPlatform();
     auto& windowing = platform->Windowing();
-    void* primaryWindow = nullptr;
-    {
-        std::lock_guard<std::mutex> wlock(s_appState.windowSessionsMutex);
-        if (!s_appState.windowSessions.empty()) {
-            primaryWindow = s_appState.windowSessions[0].renderSurface.nativeWindowHandle;
-        }
-    }
-
-    if (!primaryWindow) {
-        NeoWPF::Platform::CurrentPlatform()->Windowing().ShowFatalError(
-            L"NeoWPF Error", L"No primary window available.");
-        s_appState.running = false;
-        return -1;
-    }
-
-    unsigned int clientWidth = 0;
-    unsigned int clientHeight = 0;
-    windowing.GetWindowSize(primaryWindow, clientWidth, clientHeight);
-
+    std::vector<void*> initialWindows;
     {
         std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
         for (auto& windowSession : s_appState.windowSessions) {
-            unsigned int windowWidth = 0;
-            unsigned int windowHeight = 0;
-            if (!windowing.IsWindowAlive(windowSession.renderSurface.nativeWindowHandle)) {
+            if (!windowSession.lifecycle.IsActive() ||
+                !windowing.IsWindowAlive(windowSession.renderSurface.nativeWindowHandle)) {
                 continue;
             }
+            unsigned int windowWidth = 0;
+            unsigned int windowHeight = 0;
             windowing.GetWindowSize(windowSession.renderSurface.nativeWindowHandle, windowWidth, windowHeight);
             if (windowWidth == 0 || windowHeight == 0) {
-                windowWidth = clientWidth;
-                windowHeight = clientHeight;
+                continue;
             }
             BuildWindowVisualTree(windowSession, windowWidth, windowHeight, true);
             windowSession.width = windowWidth;
             windowSession.height = windowHeight;
+            initialWindows.push_back(windowSession.renderSurface.nativeWindowHandle);
         }
     }
 
-    if (!s_appState.windowSessions.empty()) {
-        auto rootVisual = s_appState.windowSessions[0].windowHost->GetContent();
-        NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual.get()));
+    for (void* nativeWindowHandle : initialWindows) {
+        windowing.InvalidateWindow(nativeWindowHandle);
     }
-
-    windowing.InvalidateWindow(primaryWindow);
+    if (!initialWindows.empty()) {
+        SetInputRootForWindow(initialWindows.front());
+    }
 
     NeoWPF::Diagnostics::PerformanceMetrics::RecordStartup();
 
-    unsigned int lastLayoutWidth = 0, lastLayoutHeight = 0;
     auto applicationHost = std::make_unique<NeoWPF::Core::DesktopApplicationHost>(
         windowing, s_appState.applicationSession);
     NeoWPF::Core::IApplicationHost* applicationHostPointer = applicationHost.get();
@@ -439,81 +415,64 @@ int RunApplicationMessageLoop()
         NeoWPF::Diagnostics::PerformanceMetrics::RecordFrameSample(tickElapsed);
         NeoWPF::Diagnostics::PerformanceMetrics::EmitPeriodicSummary();
 
+        bool anyWindowOpen = false;
+        bool hasCreatedWindow = false;
         {
             std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
-            bool anyWindowOpen = false;
+            hasCreatedWindow = s_appState.hasCreatedWindow;
             for (const auto& window : s_appState.windowSessions) {
                 if (windowing.IsWindowAlive(window.renderSurface.nativeWindowHandle)) {
                     anyWindowOpen = true;
                     break;
                 }
             }
-            if (!anyWindowOpen) {
-                return false;
-            }
+        }
+        if (!ShouldContinueDesktopLoop(hasCreatedWindow, anyWindowOpen)) {
+            return false;
         }
 
         bool needsUpdate = false;
-        bool anyTopLevelDirty = false;
-        for (const auto& windowSession : s_appState.windowSessions) {
-            if (windowSession.windowHost &&
-                (windowSession.windowHost->IsTreeDirty() || OverlayDirty(*windowSession.windowHost))) {
-                anyTopLevelDirty = true;
-                break;
-            }
-        }
-
-        unsigned int currentClientWidth = 0;
-        unsigned int currentClientHeight = 0;
-        windowing.GetWindowSize(primaryWindow, currentClientWidth, currentClientHeight);
-        const bool sizeChanged = currentClientWidth != lastLayoutWidth || currentClientHeight != lastLayoutHeight;
-        if (sizeChanged) {
-            lastLayoutWidth = currentClientWidth;
-            lastLayoutHeight = currentClientHeight;
-        }
-
         {
             std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
             for (auto& windowSession : s_appState.windowSessions) {
-                unsigned int windowWidth = 0;
-                unsigned int windowHeight = 0;
-                if (!windowing.IsWindowAlive(windowSession.renderSurface.nativeWindowHandle)) {
+                if (!windowSession.lifecycle.IsActive() ||
+                    !windowing.IsWindowAlive(windowSession.renderSurface.nativeWindowHandle)) {
                     continue;
                 }
+                unsigned int windowWidth = 0;
+                unsigned int windowHeight = 0;
                 windowing.GetWindowSize(windowSession.renderSurface.nativeWindowHandle, windowWidth, windowHeight);
-                if (windowWidth == 0 || windowHeight == 0) {
-                    windowWidth = currentClientWidth;
-                    windowHeight = currentClientHeight;
-                }
-
-                if (!windowSession.commandListInitialized || windowSession.width != windowWidth || windowSession.height != windowHeight) {
+                if (windowWidth > 0 && windowHeight > 0 &&
+                    (!windowSession.commandListInitialized || windowSession.width != windowWidth ||
+                     windowSession.height != windowHeight ||
+                     (windowSession.windowHost &&
+                      (windowSession.windowHost->IsTreeDirty() || OverlayDirty(*windowSession.windowHost))))) {
                     needsUpdate = true;
                     break;
                 }
             }
         }
 
-        needsUpdate = needsUpdate || anyTopLevelDirty || sizeChanged;
-
         if (needsUpdate) {
             NeoWPF::Diagnostics::ProcessPendingDeveloperWarnings();
             std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
             for (auto& windowSession : s_appState.windowSessions) {
-                unsigned int windowWidth = 0;
-                unsigned int windowHeight = 0;
-                if (!windowing.IsWindowAlive(windowSession.renderSurface.nativeWindowHandle)) {
+                if (!windowSession.lifecycle.IsActive() ||
+                    !windowing.IsWindowAlive(windowSession.renderSurface.nativeWindowHandle)) {
                     continue;
                 }
+                unsigned int windowWidth = 0;
+                unsigned int windowHeight = 0;
                 windowing.GetWindowSize(windowSession.renderSurface.nativeWindowHandle, windowWidth, windowHeight);
                 if (windowWidth == 0 || windowHeight == 0) {
-                    windowWidth = currentClientWidth;
-                    windowHeight = currentClientHeight;
+                    continue;
                 }
                 auto rootVisual = windowSession.windowHost ? windowSession.windowHost->GetContent() : nullptr;
-                const bool layoutRequired = sizeChanged ||
+                const bool layoutRequired =
                     !windowSession.commandListInitialized ||
+                    windowSession.width != windowWidth || windowSession.height != windowHeight ||
                     (rootVisual && rootVisual->IsLayoutDirty()) ||
-                    OverlayLayoutDirty(*windowSession.windowHost);
+                    (windowSession.windowHost && OverlayLayoutDirty(*windowSession.windowHost));
                 BuildWindowVisualTree(windowSession, windowWidth, windowHeight, layoutRequired);
                 windowSession.width = windowWidth;
                 windowSession.height = windowHeight;
