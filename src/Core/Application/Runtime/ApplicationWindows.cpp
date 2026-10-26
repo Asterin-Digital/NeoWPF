@@ -27,12 +27,15 @@ bool CloseApplicationWindow(void* nativeWindowHandle)
     bool removed = false;
     bool rendererInitialized = false;
     bool waitForRendererShutdown = false;
+    bool removedPrimaryWindow = false;
+    std::optional<NeoWPF::Rendering::RenderSurface> promotedSurface;
     {
         std::lock_guard<std::mutex> lock(App().windowSessionsMutex);
         auto it = std::find_if(App().windowSessions.begin(), App().windowSessions.end(), [nativeWindowHandle](const WindowSession& windowSession) {
             return windowSession.renderSurface.nativeWindowHandle == nativeWindowHandle;
         });
         if (it != App().windowSessions.end()) {
+            removedPrimaryWindow = it->isPrimaryWindow;
             windowHost = it->windowHost;
             it->renderSurface.Invalidate();
             if (App().renderThreadInitialized.load()) {
@@ -45,12 +48,26 @@ bool CloseApplicationWindow(void* nativeWindowHandle)
                 App().pendingRenderSurfaceDestruction.push_back(destructionRequest);
             }
             App().windowSessions.erase(it);
+            if (removedPrimaryWindow && !App().windowSessions.empty()) {
+                for (auto& windowSession : App().windowSessions) {
+                    windowSession.isPrimaryWindow = false;
+                }
+                App().windowSessions.front().isPrimaryWindow = true;
+                promotedSurface = App().windowSessions.front().renderSurface;
+            }
             removed = true;
         }
     }
 
     if (!removed) {
         return false;
+    }
+
+    if (removedPrimaryWindow) {
+        (void)App().applicationSession.DetachSurface();
+        if (promotedSurface && !App().applicationSession.AttachSurface(*promotedSurface)) {
+            NeoWPF::Diagnostics::LogError("Failed to attach promoted render surface to application session");
+        }
     }
 
     if (rendererInitialized) {

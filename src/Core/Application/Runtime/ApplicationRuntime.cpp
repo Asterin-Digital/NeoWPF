@@ -178,10 +178,20 @@ void StartRenderThread()
         auto* platform = NeoWPF::Platform::CurrentPlatform();
         try {
             bool surfacesInitialized = true;
+            const auto applicationSurface = s_appState.applicationSession.GetSurface();
             {
                 std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
                 for (const auto& windowSession : s_appState.windowSessions) {
-                    if (!platform || !NeoWPF::Rendering::Renderer_Initialize(windowSession.renderSurface)) {
+                    const NeoWPF::Rendering::RenderSurface* surface = &windowSession.renderSurface;
+                    if (windowSession.isPrimaryWindow) {
+                        if (!applicationSurface ||
+                            applicationSurface->GetGenerationId() != windowSession.renderSurface.GetGenerationId()) {
+                            surfacesInitialized = false;
+                            break;
+                        }
+                        surface = &*applicationSurface;
+                    }
+                    if (!platform || !NeoWPF::Rendering::Renderer_Initialize(*surface)) {
                         NeoWPF::Diagnostics::LogError("Render backend initialization failed");
                         surfacesInitialized = false;
                         break;
@@ -272,13 +282,22 @@ void StartRenderThread()
                 break;
             }
 
+            const auto applicationSurface = s_appState.applicationSession.GetSurface();
             for (auto& windowSession : windowSessionsSnapshot) {
-                if (!platform->Windowing().IsWindowAlive(windowSession.renderSurface.nativeWindowHandle)) {
+                const NeoWPF::Rendering::RenderSurface* surface = &windowSession.renderSurface;
+                if (windowSession.isPrimaryWindow) {
+                    if (!applicationSurface || !applicationSurface->IsValid() ||
+                        applicationSurface->GetGenerationId() != windowSession.renderSurface.GetGenerationId()) {
+                        continue;
+                    }
+                    surface = &*applicationSurface;
+                }
+                if (!platform->Windowing().IsWindowAlive(surface->nativeWindowHandle)) {
                     continue;
                 }
                 bool surfaceInitialized = false;
                 try {
-                    surfaceInitialized = NeoWPF::Rendering::Renderer_Initialize(windowSession.renderSurface);
+                    surfaceInitialized = NeoWPF::Rendering::Renderer_Initialize(*surface);
                 } catch (const std::exception& ex) {
                     NeoWPF::Diagnostics::LogError("Render surface initialization failed: %s", ex.what());
                     continue;
@@ -292,13 +311,13 @@ void StartRenderThread()
                 }
                 unsigned int w = 0;
                 unsigned int h = 0;
-                platform->Windowing().GetWindowSize(windowSession.renderSurface.nativeWindowHandle, w, h);
+                platform->Windowing().GetWindowSize(surface->nativeWindowHandle, w, h);
 
                 if (w > 0 && h > 0) {
                     try {
-                        NeoWPF::Rendering::Renderer_Resize(windowSession.renderSurface, w, h);
+                        NeoWPF::Rendering::Renderer_Resize(*surface, w, h);
                         const auto renderStart = std::chrono::steady_clock::now();
-                        NeoWPF::Rendering::Renderer_BeginFrame(windowSession.renderSurface);
+                        NeoWPF::Rendering::Renderer_BeginFrame(*surface);
 
                         NeoWPF::Rendering::CommandList toRender;
                         {
@@ -306,8 +325,8 @@ void StartRenderThread()
                             toRender = windowSession.renderCommandList;
                         }
 
-                        NeoWPF::Rendering::Renderer_Execute(windowSession.renderSurface, toRender);
-                        NeoWPF::Rendering::Renderer_Present(windowSession.renderSurface);
+                        NeoWPF::Rendering::Renderer_Execute(*surface, toRender);
+                        NeoWPF::Rendering::Renderer_Present(*surface);
                         const auto renderElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - renderStart).count();
                         NeoWPF::Diagnostics::PerformanceMetrics::RecordRenderPass(renderElapsed);
                     } catch (const std::exception& ex) {

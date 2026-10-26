@@ -53,7 +53,16 @@ option(NEOWPF_BUILD_BENCHMARKS "Build local NeoWPF performance benchmarks" OFF)
 if(WIN32)
     set(NEOWPF_PLATFORM "Windows")
     set(NEOWPF_DEFAULT_RENDERER_BACKEND "D3D11")
-elseif(UNIX)
+elseif(ANDROID)
+    set(NEOWPF_PLATFORM "Android")
+    set(NEOWPF_DEFAULT_RENDERER_BACKEND "Vulkan")
+    if(NOT DEFINED CMAKE_ANDROID_API)
+        set(CMAKE_ANDROID_API 24)
+    endif()
+    if(NOT DEFINED CMAKE_ANDROID_ARCH_ABI)
+        set(CMAKE_ANDROID_ARCH_ABI arm64-v8a)
+    endif()
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(NEOWPF_PLATFORM "Linux")
     set(NEOWPF_DEFAULT_RENDERER_BACKEND "Vulkan")
 else()
@@ -72,8 +81,11 @@ if(NOT NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "d3d11" AND
         "Unsupported NEOWPF_RENDERER_BACKEND='${NEOWPF_RENDERER_BACKEND}'. "
         "Choose D3D11 or Vulkan.")
 endif()
-if(NOT WIN32 AND NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "d3d11")
+if(NOT WIN32 AND NOT ANDROID AND NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "d3d11")
     message(FATAL_ERROR "D3D11 is only supported on Windows.")
+endif()
+if(ANDROID AND NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "d3d11")
+    message(FATAL_ERROR "Android supports only vulkan")
 endif()
 
 if(NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "d3d11")
@@ -84,9 +96,10 @@ else()
     find_program(NEOWPF_GLSLANG_VALIDATOR glslangValidator REQUIRED)
 endif()
 
+message(STATUS "NeoWPF platform selected: ${NEOWPF_PLATFORM}")
 message(STATUS "NeoWPF renderer backend selected: ${NEOWPF_RENDERER_BACKEND}")
 
-if(UNIX)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(NEOWPF_VULKAN_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/Vulkan/Shaders")
     set(NEOWPF_VULKAN_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/vulkan")
     set(NEOWPF_SOLID_VERT_SPV "${NEOWPF_VULKAN_GENERATED_DIR}/solid.vert.spv")
@@ -235,7 +248,7 @@ if(WIN32)
     find_package(harfbuzz CONFIG REQUIRED)
 endif()
 
-if(UNIX)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(VCPKG_TARGET_TRIPLET "x64-linux" CACHE STRING
         "vcpkg triplet used for Linux dependencies")
     set(VCPKG_LIBRARY_LINKAGE "static" CACHE STRING
@@ -258,7 +271,7 @@ endif()
 find_package(ZLIB REQUIRED)
 find_package(CURL CONFIG REQUIRED)
 find_package(Stb REQUIRED)
-if(UNIX)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_package(MbedTLS CONFIG REQUIRED)
     find_package(OpenSSL CONFIG REQUIRED)
     find_package(Freetype CONFIG REQUIRED)
@@ -365,7 +378,7 @@ if(WIN32)
     target_include_directories(NeoWPF.Foundation PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include/harfbuzz")
 endif()
 target_include_directories(NeoWPF.Foundation PRIVATE "${Stb_INCLUDE_DIR}")
-if(UNIX)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_include_directories(NeoWPF.Foundation SYSTEM PRIVATE
         "${NEOWPF_WAYLAND_GENERATED_DIR}"
         "${NEOWPF_VULKAN_GENERATED_DIR}"
@@ -391,7 +404,7 @@ if(WIN32)
     )
 endif()
 
-if(UNIX)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_SHELL_HEADER}")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_DECORATION_HEADER}")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_SOLID_VERT_HEADER}" "${NEOWPF_SOLID_FRAG_HEADER}")
@@ -439,7 +452,7 @@ else()
     set(NEOWPF_RELEASE_EXTENSION "a")
 endif()
 
-if(UNIX)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(NEOWPF_RELEASE_DIRECTORY "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/$<CONFIG>")
     set(NEOWPF_RELEASE_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/Debug")
     set(NEOWPF_RELEASE_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/Release")
@@ -492,7 +505,7 @@ set_target_properties(NeoWPF PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${NEOWPF_RELEASE_DIRECTORY_MINSIZEREL}"
 )
 set(NEOWPF_RELEASE_SOURCE "$<TARGET_FILE:NeoWPF>")
-if(UNIX)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set_target_properties(NeoWPF PROPERTIES OUTPUT_NAME "NeoWPF")
 endif()
 
@@ -505,7 +518,7 @@ if(WIN32)
     target_include_directories(NeoWPF PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include/harfbuzz")
 endif()
 target_include_directories(NeoWPF PRIVATE "${Stb_INCLUDE_DIR}")
-if(UNIX)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_include_directories(NeoWPF SYSTEM PRIVATE "${NEOWPF_WAYLAND_GENERATED_DIR}" "${NEOWPF_VULKAN_GENERATED_DIR}")
 endif()
 
@@ -648,7 +661,7 @@ if(WIN32 AND NEOWPF_BUILD_SAMPLES)
     target_link_libraries(NeoWPF.WindowsTransparencySample PRIVATE NeoWPF::NeoWPF)
 endif()
 
-if(WIN32 OR UNIX)
+if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_custom_command(TARGET NeoWPF POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_RELEASE_DIRECTORY}"
         COMMAND ${CMAKE_COMMAND} -E copy
@@ -909,7 +922,7 @@ if(BUILD_TESTING)
         tests/Automated/ClippingTests.cpp
     )
 
-    if(UNIX)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         target_include_directories(NeoWPF.AutomatedTests SYSTEM PRIVATE
             "${NEOWPF_WAYLAND_GENERATED_DIR}"
             "${NEOWPF_VULKAN_GENERATED_DIR}"

@@ -33,6 +33,20 @@
             }
         },
         {
+            "name": "android-base",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_SYSTEM_NAME": "Android",
+                "CMAKE_ANDROID_API": "24",
+                "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "NEOWPF_RENDERER_BACKEND": "Vulkan"
+            }
+        },
+        {
             "name": "x64-debug",
             "displayName": "NeoWPF x64 Debug",
             "inherits": "windows-base"
@@ -51,6 +65,22 @@
             "name": "linux-release",
             "displayName": "NeoWPF Linux Release",
             "inherits": "linux-base"
+        },
+        {
+            "name": "android-debug",
+            "displayName": "NeoWPF Android Debug",
+            "inherits": "android-base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "android-release",
+            "displayName": "NeoWPF Android Release",
+            "inherits": "android-base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
         }
     ],
     "buildPresets": [
@@ -72,6 +102,16 @@
         {
             "name": "linux-release",
             "configurePreset": "linux-release",
+            "configuration": "Release"
+        },
+        {
+            "name": "android-debug",
+            "configurePreset": "android-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "android-release",
+            "configurePreset": "android-release",
             "configuration": "Release"
         }
     ]

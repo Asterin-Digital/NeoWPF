@@ -210,7 +210,7 @@ if(NEOWPF_STATIC_DEPENDENCIES)
         list(APPEND NEOWPF_STATIC_ARCHIVES_RELEASE "$<TARGET_FILE:Cudev>")
     endif()
 
-    if(UNIX AND TARGET ZLIB::ZLIB)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND TARGET ZLIB::ZLIB)
         neowpf_resolve_linked_archive("ZLIB::ZLIB" _neowpf_zlib_archive)
         if(_neowpf_zlib_archive)
             list(APPEND NEOWPF_STATIC_ARCHIVES_DEBUG "${_neowpf_zlib_archive}")

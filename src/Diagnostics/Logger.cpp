@@ -146,7 +146,13 @@ void ShutdownLogger() noexcept
     }
 }
 
-[[deprecated("Use the new logger, its better")]]
+/* @note
+*  When to use the non-categorized logging functions? 
+*  You shouldn't use them for general debugging such as layout or spammy information.
+*  Reserve it for important information such as core start-up failing and other things that should get logged
+*  regardless if logging is turned off or on.
+*/
+
 void LogInfo(const char* fmt, ...)
 {
     if (static_cast<Level>(s_globalLevel.load(std::memory_order_relaxed)) == Level::Off) return;
@@ -156,7 +162,6 @@ void LogInfo(const char* fmt, ...)
     va_end(ap);
 }
 
-[[deprecated("Use the new logger, its better")]]
 void LogWarn(const char* fmt, ...)
 {
     if (static_cast<Level>(s_globalLevel.load(std::memory_order_relaxed)) == Level::Off) return;
@@ -166,7 +171,6 @@ void LogWarn(const char* fmt, ...)
     va_end(ap);
 }
 
-[[deprecated("Use the new logger, its better")]]
 void LogError(const char* fmt, ...)
 {
     va_list ap;

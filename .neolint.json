@@ -6,7 +6,7 @@
     },
     "neowpf-documentation": {
       "enabled": true,
-      "severity": "warning"
+      "severity": "error"
     },
     "neowpf-dp-registration-location": {
       "enabled": true,
