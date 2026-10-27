@@ -1,4 +1,4 @@
-\<type> (\<project>): \<summary>
+<type> (<project>): <summary>
 
 # Allowed types: Feat, Chore, Refactor, Fix, Perf, Test, Review
 #
@@ -6,7 +6,11 @@
 # Use Review when changes are made after inspecting existing code to address issues
 # found during code review, enforce project standards, or correct potential issues
 # before they cause an observed failure at runtime. This does not apply to compiler errors.
-# Use Fix when correcting an issue that has already manifested during use or execution of said code.
+#
+# Fix:
+# Use when you encounter an issue at runtime that was not statically discovered.
+# Compiler errors with the source being from the IDE or compiler at build time are included in the Fix commit type,
+# even if not encountered at runtime.
 #
 # Project tags: NeoPM, NeoWPF, NeoLint, NeoCM, NeoWPF.DotNet, NeoWPF.Media
 # Use the project that owns the change. Project tag comes only for something that's separately built.
@@ -17,3 +21,6 @@
 # If an LLM helped write code in a primarily human-authored commit, add this exact
 # marker as the final line of the description; otherwise, omit it:
 # AI Assisted
+# If an LLM fully authored the commit, add this exact
+# marker as the final line of the description; otherwise, omit it:
+# AI Generated
