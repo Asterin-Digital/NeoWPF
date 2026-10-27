@@ -54,7 +54,7 @@ namespace NeoWPF::Input::Core
 
         @internal
     */
-    class PointerEventArgs : public InputEventArgs
+    class PointerEventArgs : public virtual InputEventArgs
     {
     public:
         /*
@@ -94,7 +94,7 @@ namespace NeoWPF::Input::Core
         @summary
         Carries keyboard state and character information.
     */
-    class KeyboardEventArgs : public InputEventArgs
+    class KeyboardEventArgs : public virtual InputEventArgs
     {
     public:
         KeyboardEventArgs(int keyCode, bool isKeyDown, wchar_t charCode = 0, int repeatCount = 1);

@@ -17,17 +17,16 @@ namespace NeoWPF::Input
         targetElement->RaiseEvent(&args);
     }
 
-    void InputManager::RouteKeyboardEvent(NeoWPF::UI::UIElement* targetElement, const Core::RoutedEvent& eventDef,
-                                         int keyCode, bool isKeyDown, wchar_t charCode, int repeatCount)
+    void InputManager::RouteKeyboardEvent(NeoWPF::UI::UIElement* targetElement,
+                                         Core::RoutedKeyboardEventArgs& args,
+                                         const Core::RoutedEvent& eventDef)
     {
         if (!targetElement)
         {
             return;
         }
 
-        Core::RoutedKeyboardEventArgs args(eventDef, keyCode, isKeyDown, charCode, repeatCount);
-        args.SetSource(targetElement);
-        args.SetOriginalSource(targetElement);
+        args.SetRoutedEvent(&eventDef);
         targetElement->RaiseEvent(&args);
     }
 }
@@ -57,16 +56,24 @@ namespace NeoWPF::Input::Core
 
     const RoutedEvent& KeyDownEvent()
     {
-        static const RoutedEvent event("KeyDown", RoutingStrategy::Direct,
+        static const RoutedEvent event("KeyDown", RoutingStrategy::Bubble,
             reinterpret_cast<std::size_t>(&KeyDownEvent));
         return event;
     }
 
     const RoutedEvent& KeyUpEvent()
     {
-        static const RoutedEvent event("KeyUp", RoutingStrategy::Direct,
+        static const RoutedEvent event("KeyUp", RoutingStrategy::Bubble,
             reinterpret_cast<std::size_t>(&KeyUpEvent));
         return event;
+    }
+
+    void RoutedEventArgs::SetRoutedEvent(const RoutedEvent* routedEvent)
+    {
+        m_routedEvent = routedEvent;
+        if (routedEvent) {
+            m_routingStrategy = routedEvent->Strategy;
+        }
     }
 
     RoutedEventArgs::RoutedEventArgs(RoutingStrategy strategy)

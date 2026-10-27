@@ -88,11 +88,12 @@ namespace NeoWPF::Input
 
         NeoWPF::UI::UIElement* HitTestVisual(NeoWPF::UI::Visual* visual, int x, int y, int depth = 0);
         NeoWPF::UI::UIElement* HitTestElement(NeoWPF::UI::UIElement* element, int x, int y, int depth = 0);
-        /* @internal */
+
         void RoutePointerEvent(NeoWPF::UI::UIElement* targetElement,
                       const Core::PointerEventArgs& eventArgs);
-        void RouteKeyboardEvent(NeoWPF::UI::UIElement* targetElement, const Core::RoutedEvent& eventDef,
-                               int keyCode, bool isKeyDown, wchar_t charCode, int repeatCount);
+        void RouteKeyboardEvent(NeoWPF::UI::UIElement* targetElement,
+                    Core::RoutedKeyboardEventArgs& args,
+                    const Core::RoutedEvent& eventDef);
         void CollectFocusableElements(NeoWPF::UI::UIElement* root,
                                      std::vector<NeoWPF::UI::UIElement*>& elements) const;
 

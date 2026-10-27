@@ -544,7 +544,6 @@ void UIElement::RaiseEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
         if (!element) {
             return;
         }
-        args->SetSource(element);
         auto it = element->m_routedEventHandlers.find(eventTypeId);
         if (it != element->m_routedEventHandlers.end())
         {

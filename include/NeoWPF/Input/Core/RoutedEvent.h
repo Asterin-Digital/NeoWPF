@@ -33,7 +33,7 @@ namespace NeoWPF::Input::Core
         @summary
         Carries routing state for an input event.
     */
-    class RoutedEventArgs
+    class RoutedEventArgs : public virtual InputEventArgs
     {
     public:
         RoutedEventArgs(RoutingStrategy strategy);
@@ -47,18 +47,14 @@ namespace NeoWPF::Input::Core
         NeoWPF::UI::UIElement* GetOriginalSource() const { return m_originalSource; }
         void SetOriginalSource(NeoWPF::UI::UIElement* originalSource) { m_originalSource = originalSource; }
 
-        bool IsHandled() const { return m_handled; }
-        void SetHandled(bool handled) { m_handled = handled; }
-
         const RoutedEvent* GetRoutedEvent() const { return m_routedEvent; }
-        void SetRoutedEvent(const RoutedEvent* routedEvent) { m_routedEvent = routedEvent; }
+        void SetRoutedEvent(const RoutedEvent* routedEvent);
 
     protected:
         RoutingStrategy m_routingStrategy;
         NeoWPF::UI::UIElement* m_source = nullptr;
         NeoWPF::UI::UIElement* m_originalSource = nullptr;
         const RoutedEvent* m_routedEvent = nullptr;
-        bool m_handled = false;
     };
 
     /*
@@ -99,7 +95,9 @@ namespace NeoWPF::Input::Core
         */
         RoutedPointerEventArgs(const RoutedEvent& routedEvent,
                                const PointerEventArgs& pointerEvent)
-            : PointerEventArgs(pointerEvent), RoutedEventArgs(routedEvent.Strategy)
+                        : InputEventArgs(pointerEvent),
+                            PointerEventArgs(pointerEvent),
+                            RoutedEventArgs(routedEvent.Strategy)
         {
             SetRoutedEvent(&routedEvent);
         }

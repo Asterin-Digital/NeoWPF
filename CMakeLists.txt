@@ -886,6 +886,7 @@ if(BUILD_TESTING)
         tests/Automated/LocalizationTests.cpp
         tests/Automated/ApplicationThemeTests.cpp
         tests/Automated/EventTests.cpp
+        tests/Automated/RoutedEventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
         tests/Automated/BrushTests.cpp
         tests/Automated/CheckboxTests.cpp

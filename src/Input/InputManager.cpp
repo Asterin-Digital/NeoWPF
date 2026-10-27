@@ -273,14 +273,23 @@ namespace NeoWPF::Input
             return;
         }
 
-        auto& eventDef = isKeyDown ? Core::PreviewKeyDownEvent() : Core::PreviewKeyUpEvent();
-        RouteKeyboardEvent(m_focusedElement, eventDef, keyCode, isKeyDown, charCode, repeatCount);
+        auto* targetElement = m_focusedElement;
+        auto& previewEvent = isKeyDown ? Core::PreviewKeyDownEvent() : Core::PreviewKeyUpEvent();
+        Core::RoutedKeyboardEventArgs args(previewEvent, keyCode, isKeyDown, charCode, repeatCount);
+        args.SetSource(targetElement);
+        args.SetOriginalSource(targetElement);
+        RouteKeyboardEvent(targetElement, args, previewEvent);
+        if (args.IsHandled()) {
+            return;
+        }
 
-        Core::KeyboardEventArgs args(keyCode, isKeyDown, charCode, repeatCount);
-        m_focusedElement->OnKeyboardInput(&args);
+        targetElement->OnKeyboardInput(&args);
+        if (args.IsHandled()) {
+            return;
+        }
 
-        RouteKeyboardEvent(m_focusedElement, isKeyDown ? Core::KeyDownEvent() : Core::KeyUpEvent(),
-                           keyCode, isKeyDown, charCode, repeatCount);
+        RouteKeyboardEvent(targetElement, args,
+            isKeyDown ? Core::KeyDownEvent() : Core::KeyUpEvent());
     }
 
     bool InputManager::IsKeyDown(int keyCode) const
