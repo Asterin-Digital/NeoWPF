@@ -1,8 +1,16 @@
-<type> (<project>): <summary>
+\<type> (\<project>): \<summary>
 
-# Allowed types: Feat, Chore, Refactor, Fix, Perf, Test
-# Project tags: NeoPM, NeoWPF, NeoLint, NeoCM, NeoWPF.DotNet, NeoWPF.Meida
-# Use the project that owns the change. Project tag comes only for something that's separately built. (E.g NeoWPF.Media is compiled separately from NeoWPF.Foundation)
+# Allowed types: Feat, Chore, Refactor, Fix, Perf, Test, Review
+#
+# Review:
+# Use Review when changes are made after inspecting existing code to address issues
+# found during code review, enforce project standards, or correct potential issues
+# before they cause an observed failure at runtime.
+# Use Fix when correcting an issue that has already manifested during use or execution of said code.
+#
+# Project tags: NeoPM, NeoWPF, NeoLint, NeoCM, NeoWPF.DotNet, NeoWPF.Media
+# Use the project that owns the change. Project tag comes only for something that's separately built.
+# (E.g NeoWPF.Media is compiled separately from NeoWPF.Foundation)
 # For changes spanning projects, include each applicable project tag, comma-separated.
 # Control and layout additions use this form, for example:
 # Feat (NeoWPF): Add base implementation for ToggleSwitch

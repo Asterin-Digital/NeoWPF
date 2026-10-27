@@ -32,6 +32,7 @@ Testing/
 # Things that should not get commited, private details
 private/
 .vscode/
+.vcpkg-backup-windows.txt
 .github/*
 # Keep things we want
 !.github/workflows/

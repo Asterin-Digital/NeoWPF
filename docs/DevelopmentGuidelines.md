@@ -115,3 +115,11 @@ Performance matters, even more in hot paths.
 - Cache results only when invalidation and lifetime management remain correct.
 - Avoid adding locks to frequently executed paths without a concrete need.
 - Prefer benchmarks and profiling evidence over speculative micro optimizations.
+
+10. ## Contracts
+
+A contract meant to abstract away platform-specific logic, or desktop vs. mobile logic, must live under `include/NeoWPF/Contracts/` and use the `I` prefix. A contract file must not have a source file.
+
+11. ## Desktop And Mobile
+
+This applies to any part of NeoWPF. Anything that deals with desktop or mobile-specific logic must account for both platforms unless the feature is logically platform-specific. Code must not assume that a feature is exclusive to desktop or mobile, and must implement a capability mechanism if a feature is unavailable on a platform.
