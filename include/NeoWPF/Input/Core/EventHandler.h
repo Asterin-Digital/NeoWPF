@@ -20,7 +20,7 @@ namespace NeoWPF::Input::Core
     template<typename TArgs>
     using EventHandler = std::function<void(::NeoWPF::UI::UIElement*, TArgs*)>;
 
-    using MouseEventHandler = EventHandler<class MouseEventArgs>;
+    using PointerEventHandler = EventHandler<class PointerEventArgs>;
     using KeyboardEventHandler = EventHandler<class KeyboardEventArgs>;
     using RoutedEventHandler = EventHandler<class RoutedEventArgs>;
 }

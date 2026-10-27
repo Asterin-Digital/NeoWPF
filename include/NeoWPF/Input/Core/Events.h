@@ -10,6 +10,24 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::Input::Core
 {
+    enum class PointerDeviceType : std::uint8_t
+    {
+        Mouse,
+        Touch,
+        Pen,
+    };
+
+    enum class PointerPhase : std::uint8_t
+    {
+        Enter,
+        Move,
+        Down,
+        Up,
+        Cancel,
+        Leave,
+        Wheel,
+    };
+
     /*
         @summary
         Base arguments for input events.
@@ -32,27 +50,44 @@ namespace NeoWPF::Input::Core
 
     /*
         @summary
-        Carries mouse position and button state.
+        Carries one device-neutral pointer packet from a presentation host.
+
+        @internal
     */
-    class MouseEventArgs : public InputEventArgs
+    class PointerEventArgs : public InputEventArgs
     {
     public:
-        MouseEventArgs(int x, int y, std::uint32_t buttonState, int wheelDelta = 0);
+        /*
+            @summary
+            Creates a pointer packet.
 
-        int GetX() const { return m_x; }
-        int GetY() const { return m_y; }
-        std::uint32_t GetButtonState() const { return m_buttonState; }
-        int GetWheelDelta() const { return m_wheelDelta; }
+            @internal
+        */
+        PointerEventArgs(std::uint32_t pointerId, PointerDeviceType deviceType, PointerPhase phase,
+                         double x, double y, std::uint32_t buttons = 0,
+                         std::uint32_t changedButton = 0, float pressure = 0.0f,
+                         double wheelDelta = 0.0);
 
-        bool IsLeftButtonDown() const { return (m_buttonState & 0x01) != 0; }
-        bool IsRightButtonDown() const { return (m_buttonState & 0x02) != 0; }
-        bool IsMiddleButtonDown() const { return (m_buttonState & 0x04) != 0; }
+        std::uint32_t GetPointerId() const noexcept { return m_pointerId; }
+        PointerDeviceType GetDeviceType() const noexcept { return m_deviceType; }
+        PointerPhase GetPhase() const noexcept { return m_phase; }
+        double GetX() const noexcept { return m_x; }
+        double GetY() const noexcept { return m_y; }
+        std::uint32_t GetButtons() const noexcept { return m_buttons; }
+        std::uint32_t GetChangedButton() const noexcept { return m_changedButton; }
+        float GetPressure() const noexcept { return m_pressure; }
+        double GetWheelDelta() const noexcept { return m_wheelDelta; }
 
     private:
-        int m_x;
-        int m_y;
-        std::uint32_t m_buttonState;
-        int m_wheelDelta;
+        std::uint32_t m_pointerId;
+        PointerDeviceType m_deviceType;
+        PointerPhase m_phase;
+        double m_x;
+        double m_y;
+        std::uint32_t m_buttons;
+        std::uint32_t m_changedButton;
+        float m_pressure;
+        double m_wheelDelta;
     };
 
     /*

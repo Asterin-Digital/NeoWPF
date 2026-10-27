@@ -130,14 +130,7 @@ namespace NeoWPF::Input
 
         const bool isEnabled = element->IsEnabled();
         const bool isHitTestVisible = element->IsHitTestVisible();
-        const bool hasMouseHandlers =
-            element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseDownEvent()) ||
-            element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseUpEvent()) ||
-            element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseMoveEvent()) ||
-            element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseWheelEvent()) ||
-            element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseEnterEvent()) ||
-            element->HasRoutedEventHandler(NeoWPF::Input::Core::MouseLeaveEvent());
-        const bool isHitTestTarget = isHitTestVisible && (element->IsInteractable() || hasMouseHandlers);
+        const bool isHitTestTarget = isHitTestVisible && element->IsInteractable();
 
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Info,
             "[HitTest] %s  Element=%s, IsEnabled: %s, IsHitTestVisible: %s, IsHitTestTarget: %s, Bounds=(%g,%g) size=(%g,%g)",

@@ -4,15 +4,14 @@
 
 namespace NeoWPF::Input
 {
-    void InputManager::RouteMouseEvent(NeoWPF::UI::UIElement* targetElement, const Core::RoutedEvent& eventDef,
-                                      int x, int y, std::uint32_t buttonState, int wheelDelta)
+    void InputManager::RoutePointerEvent(NeoWPF::UI::UIElement* targetElement,
+                                         const Core::PointerEventArgs& eventArgs)
     {
-        if (!targetElement)
-        {
+        if (!targetElement) {
             return;
         }
 
-        Core::RoutedMouseEventArgs args(eventDef, x, y, buttonState, wheelDelta);
+        Core::RoutedPointerEventArgs args(Core::PointerEvent(), eventArgs);
         args.SetSource(targetElement);
         args.SetOriginalSource(targetElement);
         targetElement->RaiseEvent(&args);
@@ -35,73 +34,10 @@ namespace NeoWPF::Input
 
 namespace NeoWPF::Input::Core
 {
-    const RoutedEvent& PreviewMouseDownEvent()
+    const RoutedEvent& PointerEvent()
     {
-        static const RoutedEvent event("PreviewMouseDown", RoutingStrategy::Tunnel,
-            reinterpret_cast<std::size_t>(&PreviewMouseDownEvent));
-        return event;
-    }
-
-    const RoutedEvent& PreviewMouseUpEvent()
-    {
-        static const RoutedEvent event("PreviewMouseUp", RoutingStrategy::Tunnel,
-            reinterpret_cast<std::size_t>(&PreviewMouseUpEvent));
-        return event;
-    }
-
-    const RoutedEvent& PreviewMouseMoveEvent()
-    {
-        static const RoutedEvent event("PreviewMouseMove", RoutingStrategy::Tunnel,
-            reinterpret_cast<std::size_t>(&PreviewMouseMoveEvent));
-        return event;
-    }
-
-    const RoutedEvent& PreviewMouseWheelEvent()
-    {
-        static const RoutedEvent event("PreviewMouseWheel", RoutingStrategy::Tunnel,
-            reinterpret_cast<std::size_t>(&PreviewMouseWheelEvent));
-        return event;
-    }
-
-    const RoutedEvent& MouseDownEvent()
-    {
-        static const RoutedEvent event("MouseDown", RoutingStrategy::Bubble,
-            reinterpret_cast<std::size_t>(&MouseDownEvent));
-        return event;
-    }
-
-    const RoutedEvent& MouseUpEvent()
-    {
-        static const RoutedEvent event("MouseUp", RoutingStrategy::Bubble,
-            reinterpret_cast<std::size_t>(&MouseUpEvent));
-        return event;
-    }
-
-    const RoutedEvent& MouseMoveEvent()
-    {
-        static const RoutedEvent event("MouseMove", RoutingStrategy::Direct,
-            reinterpret_cast<std::size_t>(&MouseMoveEvent));
-        return event;
-    }
-
-    const RoutedEvent& MouseWheelEvent()
-    {
-        static const RoutedEvent event("MouseWheel", RoutingStrategy::Direct,
-            reinterpret_cast<std::size_t>(&MouseWheelEvent));
-        return event;
-    }
-
-    const RoutedEvent& MouseEnterEvent()
-    {
-        static const RoutedEvent event("MouseEnter", RoutingStrategy::Direct,
-            reinterpret_cast<std::size_t>(&MouseEnterEvent));
-        return event;
-    }
-
-    const RoutedEvent& MouseLeaveEvent()
-    {
-        static const RoutedEvent event("MouseLeave", RoutingStrategy::Direct,
-            reinterpret_cast<std::size_t>(&MouseLeaveEvent));
+        static const RoutedEvent event("Pointer", RoutingStrategy::Bubble,
+            reinterpret_cast<std::size_t>(&PointerEvent));
         return event;
     }
 

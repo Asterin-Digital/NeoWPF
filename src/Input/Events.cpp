@@ -9,8 +9,15 @@ namespace NeoWPF::Input::Core
         m_timestamp = now.time_since_epoch().count();
     }
 
-    MouseEventArgs::MouseEventArgs(int x, int y, std::uint32_t buttonState, int wheelDelta)
-        : InputEventArgs(), m_x(x), m_y(y), m_buttonState(buttonState), m_wheelDelta(wheelDelta)
+    PointerEventArgs::PointerEventArgs(std::uint32_t pointerId, PointerDeviceType deviceType,
+                                       PointerPhase phase,
+                                       double x, double y, std::uint32_t buttons,
+                                       std::uint32_t changedButton, float pressure,
+                                       double wheelDelta)
+                : InputEventArgs(), m_pointerId(pointerId), m_deviceType(deviceType),
+                    m_phase(phase), m_x(x), m_y(y),
+          m_buttons(buttons), m_changedButton(changedButton), m_pressure(pressure),
+          m_wheelDelta(wheelDelta)
     {
     }
 

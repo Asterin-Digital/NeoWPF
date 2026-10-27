@@ -82,11 +82,24 @@ namespace NeoWPF::Input::Core
         }
     };
 
-    class RoutedMouseEventArgs : public MouseEventArgs, public RoutedEventArgs
+    /*
+        @summary
+        Adds routing state to a pointer packet.
+
+        @internal
+    */
+    class RoutedPointerEventArgs : public PointerEventArgs, public RoutedEventArgs
     {
     public:
-        RoutedMouseEventArgs(const RoutedEvent& routedEvent, int x, int y, std::uint32_t buttonState, int wheelDelta = 0)
-            : MouseEventArgs(x, y, buttonState, wheelDelta), RoutedEventArgs(routedEvent.Strategy)
+        /*
+            @summary
+            Creates routed arguments from a pointer packet.
+
+            @internal
+        */
+        RoutedPointerEventArgs(const RoutedEvent& routedEvent,
+                               const PointerEventArgs& pointerEvent)
+            : PointerEventArgs(pointerEvent), RoutedEventArgs(routedEvent.Strategy)
         {
             SetRoutedEvent(&routedEvent);
         }
@@ -102,16 +115,13 @@ namespace NeoWPF::Input::Core
         }
     };
 
-    const RoutedEvent& PreviewMouseDownEvent();
-    const RoutedEvent& PreviewMouseUpEvent();
-    const RoutedEvent& PreviewMouseMoveEvent();
-    const RoutedEvent& PreviewMouseWheelEvent();
-    const RoutedEvent& MouseDownEvent();
-    const RoutedEvent& MouseUpEvent();
-    const RoutedEvent& MouseMoveEvent();
-    const RoutedEvent& MouseWheelEvent();
-    const RoutedEvent& MouseEnterEvent();
-    const RoutedEvent& MouseLeaveEvent();
+    /*
+        @summary
+        Returns the routed pointer event definition.
+
+        @internal
+    */
+    const RoutedEvent& PointerEvent();
     const RoutedEvent& PreviewKeyDownEvent();
     const RoutedEvent& PreviewKeyUpEvent();
     const RoutedEvent& KeyDownEvent();

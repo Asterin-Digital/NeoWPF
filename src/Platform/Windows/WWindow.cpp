@@ -27,6 +27,18 @@ namespace {
 
 const wchar_t* NeoWPFWindowClassName = L"NeoWPFWindowClass";
 
+void SubmitNativePointerInput(NeoWPF::Input::Core::PointerPhase phase,
+                              int x, int y, std::uint32_t buttons,
+                              std::uint32_t changedButton = 0, double wheelDelta = 0.0)
+{
+    auto& input = static_cast<NeoWPF::Contracts::IPointerInput&>(
+        NeoWPF::Input::InputManager::GetInstance());
+    input.SubmitPointerEvent(NeoWPF::Input::Core::PointerEventArgs(
+        0,
+        NeoWPF::Input::Core::PointerDeviceType::Mouse, phase,
+        x, y, buttons, changedButton, 0.0f, wheelDelta));
+}
+
 LRESULT CALLBACK NeoWPFWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg) {
@@ -125,7 +137,8 @@ LRESULT CALLBACK NeoWPFWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
         int x = GET_X_LPARAM(lParam);
         int y = GET_Y_LPARAM(lParam);
         std::uint32_t buttonState = static_cast<std::uint32_t>(wParam);
-        NeoWPF::Input::InputManager::GetInstance().ProcessMouseInput(x, y, buttonState);
+        SubmitNativePointerInput(NeoWPF::Input::Core::PointerPhase::Move,
+                     x, y, buttonState);
         return 0;
     }
 
@@ -140,7 +153,9 @@ LRESULT CALLBACK NeoWPFWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
             buttonState |= 0x01;
         else
             buttonState &= ~0x01;
-        NeoWPF::Input::InputManager::GetInstance().ProcessMouseInput(x, y, buttonState);
+        SubmitNativePointerInput(
+            uMsg == WM_LBUTTONDOWN ? NeoWPF::Input::Core::PointerPhase::Down : NeoWPF::Input::Core::PointerPhase::Up,
+            x, y, buttonState, 0x01);
         return 0;
     }
 
@@ -155,7 +170,9 @@ LRESULT CALLBACK NeoWPFWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
             buttonState |= 0x02;
         else
             buttonState &= ~0x02;
-        NeoWPF::Input::InputManager::GetInstance().ProcessMouseInput(x, y, buttonState);
+        SubmitNativePointerInput(
+            uMsg == WM_RBUTTONDOWN ? NeoWPF::Input::Core::PointerPhase::Down : NeoWPF::Input::Core::PointerPhase::Up,
+            x, y, buttonState, 0x02);
         return 0;
     }
 
@@ -170,7 +187,9 @@ LRESULT CALLBACK NeoWPFWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
             buttonState |= 0x04;
         else
             buttonState &= ~0x04;
-        NeoWPF::Input::InputManager::GetInstance().ProcessMouseInput(x, y, buttonState);
+        SubmitNativePointerInput(
+            uMsg == WM_MBUTTONDOWN ? NeoWPF::Input::Core::PointerPhase::Down : NeoWPF::Input::Core::PointerPhase::Up,
+            x, y, buttonState, 0x04);
         return 0;
     }
 
@@ -185,7 +204,8 @@ LRESULT CALLBACK NeoWPFWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
         y = screenPoint.y;
         int wheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
         std::uint32_t buttonState = GET_KEYSTATE_WPARAM(wParam);
-        NeoWPF::Input::InputManager::GetInstance().ProcessMouseInput(x, y, buttonState, wheelDelta);
+        SubmitNativePointerInput(NeoWPF::Input::Core::PointerPhase::Wheel,
+                     x, y, buttonState, 0, wheelDelta);
         return 0;
     }
 

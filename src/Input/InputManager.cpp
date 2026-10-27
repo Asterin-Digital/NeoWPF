@@ -97,8 +97,6 @@ namespace NeoWPF::Input
             m_focusedElement = nullptr;
         }
 
-        m_captureElement = nullptr;
-        m_mouseOverElement = nullptr;
         m_lastHitTestResult = nullptr;
         m_rootElement = root;
     }
@@ -107,17 +105,16 @@ namespace NeoWPF::Input
     {
         if (!oldRoot) {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
-                "[Input] Full visual-tree reset: root=%p hover=%p focus=%p capture=%p",
-                static_cast<void*>(m_rootElement), static_cast<void*>(m_mouseOverElement),
-                static_cast<void*>(m_focusedElement), static_cast<void*>(m_captureElement));
+                "[Input] Full visual-tree reset: root=%p focus=%p",
+                static_cast<void*>(m_rootElement), static_cast<void*>(m_focusedElement));
             ++m_treeEpoch;
             if (m_focusedElement) {
                 m_focusedElement->SetFocused(false);
                 m_focusedElement->OnLostFocus();
             }
             m_focusedElement = nullptr;
-            m_captureElement = nullptr;
-            m_mouseOverElement = nullptr;
+            m_pointerCaptures.clear();
+            m_pointerOverElements.clear();
             m_lastHitTestResult = nullptr;
             m_rootElement = nullptr;
             return;
@@ -126,34 +123,39 @@ namespace NeoWPF::Input
         const auto inOld = [oldRoot](const NeoWPF::UI::UIElement* element) {
             return element && IsInSubtree(element, oldRoot);
         };
-        const bool hover = inOld(m_mouseOverElement);
         const bool focus = inOld(m_focusedElement);
-        const bool capture = inOld(m_captureElement);
         const bool root = inOld(m_rootElement);
-        if (!hover && !focus && !capture && !root) {
+        bool capture = false;
+        for (auto it = m_pointerCaptures.begin(); it != m_pointerCaptures.end();) {
+            if (inOld(it->first.first) || inOld(it->second)) {
+                capture = true;
+                it = m_pointerCaptures.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        bool pointerOver = false;
+        for (auto it = m_pointerOverElements.begin(); it != m_pointerOverElements.end();) {
+            if (inOld(it->first.first) || inOld(it->second)) {
+                pointerOver = true;
+                it = m_pointerOverElements.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        if (!focus && !root && !capture && !pointerOver) {
             return;
         }
 
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
-            "[Input] Visual tree replaced: oldRoot=%p hover=%d focus=%d capture=%d root=%d",
-            static_cast<void*>(oldRoot), hover, focus, capture, root);
-
-        if (hover) {
-            auto* previous = m_mouseOverElement;
-            m_mouseOverElement = nullptr;
-            Core::MouseEventArgs args(m_mouseX, m_mouseY, m_mouseButtonState, 0);
-            previous->OnMouseLeave(&args);
-            RouteMouseEvent(previous, Core::MouseLeaveEvent(), m_mouseX, m_mouseY, m_mouseButtonState, 0);
-        }
+            "[Input] Visual tree replaced: oldRoot=%p focus=%d capture=%d pointerOver=%d root=%d",
+            static_cast<void*>(oldRoot), focus, capture, pointerOver, root);
         ++m_treeEpoch;
         if (focus) {
             auto* focused = m_focusedElement;
             m_focusedElement = nullptr;
             focused->SetFocused(false);
             focused->OnLostFocus();
-        }
-        if (capture) {
-            m_captureElement = nullptr;
         }
         if (root) {
             m_rootElement = nullptr;
@@ -169,237 +171,83 @@ namespace NeoWPF::Input
         m_overlayElements = overlays;
     }
 
-    void InputManager::ClickAt(NeoWPF::UI::UIElement* target, int x, int y, std::uint32_t buttonState)
+    void InputManager::SubmitPointerEvent(const Core::PointerEventArgs& eventArgs)
     {
-        if (!target) {
-            return;
+        const PointerKey pointerKey{m_rootElement, eventArgs.GetPointerId()};
+        auto* target = static_cast<NeoWPF::UI::UIElement*>(nullptr);
+        if (eventArgs.GetPhase() == Core::PointerPhase::Leave) {
+            const auto pointerOver = m_pointerOverElements.find(pointerKey);
+            if (pointerOver != m_pointerOverElements.end()) {
+                target = pointerOver->second;
+                m_pointerOverElements.erase(pointerOver);
+            }
+        } else {
+            const auto capture = m_pointerCaptures.find(pointerKey);
+            target = capture != m_pointerCaptures.end()
+                ? capture->second
+                : HitTest(static_cast<int>(eventArgs.GetX()), static_cast<int>(eventArgs.GetY()));
         }
 
-        const auto treeEpoch = m_treeEpoch;
-        const auto treeChanged = [this, treeEpoch]() { return m_treeEpoch != treeEpoch; };
-        std::shared_ptr<NeoWPF::UI::Visual> keepAlive;
-        try {
-            keepAlive = target->shared_from_this();
-        } catch (const std::bad_weak_ptr&) {
+        const auto send = [this, &eventArgs](NeoWPF::UI::UIElement* targetElement,
+                                             Core::PointerPhase phase) {
+            if (!targetElement) {
+                return;
+            }
+            Core::PointerEventArgs routedEvent(
+                eventArgs.GetPointerId(), eventArgs.GetDeviceType(), phase,
+                eventArgs.GetX(), eventArgs.GetY(), eventArgs.GetButtons(),
+                eventArgs.GetChangedButton(), eventArgs.GetPressure(), eventArgs.GetWheelDelta());
+            RoutePointerEvent(targetElement, routedEvent);
+        };
+
+        if (eventArgs.GetPhase() == Core::PointerPhase::Move ||
+            eventArgs.GetPhase() == Core::PointerPhase::Enter) {
+            const auto previous = m_pointerOverElements.find(pointerKey);
+            if (previous != m_pointerOverElements.end() && previous->second != target) {
+                send(previous->second, Core::PointerPhase::Leave);
+                m_pointerOverElements.erase(previous);
+            }
+            if (target) {
+                const auto current = m_pointerOverElements.find(pointerKey);
+                if (current == m_pointerOverElements.end()) {
+                    m_pointerOverElements.emplace(pointerKey, target);
+                    if (eventArgs.GetPhase() == Core::PointerPhase::Move) {
+                        send(target, Core::PointerPhase::Enter);
+                    }
+                }
+            }
         }
 
-        RouteMouseEvent(target, Core::PreviewMouseDownEvent(), x, y, buttonState, 0);
-        if (treeChanged()) return;
-        target->OnMouseDown(x, y, buttonState);
-        if (treeChanged()) return;
-        RouteMouseEvent(target, Core::MouseDownEvent(), x, y, buttonState, 0);
-        if (treeChanged()) return;
-
-        RouteMouseEvent(target, Core::PreviewMouseUpEvent(), x, y, buttonState, 0);
-        if (treeChanged()) return;
-        target->OnMouseUp(x, y, buttonState);
-        if (treeChanged()) return;
-        RouteMouseEvent(target, Core::MouseUpEvent(), x, y, buttonState, 0);
+        send(target, eventArgs.GetPhase());
+        if (eventArgs.GetPhase() == Core::PointerPhase::Down && target) {
+            SetFocusedElement(target);
+        }
+        if (eventArgs.GetPhase() == Core::PointerPhase::Up ||
+            eventArgs.GetPhase() == Core::PointerPhase::Cancel) {
+            ReleasePointerCapture(eventArgs.GetPointerId());
+        }
     }
 
-    void InputManager::ProcessMouseInput(int x, int y, std::uint32_t buttonState, int wheelDelta)
+    bool InputManager::SetPointerCapture(std::uint32_t pointerId,
+                                         NeoWPF::UI::UIElement* element)
     {
-        NEO_WPF_ACTION("Input.ProcessMouseInput");
-
-        m_mouseX = x;
-        m_mouseY = y;
-        const auto treeEpoch = m_treeEpoch;
-        const auto treeChanged = [this, treeEpoch]() { return m_treeEpoch != treeEpoch; };
-
-        if (m_captureElement)
-        {
-            auto* captured = m_captureElement;
-            std::shared_ptr<NeoWPF::UI::Visual> keepAlive;
-            try {
-                keepAlive = captured->shared_from_this();
-            } catch (const std::bad_weak_ptr&) {
-            }
-            Core::MouseEventArgs args(x, y, buttonState, wheelDelta);
-            if ((buttonState & 0x01) != (m_prevMouseButtonState & 0x01))
-            {
-                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
-                    "[Input] Captured mouse button %s: target=%p position=(%d,%d) buttons=%u",
-                    (buttonState & 0x01) != 0 ? "down" : "up", static_cast<void*>(captured), x, y, buttonState);
-                if ((buttonState & 0x01) != 0)
-                {
-                    RouteMouseEvent(captured, Core::PreviewMouseDownEvent(), x, y, buttonState, wheelDelta);
-                    if (treeChanged()) {
-                        m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                        return;
-                    }
-                    captured->OnMouseDown(x, y, buttonState);
-                    if (treeChanged()) {
-                        m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                        return;
-                    }
-                    RouteMouseEvent(captured, Core::MouseDownEvent(), x, y, buttonState, wheelDelta);
-                    if (treeChanged()) {
-                        m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                        return;
-                    }
-                }
-                else
-                {
-                    RouteMouseEvent(captured, Core::PreviewMouseUpEvent(), x, y, buttonState, wheelDelta);
-                    if (treeChanged()) {
-                        m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                        return;
-                    }
-                    captured->OnMouseUp(x, y, buttonState);
-                    if (treeChanged()) {
-                        m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                        return;
-                    }
-                    RouteMouseEvent(captured, Core::MouseUpEvent(), x, y, buttonState, wheelDelta);
-                    if (treeChanged()) {
-                        m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                        return;
-                    }
-                }
-            }
-            RouteMouseEvent(captured, Core::PreviewMouseMoveEvent(), x, y, buttonState, wheelDelta);
-            if (treeChanged()) {
-                m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                return;
-            }
-            if (wheelDelta != 0)
-            {
-                RouteMouseEvent(captured, Core::PreviewMouseWheelEvent(), x, y, buttonState, wheelDelta);
-                if (treeChanged()) {
-                    m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                    return;
-                }
-            }
-            if (captured)
-            {
-                captured->OnMouseInput(&args);
-            }
-            RouteMouseEvent(captured, Core::MouseMoveEvent(), x, y, buttonState, wheelDelta);
-            if (treeChanged()) {
-                m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                return;
-            }
-            if (wheelDelta != 0)
-            {
-                RouteMouseEvent(captured, Core::MouseWheelEvent(), x, y, buttonState, wheelDelta);
-                if (treeChanged()) {
-                    m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                    return;
-                }
-            }
-            m_mouseButtonState = buttonState;
-            m_prevMouseButtonState = buttonState;
-            return;
+        if (!element || !m_rootElement) {
+            return false;
         }
+        m_pointerCaptures[PointerKey{m_rootElement, pointerId}] = element;
+        return true;
+    }
 
-        NeoWPF::UI::UIElement* targetElement = HitTest(x, y);
+    NeoWPF::UI::UIElement* InputManager::GetPointerCapture(
+        std::uint32_t pointerId) const
+    {
+        const auto capture = m_pointerCaptures.find(PointerKey{m_rootElement, pointerId});
+        return capture == m_pointerCaptures.end() ? nullptr : capture->second;
+    }
 
-        if ((buttonState & 0x01) != (m_prevMouseButtonState & 0x01)) {
-            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
-                "[Input] Mouse button %s: target=%p position=(%d,%d) buttons=%u",
-                (buttonState & 0x01) != 0 ? "down" : "up", static_cast<void*>(targetElement), x, y, buttonState);
-        }
-
-        if (targetElement != m_mouseOverElement)
-        {
-            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
-                "[Input] Hover changed: old=%p new=%p position=(%d,%d)",
-                static_cast<void*>(m_mouseOverElement), static_cast<void*>(targetElement), x, y);
-            if (m_mouseOverElement)
-            {
-                Core::MouseEventArgs leaveArgs(x, y, buttonState, wheelDelta);
-                m_mouseOverElement->OnMouseLeave(&leaveArgs);
-                RouteMouseEvent(m_mouseOverElement, Core::MouseLeaveEvent(), x, y, buttonState, wheelDelta);
-            }
-            if (targetElement)
-            {
-                Core::MouseEventArgs enterArgs(x, y, buttonState, wheelDelta);
-                targetElement->OnMouseEnter(&enterArgs);
-                RouteMouseEvent(targetElement, Core::MouseEnterEvent(), x, y, buttonState, wheelDelta);
-            }
-            m_mouseOverElement = targetElement;
-        }
-
-        if (targetElement)
-        {
-            std::shared_ptr<NeoWPF::UI::Visual> keepAlive;
-            try {
-                keepAlive = targetElement->shared_from_this();
-            } catch (const std::bad_weak_ptr&) {
-            }
-            if ((buttonState & 0x01) != (m_prevMouseButtonState & 0x01))
-            {
-                if ((buttonState & 0x01) != 0)
-                {
-                    RouteMouseEvent(targetElement, Core::PreviewMouseDownEvent(), x, y, buttonState, wheelDelta);
-                    if (treeChanged()) {
-                        m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                        return;
-                    }
-                    targetElement->OnMouseDown(x, y, buttonState);
-                    if (treeChanged()) {
-                        m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                        return;
-                    }
-                    RouteMouseEvent(targetElement, Core::MouseDownEvent(), x, y, buttonState, wheelDelta);
-                    if (treeChanged()) {
-                        m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                        return;
-                    }
-                    SetFocusedElement(targetElement);
-                }
-                else
-                {
-                    RouteMouseEvent(targetElement, Core::PreviewMouseUpEvent(), x, y, buttonState, wheelDelta);
-                    if (treeChanged()) {
-                        m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                        return;
-                    }
-                    targetElement->OnMouseUp(x, y, buttonState);
-                    if (treeChanged()) {
-                        m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                        return;
-                    }
-                    RouteMouseEvent(targetElement, Core::MouseUpEvent(), x, y, buttonState, wheelDelta);
-                    if (treeChanged()) {
-                        m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                        return;
-                    }
-                }
-            }
-
-            RouteMouseEvent(targetElement, Core::PreviewMouseMoveEvent(), x, y, buttonState, wheelDelta);
-            if (treeChanged()) {
-                m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                return;
-            }
-            if (wheelDelta != 0)
-            {
-                RouteMouseEvent(targetElement, Core::PreviewMouseWheelEvent(), x, y, buttonState, wheelDelta);
-                if (treeChanged()) {
-                    m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                    return;
-                }
-            }
-            Core::MouseEventArgs args(x, y, buttonState, wheelDelta);
-            targetElement->OnMouseInput(&args);
-            RouteMouseEvent(targetElement, Core::MouseMoveEvent(), x, y, buttonState, wheelDelta);
-            if (treeChanged()) {
-                m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                return;
-            }
-            if (wheelDelta != 0)
-            {
-                RouteMouseEvent(targetElement, Core::MouseWheelEvent(), x, y, buttonState, wheelDelta);
-                if (treeChanged()) {
-                    m_mouseButtonState = m_prevMouseButtonState = buttonState;
-                    return;
-                }
-            }
-        }
-
-        m_mouseButtonState = buttonState;
-        m_prevMouseButtonState = buttonState;
+    void InputManager::ReleasePointerCapture(std::uint32_t pointerId) noexcept
+    {
+        m_pointerCaptures.erase(PointerKey{m_rootElement, pointerId});
     }
 
     void InputManager::ProcessKeyboardInput(int keyCode, bool isKeyDown, wchar_t charCode, int repeatCount)

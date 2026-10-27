@@ -39,14 +39,4 @@ namespace NeoWPF::Input
         }
     }
 
-    void InputManager::SetMouseCapture(NeoWPF::UI::UIElement* element)
-    {
-        if (m_captureElement == element) {
-            return;
-        }
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input, NeoWPF::Diagnostics::Level::Debug,
-            "[Input] Capture changed: old=%p new=%p",
-            static_cast<void*>(m_captureElement), static_cast<void*>(element));
-        m_captureElement = element;
-    }
 }

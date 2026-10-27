@@ -10,5 +10,4 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/Input/Core/EventHandler.h>
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/Input/Command.h>
-#include <NeoWPF/Input/Mouse.h>
 #include <NeoWPF/Input/Keyboard.h>
