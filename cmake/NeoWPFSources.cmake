@@ -40,6 +40,9 @@ file(GLOB_RECURSE NEOWPF_HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/include/NeoNaml/*.h"
 )
 list(FILTER NEOWPF_HEADERS EXCLUDE REGEX "/include/NeoWPF/DotNet/")
+list(APPEND NEOWPF_HEADERS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/Internal/NeoWPF/Platform/PlatformRegistry.h"
+)
 
 set(NEOWPF_DOTNET_SOURCES)
 set(NEOWPF_DOTNET_HEADERS)

@@ -366,6 +366,7 @@ target_include_directories(NeoWPF.Foundation
         "${CMAKE_CURRENT_BINARY_DIR}/generated/xaml"
     PRIVATE
         "${NEOWPF_GENERATED_INCLUDE_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/Internal"
 )
 target_compile_definitions(NeoWPF.Foundation
     PUBLIC
@@ -934,6 +935,10 @@ if(BUILD_TESTING)
             "${NEOWPF_VULKAN_GENERATED_DIR}"
         )
     endif()
+
+    target_include_directories(NeoWPF.AutomatedTests PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/Internal"
+    )
 
     target_link_libraries(NeoWPF.AutomatedTests
         PRIVATE

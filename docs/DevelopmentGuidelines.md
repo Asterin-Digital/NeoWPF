@@ -64,7 +64,7 @@ Do not duplicate code. If you need utilities, use the existing ones. If there is
 
 Keep files lean and modularize your code. It's not necessary to create a new module out of a file if it's small - it would only annoy the future developer working on that part if they have to browse many other files just to understand one thing. A monolithic file should get split, while a small but focused one shouldn't, unless you expect it to grow a lot.
 
-### Project Structure
+5. ## Project Structure
 
 Use this structure:
 
@@ -74,11 +74,15 @@ Use this structure:
 
 A system cannot contain another system. A subsystem can contain detail only. A detail cannot contain a system or subsystem. Use the same structure across headers, sources, tests, and managed code.
 
-### Dependency Properties
+6. ## Internal Headers
+
+`include/Internal/NeoWPF/` is reserved for a small number of explicitly approved headers. Do not use it to hide framework APIs or reusable contracts. Add `include/Internal` only to the private include paths of targets that need it.
+
+7. ## Dependency Properties
 
 If it's worth it, make sure a property is backed up by dependency property instead of one-off private member; so the rest of NeoWPF can also benefit.
 
-### Platform Separation
+8. ## Platform Separation
 
 Portable code must not contain platform `#if`/`#ifdef` branches or platform headers. Put platform implementations in the corresponding directories:
 
@@ -91,23 +95,23 @@ src/Platform/Linux/
 
 Use platform-neutral interfaces in shared code and select implementations through CMake.
 
-5. ## Documentation
+9. ## Documentation
 
 Do not document source files or internal details. If you need documentation, do it inside the header file for your source file. Follow CommentFormatting.md and CommentingRules.md for more information. In source files, only notes and warnings are allowed - like one simple note telling a developer not to do something, or after you fix a bug, you can leave a note there for the future developer working on that part to know what not to do.
 
-6. ## Stable Header Files
+10. ## Stable Header Files
 
 Avoid needless churn in Visual.h, UIElement.h, and FrameworkElement.h, but modify them when architecture or behavior warrants it. Header stability does not mean preserving APIs that should change.
 
-7. ## Legacy Code
+11. ## Legacy Code
 
 NeoWPF is currently a private, greenfield project. Do not preserve old APIs or behavior, add compatibility shims, or stage removals solely for backward compatibility. Make breaking changes directly when they improve the architecture or implementation.
 
-8. ## NeoWPF Dependencies
+12. ## NeoWPF Dependencies
 
 Do not add huge libraries to NeoWPF unless we really need them, but even then, if it's not difficult to make, don't bring that in and instead make our own version of it.
 
-9. ## Performance
+13. ## Performance
 
 Performance matters, even more in hot paths.
 - Avoid unnecessary allocations, repeated conversions, and redundant calculations in layout, rendering, hit testing, and dependency property operations.
@@ -116,15 +120,15 @@ Performance matters, even more in hot paths.
 - Avoid adding locks to frequently executed paths without a concrete need.
 - Prefer benchmarks and profiling evidence over speculative micro optimizations.
 
-10. ## Contracts
+14. ## Contracts
 
 A contract meant to abstract away platform-specific logic, or desktop vs. mobile logic, must live under `include/NeoWPF/Contracts/` and use the `I` prefix. A contract file must not have a source file.
 
-11. ## Desktop And Mobile
+15. ## Desktop And Mobile
 
 This applies to any part of NeoWPF. Anything that deals with desktop or mobile-specific logic must account for both platforms unless the feature is logically platform-specific. Code must not assume that a feature is exclusive to desktop or mobile, and must implement a capability mechanism if a feature is unavailable on a platform.
 
-12. ## State And Resource Ownership
+16. ## State And Resource Ownership
 
 Every object must have a clear owner and lifetime. When introducing state, resources, callbacks, or subscriptions, determine who owns them, how long they remain valid, and how they are released.
 
