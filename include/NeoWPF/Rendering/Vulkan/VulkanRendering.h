@@ -60,10 +60,10 @@ private:
     const WindowContext* FirstWindowContext() const noexcept;
     void DestroySwapchainResources(WindowContext&) noexcept;
     void DestroySolidPipeline() noexcept;
-    bool CreateSolidPipeline();
+    bool CreateSolidPipeline(VkRenderPass renderPass);
     void DestroyTexturedPipeline() noexcept;
     void DestroyTextureResources() noexcept;
-    bool CreateTexturedPipeline();
+    bool CreateTexturedPipeline(VkRenderPass renderPass);
     bool CreateSwapchainResources(WindowContext&, unsigned int width, unsigned int height);
 
     VkInstance m_instance = VK_NULL_HANDLE;

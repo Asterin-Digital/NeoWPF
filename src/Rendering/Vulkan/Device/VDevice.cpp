@@ -197,10 +197,10 @@ void VulkanRendering::DestroySolidPipeline() noexcept
     }
 }
 
-bool VulkanRendering::CreateSolidPipeline()
+bool VulkanRendering::CreateSolidPipeline(VkRenderPass renderPass)
 {
-    auto* context = FirstWindowContext();
-    if (!context) {
+    if (renderPass == VK_NULL_HANDLE) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Cannot create solid pipeline without a render pass");
         return false;
     }
     const VkPushConstantRange pushConstants{VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(float) * 2};
@@ -259,7 +259,7 @@ bool VulkanRendering::CreateSolidPipeline()
     const VkGraphicsPipelineCreateInfo pipelineInfo{
         VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, nullptr, 0, 2, shaderStages,
         &vertexInput, &inputAssembly, nullptr, &viewportState, &rasterization, &multisample,
-        nullptr, &blend, &dynamicState, m_solidPipelineLayout, context->renderPass, 0, VK_NULL_HANDLE, -1};
+        nullptr, &blend, &dynamicState, m_solidPipelineLayout, renderPass, 0, VK_NULL_HANDLE, -1};
     const VkResult pipelineResult = vkCreateGraphicsPipelines(
         m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_solidPipeline);
     vkDestroyShaderModule(m_device, vertexShader, nullptr);

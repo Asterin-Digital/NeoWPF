@@ -1,8 +1,12 @@
 #include <NeoWPF/NeoWPF.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <Gallery/MainWindow.h>
 
 int main()
 {
+#ifndef NDEBUG
+    NeoWPF::Diagnostics::SetGlobalLevel(NeoWPF::Diagnostics::Level::Trace);
+#endif
     NeoWPF::Core::Application::Initialize();
 
     auto windowHost = Gallery::CreateMainWindow();

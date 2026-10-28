@@ -177,12 +177,12 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
         DestroySwapchainResources(context);
         return false;
     }
-    if (!CreateSolidPipeline()) {
+    if (!CreateSolidPipeline(context.renderPass)) {
         NeoWPF::Diagnostics::LogError("[Vulkan] Solid pipeline creation failed");
         DestroySwapchainResources(context);
         return false;
     }
-    if (m_textureDescriptorPool != VK_NULL_HANDLE && !CreateTexturedPipeline()) {
+    if (m_textureDescriptorPool != VK_NULL_HANDLE && !CreateTexturedPipeline(context.renderPass)) {
         NeoWPF::Diagnostics::LogError("[Vulkan] Textured pipeline recreation failed");
         DestroySwapchainResources(context);
         return false;

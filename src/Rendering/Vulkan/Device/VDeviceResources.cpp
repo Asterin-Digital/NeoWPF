@@ -100,10 +100,10 @@ bool SubmitImmediate(VkDevice device, VkCommandPool commandPool, VkQueue queue,
 
 }
 
-bool VulkanRendering::CreateTexturedPipeline()
+bool VulkanRendering::CreateTexturedPipeline(VkRenderPass renderPass)
 {
-    auto* context = FirstWindowContext();
-    if (!context) {
+    if (renderPass == VK_NULL_HANDLE) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Cannot create textured pipeline without a render pass");
         return false;
     }
     if (m_textureDescriptorPool == VK_NULL_HANDLE) {
@@ -185,7 +185,7 @@ bool VulkanRendering::CreateTexturedPipeline()
     const VkGraphicsPipelineCreateInfo pipelineInfo{
         VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, nullptr, 0, 2, stages,
         &vertexInput, &inputAssembly, nullptr, &viewportState, &rasterization, &multisample,
-        nullptr, &blend, &dynamicState, m_texturedPipelineLayout, context->renderPass, 0, VK_NULL_HANDLE, -1};
+        nullptr, &blend, &dynamicState, m_texturedPipelineLayout, renderPass, 0, VK_NULL_HANDLE, -1};
     const VkResult pipelineResult = vkCreateGraphicsPipelines(
         m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_texturedPipeline);
     vkDestroyShaderModule(m_device, vertexShader, nullptr);
@@ -242,7 +242,7 @@ std::uint32_t VulkanRendering::CreateTexture(unsigned int width, unsigned int he
         width == 0 || height == 0 || rgbaData == nullptr) {
         return 0;
     }
-    if (m_textureDescriptorPool == VK_NULL_HANDLE && !CreateTexturedPipeline()) {
+    if (m_textureDescriptorPool == VK_NULL_HANDLE && !CreateTexturedPipeline(context->renderPass)) {
         NeoWPF::Diagnostics::LogError("[Vulkan] Failed to initialize textured resources on demand");
         return 0;
     }
