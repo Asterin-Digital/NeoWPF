@@ -157,16 +157,19 @@ bool ComboBoxItem::GetIsHighlighted() const noexcept
     }
 }
 
-void ComboBoxItem::OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args)
+void ComboBoxItem::OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
 {
-    (void)args;
-    SetIsHighlighted(true);
-}
+    if (!args) {
+        return;
+    }
 
-void ComboBoxItem::OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args)
-{
-    (void)args;
-    SetIsHighlighted(false);
+    if (args->GetRoutedEvent() == &NeoWPF::Input::Core::PointerEnteredEvent()) {
+        SetIsHighlighted(true);
+    } else if (args->GetRoutedEvent() == &NeoWPF::Input::Core::PointerExitedEvent()) {
+        SetIsHighlighted(false);
+    } else {
+        ListBoxItem::OnRoutedEvent(args);
+    }
 }
 
 void ComboBoxItem::OnSelectionStateChanged()
@@ -221,7 +224,7 @@ ComboBox::ComboBox()
         ApplyComboBoxTheme(*this);
     });
 
-    AddHandler(NeoWPF::Input::Core::MouseUpEvent(), [this](UIElement*, NeoWPF::Input::Core::RoutedEventArgs* args) {
+    AddHandler(NeoWPF::Input::Core::PointerReleasedEvent(), [this](UIElement*, NeoWPF::Input::Core::RoutedEventArgs* args) {
         const bool wasOpen = GetIsDropDownOpen();
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::ComboBox,
             NeoWPF::Diagnostics::Level::Info,

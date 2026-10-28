@@ -2,6 +2,7 @@
 
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
+#include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/UI/Controls/ToggleSwitch/ToggleSwitch.h>
@@ -16,6 +17,21 @@
 #include <vector>
 
 namespace {
+
+void RaisePointerEvent(NeoWPF::UI::ToggleSwitch& toggleSwitch,
+                       const NeoWPF::Input::Core::RoutedEvent& routedEvent,
+                       NeoWPF::Input::Core::PointerPhase phase,
+                       std::uint32_t changedButton = 0,
+                       std::uint32_t buttons = 0)
+{
+    NeoWPF::Input::Core::PointerEventArgs packet(
+        1, NeoWPF::Input::Core::PointerDeviceType::Mouse, phase,
+        0.0, 0.0, buttons, changedButton);
+    NeoWPF::Input::Core::RoutedPointerEventArgs args(routedEvent, packet);
+    args.SetSource(&toggleSwitch);
+    args.SetOriginalSource(&toggleSwitch);
+    toggleSwitch.RaiseEvent(&args);
+}
 
 using RoundedRectData = decltype(
     std::declval<NeoWPF::Rendering::CommandList::Command>().roundedRect);
@@ -108,8 +124,10 @@ TEST_F(ToggleSwitchTests, PointerActivationRaisesClickAndTogglesOnce)
     int clickCount = 0;
     toggleSwitch.Click += [&clickCount] { ++clickCount; };
 
-    toggleSwitch.OnMouseDown(0, 0, 0x01);
-    toggleSwitch.OnMouseUp(0, 0, 0x00);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerPressedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Down, 0x01u, 0x01u);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerReleasedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Up, 0x01u);
 
     EXPECT_TRUE(toggleSwitch.IsChecked());
     EXPECT_EQ(clickCount, 1);
@@ -121,7 +139,8 @@ TEST_F(ToggleSwitchTests, PointerReleaseWithoutPressDoesNotToggle)
     int clickCount = 0;
     toggleSwitch.Click += [&clickCount] { ++clickCount; };
 
-    toggleSwitch.OnMouseUp(0, 0, 0x00);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerReleasedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Up);
 
     EXPECT_FALSE(toggleSwitch.IsChecked());
     EXPECT_EQ(clickCount, 0);
@@ -133,9 +152,12 @@ TEST_F(ToggleSwitchTests, PointerLeaveCancelsPendingToggle)
     int clickCount = 0;
     toggleSwitch.Click += [&clickCount] { ++clickCount; };
 
-    toggleSwitch.OnMouseDown(0, 0, 0x01);
-    toggleSwitch.OnMouseLeave(nullptr);
-    toggleSwitch.OnMouseUp(0, 0, 0x00);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerPressedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Down, 0x01u, 0x01u);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerExitedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Leave);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerReleasedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Up, 0x01u);
 
     EXPECT_FALSE(toggleSwitch.IsChecked());
     EXPECT_EQ(clickCount, 0);
@@ -148,8 +170,10 @@ TEST_F(ToggleSwitchTests, DisabledPointerActivationPreservesStateAndDoesNotRaise
     int clickCount = 0;
     toggleSwitch.Click += [&clickCount] { ++clickCount; };
 
-    toggleSwitch.OnMouseDown(0, 0, 0x01);
-    toggleSwitch.OnMouseUp(0, 0, 0x00);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerPressedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Down, 0x01u, 0x01u);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerReleasedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Up, 0x01u);
 
     EXPECT_FALSE(toggleSwitch.IsChecked());
     EXPECT_EQ(clickCount, 0);
@@ -203,25 +227,31 @@ TEST_F(ToggleSwitchTests, PointerVisualStatesUseThemePaletteRoles)
     EXPECT_EQ(GetRenderedTrackColor(toggleSwitch),
               GetBrushColor(GetPaletteBrush(PaletteBrush::Track)));
 
-    toggleSwitch.OnMouseEnter(nullptr);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerEnteredEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Enter);
     EXPECT_EQ(GetRenderedTrackColor(toggleSwitch),
               GetBrushColor(GetPaletteBrush(PaletteBrush::AccentHover)));
 
-    toggleSwitch.OnMouseDown(0, 0, 0x01);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerPressedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Down, 0x01u, 0x01u);
     EXPECT_EQ(GetRenderedTrackColor(toggleSwitch),
               GetBrushColor(GetPaletteBrush(PaletteBrush::AccentPressed)));
 
-    toggleSwitch.OnMouseUp(0, 0, 0x00);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerReleasedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Up, 0x01u);
     ASSERT_TRUE(toggleSwitch.IsChecked());
     EXPECT_EQ(GetRenderedTrackColor(toggleSwitch),
               GetBrushColor(GetPaletteBrush(PaletteBrush::Accent)));
 
-    toggleSwitch.OnMouseLeave(nullptr);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerExitedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Leave);
     EXPECT_EQ(GetRenderedTrackColor(toggleSwitch),
               GetBrushColor(GetPaletteBrush(PaletteBrush::Accent)));
 
-    toggleSwitch.OnMouseEnter(nullptr);
-    toggleSwitch.OnMouseDown(0, 0, 0x01);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerEnteredEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Enter);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerPressedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Down, 0x01u, 0x01u);
     EXPECT_EQ(GetRenderedTrackColor(toggleSwitch),
               GetBrushColor(GetPaletteBrush(PaletteBrush::Accent)));
 }
@@ -233,9 +263,11 @@ TEST_F(ToggleSwitchTests, PointerStateChangesInvalidateTheVisualTree)
     toggleSwitch.Initialize();
     toggleSwitch.Arrange(36.0, 20.0);
 
-    toggleSwitch.OnMouseEnter(nullptr);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerEnteredEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Enter);
     toggleSwitch.ClearDirty();
-    toggleSwitch.OnMouseLeave(nullptr);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerExitedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Leave);
 
     EXPECT_TRUE(toggleSwitch.IsTreeDirty());
     EXPECT_EQ(GetRenderedTrackColor(toggleSwitch), GetBrushColor(
@@ -243,9 +275,11 @@ TEST_F(ToggleSwitchTests, PointerStateChangesInvalidateTheVisualTree)
             NeoWPF::Core::ApplicationThemes::PaletteBrush::Track)));
 
     toggleSwitch.SetChecked(true);
-    toggleSwitch.OnMouseEnter(nullptr);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerEnteredEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Enter);
     toggleSwitch.ClearDirty();
-    toggleSwitch.OnMouseLeave(nullptr);
+    RaisePointerEvent(toggleSwitch, NeoWPF::Input::Core::PointerExitedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Leave);
 
     EXPECT_TRUE(toggleSwitch.IsTreeDirty());
     EXPECT_EQ(GetRenderedTrackColor(toggleSwitch), GetBrushColor(

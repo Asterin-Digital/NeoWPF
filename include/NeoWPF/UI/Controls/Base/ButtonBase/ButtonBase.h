@@ -15,10 +15,6 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <NeoWPF/Input/Command.h>
 
-namespace NeoWPF::Input::Core {
-    class MouseEventArgs;
-}
-
 namespace NeoWPF::UI {
 
 class ButtonBase : public NeoWPF::UI::Content::ContentControl, public NeoWPF::Input::ICommandSource {
@@ -33,11 +29,6 @@ public:
     bool IsHitTestVisible() const noexcept override { return true; }
     bool IsInteractable() const noexcept override { return IsEnabled(); }
 
-    virtual void OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args) override;
-    virtual void OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args) override;
-    virtual void OnMouseDown(int x, int y, std::uint32_t buttonState) override;
-    virtual void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
-
     std::shared_ptr<NeoWPF::Input::ICommand> GetCommand() const noexcept override { return m_command; }
     void SetCommand(std::shared_ptr<NeoWPF::Input::ICommand> command) override;
 
@@ -50,6 +41,16 @@ public:
     NeoWPF::Core::Event<> Click;
 
 protected:
+    /*
+        @summary
+        Handles routed input for button interaction.
+
+        @param args
+        The routed event arguments.
+
+        @internal
+    */
+    void OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args) override;
     void OnInitialize() override;
     void InitializeVisualStates();
     void ApplyVisualState(const std::string& stateName, bool useTransitions = false);
@@ -60,6 +61,7 @@ protected:
     std::shared_ptr<NeoWPF::UI::Styling::VisualStateManager> m_visualStateManager;
     std::string m_currentVisualState;
     bool m_isPressed = false;
+    bool m_isMouseOver = false;
     std::shared_ptr<NeoWPF::Input::ICommand> m_command;
     std::any m_commandParameter;
     NeoWPF::UI::UIElement* m_commandTarget = nullptr;

@@ -47,24 +47,18 @@ DefaultTitleBar::DefaultTitleBar()
     m_closeButton->SetBorderBrush(nullptr);
     m_closeButton->SetForeground(m_foregroundBrush);
 
-    m_minimizeButton->AddHandler(NeoWPF::Input::Core::MouseEnterEvent(), [](NeoWPF::UI::UIElement*, NeoWPF::Input::Core::RoutedEventArgs*) {});
-    m_minimizeButton->AddHandler(NeoWPF::Input::Core::MouseLeaveEvent(), [](NeoWPF::UI::UIElement*, NeoWPF::Input::Core::RoutedEventArgs*) {});
     m_minimizeButton->Click += [this]() {
         if (m_onMinimize) {
             m_onMinimize();
         }
     };
 
-    m_maximizeButton->AddHandler(NeoWPF::Input::Core::MouseEnterEvent(), [](NeoWPF::UI::UIElement*, NeoWPF::Input::Core::RoutedEventArgs*) {});
-    m_maximizeButton->AddHandler(NeoWPF::Input::Core::MouseLeaveEvent(), [](NeoWPF::UI::UIElement*, NeoWPF::Input::Core::RoutedEventArgs*) {});
     m_maximizeButton->Click += [this]() {
         if (m_onMaximize) {
             m_onMaximize();
         }
     };
 
-    m_closeButton->AddHandler(NeoWPF::Input::Core::MouseEnterEvent(), [](NeoWPF::UI::UIElement*, NeoWPF::Input::Core::RoutedEventArgs*) {});
-    m_closeButton->AddHandler(NeoWPF::Input::Core::MouseLeaveEvent(), [](NeoWPF::UI::UIElement*, NeoWPF::Input::Core::RoutedEventArgs*) {});
     m_closeButton->Click += [this]() {
         if (m_onClose) {
             m_onClose();

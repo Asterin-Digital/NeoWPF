@@ -32,8 +32,6 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::Input::Core
 {
-    class MouseEventArgs;
-    class KeyboardEventArgs;
     class RoutedEventArgs;
     struct RoutedEvent;
 }
@@ -844,72 +842,6 @@ public:
 
     /*
         @summary
-        Called when mouse input is received.
-
-        @param args
-        The mouse event arguments.
-    */
-    virtual void OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args) {}
-
-    /*
-        @summary
-        Called when the mouse button is pressed.
-
-        @param x
-        The local x-coordinate.
-
-        @param y
-        The local y-coordinate.
-
-        @param buttonState
-        The button state mask for the input.
-    */
-    virtual void OnMouseDown(int x, int y, std::uint32_t buttonState) {}
-
-    /*
-        @summary
-        Called when the mouse button is released.
-
-        @param x
-        The local x-coordinate.
-
-        @param y
-        The local y-coordinate.
-
-        @param buttonState
-        The button state mask for the input.
-    */
-    virtual void OnMouseUp(int x, int y, std::uint32_t buttonState) {}
-
-    /*
-        @summary
-        Called when the mouse pointer enters the element.
-
-        @param args
-        The mouse event arguments.
-    */
-    virtual void OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args) {}
-
-    /*
-        @summary
-        Called when the mouse pointer leaves the element.
-
-        @param args
-        The mouse event arguments.
-    */
-    virtual void OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args) {}
-
-    /*
-        @summary
-        Called when keyboard input is received.
-
-        @param args
-        The keyboard event arguments.
-    */
-    virtual void OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args) {}
-
-    /*
-        @summary
         Called when the element gains focus.
     */
     virtual void OnGotFocus();
@@ -922,6 +854,14 @@ public:
 
 protected:
     void OnInitialize() override;
+
+    /*
+        @summary
+        Handles a routed input event before instance handlers are invoked.
+
+        @internal
+    */
+    virtual void OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args);
 
     void InvalidateTransformCache() const noexcept;
     void InvalidateWorldTransformCache() const noexcept;

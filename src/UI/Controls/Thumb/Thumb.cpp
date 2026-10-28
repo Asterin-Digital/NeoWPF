@@ -2,6 +2,7 @@
 #include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/Input/Core/Events.h>
+#include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 
@@ -43,53 +44,63 @@ void Thumb::SetBounds(int x, int y, int width, int height) noexcept
     }
 }
 
-void Thumb::OnMouseDown(int x, int y, std::uint32_t buttonState)
+void Thumb::OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
 {
-    if ((buttonState & 0x01) == 0) {
+    if (!args) {
         return;
     }
 
-    if (!IsInteractable()) {
+    auto* pointerArgs = dynamic_cast<NeoWPF::Input::Core::RoutedPointerEventArgs*>(args);
+    if (!pointerArgs) {
         return;
     }
 
-    if (auto parent = GetParentElement()) {
-        parent->Focus();
-    }
+    const auto* routedEvent = args->GetRoutedEvent();
+    if (routedEvent == &NeoWPF::Input::Core::PointerPressedEvent()) {
+        if (pointerArgs->GetChangedButton() != 0x01u || !IsInteractable()) {
+            return;
+        }
 
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Info,
-        "[Thumb] OnMouseDown: x=%d y=%d buttonState=0x%X",
-        x,
-        y,
-        buttonState);
+        if (!Input::InputManager::GetInstance().SetPointerCapture(
+                pointerArgs->GetPointerId(), this)) {
+            return;
+        }
+        if (auto parent = GetParentElement()) {
+            parent->Focus();
+        }
 
-    m_isDragging = true;
-    m_dragStartPointer = m_orientation == Orientation::Vertical ? y : x;
-    Input::InputManager::GetInstance().SetMouseCapture(this);
-    DragStarted.Invoke(m_dragStartPointer);
-}
-
-void Thumb::OnMouseUp(int x, int y, std::uint32_t buttonState)
-{
-    if (!m_isDragging) {
+        const int x = static_cast<int>(pointerArgs->GetX());
+        const int y = static_cast<int>(pointerArgs->GetY());
+        m_isDragging = true;
+        m_dragStartPointer = m_orientation == Orientation::Vertical ? y : x;
+        DragStarted.Invoke(m_dragStartPointer);
         return;
     }
 
-    m_isDragging = false;
-    Input::InputManager::GetInstance().SetMouseCapture(nullptr);
-    DragCompleted.Invoke(m_orientation == Orientation::Vertical ? y : x);
-}
-
-void Thumb::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
-{
-    if (!m_isDragging || !args) {
+    auto& input = Input::InputManager::GetInstance();
+    const bool ownsCapture = input.GetPointerCapture(pointerArgs->GetPointerId()) == this;
+    if (!m_isDragging || (!ownsCapture &&
+            routedEvent != &NeoWPF::Input::Core::PointerCanceledEvent())) {
         return;
     }
 
-    const int pointer = m_orientation == Orientation::Vertical ? args->GetY() : args->GetX();
-    const int delta = pointer - m_dragStartPointer;
-    m_dragStartPointer = pointer;
-    DragDelta.Invoke(delta);
+    const int x = static_cast<int>(pointerArgs->GetX());
+    const int y = static_cast<int>(pointerArgs->GetY());
+    if (routedEvent == &NeoWPF::Input::Core::PointerMovedEvent()) {
+        const int pointer = m_orientation == Orientation::Vertical ? y : x;
+        const int delta = pointer - m_dragStartPointer;
+        m_dragStartPointer = pointer;
+        DragDelta.Invoke(delta);
+    } else if (routedEvent == &NeoWPF::Input::Core::PointerReleasedEvent() &&
+               pointerArgs->GetChangedButton() == 0x01u) {
+        m_isDragging = false;
+        input.ReleasePointerCapture(pointerArgs->GetPointerId());
+        DragCompleted.Invoke(m_orientation == Orientation::Vertical ? y : x);
+    } else if (routedEvent == &NeoWPF::Input::Core::PointerCanceledEvent()) {
+        m_isDragging = false;
+        input.ReleasePointerCapture(pointerArgs->GetPointerId());
+        DragCompleted.Invoke(m_dragStartPointer);
+    }
 }
 
 void Thumb::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)

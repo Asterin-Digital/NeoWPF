@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Controls/ScrollViewer/ScrollViewer.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Layout/Scrolling/IScrollInfo.h>
+#include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 #include <cmath>
@@ -225,15 +226,16 @@ void ScrollViewer::UpdateScrollBarValues() noexcept
     }
 }
 
-void ScrollViewer::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
+void ScrollViewer::OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
 {
-    if (!args) {
+    auto* pointerArgs = dynamic_cast<NeoWPF::Input::Core::RoutedPointerEventArgs*>(args);
+    if (!pointerArgs || args->GetRoutedEvent() != &NeoWPF::Input::Core::PointerWheelEvent()) {
         return;
     }
 
-    const int wheelDelta = args->GetWheelDelta();
+    const int wheelDelta = static_cast<int>(pointerArgs->GetWheelDelta());
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
-        "[ScrollViewer] OnMouseInput wheelDelta=%d presenter=%p", wheelDelta, m_contentPresenter.get());
+        "[ScrollViewer] OnRoutedEvent wheelDelta=%d presenter=%p", wheelDelta, m_contentPresenter.get());
     if (wheelDelta == 0) {
         return;
     }
@@ -245,11 +247,15 @@ void ScrollViewer::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
         if (content) {
             auto scrollInfo = std::dynamic_pointer_cast<Layout::Scrolling::IScrollInfo>(content);
             if (scrollInfo) {
+                const double previousOffset = scrollInfo->GetVerticalOffset();
                 NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
                     "[ScrollViewer] MouseWheel cast success, calling scrollInfo->MouseWheel delta=%d adjusted=%d", delta, -delta * std::max(1, smallChange));
                 scrollInfo->MouseWheel(-delta * std::max(1, smallChange));
                 UpdateScrollBarValues();
                 InvalidateVisual();
+                if (scrollInfo->GetVerticalOffset() != previousOffset) {
+                    args->SetHandled(true);
+                }
                 return;
             } else {
                 NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Virtualization, NeoWPF::Diagnostics::Level::Debug,
@@ -259,7 +265,11 @@ void ScrollViewer::OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args)
     }
 
     if (m_verticalScrollBarVisibility != ScrollBarVisibility::Disabled) {
+        const double previousOffset = m_verticalOffset;
         SetVerticalOffset(m_verticalOffset - delta * std::max(1, smallChange));
+        if (m_verticalOffset != previousOffset) {
+            args->SetHandled(true);
+        }
     }
 }
 

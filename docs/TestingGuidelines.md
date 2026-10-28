@@ -82,3 +82,5 @@ A feature's test suite is complete only when every identified behavioral require
 ## 7. Older Tests
 
 Older tests within `Automated` that were made before the testing guidelines we're designed are not subject to these rules and should not be modified unless there's a good reason.
+
+If a test file contains both older tests that do not comply with these guidelines and newer tests that do, the entire file must be refactored to comply with the current guidelines.

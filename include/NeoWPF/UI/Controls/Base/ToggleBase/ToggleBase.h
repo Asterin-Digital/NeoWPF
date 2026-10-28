@@ -13,10 +13,6 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 
-namespace NeoWPF::Input::Core {
-    class MouseEventArgs;
-}
-
 namespace NeoWPF::UI {
 
 class ToggleBase : public NeoWPF::UI::Content::ContentControl {
@@ -37,10 +33,6 @@ public:
     void SetContentText(const std::wstring& text);
     const std::wstring& GetContentText() const noexcept { return m_contentText; }
 
-    virtual void OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args) override;
-    virtual void OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args) override;
-    virtual void OnMouseDown(int x, int y, std::uint32_t buttonState) override;
-    virtual void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
     void OnGotFocus() override;
     void OnLostFocus() override;
 
@@ -49,6 +41,16 @@ public:
     NeoWPF::Core::Event<> Click;
 
 protected:
+    /*
+        @summary
+        Handles routed input for toggle interaction.
+
+        @param args
+        The routed event arguments.
+
+        @internal
+    */
+    void OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args) override;
     void OnInitialize() override;
     void InitializeVisualStates();
     /*

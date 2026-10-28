@@ -1,4 +1,5 @@
 #include <NeoWPF/UI/Controls/Base/ToggleBase/ToggleBase.h>
+#include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
@@ -127,35 +128,54 @@ void ToggleBase::RaiseClick()
     Click.Invoke();
 }
 
-void ToggleBase::OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args)
+void ToggleBase::OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
 {
-    m_isMouseOver = true;
-    RefreshVisualState();
-}
-
-void ToggleBase::OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args)
-{
-    m_isMouseOver = false;
-    m_isPressed = false;
-    RefreshVisualState();
-}
-
-void ToggleBase::OnMouseDown(int x, int y, std::uint32_t buttonState)
-{
-    m_isMouseOver = true;
-    m_isPressed = IsEnabled() && (buttonState & 0x01) != 0;
-    RefreshVisualState();
-}
-
-void ToggleBase::OnMouseUp(int x, int y, std::uint32_t buttonState)
-{
-    const bool shouldToggle = IsEnabled() && m_isPressed && ((buttonState & 0x01) == 0);
-    m_isPressed = false;
-    if (shouldToggle) {
-        Toggle();
-        RaiseClick();
+    if (!args) {
+        return;
     }
-    RefreshVisualState();
+
+    const auto* routedEvent = args->GetRoutedEvent();
+    if (routedEvent == &NeoWPF::Input::Core::PointerEnteredEvent()) {
+        m_isMouseOver = true;
+        RefreshVisualState();
+        return;
+    }
+
+    if (routedEvent == &NeoWPF::Input::Core::PointerExitedEvent()) {
+        m_isMouseOver = false;
+        m_isPressed = false;
+        RefreshVisualState();
+        return;
+    }
+
+    auto* pointerArgs = dynamic_cast<NeoWPF::Input::Core::RoutedPointerEventArgs*>(args);
+    if (!pointerArgs) {
+        return;
+    }
+
+    if (routedEvent == &NeoWPF::Input::Core::PointerPressedEvent()) {
+        m_isMouseOver = true;
+        m_isPressed = IsEnabled() && pointerArgs->GetChangedButton() == 0x01u;
+        RefreshVisualState();
+        return;
+    }
+
+    if (routedEvent == &NeoWPF::Input::Core::PointerReleasedEvent()) {
+        const bool shouldToggle = IsEnabled() && m_isPressed &&
+            pointerArgs->GetChangedButton() == 0x01u;
+        m_isPressed = false;
+        if (shouldToggle) {
+            Toggle();
+            RaiseClick();
+        }
+        RefreshVisualState();
+        return;
+    }
+
+    if (routedEvent == &NeoWPF::Input::Core::PointerCanceledEvent()) {
+        m_isPressed = false;
+        RefreshVisualState();
+    }
 }
 
 void ToggleBase::OnGotFocus()

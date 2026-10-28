@@ -163,3 +163,32 @@ TEST(PlatformDependencyIsolationRuleTests, AllowsPlatformSpecificImplementation)
         R"({"platforms":["windows","linux","android"],"path_platforms":{"*windows_platform.cpp":"windows"}})");
     EXPECT_TRUE(AnalyzeFixture("windows_platform.cpp", config).empty());
 }
+
+TEST(PlatformDependencyIsolationRuleTests, DoesNotTreatVcpkgTripletNamesAsSystemDirectories)
+{
+    const auto config = LoadConfig(
+        R"({"platforms":["windows","linux","android"]})");
+    const auto tempRoot = std::filesystem::temp_directory_path() /
+        "neolint-platform-dependency-triplet-path";
+    const auto code = "#include <dependency.h>\nint main() { return 0; }\n";
+
+    for (const auto* triplet : {"x64-linux", "x64-android"})
+    {
+        const auto tripletRoot = tempRoot / triplet;
+        const auto includeDirectory = tripletRoot / "include";
+        std::filesystem::remove_all(tripletRoot);
+        std::filesystem::create_directories(includeDirectory);
+        {
+            std::ofstream header(includeDirectory / "dependency.h");
+            header << "#pragma once\n";
+        }
+
+        neolint::DiagnosticsSink diagnostics;
+        ASSERT_TRUE(clang::tooling::runToolOnCodeWithArgs(
+            std::make_unique<Action>(config, diagnostics), code,
+            {"-std=c++20", "-I" + includeDirectory.string()},
+            (tripletRoot / "input.cpp").string(), NEOLINT_TEST_CLANG_TOOL));
+        EXPECT_TRUE(diagnostics.Diagnostics().empty()) << triplet;
+        std::filesystem::remove_all(tripletRoot);
+    }
+}

@@ -120,6 +120,46 @@ namespace NeoWPF::Input::Core
         @internal
     */
     const RoutedEvent& PointerEvent();
+    /*
+        @summary
+        Returns the preview pointer-pressed event definition.
+    */
+    const RoutedEvent& PreviewPointerPressedEvent();
+    /*
+        @summary
+        Returns the pointer-pressed event definition.
+    */
+    const RoutedEvent& PointerPressedEvent();
+    /*
+        @summary
+        Returns the pointer-moved event definition.
+    */
+    const RoutedEvent& PointerMovedEvent();
+    /*
+        @summary
+        Returns the pointer-released event definition.
+    */
+    const RoutedEvent& PointerReleasedEvent();
+    /*
+        @summary
+        Returns the pointer-entered event definition.
+    */
+    const RoutedEvent& PointerEnteredEvent();
+    /*
+        @summary
+        Returns the pointer-exited event definition.
+    */
+    const RoutedEvent& PointerExitedEvent();
+    /*
+        @summary
+        Returns the pointer-canceled event definition.
+    */
+    const RoutedEvent& PointerCanceledEvent();
+    /*
+        @summary
+        Returns the pointer-wheel event definition.
+    */
+    const RoutedEvent& PointerWheelEvent();
     const RoutedEvent& PreviewKeyDownEvent();
     const RoutedEvent& PreviewKeyUpEvent();
     const RoutedEvent& KeyDownEvent();

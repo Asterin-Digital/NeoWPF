@@ -17,6 +17,18 @@ namespace NeoWPF::Input
             }
             return false;
         }
+
+        std::vector<NeoWPF::UI::UIElement*> GetPointerPath(NeoWPF::UI::UIElement* target)
+        {
+            std::vector<NeoWPF::UI::UIElement*> path;
+            for (auto* visual = static_cast<NeoWPF::UI::Visual*>(target); visual;
+                 visual = visual->GetParent()) {
+                if (auto* element = dynamic_cast<NeoWPF::UI::UIElement*>(visual)) {
+                    path.push_back(element);
+                }
+            }
+            return path;
+        }
     }
 
     void InputManager::CollectFocusableElements(NeoWPF::UI::UIElement* root,
@@ -200,30 +212,62 @@ namespace NeoWPF::Input
             RoutePointerEvent(targetElement, routedEvent);
         };
 
+        const auto sendBoundaryTransitions = [&send](NeoWPF::UI::UIElement* previousTarget,
+                                                      NeoWPF::UI::UIElement* currentTarget) {
+            const auto previousPath = GetPointerPath(previousTarget);
+            const auto currentPath = GetPointerPath(currentTarget);
+            std::size_t commonAncestors = 0;
+            while (commonAncestors < previousPath.size() &&
+                   commonAncestors < currentPath.size() &&
+                   previousPath[previousPath.size() - commonAncestors - 1] ==
+                       currentPath[currentPath.size() - commonAncestors - 1]) {
+                ++commonAncestors;
+            }
+
+            for (std::size_t index = 0; index < previousPath.size() - commonAncestors; ++index) {
+                send(previousPath[index], Core::PointerPhase::Leave);
+            }
+            for (std::size_t index = currentPath.size() - commonAncestors; index > 0; --index) {
+                send(currentPath[index - 1], Core::PointerPhase::Enter);
+            }
+        };
+
+        if (eventArgs.GetPhase() == Core::PointerPhase::Leave) {
+            sendBoundaryTransitions(target, nullptr);
+            return;
+        }
+
         if (eventArgs.GetPhase() == Core::PointerPhase::Move ||
             eventArgs.GetPhase() == Core::PointerPhase::Enter) {
             const auto previous = m_pointerOverElements.find(pointerKey);
-            if (previous != m_pointerOverElements.end() && previous->second != target) {
-                send(previous->second, Core::PointerPhase::Leave);
-                m_pointerOverElements.erase(previous);
+            auto* previousTarget = previous == m_pointerOverElements.end() ? nullptr : previous->second;
+            if (previousTarget != target) {
+                sendBoundaryTransitions(previousTarget, target);
+                if (previous != m_pointerOverElements.end()) {
+                    m_pointerOverElements.erase(previous);
+                }
             }
             if (target) {
                 const auto current = m_pointerOverElements.find(pointerKey);
                 if (current == m_pointerOverElements.end()) {
                     m_pointerOverElements.emplace(pointerKey, target);
-                    if (eventArgs.GetPhase() == Core::PointerPhase::Move) {
-                        send(target, Core::PointerPhase::Enter);
-                    }
                 }
             }
+            if (eventArgs.GetPhase() == Core::PointerPhase::Move) {
+                send(target, Core::PointerPhase::Move);
+            } else if (previousTarget == target) {
+                send(target, Core::PointerPhase::Enter);
+            }
+            return;
         }
 
         send(target, eventArgs.GetPhase());
         if (eventArgs.GetPhase() == Core::PointerPhase::Down && target) {
             SetFocusedElement(target);
         }
-        if (eventArgs.GetPhase() == Core::PointerPhase::Up ||
-            eventArgs.GetPhase() == Core::PointerPhase::Cancel) {
+        if (eventArgs.GetPhase() == Core::PointerPhase::Cancel ||
+            (eventArgs.GetPhase() == Core::PointerPhase::Up &&
+             eventArgs.GetButtons() == 0)) {
             ReleasePointerCapture(eventArgs.GetPointerId());
         }
     }
@@ -279,11 +323,6 @@ namespace NeoWPF::Input
         args.SetSource(targetElement);
         args.SetOriginalSource(targetElement);
         RouteKeyboardEvent(targetElement, args, previewEvent);
-        if (args.IsHandled()) {
-            return;
-        }
-
-        targetElement->OnKeyboardInput(&args);
         if (args.IsHandled()) {
             return;
         }

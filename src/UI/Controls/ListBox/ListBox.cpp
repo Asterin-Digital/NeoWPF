@@ -19,11 +19,11 @@ void AddSelectionHandlerToItem(ListBox* owner, const std::shared_ptr<FrameworkEl
     }
 
     listBoxItem->SetOwner(owner);
-    if (listBoxItem->HasRoutedEventHandler(NeoWPF::Input::Core::MouseUpEvent())) {
+    if (listBoxItem->HasRoutedEventHandler(NeoWPF::Input::Core::PointerReleasedEvent())) {
         return;
     }
 
-    listBoxItem->AddHandler(NeoWPF::Input::Core::MouseUpEvent(), [owner](UIElement* sender, NeoWPF::Input::Core::RoutedEventArgs* args) {
+    listBoxItem->AddHandler(NeoWPF::Input::Core::PointerReleasedEvent(), [owner](UIElement* sender, NeoWPF::Input::Core::RoutedEventArgs* args) {
         if (!sender || !args) {
             return;
         }

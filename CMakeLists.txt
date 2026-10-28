@@ -893,6 +893,9 @@ if(BUILD_TESTING)
         tests/Automated/ToggleSwitchTests.cpp
         tests/Automated/ControlThemeTests.cpp
         tests/Automated/ButtonTests.cpp
+        tests/Automated/ComboBoxTests.cpp
+        tests/Automated/SliderTests.cpp
+        tests/Automated/ThumbTests.cpp
         tests/Automated/CommonConvertersTests.cpp
         tests/Automated/FileDialogTests.cpp
         tests/Automated/TransformTests.cpp
@@ -920,7 +923,9 @@ if(BUILD_TESTING)
         tests/Automated/ThreadingTests.cpp
         tests/Automated/XamlParserTests.cpp
         tests/Automated/XamlElementPropertyTests.cpp
+        tests/Automated/TextBoxTests.cpp
         tests/Automated/ClippingTests.cpp
+        tests/Automated/ScrollViewerTests.cpp
     )
 
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")

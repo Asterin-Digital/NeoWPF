@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Controls/Base/ButtonBase/ButtonBase.h>
 #include <NeoWPF/UI/Styling/State/VisualStateManager.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <NeoWPF/Input/Core/RoutedEvent.h>
 
 namespace NeoWPF::UI {
 
@@ -102,42 +103,61 @@ void ButtonBase::SetCommandTarget(NeoWPF::UI::UIElement* target) noexcept
     m_commandTarget = target;
 }
 
-void ButtonBase::OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args)
+void ButtonBase::OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
 {
-    if (IsEnabled()) {
-        ApplyVisualState("MouseOver", true);
+    if (!args) {
+        return;
     }
-}
 
-void ButtonBase::OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args)
-{
-    m_isPressed = false;
-    if (IsEnabled()) {
-        ApplyVisualState("Normal", true);
-    }
-}
-
-void ButtonBase::OnMouseDown(int x, int y, std::uint32_t buttonState)
-{
-    if (IsEnabled()) {
-        m_isPressed = (buttonState & 0x01) != 0;
-        ApplyVisualState("Pressed", true);
-    }
-}
-
-void ButtonBase::OnMouseUp(int x, int y, std::uint32_t buttonState)
-{
-    if (IsEnabled()) {
-        const bool shouldClick = m_isPressed && ((buttonState & 0x01) == 0);
-        m_isPressed = false;
-        ApplyVisualState("MouseOver", true);
-        if (shouldClick) {
-            RaiseClick();
+    const auto* routedEvent = args->GetRoutedEvent();
+    if (routedEvent == &NeoWPF::Input::Core::PointerEnteredEvent()) {
+        m_isMouseOver = true;
+        if (IsEnabled()) {
+            ApplyVisualState("MouseOver", true);
         }
+        return;
     }
-    else {
+
+    if (routedEvent == &NeoWPF::Input::Core::PointerExitedEvent()) {
+        m_isMouseOver = false;
         m_isPressed = false;
-        ApplyVisualState("Disabled", true);
+        if (IsEnabled()) {
+            ApplyVisualState("Normal", true);
+        }
+        return;
+    }
+
+    auto* pointerArgs = dynamic_cast<NeoWPF::Input::Core::RoutedPointerEventArgs*>(args);
+    if (!pointerArgs) {
+        return;
+    }
+
+    if (routedEvent == &NeoWPF::Input::Core::PointerPressedEvent()) {
+        if (IsEnabled() && pointerArgs->GetChangedButton() == 0x01u) {
+            m_isPressed = true;
+            ApplyVisualState("Pressed", true);
+        }
+        return;
+    }
+
+    if (routedEvent == &NeoWPF::Input::Core::PointerReleasedEvent()) {
+        if (IsEnabled()) {
+            const bool shouldClick = m_isPressed && pointerArgs->GetChangedButton() == 0x01u;
+            m_isPressed = false;
+            ApplyVisualState(m_isMouseOver ? "MouseOver" : "Normal", true);
+            if (shouldClick) {
+                RaiseClick();
+            }
+        } else {
+            m_isPressed = false;
+            ApplyVisualState("Disabled", true);
+        }
+        return;
+    }
+
+    if (routedEvent == &NeoWPF::Input::Core::PointerCanceledEvent()) {
+        m_isPressed = false;
+        ApplyVisualState(m_isMouseOver ? "MouseOver" : "Normal", true);
     }
 }
 

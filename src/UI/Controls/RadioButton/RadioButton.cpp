@@ -5,6 +5,7 @@
 #include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Localization/LocaleOperations.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <algorithm>
 #include <cmath>
 
@@ -274,16 +275,26 @@ void RadioButton::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     Content::ContentControl::BuildRenderCommands(commands);
 }
 
-void RadioButton::OnMouseUp(int x, int y, std::uint32_t buttonState)
+void RadioButton::OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
 {
-    (void)x;
-    (void)y;
+    if (!args) {
+        return;
+    }
+    if (args->GetRoutedEvent() != &NeoWPF::Input::Core::PointerReleasedEvent()) {
+        GroupedToggleBase::OnRoutedEvent(args);
+        return;
+    }
+
+    auto* pointerArgs = dynamic_cast<NeoWPF::Input::Core::RoutedPointerEventArgs*>(args);
+    if (!pointerArgs) {
+        return;
+    }
     if (!IsEnabled()) {
         m_isPressed = false;
         ApplyVisualState("Disabled", false);
         return;
     }
-    const bool shouldActivate = m_isPressed && ((buttonState & 0x01) == 0);
+    const bool shouldActivate = m_isPressed && pointerArgs->GetChangedButton() == 0x01u;
     m_isPressed = false;
     if (shouldActivate) {
         if (!IsChecked()) SetChecked(true);

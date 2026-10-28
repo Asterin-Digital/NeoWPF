@@ -544,6 +544,7 @@ void UIElement::RaiseEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
         if (!element) {
             return;
         }
+        element->OnRoutedEvent(args);
         auto it = element->m_routedEventHandlers.find(eventTypeId);
         if (it != element->m_routedEventHandlers.end())
         {
@@ -610,6 +611,10 @@ void UIElement::RaiseEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
             invokeOnElement(element);
         }
     }
+}
+
+void UIElement::OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs*)
+{
 }
 
 }

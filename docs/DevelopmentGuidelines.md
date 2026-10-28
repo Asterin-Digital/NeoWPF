@@ -68,7 +68,7 @@ Keep files lean and modularize your code. It's not necessary to create a new mod
 
 Use this structure:
 
-```text
+```
 [system]/[subsystem]/[detail]
 ```
 
@@ -82,7 +82,7 @@ If it's worth it, make sure a property is backed up by dependency property inste
 
 Portable code must not contain platform `#if`/`#ifdef` branches or platform headers. Put platform implementations in the corresponding directories:
 
-```text
+```
 include/NeoWPF/Platform/Windows/
 include/NeoWPF/Platform/Linux/
 src/Platform/Windows/
@@ -97,11 +97,11 @@ Do not document source files or internal details. If you need documentation, do 
 
 6. ## Stable Header Files
 
-Keep Visual.h, UIElement.h, and FrameworkElement.h stable. Do not constantly modify them unless you have a good reason to do so.
+Avoid needless churn in Visual.h, UIElement.h, and FrameworkElement.h, but modify them when architecture or behavior warrants it. Header stability does not mean preserving APIs that should change.
 
 7. ## Legacy Code
 
-NeoWPF is still young; we recommend not leaving any legacy code or preserving an old way of doing something unless lots of things use that API. That also depends - if it's internal code using that API, do not preserve it; simply do a refactor. If it's user code instead, you should gradually deprecate that API and in the end remove it unless there is a reasonable decision to keep said code and it does not make the architecture worse.
+NeoWPF is currently a private, greenfield project. Do not preserve old APIs or behavior, add compatibility shims, or stage removals solely for backward compatibility. Make breaking changes directly when they improve the architecture or implementation.
 
 8. ## NeoWPF Dependencies
 
@@ -123,3 +123,17 @@ A contract meant to abstract away platform-specific logic, or desktop vs. mobile
 11. ## Desktop And Mobile
 
 This applies to any part of NeoWPF. Anything that deals with desktop or mobile-specific logic must account for both platforms unless the feature is logically platform-specific. Code must not assume that a feature is exclusive to desktop or mobile, and must implement a capability mechanism if a feature is unavailable on a platform.
+
+12. ## State And Resource Ownership
+
+Every object must have a clear owner and lifetime. When introducing state, resources, callbacks, or subscriptions, determine who owns them, how long they remain valid, and how they are released.
+
+- Use the existing ownership conventions and smart pointer types instead of introducing new ownership mechanisms without a good reason.
+- Do not retain raw pointers or references to objects beyond their guaranteed lifetime.
+- Unsubscribe from events and notifications when the owning object no longer needs them, especially when subscriptions can outlive the subscriber.
+- Release platform resources, rendering resources, and other acquired resources through the appropriate existing lifecycle mechanisms.
+- Avoid duplicating state that can already be obtained reliably from an existing source of truth.
+- Ensure that asynchronous operations and deferred callbacks cannot access destroyed objects or apply stale results.
+- When ownership or lifetime requirements are unclear, establish them explicitly before implementing the feature.
+
+Resource cleanup and state transitions must remain correct across normal execution, early returns, failures, and object destruction.

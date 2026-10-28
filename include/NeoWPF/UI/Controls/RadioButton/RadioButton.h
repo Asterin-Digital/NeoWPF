@@ -16,8 +16,6 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
 #include <cstddef>
 
-namespace NeoWPF::Input::Core { class MouseEventArgs; }
-
 namespace NeoWPF::UI {
 
 class RadioButtonTemplate;
@@ -69,9 +67,19 @@ public:
     void Measure(double availableWidth, double availableHeight) override;
     void Arrange(double finalWidth, double finalHeight) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
-    void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
 
 protected:
+    /*
+        @summary
+        Handles routed input for radio button interaction.
+
+        @param args
+        The routed event arguments.
+
+        @internal
+    */
+    void OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args) override;
+
     void OnVisualStateApplied(const std::string& stateName) override;
     bool IsGroupedPeer(const Visual* visual) const noexcept override;
 

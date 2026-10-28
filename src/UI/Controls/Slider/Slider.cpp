@@ -3,6 +3,7 @@
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/Input/Keyboard.h>
 #include <NeoWPF/Input/Core/Events.h>
+#include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/UI/Controls/Thumb/Thumb.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
@@ -154,26 +155,39 @@ void Slider::OnInitialize()
     }
 }
 
-void Slider::OnMouseDown(int x, int y, std::uint32_t buttonState)
+void Slider::OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args)
 {
-    if ((buttonState & 0x01u) == 0 || !IsInteractable()) {
+    if (!args) {
         return;
     }
 
-    Focus();
-    double absoluteX = 0.0;
-    double absoluteY = 0.0;
-    GetAbsolutePosition(absoluteX, absoluteY);
-    SetValue(ValueFromPosition(x - absoluteX, y - absoluteY));
-}
+    auto* keyboardArgs = dynamic_cast<NeoWPF::Input::Core::RoutedKeyboardEventArgs*>(args);
+    auto* pointerArgs = dynamic_cast<NeoWPF::Input::Core::RoutedPointerEventArgs*>(args);
+    if (pointerArgs && args->GetRoutedEvent() == &NeoWPF::Input::Core::PointerPressedEvent()) {
+        if (pointerArgs->GetChangedButton() != 0x01u || !IsInteractable()) {
+            return;
+        }
 
-void Slider::OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args)
-{
-    if (!args || !args->IsKeyDown() || !IsInteractable()) {
+        Focus();
+        const auto thumb = std::dynamic_pointer_cast<Thumb>(FindTemplateChild("PART_Thumb"));
+        if (thumb && args->GetOriginalSource() == thumb.get()) {
+            return;
+        }
+
+        double absoluteX = 0.0;
+        double absoluteY = 0.0;
+        GetAbsolutePosition(absoluteX, absoluteY);
+        SetValue(ValueFromPosition(pointerArgs->GetX() - absoluteX,
+                                   pointerArgs->GetY() - absoluteY));
         return;
     }
 
-    const auto key = static_cast<NeoWPF::Input::Key>(args->GetKeyCode());
+    if (!keyboardArgs || args->GetRoutedEvent() != &NeoWPF::Input::Core::KeyDownEvent() ||
+        !keyboardArgs->IsKeyDown() || !IsInteractable()) {
+        return;
+    }
+
+    const auto key = static_cast<NeoWPF::Input::Key>(keyboardArgs->GetKeyCode());
     const bool isVertical = m_orientation == Orientation::Vertical;
     const bool increaseKey = isVertical ? key == NeoWPF::Input::Key::Up : key == NeoWPF::Input::Key::Right;
     const bool decreaseKey = isVertical ? key == NeoWPF::Input::Key::Down : key == NeoWPF::Input::Key::Left;

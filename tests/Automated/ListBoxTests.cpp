@@ -141,7 +141,7 @@ TEST(ListBoxTests, SelectionSyncsExistingContainerItems)
     EXPECT_FALSE(second->GetIsSelected());
 }
 
-TEST(ListBoxTests, RoutedMouseUpEventSelectsTheItem)
+TEST(ListBoxTests, RoutedPointerReleaseSelectsTheItem)
 {
     NeoWPF::UI::ListBox listBox;
     auto clickedItem = std::make_shared<NeoWPF::UI::ListBoxItem>();
@@ -149,8 +149,14 @@ TEST(ListBoxTests, RoutedMouseUpEventSelectsTheItem)
 
     listBox.AddItem(clickedItem);
 
-    NeoWPF::Input::InputManager::GetInstance().SetRootElement(&listBox);
-    NeoWPF::Input::InputManager::GetInstance().ClickAt(clickedItem.get(), 0, 0);
+    NeoWPF::Input::Core::PointerEventArgs packet(
+        1, NeoWPF::Input::Core::PointerDeviceType::Mouse,
+        NeoWPF::Input::Core::PointerPhase::Up, 0.0, 0.0, 0, 0x01u);
+    NeoWPF::Input::Core::RoutedPointerEventArgs args(
+        NeoWPF::Input::Core::PointerReleasedEvent(), packet);
+    args.SetSource(clickedItem.get());
+    args.SetOriginalSource(clickedItem.get());
+    clickedItem->RaiseEvent(&args);
 
     EXPECT_TRUE(listBox.GetSelectedItem().has_value());
     EXPECT_TRUE(NeoWPF::UI::Properties::ValuesEqual(listBox.GetSelectedItem(), std::string("clicked")));

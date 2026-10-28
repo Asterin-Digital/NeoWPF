@@ -17,12 +17,6 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 
-namespace NeoWPF::Input::Core
-{
-    class MouseEventArgs;
-    class KeyboardEventArgs;
-}
-
 namespace NeoWPF::UI::Styling {
     class Style;
 }

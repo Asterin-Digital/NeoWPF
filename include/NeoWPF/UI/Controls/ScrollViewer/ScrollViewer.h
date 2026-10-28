@@ -177,14 +177,15 @@ public:
 
     /*
         @summary
-        Handles mouse input for scrolling and interaction.
+        Handles routed pointer input for scrolling and interaction.
 
         @param args
-        The mouse event arguments.
+        The routed event arguments.
 
         @internal
     */
-    void OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args) override;
+protected:
+    void OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args) override;
 
 private:
     void InitializeScrollBars() noexcept;

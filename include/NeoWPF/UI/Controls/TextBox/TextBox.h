@@ -425,35 +425,14 @@ protected:
 
     /*
         @summary
-        Mouse-down handler (used for caret placement and selection).
+        Handles routed input for caret placement, scrolling, and editing.
+
+        @param args
+        The routed event arguments.
 
         @internal
     */
-    void OnMouseDown(int x, int y, std::uint32_t buttonState) override;
-
-    /*
-        @summary
-        Ends any active scrollbar drag interaction when is released
-
-        @internal
-    */
-    void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
-
-    /*
-        @summary
-        Handles mouse movement and wheel input for scrolling when the text overflows.
-
-        @internal
-    */
-    void OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args) override;
-
-    /*
-        @summary
-        Keyboard input handler (text input and navigation).
-
-        @internal
-    */
-    void OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args) override;
+    void OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args) override;
 
     /*
         @summary

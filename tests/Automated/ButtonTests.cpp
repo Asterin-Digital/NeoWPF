@@ -3,6 +3,8 @@
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Input/Command.h>
+#include <NeoWPF/Input/Core/RoutedEvent.h>
+#include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
@@ -15,6 +17,21 @@
 #include <string>
 
 namespace {
+
+void RaisePointerEvent(NeoWPF::UI::UIElement& element,
+                       const NeoWPF::Input::Core::RoutedEvent& routedEvent,
+                       NeoWPF::Input::Core::PointerPhase phase,
+                       std::uint32_t changedButton = 0,
+                       std::uint32_t buttons = 0)
+{
+    NeoWPF::Input::Core::PointerEventArgs packet(
+        1, NeoWPF::Input::Core::PointerDeviceType::Mouse, phase,
+        10.0, 10.0, buttons, changedButton);
+    NeoWPF::Input::Core::RoutedPointerEventArgs args(routedEvent, packet);
+    args.SetSource(&element);
+    args.SetOriginalSource(&element);
+    element.RaiseEvent(&args);
+}
 
 class ButtonTests : public ::testing::Test {
 protected:
@@ -320,19 +337,22 @@ TEST_F(ButtonTests, VisualStatesProduceDeterministicStateColors)
     ASSERT_TRUE(themeManager.TryGetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::Accent, accent));
     ASSERT_TRUE(themeManager.TryGetPaletteBrush(NeoWPF::Core::ApplicationThemes::PaletteBrush::AccentPressed, pressed));
 
-    button->OnMouseEnter(nullptr);
+    RaisePointerEvent(*button, NeoWPF::Input::Core::PointerEnteredEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Enter);
     NeoWPF::Rendering::CommandList mouseOverCommands;
     button->BuildRenderCommands(mouseOverCommands);
     EXPECT_TRUE(ContainsRoundedRectColor(mouseOverCommands, GetSolidBrushColor(hover)));
     EXPECT_TRUE(ContainsRoundedRectColor(mouseOverCommands, GetSolidBrushColor(accent)));
 
-    button->OnMouseDown(10, 10, 0x01u);
+    RaisePointerEvent(*button, NeoWPF::Input::Core::PointerPressedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Down, 0x01u, 0x01u);
     NeoWPF::Rendering::CommandList pressedCommands;
     button->BuildRenderCommands(pressedCommands);
     EXPECT_TRUE(ContainsRoundedRectColor(pressedCommands, GetSolidBrushColor(pressed)));
     EXPECT_TRUE(ContainsRoundedRectColor(pressedCommands, GetSolidBrushColor(accent)));
 
-    button->OnMouseLeave(nullptr);
+    RaisePointerEvent(*button, NeoWPF::Input::Core::PointerExitedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Leave);
     NeoWPF::Rendering::CommandList normalCommands;
     button->BuildRenderCommands(normalCommands);
     EXPECT_TRUE(ContainsRoundedRectColor(normalCommands, GetSolidBrushColor(button->GetBackgroundBrush())));
@@ -349,14 +369,64 @@ TEST_F(ButtonTests, DisabledButtonDoesNotRaiseClickOrExecuteCommand)
     button.SetCommandParameter(std::wstring(L"disabled"));
     button.SetEnabled(false);
 
-    button.OnMouseDown(0, 0, 0x01u);
-    button.OnMouseUp(0, 0, 0u);
+    RaisePointerEvent(button, NeoWPF::Input::Core::PointerPressedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Down, 0x01u, 0x01u);
+    RaisePointerEvent(button, NeoWPF::Input::Core::PointerReleasedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Up, 0x01u);
 
     EXPECT_EQ(clickCount, 0);
     EXPECT_EQ(command->executeCount, 0);
 }
 
-TEST_F(ButtonTests, MouseClickRaisesClickAndExecutesCommandWithParameter)
+TEST_F(ButtonTests, LeavingNestedContentCancelsPendingPointerClick)
+{
+    auto button = std::make_shared<NeoWPF::UI::Button>(L"Nested content");
+    auto content = std::make_shared<NeoWPF::UI::Button>(L"Nested target");
+    button->SetWidth(120.0);
+    button->SetHeight(40.0);
+    button->ApplyTemplate();
+    button->Initialize();
+    button->Measure(120.0, 40.0);
+    button->Arrange(120.0, 40.0);
+    button->AddVisualChild(content);
+    content->Measure(60.0, 20.0);
+    content->Arrange(60.0, 20.0);
+
+    double contentX = 0.0;
+    double contentY = 0.0;
+    content->GetAbsolutePosition(contentX, contentY);
+    const double insideX = contentX + content->GetFinalWidth() / 2.0;
+    const double insideY = contentY + content->GetFinalHeight() / 2.0;
+    int clickCount = 0;
+    button->Click += [&clickCount] { ++clickCount; };
+
+    auto& input = NeoWPF::Input::InputManager::GetInstance();
+    input.NotifyVisualTreeReplaced();
+    input.SetRootElement(button.get());
+
+    const auto submit = [&input](NeoWPF::Input::Core::PointerPhase phase,
+                                 double x, double y,
+                                 std::uint32_t changedButton = 0,
+                                 std::uint32_t buttons = 0) {
+        const NeoWPF::Input::Core::PointerEventArgs args(
+            1, NeoWPF::Input::Core::PointerDeviceType::Mouse, phase,
+            x, y, buttons, changedButton);
+        input.SubmitPointerEvent(args);
+    };
+
+    auto* hitTarget = input.HitTest(static_cast<int>(insideX), static_cast<int>(insideY));
+    ASSERT_EQ(hitTarget, content.get());
+    submit(NeoWPF::Input::Core::PointerPhase::Move, insideX, insideY);
+    submit(NeoWPF::Input::Core::PointerPhase::Down, insideX, insideY, 0x01u, 0x01u);
+    submit(NeoWPF::Input::Core::PointerPhase::Move, 150.0, insideY);
+    submit(NeoWPF::Input::Core::PointerPhase::Move, insideX, insideY);
+    submit(NeoWPF::Input::Core::PointerPhase::Up, insideX, insideY, 0x01u);
+
+    EXPECT_EQ(clickCount, 0);
+    input.NotifyVisualTreeReplaced();
+}
+
+TEST_F(ButtonTests, PointerClickRaisesClickAndExecutesCommandWithParameter)
 {
     NeoWPF::UI::Button button;
     int clickCount = 0;
@@ -365,8 +435,10 @@ TEST_F(ButtonTests, MouseClickRaisesClickAndExecutesCommandWithParameter)
     button.SetCommand(command);
     button.SetCommandParameter(std::wstring(L"save"));
 
-    button.OnMouseDown(0, 0, 0x01u);
-    button.OnMouseUp(0, 0, 0u);
+    RaisePointerEvent(button, NeoWPF::Input::Core::PointerPressedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Down, 0x01u, 0x01u);
+    RaisePointerEvent(button, NeoWPF::Input::Core::PointerReleasedEvent(),
+                      NeoWPF::Input::Core::PointerPhase::Up, 0x01u);
 
     EXPECT_EQ(clickCount, 1);
     EXPECT_EQ(command->executeCount, 1);

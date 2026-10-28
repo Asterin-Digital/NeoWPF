@@ -114,6 +114,21 @@ bool MatchesPathPattern(std::string_view path, std::string_view pattern)
     return false;
 }
 
+bool HasPathComponent(std::string_view path, std::string_view component)
+{
+    std::size_t start = 0;
+    while (start < path.size())
+    {
+        const auto end = path.find('/', start);
+        const auto current = path.substr(start,
+            end == std::string_view::npos ? path.size() - start : end - start);
+        if (current == component) return true;
+        if (end == std::string_view::npos) break;
+        start = end + 1;
+    }
+    return false;
+}
+
 PlatformSet DefaultPlatforms()
 {
     return {"windows", "linux", "android"};
@@ -144,11 +159,8 @@ PlatformSet BuiltInHeaderPlatforms(std::string_view path)
         "arpa/inet.h", "netinet/in.h", "sys/socket.h", "sys/stat.h", "sys/types.h",
         "sys/wait.h", "sys/mman.h",
     };
-    constexpr std::array linuxHeaders{
-        "linux/", "asm/", "sys/epoll.h", "sys/eventfd.h", "sys/inotify.h",
-    };
     constexpr std::array androidHeaders{
-        "android/", "android_native_app_glue.h", "jni.h",
+        "android_native_app_glue.h", "jni.h",
     };
     for (const auto* header : windowsHeaders)
     {
@@ -158,14 +170,15 @@ PlatformSet BuiltInHeaderPlatforms(std::string_view path)
     {
         if (path.ends_with(header)) return {"linux", "android"};
     }
-    for (const auto* header : linuxHeaders)
+    if (HasPathComponent(path, "linux") || HasPathComponent(path, "asm"))
     {
-        if (path.find(header) != std::string_view::npos) return {"linux"};
+        return {"linux"};
     }
     for (const auto* header : androidHeaders)
     {
         if (path.find(header) != std::string_view::npos) return {"android"};
     }
+    if (HasPathComponent(path, "android")) return {"android"};
     if (path.find("/d3d") != std::string_view::npos ||
         path.find("/dxgi") != std::string_view::npos ||
         path.find("/wrl/") != std::string_view::npos ||

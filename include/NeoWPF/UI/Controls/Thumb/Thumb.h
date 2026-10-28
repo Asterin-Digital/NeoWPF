@@ -26,9 +26,20 @@ public:
     void SetDragging(bool dragging) noexcept { m_isDragging = dragging; }
     void SetBounds(int x, int y, int width, int height) noexcept;
     bool IsInteractable() const noexcept override;
-    void OnMouseDown(int x, int y, std::uint32_t buttonState) override;
-    void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
-    void OnMouseInput(NeoWPF::Input::Core::MouseEventArgs* args) override;
+
+protected:
+    /*
+        @summary
+        Handles routed input for thumb dragging.
+
+        @param args
+        The routed event arguments.
+
+        @internal
+    */
+    void OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args) override;
+
+public:
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
     NeoWPF::Core::Event<int> DragStarted;

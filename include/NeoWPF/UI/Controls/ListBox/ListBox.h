@@ -103,7 +103,6 @@ public:
     */
     bool GetIsSelected() const noexcept;
 
-    void OnMouseUp(int x, int y, std::uint32_t buttonState) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
 protected:

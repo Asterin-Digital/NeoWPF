@@ -46,8 +46,17 @@ public:
     */
     bool GetIsHighlighted() const noexcept;
 
-    void OnMouseEnter(NeoWPF::Input::Core::MouseEventArgs* args) override;
-    void OnMouseLeave(NeoWPF::Input::Core::MouseEventArgs* args) override;
+protected:
+    /*
+        @summary
+        Handles routed input for the combo box item.
+
+        @param args
+        The routed event arguments.
+
+        @internal
+    */
+    void OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args) override;
 
 private:
     void OnSelectionStateChanged() override;

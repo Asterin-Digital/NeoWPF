@@ -77,11 +77,6 @@ bool ListBoxItem::GetIsSelected() const noexcept
     }
 }
 
-void ListBoxItem::OnMouseUp(int x, int y, std::uint32_t buttonState)
-{
-    Content::ContentControl::OnMouseUp(x, y, buttonState);
-}
-
 void ListBoxItem::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 {
     const auto before = commands.commands.size();

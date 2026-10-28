@@ -44,6 +44,12 @@ public:
 
     /*
         @summary
+        Returns whether the slider can receive user input.
+    */
+    bool IsInteractable() const noexcept override { return IsEnabled(); }
+
+    /*
+        @summary
         Sets the direction in which the slider track is laid out.
 
         @param orientation
@@ -251,25 +257,19 @@ public:
     */
     void OnInitialize() override;
 
+protected:
     /*
         @summary
-        Handles a mouse press on the slider.
+        Handles routed keyboard and pointer input for the slider.
 
-        @param x
-        Mouse position on the window's horizontal axis.
-
-        @param y
-        Mouse position on the window's vertical axis.
-
-        @param buttonState
-        Current mouse button state flags.
+        @param args
+        The routed event arguments.
 
         @internal
     */
-    void OnMouseDown(int x, int y, std::uint32_t buttonState) override;
+    void OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args) override;
 
-    void OnKeyboardInput(NeoWPF::Input::Core::KeyboardEventArgs* args) override;
-
+public:
     int GetOrientationValue() const noexcept;
     void SetOrientationValue(int orientation) noexcept;
     static const NeoWPF::UI::Properties::DependencyProperty& GetOrientationProperty();

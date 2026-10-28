@@ -442,12 +442,16 @@ TEST(EventTriggerTests, AttachedTriggerInvokesOnMatchingRoutedEvent)
     };
 
     auto action = std::make_shared<CountingAction>();
-    auto trigger = std::make_shared<EventTrigger>("MouseEnter");
+    auto trigger = std::make_shared<EventTrigger>("PointerEntered");
     trigger->AddAction(action);
 
     element.AddEventTrigger(trigger);
 
-    NeoWPF::Input::Core::RoutedMouseEventArgs args(NeoWPF::Input::Core::MouseEnterEvent(), 0, 0, 0);
+    NeoWPF::Input::Core::PointerEventArgs packet(
+        1, NeoWPF::Input::Core::PointerDeviceType::Mouse,
+        NeoWPF::Input::Core::PointerPhase::Enter, 0.0, 0.0);
+    NeoWPF::Input::Core::RoutedPointerEventArgs args(
+        NeoWPF::Input::Core::PointerEnteredEvent(), packet);
     element.RaiseEvent(&args);
 
     EXPECT_EQ(action->invokeCount, 1);
@@ -465,13 +469,13 @@ TEST(EventTriggerTests, AttachedTriggerInvokesOnMatchingBubblingRoutedEvent)
     };
 
     auto action = std::make_shared<CountingAction>();
-    auto trigger = std::make_shared<EventTrigger>("MouseEnter");
+    auto trigger = std::make_shared<EventTrigger>("PointerMoved");
     trigger->AddAction(action);
 
     element.AddEventTrigger(trigger);
 
     NeoWPF::Input::Core::RoutedEventArgs args(NeoWPF::Input::Core::RoutingStrategy::Bubble);
-    args.SetRoutedEvent(&NeoWPF::Input::Core::MouseEnterEvent());
+    args.SetRoutedEvent(&NeoWPF::Input::Core::PointerMovedEvent());
     element.RaiseEvent(&args);
 
     EXPECT_EQ(action->invokeCount, 1);

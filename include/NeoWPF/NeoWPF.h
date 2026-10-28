@@ -367,18 +367,24 @@ namespace NeoWPF {
 
     using Input::InputManager;
 
-    using Input::Mouse;
-
-    using Input::MouseButtonState;
-
     using Input::Keyboard;
+
+    using Input::Key;
 
     using Input::KeyState;
 
     namespace Input {
-        using ::NeoWPF::Input::Core::MouseEventArgs;
+        using ::NeoWPF::Input::Key;
+
+        using ::NeoWPF::Input::Core::InputEventArgs;
 
         using ::NeoWPF::Input::Core::KeyboardEventArgs;
+
+        using ::NeoWPF::Input::Core::PointerEventArgs;
+
+        using ::NeoWPF::Input::Core::PointerDeviceType;
+
+        using ::NeoWPF::Input::Core::PointerPhase;
 
         using ::NeoWPF::Input::Core::RoutedEventArgs;
 
@@ -386,43 +392,33 @@ namespace NeoWPF {
 
         using ::NeoWPF::Input::Core::RoutingStrategy;
 
-        using ::NeoWPF::Input::Core::MouseEventHandler;
-
         using ::NeoWPF::Input::Core::KeyboardEventHandler;
 
         using ::NeoWPF::Input::Core::RoutedEventHandler;
 
-        using ::NeoWPF::Input::Core::RoutedMouseEventArgs;
+        using ::NeoWPF::Input::Core::RoutedPointerEventArgs;
 
         using ::NeoWPF::Input::Core::RoutedKeyboardEventArgs;
 
-        using ::NeoWPF::Input::Core::PreviewMouseDownEvent;
+        using ::NeoWPF::Input::Core::PreviewPointerPressedEvent;
 
-        using ::NeoWPF::Input::Core::PreviewMouseUpEvent;
+        using ::NeoWPF::Input::Core::PointerPressedEvent;
 
-        using ::NeoWPF::Input::Core::PreviewMouseMoveEvent;
+        using ::NeoWPF::Input::Core::PointerMovedEvent;
 
-        using ::NeoWPF::Input::Core::PreviewMouseWheelEvent;
+        using ::NeoWPF::Input::Core::PointerReleasedEvent;
 
-        using ::NeoWPF::Input::Core::MouseDownEvent;
+        using ::NeoWPF::Input::Core::PointerEnteredEvent;
 
-        using ::NeoWPF::Input::Core::MouseUpEvent;
+        using ::NeoWPF::Input::Core::PointerExitedEvent;
 
-        using ::NeoWPF::Input::Core::MouseMoveEvent;
+        using ::NeoWPF::Input::Core::PointerCanceledEvent;
 
-        using ::NeoWPF::Input::Mouse;
-
-        using ::NeoWPF::Input::MouseButtonState;
+        using ::NeoWPF::Input::Core::PointerWheelEvent;
 
         using ::NeoWPF::Input::Keyboard;
 
         using ::NeoWPF::Input::KeyState;
-
-        using ::NeoWPF::Input::Core::MouseWheelEvent;
-
-        using ::NeoWPF::Input::Core::MouseEnterEvent;
-
-        using ::NeoWPF::Input::Core::MouseLeaveEvent;
 
         using ::NeoWPF::Input::Core::PreviewKeyDownEvent;
 

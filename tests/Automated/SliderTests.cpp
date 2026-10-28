@@ -1,12 +1,37 @@
 #include <gtest/gtest.h>
 
+#include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/UI/Controls/Slider/Slider.h>
+#include <NeoWPF/UI/Controls/Thumb/Thumb.h>
+
+#include <memory>
 
 namespace {
+
+void RaisePointerPress(NeoWPF::UI::Slider& slider,
+                       NeoWPF::UI::UIElement* originalSource,
+                       double x,
+                       double y)
+{
+    const NeoWPF::Input::Core::PointerEventArgs packet(
+        1, NeoWPF::Input::Core::PointerDeviceType::Mouse,
+        NeoWPF::Input::Core::PointerPhase::Down,
+        x, y, 0x01u, 0x01u);
+    NeoWPF::Input::Core::RoutedPointerEventArgs args(
+        NeoWPF::Input::Core::PointerPressedEvent(), packet);
+    args.SetSource(originalSource);
+    args.SetOriginalSource(originalSource);
+    slider.RaiseEvent(&args);
+}
 
 TEST(SliderTests, UpdatesRangeAndRaisesValueChanged)
 {
     NeoWPF::UI::Slider slider;
+    slider.SetMinimum(10.0);
+    slider.SetMaximum(90.0);
+    slider.SetSmallChange(2.0);
+    slider.SetLargeChange(20.0);
+
     int valueChangedCount = 0;
     double lastValue = -1.0;
 
@@ -15,10 +40,6 @@ TEST(SliderTests, UpdatesRangeAndRaisesValueChanged)
         lastValue = value;
     };
 
-    slider.SetMinimum(10.0);
-    slider.SetMaximum(90.0);
-    slider.SetSmallChange(2.0);
-    slider.SetLargeChange(20.0);
     slider.SetValue(42.5);
 
     EXPECT_DOUBLE_EQ(slider.GetMinimum(), 10.0);
@@ -105,4 +126,26 @@ TEST(SliderTests, HandlesDegenerateRange)
     EXPECT_DOUBLE_EQ(slider.GetValue(), 50.0);
 }
 
-} // namespace
+TEST(SliderTests, PressingThumbDoesNotJumpValueButTrackPressDoes)
+{
+    NeoWPF::UI::Slider slider;
+    slider.SetWidth(200.0);
+    slider.SetHeight(24.0);
+    slider.SetValue(50.0);
+    slider.ApplyTemplate();
+    slider.Initialize();
+    slider.Measure(200.0, 24.0);
+    slider.Arrange(200.0, 24.0);
+
+    const auto thumb = std::dynamic_pointer_cast<NeoWPF::UI::Thumb>(
+        slider.FindTemplateChild("PART_Thumb"));
+    ASSERT_NE(thumb, nullptr);
+
+    RaisePointerPress(slider, thumb.get(), 180.0, 12.0);
+    EXPECT_DOUBLE_EQ(slider.GetValue(), 50.0);
+
+    RaisePointerPress(slider, &slider, 180.0, 12.0);
+    EXPECT_GT(slider.GetValue(), 50.0);
+}
+
+}

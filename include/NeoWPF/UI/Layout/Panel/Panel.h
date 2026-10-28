@@ -8,11 +8,6 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Core/Element/Control.h>
 #include <NeoWPF/Rendering/Renderer.h>
 
-namespace NeoWPF::Input::Core
-{
-    class MouseEventArgs;
-}
-
 namespace NeoWPF::UI {
 
 class Panel : public Control {
