@@ -217,11 +217,11 @@ namespace NeoWPF::UI {
             return;
         }
 
+        AddChild(child);
         SetRow(child.get(), row);
         SetColumn(child.get(), column);
         SetRowSpan(child.get(), rowSpan);
         SetColumnSpan(child.get(), columnSpan);
-        AddChild(child);
     }
 
     void Grid::Measure(double availableWidth, double availableHeight)

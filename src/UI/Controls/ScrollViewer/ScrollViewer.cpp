@@ -6,6 +6,13 @@
 #include <algorithm>
 #include <cmath>
 
+namespace {
+    /* @note
+    *  Maybe we should unify what unbounded means in one place these constants are getting pretty scattered
+    */
+constexpr double kUnboundedMeasure = 1000000.0; 
+}
+
 namespace NeoWPF::UI {
 
 ScrollViewer::ScrollViewer()
@@ -152,7 +159,13 @@ void ScrollViewer::Measure(double availableWidth, double availableHeight)
     UpdateScrollBarState();
     UpdateScrollBarVisibility();
 
-    SetDesiredSize(m_viewportWidth, m_viewportHeight);
+    const double desiredWidth = explicitW <= 0.0 && availableWidth >= kUnboundedMeasure
+        ? m_contentWidth
+        : m_viewportWidth;
+    const double desiredHeight = explicitH <= 0.0 && availableHeight >= kUnboundedMeasure
+        ? m_contentHeight
+        : m_viewportHeight;
+    SetDesiredSize(desiredWidth, desiredHeight);
 }
 
 void ScrollViewer::Arrange(double finalWidth, double finalHeight)
