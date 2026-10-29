@@ -23,6 +23,7 @@ static std::atomic<uint64_t> s_logCounter{0};
 static std::array<std::atomic<uint8_t>, static_cast<size_t>(Category::Count)> s_levels{};
 static std::array<std::atomic<bool>, static_cast<size_t>(Category::Count)> s_levelOverrides{};
 static std::atomic<uint8_t> s_globalLevel{static_cast<uint8_t>(Level::Off)};
+static std::atomic<OutputHandler> s_outputHandler{nullptr};
 
 struct LoggerState {
     std::mutex mutex;
@@ -40,6 +41,11 @@ static LoggerState& GetLoggerState()
 
 static void WriteOutput(std::string message)
 {
+    if (const auto handler = s_outputHandler.load(std::memory_order_acquire)) {
+        handler(message.c_str());
+        return;
+    }
+
 // neolint-disable-next-line neowpf-platform-code-location: a logger contract is not worth adding for this small Windows-only block.
 #ifdef _WIN32
     // neolint-disable-next-line neowpf-platform-dependency-isolation: Windows console output is guarded by _WIN32.
@@ -59,6 +65,11 @@ static void WriteOutput(std::string message)
     fputs(message.c_str(), stderr);
     fflush(stderr);
 #endif
+}
+
+void SetOutputHandler(OutputHandler handler) noexcept
+{
+    s_outputHandler.store(handler, std::memory_order_release);
 }
 
 static void EnsureWorker()

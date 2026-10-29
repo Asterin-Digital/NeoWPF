@@ -958,6 +958,7 @@ if(BUILD_TESTING)
         tests/Automated/EventTests.cpp
         tests/Automated/RoutedEventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
+        tests/Automated/DiagnosticsTests.cpp
         tests/Automated/BrushTests.cpp
         tests/Automated/CheckboxTests.cpp
         tests/Automated/ToggleSwitchTests.cpp

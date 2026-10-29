@@ -17,6 +17,9 @@ reports/
 # Junk
 __pycache__/
 *.vcxproj.user
+/samples/Android/.gradle/
+/samples/Android/app/.cxx/
+/samples/Android/local.properties
 /NeoWPF/
 paths.neo
 tools/
