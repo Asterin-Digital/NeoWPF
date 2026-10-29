@@ -43,6 +43,10 @@ public:
     */
     void Clear();
 
+    /*
+        @summary
+        Returns the triggers in the collection.
+    */
     std::vector<std::shared_ptr<TriggerBase>> GetTriggers() const;
 
 private:

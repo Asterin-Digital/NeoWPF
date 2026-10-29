@@ -44,6 +44,10 @@ public:
     void AddChild(const std::string& targetName,
                   const std::string& targetPropertyName,
                   std::shared_ptr<AnimationTimeline> timeline);
+    /*
+        @summary
+        Returns the animations assigned to the storyboard.
+    */
     const std::vector<StoryboardChild>& GetChildren() const noexcept { return m_children; }
     /*
         @summary

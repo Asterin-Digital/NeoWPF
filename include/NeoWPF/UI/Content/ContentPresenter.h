@@ -24,6 +24,10 @@ namespace NeoWPF::UI::Content {
 */
 class ContentPresenter : public FrameworkElement, public IContentAware {
 public:
+    /*
+        @summary
+        Creates a visual from the supplied content value.
+    */
     using ContentTemplate = std::function<std::shared_ptr<NeoWPF::UI::UIElement>(const std::any&)>;
 
     ContentPresenter();
@@ -63,6 +67,10 @@ public:
         Returns the current content value supplied to the presenter.
     */
     const std::any& GetContent() const noexcept { return m_content; }
+    /*
+        @summary
+        Returns the current content when it is a UI element.
+    */
     std::shared_ptr<NeoWPF::UI::UIElement> GetContentElement() const noexcept { return m_contentElement; }
     /*
         @summary
@@ -104,11 +112,39 @@ public:
         InvalidateVisual();
     }
 
+    /*
+        @summary
+        Measures the presented content using the available layout space.
+
+        @internal
+    */
     void Measure(double availableWidth, double availableHeight) override;
+    /*
+        @summary
+        Arranges the presented content within the final layout size.
+
+        @internal
+    */
     void Arrange(double finalWidth, double finalHeight) override;
+    /*
+        @summary
+        Adds the presented content's drawing operations to a command list.
+
+        @internal
+    */
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
+    /*
+        @summary
+        Reports whether the presenter can receive hit tests.
+
+        @internal
+    */
     bool IsHitTestVisible() const noexcept override { return false; }
+    /*
+        @summary
+        Returns the bounds occupied by the presented content.
+    */
     ContentBounds GetContentBounds() const noexcept override;
 
     /*

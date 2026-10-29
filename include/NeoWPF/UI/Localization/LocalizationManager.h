@@ -17,15 +17,31 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::UI::Localization {
 
+/*
+    @summary
+    Defines how unresolved localization keys are represented.
+*/
 enum class MissingKeyPolicy {
     Marker,
     Empty,
     Key
 };
 
+/*
+    @summary
+    Stores locale tables and resolves localized strings.
+*/
 class LocalizationManager {
 public:
+    /*
+        @summary
+        Returns the localization manager singleton.
+    */
     static LocalizationManager& Get();
+    /*
+        @summary
+        Returns the localization manager singleton.
+    */
     static LocalizationManager& Instance() { return Get(); }
 
     /*
@@ -139,6 +155,12 @@ public:
     */
     std::wstring Resolve(const std::wstring& key) const;
 
+    /*
+        @summary
+        Notifies subscribers that localization state has changed.
+
+        @internal
+    */
     void NotifyLocaleChanged();
 
     /*

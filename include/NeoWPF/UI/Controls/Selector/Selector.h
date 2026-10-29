@@ -79,9 +79,34 @@ public:
     */
     void SetSelectionMode(SelectionMode mode) noexcept;
 
+    /*
+        @summary
+        Reports whether an item is currently selected.
+
+        @param item
+        Item to check.
+    */
     bool IsSelected(const std::any& item) const;
 
 protected:
+    /*
+        @summary
+        Handles a change to the selected item and its index.
+
+        @param oldIndex
+        Previous selected index.
+
+        @param newIndex
+        New selected index.
+
+        @param oldItem
+        Previously selected item.
+
+        @param newItem
+        Newly selected item.
+
+        @internal
+    */
     virtual void OnSelectionChanged(int oldIndex, int newIndex, const std::any& oldItem, const std::any& newItem);
 
 private:

@@ -38,6 +38,10 @@ namespace NeoWPF::Input::Core
 
 namespace NeoWPF::UI::Core {
     class Transform;
+    /*
+        @summary
+        Represents a two-dimensional point.
+    */
     struct Point {
         float X;
         float Y;
@@ -51,6 +55,10 @@ namespace NeoWPF::Input {
 
 namespace NeoWPF::UI {
 
+/*
+    @summary
+    Stores the world-position matrix and rotation data used to render an element.
+*/
 struct WorldRenderTransform {
     NeoWPF::UI::Core::Matrix4 positionMatrix;
     float rotationRadians = 0.0f;
@@ -81,6 +89,10 @@ class EventTrigger;
 
 namespace NeoWPF::UI {
 
+/*
+    @summary
+    Base class for interactive and renderable user-interface elements.
+*/
 class UIElement : public Visual,
                   public Properties::DependencyObject,
                   public NeoWPF::UI::Markup::Xaml::IXamlResourceHost {
@@ -664,6 +676,18 @@ public:
         The resource value.
     */
     bool SetResource(const std::string& key, const std::any& value);
+    /*
+        @summary
+        Stores a named XAML resource on the element.
+
+        @param key
+        Resource key.
+
+        @param value
+        Resource value.
+
+        @internal
+    */
     bool SetXamlResource(const std::string& key, const std::any& value) override {
         return SetResource(key, value);
     }

@@ -79,6 +79,12 @@ public:
     */
     std::vector<Visual*> GetVisualChildren() const;
 
+    /*
+        @summary
+        Returns the descendants of this visual in the visual tree.
+
+        @internal
+    */
     std::vector<Visual*> GetVisualDescendants() const;
 
     /*
@@ -170,6 +176,12 @@ public:
     */
     virtual void OnRemoveVisualChild(Visual* child) {}
 
+    /*
+        @summary
+        Handles a child being added to this visual.
+
+        @internal
+    */
     virtual void OnAddChild(Visual* child) {}
 
     /*
@@ -188,6 +200,12 @@ public:
     */
     bool IsTreeDirty() const noexcept { return m_isTreeDirty; }
 
+    /*
+        @summary
+        Reports whether this visual requires layout.
+
+        @internal
+    */
     bool IsLayoutDirty() const noexcept { return m_isLayoutDirty; }
 
     /*
@@ -198,6 +216,12 @@ public:
     */
     void MarkTreeDirty();
 
+    /*
+        @summary
+        Marks this visual as requiring layout.
+
+        @internal
+    */
     void MarkLayoutDirty();
 
     /*
@@ -208,6 +232,12 @@ public:
     */
     void ClearTreeDirty() noexcept { m_isTreeDirty = false; }
 
+    /*
+        @summary
+        Clears the layout dirty flag.
+
+        @internal
+    */
     void ClearLayoutDirty() noexcept { m_isLayoutDirty = false; }
 
     /*

@@ -39,15 +39,52 @@ namespace NeoWPF::Input::Core
         RoutedEventArgs(RoutingStrategy strategy);
         virtual ~RoutedEventArgs() = default;
 
+        /*
+            @summary
+            Returns the strategy used to route this event.
+        */
         RoutingStrategy GetRoutingStrategy() const { return m_routingStrategy; }
 
+        /*
+            @summary
+            Returns the current source element.
+        */
         NeoWPF::UI::UIElement* GetSource() const { return m_source; }
+        /*
+            @summary
+            Sets the current source element.
+
+            @param source
+            Element currently receiving the event.
+        */
         void SetSource(NeoWPF::UI::UIElement* source) { m_source = source; }
 
+        /*
+            @summary
+            Returns the element that originally raised the event.
+        */
         NeoWPF::UI::UIElement* GetOriginalSource() const { return m_originalSource; }
+        /*
+            @summary
+            Sets the element that originally raised the event.
+
+            @param originalSource
+            Element that raised the event.
+        */
         void SetOriginalSource(NeoWPF::UI::UIElement* originalSource) { m_originalSource = originalSource; }
 
+        /*
+            @summary
+            Returns the routed event descriptor.
+        */
         const RoutedEvent* GetRoutedEvent() const { return m_routedEvent; }
+        /*
+            @summary
+            Assigns the routed event descriptor.
+
+            @param routedEvent
+            Event descriptor to assign.
+        */
         void SetRoutedEvent(const RoutedEvent* routedEvent);
 
     protected:
@@ -103,6 +140,12 @@ namespace NeoWPF::Input::Core
         }
     };
 
+    /*
+        @summary
+        Combines keyboard input data with routed-event state.
+
+        @internal
+    */
     class RoutedKeyboardEventArgs : public KeyboardEventArgs, public RoutedEventArgs
     {
     public:

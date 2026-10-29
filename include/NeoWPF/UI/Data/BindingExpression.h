@@ -64,10 +64,18 @@ public:
     */
     void Refresh();
 
+    /*
+        @summary
+        Returns the dependency property updated by this expression.
+    */
     const Properties::DependencyProperty& GetTargetProperty() const noexcept {
         return m_targetProperty;
     }
 
+    /*
+        @summary
+        Returns the object updated by this expression.
+    */
     Properties::DependencyObject& GetTarget() const noexcept {
         return m_target;
     }

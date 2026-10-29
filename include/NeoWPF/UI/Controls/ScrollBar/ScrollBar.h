@@ -138,9 +138,25 @@ public:
     */
     double GetValue() const noexcept { return RangeBase::GetValue(); }
 
+    /*
+        @summary
+        Decreases the scroll position by one line.
+    */
     void LineUp() noexcept;
+    /*
+        @summary
+        Increases the scroll position by one line.
+    */
     void LineDown() noexcept;
+    /*
+        @summary
+        Decreases the scroll position by one page.
+    */
     void PageUp() noexcept;
+    /*
+        @summary
+        Increases the scroll position by one page.
+    */
     void PageDown() noexcept;
 
     /*
@@ -177,6 +193,12 @@ public:
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
     
+    /*
+        @summary
+        Initializes the scrollbar's template and interaction behavior.
+
+        @internal
+    */
     void OnInitialize() override;
 
     /*
@@ -229,7 +251,19 @@ private:
     void UpdateThumbVisualState() noexcept;
 
 public:
+    /*
+        @summary
+        Returns the orientation value used by markup conversion.
+
+        @internal
+    */
     int GetOrientationValue() const noexcept;
+    /*
+        @summary
+        Sets the orientation value used by markup conversion.
+
+        @internal
+    */
     void SetOrientationValue(int orientation) noexcept;
     static const NeoWPF::UI::Properties::DependencyProperty& GetOrientationProperty();
 
@@ -240,7 +274,10 @@ private:
     double m_viewportSize = 0.0;
     std::size_t m_themeAppliedSubscriptionId = 0;
 };
-
+/*
+    @summary
+    Defines the control template for a scrollbar.
+*/
 class ScrollBarTemplate : public Templates::ControlTemplate {
 public:
     ScrollBarTemplate();

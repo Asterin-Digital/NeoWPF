@@ -28,8 +28,26 @@ public:
 
     virtual ~EasingFunctionBase() = default;
 
+    /*
+        @summary
+        Applies the configured easing mode to normalized time.
+
+        @param normalizedTime
+        Input time between zero and one.
+    */
     double Ease(double normalizedTime) const noexcept;
+    /*
+        @summary
+        Returns the configured easing mode.
+    */
     EasingMode GetEasingMode() const noexcept { return m_mode; }
+    /*
+        @summary
+        Sets the easing mode.
+
+        @param mode
+        Easing mode to apply.
+    */
     void SetEasingMode(EasingMode mode) noexcept { m_mode = mode; }
 
 protected:

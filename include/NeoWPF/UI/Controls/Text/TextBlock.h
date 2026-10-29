@@ -248,7 +248,18 @@ public:
     */
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
+    /*
+        @summary
+        Reports whether the text block participates in hit testing.
+    */
     bool IsHitTestVisible() const noexcept override { return m_isHitTestVisible; }
+    /*
+        @summary
+        Sets whether the text block participates in hit testing.
+
+        @param visible
+        True to enable hit testing.
+    */
     void SetHitTestVisible(bool visible) noexcept { m_isHitTestVisible = visible; }
 
     /*

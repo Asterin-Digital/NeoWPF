@@ -10,6 +10,10 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::Input::Core
 {
+    /*
+        @summary
+        Identifies the pointer device that produced an input packet.
+    */
     enum class PointerDeviceType : std::uint8_t
     {
         Mouse,
@@ -17,6 +21,10 @@ namespace NeoWPF::Input::Core
         Pen,
     };
 
+    /*
+        @summary
+        Identifies the stage of a pointer input packet.
+    */
     enum class PointerPhase : std::uint8_t
     {
         Enter,
@@ -38,9 +46,24 @@ namespace NeoWPF::Input::Core
         InputEventArgs();
         virtual ~InputEventArgs() = default;
 
+        /*
+            @summary
+            Reports whether the event has been handled.
+        */
         bool IsHandled() const { return m_handled; }
+        /*
+            @summary
+            Sets whether the event has been handled.
+
+            @param handled
+            True when event processing is complete.
+        */
         void SetHandled(bool handled) { m_handled = handled; }
 
+        /*
+            @summary
+            Returns the event timestamp in clock ticks.
+        */
         std::uint64_t GetTimestamp() const { return m_timestamp; }
 
     protected:
@@ -68,14 +91,68 @@ namespace NeoWPF::Input::Core
                          std::uint32_t changedButton = 0, float pressure = 0.0f,
                          double wheelDelta = 0.0);
 
+        /*
+            @summary
+            Returns the identifier of the pointer that produced this packet.
+
+            @internal
+        */
         std::uint32_t GetPointerId() const noexcept { return m_pointerId; }
+        /*
+            @summary
+            Returns the device type that produced this packet.
+
+            @internal
+        */
         PointerDeviceType GetDeviceType() const noexcept { return m_deviceType; }
+        /*
+            @summary
+            Returns the pointer phase represented by this packet.
+
+            @internal
+        */
         PointerPhase GetPhase() const noexcept { return m_phase; }
+        /*
+            @summary
+            Returns the pointer's horizontal position.
+
+            @internal
+        */
         double GetX() const noexcept { return m_x; }
+        /*
+            @summary
+            Returns the pointer's vertical position.
+
+            @internal
+        */
         double GetY() const noexcept { return m_y; }
+        /*
+            @summary
+            Returns the currently pressed pointer buttons.
+
+            @internal
+        */
         std::uint32_t GetButtons() const noexcept { return m_buttons; }
+        /*
+            @summary
+            Returns the button changed by this packet.
+
+            @internal
+        */
         std::uint32_t GetChangedButton() const noexcept { return m_changedButton; }
+        /*
+            @summary
+            Returns the pointer pressure value.
+
+            @internal
+        */
         float GetPressure() const noexcept { return m_pressure; }
+        /*
+            @summary
+            Returns the wheel movement represented by this packet.
+
+            @internal
+        */
         double GetWheelDelta() const noexcept { return m_wheelDelta; }
 
     private:
@@ -99,9 +176,25 @@ namespace NeoWPF::Input::Core
     public:
         KeyboardEventArgs(int keyCode, bool isKeyDown, wchar_t charCode = 0, int repeatCount = 1);
 
+        /*
+            @summary
+            Returns the virtual key code carried by this event.
+        */
         int GetKeyCode() const { return m_keyCode; }
+        /*
+            @summary
+            Reports whether the key is pressed.
+        */
         bool IsKeyDown() const { return m_isKeyDown; }
+        /*
+            @summary
+            Returns the character code carried by this event.
+        */
         wchar_t GetCharCode() const { return m_charCode; }
+        /*
+            @summary
+            Returns the key repeat count carried by this event.
+        */
         int GetRepeatCount() const { return m_repeatCount; }
 
     private:

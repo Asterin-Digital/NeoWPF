@@ -25,13 +25,43 @@ public:
     GroupedToggleBase();
     ~GroupedToggleBase() override = default;
 
+    /*
+        @summary
+        Sets the checked state while maintaining the group selection.
+
+        @param value
+        True to select this control.
+    */
     void SetChecked(bool value) noexcept override;
 
+    /*
+        @summary
+        Sets the name used to group mutually exclusive controls.
+
+        @param groupName
+        Group identifier.
+    */
     void SetGroupName(const std::wstring& groupName);
+    /*
+        @summary
+        Returns the name used to group mutually exclusive controls.
+    */
     const std::wstring& GetGroupName() const noexcept { return m_groupName; }
 
 protected:
+    /*
+        @summary
+        Determines whether a visual participates as a peer in this group.
+
+        @internal
+    */
     virtual bool IsGroupedPeer(const Visual* visual) const noexcept;
+    /*
+        @summary
+        Handles a grouped peer becoming unchecked.
+
+        @internal
+    */
     virtual void OnGroupedPeerUnchecked(GroupedToggleBase* peer) noexcept;
 
 private:

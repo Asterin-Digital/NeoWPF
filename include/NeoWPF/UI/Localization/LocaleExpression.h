@@ -60,8 +60,20 @@ public:
     */
     void Refresh();
 
+    /*
+        @summary
+        Returns the localization key resolved by this expression.
+    */
     const std::wstring& GetKey() const noexcept { return m_key; }
+    /*
+        @summary
+        Returns the dependency property updated by this expression.
+    */
     const Properties::DependencyProperty& GetTargetProperty() const noexcept { return m_targetProperty; }
+    /*
+        @summary
+        Returns the object updated by this expression.
+    */
     Properties::DependencyObject& GetTarget() const noexcept { return m_target; }
 
 private:

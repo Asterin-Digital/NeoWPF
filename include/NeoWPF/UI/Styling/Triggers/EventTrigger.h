@@ -56,8 +56,21 @@ public:
         Action to add.
     */
     void AddAction(const std::shared_ptr<TriggerAction>& action);
+    /*
+        @summary
+        Returns the actions registered with the trigger.
+    */
     std::vector<std::shared_ptr<TriggerAction>> GetActions() const;
 
+    /*
+        @summary
+        Reports whether an element and routed event name are configured.
+
+        @param element
+        Element whose event state is evaluated.
+
+        @internal
+    */
     bool Evaluate(UIElement* element) const override;
     /*
         @summary

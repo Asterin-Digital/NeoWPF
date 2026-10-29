@@ -68,6 +68,13 @@ public:
     */
     const std::vector<std::shared_ptr<LocaleString>>& GetLocaleStrings() const noexcept { return m_localeStrings; }
 
+    /*
+        @summary
+        Adds a locale string object to the table.
+
+        @param value
+        Locale string to add.
+    */
     void AddLocaleString(std::shared_ptr<LocaleString> value);
     
     explicit LocaleTable(const std::wstring& culture)
@@ -75,6 +82,10 @@ public:
     {
     }
 
+    /*
+        @summary
+        Reports whether the table has a valid culture.
+    */
     bool IsValid() const noexcept { return m_culture.IsValid(); }
 
     /*
@@ -124,6 +135,10 @@ public:
         True when the key exists.
     */
     bool TryGet(const std::wstring& key, std::wstring& value) const;
+    /*
+        @summary
+        Returns the localized strings indexed by key.
+    */
     const std::unordered_map<std::wstring, LocaleString>& GetStrings() const noexcept { return m_strings; }
 
 private:

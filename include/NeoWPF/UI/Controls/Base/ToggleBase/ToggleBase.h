@@ -15,6 +15,10 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::UI {
 
+/*
+    @summary
+    Provides shared checked-state and interaction behavior for toggle controls.
+*/
 class ToggleBase : public NeoWPF::UI::Content::ContentControl {
 public:
     static const Properties::DependencyProperty& IsCheckedProperty();
@@ -23,17 +27,63 @@ public:
     ToggleBase();
     virtual ~ToggleBase() = default;
 
+    /*
+        @summary
+        Reports whether the toggle participates in hit testing.
+    */
     bool IsHitTestVisible() const noexcept override { return true; }
+    /*
+        @summary
+        Reports whether the toggle can currently be interacted with.
+    */
     bool IsInteractable() const noexcept override { return IsEnabled(); }
 
+    /*
+        @summary
+        Returns whether the toggle is checked.
+    */
     bool IsChecked() const noexcept { return m_isChecked; }
+    /*
+        @summary
+        Sets the checked state of the toggle.
+
+        @param value
+        True to check the toggle.
+    */
     virtual void SetChecked(bool value) noexcept;
+    /*
+        @summary
+        Switches the toggle to the opposite checked state.
+    */
     void Toggle() noexcept;
 
+    /*
+        @summary
+        Sets the text displayed by the toggle.
+
+        @param text
+        Text to display.
+    */
     void SetContentText(const std::wstring& text);
+    /*
+        @summary
+        Returns the text displayed by the toggle.
+    */
     const std::wstring& GetContentText() const noexcept { return m_contentText; }
 
+    /*
+        @summary
+        Handles keyboard focus entering the toggle.
+
+        @internal
+    */
     void OnGotFocus() override;
+    /*
+        @summary
+        Handles keyboard focus leaving the toggle.
+
+        @internal
+    */
     void OnLostFocus() override;
 
     NeoWPF::Core::Event<> Checked;

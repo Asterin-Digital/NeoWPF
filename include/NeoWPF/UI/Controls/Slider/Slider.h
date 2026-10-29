@@ -270,11 +270,35 @@ protected:
     void OnRoutedEvent(NeoWPF::Input::Core::RoutedEventArgs* args) override;
 
 public:
+    /*
+        @summary
+        Returns the orientation value used by markup conversion.
+
+        @internal
+    */
     int GetOrientationValue() const noexcept;
+    /*
+        @summary
+        Sets the orientation value used by markup conversion.
+
+        @internal
+    */
     void SetOrientationValue(int orientation) noexcept;
     static const NeoWPF::UI::Properties::DependencyProperty& GetOrientationProperty();
 
+    /*
+        @summary
+        Returns the tick placement value used by markup conversion.
+
+        @internal
+    */
     int GetTickPlacementValue() const noexcept { return static_cast<int>(m_tickPlacement); }
+    /*
+        @summary
+        Sets the tick placement value used by markup conversion.
+
+        @internal
+    */
     void SetTickPlacementValue(int placement) noexcept { SetTickPlacement(static_cast<TickPlacement>(placement)); }
 
     static const NeoWPF::UI::Properties::DependencyProperty& IsDirectionReversedProperty();
@@ -310,6 +334,10 @@ private:
     std::size_t m_themeAppliedSubscriptionId = 0;
 };
 
+/*
+    @summary
+    Defines the control template for a slider.
+*/
 class SliderTemplate : public Templates::ControlTemplate {
 public:
     SliderTemplate();

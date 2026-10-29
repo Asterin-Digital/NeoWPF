@@ -27,9 +27,25 @@ public:
     */
     explicit Culture(const std::wstring& name);
 
+    /*
+        @summary
+        Reports whether the culture contains a valid language tag.
+    */
     bool IsValid() const noexcept { return !m_name.empty(); }
+    /*
+        @summary
+        Returns the normalized culture name.
+    */
     const std::wstring& GetName() const noexcept { return m_name; }
+    /*
+        @summary
+        Returns the language component of the culture.
+    */
     const std::wstring& GetLanguage() const noexcept { return m_language; }
+    /*
+        @summary
+        Returns the region component of the culture.
+    */
     const std::wstring& GetRegion() const noexcept { return m_region; }
     /*
         @summary
@@ -40,6 +56,16 @@ public:
     */
     std::vector<Culture> GetFallbackChain() const;
 
+    /*
+        @summary
+        Compares cultures by their normalized names.
+
+        @param left
+        First culture.
+
+        @param right
+        Second culture.
+    */
     friend bool operator==(const Culture& left, const Culture& right) noexcept
     {
         return left.m_name == right.m_name;

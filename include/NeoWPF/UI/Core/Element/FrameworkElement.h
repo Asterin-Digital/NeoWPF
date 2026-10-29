@@ -40,6 +40,10 @@ enum class LayoutSizeMode {
     Stretch
 };
 
+/*
+    @summary
+    Provides layout, sizing, alignment, and data-context behavior for elements.
+*/
 class FrameworkElement : public UIElement {
     friend class ScrollBar;
 public:
@@ -117,6 +121,12 @@ public:
     */
     void Arrange(double finalWidth, double finalHeight) override;
 
+    /*
+        @summary
+        Returns the matrix that maps local coordinates to the parent position.
+
+        @internal
+    */
     NeoWPF::UI::Core::Matrix4 GetLocalPositionMatrix() const noexcept override;
 
     /*
@@ -321,11 +331,35 @@ public:
     */
     void SetMargin(double left, double top, double right, double bottom) noexcept;
 
+    /*
+        @summary
+        Returns the left layout margin.
+    */
     double GetMarginLeft() const noexcept;
+    /*
+        @summary
+        Returns the top layout margin.
+    */
     double GetMarginTop() const noexcept;
+    /*
+        @summary
+        Returns the right layout margin.
+    */
     double GetMarginRight() const noexcept;
+    /*
+        @summary
+        Returns the bottom layout margin.
+    */
     double GetMarginBottom() const noexcept;
+    /*
+        @summary
+        Returns the sum of the left and right layout margins.
+    */
     double GetMarginHorizontal() const noexcept;
+    /*
+        @summary
+        Returns the sum of the top and bottom layout margins.
+    */
     double GetMarginVertical() const noexcept;
 
     /*
@@ -481,7 +515,19 @@ public:
         }
     }
 
+    /*
+        @summary
+        Returns the object inherited by this element for dependency values.
+
+        @internal
+    */
     const Properties::DependencyObject* GetInheritanceParent() const noexcept override;
+    /*
+        @summary
+        Handles a dependency property value change.
+
+        @internal
+    */
     void OnDependencyPropertyChanged(const Properties::DependencyProperty& property,
                                      const Properties::PropertyMetadata& metadata,
                                      const std::any& oldValue,
@@ -548,7 +594,19 @@ protected:
     void SetRenderOffset(double x, double y) noexcept { m_renderOffsetX = x; m_renderOffsetY = y; InvalidateTransformCache(); InvalidateVisual(); }
 
 public:
+    /*
+        @summary
+        Returns the horizontal render offset.
+
+        @internal
+    */
     double GetRenderOffsetX() const noexcept { return m_renderOffsetX; }
+    /*
+        @summary
+        Returns the vertical render offset.
+
+        @internal
+    */
     double GetRenderOffsetY() const noexcept { return m_renderOffsetY; }
 
 private:

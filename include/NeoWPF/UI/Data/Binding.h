@@ -41,6 +41,10 @@ public:
     {
     }
 
+    /*
+        @summary
+        Returns the source property path.
+    */
     const std::string& GetPath() const noexcept {
         return m_path;
     }
@@ -57,6 +61,10 @@ public:
         return *this;
     }
 
+    /*
+        @summary
+        Returns the dependency object binding source, if set.
+    */
     const std::optional<std::weak_ptr<Properties::DependencyObject>>& GetSourceObject() const noexcept {
         return m_sourceObject;
     }
@@ -73,6 +81,10 @@ public:
         return *this;
     }
 
+    /*
+        @summary
+        Returns the property-notifying binding source, if set.
+    */
     const std::optional<std::weak_ptr<INotifyPropertyChanged>>& GetSourcePoco() const noexcept {
         return m_sourcePoco;
     }

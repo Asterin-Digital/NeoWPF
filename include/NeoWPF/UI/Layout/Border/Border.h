@@ -57,12 +57,36 @@ public:
     */
     void ClearChild() { ClearContent(); }
 
+    /*
+        @summary
+        Sets the space between the border and its child.
+    */
     void SetPadding(Thickness padding) noexcept;
+    /*
+        @summary
+        Returns the space between the border and its child.
+    */
     Thickness GetPadding() const noexcept;
 
+    /*
+        @summary
+        Sets a uniform border thickness.
+    */
     void SetBorderThickness(double thickness) noexcept;
+    /*
+        @summary
+        Returns the uniform border thickness.
+    */
     double GetBorderThickness() const noexcept;
+    /*
+        @summary
+        Sets the thickness of each border edge.
+    */
     void SetBorderThickness(Thickness thickness) noexcept;
+    /*
+        @summary
+        Returns the thickness of each border edge.
+    */
     Thickness GetBorderThicknessValue() const noexcept;
 
     /*
@@ -93,6 +117,12 @@ public:
     */
     void Arrange(double finalWidth, double finalHeight) override;
 
+    /*
+        @summary
+        Adds border and child drawing operations to a command list.
+
+        @internal
+    */
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
 public:

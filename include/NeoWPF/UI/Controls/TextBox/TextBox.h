@@ -27,6 +27,10 @@ namespace NeoWPF::UI {
 
 class UIElement;
 
+/*
+    @summary
+    Defines when caret movement scrolls the text box viewport.
+*/
 enum class CaretScrollBehavior {
     Disabled,
     Enabled,
@@ -183,6 +187,10 @@ public:
         tb->SetReadOnly(true); // useful for read-only editors
     */
     void SetReadOnly(bool value) noexcept { m_isReadOnly = value; InvalidateVisual(); }
+    /*
+        @summary
+        Reports whether the text box prevents text editing.
+    */
     bool IsReadOnly() const noexcept { return m_isReadOnly; }
 
     /*
@@ -584,7 +592,10 @@ private:
     */
     int GetLineHeight(const std::wstring& line) const;
 };
-
+/*
+    @summary
+    Defines the control template for a text box.
+*/
 class TextBoxTemplate : public Templates::ControlTemplate {
 public:
     TextBoxTemplate();

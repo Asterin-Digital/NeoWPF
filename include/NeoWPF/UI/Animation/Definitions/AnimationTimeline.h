@@ -17,6 +17,10 @@ namespace NeoWPF::UI::Animation {
     Defines common timing for an animation.
 */
 enum class RepeatBehavior { Once, Loop, Count };
+/*
+    @summary
+    Defines how an animation uses its final value after playback.
+*/
 enum class FillBehavior { Stop, HoldEnd };
 
 /*
@@ -26,6 +30,13 @@ enum class FillBehavior { Stop, HoldEnd };
 class AnimationTimeline {
 public:
     virtual ~AnimationTimeline() = default;
+    /*
+        @summary
+        Calculates the animated value at the specified progress.
+
+        @param progress
+        Normalized progress from the beginning to the end of the animation.
+    */
     virtual std::any GetCurrentValue(double progress) const = 0;
 
     /*

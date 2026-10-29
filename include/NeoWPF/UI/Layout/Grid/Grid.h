@@ -50,17 +50,43 @@ class Grid : public Panel {
 public:
     using Panel::AddChild;
 
+    /*
+        @summary
+        Stores the sizing mode and value for a grid row or column.
+    */
     struct Definition {
         SizeMode mode = SizeMode::Auto;
         int value = 0;
     };
 
+    /*
+        @summary
+        Represents a fixed, content-sized, or weighted grid dimension.
+    */
     struct GridLength {
         SizeMode Mode = SizeMode::Auto;
         int Value = 0;
 
+        /*
+            @summary
+            Creates a content-sized grid dimension.
+        */
         static GridLength Auto() noexcept { return {SizeMode::Auto, 0}; }
+        /*
+            @summary
+            Creates a star-sized grid dimension with the supplied weight.
+
+            @param weight
+            Relative sizing weight.
+        */
         static GridLength Star(int weight = 1) noexcept { return {SizeMode::Star, weight > 0 ? weight : 1}; }
+        /*
+            @summary
+            Creates a fixed grid dimension with the supplied pixel size.
+
+            @param pixels
+            Pixel size to use.
+        */
         static GridLength Fixed(int pixels) noexcept { return {SizeMode::Fixed, pixels > 0 ? pixels : 0}; }
     };
 
@@ -140,7 +166,15 @@ public:
     */
     void AddColumnDefinition(std::shared_ptr<ColumnDefinition> colDef);
 
+    /*
+        @summary
+        Returns the row definitions assigned to the grid.
+    */
     const std::vector<Definition>& GetRowDefinitions() const noexcept { return m_rowDefs; }
+    /*
+        @summary
+        Returns the column definitions assigned to the grid.
+    */
     const std::vector<Definition>& GetColumnDefinitions() const noexcept { return m_colDefs; }
 
     /*

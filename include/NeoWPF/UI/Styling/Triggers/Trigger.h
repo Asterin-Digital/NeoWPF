@@ -63,6 +63,15 @@ public:
     */
     std::any GetValue() const;
 
+    /*
+        @summary
+        Tests whether the element's property value activates the trigger.
+
+        @param element
+        Element whose property is evaluated.
+
+        @internal
+    */
     bool Evaluate(UIElement* element) const override;
 
 private:

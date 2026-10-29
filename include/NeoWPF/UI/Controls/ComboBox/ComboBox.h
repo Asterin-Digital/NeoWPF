@@ -64,11 +64,19 @@ private:
     void ApplyTheme() override;
 };
 
+/*
+    @summary
+    Defines the control template for a ComboBox item.
+*/
 class ComboBoxItemTemplate : public Templates::ControlTemplate {
 public:
     ComboBoxItemTemplate();
 };
 
+/*
+    @summary
+    Defines the control template for a ComboBox.
+*/
 class ComboBoxTemplate : public Templates::ControlTemplate {
 public:
     ComboBoxTemplate();
@@ -91,8 +99,16 @@ public:
     ComboBox();
     ~ComboBox() override;
 
+    /*
+        @summary
+        Reports whether the ComboBox participates in hit testing.
+    */
     bool IsHitTestVisible() const noexcept override { return true; }
 
+    /*
+        @summary
+        Reports whether the ComboBox can currently be interacted with.
+    */
     bool IsInteractable() const noexcept override { return IsEnabled(); }
 
     /*
@@ -125,6 +141,10 @@ public:
     */
     PopupPlacement GetPlacement() const noexcept;
 
+    /*
+        @summary
+        Returns the value displayed in the closed selection box.
+    */
     std::any GetSelectionBoxItem() const noexcept;
 
     /*
@@ -169,6 +189,12 @@ public:
     */
     void SetItemTemplate(const Controls::ItemsControl::Virtualization::ItemTemplate& templ);
 
+    /*
+        @summary
+        Adds the ComboBox drawing operations to a command list.
+
+        @internal
+    */
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
 protected:

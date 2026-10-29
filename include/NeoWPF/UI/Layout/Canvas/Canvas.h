@@ -15,8 +15,9 @@ namespace NeoWPF::UI {
     Positions child elements at explicit coordinates within the panel.
 
     @details
-    Canvas follows WPF placement precedence: Left takes precedence over Right and Top takes precedence over Bottom.
-    An unset coordinate is represented by NaN and places the child at the origin when no opposing coordinate is set.
+    Left takes precedence over Right and Top takes precedence over Bottom.
+    An unset coordinate is represented by NaN and places the child at the origin
+    when no opposing coordinate is set.
 */
 class Canvas : public Panel {
 public:
@@ -29,13 +30,45 @@ public:
     static const Properties::DependencyProperty& RightProperty();
     static const Properties::DependencyProperty& BottomProperty();
 
+    /*
+        @summary
+        Returns the left coordinate assigned to an element.
+    */
     static double GetLeft(const Visual* element) noexcept;
+    /*
+        @summary
+        Sets the left coordinate assigned to an element.
+    */
     static void SetLeft(Visual* element, double value) noexcept;
+    /*
+        @summary
+        Returns the top coordinate assigned to an element.
+    */
     static double GetTop(const Visual* element) noexcept;
+    /*
+        @summary
+        Sets the top coordinate assigned to an element.
+    */
     static void SetTop(Visual* element, double value) noexcept;
+    /*
+        @summary
+        Returns the right coordinate assigned to an element.
+    */
     static double GetRight(const Visual* element) noexcept;
+    /*
+        @summary
+        Sets the right coordinate assigned to an element.
+    */
     static void SetRight(Visual* element, double value) noexcept;
+    /*
+        @summary
+        Returns the bottom coordinate assigned to an element.
+    */
     static double GetBottom(const Visual* element) noexcept;
+    /*
+        @summary
+        Sets the bottom coordinate assigned to an element.
+    */
     static void SetBottom(Visual* element, double value) noexcept;
 
     /*

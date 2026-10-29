@@ -42,6 +42,19 @@ public:
         const Properties::DependencyProperty& property,
         const std::wstring& key);
 
+    /*
+        @summary
+        Assigns a localization key using a dependency property pointer.
+
+        @param target
+        Object whose property is updated.
+
+        @param property
+        Property to update.
+
+        @param key
+        Localization key.
+    */
     static std::shared_ptr<LocaleExpression> SetLocale(
         Properties::DependencyObject& target,
         const Properties::DependencyProperty* property,
@@ -59,6 +72,16 @@ public:
     */
     static void ClearLocale(Properties::DependencyObject& target,
                              const Properties::DependencyProperty& property);
+    /*
+        @summary
+        Removes a localization expression using a dependency property pointer.
+
+        @param target
+        Object whose property is cleared.
+
+        @param property
+        Property to clear.
+    */
     static void ClearLocale(Properties::DependencyObject& target,
                             const Properties::DependencyProperty* property);
 
@@ -75,6 +98,16 @@ public:
     static std::shared_ptr<LocaleExpression> GetLocaleExpression(
         const Properties::DependencyObject& target,
         const Properties::DependencyProperty& property);
+    /*
+        @summary
+        Returns the localization expression using a dependency property pointer.
+
+        @param target
+        Object to inspect.
+
+        @param property
+        Property to inspect.
+    */
     static std::shared_ptr<LocaleExpression> GetLocaleExpression(
         const Properties::DependencyObject& target,
         const Properties::DependencyProperty* property);

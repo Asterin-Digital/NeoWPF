@@ -38,6 +38,13 @@ public:
         Returns the ending value of the animation.
     */
     float GetTo() const noexcept { return m_to; }
+    /*
+        @summary
+        Interpolates the configured values at the specified progress.
+
+        @param progress
+        Normalized animation progress.
+    */
     std::any GetCurrentValue(double progress) const override;
 
 private:

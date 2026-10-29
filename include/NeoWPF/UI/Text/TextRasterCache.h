@@ -46,9 +46,36 @@ public:
     */
     void Clear();
 
+    /*
+        @summary
+        Returns the flow lines in the current text layout.
+
+        @internal
+    */
     const std::vector<FlowLine>& GetLines() const noexcept { return m_flow.lines; }
+    /*
+        @summary
+        Returns the texture identifier for a flow line.
+
+        @param lineIndex
+        Index of the line.
+
+        @internal
+    */
     std::uint32_t GetLineTextureId(std::size_t lineIndex) const noexcept;
+    /*
+        @summary
+        Returns the width of the current text layout.
+
+        @internal
+    */
     double GetContentWidth() const noexcept { return m_flow.contentWidth; }
+    /*
+        @summary
+        Returns the height of the current text layout.
+
+        @internal
+    */
     double GetContentHeight() const noexcept { return m_flow.contentHeight; }
 
 private:

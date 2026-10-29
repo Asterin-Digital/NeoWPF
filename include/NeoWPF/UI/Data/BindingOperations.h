@@ -43,9 +43,41 @@ public:
     static std::shared_ptr<BindingExpression> SetBinding(Properties::DependencyObject& target,
                                                          const Properties::DependencyProperty& property,
                                                          const Binding& binding);
+    /*
+        @summary
+        Assigns a binding using a dependency property pointer.
+
+        @param target
+        Object whose property is updated.
+
+        @param property
+        Property to update.
+
+        @param binding
+        Binding configuration.
+
+        @returns
+        The attached binding expression.
+    */
     static std::shared_ptr<BindingExpression> SetBinding(Properties::DependencyObject& target,
                                                          const Properties::DependencyProperty* property,
                                                          const Binding& binding);
+    /*
+        @summary
+        Assigns a binding using a registered property name.
+
+        @param target
+        Object whose property is updated.
+
+        @param propertyName
+        Registered property name.
+
+        @param binding
+        Binding configuration.
+
+        @returns
+        The attached binding expression.
+    */
     static std::shared_ptr<BindingExpression> SetBinding(Properties::DependencyObject& target,
                                                          const std::string& propertyName,
                                                          const Binding& binding);
@@ -62,8 +94,28 @@ public:
     */
     static void ClearBinding(Properties::DependencyObject& target,
                              const Properties::DependencyProperty& property);
+    /*
+        @summary
+        Removes a binding using a dependency property pointer.
+
+        @param target
+        Object whose property is cleared.
+
+        @param property
+        Property to clear.
+    */
     static void ClearBinding(Properties::DependencyObject& target,
                              const Properties::DependencyProperty* property);
+    /*
+        @summary
+        Removes a binding using a registered property name.
+
+        @param target
+        Object whose property is cleared.
+
+        @param propertyName
+        Registered property name.
+    */
     static void ClearBinding(Properties::DependencyObject& target,
                              const std::string& propertyName);
 
@@ -79,6 +131,16 @@ public:
     */
     static std::shared_ptr<BindingExpression> GetBindingExpression(const Properties::DependencyObject& target,
                                                                   const Properties::DependencyProperty& property);
+    /*
+        @summary
+        Returns the binding expression for a dependency property pointer.
+
+        @param target
+        Object to inspect.
+
+        @param property
+        Property to inspect.
+    */
     static std::shared_ptr<BindingExpression> GetBindingExpression(const Properties::DependencyObject& target,
                                                                   const Properties::DependencyProperty* property);
 };

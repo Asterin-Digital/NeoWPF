@@ -32,7 +32,18 @@ public:
         Setter to add.
     */
     void AddSetter(const Setter& setter);
+    /*
+        @summary
+        Adds a setter to the trigger by moving it into the collection.
+
+        @param setter
+        Setter to add.
+    */
     void AddSetter(Setter&& setter);
+    /*
+        @summary
+        Returns the setters registered with the trigger.
+    */
     std::vector<Setter> GetSetters() const;
 
     /*
@@ -43,6 +54,15 @@ public:
         Element to update.
     */
     void Apply(UIElement* element) const;
+    /*
+        @summary
+        Evaluates whether the trigger is active for an element.
+
+        @param element
+        Element to evaluate.
+
+        @internal
+    */
     virtual bool Evaluate(UIElement* element) const;
 
     /*
@@ -59,6 +79,12 @@ public:
         Detaches the trigger from its element.
     */
     void Detach();
+    /*
+        @summary
+        Returns the element currently observed by the trigger.
+
+        @internal
+    */
     UIElement* GetTarget() const;
 
 protected:

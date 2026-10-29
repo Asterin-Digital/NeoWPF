@@ -14,6 +14,10 @@ struct CommandList;
 
 namespace NeoWPF::Contracts {
 
+/*
+    @summary
+    Defines the rendering operations provided by a platform backend.
+*/
 class IRendering {
 public:
     virtual ~IRendering() = default;
@@ -63,15 +67,74 @@ public:
         @internal
     */
     virtual void ShutdownDevice() noexcept = 0;
+    /*
+        @summary
+        Reports whether the rendering device is initialized.
+    */
     virtual bool IsInitialized() const noexcept = 0;
+    /*
+        @summary
+        Resizes a rendering surface.
+
+        @param surface
+        Surface to resize.
+
+        @param width
+        New surface width.
+
+        @param height
+        New surface height.
+    */
     virtual void Resize(const NeoWPF::Rendering::RenderSurface& surface,
                         unsigned int width, unsigned int height) noexcept = 0;
+    /*
+        @summary
+        Begins rendering a frame to a surface.
+    */
     virtual void BeginFrame(const NeoWPF::Rendering::RenderSurface& surface) = 0;
+    /*
+        @summary
+        Executes a command list against a rendering surface.
+
+        @param surface
+        Target surface.
+
+        @param commands
+        Commands to execute.
+    */
     virtual void Execute(const NeoWPF::Rendering::RenderSurface& surface,
                          const NeoWPF::Rendering::CommandList& commands) = 0;
+    /*
+        @summary
+        Presents the completed frame for a surface.
+    */
     virtual void Present(const NeoWPF::Rendering::RenderSurface& surface) = 0;
+    /*
+        @summary
+        Creates a texture from RGBA pixel data.
+
+        @param width
+        Texture width.
+
+        @param height
+        Texture height.
+
+        @param rgbaData
+        RGBA pixel buffer.
+    */
     virtual std::uint32_t CreateTexture(unsigned int width, unsigned int height, const void* rgbaData) = 0;
+    /*
+        @summary
+        Releases a texture by identifier.
+
+        @param id
+        Texture identifier.
+    */
     virtual void DestroyTexture(std::uint32_t id) noexcept = 0;
+    /*
+        @summary
+        Releases all textures owned by the renderer.
+    */
     virtual void ClearTextures() noexcept = 0;
 };
 

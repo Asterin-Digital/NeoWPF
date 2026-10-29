@@ -49,11 +49,29 @@ public:
     */
     virtual void SyncSelection(const std::any& item);
 
+    /*
+        @summary
+        Creates the visual container for an item.
+
+        @internal
+    */
     std::shared_ptr<FrameworkElement> GetContainerForItem(const std::any& data, int index) override;
+    /*
+        @summary
+        Prepares an item container with its data and index.
+
+        @internal
+    */
     void PrepareContainer(const std::shared_ptr<FrameworkElement>& container,
                           const std::any& data,
                           int index) override;
 
+    /*
+        @summary
+        Handles a change to the selected item.
+
+        @internal
+    */
     void OnSelectionChanged(int oldIndex, int newIndex, const std::any& oldItem, const std::any& newItem) override;
 
 private:
@@ -103,9 +121,21 @@ public:
     */
     bool GetIsSelected() const noexcept;
 
+    /*
+        @summary
+        Adds the list item's drawing operations to a command list.
+
+        @internal
+    */
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
 protected:
+    /*
+        @summary
+        Handles a change to the item's selected state.
+
+        @internal
+    */
     virtual void OnSelectionStateChanged() {}
 
     /*

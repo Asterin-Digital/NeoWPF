@@ -103,10 +103,30 @@ struct DependencyPropertyChangedEventArgs {
     PropertyValueSource Source;
 };
 
+/*
+    @summary
+    Callback invoked after a dependency property value changes.
+*/
 using PropertyChangedCallback = std::function<void(DependencyObject*, const DependencyPropertyChangedEventArgs&)>;
+/*
+    @summary
+    Callback that coerces a proposed dependency property value.
+*/
 using CoerceValueCallback = std::function<std::any(DependencyObject*, const std::any&)>;
+/*
+    @summary
+    Named callback type for dependency property change notifications.
+*/
 using PropertyChangedCallbackFunction = PropertyChangedCallback;
+/*
+    @summary
+    Named callback type for dependency property value coercion.
+*/
 using CoerceValueCallbackFunction = CoerceValueCallback;
+/*
+    @summary
+    Parser callback that converts a XAML string into a property value.
+*/
 using XamlValueParser = std::function<bool(const std::string&, std::any&)>;
 
 /*
@@ -116,7 +136,10 @@ using XamlValueParser = std::function<bool(const std::string&, std::any&)>;
 struct PropertyMetadata {
     std::any DefaultValue;
     PropertyChangedCallbackFunction PropertyChangedCallback;
-    // Runs before a value is committed; non-any properties must return their registered type.
+    /*
+        @summary
+        Coerces a proposed value before it is committed; non-any values must match the registered type.
+    */
     CoerceValueCallbackFunction CoerceValueCallback;
     PropertyFlags Flags = PropertyFlags::None;
     XamlValueParser ValueParser;
@@ -128,8 +151,21 @@ bool ValuesEqual(const DependencyObject& owner,
                  const DependencyProperty& property,
                  const std::any& expectedValue);
 
+/*
+    @summary
+    Compares two values stored in std::any.
+*/
 using AnyEqualityComparer = bool (*)(const std::any&, const std::any&);
-/* Registers operator== for values erased into std::any before they are compared. */
+/*
+    @summary
+    Registers an equality comparer for values stored in std::any.
+
+    @param valueType
+    Type of values erased into std::any.
+
+    @param comparer
+    Comparison function for the type.
+*/
 void RegisterAnyEqualityComparer(const std::type_index& valueType,
                                  AnyEqualityComparer comparer) noexcept;
 
@@ -241,6 +277,19 @@ public:
     */
     bool TryParseValue(const std::string& rawValue, std::any& parsedValue) const;
 
+    /*
+        @summary
+        Converts a XAML value string into a generated code expression.
+
+        @param rawValue
+        Text value to convert.
+
+        @param expression
+        Receives the generated expression.
+
+        @returns
+        True when conversion succeeds.
+    */
     bool TryConvertToCode(const std::string& rawValue, std::string& expression) const;
 
     /*
@@ -394,6 +443,13 @@ public:
                                                   const DependencyObject& targetInstance,
                                                   const std::type_index& ownerType) const;
 
+    /*
+        @summary
+        Returns the dependency properties available to an owner instance.
+
+        @param ownerInstance
+        Object whose properties are queried.
+    */
     std::vector<const DependencyProperty*> GetPropertiesFor(const DependencyObject& ownerInstance) const;
 
 private:

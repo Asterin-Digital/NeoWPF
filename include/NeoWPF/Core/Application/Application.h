@@ -36,6 +36,10 @@ class Window;
 
 namespace NeoWPF::Core {
 
+/*
+    @summary
+    Coordinates application startup, windows, resources, and runtime services.
+*/
 class Application : public NeoWPF::UI::Properties::DependencyObject,
                     public NeoWPF::UI::Markup::Xaml::IXamlResourceHost {
 public:
@@ -44,8 +48,16 @@ public:
 
     Application() = default;
 
+    /*
+        @summary
+        Identifies the severity assigned to an application developer message.
+    */
     using DeveloperMessageSeverity = NeoWPF::Diagnostics::DeveloperWarningSeverity;
 
+    /*
+        @summary
+        Stores the text and severity of an application developer message.
+    */
     struct DeveloperMessage {
         std::wstring title;
         std::wstring message;
@@ -147,7 +159,18 @@ public:
     */
     const std::shared_ptr<NeoWPF::UI::Window>& GetMainWindow() const noexcept;
 
+    /*
+        @summary
+        Adds a locale table to the application.
+
+        @param table
+        Locale table to add.
+    */
     void AddLocale(std::shared_ptr<NeoWPF::UI::Localization::LocaleTable> table);
+    /*
+        @summary
+        Returns the locale tables registered with the application.
+    */
     const std::vector<std::shared_ptr<NeoWPF::UI::Localization::LocaleTable>>& GetLocales() const noexcept { return m_locales; }
 
     /*

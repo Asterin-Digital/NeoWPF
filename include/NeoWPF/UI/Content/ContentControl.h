@@ -65,6 +65,10 @@ public:
         Returns the current content value.
     */
     const std::any& GetContent() const noexcept { return m_content; }
+    /*
+        @summary
+        Returns the current content when it is a UI element.
+    */
     std::shared_ptr<NeoWPF::UI::UIElement> GetContentElement() const noexcept;
     /*
         @summary
@@ -87,10 +91,32 @@ public:
     */
     const std::shared_ptr<ContentPresenter>& GetPresenter() const noexcept { return m_presenter; }
 
+    /*
+        @summary
+        Measures the content using the available layout space.
+
+        @internal
+    */
     void Measure(double availableWidth, double availableHeight) override;
+    /*
+        @summary
+        Arranges the content within the final layout size.
+
+        @internal
+    */
     void Arrange(double finalWidth, double finalHeight) override;
+    /*
+        @summary
+        Adds the content's drawing operations to a command list.
+
+        @internal
+    */
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
+    /*
+        @summary
+        Returns the bounds occupied by the content.
+    */
     ContentBounds GetContentBounds() const noexcept override;
 
 private:

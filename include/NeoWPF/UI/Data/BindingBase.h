@@ -32,6 +32,10 @@ class BindingBase {
 public:
     virtual ~BindingBase() = default;
 
+    /*
+        @summary
+        Returns the binding update mode.
+    */
     BindingMode GetMode() const noexcept {
         return m_mode;
     }

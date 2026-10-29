@@ -29,6 +29,10 @@ namespace NeoWPF::UI {
 */
 class ItemsControl : public NeoWPF::UI::Content::ContentControl, public Layout::Scrolling::IScrollInfo {
 public:
+    /*
+        @summary
+        Represents a collection of framework-element item containers.
+    */
     using ItemCollection = std::vector<std::shared_ptr<FrameworkElement>>;
 
     static const Properties::DependencyProperty& ItemsProperty();
@@ -71,6 +75,13 @@ public:
     */
     void SetItemsSource(const std::vector<std::any>& source);
 
+    /*
+        @summary
+        Sets an external item source with values of a comparable type.
+
+        @param source
+        Values to expose as item data.
+    */
     template<typename T>
     requires Properties::TypeTraits::IsAnyEqualityComparable<T>::value
     void SetItemsSource(const std::vector<T>& source)
@@ -129,6 +140,12 @@ public:
                                   const std::any& data,
                                   int index);
 
+    /*
+        @summary
+        Applies an item template to a realized container.
+
+        @internal
+    */
     virtual void ApplyItemTemplate(const std::shared_ptr<FrameworkElement>& container,
                                    const std::any& data,
                                    int index,
@@ -140,8 +157,19 @@ public:
     */
     const std::vector<std::shared_ptr<FrameworkElement>>& GetItems() const noexcept { return m_items; }
 
+    /*
+        @summary
+        Replaces the item collection used by the control.
+
+        @param items
+        Items to assign.
+    */
     void SetItemsValue(const ItemCollection& items) { SetItems(items); }
 
+    /*
+        @summary
+        Returns the number of items in the active item collection.
+    */
     int GetItemCount() const noexcept { return static_cast<int>(m_hasItemsSource ? m_itemsSource.size() : m_items.size()); }
 
     /*
@@ -209,28 +237,130 @@ public:
     */
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
+    /*
+        @summary
+        Returns the total horizontal extent of the item content.
+
+        @internal
+    */
     double GetExtentWidth() const noexcept override;
+    /*
+        @summary
+        Returns the total vertical extent of the item content.
+
+        @internal
+    */
     double GetExtentHeight() const noexcept override;
 
+    /*
+        @summary
+        Returns the horizontal viewport size.
+
+        @internal
+    */
     double GetViewportWidth() const noexcept override;
+    /*
+        @summary
+        Returns the vertical viewport size.
+
+        @internal
+    */
     double GetViewportHeight() const noexcept override;
 
+    /*
+        @summary
+        Returns the horizontal scroll offset.
+
+        @internal
+    */
     double GetHorizontalOffset() const noexcept override;
+    /*
+        @summary
+        Returns the vertical scroll offset.
+
+        @internal
+    */
     double GetVerticalOffset() const noexcept override;
 
+    /*
+        @summary
+        Sets the horizontal scroll offset.
+
+        @internal
+    */
     void SetHorizontalOffset(double offset) noexcept override;
+    /*
+        @summary
+        Sets the vertical scroll offset.
+
+        @internal
+    */
     void SetVerticalOffset(double offset) noexcept override;
 
+    /*
+        @summary
+        Scrolls the viewport one step to the left.
+
+        @internal
+    */
     void LineLeft() noexcept override;
+    /*
+        @summary
+        Scrolls the viewport one step to the right.
+
+        @internal
+    */
     void LineRight() noexcept override;
+    /*
+        @summary
+        Scrolls the viewport one step up.
+
+        @internal
+    */
     void LineUp() noexcept override;
+    /*
+        @summary
+        Scrolls the viewport one step down.
+
+        @internal
+    */
     void LineDown() noexcept override;
 
+    /*
+        @summary
+        Scrolls the viewport one page to the left.
+
+        @internal
+    */
     void PageLeft() noexcept override;
+    /*
+        @summary
+        Scrolls the viewport one page to the right.
+
+        @internal
+    */
     void PageRight() noexcept override;
+    /*
+        @summary
+        Scrolls the viewport one page up.
+
+        @internal
+    */
     void PageUp() noexcept override;
+    /*
+        @summary
+        Scrolls the viewport one page down.
+
+        @internal
+    */
     void PageDown() noexcept override;
 
+    /*
+        @summary
+        Scrolls the viewport in response to a wheel delta.
+
+        @internal
+    */
     void MouseWheel(int delta) noexcept override;
 
 private:

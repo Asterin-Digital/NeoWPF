@@ -17,6 +17,10 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::UI {
 
+/*
+    @summary
+    Provides shared command and interaction behavior for button controls.
+*/
 class ButtonBase : public NeoWPF::UI::Content::ContentControl, public NeoWPF::Input::ICommandSource {
 public:
     static const Properties::DependencyProperty& CommandProperty();
@@ -26,16 +30,57 @@ public:
     ButtonBase();
     virtual ~ButtonBase() = default;
 
+    /*
+        @summary
+        Reports whether the button participates in hit testing.
+    */
     bool IsHitTestVisible() const noexcept override { return true; }
+    /*
+        @summary
+        Reports whether the button can currently be interacted with.
+    */
     bool IsInteractable() const noexcept override { return IsEnabled(); }
 
+    /*
+        @summary
+        Returns the command associated with the button.
+    */
     std::shared_ptr<NeoWPF::Input::ICommand> GetCommand() const noexcept override { return m_command; }
+    /*
+        @summary
+        Assigns the command associated with the button.
+
+        @param command
+        Command to assign.
+    */
     void SetCommand(std::shared_ptr<NeoWPF::Input::ICommand> command) override;
 
+    /*
+        @summary
+        Returns the parameter passed to the button command.
+    */
     std::any GetCommandParameter() const noexcept override { return m_commandParameter; }
+    /*
+        @summary
+        Sets the parameter passed to the button command.
+
+        @param parameter
+        Command parameter.
+    */
     void SetCommandParameter(const std::any& parameter) override;
 
+    /*
+        @summary
+        Returns the element targeted by the button command.
+    */
     NeoWPF::UI::UIElement* GetCommandTarget() const noexcept override { return m_commandTarget; }
+    /*
+        @summary
+        Sets the element targeted by the button command.
+
+        @param target
+        Target element.
+    */
     void SetCommandTarget(NeoWPF::UI::UIElement* target) noexcept override;
 
     NeoWPF::Core::Event<> Click;

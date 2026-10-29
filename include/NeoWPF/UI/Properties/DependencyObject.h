@@ -105,6 +105,16 @@ namespace NeoWPF::UI::Properties {
             The value to store for the property.
         */
         void SetValue(const DependencyProperty& property, const std::any& value);
+        /*
+            @summary
+            Sets a dependency property value using a property pointer.
+
+            @param property
+            Property to update.
+
+            @param value
+            Value to store.
+        */
         void SetValue(const DependencyProperty* property, const std::any& value);
 
         /*
@@ -116,11 +126,46 @@ namespace NeoWPF::UI::Properties {
 
             @param value
             The binding expression or expression payload to assign.
+
+            @internal
         */
         void SetValueExpression(const DependencyProperty& property, const std::any& value);
+        /*
+            @summary
+            Associates an expression-based value using a property pointer.
+
+            @param property
+            Property to update.
+
+            @param value
+            Expression payload to assign.
+
+            @internal
+        */
         void SetValueExpression(const DependencyProperty* property, const std::any& value);
 
+        /*
+            @summary
+            Sets the animated value for a dependency property.
+
+            @param property
+            Property to update.
+
+            @param value
+            Animated value.
+
+            @internal
+        */
         void SetValueAnimated(const DependencyProperty& property, const std::any& value);
+        /*
+            @summary
+            Removes the animated value for a dependency property.
+
+            @param property
+            Property to clear.
+
+            @internal
+        */
         void ClearAnimatedValue(const DependencyProperty& property);
 
         /*
@@ -128,7 +173,27 @@ namespace NeoWPF::UI::Properties {
             Attaches a binding to a dependency property using the common target-side convenience API.
         */
         void SetBinding(const DependencyProperty& property, const Data::Binding& binding);
+        /*
+            @summary
+            Attaches a binding using a dependency property pointer.
+
+            @param property
+            Property to update.
+
+            @param binding
+            Binding configuration.
+        */
         void SetBinding(const DependencyProperty* property, const Data::Binding& binding);
+        /*
+            @summary
+            Attaches a binding using a registered property name.
+
+            @param propertyName
+            Registered property name.
+
+            @param binding
+            Binding configuration.
+        */
         void SetBinding(const std::string& propertyName, const Data::Binding& binding);
 
         /*
@@ -149,7 +214,21 @@ namespace NeoWPF::UI::Properties {
             Clears any binding currently attached to a dependency property.
         */
         void ClearBinding(const DependencyProperty& property);
+        /*
+            @summary
+            Clears a binding using a dependency property pointer.
+
+            @param property
+            Property whose binding is removed.
+        */
         void ClearBinding(const DependencyProperty* property);
+        /*
+            @summary
+            Clears a binding using a registered property name.
+
+            @param propertyName
+            Registered property name.
+        */
         void ClearBinding(const std::string& propertyName);
 
         /*
@@ -160,6 +239,13 @@ namespace NeoWPF::UI::Properties {
             The dependency property whose local value should be removed.
         */
         void ClearValue(const DependencyProperty& property);
+        /*
+            @summary
+            Clears the local value using a dependency property pointer.
+
+            @param property
+            Property whose local value is removed.
+        */
         void ClearValue(const DependencyProperty* property);
 
         /*
@@ -173,6 +259,13 @@ namespace NeoWPF::UI::Properties {
             The local value stored for the property, if any.
         */
         const std::any& ReadLocalValue(const DependencyProperty& property) const;
+        /*
+            @summary
+            Returns the local value using a dependency property pointer.
+
+            @param property
+            Property to inspect.
+        */
         const std::any& ReadLocalValue(const DependencyProperty* property) const;
 
         /*
@@ -186,6 +279,13 @@ namespace NeoWPF::UI::Properties {
             The precedence source for the property value.
         */
         PropertyValueSource GetValueSource(const DependencyProperty& property) const;
+        /*
+            @summary
+            Returns the value source using a dependency property pointer.
+
+            @param property
+            Property to inspect.
+        */
         PropertyValueSource GetValueSource(const DependencyProperty* property) const;
 
         /*
@@ -199,6 +299,13 @@ namespace NeoWPF::UI::Properties {
             The current raw value for the property.
         */
         std::any GetRawValue(const DependencyProperty& property) const;
+        /*
+            @summary
+            Returns the raw value using a dependency property pointer.
+
+            @param property
+            Property to inspect.
+        */
         std::any GetRawValue(const DependencyProperty* property) const;
 
     protected:
@@ -266,6 +373,12 @@ namespace NeoWPF::UI::Properties {
                                                  PropertyValueSource source) {}
 
     public:
+        /*
+            @summary
+            Refreshes the bindings attached to this object.
+
+            @internal
+        */
         void RefreshBindingExpressions();
 
     private:

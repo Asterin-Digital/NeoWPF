@@ -30,8 +30,26 @@ public:
     StackPanel() noexcept {
     }
 
+    /*
+        @summary
+        Measures children along the stack's primary axis.
+
+        @internal
+    */
     void Measure(double availableWidth, double availableHeight) override;
+    /*
+        @summary
+        Arranges children sequentially within the stack bounds.
+
+        @internal
+    */
     void Arrange(double finalWidth, double finalHeight) override;
+    /*
+        @summary
+        Adds the stack and child drawing operations to a command list.
+
+        @internal
+    */
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 
     /*

@@ -20,13 +20,20 @@ class DependencyObject;
 
 namespace NeoWPF::UI::Markup::Xaml {
 
+/*
+    @summary
+    Identifies the role a registered type plays in a XAML document.
+*/
 enum class XamlTypeRole {
     Element,
     WindowRoot,
     ApplicationRoot,
 };
 
-
+/*
+    @summary
+    Stores construction and content metadata for a registered XAML type.
+*/
 struct XamlTypeInfo {
     std::type_index Type;
 
@@ -43,6 +50,10 @@ struct XamlTypeInfo {
     XamlTypeRole Role = XamlTypeRole::Element;
 };
 
+/*
+    @summary
+    Associates a XAML tag name with its registered type metadata.
+*/
 struct RegisteredXamlType {
     std::string TagName;
     XamlTypeInfo Info;
@@ -105,6 +116,10 @@ public:
     */
     const XamlTypeInfo* FindByType(std::type_index type) const;
 
+    /*
+        @summary
+        Returns the XAML types registered with the registry.
+    */
     std::vector<RegisteredXamlType> GetRegisteredTypes() const;
 
 private:
