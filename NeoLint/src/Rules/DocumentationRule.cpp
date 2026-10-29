@@ -4,6 +4,7 @@
 #include <NeoLint/Core/RuleRegistry.h>
 #include <NeoLint/Core/Suppression.h>
 
+#include <clang/AST/Decl.h>
 #include <clang/AST/DeclCXX.h>
 #include <clang/ASTMatchers/ASTMatchers.h>
 #include <clang/Basic/SourceManager.h>
@@ -17,6 +18,7 @@
 #include <string>
 #include <sstream>
 #include <system_error>
+#include <unordered_map>
 #include <vector>
 
 namespace neolint
@@ -33,9 +35,9 @@ bool IsHeaderPath(const std::filesystem::path& path)
     return extension == ".h";
 }
 
-bool IsDocumented(const clang::CXXMethodDecl& method, clang::SourceManager& sourceManager)
+bool IsDocumented(const clang::Decl& declaration, clang::SourceManager& sourceManager)
 {
-    const auto location = sourceManager.getFileLoc(method.getBeginLoc());
+    const auto location = sourceManager.getFileLoc(declaration.getBeginLoc());
     if (location.isInvalid()) return false;
 
     const auto decomposed = sourceManager.getDecomposedLoc(location);
@@ -49,20 +51,110 @@ bool IsDocumented(const clang::CXXMethodDecl& method, clang::SourceManager& sour
     if (commentEnd < 2 || source.substr(commentEnd - 2, 2) != "*/") return false;
 
     const auto commentStart = source.rfind("/*", commentEnd - 2);
-    return commentStart != std::string_view::npos &&
-        source.substr(commentStart, commentEnd - commentStart).find("@summary") !=
-            std::string_view::npos;
+    if (commentStart == std::string_view::npos) return false;
+    const auto comment = source.substr(commentStart, commentEnd - commentStart);
+    return comment.find("@summary") != std::string_view::npos ||
+        comment.find("@internal") != std::string_view::npos;
+}
+
+std::string HeaderPath(const clang::Decl& declaration, clang::SourceManager& sourceManager)
+{
+    const auto location = sourceManager.getExpansionLoc(declaration.getLocation());
+    if (location.isInvalid() || sourceManager.isInSystemHeader(location)) return {};
+    const auto path = std::filesystem::path(sourceManager.getFilename(location).str());
+    return IsHeaderPath(path) ? path.generic_string() : std::string{};
+}
+
+bool IsPublicClass(const clang::CXXRecordDecl& record)
+{
+    const auto access = record.getAccess();
+    return record.isExternallyVisible() &&
+        (access == clang::AS_none || access == clang::AS_public);
+}
+
+bool IsDocumentableMethod(const clang::CXXMethodDecl& method)
+{
+    if (method.isImplicit() || llvm::isa<clang::CXXConstructorDecl>(method) ||
+        llvm::isa<clang::CXXDestructorDecl>(method) ||
+        method.isOverloadedOperator()) return false;
+
+    const auto returnType = method.getReturnType().getNonReferenceType();
+    const auto* returnRecord = returnType->getAsCXXRecordDecl();
+    if (method.isStatic() && method.getName().ends_with("Property") && returnRecord &&
+        returnRecord->getName() == "DependencyProperty") return false;
+
+    const auto access = method.getAccess();
+    return access == clang::AS_public ||
+        (access == clang::AS_none && method.getParent()->isStruct());
+}
+
+struct ClassDocumentation
+{
+    const clang::CXXRecordDecl* definition = nullptr;
+    bool hasDocumentation = false;
+};
+
+struct FileDeclarations
+{
+    bool hasClass = false;
+    std::map<const clang::CXXRecordDecl*, ClassDocumentation> classes;
+    std::vector<const clang::FunctionDecl*> functions;
+};
+
+void CollectDeclarations(const clang::DeclContext& declarationContext,
+                         clang::SourceManager& sourceManager,
+                         std::unordered_map<std::string, FileDeclarations>& files)
+{
+    for (const auto* declaration : declarationContext.decls())
+    {
+        if (declaration->isImplicit()) continue;
+
+        if (const auto* record = llvm::dyn_cast<clang::CXXRecordDecl>(declaration))
+        {
+            const auto path = HeaderPath(*record, sourceManager);
+            if (!path.empty())
+            {
+                auto& file = files[path];
+                file.hasClass = true;
+                auto& classInfo = file.classes[record->getCanonicalDecl()];
+                if (record->isThisDeclarationADefinition()) classInfo.definition = record;
+                classInfo.hasDocumentation |= IsDocumented(*record, sourceManager);
+            }
+        }
+        else if (const auto* function = llvm::dyn_cast<clang::FunctionDecl>(declaration))
+        {
+            if (!llvm::isa<clang::CXXMethodDecl>(function))
+            {
+                const auto path = HeaderPath(*function, sourceManager);
+                if (!path.empty()) files[path].functions.push_back(function);
+            }
+        }
+
+        if (const auto* nestedContext = llvm::dyn_cast<clang::DeclContext>(declaration))
+        {
+            CollectDeclarations(*nestedContext, sourceManager, files);
+        }
+    }
+}
+
+bool HasDocumentedFunction(const std::vector<const clang::FunctionDecl*>& functions,
+                           clang::SourceManager& sourceManager)
+{
+    return std::any_of(functions.begin(), functions.end(), [&](const auto* function)
+    {
+        return IsDocumented(*function, sourceManager);
+    });
 }
 }
 
 std::string_view DocumentationRule::Id() const noexcept
 {
-    return "neowpf-documentation";
+    return "neowpf-documentation-coverage";
 }
 
 std::string_view DocumentationRule::Description() const noexcept
 {
-    return "Require paired Set*/Get* documentation and reject @note/@todo in headers.";
+    return "Require documented public methods and documented functions in class-free headers.";
 }
 
 RuleSeverity DocumentationRule::DefaultSeverity() const noexcept
@@ -73,72 +165,70 @@ RuleSeverity DocumentationRule::DefaultSeverity() const noexcept
 void DocumentationRule::RegisterMatchers(
     MatchFinder& finder, MatchFinder::MatchCallback& callback)
 {
-    finder.addMatcher(cxxMethodDecl(unless(isImplicit())).bind("set-get-method"), &callback);
+    finder.addMatcher(translationUnitDecl().bind("translation-unit"), &callback);
 }
 
 void DocumentationRule::OnMatch(
-    const MatchFinder::MatchResult& result, RuleContext& context)
+    const MatchFinder::MatchResult&, RuleContext& context)
 {
-    const auto* method = result.Nodes.getNodeAs<clang::CXXMethodDecl>("set-get-method");
-    if (!method || !method->getName().starts_with("Set")) return;
-
-    const auto* parent = method->getParent();
-    if (!parent) return;
-
     auto& sourceManager = context.SourceMgr();
-    const auto location = sourceManager.getExpansionLoc(method->getLocation());
-    if (location.isInvalid() || sourceManager.isInSystemHeader(location) ||
-        !IsHeaderPath(sourceManager.getFilename(location).str())) return;
+    std::unordered_map<std::string, FileDeclarations> files;
+    CollectDeclarations(*context.AST().getTranslationUnitDecl(), sourceManager, files);
 
-    struct MethodGroup
+    const auto severity = context.SettingsFor(Id()).severity;
+    for (const auto& fileEntry : files)
     {
-        std::vector<const clang::CXXMethodDecl*> setters;
-        std::vector<const clang::CXXMethodDecl*> getters;
-        bool hasDocumentedSetter = false;
-        bool hasDocumentedGetter = false;
-    };
+        const auto& file = fileEntry.second;
+        for (const auto& classEntry : file.classes)
+        {
+            const auto& classInfo = classEntry.second;
+            const auto* record = classInfo.definition;
+            if (!record || !IsPublicClass(*record)) continue;
 
-    std::map<std::string, MethodGroup> groups;
-    for (const auto* candidate : parent->methods())
-    {
-        const auto name = candidate->getNameAsString();
-        if (name.starts_with("Set") && name.size() > 3)
-        {
-            auto& group = groups[name.substr(3)];
-            group.setters.push_back(candidate);
-            group.hasDocumentedSetter |= IsDocumented(*candidate, sourceManager);
-        }
-        else if (name.starts_with("Get") && name.size() > 3)
-        {
-            auto& group = groups[name.substr(3)];
-            group.getters.push_back(candidate);
-            group.hasDocumentedGetter |= IsDocumented(*candidate, sourceManager);
-        }
-    }
-
-    for (const auto& [suffix, group] : groups)
-    {
-        if (group.setters.empty() || group.getters.empty()) continue;
-        const auto reportUndocumented = [&](
-            const std::vector<const clang::CXXMethodDecl*>& methods, bool hasDocumentation,
-            std::string_view counterpart)
-        {
-            if (!hasDocumentation) return;
-            for (const auto* candidate : methods)
+            bool hasDocumentation = classInfo.hasDocumentation;
+            for (const auto* method : record->methods())
             {
-                if (IsDocumented(*candidate, sourceManager)) continue;
-                context.Report(Id(), candidate->getLocation(), context.SettingsFor(Id()).severity,
-                    candidate->getNameAsString() + " is undocumented while " +
-                    std::string(counterpart) + suffix + " is documented.");
+                hasDocumentation |= IsDocumented(*method, sourceManager);
             }
-        };
+            if (!hasDocumentation) continue;
 
-        reportUndocumented(group.setters, group.hasDocumentedGetter, "Get");
-        reportUndocumented(group.getters, group.hasDocumentedSetter, "Set");
+            for (const auto* method : record->methods())
+            {
+                if (!IsDocumentableMethod(*method) ||
+                    IsDocumented(*method, sourceManager)) continue;
+                context.Report(Id(), method->getLocation(), severity,
+                    method->getNameAsString() + " is undocumented in a documented class.");
+            }
+        }
+
+        if (!file.hasClass && HasDocumentedFunction(file.functions, sourceManager))
+        {
+            for (const auto* function : file.functions)
+            {
+                if (IsDocumented(*function, sourceManager)) continue;
+                context.Report(Id(), function->getLocation(), severity,
+                    function->getNameAsString() + " is undocumented in a documented header.");
+            }
+        }
     }
 }
 
-void DocumentationRule::Run(
+std::string_view DocumentationTagRule::Id() const noexcept
+{
+    return "neowpf-documentation-tags";
+}
+
+std::string_view DocumentationTagRule::Description() const noexcept
+{
+    return "Reject @note and @todo tags in header files.";
+}
+
+RuleSeverity DocumentationTagRule::DefaultSeverity() const noexcept
+{
+    return RuleSeverity::Warning;
+}
+
+void DocumentationTagRule::Run(
     const std::vector<std::filesystem::path>& sourceRoots,
     const RuleConfig& config, DiagnosticsSink& diagnostics)
 {
@@ -183,6 +273,6 @@ void DocumentationRule::Run(
 namespace
 {
 const RuleRegistrar<DocumentationRule> astRegistrar;
-const TreeRuleRegistrar<DocumentationRule> treeRegistrar;
+const TreeRuleRegistrar<DocumentationTagRule> treeRegistrar;
 }
 }

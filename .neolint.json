@@ -4,7 +4,11 @@
       "enabled": true,
       "severity": "error"
     },
-    "neowpf-documentation": {
+    "neowpf-documentation-coverage": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "neowpf-documentation-tags": {
       "enabled": true,
       "severity": "error"
     },

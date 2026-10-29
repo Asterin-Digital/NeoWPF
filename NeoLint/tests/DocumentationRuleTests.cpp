@@ -109,7 +109,7 @@ public:
 )");
 
     ASSERT_EQ(diagnostics.size(), 1u);
-    EXPECT_EQ(diagnostics[0].ruleId, "neowpf-documentation");
+    EXPECT_EQ(diagnostics[0].ruleId, "neowpf-documentation-coverage");
     EXPECT_EQ(diagnostics[0].severity, neolint::RuleSeverity::Warning);
     EXPECT_NE(diagnostics[0].message.find("GetValue"), std::string::npos);
 }
@@ -129,6 +129,86 @@ public:
 )").empty());
 }
 
+TEST(DocumentationRuleTests, ReportsUndocumentedPublicMethodsInDocumentedClass)
+{
+    const auto diagnostics = AnalyzeSetGet(R"(
+/** @summary Describes a value. */
+class Value {
+public:
+    /** @summary Reads the value. */
+    int GetValue() const;
+    void SetValue(int value);
+};
+)");
+
+    ASSERT_EQ(diagnostics.size(), 1u);
+    EXPECT_EQ(diagnostics[0].ruleId, "neowpf-documentation-coverage");
+    EXPECT_NE(diagnostics[0].message.find("SetValue"), std::string::npos);
+}
+
+TEST(DocumentationRuleTests, IgnoresPrivateMethodsAndSpecialMembers)
+{
+    const auto diagnostics = AnalyzeSetGet(R"(
+namespace Properties {
+class DependencyProperty {};
+}
+/** @summary Describes a value. */
+class Value {
+public:
+    /** @summary Executes the operation. */
+    void Execute();
+    static const Properties::DependencyProperty& TextProperty();
+    Value& operator=(const Value&) = delete;
+    bool operator==(const Value&) const;
+    ~Value() = default;
+private:
+    void ResetValue();
+};
+)");
+
+    EXPECT_TRUE(diagnostics.empty());
+}
+
+TEST(DocumentationRuleTests, RequiresDocumentationForPublicStaticMethods)
+{
+    const auto diagnostics = AnalyzeSetGet(R"(
+/** @summary Describes a value. */
+class Value {
+public:
+    static int Create();
+};
+)");
+
+    ASSERT_EQ(diagnostics.size(), 1u);
+    EXPECT_NE(diagnostics[0].message.find("Create"), std::string::npos);
+}
+
+TEST(DocumentationRuleTests, IgnoresClassesWithoutExternalVisibility)
+{
+    EXPECT_TRUE(AnalyzeSetGet(R"(
+namespace {
+/** @summary Describes an implementation detail. */
+class InternalValue {
+public:
+    void ResetValue();
+};
+}
+)").empty());
+}
+
+TEST(DocumentationRuleTests, AppliesFileCoverageWhenThereAreNoClasses)
+{
+    const auto diagnostics = AnalyzeSetGet(R"(
+/** @summary Reads a value. */
+int ReadValue();
+void WriteValue(int value);
+)");
+
+    ASSERT_EQ(diagnostics.size(), 1u);
+    EXPECT_EQ(diagnostics[0].ruleId, "neowpf-documentation-coverage");
+    EXPECT_NE(diagnostics[0].message.find("WriteValue"), std::string::npos);
+}
+
 TEST(DocumentationRuleTests, ReportsNoteAndTodoInHeadersButIgnoresSourceFiles)
 {
     const auto directory = CreateTempDirectory();
@@ -146,7 +226,7 @@ TEST(DocumentationRuleTests, ReportsNoteAndTodoInHeadersButIgnoresSourceFiles)
     }
     {
         std::ofstream output(suppressedHeader);
-        output << "// neolint-disable-next-line neowpf-documentation: tracked separately\n"
+        output << "// neolint-disable-next-line neowpf-documentation-tags: tracked separately\n"
                   "// @todo intentionally suppressed\n";
     }
     {
@@ -154,14 +234,14 @@ TEST(DocumentationRuleTests, ReportsNoteAndTodoInHeadersButIgnoresSourceFiles)
         output << "// @todo source files are not checked\n";
     }
 
-    neolint::DocumentationRule rule;
+    neolint::DocumentationTagRule rule;
     neolint::RuleConfig config;
     neolint::DiagnosticsSink diagnostics;
     rule.Run({directory}, config, diagnostics);
     std::filesystem::remove_all(directory);
 
     ASSERT_EQ(diagnostics.Diagnostics().size(), 2u);
-    EXPECT_EQ(diagnostics.Diagnostics()[0].ruleId, "neowpf-documentation");
+    EXPECT_EQ(diagnostics.Diagnostics()[0].ruleId, "neowpf-documentation-tags");
     EXPECT_EQ(diagnostics.Diagnostics()[0].severity, neolint::RuleSeverity::Warning);
     EXPECT_EQ(diagnostics.Diagnostics()[1].severity, neolint::RuleSeverity::Warning);
 }

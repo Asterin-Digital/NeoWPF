@@ -10,7 +10,7 @@ See LICENSE file in the project root for full license text.
 
 namespace neolint
 {
-class DocumentationRule final : public IRule, public ITreeRule
+class DocumentationRule final : public IRule
 {
 public:
     std::string_view Id() const noexcept override;
@@ -20,6 +20,14 @@ public:
                           clang::ast_matchers::MatchFinder::MatchCallback& callback) override;
     void OnMatch(const clang::ast_matchers::MatchFinder::MatchResult& result,
                  RuleContext& context) override;
+};
+
+class DocumentationTagRule final : public ITreeRule
+{
+public:
+    std::string_view Id() const noexcept override;
+    std::string_view Description() const noexcept override;
+    RuleSeverity DefaultSeverity() const noexcept override;
     void Run(const std::vector<std::filesystem::path>& sourceRoots,
              const RuleConfig& config, DiagnosticsSink& diagnostics) override;
 };
