@@ -4,11 +4,10 @@
 #ifdef _WIN32
 #include <NeoWPF/Platform/Windows/WPlatform.h>
 #elif defined(__ANDROID__)
-#error Unfinished
 #elif defined(__linux__)
 #include <NeoWPF/Platform/Linux/LPlatform.h>
 #else
-#error Unfinished
+#error Unavailable
 #endif
 
 #include <mutex>
@@ -47,7 +46,7 @@ std::unique_ptr<NeoWPF::Contracts::IPlatform> CreateDefaultPlatform()
 #ifdef _WIN32
     return std::make_unique<NeoWPF::Platform::Windows::WPlatform>();
 #elif defined(__ANDROID__)
-#error Unfinished
+    return nullptr;
 #elif defined(__linux__)
     return std::make_unique<NeoWPF::Platform::Linux::LPlatform>();
 #else

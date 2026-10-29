@@ -18,6 +18,9 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
 string(TIMESTAMP NEOWPF_BUILD_TIME "%Y-%m-%d %H:%M:%S UTC" UTC)
 project(NeoWPF VERSION "${NEOWPF_VERSION}" LANGUAGES CXX)
 
+set(NEOWPF_HOST_TOOLS_DIR "" CACHE PATH
+    "Directory containing host-built NeoWPF tools for cross-compilation")
+
 include(FetchContent)
 
 set(CUDEV_BUILD_TESTS OFF CACHE BOOL "Build Cudev tests" FORCE)
@@ -54,7 +57,8 @@ if(WIN32)
     set(NEOWPF_PLATFORM "Windows")
     set(NEOWPF_DEFAULT_RENDERER_BACKEND "D3D11")
 elseif(ANDROID)
-    message(FATAL_ERROR "Unfinished")
+    set(NEOWPF_PLATFORM "Android")
+    set(NEOWPF_DEFAULT_RENDERER_BACKEND "Vulkan")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(NEOWPF_PLATFORM "Linux")
     set(NEOWPF_DEFAULT_RENDERER_BACKEND "Vulkan")
@@ -86,13 +90,14 @@ if(NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "d3d11")
 else()
     set(NEOWPF_RENDERER_BACKEND "Vulkan")
     find_package(Vulkan REQUIRED)
-    find_program(NEOWPF_GLSLANG_VALIDATOR glslangValidator REQUIRED)
+    find_program(NEOWPF_GLSLANG_VALIDATOR glslangValidator
+        HINTS "${NEOWPF_HOST_TOOLS_DIR}" REQUIRED)
 endif()
 
 message(STATUS "NeoWPF platform selected: ${NEOWPF_PLATFORM}")
 message(STATUS "NeoWPF renderer backend selected: ${NEOWPF_RENDERER_BACKEND}")
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if(NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "vulkan")
     set(NEOWPF_VULKAN_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/Vulkan/Shaders")
     set(NEOWPF_VULKAN_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/vulkan")
     set(NEOWPF_SOLID_VERT_SPV "${NEOWPF_VULKAN_GENERATED_DIR}/solid.vert.spv")
@@ -138,6 +143,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set_source_files_properties("${NEOWPF_SOLID_VERT_HEADER}" "${NEOWPF_SOLID_FRAG_HEADER}"
         "${NEOWPF_TEXTURED_VERT_HEADER}" "${NEOWPF_TEXTURED_FRAG_HEADER}"
         PROPERTIES HEADER_FILE_ONLY TRUE)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(WAYLAND REQUIRED IMPORTED_TARGET wayland-client)
     pkg_check_modules(XKBCOMMON REQUIRED IMPORTED_TARGET xkbcommon)
@@ -261,9 +269,35 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(PREPEND CMAKE_MODULE_PATH "${NEOWPF_VCPKG_PREFIX}/share/stb")
 endif()
 
+if(ANDROID)
+    set(VCPKG_TARGET_TRIPLET "arm64-android" CACHE STRING
+        "vcpkg triplet used for Android dependencies")
+    set(VCPKG_LIBRARY_LINKAGE "static" CACHE STRING
+        "Build Android vcpkg libraries as static libraries")
+    set(NEOWPF_VCPKG_PREFIX
+        "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
+    if(NOT EXISTS "${NEOWPF_VCPKG_PREFIX}/include/curl/curl.h" OR
+       NOT EXISTS "${NEOWPF_VCPKG_PREFIX}/include/stb_image.h" OR
+       NOT EXISTS "${NEOWPF_VCPKG_PREFIX}/share/stb/FindStb.cmake")
+        message(FATAL_ERROR
+            "Could not locate Android vcpkg dependencies for '${VCPKG_TARGET_TRIPLET}' "
+            "under ${NEOWPF_VCPKG_PREFIX}. Configure with the vcpkg toolchain and "
+            "install the Android manifest dependencies.")
+    endif()
+    list(PREPEND CMAKE_PREFIX_PATH "${NEOWPF_VCPKG_PREFIX}")
+    list(PREPEND CMAKE_FIND_ROOT_PATH "${NEOWPF_VCPKG_PREFIX}")
+    list(PREPEND CMAKE_MODULE_PATH "${NEOWPF_VCPKG_PREFIX}/share/stb")
+    set(ZLIB_ROOT "${NEOWPF_VCPKG_PREFIX}")
+    set(ZLIB_USE_STATIC_LIBS ON)
+endif()
+
 find_package(ZLIB REQUIRED)
 find_package(CURL CONFIG REQUIRED)
 find_package(Stb REQUIRED)
+if(ANDROID)
+    find_package(Freetype CONFIG REQUIRED)
+    find_package(harfbuzz CONFIG REQUIRED)
+endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_package(MbedTLS CONFIG REQUIRED)
     find_package(OpenSSL CONFIG REQUIRED)
@@ -329,7 +363,24 @@ if(NEOWPF_BUILD_MEDIA)
     set(BUILD_TESTING "${NEOWPF_MEDIA_BUILD_TESTING}")
 endif()
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tools/XamlCompiler${CMAKE_EXECUTABLE_SUFFIX}")
+if(ANDROID)
+    if(NOT NEOWPF_HOST_TOOLS_DIR)
+        message(FATAL_ERROR
+            "NEOWPF_HOST_TOOLS_DIR must point to host-built tools when cross-compiling for Android.")
+    endif()
+    if(CMAKE_HOST_WIN32)
+        set(NEOWPF_HOST_EXECUTABLE_SUFFIX ".exe")
+    else()
+        set(NEOWPF_HOST_EXECUTABLE_SUFFIX "")
+    endif()
+    set(NEOWPF_XAML_COMPILER
+        "${NEOWPF_HOST_TOOLS_DIR}/XamlCompiler${NEOWPF_HOST_EXECUTABLE_SUFFIX}")
+    if(NOT EXISTS "${NEOWPF_XAML_COMPILER}")
+        message(FATAL_ERROR
+            "Host XAML compiler not found: ${NEOWPF_XAML_COMPILER}. "
+            "Set NEOWPF_HOST_TOOLS_DIR to the host tools directory.")
+    endif()
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tools/XamlCompiler${CMAKE_EXECUTABLE_SUFFIX}")
     set(NEOWPF_XAML_COMPILER
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/XamlCompiler${CMAKE_EXECUTABLE_SUFFIX}")
 else()
@@ -372,11 +423,11 @@ if(WIN32)
     target_include_directories(NeoWPF.Foundation PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include/harfbuzz")
 endif()
 target_include_directories(NeoWPF.Foundation PRIVATE "${Stb_INCLUDE_DIR}")
+if(NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "vulkan")
+    target_include_directories(NeoWPF.Foundation SYSTEM PRIVATE "${NEOWPF_VULKAN_GENERATED_DIR}")
+endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_include_directories(NeoWPF.Foundation SYSTEM PRIVATE
-        "${NEOWPF_WAYLAND_GENERATED_DIR}"
-        "${NEOWPF_VULKAN_GENERATED_DIR}"
-    )
+    target_include_directories(NeoWPF.Foundation SYSTEM PRIVATE "${NEOWPF_WAYLAND_GENERATED_DIR}")
 endif()
 
 target_compile_definitions(NeoWPF.Foundation
@@ -398,21 +449,25 @@ if(WIN32)
     )
 endif()
 
+set(NEOWPF_GENERATED_ASSET_OUTPUTS)
+if(NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "vulkan")
+    list(APPEND NEOWPF_HEADERS
+        "${NEOWPF_SOLID_VERT_HEADER}" "${NEOWPF_SOLID_FRAG_HEADER}"
+        "${NEOWPF_TEXTURED_VERT_HEADER}" "${NEOWPF_TEXTURED_FRAG_HEADER}")
+    list(APPEND NEOWPF_GENERATED_ASSET_OUTPUTS
+        "${NEOWPF_SOLID_VERT_HEADER}" "${NEOWPF_SOLID_FRAG_HEADER}"
+        "${NEOWPF_TEXTURED_VERT_HEADER}" "${NEOWPF_TEXTURED_FRAG_HEADER}")
+endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_SHELL_HEADER}")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_DECORATION_HEADER}")
-    list(APPEND NEOWPF_HEADERS "${NEOWPF_SOLID_VERT_HEADER}" "${NEOWPF_SOLID_FRAG_HEADER}")
-    list(APPEND NEOWPF_HEADERS "${NEOWPF_TEXTURED_VERT_HEADER}" "${NEOWPF_TEXTURED_FRAG_HEADER}")
+    list(APPEND NEOWPF_GENERATED_ASSET_OUTPUTS
+        "${NEOWPF_XDG_SHELL_HEADER}" "${NEOWPF_XDG_SHELL_SOURCE}"
+        "${NEOWPF_XDG_DECORATION_HEADER}" "${NEOWPF_XDG_DECORATION_SOURCE}")
+endif()
+if(NEOWPF_GENERATED_ASSET_OUTPUTS)
     add_custom_target(NeoWPF.GeneratedAssets
-        DEPENDS
-            "${NEOWPF_XDG_SHELL_HEADER}"
-            "${NEOWPF_XDG_SHELL_SOURCE}"
-            "${NEOWPF_XDG_DECORATION_HEADER}"
-            "${NEOWPF_XDG_DECORATION_SOURCE}"
-            "${NEOWPF_SOLID_VERT_HEADER}"
-            "${NEOWPF_SOLID_FRAG_HEADER}"
-            "${NEOWPF_TEXTURED_VERT_HEADER}"
-            "${NEOWPF_TEXTURED_FRAG_HEADER}"
+        DEPENDS ${NEOWPF_GENERATED_ASSET_OUTPUTS}
     )
     add_dependencies(NeoWPF.Foundation NeoWPF.GeneratedAssets)
 endif()
@@ -512,8 +567,11 @@ if(WIN32)
     target_include_directories(NeoWPF PRIVATE "${NEOWPF_VCPKG_TRIPLET}/include/harfbuzz")
 endif()
 target_include_directories(NeoWPF PRIVATE "${Stb_INCLUDE_DIR}")
+if(NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "vulkan")
+    target_include_directories(NeoWPF SYSTEM PRIVATE "${NEOWPF_VULKAN_GENERATED_DIR}")
+endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_include_directories(NeoWPF SYSTEM PRIVATE "${NEOWPF_WAYLAND_GENERATED_DIR}" "${NEOWPF_VULKAN_GENERATED_DIR}")
+    target_include_directories(NeoWPF SYSTEM PRIVATE "${NEOWPF_WAYLAND_GENERATED_DIR}")
 endif()
 
 target_compile_definitions(NeoWPF
@@ -611,7 +669,7 @@ if(WIN32)
             secur32
             dwmapi
     )
-else()
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_libraries(NeoWPF
         PUBLIC
             Vulkan::Vulkan
@@ -637,6 +695,24 @@ else()
             ZLIB::ZLIB
     )
     message(STATUS "NeoWPF Linux configuration selected with Vulkan renderer backend.")
+elseif(ANDROID)
+    target_link_libraries(NeoWPF
+        PUBLIC
+            Vulkan::Vulkan
+            Freetype::Freetype
+            harfbuzz::harfbuzz
+            CURL::libcurl
+            ZLIB::ZLIB
+    )
+    target_link_libraries(NeoWPF.Foundation
+        PUBLIC
+            Vulkan::Vulkan
+            Freetype::Freetype
+            harfbuzz::harfbuzz
+            CURL::libcurl
+            ZLIB::ZLIB
+    )
+    message(STATUS "NeoWPF Android configuration selected with Vulkan renderer backend.")
 endif()
 
 target_link_libraries(NeoWPF.Foundation PUBLIC Cudev)

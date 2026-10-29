@@ -22,7 +22,8 @@
             ]
         },
         {
-            "name": "fontconfig"
+            "name": "fontconfig",
+            "platform": "linux"
         },
         {
             "name": "stb"
