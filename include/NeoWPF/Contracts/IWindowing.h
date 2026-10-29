@@ -20,6 +20,7 @@ enum class NativeWindowSystem {
     Unknown,
     Win32,
     Wayland,
+    Android,
 };
 
 enum class SurfaceAlpha {

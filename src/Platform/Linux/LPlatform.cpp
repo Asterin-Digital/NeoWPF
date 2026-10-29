@@ -112,7 +112,7 @@ NeoWPF::Core::DeviceCategory LPlatform::GetDeviceCategory() const noexcept
 }
 int LPlatform::RunApplication(std::chrono::seconds startupTimeout)
 {
-    return NeoWPF::Core::RunDesktopApplication(startupTimeout);
+    return NeoWPF::Core::RunDesktopApp(startupTimeout);
 }
 
 bool LPlatform::LoadResourceData(const std::wstring&, std::vector<std::uint8_t>&) { return false; }

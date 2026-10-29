@@ -6,11 +6,11 @@
 
 namespace NeoWPF::Core {
 
-void DumpVisualTreeImpl(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options)
+void DumpTree(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options)
 {
     auto& appState = GetAppState();
     if (appState.windowSessions.empty()) {
-        NeoWPF::Diagnostics::LogWarn("No visual tree to dump, no windows have content attached");
+        NeoWPF::Diagnostics::LogWarn("No tree to dump, no windows have content attached");
         return;
     }
 

@@ -14,215 +14,256 @@
 
 namespace {
 
-class WindowSessionGuard {
+class SessionGuard {
 public:
-    explicit WindowSessionGuard(void* nativeWindowHandle)
-        : m_nativeWindowHandle(nativeWindowHandle)
+    explicit SessionGuard(void* handle)
+        : m_handle(handle)
     {
         NeoWPF::Core::WindowSession session;
-        session.renderSurface.nativeWindowHandle = nativeWindowHandle;
+        session.renderSurface.nativeWindowHandle = handle;
         session.lifecycle.Activate();
         session.windowHost = std::make_shared<NeoWPF::UI::Window>();
 
-        auto& appState = NeoWPF::Core::GetAppState();
-        std::lock_guard<std::mutex> lock(appState.windowSessionsMutex);
-        appState.windowSessions.push_back(std::move(session));
+        auto& app = NeoWPF::Core::GetAppState();
+        std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+        app.windowSessions.push_back(std::move(session));
     }
 
-    ~WindowSessionGuard()
+    ~SessionGuard()
     {
-        NeoWPF::Core::CloseApplicationWindow(m_nativeWindowHandle);
+        NeoWPF::Core::CloseWindow(m_handle);
     }
 
 private:
-    void* m_nativeWindowHandle;
+    void* m_handle;
 };
 
-bool HasWindowSession(void* nativeWindowHandle)
+bool HasSession(void* handle)
 {
-    auto& appState = NeoWPF::Core::GetAppState();
-    std::lock_guard<std::mutex> lock(appState.windowSessionsMutex);
-    return std::any_of(appState.windowSessions.begin(), appState.windowSessions.end(),
-        [nativeWindowHandle](const NeoWPF::Core::WindowSession& session) {
-            return session.renderSurface.nativeWindowHandle == nativeWindowHandle;
+    auto& app = NeoWPF::Core::GetAppState();
+    std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+    return std::any_of(app.windowSessions.begin(), app.windowSessions.end(),
+        [handle](const NeoWPF::Core::WindowSession& session) {
+            return session.renderSurface.nativeWindowHandle == handle;
         });
 }
 
-TEST(ApplicationWindowSessionTests, CloseRejectsNullHandle)
+TEST(SessionTests, CloseRejectsNull)
 {
-    EXPECT_FALSE(NeoWPF::Core::CloseApplicationWindow(nullptr));
+    EXPECT_FALSE(NeoWPF::Core::CloseWindow(nullptr));
 }
 
-TEST(ApplicationWindowSessionTests, SurfaceCopiesShareGenerationInvalidation)
+TEST(SessionTests, CopiesShareInvalidation)
 {
-    int nativeHandle = 0;
-    WindowSessionGuard session(&nativeHandle);
+    int handle = 0;
+    SessionGuard session(&handle);
     NeoWPF::Rendering::RenderSurface surface;
     {
-        auto& appState = NeoWPF::Core::GetAppState();
-        std::lock_guard<std::mutex> lock(appState.windowSessionsMutex);
-        const auto found = std::find_if(appState.windowSessions.begin(), appState.windowSessions.end(),
-            [&nativeHandle](const NeoWPF::Core::WindowSession& current) {
-                return current.renderSurface.nativeWindowHandle == &nativeHandle;
+        auto& app = NeoWPF::Core::GetAppState();
+        std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+        const auto found = std::find_if(app.windowSessions.begin(), app.windowSessions.end(),
+            [&handle](const NeoWPF::Core::WindowSession& current) {
+                return current.renderSurface.nativeWindowHandle == &handle;
             });
-        ASSERT_NE(found, appState.windowSessions.end());
+        ASSERT_NE(found, app.windowSessions.end());
         surface = found->renderSurface;
     }
-    const auto renderSnapshot = surface;
+    const auto snapshot = surface;
     ASSERT_TRUE(surface.IsValid());
-    ASSERT_TRUE(renderSnapshot.IsValid());
+    ASSERT_TRUE(snapshot.IsValid());
 
-    EXPECT_TRUE(NeoWPF::Core::CloseApplicationWindow(&nativeHandle));
+    EXPECT_TRUE(NeoWPF::Core::CloseWindow(&handle));
 
     EXPECT_FALSE(surface.IsValid());
-    EXPECT_FALSE(renderSnapshot.IsValid());
+    EXPECT_FALSE(snapshot.IsValid());
 }
 
-TEST(ApplicationWindowSessionTests, NewSurfaceGetsDistinctGeneration)
+TEST(SessionTests, NewSurfaceGetsFreshGeneration)
 {
-    int nativeHandle = 0;
-    const NeoWPF::Rendering::RenderSurface first{&nativeHandle};
-    const NeoWPF::Rendering::RenderSurface replacement{&nativeHandle};
+    int handle = 0;
+    const NeoWPF::Rendering::RenderSurface first{&handle};
+    const NeoWPF::Rendering::RenderSurface next{&handle};
 
-    EXPECT_NE(first.GetGenerationId(), replacement.GetGenerationId());
+    EXPECT_NE(first.GetGenerationId(), next.GetGenerationId());
 }
 
-TEST(ApplicationWindowSessionTests, SurfaceDestructionInvalidatesGeneration)
+TEST(SessionTests, SurfaceReattachGetsFreshGeneration)
 {
-    int nativeHandle = 0;
-    const NeoWPF::Rendering::RenderSurface surface{&nativeHandle};
+    int handle = 0;
+    SessionGuard session(&handle);
+    NeoWPF::Rendering::RenderSurface original;
+    NeoWPF::Core::SessionLifecycle life;
+    {
+        auto& app = NeoWPF::Core::GetAppState();
+        std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+        const auto found = std::find_if(app.windowSessions.begin(), app.windowSessions.end(),
+            [&handle](const NeoWPF::Core::WindowSession& current) {
+                return current.renderSurface.nativeWindowHandle == &handle;
+            });
+        ASSERT_NE(found, app.windowSessions.end());
+        original = found->renderSurface;
+        life = found->lifecycle;
+    }
 
-    auto destruction = surface.LockForDestruction();
+    ASSERT_TRUE(NeoWPF::Core::ReleaseWindowSurface(&handle));
 
-    EXPECT_TRUE(destruction.owns_lock());
+    EXPECT_TRUE(HasSession(&handle));
+    EXPECT_FALSE(original.IsValid());
+    EXPECT_FALSE(life.IsActive());
+    EXPECT_TRUE(NeoWPF::Core::AttachWindowSurface(&handle));
+
+    NeoWPF::Rendering::RenderSurface replacement;
+    {
+        auto& app = NeoWPF::Core::GetAppState();
+        std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+        const auto found = std::find_if(app.windowSessions.begin(), app.windowSessions.end(),
+            [&handle](const NeoWPF::Core::WindowSession& current) {
+                return current.renderSurface.nativeWindowHandle == &handle;
+            });
+        ASSERT_NE(found, app.windowSessions.end());
+        replacement = found->renderSurface;
+    }
+    EXPECT_TRUE(replacement.IsValid());
+    EXPECT_NE(original.GetGenerationId(), replacement.GetGenerationId());
+    EXPECT_TRUE(life.IsActive());
+}
+
+TEST(SessionTests, DestroyInvalidatesGeneration)
+{
+    int handle = 0;
+    const NeoWPF::Rendering::RenderSurface surface{&handle};
+
+    auto destroy = surface.LockForDestruction();
+
+    EXPECT_TRUE(destroy.owns_lock());
     EXPECT_FALSE(surface.IsValid());
 }
 
-TEST(ApplicationWindowSessionTests, InvalidationWaitsForActiveRenderUse)
+TEST(SessionTests, InvalidationWaitsForRenderUse)
 {
-    int nativeHandle = 0;
-    NeoWPF::Rendering::RenderSurface surface{&nativeHandle};
-    auto surfaceUse = surface.TryAcquireUse();
-    ASSERT_TRUE(surfaceUse.owns_lock());
+    int handle = 0;
+    NeoWPF::Rendering::RenderSurface surface{&handle};
+    auto use = surface.TryAcquireUse();
+    ASSERT_TRUE(use.owns_lock());
 
-    std::promise<void> invalidationStarted;
-    std::promise<void> invalidationCompleted;
-    auto completed = invalidationCompleted.get_future();
-    std::thread invalidator([&surface, &invalidationStarted, &invalidationCompleted] {
-        invalidationStarted.set_value();
+    std::promise<void> started;
+    std::promise<void> finished;
+    auto complete = finished.get_future();
+    std::thread worker([&surface, &started, &finished] {
+        started.set_value();
         surface.Invalidate();
-        invalidationCompleted.set_value();
+        finished.set_value();
     });
-    invalidationStarted.get_future().wait();
+    started.get_future().wait();
 
-    EXPECT_EQ(completed.wait_for(std::chrono::milliseconds(10)), std::future_status::timeout);
-    surfaceUse = {};
-    EXPECT_EQ(completed.wait_for(std::chrono::seconds(1)), std::future_status::ready);
-    invalidator.join();
+    EXPECT_EQ(complete.wait_for(std::chrono::milliseconds(10)), std::future_status::timeout);
+    use = {};
+    EXPECT_EQ(complete.wait_for(std::chrono::seconds(1)), std::future_status::ready);
+    worker.join();
     EXPECT_FALSE(surface.IsValid());
     EXPECT_FALSE(surface.TryAcquireUse().owns_lock());
 }
 
-TEST(ApplicationWindowSessionTests, CloseRejectsUnknownHandleAndPreservesRegisteredSession)
+TEST(SessionTests, CloseRejectsUnknownHandle)
 {
-    int registeredHandle = 0;
-    int unknownHandle = 0;
-    WindowSessionGuard session(&registeredHandle);
+    int registered = 0;
+    int unknown = 0;
+    SessionGuard session(&registered);
 
-    EXPECT_FALSE(NeoWPF::Core::CloseApplicationWindow(&unknownHandle));
-    EXPECT_TRUE(HasWindowSession(&registeredHandle));
+    EXPECT_FALSE(NeoWPF::Core::CloseWindow(&unknown));
+    EXPECT_TRUE(HasSession(&registered));
 }
 
-TEST(ApplicationWindowSessionTests, CloseRemovesRegisteredSessionOnlyOnce)
+TEST(SessionTests, CloseRemovesSessionOnce)
 {
-    int nativeHandle = 0;
-    WindowSessionGuard session(&nativeHandle);
+    int handle = 0;
+    SessionGuard session(&handle);
 
-    EXPECT_TRUE(NeoWPF::Core::CloseApplicationWindow(&nativeHandle));
-    EXPECT_FALSE(HasWindowSession(&nativeHandle));
-    EXPECT_FALSE(NeoWPF::Core::CloseApplicationWindow(&nativeHandle));
+    EXPECT_TRUE(NeoWPF::Core::CloseWindow(&handle));
+    EXPECT_FALSE(HasSession(&handle));
+    EXPECT_FALSE(NeoWPF::Core::CloseWindow(&handle));
 }
 
-TEST(ApplicationWindowSessionTests, ClosingOneWindowShutsDownOnlyItsHostSession)
+TEST(SessionTests, ClosingOneKeepsOtherActive)
 {
-    int primaryHandle = 0;
-    int secondaryHandle = 0;
-    WindowSessionGuard primarySession(&primaryHandle);
-    WindowSessionGuard secondarySession(&secondaryHandle);
-    auto& appState = NeoWPF::Core::GetAppState();
-    NeoWPF::Rendering::RenderSurface secondarySurface;
-    NeoWPF::Core::SessionLifecycle secondaryLifecycle;
+    int first = 0;
+    int second = 0;
+    SessionGuard firstSession(&first);
+    SessionGuard secondSession(&second);
+    auto& app = NeoWPF::Core::GetAppState();
+    NeoWPF::Rendering::RenderSurface secondSurface;
+    NeoWPF::Core::SessionLifecycle secondLife;
     {
-        std::lock_guard<std::mutex> lock(appState.windowSessionsMutex);
-        auto primary = std::find_if(appState.windowSessions.begin(), appState.windowSessions.end(),
-            [&primaryHandle](const NeoWPF::Core::WindowSession& session) {
-                return session.renderSurface.nativeWindowHandle == &primaryHandle;
+        std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+        auto firstIt = std::find_if(app.windowSessions.begin(), app.windowSessions.end(),
+            [&first](const NeoWPF::Core::WindowSession& session) {
+                return session.renderSurface.nativeWindowHandle == &first;
             });
-        auto secondary = std::find_if(appState.windowSessions.begin(), appState.windowSessions.end(),
-            [&secondaryHandle](const NeoWPF::Core::WindowSession& session) {
-                return session.renderSurface.nativeWindowHandle == &secondaryHandle;
+        auto secondIt = std::find_if(app.windowSessions.begin(), app.windowSessions.end(),
+            [&second](const NeoWPF::Core::WindowSession& session) {
+                return session.renderSurface.nativeWindowHandle == &second;
             });
-        ASSERT_NE(primary, appState.windowSessions.end());
-        ASSERT_NE(secondary, appState.windowSessions.end());
-        secondarySurface = secondary->renderSurface;
-        secondaryLifecycle = secondary->lifecycle;
+        ASSERT_NE(firstIt, app.windowSessions.end());
+        ASSERT_NE(secondIt, app.windowSessions.end());
+        secondSurface = secondIt->renderSurface;
+        secondLife = secondIt->lifecycle;
     }
 
-    EXPECT_TRUE(NeoWPF::Core::CloseApplicationWindow(&primaryHandle));
+    EXPECT_TRUE(NeoWPF::Core::CloseWindow(&first));
 
-    EXPECT_FALSE(HasWindowSession(&primaryHandle));
-    EXPECT_TRUE(secondaryLifecycle.IsActive());
-    EXPECT_TRUE(secondarySurface.IsValid());
+    EXPECT_FALSE(HasSession(&first));
+    EXPECT_TRUE(secondLife.IsActive());
+    EXPECT_TRUE(secondSurface.IsValid());
 }
 
-TEST(ApplicationWindowSessionTests, CloseQueuesRendererSurfaceReleaseAfterRendererStartup)
+TEST(SessionTests, CloseQueuesSurfaceDestroyAfterStartup)
 {
-    int nativeHandle = 0;
-    WindowSessionGuard session(&nativeHandle);
-    auto& appState = NeoWPF::Core::GetAppState();
-    const bool wasRendererInitialized = appState.renderThreadInitialized.exchange(true);
-    const bool wasRunning = appState.running.exchange(true);
+    int handle = 0;
+    SessionGuard session(&handle);
+    auto& app = NeoWPF::Core::GetAppState();
+    const bool wasInitialized = app.renderThreadInitialized.exchange(true);
+    const bool wasRunning = app.running.exchange(true);
     {
-        std::lock_guard<std::mutex> lock(appState.renderRequestMutex);
-        appState.renderRequested = false;
+        std::lock_guard<std::mutex> lock(app.renderRequestMutex);
+        app.renderRequested = false;
     }
-    std::atomic<bool> surfaceReleaseRequested{false};
-    std::thread renderer([&appState, &nativeHandle, &surfaceReleaseRequested] {
+    std::atomic<bool> destroyQueued{false};
+    std::thread renderer([&app, &handle, &destroyQueued] {
         {
-            std::unique_lock<std::mutex> lock(appState.renderRequestMutex);
-            appState.renderRequestCondition.wait(lock, [&appState] {
-                return appState.renderRequested;
+            std::unique_lock<std::mutex> lock(app.renderRequestMutex);
+            app.renderRequestCondition.wait(lock, [&app] {
+                return app.renderRequested;
             });
-            appState.renderRequested = false;
+            app.renderRequested = false;
         }
-        std::vector<std::shared_ptr<NeoWPF::Core::RenderSurfaceDestructionRequest>> requests;
+        std::vector<std::shared_ptr<NeoWPF::Core::SurfaceDestroyRequest>> requests;
         {
-            std::lock_guard<std::mutex> lock(appState.windowSessionsMutex);
-            requests.swap(appState.pendingRenderSurfaceDestruction);
+            std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+            requests.swap(app.pendingSurfaceDestroy);
         }
         for (const auto& request : requests) {
-            surfaceReleaseRequested = request->surface.nativeWindowHandle == &nativeHandle;
+            destroyQueued = request->surface.nativeWindowHandle == &handle;
             NeoWPF::Rendering::Renderer_DestroySurface(request->surface);
             {
-                std::lock_guard<std::mutex> lock(appState.windowSessionsMutex);
+                std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
                 request->completed = true;
             }
-            appState.renderSurfaceDestructionCondition.notify_all();
+            app.surfaceDestroyCondition.notify_all();
         }
     });
 
-    EXPECT_TRUE(NeoWPF::Core::CloseApplicationWindow(&nativeHandle));
+    EXPECT_TRUE(NeoWPF::Core::CloseWindow(&handle));
     renderer.join();
-    EXPECT_TRUE(surfaceReleaseRequested.load());
+    EXPECT_TRUE(destroyQueued.load());
     {
-        std::lock_guard<std::mutex> lock(appState.windowSessionsMutex);
-        EXPECT_TRUE(appState.pendingRenderSurfaceDestruction.empty());
+        std::lock_guard<std::mutex> lock(app.windowSessionsMutex);
+        EXPECT_TRUE(app.pendingSurfaceDestroy.empty());
     }
-    appState.renderThreadInitialized = wasRendererInitialized;
-    appState.running = wasRunning;
+    app.renderThreadInitialized = wasInitialized;
+    app.running = wasRunning;
     {
-        std::lock_guard<std::mutex> lock(appState.renderRequestMutex);
-        appState.renderRequested = false;
+        std::lock_guard<std::mutex> lock(app.renderRequestMutex);
+        app.renderRequested = false;
     }
 }
 

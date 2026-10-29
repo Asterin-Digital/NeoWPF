@@ -329,7 +329,7 @@ void Window::SetWindowContent(void* nativeHandle, std::shared_ptr<NeoWPF::UI::Vi
     if (host) {
         host->SetContent(std::move(content));
     }
-    NeoWPF::Core::SetInputRootForWindow(nativeHandle);
+    NeoWPF::Core::SetInputRoot(nativeHandle);
 }
 
 std::shared_ptr<NeoWPF::UI::Visual> Window::GetWindowContent(void* nativeHandle)

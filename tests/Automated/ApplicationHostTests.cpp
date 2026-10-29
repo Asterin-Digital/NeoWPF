@@ -155,9 +155,9 @@ TEST(DesktopApplicationHostTests, ShutdownPreventsActivationAndFrames)
 
 TEST(DesktopApplicationHostTests, WaitsForFirstWindowButExitsAfterLastWindowCloses)
 {
-    EXPECT_TRUE(NeoWPF::Core::ShouldContinueDesktopLoop(false, false));
-    EXPECT_TRUE(NeoWPF::Core::ShouldContinueDesktopLoop(true, true));
-    EXPECT_FALSE(NeoWPF::Core::ShouldContinueDesktopLoop(true, false));
+    EXPECT_TRUE(NeoWPF::Core::ShouldContinueLoop(false, false));
+    EXPECT_TRUE(NeoWPF::Core::ShouldContinueLoop(true, true));
+    EXPECT_FALSE(NeoWPF::Core::ShouldContinueLoop(true, false));
 }
 
 TEST(ApplicationSessionTests, PreservesContentAcrossPauseAndResume)

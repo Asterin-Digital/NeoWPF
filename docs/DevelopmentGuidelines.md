@@ -141,3 +141,14 @@ Every object must have a clear owner and lifetime. When introducing state, resou
 - When ownership or lifetime requirements are unclear, establish them explicitly before implementing the feature.
 
 Resource cleanup and state transitions must remain correct across normal execution, early returns, failures, and object destruction.
+
+17. ## Documentation Consistency
+
+When documenting a header file, always avoid documenting a few methods and leaving every other method undocumented.
+This only makes it worse, inconsistent documentation is worse then no documentation.
+Any file that gets modified, and does not follow the documentation convention, must be refactored and not mixed with older conventions regardless of what the commit promises to do.
+
+18. ## Naming Consistency
+
+Assume the reader is competent enough to use context to know what a method does by it's name. Do not use long names to provide context to the reader, always prefer, short and clear names, let the context do the work.
+Any file that gets modified, and does not follow the naming convention, must be refactored and not mixed with older conventions regardless of what the commit promises to do.

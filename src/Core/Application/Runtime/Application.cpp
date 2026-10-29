@@ -195,7 +195,7 @@ DeviceCategory Application::GetDeviceCategory() const noexcept
     return platform->GetDeviceCategory();
 }
 
-int RunDesktopApplication(std::chrono::seconds renderInitializationTimeout)
+int RunDesktopApp(std::chrono::seconds renderInitializationTimeout)
 {
     auto& appState = GetAppState();
     StartRenderThread();
@@ -222,7 +222,7 @@ int RunDesktopApplication(std::chrono::seconds renderInitializationTimeout)
         return -1;
     }
 
-    return RunApplicationMessageLoop();
+    return RunMessageLoop();
 }
 
 void Application::Shutdown()
@@ -245,7 +245,7 @@ void Application::Shutdown()
     NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().Clear();
     NeoWPF::Core::ApplicationResources::Resources::Shutdown();
     NeoWPF::Diagnostics::PerformanceMetrics::Shutdown();
-    ShutdownApplication();
+    ShutdownApp();
 }
 
 void Application::InitializeOnLoad()
@@ -382,7 +382,7 @@ bool Application::IsLayoutInspectionEnabled()
 
 void Application::DumpVisualTree(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options)
 {
-    DumpVisualTreeImpl(options);
+    DumpTree(options);
 }
 
 void Application::DumpLayoutTree()
@@ -390,7 +390,7 @@ void Application::DumpLayoutTree()
     NeoWPF::Diagnostics::VisualTreeDumpOptions options;
     options.flags = NeoWPF::Diagnostics::IncludeLayout | NeoWPF::Diagnostics::IncludeProperties;
     options.maxDepth = 0;
-    DumpVisualTreeImpl(options);
+    DumpTree(options);
 }
 
 void Application::DumpTextTree(const NeoWPF::Diagnostics::TextDumpOptions& options)

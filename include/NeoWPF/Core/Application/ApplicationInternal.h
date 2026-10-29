@@ -43,7 +43,7 @@ struct WindowSession {
     bool commandListInitialized = false;
 };
 
-struct RenderSurfaceDestructionRequest {
+struct SurfaceDestroyRequest {
     NeoWPF::Rendering::RenderSurface surface;
     bool completed = false;
 };
@@ -53,7 +53,7 @@ struct AppState {
     NeoWPF::Core::ApplicationSession applicationSession;
     std::vector<WindowSession> windowSessions;
     bool hasCreatedWindow = false;
-    std::vector<std::shared_ptr<RenderSurfaceDestructionRequest>> pendingRenderSurfaceDestruction;
+    std::vector<std::shared_ptr<SurfaceDestroyRequest>> pendingSurfaceDestroy;
     std::atomic<bool> running{false};
     std::atomic<bool> consoleVisible{false};
     std::shared_ptr<NeoWPF::UI::Visual> developerWarningOverlayHost;
@@ -74,7 +74,7 @@ struct AppState {
     std::mutex renderRequestMutex;
     std::condition_variable renderRequestCondition;
     bool renderRequested = false;
-    std::condition_variable renderSurfaceDestructionCondition;
+    std::condition_variable surfaceDestroyCondition;
 
     std::mutex windowSessionsMutex;
     std::mutex windowCreationMutex;
@@ -85,14 +85,119 @@ struct AppState {
     std::vector<std::shared_ptr<NeoWPF::UI::Visual>> textInspectionOverlayVisuals;
 };
 
+/*
+    @summary
+    Returns the shared application state.
+
+    @internal
+*/
 AppState& GetAppState();
-bool ShouldContinueDesktopLoop(bool hasCreatedWindow, bool anyWindowOpen) noexcept;
+
+/*
+    @summary
+    Checks whether the application loop should continue.
+
+    @internal
+*/
+bool ShouldContinueLoop(bool hasCreatedWindow, bool anyWindowOpen) noexcept;
+
+/*
+    @summary
+    Starts the render thread.
+
+    @internal
+*/
 void StartRenderThread();
-int RunDesktopApplication(std::chrono::seconds renderInitializationTimeout);
-bool CloseApplicationWindow(void* nativeWindowHandle);
-int RunApplicationMessageLoop();
-void ShutdownApplication();
-void DumpVisualTreeImpl(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options);
-void SetInputRootForWindow(void* nativeWindowHandle);
+
+/*
+    @summary
+    Starts rendering and runs the desktop loop.
+
+    @param timeout
+    Maximum wait for render initialization.
+
+    @internal
+*/
+int RunDesktopApp(std::chrono::seconds timeout);
+
+/*
+    @summary
+    Releases a window surface but keeps its session.
+
+    @param handle
+    Stable window handle.
+
+    @returns
+    True when release completes for an existing session.
+
+    @internal
+*/
+bool ReleaseWindowSurface(void* handle);
+
+/*
+    @summary
+    Attaches a new surface generation to a retained session.
+
+    @param handle
+    Stable window handle.
+
+    @returns
+    True when the surface attaches and the session activates.
+
+    @internal
+*/
+bool AttachWindowSurface(void* handle);
+
+/*
+    @summary
+    Closes and removes a window session.
+
+    @param handle
+    Stable window handle.
+
+    @returns
+    True when the session is removed.
+
+    @internal
+*/
+bool CloseWindow(void* handle);
+
+/*
+    @summary
+    Runs the application message loop.
+
+    @internal
+*/
+int RunMessageLoop();
+
+/*
+    @summary
+    Shuts down the application runtime.
+
+    @internal
+*/
+void ShutdownApp();
+
+/*
+    @summary
+    Dumps the visual tree.
+
+    @param options
+    Controls the dump contents.
+
+    @internal
+*/
+void DumpTree(const NeoWPF::Diagnostics::VisualTreeDumpOptions& options);
+
+/*
+    @summary
+    Selects the input root for a window.
+
+    @param handle
+    Stable window handle.
+
+    @internal
+*/
+void SetInputRoot(void* handle);
 
 }

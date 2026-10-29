@@ -132,7 +132,7 @@ void LWindow::UpdateKeyStateFromWayland(std::uint32_t key, bool isPressed, wchar
     if (key == 0 && charCode == 0) {
         return;
     }
-    NeoWPF::Core::SetInputRootForWindow(this);
+    NeoWPF::Core::SetInputRoot(this);
     NeoWPF::Input::InputManager::GetInstance().ProcessKeyboardInput(
         static_cast<int>(key), isPressed, charCode, 1);
 }
@@ -159,7 +159,7 @@ void LWindow::ProcessKeyRepeat()
 void LWindow::HandlePointerEnter(void* data, wl_pointer*, std::uint32_t, wl_surface*, wl_fixed_t sx, wl_fixed_t sy)
 {
     auto* window = static_cast<LWindow*>(data);
-    NeoWPF::Core::SetInputRootForWindow(window);
+    NeoWPF::Core::SetInputRoot(window);
     window->m_pointerX = wl_fixed_to_int(sx);
     window->m_pointerY = wl_fixed_to_int(sy);
     SubmitPointerInput(NeoWPF::Input::Core::PointerPhase::Enter,
@@ -171,7 +171,7 @@ void LWindow::HandlePointerLeave(void* data, wl_pointer*, std::uint32_t, wl_surf
 {
     auto* window = static_cast<LWindow*>(data);
     if (window) {
-        NeoWPF::Core::SetInputRootForWindow(window);
+        NeoWPF::Core::SetInputRoot(window);
         SubmitPointerInput(NeoWPF::Input::Core::PointerPhase::Leave,
                            window->m_pointerX, window->m_pointerY,
                            window->m_pointerButtonState);
@@ -184,7 +184,7 @@ void LWindow::HandlePointerMotion(void* data, wl_pointer*, std::uint32_t, wl_fix
     if (!window) {
         return;
     }
-    NeoWPF::Core::SetInputRootForWindow(window);
+    NeoWPF::Core::SetInputRoot(window);
     window->m_pointerX = wl_fixed_to_int(sx);
     window->m_pointerY = wl_fixed_to_int(sy);
     SubmitPointerInput(NeoWPF::Input::Core::PointerPhase::Move,
@@ -204,7 +204,7 @@ void LWindow::HandlePointerButton(void* data, wl_pointer*, std::uint32_t serial,
     if (bit == 0) {
         return;
     }
-    NeoWPF::Core::SetInputRootForWindow(window);
+    NeoWPF::Core::SetInputRoot(window);
     if (state == WL_POINTER_BUTTON_STATE_PRESSED) {
         window->m_pointerButtonState |= bit;
     } else {
@@ -224,7 +224,7 @@ void LWindow::HandlePointerAxis(void* data, wl_pointer*, std::uint32_t, std::uin
     if (!window) {
         return;
     }
-    NeoWPF::Core::SetInputRootForWindow(window);
+    NeoWPF::Core::SetInputRoot(window);
     const int wheelDelta = (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) ? static_cast<int>(wl_fixed_to_double(value) * 120.0) : 0;
     SubmitPointerInput(NeoWPF::Input::Core::PointerPhase::Wheel,
                        window->m_pointerX, window->m_pointerY,
@@ -263,14 +263,14 @@ void LWindow::HandleKeyboardKeymap(void* data, wl_keyboard*, std::uint32_t, int 
 void LWindow::HandleKeyboardEnter(void* data, wl_keyboard*, std::uint32_t, wl_surface*, wl_array*)
 {
     auto* window = static_cast<LWindow*>(data);
-    NeoWPF::Core::SetInputRootForWindow(window);
+    NeoWPF::Core::SetInputRoot(window);
 }
 
 void LWindow::HandleKeyboardLeave(void* data, wl_keyboard*, std::uint32_t, wl_surface*)
 {
     auto* window = static_cast<LWindow*>(data);
     if (window) {
-        NeoWPF::Core::SetInputRootForWindow(window);
+        NeoWPF::Core::SetInputRoot(window);
     }
 }
 
@@ -316,7 +316,7 @@ void LWindow::HandleKeyboardModifiers(void* data, wl_keyboard*, std::uint32_t, s
                               0,
                               0,
                               group);
-        NeoWPF::Core::SetInputRootForWindow(window);
+        NeoWPF::Core::SetInputRoot(window);
     }
 }
 

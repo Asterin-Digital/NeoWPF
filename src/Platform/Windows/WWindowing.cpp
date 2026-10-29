@@ -132,7 +132,7 @@ void WWindowing::CloseWindow(void* nativeWindowHandle) noexcept
 {
     if (nativeWindowHandle) {
         const auto hwnd = static_cast<HWND>(nativeWindowHandle);
-        if (NeoWPF::Core::CloseApplicationWindow(nativeWindowHandle) && IsWindow(hwnd)) {
+        if (NeoWPF::Core::CloseWindow(nativeWindowHandle) && IsWindow(hwnd)) {
             ::DestroyWindow(hwnd);
         }
     }

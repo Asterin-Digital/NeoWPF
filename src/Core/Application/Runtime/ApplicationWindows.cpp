@@ -12,39 +12,138 @@ namespace {
 
 AppState& App() { return GetAppState(); }
 
+struct DestroyWait {
+    std::shared_ptr<SurfaceDestroyRequest> request;
+    bool waitForShutdown = false;
+};
+
+DestroyWait QueueDestroyLocked(WindowSession& session)
+{
+    DestroyWait wait;
+    session.lifecycle.Deactivate();
+
+    const auto surface = session.renderSurface;
+    if (surface.IsValid()) {
+        surface.Invalidate();
+        if (App().renderThreadInitialized.load()) {
+            wait.waitForShutdown = App().renderThreadShuttingDown;
+            if (!wait.waitForShutdown) {
+                wait.request = std::make_shared<SurfaceDestroyRequest>();
+                wait.request->surface = surface;
+                App().pendingSurfaceDestroy.push_back(wait.request);
+            }
+        }
+        return wait;
+    }
+
+    const auto pending = std::find_if(
+        App().pendingSurfaceDestroy.begin(),
+        App().pendingSurfaceDestroy.end(),
+        [&surface](const auto& request) {
+            return request->surface.nativeWindowHandle == surface.nativeWindowHandle &&
+                   request->surface.GetGenerationId() == surface.GetGenerationId();
+        });
+    if (pending != App().pendingSurfaceDestroy.end()) {
+        wait.request = *pending;
+    } else {
+        wait.waitForShutdown = App().renderThreadInitialized.load() &&
+            App().renderThreadShuttingDown;
+    }
+    return wait;
 }
 
-bool CloseApplicationWindow(void* nativeWindowHandle)
+void WaitDestroy(const DestroyWait& wait)
+{
+    if (wait.request) {
+        {
+            std::lock_guard<std::mutex> lock(App().renderRequestMutex);
+            App().renderRequested = true;
+        }
+        App().renderRequestCondition.notify_one();
+        std::unique_lock<std::mutex> lock(App().windowSessionsMutex);
+        App().surfaceDestroyCondition.wait(lock, [&wait] {
+            return wait.request->completed;
+        });
+    } else if (wait.waitForShutdown) {
+        std::unique_lock<std::mutex> lock(App().windowSessionsMutex);
+        App().surfaceDestroyCondition.wait(lock, [] {
+            return !App().renderThreadInitialized.load();
+        });
+    }
+}
+
+}
+
+bool ReleaseWindowSurface(void* handle)
+{
+    if (!handle) {
+        return false;
+    }
+
+    DestroyWait wait;
+    {
+        std::lock_guard<std::mutex> lock(App().windowSessionsMutex);
+        const auto session = std::find_if(
+            App().windowSessions.begin(), App().windowSessions.end(),
+            [handle](const WindowSession& candidate) {
+                return candidate.renderSurface.nativeWindowHandle == handle;
+            });
+        if (session == App().windowSessions.end()) {
+            return false;
+        }
+        wait = QueueDestroyLocked(*session);
+    }
+
+    WaitDestroy(wait);
+    return true;
+}
+
+bool AttachWindowSurface(void* handle)
+{
+    if (!handle) {
+        return false;
+    }
+
+    std::lock_guard<std::mutex> lock(App().windowSessionsMutex);
+    const auto session = std::find_if(
+        App().windowSessions.begin(), App().windowSessions.end(),
+        [handle](const WindowSession& candidate) {
+            return candidate.renderSurface.nativeWindowHandle == handle;
+        });
+    if (session == App().windowSessions.end() || session->lifecycle.IsShutdown() ||
+        session->renderSurface.IsValid()) {
+        return false;
+    }
+
+    session->renderSurface = NeoWPF::Rendering::RenderSurface{};
+    session->renderSurface.nativeWindowHandle = handle;
+    session->width = 0;
+    session->height = 0;
+    session->needsLayout = true;
+    session->commandListInitialized = false;
+    return session->lifecycle.Activate();
+}
+
+bool CloseWindow(void* handle)
 {
     NEO_WPF_ACTION("Application.CloseWindow");
 
-    if (!nativeWindowHandle) {
+    if (!handle) {
         return false;
     }
 
     std::shared_ptr<NeoWPF::UI::Window> windowHost;
-    std::shared_ptr<RenderSurfaceDestructionRequest> destructionRequest;
+    DestroyWait destroyWait;
     bool removed = false;
-    bool rendererInitialized = false;
-    bool waitForRendererShutdown = false;
     {
         std::lock_guard<std::mutex> lock(App().windowSessionsMutex);
-        auto it = std::find_if(App().windowSessions.begin(), App().windowSessions.end(), [nativeWindowHandle](const WindowSession& windowSession) {
-            return windowSession.renderSurface.nativeWindowHandle == nativeWindowHandle;
+        auto it = std::find_if(App().windowSessions.begin(), App().windowSessions.end(), [handle](const WindowSession& windowSession) {
+            return windowSession.renderSurface.nativeWindowHandle == handle;
         });
         if (it != App().windowSessions.end()) {
             windowHost = it->windowHost;
             it->lifecycle.Shutdown();
-            it->renderSurface.Invalidate();
-            if (App().renderThreadInitialized.load()) {
-                waitForRendererShutdown = App().renderThreadShuttingDown;
-                rendererInitialized = !waitForRendererShutdown;
-            }
-            if (rendererInitialized) {
-                destructionRequest = std::make_shared<RenderSurfaceDestructionRequest>();
-                destructionRequest->surface = it->renderSurface;
-                App().pendingRenderSurfaceDestruction.push_back(destructionRequest);
-            }
+            destroyWait = QueueDestroyLocked(*it);
             App().windowSessions.erase(it);
             removed = true;
         }
@@ -54,28 +153,13 @@ bool CloseApplicationWindow(void* nativeWindowHandle)
         return false;
     }
 
-    if (rendererInitialized) {
-        {
-            std::lock_guard<std::mutex> lock(App().renderRequestMutex);
-            App().renderRequested = true;
-        }
-        App().renderRequestCondition.notify_one();
-        std::unique_lock<std::mutex> lock(App().windowSessionsMutex);
-        App().renderSurfaceDestructionCondition.wait(lock, [&destructionRequest] {
-            return destructionRequest->completed;
-        });
-    } else if (waitForRendererShutdown) {
-        std::unique_lock<std::mutex> lock(App().windowSessionsMutex);
-        App().renderSurfaceDestructionCondition.wait(lock, [] {
-            return !App().renderThreadInitialized.load();
-        });
-    }
+    WaitDestroy(destroyWait);
 
     if (windowHost) {
         NeoWPF::Input::InputManager::GetInstance().NotifyVisualTreeReplaced(windowHost.get());
     }
 
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "CloseApplicationWindow");
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "CloseWindow");
 
     return true;
 }

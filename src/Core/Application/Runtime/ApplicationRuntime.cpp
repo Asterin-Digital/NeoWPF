@@ -27,20 +27,20 @@ AppState s_appState;
 
 AppState& GetAppState() { return s_appState; }
 
-bool ShouldContinueDesktopLoop(bool hasCreatedWindow, bool anyWindowOpen) noexcept
+bool ShouldContinueLoop(bool hasCreatedWindow, bool anyWindowOpen) noexcept
 {
     return !hasCreatedWindow || anyWindowOpen;
 }
 
-void SetInputRootForWindow(void* nativeWindowHandle)
+void SetInputRoot(void* handle)
 {
-    if (!nativeWindowHandle) {
+    if (!handle) {
         return;
     }
 
     std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
     for (auto& windowSession : s_appState.windowSessions) {
-        if (windowSession.renderSurface.nativeWindowHandle == nativeWindowHandle) {
+        if (windowSession.renderSurface.nativeWindowHandle == handle) {
             auto rootVisual = windowSession.windowHost->GetContent();
             NeoWPF::Input::InputManager::GetInstance().SetRootElement(dynamic_cast<NeoWPF::UI::UIElement*>(rootVisual.get()));
             NeoWPF::Input::InputManager::GetInstance().SetOverlayElements(windowSession.windowHost->GetOverlays());
@@ -255,26 +255,26 @@ void StartRenderThread()
             }
 
             std::vector<WindowSession> windowSessionsSnapshot;
-            std::vector<std::shared_ptr<RenderSurfaceDestructionRequest>> surfacesToDestroy;
+            std::vector<std::shared_ptr<SurfaceDestroyRequest>> destroyRequests;
             {
                 std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
-                surfacesToDestroy.swap(s_appState.pendingRenderSurfaceDestruction);
+                destroyRequests.swap(s_appState.pendingSurfaceDestroy);
                 if (keepRendering) {
                     windowSessionsSnapshot = s_appState.windowSessions;
                 }
             }
 
-            for (const auto& request : surfacesToDestroy) {
+            for (const auto& request : destroyRequests) {
                 NeoWPF::Rendering::Renderer_DestroySurface(request->surface);
                 {
                     std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
                     request->completed = true;
                 }
-                s_appState.renderSurfaceDestructionCondition.notify_all();
+                s_appState.surfaceDestroyCondition.notify_all();
             }
             if (!keepRendering) {
                 std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
-                if (!s_appState.pendingRenderSurfaceDestruction.empty()) {
+                if (!s_appState.pendingSurfaceDestroy.empty()) {
                     continue;
                 }
                 s_appState.renderThreadShuttingDown = true;
@@ -339,12 +339,12 @@ void StartRenderThread()
             s_appState.renderThreadInitialized = false;
             s_appState.renderThreadShuttingDown = false;
         }
-        s_appState.renderSurfaceDestructionCondition.notify_all();
+        s_appState.surfaceDestroyCondition.notify_all();
         NeoWPF::Core::Threading::ThreadAffinity::ClearRenderThread();
     });
 }
 
-void ShutdownApplication()
+void ShutdownApp()
 {
     s_appState.running = false;
     s_appState.renderRequestCondition.notify_all();
@@ -360,7 +360,7 @@ void ShutdownApplication()
     }
 }
 
-int RunApplicationMessageLoop()
+int RunMessageLoop()
 {
     NeoWPF::Core::Threading::ThreadAffinity::RegisterMainThread();
     auto* platform = NeoWPF::Platform::CurrentPlatform();
@@ -386,11 +386,11 @@ int RunApplicationMessageLoop()
         }
     }
 
-    for (void* nativeWindowHandle : initialWindows) {
-        windowing.InvalidateWindow(nativeWindowHandle);
+    for (void* handle : initialWindows) {
+        windowing.InvalidateWindow(handle);
     }
     if (!initialWindows.empty()) {
-        SetInputRootForWindow(initialWindows.front());
+        SetInputRoot(initialWindows.front());
     }
 
     NeoWPF::Diagnostics::PerformanceMetrics::RecordStartup();
@@ -427,7 +427,7 @@ int RunApplicationMessageLoop()
                 }
             }
         }
-        if (!ShouldContinueDesktopLoop(hasCreatedWindow, anyWindowOpen)) {
+        if (!ShouldContinueLoop(hasCreatedWindow, anyWindowOpen)) {
             return false;
         }
 

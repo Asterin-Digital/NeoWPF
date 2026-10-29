@@ -220,7 +220,7 @@ void LWindowing::CloseWindow(void* nativeWindowHandle) noexcept
         return;
     }
     (*it)->Close();
-    NeoWPF::Core::CloseApplicationWindow(nativeWindowHandle);
+    NeoWPF::Core::CloseWindow(nativeWindowHandle);
     m_windows.erase(it);
 }
 
