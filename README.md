@@ -1,5 +1,7 @@
 ## NeoWPF — A Modern C++ UI Framework
 
+**Great apps start with you.**
+
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey)](Compile.md)
 [![C++](https://img.shields.io/badge/C%2B%2B-20-blue)](Compile.md)

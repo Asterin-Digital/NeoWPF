@@ -20,18 +20,15 @@ endif()
 add_library(NeoWPF::NeoWPF STATIC IMPORTED GLOBAL)
 set_target_properties(NeoWPF::NeoWPF PROPERTIES
     IMPORTED_LOCATION "${NEOWPF_ANDROID_ARCHIVE}"
+    INTERFACE_INCLUDE_DIRECTORIES "${NEOWPF_ROOT}/include"
+    INTERFACE_COMPILE_DEFINITIONS "main=NeoWPFAndroidApplicationMain"
+    INTERFACE_LINK_OPTIONS "-Wl,-u,ANativeActivity_onCreate"
+    INTERFACE_LINK_LIBRARIES "vulkan;android;log;${CMAKE_DL_LIBS}"
 )
 
 add_library(neowpf_android SHARED
-    "${NEOWPF_ROOT}/src/Platform/Android/Jni/AndroidJni.cpp"
-)
-target_include_directories(neowpf_android PRIVATE
-    "${NEOWPF_ROOT}/include"
+    "${CMAKE_CURRENT_LIST_DIR}/Main.cpp"
 )
 target_link_libraries(neowpf_android PRIVATE
     NeoWPF::NeoWPF
-    android
-    log
-    vulkan
-    ${CMAKE_DL_LIBS}
 )

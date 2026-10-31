@@ -16,13 +16,19 @@ namespace NeoWPF::Rendering::Vulkan {
 inline std::optional<VkCompositeAlphaFlagBitsKHR> SelectSurfaceCompositeAlpha(
     bool transparent, VkCompositeAlphaFlagsKHR supported) noexcept
 {
-    const auto requested = transparent
-        ? VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR
-        : VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    if ((supported & requested) == 0) {
+    if (transparent) {
+        if ((supported & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR) != 0) {
+            return VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
+        }
         return std::nullopt;
     }
-    return requested;
+    if ((supported & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR) != 0) {
+        return VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    }
+    if ((supported & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR) != 0) {
+        return VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+    }
+    return std::nullopt;
 }
 
 inline std::array<float, 4> ToSurfaceClearColor(std::uint32_t argb,

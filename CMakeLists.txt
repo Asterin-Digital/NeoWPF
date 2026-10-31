@@ -392,6 +392,9 @@ include(cmake/NeoWPFSources.cmake)
 add_library(NeoNaml OBJECT
     src/NeoNaml/NamlArtifact.cpp
 )
+if(ANDROID)
+    set_target_properties(NeoNaml PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 add_library(NeoNaml::NeoNaml ALIAS NeoNaml)
 target_include_directories(NeoNaml
     PUBLIC
@@ -400,6 +403,9 @@ target_include_directories(NeoNaml
 target_link_libraries(NeoNaml PUBLIC Cudev)
 
 add_library(NeoWPF.Foundation OBJECT ${NEOWPF_SOURCES} ${NEOWPF_HEADERS})
+if(ANDROID)
+    set_target_properties(NeoWPF.Foundation PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 add_library(NeoWPF::Foundation ALIAS NeoWPF.Foundation
 )
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/LinterChecks.cmake")
@@ -703,6 +709,9 @@ elseif(ANDROID)
             harfbuzz::harfbuzz
             CURL::libcurl
             ZLIB::ZLIB
+                android
+                log
+                ${CMAKE_DL_LIBS}
     )
     target_link_libraries(NeoWPF.Foundation
         PUBLIC
@@ -711,6 +720,12 @@ elseif(ANDROID)
             harfbuzz::harfbuzz
             CURL::libcurl
             ZLIB::ZLIB
+    )
+    target_compile_definitions(NeoWPF INTERFACE
+        "main=NeoWPFAndroidApplicationMain"
+    )
+    target_link_options(NeoWPF INTERFACE
+        "-Wl,-u,ANativeActivity_onCreate"
     )
     message(STATUS "NeoWPF Android configuration selected with Vulkan renderer backend.")
 endif()
@@ -943,6 +958,7 @@ if(BUILD_TESTING)
     FetchContent_MakeAvailable(googletest)
 
     add_executable(NeoWPF.AutomatedTests
+        tests/Automated/AndroidNativeActivityTests.cpp
         tests/Automated/ApplicationTests.cpp
         tests/Automated/PlatformRegistryTests.cpp
         tests/Automated/ApplicationHostTests.cpp
@@ -999,6 +1015,12 @@ if(BUILD_TESTING)
         tests/Automated/ScrollViewerTests.cpp
     )
 
+    if(NOT ANDROID)
+        target_sources(NeoWPF.AutomatedTests PRIVATE
+            src/Platform/Android/App/AActivityLifecycle.cpp
+        )
+    endif()
+
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         target_include_directories(NeoWPF.AutomatedTests SYSTEM PRIVATE
             "${NEOWPF_WAYLAND_GENERATED_DIR}"
@@ -1009,7 +1031,6 @@ if(BUILD_TESTING)
     target_include_directories(NeoWPF.AutomatedTests PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include/Internal"
     )
-
     target_link_libraries(NeoWPF.AutomatedTests
         PRIVATE
             NeoWPF::NeoWPF

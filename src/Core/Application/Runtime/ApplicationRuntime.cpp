@@ -358,6 +358,13 @@ void ShutdownApp()
             NeoWPF::Platform::CurrentPlatform()->Windowing().RequestQuit(0);
         }
     }
+    if (s_appState.renderThread.joinable()) {
+        s_appState.renderThread.join();
+    }
+    {
+        std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
+        s_appState.windowSessions.clear();
+    }
 }
 
 int RunMessageLoop()

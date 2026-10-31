@@ -1,0 +1,190 @@
+#include <NeoWPF/Platform/Android/AWindow.h>
+#include <NeoWPF/Platform/Android/APlatform.h>
+
+#include <NeoWPF/Core/Application/ApplicationInternal.h>
+#include <NeoWPF/Core/Application/Resources/Embedded/FallbackFont.h>
+#include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Platform/PlatformUtils.h>
+#include <NeoWPF/Rendering/Text/FontDatabase.h>
+#include <NeoWPF/Rendering/TextRenderer.h>
+
+#include <dlfcn.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+
+#include <chrono>
+#include <mutex>
+
+namespace NeoWPF::Platform::Android {
+namespace {
+
+class AClipboard final : public NeoWPF::Contracts::IClipboard {
+public:
+    bool SetText(const std::wstring&) override { return false; }
+    void TryGetText(TextCallback callback) override
+    {
+        if (callback) {
+            callback({});
+        }
+    }
+    bool Clear() override { return false; }
+};
+
+bool LoadEmbeddedFallbackFont()
+{
+    using NeoWPF::Core::ApplicationResources::Embedded::FontRecord;
+    using NeoWPF::Core::ApplicationResources::Embedded::GetEmbeddedFallbackFontCount;
+    using NeoWPF::Core::ApplicationResources::Embedded::TryGetEmbeddedFallbackFont;
+
+    for (std::size_t index = 0; index < GetEmbeddedFallbackFontCount(); ++index) {
+        FontRecord record{};
+        if (!TryGetEmbeddedFallbackFont(index, record) || !record.data || record.size == 0) {
+            continue;
+        }
+
+        const auto familyName = NeoWPF::Platform::Utf8ToWide(record.name ? record.name : "Noto Sans");
+        if (NeoWPF::Rendering::Text::RegisterFontMemory(record.data, record.size, familyName)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+}
+
+APlatform::APlatform()
+    : m_clipboard(std::make_unique<AClipboard>())
+{
+}
+
+APlatform::~APlatform() = default;
+
+NeoWPF::Contracts::IClipboard& APlatform::Clipboard() noexcept { return *m_clipboard; }
+NeoWPF::Contracts::IWindowing& APlatform::Windowing() noexcept { return m_windowing; }
+NeoWPF::Contracts::IRendering& APlatform::Rendering() noexcept { return m_rendering; }
+NeoWPF::Contracts::IWindowChrome* APlatform::Chrome() noexcept { return nullptr; }
+
+NeoWPF::Core::DeviceCategory APlatform::GetDeviceCategory() const noexcept
+{
+    return NeoWPF::Core::DeviceCategory::Mobile;
+}
+
+int APlatform::RunApplication(std::chrono::seconds startupTimeout)
+{
+    if (!m_windowing.WaitForSurface(startupTimeout)) {
+        m_windowing.ShowFatalError(L"NeoWPF Error", L"Timed out waiting for the Android surface.");
+        m_windowing.Stop();
+        return -1;
+    }
+    const int result = NeoWPF::Core::RunDesktopApp(startupTimeout);
+    m_windowing.Stop();
+    return result;
+}
+
+bool APlatform::LoadResourceData(const std::wstring&, std::vector<std::uint8_t>& outData)
+{
+    outData.clear();
+    return false;
+}
+
+std::filesystem::path APlatform::GetExecutableDirectory() const
+{
+    return {};
+}
+
+bool APlatform::FetchHttpResource(const std::wstring&, std::vector<std::uint8_t>& outData)
+{
+    outData.clear();
+    return false;
+}
+
+NeoWPF::Contracts::FileDialogResult APlatform::ShowOpenFileDialog(
+    const std::wstring&, const std::wstring&,
+    const std::vector<NeoWPF::Contracts::FileDialogFilter>&, bool)
+{
+    return {};
+}
+
+NeoWPF::Contracts::FileDialogResult APlatform::ShowSaveFileDialog(
+    const std::wstring&, const std::wstring&, const std::wstring&,
+    const std::vector<NeoWPF::Contracts::FileDialogFilter>&)
+{
+    return {};
+}
+
+bool APlatform::DecodeImageFromMemory(const std::vector<std::uint8_t>&,
+                                      std::vector<std::uint8_t>& outPixels,
+                                      int& outWidth, int& outHeight, int, int)
+{
+    outPixels.clear();
+    outWidth = 0;
+    outHeight = 0;
+    return false;
+}
+
+bool APlatform::DecodeImageFile(const std::wstring&, std::vector<std::uint8_t>& outPixels,
+                                int& outWidth, int& outHeight, int, int)
+{
+    outPixels.clear();
+    outWidth = 0;
+    outHeight = 0;
+    return false;
+}
+
+bool APlatform::RegisterFontFile(const std::wstring& filePath)
+{
+    return NeoWPF::Rendering::Text::RegisterFontFile(filePath);
+}
+
+bool APlatform::RegisterFontMemory(const unsigned char* data, std::size_t size,
+                                   const std::wstring& familyName)
+{
+    return NeoWPF::Rendering::Text::RegisterFontMemory(data, size, familyName);
+}
+
+std::wstring APlatform::ResolveFontFamily(const std::wstring& requestedFontFamily)
+{
+    auto& fontDatabase = NeoWPF::Rendering::Text::GetFontDatabase();
+    if (fontDatabase.Records().empty()) {
+        static std::once_flag fallbackFontRegistration;
+        std::call_once(fallbackFontRegistration, [] {
+            if (NeoWPF::Rendering::Text::GetFontDatabase().Records().empty() &&
+                !LoadEmbeddedFallbackFont()) {
+                NeoWPF::Diagnostics::LogWarn(
+                    "Android embedded fallback font could not be registered");
+            }
+        });
+    }
+    return NeoWPF::Rendering::Text::ResolveFontFamily(requestedFontFamily);
+}
+
+int APlatform::CaptureCallStack(NeoWPF::Diagnostics::CallStackEntry*, int, int) noexcept
+{
+    return 0;
+}
+
+void APlatform::InstallCrashHandler() noexcept
+{
+    NeoWPF::Diagnostics::LogInfo("Android crash handler is not installed yet");
+}
+
+void APlatform::UninstallCrashHandler() noexcept
+{
+}
+
+std::wstring APlatform::CurrentModulePath() const
+{
+    Dl_info moduleInfo{};
+    const auto symbol = dlsym(RTLD_DEFAULT, "ANativeActivity_onCreate");
+    if (!symbol || dladdr(symbol, &moduleInfo) == 0 || !moduleInfo.dli_fname) {
+        return {};
+    }
+    return NeoWPF::Platform::Utf8ToWide(moduleInfo.dli_fname);
+}
+
+std::uint32_t APlatform::CurrentThreadId() const noexcept
+{
+    return static_cast<std::uint32_t>(::syscall(SYS_gettid));
+}
+
+}

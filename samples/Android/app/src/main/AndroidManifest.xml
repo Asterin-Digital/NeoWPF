@@ -4,8 +4,11 @@
         android:label="NeoWPF Android"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity
-            android:name=".MainActivity"
+            android:name="android.app.NativeActivity"
             android:exported="true">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="neowpf_android" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

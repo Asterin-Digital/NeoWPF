@@ -140,7 +140,6 @@ public:
         @summary
         Adds a child visual.
 
-        @internal
     */
     void AddChild(const std::shared_ptr<Visual>& child);
 

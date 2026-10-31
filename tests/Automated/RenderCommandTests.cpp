@@ -135,6 +135,13 @@ TEST(VulkanRenderingTests, RequiresPremultipliedCompositeAlphaForTransparentWind
                VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR);
     ASSERT_TRUE(opaque.has_value());
     EXPECT_EQ(*opaque, VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
+
+    const auto inheritedOpaque = SelectSurfaceCompositeAlpha(
+        false, VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR);
+    ASSERT_TRUE(inheritedOpaque.has_value());
+    EXPECT_EQ(*inheritedOpaque, VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR);
+    EXPECT_FALSE(SelectSurfaceCompositeAlpha(
+        true, VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR).has_value());
 }
 
 TEST(VulkanRenderingTests, PremultipliesOnlyTransparentClearColors)

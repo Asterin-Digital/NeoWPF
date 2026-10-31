@@ -26,7 +26,7 @@
 
 ## More Rules
 
-1. You cannot document a constructor
+1. You cannot document a constructor nor a destructor.
 2. You cannot describe a use case, when to use, or whatnot when documenting something
 3. You cannot document static Dependency Properties
 4. You cannot include internal arlgorithm details in documentation

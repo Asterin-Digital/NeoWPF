@@ -152,3 +152,9 @@ Any file that gets modified, and does not follow the documentation convention, m
 
 Assume the reader is competent enough to use context to know what a method does by it's name. Do not use long names to provide context to the reader, always prefer, short and clear names, let the context do the work.
 Any file that gets modified, and does not follow the naming convention, must be refactored and not mixed with older conventions regardless of what the commit promises to do.
+
+19. ## Source and Header Files
+
+Avoid writing excessively large inline implementations in header files. Prefer source files when an implementation is substantial enough to warrant one. This does not apply to interfaces, which must not have separate source files, as stated in the previous rule.
+
+Small inline implementations are perfectly acceptable when they genuinely do not require a source file. However, distinguish these from control implementations that require dependency properties. Such implementations should use dependency properties rather than local members and should not be kept inline.
