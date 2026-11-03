@@ -10,8 +10,58 @@ See LICENSE file in the project root for full license text.
 #include <span>
 #include <string_view>
 
+#include <NeoWPF/Core/Application/DeviceCategory.h>
+
 namespace NeoWPF::Platform::Capabilities
 {
+    /*
+        @summary
+        Identifies a concrete NeoWPF platform backend.
+    */
+    enum class PlatformId : std::uint8_t
+    {
+        Android,
+        Linux,
+        Windows
+    };
+
+    /*
+        @summary
+        Identifies a group in the built-in platform capability catalog.
+    */
+    enum class CapabilityGroupId : std::uint8_t
+    {
+        Windowing,
+        WindowChrome,
+        FileDialogs,
+        Clipboard,
+        Resources,
+        Networking,
+        Images
+    };
+
+    /*
+        @summary
+        Identifies a feature in the built-in platform capability catalog.
+    */
+    enum class CapabilityId : std::uint8_t
+    {
+        MultiWindow,
+        ChromeService,
+        ChromeNativeMode,
+        ChromeCustomMode,
+        ChromeNoneMode,
+        NativeCaptionColor,
+        OpenFileDialog,
+        SaveFileDialog,
+        MultiSelectFileDialog,
+        TextClipboard,
+        EmbeddedResourceLoading,
+        HttpResourceFetch,
+        ImageDecodeFromMemory,
+        ImageDecodeFromFile
+    };
+
     /*
         @summary
         Describes whether a declared capability is supported.
@@ -341,4 +391,122 @@ namespace NeoWPF::Platform::Capabilities
     {
         return HasAtLeastSupported(group, group.MinimumSupportedCount);
     }
+
+    /*
+        @summary
+        Returns the declared status of a feature for a concrete platform.
+
+        @param platform
+        Platform backend to query.
+
+        @param group
+        Capability group containing the feature.
+
+        @param capability
+        Feature to query.
+
+        @returns
+        The declared status, or `Undeclared` when the group-feature pair is unknown.
+    */
+    [[nodiscard]] CapabilityStatus GetStatus(
+        PlatformId platform,
+        CapabilityGroupId group,
+        CapabilityId capability) noexcept;
+
+    /*
+        @summary
+        Returns the declared status of a feature shared by a device category.
+
+        @param category
+        Device category to query.
+
+        @param group
+        Capability group containing the feature.
+
+        @param capability
+        Feature to query.
+
+        @returns
+        `Supported` only when every backend in the category supports the feature.
+    */
+    [[nodiscard]] CapabilityStatus GetStatus(
+        NeoWPF::Core::DeviceCategory category,
+        CapabilityGroupId group,
+        CapabilityId capability) noexcept;
+
+    /*
+        @summary
+        Reports whether a feature is supported by a concrete platform.
+
+        @param platform
+        Platform backend to query.
+
+        @param group
+        Capability group containing the feature.
+
+        @param capability
+        Feature to query.
+
+        @returns
+        `true` when the feature is declared supported.
+    */
+    [[nodiscard]] bool IsSupported(
+        PlatformId platform,
+        CapabilityGroupId group,
+        CapabilityId capability) noexcept;
+
+    /*
+        @summary
+        Reports whether a feature is supported by every backend in a device category.
+
+        @param category
+        Device category to query.
+
+        @param group
+        Capability group containing the feature.
+
+        @param capability
+        Feature to query.
+
+        @returns
+        `true` when every backend in the category declares the feature supported.
+    */
+    [[nodiscard]] bool IsSupported(
+        NeoWPF::Core::DeviceCategory category,
+        CapabilityGroupId group,
+        CapabilityId capability) noexcept;
+
+    /*
+        @summary
+        Returns the declared status of a feature for the active platform.
+
+        @param group
+        Capability group containing the feature.
+
+        @param capability
+        Feature to query.
+
+        @returns
+        The active platform's declared status, or `Undeclared` when no platform is active.
+    */
+    [[nodiscard]] CapabilityStatus GetCurrentStatus(
+        CapabilityGroupId group,
+        CapabilityId capability) noexcept;
+
+    /*
+        @summary
+        Reports whether a feature is supported by the active platform.
+
+        @param group
+        Capability group containing the feature.
+
+        @param capability
+        Feature to query.
+
+        @returns
+        `true` when the active platform declares the feature supported.
+    */
+    [[nodiscard]] bool IsCurrentSupported(
+        CapabilityGroupId group,
+        CapabilityId capability) noexcept;
 }

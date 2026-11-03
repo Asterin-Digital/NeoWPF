@@ -180,6 +180,11 @@ NeoWPF::Contracts::IWindowChrome* WPlatform::Chrome() noexcept
     return &m_chrome;
 }
 
+NeoWPF::Platform::Capabilities::PlatformId WPlatform::GetPlatformId() const noexcept
+{
+    return NeoWPF::Platform::Capabilities::PlatformId::Windows;
+}
+
 NeoWPF::Core::DeviceCategory WPlatform::GetDeviceCategory() const noexcept
 {
     return NeoWPF::Core::DeviceCategory::Desktop;

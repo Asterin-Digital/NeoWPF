@@ -17,6 +17,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/Contracts/IWindowChrome.h>
 #include <NeoWPF/Contracts/IRendering.h>
 #include <NeoWPF/Contracts/IWindowing.h>
+#include <NeoWPF/Platform/Capabilities.h>
 
 namespace NeoWPF::Diagnostics {
 struct CallStackEntry;
@@ -52,6 +53,14 @@ public:
         Returns the optional native window chrome service.
     */
     virtual IWindowChrome* Chrome() noexcept = 0;
+
+    /*
+        @summary
+        Returns the concrete platform backend identifier.
+
+        @internal
+    */
+    virtual NeoWPF::Platform::Capabilities::PlatformId GetPlatformId() const noexcept = 0;
 
     /*
         @summary
