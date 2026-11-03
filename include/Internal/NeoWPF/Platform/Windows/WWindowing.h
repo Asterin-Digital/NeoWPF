@@ -6,6 +6,7 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoWPF/Contracts/IWindowing.h>
+#include <cstdint>
 
 #ifdef CreateWindow
 #undef CreateWindow
@@ -21,6 +22,20 @@ See LICENSE file in the project root for full license text.
 #endif
 
 namespace NeoWPF::Platform::Windows {
+
+/*
+    @summary
+    Converts a Windows virtual-key code to a NeoWPF key code.
+
+    @param virtualKey
+    Windows virtual-key code.
+
+    @returns
+    The matching key code, or zero when it is not mapped.
+
+    @internal
+*/
+int TranslateVirtualKey(std::uint32_t virtualKey) noexcept;
 
 class WWindowing final : public NeoWPF::Contracts::IWindowing {
 public:

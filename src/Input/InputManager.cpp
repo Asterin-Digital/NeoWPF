@@ -1,4 +1,5 @@
 #include <NeoWPF/Input/InputManager.h>
+#include <NeoWPF/Input/Keyboard.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Input/Core/Events.h>
@@ -300,14 +301,14 @@ namespace NeoWPF::Input
             "[Input] Key %s: key=%d char=%u repeat=%d focus=%p",
             isKeyDown ? "down" : "up", keyCode, static_cast<unsigned int>(charCode), repeatCount,
             static_cast<void*>(m_focusedElement));
-        if (keyCode >= 0 && keyCode < static_cast<int>(m_keyStates.size()))
+        if (keyCode > static_cast<int>(Key::None) && keyCode < static_cast<int>(m_keyStates.size()))
         {
             m_keyStates[keyCode] = isKeyDown;
         }
 
-        if (keyCode == 0x09 && isKeyDown)
+        if (keyCode == static_cast<int>(Key::Tab) && isKeyDown)
         {
-            const bool shiftPressed = IsKeyDown(0x10);
+            const bool shiftPressed = IsKeyDown(static_cast<int>(Key::Shift));
             TryMoveFocus(!shiftPressed);
             return;
         }
@@ -333,7 +334,7 @@ namespace NeoWPF::Input
 
     bool InputManager::IsKeyDown(int keyCode) const
     {
-        if (keyCode < 0 || keyCode >= static_cast<int>(m_keyStates.size()))
+        if (keyCode <= static_cast<int>(Key::None) || keyCode >= static_cast<int>(m_keyStates.size()))
         {
             return false;
         }
