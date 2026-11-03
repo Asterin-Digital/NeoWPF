@@ -14,6 +14,20 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::Platform::Linux {
 
+/*
+    @summary
+    Converts an XKB keysym to a NeoWPF key code.
+
+    @param keysym
+    XKB keysym to translate.
+
+    @returns
+    The matching key code, or zero when it is not mapped.
+
+    @internal
+*/
+std::uint32_t TranslateXkbKeysymToVirtualKey(std::uint32_t keysym) noexcept;
+
 class LWindow final {
 public:
         LWindow(LWindowing& windowing, const wchar_t* title, int width, int height,
@@ -73,7 +87,6 @@ public:
 private:
     void UpdateKeyStateFromWayland(std::uint32_t key, bool isPressed, wchar_t charCode);
     std::uint32_t WaylandButtonToNeoWPFButton(std::uint32_t button) const noexcept;
-    static std::uint32_t TranslateXkbKeysymToVirtualKey(std::uint32_t keysym) noexcept;
 
     LWindowing& m_windowing;
     wl_display* m_display = nullptr;

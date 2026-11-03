@@ -982,6 +982,8 @@ if(BUILD_TESTING)
         tests/Automated/ButtonTests.cpp
         tests/Automated/ComboBoxTests.cpp
         tests/Automated/SliderTests.cpp
+        tests/Automated/KeyboardTests.cpp
+        tests/Automated/CapabilitiesTests.cpp
         tests/Automated/ThumbTests.cpp
         tests/Automated/CommonConvertersTests.cpp
         tests/Automated/FileDialogTests.cpp

@@ -1,6 +1,7 @@
 #include <NeoWPF/Platform/Linux/LWindow.h>
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Input/InputManager.h>
+#include <NeoWPF/Input/Keyboard.h>
 
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -69,61 +70,78 @@ std::uint32_t LWindow::WaylandButtonToNeoWPFButton(std::uint32_t button) const n
     }
 }
 
-std::uint32_t LWindow::TranslateXkbKeysymToVirtualKey(std::uint32_t keysym) noexcept
+std::uint32_t TranslateXkbKeysymToVirtualKey(std::uint32_t keysym) noexcept
 {
+    using NeoWPF::Input::Key;
+
+    if (keysym >= XKB_KEY_F1 && keysym <= XKB_KEY_F24) {
+        return static_cast<std::uint32_t>(static_cast<int>(Key::F1) +
+            static_cast<int>(keysym - XKB_KEY_F1));
+    }
+    if (keysym >= XKB_KEY_KP_0 && keysym <= XKB_KEY_KP_9) {
+        return static_cast<std::uint32_t>(static_cast<int>(Key::NumPad0) +
+            static_cast<int>(keysym - XKB_KEY_KP_0));
+    }
+    if (keysym >= XKB_KEY_0 && keysym <= XKB_KEY_9) {
+        return static_cast<std::uint32_t>(static_cast<int>(Key::D0) +
+            static_cast<int>(keysym - XKB_KEY_0));
+    }
+    if (keysym >= XKB_KEY_a && keysym <= XKB_KEY_z) {
+        return static_cast<std::uint32_t>(static_cast<int>(Key::A) +
+            static_cast<int>(keysym - XKB_KEY_a));
+    }
+    if (keysym >= XKB_KEY_A && keysym <= XKB_KEY_Z) {
+        return static_cast<std::uint32_t>(static_cast<int>(Key::A) +
+            static_cast<int>(keysym - XKB_KEY_A));
+    }
+
     switch (keysym) {
-    case XKB_KEY_BackSpace: return 0x08;
-    case XKB_KEY_Tab: return 0x09;
-    case XKB_KEY_Return: return 0x0D;
-    case XKB_KEY_Escape: return 0x1B;
-    case XKB_KEY_space: return 0x20;
-    case XKB_KEY_Shift_L: case XKB_KEY_Shift_R: return 0x10;
-    case XKB_KEY_Control_L: case XKB_KEY_Control_R: return 0x11;
-    case XKB_KEY_Alt_L: case XKB_KEY_Alt_R: return 0x12;
-    case XKB_KEY_Left: return 0x25;
-    case XKB_KEY_Up: return 0x26;
-    case XKB_KEY_Right: return 0x27;
-    case XKB_KEY_Down: return 0x28;
-    case XKB_KEY_Delete: return 0x2E;
-    case XKB_KEY_Home: return 0x24;
-    case XKB_KEY_End: return 0x23;
-    case XKB_KEY_a: case XKB_KEY_A: return 0x41;
-    case XKB_KEY_b: case XKB_KEY_B: return 0x42;
-    case XKB_KEY_c: case XKB_KEY_C: return 0x43;
-    case XKB_KEY_d: case XKB_KEY_D: return 0x44;
-    case XKB_KEY_e: case XKB_KEY_E: return 0x45;
-    case XKB_KEY_f: case XKB_KEY_F: return 0x46;
-    case XKB_KEY_g: case XKB_KEY_G: return 0x47;
-    case XKB_KEY_h: case XKB_KEY_H: return 0x48;
-    case XKB_KEY_i: case XKB_KEY_I: return 0x49;
-    case XKB_KEY_j: case XKB_KEY_J: return 0x4A;
-    case XKB_KEY_k: case XKB_KEY_K: return 0x4B;
-    case XKB_KEY_l: case XKB_KEY_L: return 0x4C;
-    case XKB_KEY_m: case XKB_KEY_M: return 0x4D;
-    case XKB_KEY_n: case XKB_KEY_N: return 0x4E;
-    case XKB_KEY_o: case XKB_KEY_O: return 0x4F;
-    case XKB_KEY_p: case XKB_KEY_P: return 0x50;
-    case XKB_KEY_q: case XKB_KEY_Q: return 0x51;
-    case XKB_KEY_r: case XKB_KEY_R: return 0x52;
-    case XKB_KEY_s: case XKB_KEY_S: return 0x53;
-    case XKB_KEY_t: case XKB_KEY_T: return 0x54;
-    case XKB_KEY_u: case XKB_KEY_U: return 0x55;
-    case XKB_KEY_v: case XKB_KEY_V: return 0x56;
-    case XKB_KEY_w: case XKB_KEY_W: return 0x57;
-    case XKB_KEY_x: case XKB_KEY_X: return 0x58;
-    case XKB_KEY_y: case XKB_KEY_Y: return 0x59;
-    case XKB_KEY_z: case XKB_KEY_Z: return 0x5A;
-    case XKB_KEY_0: return 0x30;
-    case XKB_KEY_1: return 0x31;
-    case XKB_KEY_2: return 0x32;
-    case XKB_KEY_3: return 0x33;
-    case XKB_KEY_4: return 0x34;
-    case XKB_KEY_5: return 0x35;
-    case XKB_KEY_6: return 0x36;
-    case XKB_KEY_7: return 0x37;
-    case XKB_KEY_8: return 0x38;
-    case XKB_KEY_9: return 0x39;
-    default: return 0;
+    case XKB_KEY_BackSpace: return static_cast<std::uint32_t>(Key::Back);
+    case XKB_KEY_Tab: return static_cast<std::uint32_t>(Key::Tab);
+    case XKB_KEY_Return: return static_cast<std::uint32_t>(Key::Enter);
+    case XKB_KEY_Pause: return static_cast<std::uint32_t>(Key::Pause);
+    case XKB_KEY_Caps_Lock: return static_cast<std::uint32_t>(Key::CapsLock);
+    case XKB_KEY_Escape: return static_cast<std::uint32_t>(Key::Escape);
+    case XKB_KEY_Shift_L: case XKB_KEY_Shift_R: return static_cast<std::uint32_t>(Key::Shift);
+    case XKB_KEY_Control_L: case XKB_KEY_Control_R: return static_cast<std::uint32_t>(Key::Control);
+    case XKB_KEY_Alt_L: case XKB_KEY_Alt_R: return static_cast<std::uint32_t>(Key::Alt);
+    case XKB_KEY_Page_Up: return static_cast<std::uint32_t>(Key::PageUp);
+    case XKB_KEY_Page_Down: return static_cast<std::uint32_t>(Key::PageDown);
+    case XKB_KEY_End: return static_cast<std::uint32_t>(Key::End);
+    case XKB_KEY_Home: return static_cast<std::uint32_t>(Key::Home);
+    case XKB_KEY_Left: return static_cast<std::uint32_t>(Key::Left);
+    case XKB_KEY_Up: return static_cast<std::uint32_t>(Key::Up);
+    case XKB_KEY_Right: return static_cast<std::uint32_t>(Key::Right);
+    case XKB_KEY_Down: return static_cast<std::uint32_t>(Key::Down);
+    case XKB_KEY_Insert: return static_cast<std::uint32_t>(Key::Insert);
+    case XKB_KEY_Delete: return static_cast<std::uint32_t>(Key::Delete);
+    case XKB_KEY_KP_Enter: return static_cast<std::uint32_t>(Key::Enter);
+    case XKB_KEY_space: return static_cast<std::uint32_t>(Key::Space);
+    case XKB_KEY_KP_Multiply: return static_cast<std::uint32_t>(Key::Multiply);
+    case XKB_KEY_KP_Add: return static_cast<std::uint32_t>(Key::Add);
+    case XKB_KEY_KP_Separator: return static_cast<std::uint32_t>(Key::Separator);
+    case XKB_KEY_KP_Subtract: return static_cast<std::uint32_t>(Key::Subtract);
+    case XKB_KEY_KP_Decimal: return static_cast<std::uint32_t>(Key::Decimal);
+    case XKB_KEY_KP_Divide: return static_cast<std::uint32_t>(Key::Divide);
+    case XKB_KEY_semicolon: case XKB_KEY_colon: return static_cast<std::uint32_t>(Key::Oem1);
+    case XKB_KEY_equal: case XKB_KEY_plus: return static_cast<std::uint32_t>(Key::OemPlus);
+    case XKB_KEY_comma: case XKB_KEY_less: return static_cast<std::uint32_t>(Key::OemComma);
+    case XKB_KEY_minus: case XKB_KEY_underscore: return static_cast<std::uint32_t>(Key::OemMinus);
+    case XKB_KEY_period: case XKB_KEY_greater: return static_cast<std::uint32_t>(Key::OemPeriod);
+    case XKB_KEY_slash: case XKB_KEY_question: return static_cast<std::uint32_t>(Key::Oem2);
+    case XKB_KEY_grave: case XKB_KEY_asciitilde: return static_cast<std::uint32_t>(Key::Oem3);
+    case XKB_KEY_bracketleft: case XKB_KEY_braceleft: return static_cast<std::uint32_t>(Key::Oem4);
+    case XKB_KEY_backslash: case XKB_KEY_bar: return static_cast<std::uint32_t>(Key::Oem5);
+    case XKB_KEY_bracketright: case XKB_KEY_braceright: return static_cast<std::uint32_t>(Key::Oem6);
+    case XKB_KEY_apostrophe: case XKB_KEY_quotedbl: return static_cast<std::uint32_t>(Key::Oem7);
+    case XKB_KEY_XF86AudioMute: return static_cast<std::uint32_t>(Key::VolumeMute);
+    case XKB_KEY_XF86AudioLowerVolume: return static_cast<std::uint32_t>(Key::VolumeDown);
+    case XKB_KEY_XF86AudioRaiseVolume: return static_cast<std::uint32_t>(Key::VolumeUp);
+    case XKB_KEY_XF86AudioNext: return static_cast<std::uint32_t>(Key::MediaNextTrack);
+    case XKB_KEY_XF86AudioPrev: return static_cast<std::uint32_t>(Key::MediaPreviousTrack);
+    case XKB_KEY_XF86AudioStop: return static_cast<std::uint32_t>(Key::MediaStop);
+    case XKB_KEY_XF86AudioPlay: return static_cast<std::uint32_t>(Key::MediaPlayPause);
+    default: return static_cast<std::uint32_t>(Key::None);
     }
 }
 
@@ -134,7 +152,7 @@ void LWindow::UpdateKeyStateFromWayland(std::uint32_t key, bool isPressed, wchar
     }
     NeoWPF::Core::SetInputRoot(this);
     NeoWPF::Input::InputManager::GetInstance().ProcessKeyboardInput(
-        static_cast<int>(key), isPressed, charCode, 1);
+        key == 0 ? -1 : static_cast<int>(key), isPressed, charCode, 1);
 }
 
 void LWindow::ProcessKeyRepeat()
