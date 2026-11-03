@@ -106,6 +106,11 @@ NeoWPF::Contracts::IClipboard& LPlatform::Clipboard() noexcept { return m_clipbo
 NeoWPF::Contracts::IWindowing& LPlatform::Windowing() noexcept { return m_windowing; }
 NeoWPF::Contracts::IRendering& LPlatform::Rendering() noexcept { return m_rendering; }
 NeoWPF::Contracts::IWindowChrome* LPlatform::Chrome() noexcept { return &m_chrome; }
+NeoWPF::Platform::Capabilities::PlatformId LPlatform::GetPlatformId() const noexcept
+{
+    return NeoWPF::Platform::Capabilities::PlatformId::Linux;
+}
+
 NeoWPF::Core::DeviceCategory LPlatform::GetDeviceCategory() const noexcept
 {
     return NeoWPF::Core::DeviceCategory::Desktop;

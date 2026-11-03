@@ -54,6 +54,13 @@ public:
     NeoWPF::Contracts::IWindowChrome* Chrome() noexcept override;
     /*
         @summary
+        Returns the Android platform identifier.
+
+        @internal
+    */
+    NeoWPF::Platform::Capabilities::PlatformId GetPlatformId() const noexcept override;
+    /*
+        @summary
         Returns the mobile device category.
 
         @internal

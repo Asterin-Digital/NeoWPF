@@ -63,6 +63,10 @@ NeoWPF::Contracts::IClipboard& APlatform::Clipboard() noexcept { return *m_clipb
 NeoWPF::Contracts::IWindowing& APlatform::Windowing() noexcept { return m_windowing; }
 NeoWPF::Contracts::IRendering& APlatform::Rendering() noexcept { return m_rendering; }
 NeoWPF::Contracts::IWindowChrome* APlatform::Chrome() noexcept { return nullptr; }
+NeoWPF::Platform::Capabilities::PlatformId APlatform::GetPlatformId() const noexcept
+{
+    return NeoWPF::Platform::Capabilities::PlatformId::Android;
+}
 
 NeoWPF::Core::DeviceCategory APlatform::GetDeviceCategory() const noexcept
 {

@@ -51,7 +51,7 @@ TEST(DiagnosticsTests, OutputHandlerReceivesFormattedMessages)
     bool received = false;
     {
         std::unique_lock<std::mutex> lock(capture.mutex);
-        received = capture.condition.wait_for(lock, std::chrono::seconds(2), [&capture] {
+        received = capture.condition.wait_for(lock, std::chrono::seconds(2), [&capture, &expectedMessage] {
             return capture.message.find(expectedMessage) != std::string::npos;
         });
         capturedMessage = capture.message;
