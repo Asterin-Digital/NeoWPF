@@ -226,6 +226,7 @@ bool SetLevelByName(std::string_view name, Level level) noexcept {
         {"contentpresenter",Category::ContentPresenter},
         {"control",         Category::Control},
         {"application",     Category::Application},
+        {"platform",        Category::Platform},
         {"hittest",         Category::HitTest},
         {"virtualization",  Category::Virtualization},
         {"textbox",         Category::TextBox},

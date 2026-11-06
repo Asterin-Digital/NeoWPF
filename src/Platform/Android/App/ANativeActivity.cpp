@@ -13,6 +13,7 @@
 #include <exception>
 #include <memory>
 #include <thread>
+#include <unistd.h>
 
 int NeoWPFAndroidApplicationMain();
 
@@ -145,10 +146,12 @@ void OnWindowDestroyed(ANativeActivity* activity, ANativeWindow*) noexcept
 void OnInputQueueCreated(ANativeActivity* activity, AInputQueue* inputQueue) noexcept
 {
     auto* const host = static_cast<AActivityHost*>(activity->instance);
-    if (host) {
-        host->lifecycle.DispatchInputQueueCreated(
-            host->inputQueueCreated, host->inputQueueCreatedContext, inputQueue);
-    }
+    const bool dispatched = host && host->lifecycle.DispatchInputQueueCreated(
+        host->inputQueueCreated, host->inputQueueCreatedContext, inputQueue);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input,
+        NeoWPF::Diagnostics::Level::Debug,
+        "T1 OnInputQueueCreated queue=%p dispatched=%d tid=%d",
+        inputQueue, dispatched, gettid());
 }
 
 void OnInputQueueDestroyed(ANativeActivity* activity, AInputQueue* inputQueue) noexcept
@@ -204,7 +207,6 @@ extern "C" void ANativeActivity_onCreate(
         NeoWPF::Diagnostics::SetOutputHandler([](const char* message) noexcept {
             __android_log_write(ANDROID_LOG_INFO, "NeoWPF", message);
         });
-        NeoWPF::Diagnostics::SetGlobalLevel(NeoWPF::Diagnostics::Level::Info);
 
         auto host = std::make_unique<NeoWPF::Platform::Android::AActivityHost>();
         host->activity = activity;

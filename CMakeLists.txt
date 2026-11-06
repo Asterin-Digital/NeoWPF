@@ -941,7 +941,7 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES
     ${NEOWPF_DOTNET_HEADERS}
 )
 
-if(BUILD_TESTING)
+if(BUILD_TESTING AND NOT ANDROID)
     include(FetchContent)
 
     FetchContent_Declare(

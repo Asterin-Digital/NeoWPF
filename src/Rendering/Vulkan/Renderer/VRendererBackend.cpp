@@ -239,6 +239,12 @@ bool VulkanRendering::CreateSurface(const NeoWPF::Rendering::RenderSurface& surf
         vkDestroySurfaceKHR(m_instance, context->surface, nullptr);
         return false;
     }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Info,
+        "[Vulkan/Surface] created: handle=%p generation=%llu extent=%ux%u",
+        surface.nativeWindowHandle,
+        static_cast<unsigned long long>(surface.GetGenerationId()),
+        context->swapchainExtent.width, context->swapchainExtent.height);
     std::lock_guard<std::mutex> lock(m_windowContextsMutex);
     m_windowContexts.emplace(surface.nativeWindowHandle, std::move(context));
     return true;
@@ -257,6 +263,11 @@ void VulkanRendering::DestroySurface(const NeoWPF::Rendering::RenderSurface& sur
         context = std::move(iterator->second);
         m_windowContexts.erase(iterator);
     }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Info,
+        "[Vulkan/Surface] destroy: handle=%p generation=%llu",
+        surface.nativeWindowHandle,
+        static_cast<unsigned long long>(surface.GetGenerationId()));
     if (m_device != VK_NULL_HANDLE) {
         vkDeviceWaitIdle(m_device);
     }
@@ -333,7 +344,11 @@ void VulkanRendering::BeginFrame(const NeoWPF::Rendering::RenderSurface& surface
     result = vkAcquireNextImageKHR(
         m_device, context->swapchain, UINT64_MAX, context->imageAvailable, VK_NULL_HANDLE, &context->currentImage);
     if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] vkAcquireNextImageKHR failed: %s (%d)",
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Info,
+            "[Vulkan/Frame] acquire failed: handle=%p generation=%llu result=%s (%d)",
+            surface.nativeWindowHandle,
+            static_cast<unsigned long long>(surface.GetGenerationId()),
             VkResultName(result), static_cast<int>(result));
         return;
     }
@@ -388,7 +403,11 @@ void VulkanRendering::Present(const NeoWPF::Rendering::RenderSurface& surface)
         1, &context->commandBuffers[context->currentImage], 1, &context->renderFinished};
     result = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, context->inFlight);
     if (result != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] vkQueueSubmit failed: %s (%d)",
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Info,
+            "[Vulkan/Frame] submit failed: handle=%p generation=%llu image=%u result=%s (%d)",
+            surface.nativeWindowHandle,
+            static_cast<unsigned long long>(surface.GetGenerationId()), context->currentImage,
             VkResultName(result), static_cast<int>(result));
         context->frameActive = false;
         return;
@@ -398,10 +417,23 @@ void VulkanRendering::Present(const NeoWPF::Rendering::RenderSurface& surface)
         1, &context->swapchain, &context->currentImage, nullptr};
     result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
     if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] vkQueuePresentKHR failed: %s (%d)",
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Info,
+            "[Vulkan/Frame] present failed: handle=%p generation=%llu image=%u result=%s (%d)",
+            surface.nativeWindowHandle,
+            static_cast<unsigned long long>(surface.GetGenerationId()), context->currentImage,
             VkResultName(result), static_cast<int>(result));
     } else if (result == VK_SUBOPTIMAL_KHR) {
         NeoWPF::Diagnostics::LogWarn("[Vulkan] vkQueuePresentKHR returned VK_SUBOPTIMAL_KHR");
+    }
+    if (!context->hasPresentedFrame && (result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR)) {
+        context->hasPresentedFrame = true;
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Info,
+            "[Vulkan/Frame] first present: handle=%p generation=%llu image=%u result=%s",
+            surface.nativeWindowHandle,
+            static_cast<unsigned long long>(surface.GetGenerationId()), context->currentImage,
+            VkResultName(result));
     }
     context->frameActive = false;
 }

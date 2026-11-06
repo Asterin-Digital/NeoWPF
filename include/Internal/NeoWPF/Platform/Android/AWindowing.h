@@ -24,6 +24,20 @@ class AWindow;
 
 /*
     @summary
+    Converts an Android keycode to a NeoWPF key code.
+
+    @param keyCode
+    Android keycode.
+
+    @returns
+    The matching key code, or `Key::None` when it is not mapped.
+
+    @internal
+*/
+int TranslateAndroidKeyCode(int keyCode) noexcept;
+
+/*
+    @summary
     Provides the single Android host window and pumps Activity events.
 
     @internal
@@ -339,6 +353,27 @@ private:
         @internal
     */
     void ProcessInputQueueEvent(Event& event) noexcept;
+    /*
+        @summary
+        Processes a NativeActivity input event.
+
+        @internal
+    */
+    int HandleInputQueueEvent(void* event) noexcept;
+    /*
+        @summary
+        Translates a NativeActivity key event into framework keyboard input.
+
+        @internal
+    */
+    int HandleKeyInputEvent(AInputEvent* event) noexcept;
+    /*
+        @summary
+        Translates a NativeActivity motion event into framework pointer input.
+
+        @internal
+    */
+    int HandlePointerInputEvent(AInputEvent* event) noexcept;
     /*
         @summary
         Detaches the current input queue from the application looper.

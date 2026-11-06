@@ -58,12 +58,14 @@ void ExpectLayoutParity(const NeoWPF::UI::Visual& xamlRoot,
     ASSERT_EQ(xamlDescendants.size(), cppDescendants.size());
 
     for (std::size_t index = 0; index < xamlDescendants.size(); ++index) {
-        ASSERT_NE(xamlDescendants[index], nullptr);
-        ASSERT_NE(cppDescendants[index], nullptr);
-        EXPECT_EQ(typeid(*xamlDescendants[index]), typeid(*cppDescendants[index]));
+        const auto* const xamlDescendant = xamlDescendants[index];
+        const auto* const cppDescendant = cppDescendants[index];
+        ASSERT_NE(xamlDescendant, nullptr);
+        ASSERT_NE(cppDescendant, nullptr);
+        EXPECT_EQ(typeid(*xamlDescendant), typeid(*cppDescendant));
 
-        const auto* xamlElement = dynamic_cast<const NeoWPF::UI::FrameworkElement*>(xamlDescendants[index]);
-        const auto* cppElement = dynamic_cast<const NeoWPF::UI::FrameworkElement*>(cppDescendants[index]);
+        const auto* xamlElement = dynamic_cast<const NeoWPF::UI::FrameworkElement*>(xamlDescendant);
+        const auto* cppElement = dynamic_cast<const NeoWPF::UI::FrameworkElement*>(cppDescendant);
         ASSERT_EQ(xamlElement != nullptr, cppElement != nullptr);
         if (!xamlElement || !cppElement) {
             continue;
@@ -878,7 +880,9 @@ TEST(XamlParserTests, XamlAndCppConstructionProduceEquivalentTreeState)
     cppTree->AddChild(cppButton);
     cppTree->AddChild(cppText);
 
-    EXPECT_EQ(typeid(*xamlTree), typeid(*cppTree));
+    const auto* const xamlTreeVisual = xamlTree.get();
+    const auto* const cppTreeVisual = cppTree.get();
+    EXPECT_EQ(typeid(*xamlTreeVisual), typeid(*cppTreeVisual));
     EXPECT_EQ(AsVisual(xamlTree)->GetVisualChildren().size(), cppTree->GetVisualChildren().size());
     EXPECT_EQ(AsVisual(xamlTree)->GetLogicalChildren().size(), cppTree->GetLogicalChildren().size());
     EXPECT_EQ(AsVisual(xamlTree)->GetLogicalChildren().size(), 2u);
@@ -887,8 +891,12 @@ TEST(XamlParserTests, XamlAndCppConstructionProduceEquivalentTreeState)
     const auto cppChildren = cppTree->GetLogicalChildren();
     ASSERT_EQ(xamlChildren.size(), 2u);
     ASSERT_EQ(cppChildren.size(), 2u);
-    EXPECT_EQ(typeid(*xamlChildren[0]), typeid(*cppChildren[0]));
-    EXPECT_EQ(typeid(*xamlChildren[1]), typeid(*cppChildren[1]));
+    const auto* const xamlFirstChild = xamlChildren[0];
+    const auto* const cppFirstChild = cppChildren[0];
+    const auto* const xamlSecondChild = xamlChildren[1];
+    const auto* const cppSecondChild = cppChildren[1];
+    EXPECT_EQ(typeid(*xamlFirstChild), typeid(*cppFirstChild));
+    EXPECT_EQ(typeid(*xamlSecondChild), typeid(*cppSecondChild));
 
     const auto* xamlButton = dynamic_cast<const NeoWPF::UI::Button*>(xamlChildren[0]);
     const auto* cppButtonValue = dynamic_cast<const NeoWPF::UI::Button*>(cppChildren[0]);
@@ -1226,10 +1234,13 @@ TEST(XamlParserTests, XamlAndCppMatchNestedGridLayout)
     ASSERT_EQ(xamlGrid->GetColumnDefinitions().size(), 2u);
     ASSERT_EQ(cppGrid->GetColumnDefinitions().size(), 2u);
     EXPECT_EQ(xamlGrid->GetVisualChildren().size(), cppGrid->GetVisualChildren().size());
-    ASSERT_EQ(xamlGrid->GetVisualDescendants().size(), cppGrid->GetVisualDescendants().size());
-    for (std::size_t index = 0; index < xamlGrid->GetVisualDescendants().size(); ++index) {
-        EXPECT_EQ(typeid(*xamlGrid->GetVisualDescendants()[index]),
-                  typeid(*cppGrid->GetVisualDescendants()[index]));
+    const auto xamlDescendants = xamlGrid->GetVisualDescendants();
+    const auto cppDescendants = cppGrid->GetVisualDescendants();
+    ASSERT_EQ(xamlDescendants.size(), cppDescendants.size());
+    for (std::size_t index = 0; index < xamlDescendants.size(); ++index) {
+        const auto* const xamlDescendant = xamlDescendants[index];
+        const auto* const cppDescendant = cppDescendants[index];
+        EXPECT_EQ(typeid(*xamlDescendant), typeid(*cppDescendant));
     }
 
     const auto xamlChildren = xamlGrid->GetVisualChildren();
@@ -1268,7 +1279,9 @@ TEST(XamlParserTests, XamlAndCppMatchContentControlNesting)
     const auto cppDescendants = cppOuter->GetVisualDescendants();
     ASSERT_EQ(xamlDescendants.size(), cppDescendants.size());
     for (std::size_t index = 0; index < xamlDescendants.size(); ++index) {
-        EXPECT_EQ(typeid(*xamlDescendants[index]), typeid(*cppDescendants[index]));
+        const auto* const xamlDescendant = xamlDescendants[index];
+        const auto* const cppDescendant = cppDescendants[index];
+        EXPECT_EQ(typeid(*xamlDescendant), typeid(*cppDescendant));
     }
 
     const auto* xamlOuter = dynamic_cast<const NeoWPF::UI::Border*>(xamlTree.get());

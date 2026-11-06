@@ -86,6 +86,7 @@ enum class Category : uint8_t {
 	ContentPresenter,
 	Control,
 	Application,
+	Platform,
 	HitTest,
 	Virtualization,
 	TextBox,

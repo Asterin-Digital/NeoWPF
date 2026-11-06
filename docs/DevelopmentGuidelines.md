@@ -144,17 +144,22 @@ Resource cleanup and state transitions must remain correct across normal executi
 
 17. ## Documentation Consistency
 
-When documenting a header file, always avoid documenting a few methods and leaving every other method undocumented.
-This only makes it worse, inconsistent documentation is worse then no documentation.
-Any file that gets modified, and does not follow the documentation convention, must be refactored and not mixed with older conventions regardless of what the commit promises to do.
+When documenting a header file, don't document a few methods and leave the rest undocumented. That just makes it worse. Inconsistent docs are worse than no docs at all.
+
+If a file is modified and it doesn't follow the documentation convention, fix that file instead of mixing old and new conventions just because a commit says it will.
 
 18. ## Naming Consistency
 
-Assume the reader is competent enough to use context to know what a method does by it's name. Do not use long names to provide context to the reader, always prefer, short and clear names, let the context do the work.
-Any file that gets modified, and does not follow the naming convention, must be refactored and not mixed with older conventions regardless of what the commit promises to do.
+Assume the reader is competent enough to use context to know what a method does from its name. Don't add long names just to explain things to the reader. Prefer short, clear names and let the context do the work.
+
+If a file is modified and it doesn't follow the naming convention, fix that file instead of mixing old and new conventions just because a commit says it will.
 
 19. ## Source and Header Files
 
-Avoid writing excessively large inline implementations in header files. Prefer source files when an implementation is substantial enough to warrant one. This does not apply to interfaces, which must not have separate source files, as stated in the previous rule.
+Avoid writing huge inline implementations in header files. Prefer source files when the implementation is substantial enough to need one. This does not apply to interfaces, which must not have separate source files, as noted in the previous rule.
 
-Small inline implementations are perfectly acceptable when they genuinely do not require a source file. However, distinguish these from control implementations that require dependency properties. Such implementations should use dependency properties rather than local members and should not be kept inline.
+Small inline implementations are fine when they genuinely do not need a source file. But don't treat them the same as control implementations that need dependency properties. Those should use dependency properties instead of local members and should not stay inline.
+
+20. ## Debugging
+
+Do not use the logger's public API to change logging levels. Only consumers and downstream applications are allowed to change the logging level. NeoWPF code must not change it. Simply log the message.

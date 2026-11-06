@@ -117,6 +117,7 @@ void ActivityDestroyedCallback() {}
 struct FakeInputEvent {
     int type = 0;
     bool preDispatched = false;
+    int handled = 0;
 };
 
 struct FakeInputQueue {
@@ -125,6 +126,7 @@ struct FakeInputQueue {
     std::vector<int> handledValues;
     std::size_t nextEvent = 0;
     int preDispatchCount = 0;
+    int processEventCount = 0;
 };
 
 int GetFakeInputEvent(void* context, void** outEvent) noexcept
@@ -153,6 +155,14 @@ void FinishFakeInputEvent(void* context, void* event, int handled) noexcept
     auto& queue = *static_cast<FakeInputQueue*>(context);
     queue.finishedEvents.push_back(static_cast<FakeInputEvent*>(event));
     queue.handledValues.push_back(handled);
+}
+
+int ProcessFakeInputEvent(void* context, void* event) noexcept
+{
+    auto& queue = *static_cast<FakeInputQueue*>(context);
+    const auto& inputEvent = *static_cast<FakeInputEvent*>(event);
+    ++queue.processEventCount;
+    return inputEvent.type == 1 ? inputEvent.handled : 0;
 }
 
 #if defined(__ANDROID__)
@@ -380,7 +390,7 @@ TEST(AndroidNativeActivityTests, CallbackRegistrationStoresAllNativeActivityHand
 TEST(AndroidNativeActivityTests, InputQueueDrainCompletesUnconsumedEventsOnce)
 {
     using NeoWPF::Platform::Android::AActivityInputQueueOperations;
-    using NeoWPF::Platform::Android::ADrainUnhandledInputQueue;
+    using NeoWPF::Platform::Android::ADrainInputQueue;
 
     FakeInputEvent key{1, true};
     FakeInputEvent motion{2, false};
@@ -388,15 +398,37 @@ TEST(AndroidNativeActivityTests, InputQueueDrainCompletesUnconsumedEventsOnce)
     FakeInputEvent regularKey{1, false};
     FakeInputQueue queue{{&key, &motion, &unknown, &regularKey}};
     const AActivityInputQueueOperations operations{
-        &GetFakeInputEvent, &PreDispatchFakeInputEvent, &FinishFakeInputEvent};
+        &GetFakeInputEvent, &PreDispatchFakeInputEvent, &FinishFakeInputEvent,
+        &ProcessFakeInputEvent};
 
-    EXPECT_EQ(ADrainUnhandledInputQueue(&queue, operations), 3u);
+    EXPECT_EQ(ADrainInputQueue(&queue, &queue, operations), 3u);
     EXPECT_EQ(queue.preDispatchCount, 2);
     ASSERT_EQ(queue.finishedEvents.size(), 3u);
     EXPECT_EQ(queue.finishedEvents[0], &motion);
     EXPECT_EQ(queue.finishedEvents[1], &unknown);
     EXPECT_EQ(queue.finishedEvents[2], &regularKey);
     EXPECT_EQ(queue.handledValues, (std::vector<int>{0, 0, 0}));
+    EXPECT_EQ(queue.processEventCount, 3);
+}
+
+TEST(AndroidNativeActivityTests, InputQueueDrainUsesProcessedHandledResult)
+{
+    using NeoWPF::Platform::Android::AActivityInputQueueOperations;
+    using NeoWPF::Platform::Android::ADrainInputQueue;
+
+    FakeInputEvent mappedKey{1, false, 1};
+    FakeInputEvent unsupportedKey{1, false, 0};
+    FakeInputEvent motion{2, false, 1};
+    FakeInputEvent preDispatchedKey{1, true, 1};
+    FakeInputQueue queue{{&mappedKey, &unsupportedKey, &motion, &preDispatchedKey}};
+    const AActivityInputQueueOperations operations{
+        &GetFakeInputEvent, &PreDispatchFakeInputEvent, &FinishFakeInputEvent,
+        &ProcessFakeInputEvent};
+
+    EXPECT_EQ(ADrainInputQueue(&queue, &queue, operations), 3u);
+    EXPECT_EQ(queue.handledValues, (std::vector<int>{1, 0, 0}));
+    EXPECT_EQ(queue.processEventCount, 3);
+    EXPECT_EQ(queue.preDispatchCount, 3);
 }
 
 #if defined(__ANDROID__)
