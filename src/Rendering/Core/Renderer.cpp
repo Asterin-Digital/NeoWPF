@@ -69,6 +69,11 @@ bool NeoWPF::Rendering::Renderer_Initialize(const RenderSurface& surface)
 {
     auto surfaceUse = surface.TryAcquireUse();
     if (!surfaceUse.owns_lock()) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[Renderer/Surface] initialize skipped: handle=%p generation=%llu surface unavailable",
+            surface.nativeWindowHandle,
+            static_cast<unsigned long long>(surface.GetGenerationId()));
         return false;
     }
     const auto existingState = s_windowStates.find(surface.nativeWindowHandle);
@@ -86,12 +91,27 @@ bool NeoWPF::Rendering::Renderer_Initialize(const RenderSurface& surface)
     }
     auto* rendering = CurrentRendering();
     if (!rendering) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Info,
+            "[Renderer/Surface] initialize failed: handle=%p generation=%llu no rendering backend",
+            surface.nativeWindowHandle,
+            static_cast<unsigned long long>(surface.GetGenerationId()));
         return false;
     }
     if (!rendering->IsInitialized() && !rendering->InitializeDevice(surface)) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Info,
+            "[Renderer/Surface] device initialization failed: handle=%p generation=%llu",
+            surface.nativeWindowHandle,
+            static_cast<unsigned long long>(surface.GetGenerationId()));
         return false;
     }
     state.surfaceCreated = rendering->CreateSurface(surface);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Info,
+        "[Renderer/Surface] create %s: handle=%p generation=%llu",
+        state.surfaceCreated ? "complete" : "failed", surface.nativeWindowHandle,
+        static_cast<unsigned long long>(surface.GetGenerationId()));
     return state.surfaceCreated;
 }
 
@@ -138,6 +158,11 @@ void NeoWPF::Rendering::Renderer_Resize(const RenderSurface& surface, unsigned i
     if (state->hasSize && w == state->lastWidth && h == state->lastHeight) {
         return;
     }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Info,
+        "[Renderer/Surface] resize: handle=%p generation=%llu extent=%ux%u",
+        surface.nativeWindowHandle,
+        static_cast<unsigned long long>(surface.GetGenerationId()), w, h);
     state->hasCommandHash = false;
     state->lastWidth = w;
     state->lastHeight = h;

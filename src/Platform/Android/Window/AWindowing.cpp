@@ -11,10 +11,13 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_android.h>
 
+#include <android/looper.h>
+
 #include <algorithm>
 #include <chrono>
 #include <limits>
 #include <utility>
+#include <unistd.h>
 
 namespace NeoWPF::Platform::Android {
 namespace {
@@ -208,6 +211,10 @@ void AWindowing::QueueSurfaceAvailable(ANativeWindow* nativeWindow,
         event.height = height;
         m_events.push_back(std::move(event));
     }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
+        NeoWPF::Diagnostics::Level::Info,
+        "[Android/Surface] available queued: nativeWindow=%p extent=%ux%u",
+        nativeWindow, width, height);
     WakeEventPump();
 }
 
@@ -225,6 +232,8 @@ void AWindowing::QueueSurfaceDestroyed() noexcept
         event.completion = std::move(completion);
         m_events.push_back(std::move(event));
     }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
+        NeoWPF::Diagnostics::Level::Info, "[Android/Surface] destroy queued");
     WakeEventPump();
     finished.wait();
 }
@@ -236,6 +245,10 @@ void AWindowing::QueueInputQueueCreated(AInputQueue* inputQueue) noexcept
     }
     {
         std::lock_guard<std::mutex> lock(m_eventMutex);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Input,
+            NeoWPF::Diagnostics::Level::Debug,
+            "T2 QueueInputQueueCreated queue=%p stopped=%d tid=%d",
+            inputQueue, m_stopped, gettid());
         if (m_stopped) {
             return;
         }
@@ -389,6 +402,10 @@ void AWindowing::ProcessSurfaceAvailable(Event& event) noexcept
     }
 
     ANativeWindow* const previous = window->NativeWindow();
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
+        NeoWPF::Diagnostics::Level::Info,
+        "[Android/Surface] available processing: windowHandle=%p nativeWindow=%p previous=%p extent=%ux%u",
+        window, event.nativeWindow, previous, event.width, event.height);
     if (previous && previous != event.nativeWindow) {
         NeoWPF::Core::ReleaseWindowSurface(window);
     }
@@ -398,12 +415,19 @@ void AWindowing::ProcessSurfaceAvailable(Event& event) noexcept
 
     if (!previous || previous != window->NativeWindow()) {
         if (!NeoWPF::Core::AttachWindowSurface(window)) {
-            NeoWPF::Diagnostics::LogError("Failed to activate the Android window surface");
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
+                NeoWPF::Diagnostics::Level::Info,
+                "[Android/Surface] attach failed: windowHandle=%p nativeWindow=%p",
+                window, window->NativeWindow());
             window->SetNativeWindow(nullptr);
             window->SetSize(0, 0);
             return;
         }
         NeoWPF::Core::SetInputRoot(window);
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
+            NeoWPF::Diagnostics::Level::Info,
+            "[Android/Surface] attached and input root selected: windowHandle=%p nativeWindow=%p",
+            window, window->NativeWindow());
     }
     InvalidateWindow(window);
 }
@@ -415,6 +439,10 @@ void AWindowing::ProcessSurfaceDestroyed() noexcept
     }
     AWindow* const window = m_windows.front().get();
     if (window->NativeWindow()) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
+            NeoWPF::Diagnostics::Level::Info,
+            "[Android/Surface] destroy processing: windowHandle=%p nativeWindow=%p",
+            window, window->NativeWindow());
         NeoWPF::Core::ReleaseWindowSurface(window);
         window->SetNativeWindow(nullptr);
         window->SetSize(0, 0);

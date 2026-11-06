@@ -50,6 +50,7 @@ private:
         VkFence inFlight = VK_NULL_HANDLE;
         std::uint32_t currentImage = 0;
         bool frameActive = false;
+        bool hasPresentedFrame = false;
         bool transparent = false;
     };
 
