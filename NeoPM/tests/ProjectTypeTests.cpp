@@ -1,6 +1,5 @@
 #include <NeoPM/Contracts/IProjectType.h>
 #include <NeoPM/Core/Project/CMakeListsBuilder.h>
-#include <NeoPM/Core/Project/VcxprojBuilder.h>
 
 #include <gtest/gtest.h>
 
@@ -41,39 +40,6 @@ namespace {
         context.projectRoot = projectRoot;
         return context;
     }
-}
-
-TEST(ProjectTypeTests, CreatesValidVcxprojProject) {
-    TemporaryProjectDirectory directory;
-    NeoPM::Core::Project::VcxprojBuilder builder("SampleApp");
-    NeoPM::Contracts::IProjectType& projectType = builder;
-
-    builder
-        .AddCompileFile("App.xaml.cpp")
-        .AddCompileFile("MainWindow.xaml.cpp")
-        .AddGeneratedXamlSources()
-        .AddHeaderFile("include/SampleApp/Main.h")
-        .AddTargetsImport("$(LocalAppData)\\NeoWPF\\NeoWPF.Resources.targets");
-
-    const auto context = MakeContext(directory.Path());
-    ASSERT_EQ(projectType.Name(), std::string("vcxproj"));
-    ASSERT_TRUE(projectType.Generate(context));
-
-    const auto projectFile = directory.Path() / "SampleApp.vcxproj";
-    const auto filtersFile = directory.Path() / "SampleApp.vcxproj.filters";
-    const auto solutionFile = directory.Path() / "SampleApp.slnx";
-    ASSERT_TRUE(std::filesystem::is_regular_file(projectFile));
-    ASSERT_TRUE(std::filesystem::is_regular_file(filtersFile));
-    ASSERT_TRUE(std::filesystem::is_regular_file(solutionFile));
-
-    std::ifstream input(projectFile);
-    const std::string content{
-        std::istreambuf_iterator<char>(input),
-        std::istreambuf_iterator<char>()};
-    EXPECT_NE(content.find("<ProjectGuid>{"), std::string::npos);
-    EXPECT_NE(content.find("App.xaml.cpp"), std::string::npos);
-    EXPECT_NE(content.find("MainWindow.xaml.cpp"), std::string::npos);
-    EXPECT_NE(content.find("Generated\\**\\*.xaml.g.cpp"), std::string::npos);
 }
 
 TEST(ProjectTypeTests, CreatesValidCMakeListsProject) {

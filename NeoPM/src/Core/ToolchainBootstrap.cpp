@@ -8,38 +8,6 @@
 #include <string>
 
 namespace NeoPM::Core {
-    namespace {
-        std::string XmlEscape(const std::string& value) {
-            auto escaped = std::string{};
-            escaped.reserve(value.size());
-
-            for (const auto ch : value) {
-                switch (ch) {
-                case '&':
-                    escaped += "&amp;";
-                    break;
-                case '<':
-                    escaped += "&lt;";
-                    break;
-                case '>':
-                    escaped += "&gt;";
-                    break;
-                case '"':
-                    escaped += "&quot;";
-                    break;
-                case '\'':
-                    escaped += "&apos;";
-                    break;
-                default:
-                    escaped += ch;
-                    break;
-                }
-            }
-
-            return escaped;
-        }
-    }
-
     bool ToolchainBootstrap::EnsureInstalled() {
         auto& logger = Utils::Logger::Instance();
 
@@ -77,7 +45,7 @@ namespace NeoPM::Core {
             }
         }
 
-        auto targetsPath = GetTargetsFilePath();
+        auto targetsPath = GetToolDirectory() / "NeoWPF.Resources.targets";
         if (std::filesystem::exists(targetsPath)) {
             std::filesystem::remove(targetsPath);
         }
@@ -87,17 +55,7 @@ namespace NeoPM::Core {
             std::filesystem::remove(cmakeModulePath);
         }
 
-        auto targetsXml = BuildTargetsXml(targetExecutable);
         auto cmakeModule = BuildResourceSyncCMakeModule(targetExecutable);
-
-        auto file = std::ofstream(targetsPath, std::ios::out | std::ios::trunc);
-        if (!file) {
-            logger.Error("ToolchainBootstrap", "Failed to write NeoWPF.Resources.targets");
-            return false;
-        }
-
-        file << targetsXml;
-        file.close();
 
         auto cmakeFile = std::ofstream(cmakeModulePath, std::ios::out | std::ios::trunc);
         if (!cmakeFile) {
@@ -108,7 +66,7 @@ namespace NeoPM::Core {
         cmakeFile << cmakeModule;
         cmakeFile.close();
 
-        logger.Info("ToolchainBootstrap", "NeoWPF toolchain bootstrap installed at: " + targetsPath.string());
+        logger.Info("ToolchainBootstrap", "NeoWPF resource sync module installed at: " + cmakeModulePath.string());
         return true;
     }
 
@@ -118,10 +76,6 @@ namespace NeoPM::Core {
 
     std::filesystem::path ToolchainBootstrap::GetToolDirectory() {
         return GetLocalAppDataDirectory() / "NeoWPF";
-    }
-
-    std::filesystem::path ToolchainBootstrap::GetTargetsFilePath() {
-        return GetToolDirectory() / "NeoWPF.Resources.targets";
     }
 
     std::filesystem::path ToolchainBootstrap::GetCMakeModulePath() {
@@ -134,31 +88,6 @@ namespace NeoPM::Core {
 #else
         return GetToolDirectory() / "NeoPM";
 #endif
-    }
-
-    std::string ToolchainBootstrap::BuildTargetsXml(const std::filesystem::path& toolExecutablePath) {
-        auto toolPath = XmlEscape(toolExecutablePath.string());
-
-        return std::string{
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
-            "<Project ToolsVersion=\"Current\">\n"
-            "  <PropertyGroup>\n"
-            "    <NeoWPFToolsDir>$(LocalAppData)\\NeoWPF\\</NeoWPFToolsDir>\n"
-            "    <NeoWPFToolExecutable>$(NeoWPFToolsDir)NeoPM.exe</NeoWPFToolExecutable>\n"
-            "  </PropertyGroup>\n"
-            "\n"
-            "  <ItemGroup>\n"
-            "    <ResourceManifest Include=\"$(ProjectDir)Resources\\resources.json\">\n"
-            "      <ExcludedFromBuild>true</ExcludedFromBuild>\n"
-            "    </ResourceManifest>\n"
-            "  </ItemGroup>\n"
-            "\n"
-            "  <Target Name=\"NeoWPF_SyncResources\" BeforeTargets=\"ClCompile\">\n"
-            "    <Exec Command=\"&quot;$(NeoWPFToolExecutable)&quot; sync-resources &quot;$(ProjectDir)Resources\\resources.json&quot; --output &quot;$(ProjectDir)Generated&quot; --copy-to &quot;$(TargetDir)&quot;\" />\n"
-            "  </Target>\n"
-            "\n"
-            "</Project>\n"
-        };
     }
 
     std::string ToolchainBootstrap::BuildResourceSyncCMakeModule(const std::filesystem::path& toolExecutablePath) {

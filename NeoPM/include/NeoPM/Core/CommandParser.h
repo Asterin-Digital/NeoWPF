@@ -20,7 +20,6 @@ namespace NeoPM::Core {
         std::optional<std::string> outputPath;
         std::optional<std::string> copyOutputPath;
         std::optional<std::string> templateName;
-        std::string projectType = "vcxproj";
         std::string sdkSource = "production";
         std::string sdkConfiguration = "debug";
         bool sdkConfigurationSpecified = false;

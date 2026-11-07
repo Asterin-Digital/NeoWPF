@@ -16,50 +16,6 @@
 namespace NeoPM::Core::Commands {
 namespace {
 
-bool RepairProjectFile(const std::filesystem::path& projectFile)
-{
-    std::ifstream input(projectFile, std::ios::binary);
-    if (!input) {
-        return false;
-    }
-
-    std::ostringstream contents;
-    contents << input.rdbuf();
-    auto text = contents.str();
-
-    const std::string targetsImport =
-        "  <Import Project=\"$(LocalAppData)\\NeoWPF\\NeoWPF.Resources.targets\" />";
-    if (text.find(targetsImport) == std::string::npos) {
-        const std::string cppTargetsImport =
-            "  <Import Project=\"$(VCTargetsPath)\\Microsoft.Cpp.targets\" />";
-        const auto position = text.find(cppTargetsImport);
-        if (position == std::string::npos) {
-            return false;
-        }
-        text.insert(position, targetsImport + "\n");
-    }
-
-    const std::string resourceManifest =
-        "    <ResourceManifest Include=\"$(ProjectDir)Resources\\resources.json\">\n"
-        "      <ExcludedFromBuild>true</ExcludedFromBuild>\n"
-        "    </ResourceManifest>";
-    if (text.find("<ResourceManifest Include=\"$(ProjectDir)Resources\\resources.json\">") == std::string::npos) {
-        const auto itemGroup = text.find("  <ItemGroup>");
-        if (itemGroup == std::string::npos) {
-            return false;
-        }
-        const auto insertPosition = itemGroup + std::string("  <ItemGroup>").size();
-        text.insert(insertPosition, "\n" + resourceManifest);
-    }
-
-    std::ofstream output(projectFile, std::ios::binary | std::ios::trunc);
-    if (!output) {
-        return false;
-    }
-    output << text;
-    return true;
-}
-
 bool RepairCMakeProject(const std::filesystem::path& projectRoot)
 {
     const auto cmakeListsPath = projectRoot / "CMakeLists.txt";
@@ -182,22 +138,14 @@ int RepairCommand::Execute()
     }
 
     if (!ToolchainBootstrap::EnsureInstalled()) {
-        logger.Error("RepairCommand", "Failed to refresh NeoWPF build targets");
+        logger.Error("RepairCommand", "Failed to refresh NeoWPF resource-sync tooling");
         return 1;
     }
 
-    bool repaired = RepairCMakeProject(m_projectPath);
-    for (const auto& entry : std::filesystem::directory_iterator(m_projectPath, error)) {
-        if (error) {
-            break;
-        }
-        if (entry.path().extension() == ".vcxproj" && RepairProjectFile(entry.path())) {
-            repaired = true;
-        }
-    }
+    const bool repaired = RepairCMakeProject(m_projectPath);
 
     if (error || !repaired) {
-        logger.Error("RepairCommand", "No repairable CMakeLists.txt or .vcxproj file found in: " + m_projectPath.string());
+        logger.Error("RepairCommand", "No repairable CMakeLists.txt found in: " + m_projectPath.string());
         return 1;
     }
 

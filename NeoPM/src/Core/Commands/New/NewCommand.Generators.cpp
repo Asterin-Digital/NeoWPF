@@ -1,14 +1,10 @@
 #include <NeoPM/Core/Commands/NewCommand.h>
 #include <NeoPM/Core/Project/CMakeListsBuilder.h>
-#include <NeoPM/Core/Project/VcxprojBuilder.h>
 #include <NeoPM/Core/ToolchainBootstrap.h>
 #include <NeoPM/Sdk/SdkManager.h>
 #include <NeoPM/Utils/Logger.h>
 
-#include <algorithm>
-#include <cctype>
 #include <fstream>
-#include <memory>
 #include <vector>
 
 namespace NeoPM::Core::Commands {
@@ -225,101 +221,53 @@ namespace NeoPM::Core::Commands {
             logger.Info("NewCommand", "Using SDK include: " + sdkIncludePath.value().string());
         }
 
-        auto projectType = std::string(m_projectType);
-        std::transform(
-            projectType.begin(),
-            projectType.end(),
-            projectType.begin(),
-            [](unsigned char character) { return static_cast<char>(std::tolower(character)); }
-        );
+        auto cmakeModuleDir = projectRoot / "cmake";
+        std::filesystem::create_directories(cmakeModuleDir);
 
-        auto builders = std::vector<std::unique_ptr<NeoPM::Contracts::IProjectType>>{};
+        const auto localCMakeModulePath = cmakeModuleDir / "NeoWPFResources.cmake";
+        auto localModule = std::ofstream(localCMakeModulePath, std::ios::out | std::ios::trunc);
+        if (!localModule) {
+            logger.Error("NewCommand", "Failed to create project-local CMake resource sync module");
+            return false;
+        }
+        localModule << ToolchainBootstrap::BuildResourceSyncCMakeModule(ToolchainBootstrap::GetToolExecutablePath());
+        localModule.close();
 
-        if (projectType == "vcxproj" || projectType == "both") {
-            auto vcxprojBuilder = std::make_unique<Project::VcxprojBuilder>(m_projectName);
-            vcxprojBuilder
-                ->AddCompileFile("App.xaml.cpp")
-                .AddCompileFile("MainWindow.xaml.cpp")
-                .AddGeneratedXamlSources()
-                .AddCompileFile("AssemblyInfo.cpp")
-                .AddCompileFile("Generated\\Resources.generated.cpp")
-                .AddHeaderFile("include\\" + m_projectName + "\\MainWindow.xaml.h")
-                .AddHeaderFile("include\\" + m_projectName + "\\App.xaml.h")
-                .AddHeaderFile("include\\" + m_projectName + "\\Xaml.h")
-                .AddHeaderFile("include\\" + m_projectName + "\\AssemblyInfo.h")
-                .AddHeaderFile("include\\" + m_projectName + "\\Generated\\Resources.generated.h")
-                .AddTargetsImport("$(LocalAppData)\\NeoWPF\\NeoWPF.Resources.targets")
-                .AddResourceAssetGlob()
-                .AddNeoWPFToolsDir();
+        Project::CMakeListsBuilder cmakeBuilder(m_projectName);
+        cmakeBuilder
+            .AddCompileFile("App.xaml.cpp")
+            .AddCompileFile("MainWindow.xaml.cpp")
+            .AddGeneratedXamlSources()
+            .AddCompileFile("AssemblyInfo.cpp")
+            .AddCompileFile("Generated/Resources.generated.cpp")
+            .AddHeaderFile("include/" + m_projectName + "/MainWindow.xaml.h")
+            .AddHeaderFile("include/" + m_projectName + "/App.xaml.h")
+            .AddHeaderFile("include/" + m_projectName + "/Xaml.h")
+            .AddHeaderFile("include/" + m_projectName + "/AssemblyInfo.h")
+            .AddHeaderFile("include/" + m_projectName + "/Generated/Resources.generated.h")
+            .AddResourceAssetGlob()
+            .AddResourceSyncModule("cmake/NeoWPFResources.cmake");
 
-            if (sdkLibPath) {
-                vcxprojBuilder->AddSdkLibrary(sdkLibPath.value());
-            }
-            if (sdkIncludePath) {
-                vcxprojBuilder->AddSdkIncludePath(sdkIncludePath.value());
-            }
-
-            builders.push_back(std::move(vcxprojBuilder));
+        if (sdkLibPath) {
+            cmakeBuilder.AddSdkLibrary(sdkLibPath.value());
+        }
+        if (sdkIncludePath) {
+            cmakeBuilder.AddSdkIncludePath(sdkIncludePath.value());
         }
 
-        if (projectType == "cmake" || projectType == "both") {
-            auto cmakeModuleDir = projectRoot / "cmake";
-            std::filesystem::create_directories(cmakeModuleDir);
+        NeoPM::Contracts::ProjectGenerationContext context{
+            m_projectName,
+            projectRoot,
+            sdkIncludePath,
+            sdkLibPath
+        };
 
-            const auto localCMakeModulePath = cmakeModuleDir / "NeoWPFResources.cmake";
-            auto localModule = std::ofstream(localCMakeModulePath, std::ios::out | std::ios::trunc);
-            if (!localModule) {
-                logger.Error("NewCommand", "Failed to create project-local CMake resource sync module");
-                return false;
-            }
-            localModule << ToolchainBootstrap::BuildResourceSyncCMakeModule(ToolchainBootstrap::GetToolExecutablePath());
-            localModule.close();
-
-            auto cmakeBuilder = std::make_unique<Project::CMakeListsBuilder>(m_projectName);
-            cmakeBuilder
-                ->AddCompileFile("App.xaml.cpp")
-                .AddCompileFile("MainWindow.xaml.cpp")
-                .AddGeneratedXamlSources()
-                .AddCompileFile("AssemblyInfo.cpp")
-                .AddCompileFile("Generated/Resources.generated.cpp")
-                .AddHeaderFile("include/" + m_projectName + "/MainWindow.xaml.h")
-                .AddHeaderFile("include/" + m_projectName + "/App.xaml.h")
-                .AddHeaderFile("include/" + m_projectName + "/Xaml.h")
-                .AddHeaderFile("include/" + m_projectName + "/AssemblyInfo.h")
-                .AddHeaderFile("include/" + m_projectName + "/Generated/Resources.generated.h")
-                .AddResourceAssetGlob()
-                .AddResourceSyncModule("cmake/NeoWPFResources.cmake");
-
-            if (sdkLibPath) {
-                cmakeBuilder->AddSdkLibrary(sdkLibPath.value());
-            }
-            if (sdkIncludePath) {
-                cmakeBuilder->AddSdkIncludePath(sdkIncludePath.value());
-            }
-
-            builders.push_back(std::move(cmakeBuilder));
-        }
-
-        if (builders.empty()) {
-            logger.Error("NewCommand", "No valid project type builders were created");
+        if (!cmakeBuilder.Generate(context)) {
+            logger.Error("NewCommand", "Failed to generate CMake project files");
             return false;
         }
 
-        for (auto& builder : builders) {
-            NeoPM::Contracts::ProjectGenerationContext context{
-                m_projectName,
-                projectRoot,
-                sdkIncludePath,
-                sdkLibPath
-            };
-
-            if (!builder->Generate(context)) {
-                logger.Error("NewCommand", "Failed to generate project files for type: " + std::string(builder->Name()));
-                return false;
-            }
-        }
-
-        logger.Info("NewCommand", "Generated project files for project type: " + projectType);
+        logger.Info("NewCommand", "Generated CMake project files");
         return true;
     }
 

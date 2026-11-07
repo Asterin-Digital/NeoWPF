@@ -76,7 +76,6 @@ namespace NeoPM::Core {
             return std::make_unique<Commands::NewCommand>(
                 args.projectName,
                 args.outputPath,
-                args.projectType,
                 args.sdkSource,
                 args.sdkConfiguration,
                 args.sdkIncludePath,
@@ -117,7 +116,7 @@ namespace NeoPM::Core {
             }
 
             std::cout << "NeoWPF toolchain bootstrap installed at: "
-                      << NeoPM::Core::ToolchainBootstrap::GetTargetsFilePath().string()
+                      << NeoPM::Core::ToolchainBootstrap::GetCMakeModulePath().string()
                       << std::endl;
             return nullptr;
         }
@@ -152,8 +151,6 @@ Options:
   --output, -o <path>             Specify generated source output directory
   --copy-to <path>                Copy external resources to this directory as well
   --template, -t <name>           Specify project template
-  --project-type <vcxproj|cmake|both>
-                                 Select project format (default: vcxproj)
   --sdk <production|user>         Select downloaded production or local user SDK
   --sdk-config <debug|release>    Select SDK configuration (default: debug)
   --sdk-include <path>            User SDK include directory containing NeoWPF
@@ -161,7 +158,6 @@ Options:
 
 Examples:
   NeoPM new MyApp
-  NeoPM new MyApp --project-type cmake
   NeoPM new MyApp --output C:\Projects
   NeoPM sync-resources Resources/resources.json --output Generated
   NeoPM refresh-sdk
@@ -226,19 +222,6 @@ Examples:
             if (arg == "--template" || arg == "-t") {
                 if (i + 1 < argc) {
                     args.templateName = argv[++i];
-                }
-                continue;
-            }
-
-            if (arg == "--project-type" || arg == "-p") {
-                if (i + 1 < argc) {
-                    args.projectType = argv[++i];
-                    std::transform(
-                        args.projectType.begin(),
-                        args.projectType.end(),
-                        args.projectType.begin(),
-                        [](unsigned char character) { return static_cast<char>(std::tolower(character)); }
-                    );
                 }
                 continue;
             }
@@ -313,8 +296,6 @@ Arguments:
 Options:
   --output, -o <path>             Output directory (default: auto-discover)
   --template, -t <name>           Project template: blank, mvvm (default: blank)
-  --project-type <vcxproj|cmake|both>
-                                 Project format (default: vcxproj)
   --sdk <production|user>         SDK source (default: production)
   --sdk-config <debug|release>    SDK configuration (default: debug)
   --sdk-include <path>            User SDK include directory containing NeoWPF
@@ -323,7 +304,6 @@ Options:
 
 Examples:
   NeoPM new MyApplication
-  NeoPM new MyApp --project-type cmake
   NeoPM new MyApp --output D:\Projects
   NeoPM new MyApp --template mvvm
   NeoPM new MyApp --sdk user --sdk-config debug --sdk-include C:\NeoWPF\include --sdk-lib C:\NeoWPF\x64\Debug
@@ -383,8 +363,8 @@ Examples:
 Usage:
   NeoPM install-tools
 
-This installs the shared MSBuild targets file used by generated projects at:
-  %LocalAppData%\NeoWPF\NeoWPF.Resources.targets
+This installs the CMake resource sync module used by generated projects at:
+    %LocalAppData%\NeoWPF\NeoWPFResources.cmake
 )" << std::endl;
             return;
         }

@@ -15,7 +15,6 @@ namespace NeoPM::Core::Commands {
     NewCommand::NewCommand(
         const std::string& projectName,
         const std::optional<std::string>& outputPath,
-        const std::string& projectType,
         const std::string& sdkSource,
         const std::string& sdkConfiguration,
         const std::optional<std::string>& sdkIncludePath,
@@ -23,7 +22,6 @@ namespace NeoPM::Core::Commands {
     )
         : m_projectName(projectName),
           m_outputPath(outputPath),
-          m_projectType(projectType),
           m_sdkSource(sdkSource),
           m_sdkConfiguration(sdkConfiguration),
           m_sdkIncludePath(sdkIncludePath),
@@ -35,10 +33,6 @@ namespace NeoPM::Core::Commands {
 
         if (!ValidateProjectName()) {
             logger.Error("NewCommand", "Invalid project name");
-            return 1;
-        }
-
-        if (!ValidateProjectType()) {
             return 1;
         }
 
@@ -125,25 +119,6 @@ namespace NeoPM::Core::Commands {
 
         auto validPattern = std::regex("^[a-zA-Z][a-zA-Z0-9._-]*$");
         return std::regex_match(m_projectName, validPattern);
-    }
-
-    bool NewCommand::ValidateProjectType() const {
-        auto& logger = Utils::Logger::Instance();
-
-        auto normalized = m_projectType;
-        std::transform(
-            normalized.begin(),
-            normalized.end(),
-            normalized.begin(),
-            [](unsigned char character) { return static_cast<char>(std::tolower(character)); }
-        );
-
-        if (normalized != "vcxproj" && normalized != "cmake" && normalized != "both") {
-            logger.Error("NewCommand", "Project type must be 'vcxproj', 'cmake', or 'both'");
-            return false;
-        }
-
-        return true;
     }
 
     bool NewCommand::ValidateSdkSelection() const {
