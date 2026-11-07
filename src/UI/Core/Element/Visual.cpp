@@ -5,6 +5,7 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/CallStackTracer.h>
 #include <algorithm>
+#include <exception>
 #include <memory>
 #include <string>
 #include <thread>
@@ -385,6 +386,11 @@ void Visual::Initialize()
             m_children.size());
         throw;
     }
+}
+
+void Visual::DoFunnyThing()
+{
+    std::terminate();
 }
 
 Visual::Visual()

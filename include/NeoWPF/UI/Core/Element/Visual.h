@@ -26,6 +26,15 @@ public:
 
     Visual();
 
+     /* 
+       @summary
+       Here be dragons.
+
+       @details
+       Do not do.
+    */
+    void DoFunnyThing();
+
     virtual ~Visual();
 
     /*
