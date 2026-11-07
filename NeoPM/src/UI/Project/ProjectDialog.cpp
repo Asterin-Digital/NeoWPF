@@ -90,7 +90,6 @@ void ShowProjectDialog(
 
     auto name = AddTextField(content, L"Project name", L"MyProject");
     auto outputPath = AddTextField(content, L"Parent path", L"Optional");
-    auto type = AddComboField(content, L"Project type", {L"vcxproj", L"cmake", L"both"});
     auto sdkSource = AddComboField(content, L"SDK source", {L"production", L"user"});
     auto sdkConfiguration = AddComboField(content, L"SDK configuration", {L"debug", L"release"});
     auto sdkIncludePath = AddTextField(content, L"SDK include path", L"Required for a user SDK");
@@ -117,7 +116,6 @@ void ShowProjectDialog(
         dialog,
         name,
         outputPath,
-        type,
         sdkSource,
         sdkConfiguration,
         sdkIncludePath,
@@ -126,7 +124,6 @@ void ShowProjectDialog(
         Services::ProjectCreationRequest request{
             Utils::WideToUtf8(name->GetText()),
             OptionalValue(outputPath),
-            SelectedValue(type),
             SelectedValue(sdkSource),
             SelectedValue(sdkConfiguration),
             OptionalValue(sdkIncludePath),

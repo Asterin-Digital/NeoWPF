@@ -223,7 +223,6 @@ if(BUILD_TESTING)
     target_sources(
         NeoPM.Tests
         PRIVATE
-            src/Core/Project/VcxprojBuilder.cpp
             src/Core/Project/CMakeListsBuilder.cpp
             src/Resources/ResourceManifest.cpp
                 src/Resources/XamlCodegen.cpp

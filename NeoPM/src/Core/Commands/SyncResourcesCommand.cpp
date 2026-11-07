@@ -131,14 +131,6 @@ namespace NeoPM::Core::Commands {
     }
 
     std::string SyncResourcesCommand::ResolveProjectName(const std::filesystem::path& projectRoot) const {
-
-        for (const auto& entry : std::filesystem::directory_iterator(projectRoot)) {
-            if (entry.path().extension() == ".vcxproj") {
-                return entry.path().stem().string();
-            }
-        }
-
-
         return projectRoot.filename().string();
     }
 }
