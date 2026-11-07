@@ -11,30 +11,17 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoPM::Core {
 
-struct SdkInfo {
-    std::string version;
-    std::string channel;
-    std::string platform;
-    std::string architecture;
-    std::string downloadUrl;
-    std::filesystem::path localPath;
-
-    std::string GetFolderName() const {
-        return channel + "-" + architecture;
-    }
-};
-
 class SdkManager {
 public:
     explicit SdkManager();
 
     bool RefreshSdks();
 
-    std::optional<std::filesystem::path> GetSdkPath(const std::string& channel, const std::string& architecture = "x64") const;
+    std::optional<std::filesystem::path> GetSdkPath() const;
 
-    std::optional<std::filesystem::path> GetSdkLibraryPath(const std::string& channel, const std::string& architecture = "x64") const;
+    std::optional<std::filesystem::path> GetSdkLibraryPath(const std::string& configuration) const;
 
-    std::optional<std::filesystem::path> GetSdkIncludePath(const std::string& channel, const std::string& architecture = "x64") const;
+    std::optional<std::filesystem::path> GetSdkIncludePath() const;
 
     std::filesystem::path GetSdkRoot() const { return m_sdkRoot; }
 
@@ -43,11 +30,11 @@ public:
 private:
     struct Release {
         std::string version;
-        std::string channel;
         std::string platform;
         std::string architecture;
         std::string url;
-        std::string libraryPath;
+        std::string debugLibraryPath;
+        std::string releaseLibraryPath;
         std::string licensePath;
         std::string includePath;
     };
@@ -56,6 +43,8 @@ private:
     bool ExtractZip(const std::filesystem::path& zipPath, const std::filesystem::path& extractPath);
 
     std::filesystem::path m_sdkRoot;
+    std::string m_sdkPlatform;
+    std::string m_sdkArchitecture;
 };
 
 }

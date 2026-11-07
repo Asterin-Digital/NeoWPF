@@ -54,7 +54,8 @@ list(PREPEND CMAKE_PREFIX_PATH "${NEOPM_VCPKG_PREFIX}")
 set(NEOWPF_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." CACHE PATH
     "Path to the NeoWPF source tree")
 include("${NEOWPF_ROOT}/cmake/NeoWPFVersion.cmake")
-neowpf_read_artifact_version("${NEOWPF_ROOT}" NEOWPF_VERSION)
+neowpf_resolve_version_file("${NEOWPF_ROOT}" NEOWPF_VERSION_FILE)
+neowpf_read_version_file("${NEOWPF_VERSION_FILE}" NEOWPF_VERSION)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(NEOWPF_CONFIGURATION "Release")
@@ -171,6 +172,23 @@ target_include_directories(
         "${NEOWPF_ROOT}/include"
 )
 
+if(ANDROID)
+    target_compile_definitions(NeoPM PRIVATE
+        NEOPM_SDK_PLATFORM="Android"
+        NEOPM_SDK_ARCHITECTURE="arm64"
+    )
+elseif(WIN32)
+    target_compile_definitions(NeoPM PRIVATE
+        NEOPM_SDK_PLATFORM="Windows"
+        NEOPM_SDK_ARCHITECTURE="x64"
+    )
+else()
+    target_compile_definitions(NeoPM PRIVATE
+        NEOPM_SDK_PLATFORM="Linux"
+        NEOPM_SDK_ARCHITECTURE="x64"
+    )
+endif()
+
 target_link_libraries(
     NeoPM
     PRIVATE
@@ -201,6 +219,7 @@ endif()
 if(BUILD_TESTING)
     add_executable(NeoPM.Tests
         tests/ProjectTypeTests.cpp
+        tests/SdkLocatorTests.cpp
         tests/XamlCodegenTests.cpp
     )
 
@@ -224,6 +243,7 @@ if(BUILD_TESTING)
         NeoPM.Tests
         PRIVATE
             src/Core/Project/CMakeListsBuilder.cpp
+            src/Sdk/SdkLocator.cpp
             src/Resources/ResourceManifest.cpp
                 src/Resources/XamlCodegen.cpp
             src/Utils/FileSystem.cpp

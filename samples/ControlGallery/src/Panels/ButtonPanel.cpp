@@ -55,8 +55,6 @@ Ref<NeoWPF::UI::Border> MakeSection(const std::wstring& title, const Ref<NeoWPF:
 Ref<NeoWPF::UI::UIElement> CreateButtonPanel()
 {
     auto page = MakeVerticalPanel(16);
-    page->AddChild(MakeText(L"Button", 25, 650));
-    page->AddChild(MakeText(L"Actions, states, and theme response", 14));
 
     auto actions = New<StackPanel>();
     actions->SetOrientation(Orientation::Horizontal);

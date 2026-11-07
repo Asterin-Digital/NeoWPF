@@ -46,8 +46,6 @@ Ref<NeoWPF::UI::Border> MakeSection(const std::wstring& title, const Ref<NeoWPF:
 Ref<NeoWPF::UI::UIElement> CreateTextBoxPanel()
 {
     auto page = MakeVerticalPanel(16);
-    page->AddChild(MakeText(L"TextBox", 25, 650));
-    page->AddChild(MakeText(L"Text entry, placeholder, and read-only states", 14));
 
     auto inputContent = MakeVerticalPanel(10);
     auto input = New<TextBox>();

@@ -9,17 +9,17 @@ SdkVersionManager::SdkVersionManager(const std::filesystem::path& sdkRoot)
 }
 
 std::filesystem::path SdkVersionManager::GetVersionFilePath(
-    const std::string& channel, 
+    const std::string& platform,
     const std::string& architecture) const
 {
-    return m_sdkRoot / (channel + "-" + architecture) / ".version";
+    return m_sdkRoot / (platform + "-" + architecture) / ".version";
 }
 
 std::string SdkVersionManager::GetInstalledVersion(
-    const std::string& channel, 
+    const std::string& platform,
     const std::string& architecture) const
 {
-    auto versionFile = GetVersionFilePath(channel, architecture);
+    auto versionFile = GetVersionFilePath(platform, architecture);
 
     if (!std::filesystem::exists(versionFile)) {
         return "";
@@ -40,11 +40,11 @@ std::string SdkVersionManager::GetInstalledVersion(
 }
 
 void SdkVersionManager::SaveInstalledVersion(
-    const std::string& channel, 
+    const std::string& platform,
     const std::string& architecture, 
     const std::string& version)
 {
-    auto versionFile = GetVersionFilePath(channel, architecture);
+    auto versionFile = GetVersionFilePath(platform, architecture);
 
     try {
         std::ofstream file(versionFile);

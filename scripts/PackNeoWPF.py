@@ -1,25 +1,3 @@
-"""
-commands:
-    --all                 pack every platform
-    --all --release       pack release for every platform
-    --all --debug         pack debug for every platform
-    --all --both          pack debug + release for every platform
-
-    --win32               pack Windows
-    --win32 --release     pack Windows release
-    --win32 --debug       pack Windows debug
-    --win32 --both        pack Windows debug + release
-
-    --unix                pack Linux/Unix
-    --unix --release      pack Linux release
-    --unix --debug        pack Linux debug
-    --unix --both        pack Linux debug + release
-
-you can mix the platform + config args however u want.
-if you don't give a config, it means --both.
---all means all platforms unless you pair it with --win32 or --unix.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -34,49 +12,55 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent
 BUILD_ROOT = ROOT / "NWpfBuild"
 VERSION_FILE = ROOT / "NeoWPFVersion.txt"
-BUILT_VERSION_FILE = BUILD_ROOT / "NeoWPFBuiltVersion.txt"
 LICENSE_FILE = ROOT / "LICENSE"
 INCLUDE_ROOT = ROOT / "include"
 PACKAGE_ROOT = BUILD_ROOT / "Packed"
 
-# --win32 -> Windows, --unix -> Linux in the current NeoWPF build layout.
 PLATFORMS = {
     "win32": {
         "folder": "Windows",
         "file_platform": "Windows",
+        "architecture": "x64",
         "package_platform": "windows",
         "extension": ".lib",
     },
-    "unix": {
+    "linux": {
         "folder": "Linux",
         "file_platform": "Linux",
-        "package_platform": "unix",
+        "architecture": "x64",
+        "package_platform": "linux",
+        "extension": ".a",
+    },
+    "android": {
+        "folder": "Android",
+        "file_platform": "Android",
+        "architecture": "arm64",
+        "package_platform": "android",
+        "library_name": "libNeoWPF.a",
         "extension": ".a",
     },
 }
 
 CONFIGS = ("Release", "Debug")
-VERSION_PATTERN = re.compile(r"^(\d+)\.(\d+)\.(\d+)\.(\d+)$")
-MAX_BUILD_NUMBER = 0xFFFFFFFF
+VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+$")
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Pack NeoWPF libraries for the platforms/configurations."
-    )
+    parser = argparse.ArgumentParser()
 
-    parser.add_argument("--all", action="store_true", help="pack all platforms")
-    parser.add_argument("--win32", action="store_true", help="pack Windows")
-    parser.add_argument("--unix", action="store_true", help="pack Linux/Unix")
+    parser.add_argument("--all", action="store_true")
+    parser.add_argument("--win32", action="store_true")
+    parser.add_argument("--linux", action="store_true")
+    parser.add_argument("--android", action="store_true")
 
-    parser.add_argument("--release", action="store_true", help="pack Release")
-    parser.add_argument("--debug", action="store_true", help="pack Debug")
-    parser.add_argument("--both", action="store_true", help="pack Release + Debug")
+    parser.add_argument("--release", action="store_true")
+    parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--both", action="store_true")
 
     args = parser.parse_args()
 
-    if not (args.all or args.win32 or args.unix):
-        parser.error("you need a platform arg: --all, --win32, or --unix")
+    if not (args.all or args.win32 or args.linux or args.android):
+        parser.error("you need a platform arg: --all, --win32, --linux, or --android")
 
     config_args = sum((args.release, args.debug, args.both))
     if config_args > 1:
@@ -104,36 +88,26 @@ def read_version() -> str:
     else:
         source_version_file = VERSION_FILE
 
-    def read_valid_version(path: Path) -> tuple[str, tuple[str, str, str, str]]:
+    def read_valid_version(path: Path) -> str:
         if not path.is_file():
             raise FileNotFoundError(f"couldn't find version file: {path}")
         version = path.read_text(encoding="utf-8").strip()
-        match = VERSION_PATTERN.fullmatch(version)
-        if match is None or int(match.group(4)) > MAX_BUILD_NUMBER:
-            raise ValueError(
-                f"{path} must contain Major.Minor.Patch.Build with a 32-bit Build"
-            )
-        return version, match.groups()
+        if VERSION_PATTERN.fullmatch(version) is None:
+            raise ValueError(f"{path} must contain Major.Minor.Patch")
+        return version
 
-    source_version, source_parts = read_valid_version(source_version_file)
-    if not BUILT_VERSION_FILE.is_file():
-        return source_version
-
-    built_version, built_parts = read_valid_version(BUILT_VERSION_FILE)
-    if built_parts[:3] == source_parts[:3]:
-        return built_version
-    return source_version
+    return read_valid_version(source_version_file)
 
 
 def selected_platforms(args: argparse.Namespace) -> list[str]:
-    # --all by itself means all platforms.
-    # --all --win32 / --all --unix narrows --all to that platform.
-    if args.win32 or args.unix:
+    if args.win32 or args.linux or args.android:
         platforms = []
         if args.win32:
             platforms.append("win32")
-        if args.unix:
-            platforms.append("unix")
+        if args.linux:
+            platforms.append("linux")
+        if args.android:
+            platforms.append("android")
         return platforms
 
     return list(PLATFORMS)
@@ -145,14 +119,14 @@ def selected_configs(args: argparse.Namespace) -> list[str]:
     if args.debug:
         return ["Debug"]
 
-    # No config OR --both = all configs.
     return list(CONFIGS)
 
 
 def find_library(platform_key: str, config: str, version: str) -> Path | None:
     info = PLATFORMS[platform_key]
-    filename = (
-        f"NeoWPF.{info['file_platform']}.{config}.{version}{info['extension']}"
+    filename = info.get(
+        "library_name",
+        f"NeoWPF.{info['file_platform']}.{config}.{version}{info['extension']}",
     )
 
     candidate = BUILD_ROOT / info["folder"] / config / filename
@@ -199,7 +173,9 @@ def package_platform(
 
     PACKAGE_ROOT.mkdir(parents=True, exist_ok=True)
 
-    package_name = f"NeoWPF-{version}-x64-{info['package_platform']}.zip"
+    package_name = (
+        f"NeoWPF-{version}-{info['architecture']}-{info['package_platform']}.zip"
+    )
     package_path = PACKAGE_ROOT / package_name
 
     with zipfile.ZipFile(
@@ -208,12 +184,6 @@ def package_platform(
         compression=zipfile.ZIP_DEFLATED,
         compresslevel=9,
     ) as archive:
-        # Package layout:
-        #   LICENSE
-        #   NeoWPF/...
-        #   NeoNaml/...
-        #   Debug/NeoWPF.<platform>.Debug.<version>.<ext>
-        #   Release/NeoWPF.<platform>.Release.<version>.<ext>
         archive.write(LICENSE_FILE, "LICENSE")
 
         add_directory_to_zip(

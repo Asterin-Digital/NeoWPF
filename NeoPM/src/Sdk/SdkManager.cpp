@@ -19,6 +19,8 @@ using json = nlohmann::json;
 namespace NeoPM::Core {
 
 SdkManager::SdkManager()
+        : m_sdkPlatform(NEOPM_SDK_PLATFORM),
+            m_sdkArchitecture(NEOPM_SDK_ARCHITECTURE)
 {
     m_sdkRoot = Utils::FileSystem::GetUserDataPath().value_or(
         std::filesystem::current_path()) / "NeoWPF" / "SDK";
@@ -34,9 +36,11 @@ bool SdkManager::RefreshSdks() {
 
     Net::CurlClient client;
     std::string manifestJson;
+    const std::string manifestUrl = Net::NEOWPF_SDK_RELEASES_URL;
+    const std::wstring wideManifestUrl(manifestUrl.begin(), manifestUrl.end());
 
     auto outcome = client.DownloadToBuffer(
-        L"https://raw.githubusercontent.com/NeoWPF/NeoWPF/main/sdk-releases.json",
+        wideManifestUrl,
         manifestJson,
         [&](uint64_t got, uint64_t total) {
             logger.Debug("SdkManager", "Downloading manifest: " + std::to_string(got) + "/" + std::to_string(total) + " bytes");
@@ -59,50 +63,77 @@ bool SdkManager::RefreshSdks() {
         auto manifest = json::parse(manifestJson);
 
         if (!manifest.contains("releases") || !manifest["releases"].is_array()) {
-            logger.Warning("SdkManager", "No releases found in manifest");
-            return true;
+            logger.Error("SdkManager", "SDK manifest must contain a releases array");
+            return false;
         }
 
         for (const auto& rel : manifest["releases"]) {
-            if (!rel.contains("channel") || !rel.contains("architecture") ||
+            if (!rel.is_object() || !rel.contains("architecture") ||
                 !rel.contains("platform") || !rel.contains("url") ||
-                !rel.contains("version")) {
+                !rel.contains("version") || !rel.contains("files") ||
+                !rel["files"].is_object()) {
+                continue;
+            }
+
+            const auto& files = rel["files"];
+            if (!files.contains("debug") || !files["debug"].is_string() ||
+                files["debug"].get<std::string>().empty() ||
+                !files.contains("release") || !files["release"].is_string() ||
+                files["release"].get<std::string>().empty() ||
+                !files.contains("license") || !files["license"].is_string() ||
+                !files.contains("include") || !files["include"].is_string()) {
+                logger.Warning("SdkManager", "Rejecting platform SDK without Debug and Release files");
                 continue;
             }
 
             Release candidate;
             candidate.version = rel["version"];
-            candidate.channel = rel["channel"];
             candidate.platform = rel["platform"];
             candidate.architecture = rel["architecture"];
             candidate.url = rel["url"];
+            candidate.debugLibraryPath = files["debug"];
+            candidate.releaseLibraryPath = files["release"];
+            candidate.licensePath = files["license"];
+            candidate.includePath = files["include"];
 
-            if (rel.contains("files")) {
-                if (rel["files"].contains("library")) {
-                    candidate.libraryPath = rel["files"]["library"];
-                }
-                if (rel["files"].contains("license")) {
-                    candidate.licensePath = rel["files"]["license"];
-                }
-                if (rel["files"].contains("include")) {
-                    candidate.includePath = rel["files"]["include"];
-                }
+            const auto debugPath = std::filesystem::path(candidate.debugLibraryPath);
+            const auto releasePath = std::filesystem::path(candidate.releaseLibraryPath);
+            const auto libraryExtension = candidate.platform == "Windows" ? ".lib" : ".a";
+            const auto debugFileName = candidate.platform == "Android"
+                ? "libNeoWPF.a"
+                : "NeoWPF." + candidate.platform + ".Debug." + candidate.version + libraryExtension;
+            const auto releaseFileName = candidate.platform == "Android"
+                ? "libNeoWPF.a"
+                : "NeoWPF." + candidate.platform + ".Release." + candidate.version + libraryExtension;
+            if ((candidate.platform != "Windows" && candidate.platform != "Linux" &&
+                 candidate.platform != "Android") ||
+                (candidate.platform == "Android" && candidate.architecture != "arm64") ||
+                (candidate.platform != "Android" && candidate.architecture != "x64") ||
+                debugPath.parent_path() != "Debug" || releasePath.parent_path() != "Release" ||
+                debugPath.filename() != debugFileName || releasePath.filename() != releaseFileName ||
+                candidate.licensePath != "LICENSE" || candidate.includePath != "include") {
+                logger.Warning("SdkManager", "Rejecting platform SDK with an invalid package layout");
+                continue;
             }
 
-            // Check if local version matches remote version
             SdkVersionManager versionMgr(m_sdkRoot);
-            auto localVersion = versionMgr.GetInstalledVersion(candidate.channel, candidate.architecture);
-            if (localVersion == candidate.version) {
-                logger.Info("SdkManager", std::string("SDK up-to-date: ") + candidate.channel + "-" + candidate.architecture + " v" + candidate.version);
+            auto localVersion = versionMgr.GetInstalledVersion(candidate.platform, candidate.architecture);
+            SdkLocator localLocator(m_sdkRoot, candidate.platform);
+            const bool localSdkComplete =
+                localLocator.FindIncludeDirectory(candidate.architecture) &&
+                localLocator.FindLibrary("debug", candidate.architecture) &&
+                localLocator.FindLibrary("release", candidate.architecture);
+            if (localVersion == candidate.version && localSdkComplete) {
+                logger.Info("SdkManager", std::string("SDK up-to-date: ") + candidate.platform + "-" + candidate.architecture + " v" + candidate.version);
                 continue;
             }
 
             if (!DownloadAndExtractRelease(candidate)) {
-                logger.Warning("SdkManager", std::string("Failed to download/extract ") + candidate.channel + "-" + candidate.architecture + " release");
+                logger.Warning("SdkManager", std::string("Rejected incomplete platform SDK: ") + candidate.platform + "-" + candidate.architecture);
                 continue;
             }
 
-            logger.Info("SdkManager", std::string("SDK installed: ") + candidate.channel + "-" + candidate.architecture + " v" + candidate.version);
+            logger.Info("SdkManager", std::string("SDK installed: ") + candidate.platform + "-" + candidate.architecture + " v" + candidate.version);
         }
 
         return true;
@@ -116,13 +147,13 @@ bool SdkManager::RefreshSdks() {
 bool SdkManager::DownloadAndExtractRelease(const Release& release) {
     auto& logger = Utils::Logger::Instance();
 
-    auto sdkFolder = m_sdkRoot / (release.channel + "-" + release.architecture);
+    auto sdkFolder = m_sdkRoot / (release.platform + "-" + release.architecture);
     std::error_code ec;
     std::filesystem::create_directories(sdkFolder, ec);
 
     auto zipPath = sdkFolder / ("NeoWPF-" + release.version + ".zip");
 
-    logger.Info("SdkManager", "Downloading " + release.channel + " SDK from " + release.url);
+    logger.Info("SdkManager", "Downloading " + release.platform + " SDK from " + release.url);
 
     std::wstring wideUrl(release.url.begin(), release.url.end());
     std::wstring wideZipPath = zipPath.wstring();
@@ -148,17 +179,32 @@ bool SdkManager::DownloadAndExtractRelease(const Release& release) {
 
 
     if (!ExtractZip(zipPath, sdkFolder)) {
-        logger.Error("SdkManager", "Failed to extract SDK zip");
+        logger.Error("SdkManager", "Failed to extract platform SDK archive");
         return false;
     }
 
-    logger.Info("SdkManager", "SDK extracted to " + sdkFolder.string());
+    const auto debugLibrary = sdkFolder / release.debugLibraryPath;
+    const auto releaseLibrary = sdkFolder / release.releaseLibraryPath;
+    const auto license = sdkFolder / release.licensePath;
+    const auto includeDirectory = sdkFolder / release.includePath;
+    if (!std::filesystem::is_regular_file(debugLibrary) ||
+        !std::filesystem::is_regular_file(releaseLibrary) ||
+        !std::filesystem::is_regular_file(license) ||
+        !std::filesystem::is_directory(includeDirectory) ||
+        !std::filesystem::is_directory(includeDirectory / "NeoWPF") ||
+        !std::filesystem::is_directory(includeDirectory / "NeoNaml")) {
+        logger.Error("SdkManager", "Platform SDK must contain Debug and Release libraries, include/NeoWPF, include/NeoNaml, and LICENSE");
+        std::filesystem::remove_all(sdkFolder, ec);
+        return false;
+    }
+
+    logger.Info("SdkManager", "Platform SDK extracted to " + sdkFolder.string());
 
     std::filesystem::remove(zipPath, ec);
 
     // Save version to mark this SDK as installed
     SdkVersionManager versionMgr(m_sdkRoot);
-    versionMgr.SaveInstalledVersion(release.channel, release.architecture, release.version);
+    versionMgr.SaveInstalledVersion(release.platform, release.architecture, release.version);
 
     return true;
 }
@@ -173,23 +219,23 @@ bool SdkManager::ExtractZip(
     return Utils::Archive::ExtractZip(zipPath, extractPath);
 }
 
-std::optional<std::filesystem::path> SdkManager::GetSdkPath(const std::string& channel, const std::string& architecture) const {
-    SdkLocator locator(m_sdkRoot);
-    return locator.FindSdk(channel, architecture);
+std::optional<std::filesystem::path> SdkManager::GetSdkPath() const {
+    SdkLocator locator(m_sdkRoot, m_sdkPlatform);
+    return locator.FindSdk(m_sdkArchitecture);
 }
 
-std::optional<std::filesystem::path> SdkManager::GetSdkLibraryPath(const std::string& channel, const std::string& architecture) const {
-    SdkLocator locator(m_sdkRoot);
-    return locator.FindLibrary(channel, architecture);
+std::optional<std::filesystem::path> SdkManager::GetSdkLibraryPath(const std::string& configuration) const {
+    SdkLocator locator(m_sdkRoot, m_sdkPlatform);
+    return locator.FindLibrary(configuration, m_sdkArchitecture);
 }
 
-std::optional<std::filesystem::path> SdkManager::GetSdkIncludePath(const std::string& channel, const std::string& architecture) const {
-    SdkLocator locator(m_sdkRoot);
-    return locator.FindIncludeDirectory(channel, architecture);
+std::optional<std::filesystem::path> SdkManager::GetSdkIncludePath() const {
+    SdkLocator locator(m_sdkRoot, m_sdkPlatform);
+    return locator.FindIncludeDirectory(m_sdkArchitecture);
 }
 
 bool SdkManager::HasLocalSdks() const {
-    SdkLocator locator(m_sdkRoot);
+    SdkLocator locator(m_sdkRoot, m_sdkPlatform);
     return locator.HasAnySdk();
 }
 

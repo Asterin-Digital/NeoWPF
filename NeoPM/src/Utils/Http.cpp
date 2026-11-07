@@ -1,27 +1,17 @@
 #include <NeoPM/Utils/Http.h>
 
+#include <NeoWPF/Platform/PlatformUtils.h>
+
 #include <curl/curl.h>
 
 #include <chrono>
-#include <codecvt>
 #include <fstream>
-#include <locale>
 #include <thread>
 
 namespace NeoPM::Net
 {
     namespace
     {
-        std::string ToUtf8(const std::wstring& value)
-        {
-            return std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(value);
-        }
-
-        std::wstring FromUtf8(const char* value)
-        {
-            return std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(value);
-        }
-
         struct CurlRuntime
         {
             CurlRuntime() { curl_global_init(CURL_GLOBAL_DEFAULT); }
@@ -106,7 +96,7 @@ namespace NeoPM::Net
             outcome.result = context.writeFailed ? DownloadResult::IoError :
                 context.callbackCancelled ? DownloadResult::Cancelled : ClassifyError(code);
             outcome.win32Error = static_cast<uint32_t>(code);
-            outcome.message = FromUtf8(curl_easy_strerror(code));
+            outcome.message = NeoWPF::Platform::Utf8ToWide(curl_easy_strerror(code));
             outcome.bytesWritten = context.bytesReceived;
             return outcome;
         }
@@ -138,7 +128,7 @@ namespace NeoPM::Net
         if (!handle)
             return false;
 
-        curl_easy_setopt(handle, CURLOPT_URL, "https://github.com/NeoWPF/NeoWPF");
+        curl_easy_setopt(handle, CURLOPT_URL, "https://github.com/Asterin-Digital/NeoWPF");
         curl_easy_setopt(handle, CURLOPT_NOBODY, 1L);
         curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT_MS, 2000L);
@@ -169,12 +159,12 @@ namespace NeoPM::Net
         }
 
         auto* handle = static_cast<CURL*>(m_handle);
-        auto urlUtf8 = ToUtf8(url);
-        auto userAgentUtf8 = ToUtf8(m_options.userAgent);
+        auto urlUtf8 = NeoWPF::Platform::WideToUtf8(url);
+        auto userAgentUtf8 = NeoWPF::Platform::WideToUtf8(m_options.userAgent);
         curl_slist* headers = nullptr;
         for (const auto& header : m_options.extraHeaders)
         {
-            auto headerUtf8 = ToUtf8(header);
+            auto headerUtf8 = NeoWPF::Platform::WideToUtf8(header);
             headers = curl_slist_append(headers, headerUtf8.c_str());
         }
 
