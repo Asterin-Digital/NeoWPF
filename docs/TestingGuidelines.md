@@ -1,6 +1,6 @@
 # Feature Testing Guidelines
 
-## 1. Feature Ownership
+1. ## Feature Ownership
 
 Every feature must have its own dedicated test file.
 
@@ -12,7 +12,7 @@ All automated tests for that feature belong in that file. Tests must not be scat
 
 A test file should cover the feature's complete public behavior, including its success paths, alternative outcomes, invalid inputs, and failure handling.
 
-## 2. Behavioral Coverage
+2. ## Behavioral Coverage
 
 Every distinct, externally observable behavior must have at least one dedicated test case.
 
@@ -31,7 +31,7 @@ For each behavior, tests must cover every distinguishable outcome, including:
 
 Not every category applies to every feature. The test suite must cover all applicable cases.
 
-## 3. Test Granularity
+3. ## Test Granularity
 
 Each test case must focus on one behavioral rule or outcome.
 
@@ -41,7 +41,7 @@ Tests must not combine unrelated behaviors into a single large test that makes f
 
 Test names must describe the condition being tested and the expected result.
 
-Example:
+Examples:
 
 `ResolveLocale_UsesExactMatchWhenAvailable`
 
@@ -51,7 +51,7 @@ Example:
 
 `ResolveLocale_ReturnsFailureWhenNoFallbackExists`
 
-## 4. Completeness
+4. ## Completeness
 
 Before a feature is considered tested, its behavior must be inventoried against its public contract.
 
@@ -61,7 +61,7 @@ Finite sets of outcomes should be tested exhaustively where practical. For unres
 
 Code coverage may help identify missing tests, but coverage percentages alone do not establish behavioral completeness.
 
-## 5. Test Independence
+5. ## Test Independence
 
 Every test must produce a reliable result independently of execution order.
 
@@ -69,7 +69,7 @@ Tests must not depend on another test having initialized state, registered resou
 
 Tests must use deterministic inputs, isolate mutable state, and clean up resources they create. Time-based waiting, external services, and platform-dependent assumptions must not be introduced unless they are necessary to test the feature's contract.
 
-## 6. Assertions
+6. ## Assertions
 
 Every test must assert its expected outcome.
 
@@ -79,8 +79,8 @@ Tests should verify observable behavior rather than internal implementation deta
 
 A feature's test suite is complete only when every identified behavioral requirement has corresponding verification and every discovered failure case has been addressed.
 
-## 7. Older Tests
+7. ## Older Tests
 
-Older tests within `Automated` that were made before the testing guidelines we're designed are not subject to these rules and should not be modified unless there's a good reason.
+Older tests within `Automated` that were created before these testing guidelines were introduced are not subject to these rules and should not be modified unless there is a good reason.
 
 If a test file contains both older tests that do not comply with these guidelines and newer tests that do, the entire file must be refactored to comply with the current guidelines.

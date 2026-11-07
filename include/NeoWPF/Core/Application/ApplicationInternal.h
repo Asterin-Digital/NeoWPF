@@ -6,7 +6,9 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <atomic>
+#include <array>
 #include <chrono>
+#include <cstddef>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -41,6 +43,18 @@ struct WindowSession {
     NeoWPF::Rendering::CommandList buildCommandList;
     NeoWPF::Rendering::CommandList renderCommandList;
     bool commandListInitialized = false;
+};
+
+struct WindowState {
+    bool treeDirty = false;
+    bool layoutDirty = false;
+    std::size_t nodeCount = 0;
+    std::size_t dirtyCount = 0;
+    std::size_t treeDirtyCount = 0;
+    std::size_t layoutDirtyCount = 0;
+    std::array<NeoWPF::UI::Visual*, 5> dirtyVisuals{};
+    std::size_t sampleCount = 0;
+    bool failed = false;
 };
 
 struct SurfaceDestroyRequest {
@@ -169,6 +183,17 @@ bool CloseWindow(void* handle);
     @internal
 */
 int RunMessageLoop();
+
+/*
+    @summary
+    Returns the state of a window and its visual tree.
+
+    @param windowSession
+    Window session to inspect.
+
+    @internal
+*/
+WindowState GetWindowState(const WindowSession& windowSession);
 
 /*
     @summary

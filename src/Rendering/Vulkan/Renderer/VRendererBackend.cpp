@@ -203,12 +203,27 @@ bool VulkanRendering::InitializeDevice(const NeoWPF::Rendering::RenderSurface& s
 bool VulkanRendering::CreateSurface(const NeoWPF::Rendering::RenderSurface& surface)
 {
     std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Vulkan/Surface] create request: handle=%p generation=%llu deviceInitialized=%d",
+        surface.nativeWindowHandle,
+        static_cast<unsigned long long>(surface.GetGenerationId()), m_initialized ? 1 : 0);
     if (!m_initialized || !surface.nativeWindowHandle) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Trace,
+            "[Vulkan/Surface] create rejected: handle=%p generation=%llu deviceInitialized=%d",
+            surface.nativeWindowHandle,
+            static_cast<unsigned long long>(surface.GetGenerationId()), m_initialized ? 1 : 0);
         return false;
     }
     {
         std::lock_guard<std::mutex> lock(m_windowContextsMutex);
         if (m_windowContexts.find(surface.nativeWindowHandle) != m_windowContexts.end()) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+                NeoWPF::Diagnostics::Level::Trace,
+                "[Vulkan/Surface] create reuses context: handle=%p generation=%llu contextCount=%zu",
+                surface.nativeWindowHandle,
+                static_cast<unsigned long long>(surface.GetGenerationId()), m_windowContexts.size());
             return true;
         }
     }
@@ -220,12 +235,26 @@ bool VulkanRendering::CreateSurface(const NeoWPF::Rendering::RenderSurface& surf
         NeoWPF::Diagnostics::LogError("[Vulkan] Invalid surface factory for rendering surface");
         return false;
     }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Vulkan/Surface] native target: handle=%p generation=%llu system=%d window=%p display=%p alpha=%d extensions=%zu factory=%p",
+        surface.nativeWindowHandle,
+        static_cast<unsigned long long>(surface.GetGenerationId()),
+        static_cast<int>(windowInfo.system), windowInfo.window, windowInfo.display,
+        static_cast<int>(windowInfo.surfaceAlpha), windowInfo.vulkanInstanceExtensionCount,
+        reinterpret_cast<void*>(windowInfo.createVulkanSurface));
 
     auto context = std::make_shared<WindowContext>();
     context->transparent = windowInfo.surfaceAlpha == NeoWPF::Contracts::SurfaceAlpha::Premultiplied;
     const bool nativeSurfaceCreated = windowInfo.createVulkanSurface(
             windowInfo.vulkanSurfaceUserData, m_instance, windowInfo.window,
             windowInfo.display, &context->surface);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Vulkan/Surface] native factory result: handle=%p generation=%llu created=%d surfaceNull=%d",
+        surface.nativeWindowHandle,
+        static_cast<unsigned long long>(surface.GetGenerationId()),
+        nativeSurfaceCreated ? 1 : 0, context->surface == VK_NULL_HANDLE ? 1 : 0);
     if (!nativeSurfaceCreated || context->surface == VK_NULL_HANDLE) {
         NeoWPF::Diagnostics::LogError("[Vulkan] Platform surface creation failed");
         if (context->surface != VK_NULL_HANDLE) {
@@ -240,11 +269,14 @@ bool VulkanRendering::CreateSurface(const NeoWPF::Rendering::RenderSurface& surf
         return false;
     }
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
-        NeoWPF::Diagnostics::Level::Info,
-        "[Vulkan/Surface] created: handle=%p generation=%llu extent=%ux%u",
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Vulkan/Surface] context ready: handle=%p generation=%llu extent=%ux%u format=%d imageCount=%zu framebufferCount=%zu commandBufferCount=%zu commandPoolReady=%d transparent=%d",
         surface.nativeWindowHandle,
         static_cast<unsigned long long>(surface.GetGenerationId()),
-        context->swapchainExtent.width, context->swapchainExtent.height);
+        context->swapchainExtent.width, context->swapchainExtent.height,
+        static_cast<int>(context->swapchainFormat), context->swapchainImages.size(),
+        context->framebuffers.size(), context->commandBuffers.size(),
+        context->commandPool != VK_NULL_HANDLE ? 1 : 0, context->transparent ? 1 : 0);
     std::lock_guard<std::mutex> lock(m_windowContextsMutex);
     m_windowContexts.emplace(surface.nativeWindowHandle, std::move(context));
     return true;
@@ -264,10 +296,12 @@ void VulkanRendering::DestroySurface(const NeoWPF::Rendering::RenderSurface& sur
         m_windowContexts.erase(iterator);
     }
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
-        NeoWPF::Diagnostics::Level::Info,
-        "[Vulkan/Surface] destroy: handle=%p generation=%llu",
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Vulkan/Surface] context removed: handle=%p generation=%llu extent=%ux%u imageCount=%zu framebufferCount=%zu",
         surface.nativeWindowHandle,
-        static_cast<unsigned long long>(surface.GetGenerationId()));
+        static_cast<unsigned long long>(surface.GetGenerationId()),
+        context->swapchainExtent.width, context->swapchainExtent.height,
+        context->swapchainImages.size(), context->framebuffers.size());
     if (m_device != VK_NULL_HANDLE) {
         vkDeviceWaitIdle(m_device);
     }

@@ -20,6 +20,14 @@ struct DestroyWait {
 DestroyWait QueueDestroyLocked(WindowSession& session)
 {
     DestroyWait wait;
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Surface] teardown decision: handle=%p host=%p generation=%llu valid=%d active=%d renderThreadInitialized=%d renderThreadShuttingDown=%d pendingDestroys=%zu",
+        session.renderSurface.nativeWindowHandle, session.windowHost.get(),
+        static_cast<unsigned long long>(session.renderSurface.GetGenerationId()),
+        session.renderSurface.IsValid() ? 1 : 0, session.lifecycle.IsActive() ? 1 : 0,
+        App().renderThreadInitialized.load() ? 1 : 0,
+        App().renderThreadShuttingDown ? 1 : 0, App().pendingSurfaceDestroy.size());
     session.lifecycle.Deactivate();
 
     const auto surface = session.renderSurface;
@@ -90,22 +98,26 @@ bool ReleaseWindowSurface(void* handle)
             });
         if (session == App().windowSessions.end()) {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application,
-                NeoWPF::Diagnostics::Level::Debug,
-                "[Surface] release requested for unknown window handle=%p", handle);
+                NeoWPF::Diagnostics::Level::Trace,
+                "[Surface] release lookup missed: handle=%p sessionCount=%zu", handle,
+                App().windowSessions.size());
             return false;
         }
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application,
-            NeoWPF::Diagnostics::Level::Info,
-            "[Surface] release begin: handle=%p host=%p generation=%llu valid=%d",
+            NeoWPF::Diagnostics::Level::Trace,
+            "[Surface] release requested: handle=%p host=%p generation=%llu valid=%d active=%d renderThreadInitialized=%d pendingDestroys=%zu",
             handle, session->windowHost.get(),
             static_cast<unsigned long long>(session->renderSurface.GetGenerationId()),
-            session->renderSurface.IsValid() ? 1 : 0);
+            session->renderSurface.IsValid() ? 1 : 0, session->lifecycle.IsActive() ? 1 : 0,
+            App().renderThreadInitialized.load() ? 1 : 0, App().pendingSurfaceDestroy.size());
         wait = QueueDestroyLocked(*session);
     }
 
     WaitDestroy(wait);
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application,
-        NeoWPF::Diagnostics::Level::Info, "[Surface] release complete: handle=%p", handle);
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Surface] release finished: handle=%p sessionRetained=1",
+        handle);
     return true;
 }
 
@@ -123,16 +135,17 @@ bool AttachWindowSurface(void* handle)
         });
     if (session == App().windowSessions.end()) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application,
-            NeoWPF::Diagnostics::Level::Debug,
-            "[Surface] attach requested for unknown window handle=%p", handle);
+            NeoWPF::Diagnostics::Level::Trace,
+            "[Surface] attach lookup missed: handle=%p sessionCount=%zu", handle,
+            App().windowSessions.size());
         return false;
     }
     if (session->lifecycle.IsShutdown() || session->renderSurface.IsValid()) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application,
-            NeoWPF::Diagnostics::Level::Debug,
-            "[Surface] attach rejected: handle=%p host=%p shutdown=%d valid=%d generation=%llu",
+            NeoWPF::Diagnostics::Level::Trace,
+            "[Surface] attach rejected: handle=%p host=%p shutdown=%d active=%d valid=%d generation=%llu",
             handle, session->windowHost.get(), session->lifecycle.IsShutdown() ? 1 : 0,
-            session->renderSurface.IsValid() ? 1 : 0,
+            session->lifecycle.IsActive() ? 1 : 0, session->renderSurface.IsValid() ? 1 : 0,
             static_cast<unsigned long long>(session->renderSurface.GetGenerationId()));
         return false;
     }
@@ -145,10 +158,11 @@ bool AttachWindowSurface(void* handle)
     session->commandListInitialized = false;
     const bool activated = session->lifecycle.Activate();
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application,
-        NeoWPF::Diagnostics::Level::Info,
-        "[Surface] attach %s: handle=%p host=%p generation=%llu",
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Surface] attach result=%s: handle=%p host=%p generation=%llu active=%d commandListReady=%d",
         activated ? "complete" : "failed", handle, session->windowHost.get(),
-        static_cast<unsigned long long>(session->renderSurface.GetGenerationId()));
+        static_cast<unsigned long long>(session->renderSurface.GetGenerationId()),
+        session->lifecycle.IsActive() ? 1 : 0, session->commandListInitialized ? 1 : 0);
     return activated;
 }
 

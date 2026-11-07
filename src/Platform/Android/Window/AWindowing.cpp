@@ -37,9 +37,11 @@ bool CreateVulkanSurface(void*, void* instance, void* window, void*, void* outSu
     const VkResult result = vkCreateAndroidSurfaceKHR(
         static_cast<VkInstance>(instance), &createInfo, nullptr,
         static_cast<VkSurfaceKHR*>(outSurface));
-    NeoWPF::Diagnostics::LogInfo(
-        "[Vulkan/Android] vkCreateAndroidSurfaceKHR: window=%p result=%d",
-        window, static_cast<int>(result));
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Android/Surface] Vulkan factory: instance=%p nativeWindow=%p result=%d surfaceNull=%d",
+        instance, window, static_cast<int>(result),
+        *static_cast<VkSurfaceKHR*>(outSurface) == VK_NULL_HANDLE ? 1 : 0);
     return result == VK_SUCCESS;
 }
 
@@ -201,6 +203,10 @@ void AWindowing::QueueSurfaceAvailable(ANativeWindow* nativeWindow,
     {
         std::lock_guard<std::mutex> lock(m_eventMutex);
         if (!m_activityAlive.load(std::memory_order_acquire)) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
+                NeoWPF::Diagnostics::Level::Trace,
+                "[Android/Surface] rejected native window: nativeWindow=%p extent=%ux%u activityAlive=0 queued=%zu",
+                nativeWindow, width, height, m_events.size());
             ANativeWindow_release(nativeWindow);
             return;
         }
@@ -210,11 +216,12 @@ void AWindowing::QueueSurfaceAvailable(ANativeWindow* nativeWindow,
         event.width = width;
         event.height = height;
         m_events.push_back(std::move(event));
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
+            NeoWPF::Diagnostics::Level::Trace,
+            "[Android/Surface] queued native window: nativeWindow=%p extent=%ux%u activityAlive=%d queued=%zu",
+            nativeWindow, width, height,
+            m_activityAlive.load(std::memory_order_relaxed) ? 1 : 0, m_events.size());
     }
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
-        NeoWPF::Diagnostics::Level::Info,
-        "[Android/Surface] available queued: nativeWindow=%p extent=%ux%u",
-        nativeWindow, width, height);
     WakeEventPump();
 }
 
@@ -231,9 +238,11 @@ void AWindowing::QueueSurfaceDestroyed() noexcept
         event.type = EventType::SurfaceDestroyed;
         event.completion = std::move(completion);
         m_events.push_back(std::move(event));
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
+            NeoWPF::Diagnostics::Level::Trace,
+            "[Android/Surface] queued destroy: stopped=%d queued=%zu",
+            m_stopped ? 1 : 0, m_events.size());
     }
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
-        NeoWPF::Diagnostics::Level::Info, "[Android/Surface] destroy queued");
     WakeEventPump();
     finished.wait();
 }
@@ -403,9 +412,10 @@ void AWindowing::ProcessSurfaceAvailable(Event& event) noexcept
 
     ANativeWindow* const previous = window->NativeWindow();
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
-        NeoWPF::Diagnostics::Level::Info,
-        "[Android/Surface] available processing: windowHandle=%p nativeWindow=%p previous=%p extent=%ux%u",
-        window, event.nativeWindow, previous, event.width, event.height);
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Android/Surface] applying native window: windowHandle=%p nativeWindow=%p previous=%p extent=%ux%u replacement=%d",
+        window, event.nativeWindow, previous, event.width, event.height,
+        previous && previous != event.nativeWindow ? 1 : 0);
     if (previous && previous != event.nativeWindow) {
         NeoWPF::Core::ReleaseWindowSurface(window);
     }
@@ -416,18 +426,18 @@ void AWindowing::ProcessSurfaceAvailable(Event& event) noexcept
     if (!previous || previous != window->NativeWindow()) {
         if (!NeoWPF::Core::AttachWindowSurface(window)) {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
-                NeoWPF::Diagnostics::Level::Info,
-                "[Android/Surface] attach failed: windowHandle=%p nativeWindow=%p",
-                window, window->NativeWindow());
+                NeoWPF::Diagnostics::Level::Trace,
+                "[Android/Surface] native window attach failed: windowHandle=%p nativeWindow=%p extent=%ux%u",
+                window, window->NativeWindow(), event.width, event.height);
             window->SetNativeWindow(nullptr);
             window->SetSize(0, 0);
             return;
         }
         NeoWPF::Core::SetInputRoot(window);
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
-            NeoWPF::Diagnostics::Level::Info,
-            "[Android/Surface] attached and input root selected: windowHandle=%p nativeWindow=%p",
-            window, window->NativeWindow());
+            NeoWPF::Diagnostics::Level::Trace,
+            "[Android/Surface] native window installed: windowHandle=%p nativeWindow=%p extent=%ux%u",
+            window, window->NativeWindow(), event.width, event.height);
     }
     InvalidateWindow(window);
 }
@@ -439,10 +449,13 @@ void AWindowing::ProcessSurfaceDestroyed() noexcept
     }
     AWindow* const window = m_windows.front().get();
     if (window->NativeWindow()) {
+        unsigned int width = 0;
+        unsigned int height = 0;
+        window->GetSize(width, height);
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
-            NeoWPF::Diagnostics::Level::Info,
-            "[Android/Surface] destroy processing: windowHandle=%p nativeWindow=%p",
-            window, window->NativeWindow());
+            NeoWPF::Diagnostics::Level::Trace,
+            "[Android/Surface] removing native window: windowHandle=%p nativeWindow=%p extent=%ux%u",
+            window, window->NativeWindow(), width, height);
         NeoWPF::Core::ReleaseWindowSurface(window);
         window->SetNativeWindow(nullptr);
         window->SetSize(0, 0);

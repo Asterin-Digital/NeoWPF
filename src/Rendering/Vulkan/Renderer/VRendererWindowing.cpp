@@ -53,7 +53,10 @@ void VulkanRendering::DestroySwapchainResources(WindowContext& context) noexcept
 
 bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned int width, unsigned int height)
 {
-    NeoWPF::Diagnostics::LogInfo("[Vulkan] Swapchain setup begin: requestedExtent=%ux%u", width, height);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Vulkan/Surface] swapchain request: requestedExtent=%ux%u surfaceNull=%d deviceNull=%d",
+        width, height, context.surface == VK_NULL_HANDLE ? 1 : 0, m_device == VK_NULL_HANDLE ? 1 : 0);
     VkSurfaceCapabilitiesKHR capabilities{};
     const VkResult capabilitiesResult = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
         m_physicalDevice, context.surface, &capabilities);
@@ -62,9 +65,15 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
             static_cast<int>(capabilitiesResult));
         return false;
     }
-    NeoWPF::Diagnostics::LogInfo("[Vulkan] Surface capabilities: minImages=%u maxImages=%u currentExtent=%ux%u",
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Vulkan/Surface] capabilities: minImages=%u maxImages=%u currentExtent=%ux%u minExtent=%ux%u maxExtent=%ux%u transforms=0x%x currentTransform=0x%x compositeAlpha=0x%x usage=0x%x",
         capabilities.minImageCount, capabilities.maxImageCount,
-        capabilities.currentExtent.width, capabilities.currentExtent.height);
+        capabilities.currentExtent.width, capabilities.currentExtent.height,
+        capabilities.minImageExtent.width, capabilities.minImageExtent.height,
+        capabilities.maxImageExtent.width, capabilities.maxImageExtent.height,
+        capabilities.supportedTransforms, capabilities.currentTransform,
+        capabilities.supportedCompositeAlpha, capabilities.supportedUsageFlags);
 
     std::uint32_t formatCount = 0;
     VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, context.surface, &formatCount, nullptr);
@@ -78,6 +87,13 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
     if (result != VK_SUCCESS) {
         NeoWPF::Diagnostics::LogError("[Vulkan] Surface format list query failed: %d", static_cast<int>(result));
         return false;
+    }
+    for (std::uint32_t index = 0; index < formatCount; ++index) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Trace,
+            "[Vulkan/Surface] available format[%u]: format=%d colorSpace=%d",
+            index, static_cast<int>(formats[index].format),
+            static_cast<int>(formats[index].colorSpace));
     }
     const auto formatIterator = std::find_if(formats.begin(), formats.end(), [](const auto& candidate) {
         return candidate.format == VK_FORMAT_B8G8R8A8_UNORM ||
@@ -94,9 +110,12 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
         NeoWPF::Diagnostics::LogError("[Vulkan] Surface selected a zero-sized swapchain extent");
         return false;
     }
-    NeoWPF::Diagnostics::LogInfo("[Vulkan] Swapchain format=%d colorSpace=%d extent=%ux%u",
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Vulkan/Surface] selected format=%d colorSpace=%d extent=%ux%u sourceExtent=%ux%u",
         static_cast<int>(format.format), static_cast<int>(format.colorSpace),
-        context.swapchainExtent.width, context.swapchainExtent.height);
+        context.swapchainExtent.width, context.swapchainExtent.height,
+        capabilities.currentExtent.width, capabilities.currentExtent.height);
 
     const auto compositeAlpha = SelectSurfaceCompositeAlpha(
         context.transparent, capabilities.supportedCompositeAlpha);
@@ -105,6 +124,10 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
             "[Vulkan] Surface does not support the required composite alpha mode for this window");
         return false;
     }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Vulkan/Surface] selected composite alpha: transparent=%d supported=0x%x selected=0x%x",
+        context.transparent ? 1 : 0, capabilities.supportedCompositeAlpha, *compositeAlpha);
     DestroySwapchainResources(context);
     const std::uint32_t requestedImageCount = (std::max)(capabilities.minImageCount, 2u);
     const std::uint32_t imageCount = std::min(
@@ -113,6 +136,13 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
     const std::array<std::uint32_t, 2> queueFamilies{
         m_graphicsQueueFamily, m_presentQueueFamily};
     const bool separateQueues = m_graphicsQueueFamily != m_presentQueueFamily;
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Vulkan/Surface] swapchain parameters: minImages=%u maxImages=%u requestedImages=%u selectedImages=%u sharingMode=%d graphicsQueueFamily=%u presentQueueFamily=%u separateQueues=%d presentMode=%d usage=0x%x",
+        capabilities.minImageCount, capabilities.maxImageCount, requestedImageCount,
+        imageCount, separateQueues ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE,
+        m_graphicsQueueFamily, m_presentQueueFamily, separateQueues ? 1 : 0,
+        VK_PRESENT_MODE_FIFO_KHR, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
     const VkSwapchainCreateInfoKHR swapchainInfo{
         VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR, nullptr, 0, context.surface, imageCount,
         format.format, format.colorSpace, context.swapchainExtent, 1, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
@@ -125,7 +155,11 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
         NeoWPF::Diagnostics::LogError("[Vulkan] vkCreateSwapchainKHR failed: %d", static_cast<int>(result));
         return false;
     }
-    NeoWPF::Diagnostics::LogInfo("[Vulkan] Swapchain created: requestedImages=%u", imageCount);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Vulkan/Surface] swapchain created: selectedImages=%u extent=%ux%u format=%d",
+        imageCount, context.swapchainExtent.width, context.swapchainExtent.height,
+        static_cast<int>(context.swapchainFormat));
 
     std::uint32_t actualCount = 0;
     result = vkGetSwapchainImagesKHR(m_device, context.swapchain, &actualCount, nullptr);
@@ -224,6 +258,15 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
         DestroySwapchainResources(context);
         return false;
     }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Vulkan/Surface] swapchain resources ready: images=%zu imageViews=%zu framebuffers=%zu commandBuffers=%zu commandPoolReady=%d imageAvailableReady=%d renderFinishedReady=%d fenceReady=%d",
+        context.swapchainImages.size(), context.swapchainImageViews.size(),
+        context.framebuffers.size(), context.commandBuffers.size(),
+        context.commandPool != VK_NULL_HANDLE ? 1 : 0,
+        context.imageAvailable != VK_NULL_HANDLE ? 1 : 0,
+        context.renderFinished != VK_NULL_HANDLE ? 1 : 0,
+        context.inFlight != VK_NULL_HANDLE ? 1 : 0);
     return true;
 }
 

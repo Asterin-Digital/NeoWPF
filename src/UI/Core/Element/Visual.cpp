@@ -303,9 +303,12 @@ void Visual::AddLogicalChild(const std::shared_ptr<Visual>& child)
     m_logicalChildren.push_back(child);
 }
 
+/* @note
+    Do not return early for an already-dirty node, an ancestor may still be clean.
+*/
 void Visual::MarkTreeDirty()
 {
-    if (!CanRunVisualLifecycle() || m_isTreeDirty) {
+    if (!CanRunVisualLifecycle()) {
         return;
     }
 
@@ -317,12 +320,12 @@ void Visual::MarkTreeDirty()
 
 void Visual::MarkLayoutDirty()
 {
-    if (!CanRunVisualLifecycle() || m_isLayoutDirty) {
+    if (!CanRunVisualLifecycle()) {
         return;
     }
 
     m_isLayoutDirty = true;
-    MarkTreeDirty();
+    m_isTreeDirty = true;
     if (m_parent) {
         m_parent->MarkLayoutDirty();
     }

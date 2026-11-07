@@ -75,6 +75,46 @@ TEST(VisualTests, AddVisualChildTracksParentAndRegistersChildren)
     NeoWPF::Core::Application::Shutdown();
 }
 
+TEST(VisualTests, ReMarkingTreeDirtyChildPropagatesToUninitializedParent)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    auto parent = std::make_shared<TestVisual>();
+    auto child = std::make_shared<TestVisual>();
+    child->MarkTreeDirty();
+
+    parent->AddVisualChild(child);
+    EXPECT_FALSE(parent->IsTreeDirty());
+    EXPECT_FALSE(parent->IsLayoutDirty());
+
+    child->MarkTreeDirty();
+
+    EXPECT_TRUE(parent->IsTreeDirty());
+    EXPECT_FALSE(parent->IsLayoutDirty());
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(VisualTests, ReMarkingLayoutDirtyChildPropagatesToUninitializedParent)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    auto parent = std::make_shared<TestVisual>();
+    auto child = std::make_shared<TestVisual>();
+    child->MarkLayoutDirty();
+
+    parent->AddVisualChild(child);
+    EXPECT_FALSE(parent->IsTreeDirty());
+    EXPECT_FALSE(parent->IsLayoutDirty());
+
+    child->MarkLayoutDirty();
+
+    EXPECT_TRUE(parent->IsTreeDirty());
+    EXPECT_TRUE(parent->IsLayoutDirty());
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
 TEST(VisualTests, AddChildAddsLogicalChildAndInvokesOnAddChild)
 {
     NeoWPF::Core::Application::Initialize();
