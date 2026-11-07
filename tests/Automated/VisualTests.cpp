@@ -2,6 +2,7 @@
 
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Core/Threading/ThreadAffinity.h>
+#include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 
 #include <algorithm>
@@ -71,6 +72,36 @@ TEST(VisualTests, AddVisualChildTracksParentAndRegistersChildren)
     EXPECT_EQ(parent->GetVisualChildren()[0], child.get());
     EXPECT_EQ(child->GetParent(), parent.get());
     EXPECT_EQ(parent->GetLogicalChildren().size(), 0u);
+
+    NeoWPF::Core::Application::Shutdown();
+}
+
+TEST(VisualTests, AddVisualChildQueuesWarningWithoutSharedOwnership)
+{
+    NeoWPF::Core::Application::Initialize();
+
+    const bool previousSuppression = NeoWPF::Diagnostics::IsDeveloperWarningSuppressionEnabled();
+    NeoWPF::Diagnostics::SetDeveloperWarningSuppression(false);
+    NeoWPF::Diagnostics::ClearDeveloperWarnings();
+
+    auto parent = std::make_shared<TestVisual>();
+    auto owner = std::make_shared<int>(0);
+    TestVisual child;
+    std::shared_ptr<NeoWPF::UI::Visual> childAlias(owner, &child);
+    parent->AddVisualChild(childAlias);
+
+    const auto warning = NeoWPF::Diagnostics::GetLastWarning();
+    const bool warningTriggered = warning &&
+        warning->title == std::wstring(
+            NeoWPF::Diagnostics::DeveloperWarnings::kDanglingChildReferenceCode) +
+            L": dangling child reference detected";
+
+    parent->RemoveVisualChild(&child);
+    childAlias.reset();
+    NeoWPF::Diagnostics::ClearDeveloperWarnings();
+    NeoWPF::Diagnostics::SetDeveloperWarningSuppression(previousSuppression);
+
+    EXPECT_TRUE(warningTriggered);
 
     NeoWPF::Core::Application::Shutdown();
 }
