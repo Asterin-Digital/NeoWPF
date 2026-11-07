@@ -15,6 +15,7 @@
 #include <chrono>
 #include <exception>
 #include <mutex>
+#include <typeinfo>
 #include <utility>
 #include <vector>
 
@@ -113,6 +114,45 @@ bool OverlayLayoutDirty(const NeoWPF::UI::Window& window)
     return false;
 }
 
+}
+
+WindowState GetWindowState(const WindowSession& windowSession)
+{
+    WindowState state;
+    auto* host = windowSession.windowHost.get();
+    if (!host) {
+        return state;
+    }
+    state.treeDirty = host->IsTreeDirty();
+    state.layoutDirty = host->IsLayoutDirty();
+
+    try {
+        std::vector<NeoWPF::UI::Visual*> pending{host};
+        for (std::size_t index = 0; index < pending.size(); ++index) {
+            auto* visual = pending[index];
+            if (!visual) {
+                continue;
+            }
+            ++state.nodeCount;
+            const bool treeDirty = visual->IsTreeDirty();
+            const bool layoutDirty = visual->IsLayoutDirty();
+            state.treeDirtyCount += treeDirty ? 1u : 0u;
+            state.layoutDirtyCount += layoutDirty ? 1u : 0u;
+            if (treeDirty || layoutDirty) {
+                ++state.dirtyCount;
+                if (state.sampleCount < state.dirtyVisuals.size()) {
+                    state.dirtyVisuals[state.sampleCount++] = visual;
+                }
+            }
+
+            const auto children = visual->GetVisualChildren();
+            pending.insert(pending.end(), children.begin(), children.end());
+        }
+
+    } catch (...) {
+        state.failed = true;
+    }
+    return state;
 }
 
 void BuildWindowVisualTree(WindowSession& windowSession, unsigned int width, unsigned int height, bool layoutRequired)
@@ -391,6 +431,21 @@ int RunMessageLoop()
             windowSession.height = windowHeight;
             initialWindows.push_back(windowSession.renderSurface.nativeWindowHandle);
         }
+        for (const auto& windowSession : s_appState.windowSessions) {
+            const auto state = GetWindowState(windowSession);
+            NeoWPF::Diagnostics::LogInfo(
+                "[state:init] host=%p tree=%d layout=%d nodes=%zu dirty=%zu tree=%zu layout=%zu failed=%d",
+                windowSession.windowHost.get(), state.treeDirty ? 1 : 0,
+                state.layoutDirty ? 1 : 0, state.nodeCount, state.dirtyCount,
+                state.treeDirtyCount, state.layoutDirtyCount, state.failed ? 1 : 0);
+            for (std::size_t index = 0; index < state.sampleCount; ++index) {
+                auto* visual = state.dirtyVisuals[index];
+                NeoWPF::Diagnostics::LogInfo(
+                    "[state:init] dirty[%zu]=%s@%p tree=%d layout=%d",
+                    index, typeid(*visual).name(), visual,
+                    visual->IsTreeDirty() ? 1 : 0, visual->IsLayoutDirty() ? 1 : 0);
+            }
+        }
     }
 
     for (void* handle : initialWindows) {
@@ -439,22 +494,48 @@ int RunMessageLoop()
         }
 
         bool needsUpdate = false;
+        static auto lastDirtyProbe = std::chrono::steady_clock::time_point{};
+        const auto dirtyProbeTime = std::chrono::steady_clock::now();
+        const bool emitDirtyProbe = dirtyProbeTime - lastDirtyProbe >= std::chrono::seconds(1);
+        if (emitDirtyProbe) {
+            lastDirtyProbe = dirtyProbeTime;
+        }
         {
             std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
             for (auto& windowSession : s_appState.windowSessions) {
-                if (!windowSession.lifecycle.IsActive() ||
-                    !windowing.IsWindowAlive(windowSession.renderSurface.nativeWindowHandle)) {
-                    continue;
-                }
+                const bool lifecycleActive = windowSession.lifecycle.IsActive();
+                const bool windowAlive = windowing.IsWindowAlive(windowSession.renderSurface.nativeWindowHandle);
                 unsigned int windowWidth = 0;
                 unsigned int windowHeight = 0;
-                windowing.GetWindowSize(windowSession.renderSurface.nativeWindowHandle, windowWidth, windowHeight);
-                if (windowWidth > 0 && windowHeight > 0 &&
-                    (!windowSession.commandListInitialized || windowSession.width != windowWidth ||
-                     windowSession.height != windowHeight ||
-                     (windowSession.windowHost &&
-                      (windowSession.windowHost->IsTreeDirty() || OverlayDirty(*windowSession.windowHost))))) {
-                    needsUpdate = true;
+                if (windowAlive) {
+                    windowing.GetWindowSize(windowSession.renderSurface.nativeWindowHandle, windowWidth, windowHeight);
+                }
+                const bool hasPositiveSize = windowWidth > 0 && windowHeight > 0;
+                const bool widthChanged = windowSession.width != windowWidth;
+                const bool heightChanged = windowSession.height != windowHeight;
+                const bool hostTreeDirty = windowSession.windowHost && windowSession.windowHost->IsTreeDirty();
+                const bool overlayTreeDirty = windowSession.windowHost && OverlayDirty(*windowSession.windowHost);
+                if (emitDirtyProbe) {
+                    NeoWPF::Diagnostics::LogInfo(
+                        "[state:gate] active=%d alive=%d size=%ux%u valid=%d initialized=%d resized=%d/%d hostTree=%d overlayTree=%d",
+                        lifecycleActive ? 1 : 0, windowAlive ? 1 : 0, windowWidth, windowHeight,
+                        hasPositiveSize ? 1 : 0, windowSession.commandListInitialized ? 1 : 0,
+                        widthChanged ? 1 : 0, heightChanged ? 1 : 0,
+                        hostTreeDirty ? 1 : 0, overlayTreeDirty ? 1 : 0);
+                    const auto state = GetWindowState(windowSession);
+                    NeoWPF::Diagnostics::LogInfo(
+                        "[state:gate] nodes=%zu dirty=%zu tree=%zu layout=%zu failed=%d",
+                        state.nodeCount, state.dirtyCount, state.treeDirtyCount,
+                        state.layoutDirtyCount, state.failed ? 1 : 0);
+                }
+                if (!lifecycleActive || !windowAlive) {
+                    continue;
+                }
+                const bool sessionNeedsUpdate = hasPositiveSize &&
+                    (!windowSession.commandListInitialized || widthChanged || heightChanged ||
+                     hostTreeDirty || overlayTreeDirty);
+                needsUpdate = needsUpdate || sessionNeedsUpdate;
+                if (needsUpdate && !emitDirtyProbe) {
                     break;
                 }
             }

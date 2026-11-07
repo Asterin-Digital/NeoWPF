@@ -124,6 +124,11 @@ void OnWindowCreated(ANativeActivity* activity, ANativeWindow* window) noexcept
         return;
     }
 
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Android/Surface] callback created: activity=%p host=%p nativeWindow=%p",
+        activity, host, window);
+
     host->lifecycle.DispatchNativeWindow(
         host->surfaceAvailable, host->surfaceAvailableContext,
         window, host->windowOperations);
@@ -131,12 +136,21 @@ void OnWindowCreated(ANativeActivity* activity, ANativeWindow* window) noexcept
 
 void OnWindowResized(ANativeActivity* activity, ANativeWindow* window) noexcept
 {
+    auto* const host = static_cast<AActivityHost*>(activity->instance);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Android/Surface] callback resized: activity=%p host=%p nativeWindow=%p",
+        activity, host, window);
     OnWindowCreated(activity, window);
 }
 
-void OnWindowDestroyed(ANativeActivity* activity, ANativeWindow*) noexcept
+void OnWindowDestroyed(ANativeActivity* activity, ANativeWindow* window) noexcept
 {
     auto* const host = static_cast<AActivityHost*>(activity->instance);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Platform,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Android/Surface] callback destroyed: activity=%p host=%p nativeWindow=%p",
+        activity, host, window);
     if (host) {
         host->lifecycle.DispatchSurfaceDestroyed(
             host->surfaceDestroyed, host->surfaceDestroyedContext);

@@ -7,6 +7,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <mutex>
+#include <typeinfo>
 
 namespace NeoWPF::Platform::Android {
 namespace {
@@ -136,6 +138,19 @@ int AWindowing::HandlePointerInputEvent(AInputEvent* inputEvent) noexcept
                       buttons, changedButton);
         if (deviceType == PointerDeviceType::Touch) {
             SubmitPointer(inputEvent, actionIndex, PointerPhase::Leave, 0, 0);
+        }
+        auto& appState = NeoWPF::Core::GetAppState();
+        std::lock_guard<std::mutex> lock(appState.windowSessionsMutex);
+        for (const auto& windowSession : appState.windowSessions) {
+            if (windowSession.renderSurface.nativeWindowHandle == m_windows.front().get()) {
+                const auto state = NeoWPF::Core::GetWindowState(windowSession);
+                NeoWPF::Diagnostics::LogInfo(
+                    "[state:tap] host=%p tree=%d layout=%d nodes=%zu dirty=%zu tree=%zu layout=%zu failed=%d",
+                    windowSession.windowHost.get(), state.treeDirty ? 1 : 0,
+                    state.layoutDirty ? 1 : 0, state.nodeCount, state.dirtyCount,
+                    state.treeDirtyCount, state.layoutDirtyCount, state.failed ? 1 : 0);
+                break;
+            }
         }
         return 1;
     }

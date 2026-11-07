@@ -67,11 +67,16 @@ NeoWPF::Contracts::IRendering* CurrentRendering() noexcept
 
 bool NeoWPF::Rendering::Renderer_Initialize(const RenderSurface& surface)
 {
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Renderer/Surface] initialize request: handle=%p generation=%llu valid=%d",
+        surface.nativeWindowHandle,
+        static_cast<unsigned long long>(surface.GetGenerationId()), surface.IsValid() ? 1 : 0);
     auto surfaceUse = surface.TryAcquireUse();
     if (!surfaceUse.owns_lock()) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
-            NeoWPF::Diagnostics::Level::Debug,
-            "[Renderer/Surface] initialize skipped: handle=%p generation=%llu surface unavailable",
+            NeoWPF::Diagnostics::Level::Trace,
+            "[Renderer/Surface] initialize rejected: handle=%p generation=%llu surface became unavailable",
             surface.nativeWindowHandle,
             static_cast<unsigned long long>(surface.GetGenerationId()));
         return false;
@@ -80,6 +85,12 @@ bool NeoWPF::Rendering::Renderer_Initialize(const RenderSurface& surface)
     if (existingState != s_windowStates.end() &&
         existingState->second.generationId != surface.GetGenerationId()) {
         if (existingState->second.surfaceCreated) {
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+                NeoWPF::Diagnostics::Level::Trace,
+                "[Renderer/Surface] initialize blocked by live prior generation: handle=%p requestedGeneration=%llu existingGeneration=%llu",
+                surface.nativeWindowHandle,
+                static_cast<unsigned long long>(surface.GetGenerationId()),
+                static_cast<unsigned long long>(existingState->second.generationId));
             return false;
         }
         s_windowStates.erase(existingState);
@@ -87,12 +98,17 @@ bool NeoWPF::Rendering::Renderer_Initialize(const RenderSurface& surface)
     auto& state = GetWindowFrameState(surface.nativeWindowHandle);
     state.generationId = surface.GetGenerationId();
     if (state.surfaceCreated) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Trace,
+            "[Renderer/Surface] already initialized: handle=%p generation=%llu",
+            surface.nativeWindowHandle,
+            static_cast<unsigned long long>(surface.GetGenerationId()));
         return true;
     }
     auto* rendering = CurrentRendering();
     if (!rendering) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
-            NeoWPF::Diagnostics::Level::Info,
+            NeoWPF::Diagnostics::Level::Trace,
             "[Renderer/Surface] initialize failed: handle=%p generation=%llu no rendering backend",
             surface.nativeWindowHandle,
             static_cast<unsigned long long>(surface.GetGenerationId()));
@@ -100,7 +116,7 @@ bool NeoWPF::Rendering::Renderer_Initialize(const RenderSurface& surface)
     }
     if (!rendering->IsInitialized() && !rendering->InitializeDevice(surface)) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
-            NeoWPF::Diagnostics::Level::Info,
+            NeoWPF::Diagnostics::Level::Trace,
             "[Renderer/Surface] device initialization failed: handle=%p generation=%llu",
             surface.nativeWindowHandle,
             static_cast<unsigned long long>(surface.GetGenerationId()));
@@ -108,24 +124,42 @@ bool NeoWPF::Rendering::Renderer_Initialize(const RenderSurface& surface)
     }
     state.surfaceCreated = rendering->CreateSurface(surface);
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
-        NeoWPF::Diagnostics::Level::Info,
-        "[Renderer/Surface] create %s: handle=%p generation=%llu",
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Renderer/Surface] backend create result=%s: handle=%p generation=%llu backendInitialized=%d",
         state.surfaceCreated ? "complete" : "failed", surface.nativeWindowHandle,
-        static_cast<unsigned long long>(surface.GetGenerationId()));
+        static_cast<unsigned long long>(surface.GetGenerationId()), rendering->IsInitialized() ? 1 : 0);
     return state.surfaceCreated;
 }
 
 void NeoWPF::Rendering::Renderer_DestroySurface(const RenderSurface& surface)
 {
     if (!surface.nativeWindowHandle || !surface.generation) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Trace,
+            "[Renderer/Surface] destroy ignored: handle=%p generation=%llu generationObject=%d",
+            surface.nativeWindowHandle,
+            static_cast<unsigned long long>(surface.GetGenerationId()), surface.generation ? 1 : 0);
         return;
     }
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Renderer/Surface] destroy request: handle=%p generation=%llu valid=%d",
+        surface.nativeWindowHandle,
+        static_cast<unsigned long long>(surface.GetGenerationId()), surface.IsValid() ? 1 : 0);
     auto surfaceDestruction = surface.LockForDestruction();
     if (!surfaceDestruction.owns_lock()) {
         return;
     }
     const auto state = s_windowStates.find(surface.nativeWindowHandle);
     if (state == s_windowStates.end() || state->second.generationId != surface.GetGenerationId()) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Trace,
+            "[Renderer/Surface] destroy found no matching state: handle=%p generation=%llu stateFound=%d stateGeneration=%llu",
+            surface.nativeWindowHandle,
+            static_cast<unsigned long long>(surface.GetGenerationId()),
+            state != s_windowStates.end() ? 1 : 0,
+            state != s_windowStates.end()
+                ? static_cast<unsigned long long>(state->second.generationId) : 0ull);
         return;
     }
     if (state->second.surfaceCreated) {
@@ -134,6 +168,11 @@ void NeoWPF::Rendering::Renderer_DestroySurface(const RenderSurface& surface)
         }
     }
     s_windowStates.erase(state);
+    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Renderer/Surface] destroy completed: handle=%p generation=%llu",
+        surface.nativeWindowHandle,
+        static_cast<unsigned long long>(surface.GetGenerationId()));
 }
 
 void NeoWPF::Rendering::Renderer_Shutdown()
@@ -159,10 +198,11 @@ void NeoWPF::Rendering::Renderer_Resize(const RenderSurface& surface, unsigned i
         return;
     }
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
-        NeoWPF::Diagnostics::Level::Info,
-        "[Renderer/Surface] resize: handle=%p generation=%llu extent=%ux%u",
+        NeoWPF::Diagnostics::Level::Trace,
+        "[Renderer/Surface] resize request: handle=%p generation=%llu previousExtent=%ux%u extent=%ux%u",
         surface.nativeWindowHandle,
-        static_cast<unsigned long long>(surface.GetGenerationId()), w, h);
+        static_cast<unsigned long long>(surface.GetGenerationId()),
+        state->hasSize ? state->lastWidth : 0u, state->hasSize ? state->lastHeight : 0u, w, h);
     state->hasCommandHash = false;
     state->lastWidth = w;
     state->lastHeight = h;

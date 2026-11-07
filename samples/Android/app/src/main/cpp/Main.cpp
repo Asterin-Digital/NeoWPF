@@ -5,7 +5,13 @@
 
 int main()
 {
-    NeoWPF::Diagnostics::SetGlobalLevel(NeoWPF::Diagnostics::Level::Debug);
+    NeoWPF::Diagnostics::SetGlobalLevel(NeoWPF::Diagnostics::Level::Trace);
+    NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::GridLayout,
+        NeoWPF::Diagnostics::Level::Off);
+    NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::ContentPresenter,
+        NeoWPF::Diagnostics::Level::Off);
+    NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::Control,
+        NeoWPF::Diagnostics::Level::Off);
     NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::HitTest,
         NeoWPF::Diagnostics::Level::Off);
     NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::Virtualization,
@@ -14,7 +20,23 @@ int main()
         NeoWPF::Diagnostics::Level::Off);
     NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::TextBox,
         NeoWPF::Diagnostics::Level::Off);
+    NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::Http,
+        NeoWPF::Diagnostics::Level::Off);
+    NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::XamlParser,
+        NeoWPF::Diagnostics::Level::Off);
+    NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::ListBox,
+        NeoWPF::Diagnostics::Level::Off);
+    NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::ComboBox,
+        NeoWPF::Diagnostics::Level::Off);
+    NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::Popup,
+        NeoWPF::Diagnostics::Level::Off);
+    NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::ItemsControl,
+        NeoWPF::Diagnostics::Level::Off);
+    NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::Clipboard,
+        NeoWPF::Diagnostics::Level::Off);
     NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::Visual,
+        NeoWPF::Diagnostics::Level::Off);
+    NeoWPF::Diagnostics::SetLevel(NeoWPF::Diagnostics::Category::Files,
         NeoWPF::Diagnostics::Level::Off);
     NeoWPF::Core::Application::Initialize();
 
