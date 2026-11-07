@@ -14,7 +14,7 @@ See LICENSE file in the project root for full license text.
 namespace NeoPM::Net
 {
     inline constexpr const char* NEOWPF_SDK_RELEASES_URL =
-        "https://raw.githubusercontent.com/NeoWPF/NeoWPF/main/sdk-releases.json";
+        "https://raw.githubusercontent.com/Asterin-Digital/NeoWPF/main/sdk-releases.json";
 
     using DownloadProgressCallback = std::function<bool(uint64_t bytesReceived, uint64_t totalBytes)>;
 

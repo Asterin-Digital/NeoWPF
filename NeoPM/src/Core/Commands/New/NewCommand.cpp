@@ -154,17 +154,29 @@ namespace NeoPM::Core::Commands {
             return false;
         }
 
-        if (!std::filesystem::is_directory(includePath / "NeoWPF")) {
-            logger.Error("NewCommand", "SDK include directory must contain a NeoWPF folder");
+        if (!std::filesystem::is_directory(includePath / "NeoWPF") ||
+            !std::filesystem::is_directory(includePath / "NeoNaml")) {
+            logger.Error("NewCommand", "SDK include root must contain NeoWPF and NeoNaml folders");
             return false;
         }
 
-        if (std::filesystem::is_directory(libraryPath)) {
-            libraryPath /= "NeoWPF.lib";
-        }
+        const auto containsLibrary = [](const std::filesystem::path& directory) {
+            if (!std::filesystem::is_directory(directory)) {
+                return false;
+            }
+            for (const auto& entry : std::filesystem::directory_iterator(directory)) {
+                if (entry.is_regular_file() &&
+                    (entry.path().extension() == ".lib" || entry.path().extension() == ".a")) {
+                    return true;
+                }
+            }
+            return false;
+        };
 
-        if (!std::filesystem::is_regular_file(libraryPath) || libraryPath.filename() != "NeoWPF.lib") {
-            logger.Error("NewCommand", "SDK library must be NeoWPF.lib or its containing directory");
+        if (!std::filesystem::is_directory(libraryPath) ||
+            !containsLibrary(libraryPath / "Debug") ||
+            !containsLibrary(libraryPath / "Release")) {
+            logger.Error("NewCommand", "SDK library root must contain Debug and Release libraries");
             return false;
         }
 

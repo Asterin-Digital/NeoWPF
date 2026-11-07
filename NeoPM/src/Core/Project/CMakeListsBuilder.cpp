@@ -94,16 +94,16 @@ namespace NeoPM::Core::Project {
         ss << "set(CMAKE_CXX_STANDARD 20)\n";
         ss << "set(CMAKE_CXX_STANDARD_REQUIRED ON)\n\n";
 
-        ss << "set(NEOWPF_ROOT \"${CMAKE_CURRENT_SOURCE_DIR}/../NeoWPF\" CACHE PATH \"Path to the NeoWPF source tree\")\n";
+        ss << "set(NEOWPF_ROOT \"${CMAKE_CURRENT_SOURCE_DIR}/../NeoWPF/include\" CACHE PATH \"Path to the NeoWPF include root\")\n";
         if (!m_sdkIncludePath.empty()) {
-            ss << "set(NEOWPF_ROOT \"" << NormalizeCMakePath(m_sdkIncludePath.parent_path().string()) << "\" CACHE PATH \"Path to the NeoWPF source tree\" FORCE)\n";
+            ss << "set(NEOWPF_ROOT \"" << NormalizeCMakePath(m_sdkIncludePath.string()) << "\" CACHE PATH \"Path to the NeoWPF include root\" FORCE)\n";
         }
         ss << "set(NEOWPF_LIBRARY \"\" CACHE FILEPATH \"Path to the NeoWPF library\")\n";
         if (!m_sdkLibraryPath.empty()) {
             ss << "set(NEOWPF_LIBRARY \"" << NormalizeCMakePath(m_sdkLibraryPath.string()) << "\" CACHE FILEPATH \"Path to the NeoWPF library\" FORCE)\n";
         }
-        ss << "if(NOT EXISTS \"${NEOWPF_ROOT}/include/NeoWPF\")\n";
-        ss << "    message(FATAL_ERROR \"NEOWPF_ROOT does not contain include/NeoWPF: ${NEOWPF_ROOT}\")\n";
+        ss << "if(NOT EXISTS \"${NEOWPF_ROOT}/NeoWPF\")\n";
+        ss << "    message(FATAL_ERROR \"NEOWPF_ROOT does not contain NeoWPF: ${NEOWPF_ROOT}\")\n";
         ss << "endif()\n\n";
 
         ss << "add_executable(" << m_projectName << "\n";
@@ -121,7 +121,7 @@ namespace NeoPM::Core::Project {
 
         ss << "target_include_directories(" << m_projectName << " PRIVATE\n";
         ss << "    \"${CMAKE_CURRENT_SOURCE_DIR}/include\"\n";
-        ss << "    \"${NEOWPF_ROOT}/include\"\n";
+        ss << "    \"${NEOWPF_ROOT}\"\n";
         ss << ")\n\n";
 
         if (!m_sdkLibraryPath.empty()) {
@@ -156,9 +156,9 @@ namespace NeoPM::Core::Project {
         ss << "        \"CMAKE_BUILD_TYPE\": \"Debug\",\n";
         ss << "        \"CMAKE_CXX_STANDARD\": \"20\"";
         if (!m_sdkIncludePath.empty()) {
-            ss << ",\n        \"NEOWPF_ROOT\": \"" << NormalizeCMakePath(m_sdkIncludePath.parent_path().string()) << "\"";
+            ss << ",\n        \"NEOWPF_ROOT\": \"" << NormalizeCMakePath(m_sdkIncludePath.string()) << "\"";
         } else {
-            ss << ",\n        \"NEOWPF_ROOT\": \"${sourceDir}/../NeoWPF\"";
+            ss << ",\n        \"NEOWPF_ROOT\": \"${sourceDir}/../NeoWPF/include\"";
         }
         if (!m_sdkLibraryPath.empty()) {
             ss << ",\n        \"NEOWPF_LIBRARY\": \"" << NormalizeCMakePath(m_sdkLibraryPath.string()) << "\"";
@@ -179,9 +179,9 @@ namespace NeoPM::Core::Project {
         ss << "        \"CMAKE_BUILD_TYPE\": \"Debug\",\n";
         ss << "        \"CMAKE_CXX_STANDARD\": \"20\"";
         if (!m_sdkIncludePath.empty()) {
-            ss << ",\n        \"NEOWPF_ROOT\": \"" << NormalizeCMakePath(m_sdkIncludePath.parent_path().string()) << "\"";
+            ss << ",\n        \"NEOWPF_ROOT\": \"" << NormalizeCMakePath(m_sdkIncludePath.string()) << "\"";
         } else {
-            ss << ",\n        \"NEOWPF_ROOT\": \"${sourceDir}/../NeoWPF\"";
+            ss << ",\n        \"NEOWPF_ROOT\": \"${sourceDir}/../NeoWPF/include\"";
         }
         if (!m_sdkLibraryPath.empty()) {
             ss << ",\n        \"NEOWPF_LIBRARY\": \"" << NormalizeCMakePath(m_sdkLibraryPath.string()) << "\"";

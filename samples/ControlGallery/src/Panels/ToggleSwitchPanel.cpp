@@ -47,8 +47,6 @@ Ref<NeoWPF::UI::Border> MakeSection(const std::wstring& title, const Ref<NeoWPF:
 Ref<NeoWPF::UI::UIElement> CreateToggleSwitchPanel()
 {
     auto page = MakeVerticalPanel(16);
-    page->AddChild(MakeText(L"ToggleSwitch", 25, 650));
-    page->AddChild(MakeText(L"Labeled switches for settings and live state changes", 14));
 
     auto settings = MakeVerticalPanel(10);
     auto wifi = New<ToggleSwitch>();

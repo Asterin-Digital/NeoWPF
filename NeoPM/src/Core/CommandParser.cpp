@@ -153,8 +153,8 @@ Options:
   --template, -t <name>           Specify project template
   --sdk <production|user>         Select downloaded production or local user SDK
   --sdk-config <debug|release>    Select SDK configuration (default: debug)
-  --sdk-include <path>            User SDK include directory containing NeoWPF
-  --sdk-lib <path>                User SDK NeoWPF.lib or its containing directory
+    --sdk-include <path>            User SDK include root containing NeoWPF and NeoNaml
+    --sdk-lib <path>                User SDK root containing Debug and Release libraries
 
 Examples:
   NeoPM new MyApp
@@ -298,8 +298,8 @@ Options:
   --template, -t <name>           Project template: blank, mvvm (default: blank)
   --sdk <production|user>         SDK source (default: production)
   --sdk-config <debug|release>    SDK configuration (default: debug)
-  --sdk-include <path>            User SDK include directory containing NeoWPF
-  --sdk-lib <path>                User SDK NeoWPF.lib or its containing directory
+    --sdk-include <path>            User SDK include root containing NeoWPF and NeoNaml
+    --sdk-lib <path>                User SDK root containing Debug and Release libraries
   --help, -h                      Show this help message
 
 Examples:
@@ -339,8 +339,7 @@ Usage:
 
 This downloads and installs the latest Debug and Release x64 NeoWPF SDKs from GitHub.
 The SDKs are extracted to:
-  <NeoWPF>/sdk/debug-x64/
-  <NeoWPF>/sdk/release-x64/
+    <NeoWPF>/sdk/<platform>-<architecture>/
 
 Examples:
   NeoPM refresh-sdk

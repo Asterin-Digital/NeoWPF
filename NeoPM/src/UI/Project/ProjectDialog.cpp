@@ -92,8 +92,8 @@ void ShowProjectDialog(
     auto outputPath = AddTextField(content, L"Parent path", L"Optional");
     auto sdkSource = AddComboField(content, L"SDK source", {L"production", L"user"});
     auto sdkConfiguration = AddComboField(content, L"SDK configuration", {L"debug", L"release"});
-    auto sdkIncludePath = AddTextField(content, L"SDK include path", L"Required for a user SDK");
-    auto sdkLibraryPath = AddTextField(content, L"SDK library path", L"Required for a user SDK");
+    auto sdkIncludePath = AddTextField(content, L"SDK include root", L"Contains NeoWPF and NeoNaml");
+    auto sdkLibraryPath = AddTextField(content, L"SDK library root", L"Contains Debug and Release");
 
     auto actions = New<StackPanel>();
     actions->SetOrientation(Orientation::Horizontal);

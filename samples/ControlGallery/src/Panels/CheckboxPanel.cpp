@@ -47,8 +47,6 @@ Ref<NeoWPF::UI::Border> MakeSection(const std::wstring& title, const Ref<NeoWPF:
 Ref<NeoWPF::UI::UIElement> CreateCheckboxPanel()
 {
     auto page = MakeVerticalPanel(16);
-    page->AddChild(MakeText(L"Checkbox", 25, 650));
-    page->AddChild(MakeText(L"On/off choices and live state feedback", 14));
 
     auto status = MakeText(L"Unchecked");
     auto options = New<StackPanel>();

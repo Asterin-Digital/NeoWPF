@@ -195,8 +195,14 @@ namespace NeoPM::Core::Commands {
 
         if (m_sdkSource == "user") {
             sdkLibPath = std::filesystem::path(*m_sdkLibraryPath);
-            if (std::filesystem::is_directory(sdkLibPath.value())) {
-                sdkLibPath = sdkLibPath.value() / "NeoWPF.lib";
+            const auto configurationDirectory = sdkLibPath.value() /
+                (m_sdkConfiguration == "debug" ? "Debug" : "Release");
+            for (const auto& entry : std::filesystem::directory_iterator(configurationDirectory)) {
+                if (entry.is_regular_file() &&
+                    (entry.path().extension() == ".lib" || entry.path().extension() == ".a")) {
+                    sdkLibPath = entry.path();
+                    break;
+                }
             }
             sdkIncludePath = std::filesystem::path(*m_sdkIncludePath);
             logger.Info("NewCommand", "Using user SDK (" + m_sdkConfiguration + ")");
@@ -204,13 +210,13 @@ namespace NeoPM::Core::Commands {
         else {
             SdkManager sdkManager;
             logger.Info("NewCommand", "Checking production NeoWPF SDK availability...");
-            if (!sdkManager.RefreshSdks()) {
-                logger.Error("NewCommand", "Failed to refresh SDK and no local SDKs are available");
+            if (!sdkManager.RefreshSdks() || !sdkManager.HasLocalSdks()) {
+                logger.Error("NewCommand", "No complete platform SDK with Debug and Release libraries is available");
                 return false;
             }
 
             sdkLibPath = sdkManager.GetSdkLibraryPath(m_sdkConfiguration);
-            sdkIncludePath = sdkManager.GetSdkIncludePath(m_sdkConfiguration);
+            sdkIncludePath = sdkManager.GetSdkIncludePath();
         }
 
         if (sdkLibPath) {
