@@ -163,3 +163,9 @@ Small inline implementations are fine when they genuinely do not need a source f
 20. ## Debugging
 
 Do not use the logger's public API to change logging levels. Only consumers and downstream applications are allowed to change the logging level. NeoWPF code must not change it. Simply log the message.
+
+21. ## Picking The Right Category
+
+When creating a new file you should think about where you put it, and if the folder name fit's the context of what the code is doing.
+If it's near impossible to properly categorize, put it under Etc/
+Only reviewed files are allowed to be put in there, creating a file without prior notice under Etc/ is not allowed and will be deleted.

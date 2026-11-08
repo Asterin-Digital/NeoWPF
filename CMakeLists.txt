@@ -9,10 +9,22 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoWPFVersion.cmake")
 neowpf_resolve_version_file("${CMAKE_CURRENT_SOURCE_DIR}" NEOWPF_VERSION_FILE)
+get_filename_component(NEOWPF_SHARED_SOURCE_ROOT
+    "${NEOWPF_VERSION_FILE}" DIRECTORY)
 neowpf_read_version_file(
     "${NEOWPF_VERSION_FILE}"
     NEOWPF_VERSION
 )
+if(NOT "${NEOWPF_SHARED_SOURCE_ROOT}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}" AND
+   "${CMAKE_CURRENT_SOURCE_DIR}" MATCHES "^/home/[^/]+/\\.vs/")
+    file(COPY
+        "${NEOWPF_SHARED_SOURCE_ROOT}/cmake"
+        "${NEOWPF_SHARED_SOURCE_ROOT}/include"
+        "${NEOWPF_SHARED_SOURCE_ROOT}/src"
+        DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}")
+    file(COPY "${NEOWPF_SHARED_SOURCE_ROOT}/tests/Automated"
+        DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+endif()
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${NEOWPF_VERSION_FILE}")
 string(TIMESTAMP NEOWPF_BUILD_TIME "%Y-%m-%d %H:%M:%S UTC" UTC)
@@ -327,7 +339,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # README: This can take a lot if it's a fresh build, preferably turn it off if you are frequently deleting cache; run it only when you are sure the binary is stable.
 option(NEOWPF_USE_NEOLINT
     "Run the NeoLint before compiling NeoWPF"
-    ON)
+    OFF)
 option(NEOWPF_BUILD_MEDIA
     "Build the optional NeoWPF.Media target and fetch LuAudio"
     OFF)
@@ -410,13 +422,15 @@ add_library(NeoWPF::Foundation ALIAS NeoWPF.Foundation
 )
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/LinterChecks.cmake")
 target_sources(NeoWPF.Foundation PRIVATE $<TARGET_OBJECTS:NeoNaml>)
+target_include_directories(NeoWPF.Foundation BEFORE PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/Internal"
+)
 target_include_directories(NeoWPF.Foundation
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         "${CMAKE_CURRENT_BINARY_DIR}/generated/xaml"
     PRIVATE
         "${NEOWPF_GENERATED_INCLUDE_DIR}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/Internal"
 )
 target_compile_definitions(NeoWPF.Foundation
     PUBLIC
@@ -746,7 +760,7 @@ if(WIN32 AND NEOWPF_BUILD_SAMPLES)
     target_link_libraries(NeoWPF.WindowsTransparencySample PRIVATE NeoWPF::NeoWPF)
 endif()
 
-if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux" OR ANDROID)
     add_custom_command(TARGET NeoWPF POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_RELEASE_DIRECTORY}"
         COMMAND ${CMAKE_COMMAND} -E copy
@@ -963,6 +977,7 @@ if(BUILD_TESTING AND NOT ANDROID)
         tests/Automated/ResourceKeyTests.cpp
         tests/Automated/ExternalFileResourceProviderTests.cpp
         tests/Automated/NamlArtifactTests.cpp
+        tests/Automated/Etc/ResultTests.cpp
         tests/Automated/NotificationTests.cpp
         tests/Automated/LocalizationTests.cpp
         tests/Automated/ApplicationThemeTests.cpp
