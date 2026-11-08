@@ -36,7 +36,6 @@ PLATFORMS = {
         "file_platform": "Android",
         "architecture": "arm64",
         "package_platform": "android",
-        "library_name": "libNeoWPF.a",
         "extension": ".a",
     },
 }
@@ -52,6 +51,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--win32", action="store_true")
     parser.add_argument("--linux", action="store_true")
     parser.add_argument("--android", action="store_true")
+    parser.add_argument(
+        "--combined",
+        action="store_true",
+    )
 
     parser.add_argument("--release", action="store_true")
     parser.add_argument("--debug", action="store_true")
@@ -59,7 +62,7 @@ def parse_args() -> argparse.Namespace:
 
     args = parser.parse_args()
 
-    if not (args.all or args.win32 or args.linux or args.android):
+    if not (args.all or args.win32 or args.linux or args.android or args.combined):
         parser.error("you need a platform arg: --all, --win32, --linux, or --android")
 
     config_args = sum((args.release, args.debug, args.both))
@@ -184,21 +187,40 @@ def package_platform(
         compression=zipfile.ZIP_DEFLATED,
         compresslevel=9,
     ) as archive:
-        archive.write(LICENSE_FILE, "LICENSE")
-
-        add_directory_to_zip(
-            archive,
-            INCLUDE_ROOT / "NeoWPF",
-            "NeoWPF",
-        )
-        add_directory_to_zip(
-            archive,
-            INCLUDE_ROOT / "NeoNaml",
-            "NeoNaml",
-        )
+        add_common_package_files(archive)
 
         for config, source in sources:
             archive.write(source, (Path(config) / source.name).as_posix())
+
+    return package_path
+
+
+def add_common_package_files(archive: zipfile.ZipFile) -> None:
+    archive.write(LICENSE_FILE, "LICENSE")
+    add_directory_to_zip(archive, INCLUDE_ROOT / "NeoWPF", "NeoWPF")
+    add_directory_to_zip(archive, INCLUDE_ROOT / "NeoNaml", "NeoNaml")
+
+
+def package_combined(
+    sources: list[tuple[str, str, Path]],
+    version: str,
+) -> Path:
+    PACKAGE_ROOT.mkdir(parents=True, exist_ok=True)
+    package_path = PACKAGE_ROOT / f"NeoWPF-{version}-all-platforms.zip"
+
+    with zipfile.ZipFile(
+        package_path,
+        mode="w",
+        compression=zipfile.ZIP_DEFLATED,
+        compresslevel=9,
+    ) as archive:
+        add_common_package_files(archive)
+
+        for platform, config, source in sources:
+            archive.write(
+                source,
+                (Path(platform) / config / source.name).as_posix(),
+            )
 
     return package_path
 
@@ -225,6 +247,7 @@ def main() -> int:
 
     missing: list[tuple[str, str]] = []
     packed: list[Path] = []
+    combined_sources: list[tuple[str, str, Path]] = []
 
     for platform_key in platforms:
         platform_name = PLATFORMS[platform_key]["file_platform"]
@@ -241,13 +264,26 @@ def main() -> int:
                 continue
 
             sources.append((config, source))
+            if args.combined:
+                combined_sources.append(
+                    (PLATFORMS[platform_key]["folder"], config, source)
+                )
             print(f"[found]   {source}")
+
+        if args.combined:
+            continue
 
         if platform_missing:
             print(f"[skipped] {platform_name} archive (missing requested build)")
             continue
 
         package = package_platform(platform_key, sources, version)
+        packed.append(package)
+        print(f"[packed]  {package}")
+        print()
+
+    if args.combined and combined_sources:
+        package = package_combined(combined_sources, version)
         packed.append(package)
         print(f"[packed]  {package}")
         print()

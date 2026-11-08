@@ -146,7 +146,9 @@ WindowState GetWindowState(const WindowSession& windowSession)
             }
 
             const auto children = visual->GetVisualChildren();
-            pending.insert(pending.end(), children.begin(), children.end());
+            for (auto* child : children) {
+                pending.push_back(child);
+            }
         }
 
     } catch (...) {
