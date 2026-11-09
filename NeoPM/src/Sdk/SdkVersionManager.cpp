@@ -15,6 +15,14 @@ std::filesystem::path SdkVersionManager::GetVersionFilePath(
     return m_sdkRoot / (platform + "-" + architecture) / ".version";
 }
 
+std::filesystem::path SdkVersionManager::GetVersionDirectory(
+    const std::string& platform,
+    const std::string& architecture,
+    const std::string& version) const
+{
+    return m_sdkRoot / (platform + "-" + architecture) / version;
+}
+
 std::string SdkVersionManager::GetInstalledVersion(
     const std::string& platform,
     const std::string& architecture) const

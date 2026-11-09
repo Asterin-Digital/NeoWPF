@@ -6,26 +6,27 @@
 
 #include <NeoWPF/NeoWPF.h>
 
+
 namespace NeoPM::UI::Navigation {
 
 using namespace NeoWPF::UI;
 
 Ref<Visual> CreateMainContent()
 {
-    auto content = New<Grid>(); // @todo (neowpf) Fix me, the grid should not have a default color, it should be transparent 
-    content->SetBackgroundColor(Theme::WindowBackground);
+    auto content = New<Grid>();
+    content->SetBackgroundBrush(New<SolidColorBrush>(Theme::WindowBackground));
     content->AddRow(SizeMode::Star, 1);
     content->AddColumn(SizeMode::Fixed, 232);
     content->AddColumn(SizeMode::Star, 1);
 
     auto sidebar = New<StackPanel>();
-    sidebar->SetBackgroundColor(Theme::SidebarBackground);
+    sidebar->SetBackgroundBrush(New<SolidColorBrush>(Theme::SidebarBackground));
     sidebar->SetPadding(Thickness(12, 24, 12, 16));
 
     auto brand = New<TextBlock>(String(L"NeoPM"));
     brand->SetFontSize(20);
     brand->SetFontWeight(700);
-    brand->SetTextColor(Theme::TextOnSidebar);
+    brand->SetForeground(New<SolidColorBrush>(Theme::TextOnSidebar));
     brand->SetWidth(208);
     brand->SetHorizontalAlignment(HorizontalAlignment::Center);
     brand->SetTextHorizontalAlignment(TextHorizontalAlignment::Left);
@@ -38,13 +39,13 @@ Ref<Visual> CreateMainContent()
     sidebar->AddChild(homeButton);
 
     auto sidebarFrame = New<Border>();
-    sidebarFrame->SetBackgroundColor(Theme::SidebarBackground);
-    sidebarFrame->SetBorderColor(Theme::SidebarBorder);
+    sidebarFrame->SetBackgroundBrush(New<SolidColorBrush>(Theme::SidebarBackground));
+    sidebarFrame->SetBorderBrush(New<SolidColorBrush>(Theme::SidebarBorder));
     sidebarFrame->SetBorderThickness(Thickness(0, 0, 1, 0));
     sidebarFrame->SetChild(sidebar);
 
     auto mainSurface = New<Border>();
-    mainSurface->SetBackgroundColor(Theme::WindowBackground);
+    mainSurface->SetBackgroundBrush(New<SolidColorBrush>(Theme::WindowBackground));
     mainSurface->SetPadding(Thickness(40));
 
     auto greeting = String(L"Welcome back");
@@ -55,13 +56,13 @@ Ref<Visual> CreateMainContent()
     }
 
     auto header = New<Grid>();
-    header->SetBackgroundColor(Theme::WindowBackground);
+    header->SetBackgroundBrush(New<SolidColorBrush>(Theme::WindowBackground));
     header->AddColumn(SizeMode::Star, 1);
     header->AddColumn(SizeMode::Auto, 0);
 
     auto status = New<TextBlock>(greeting);
     status->SetFontSize(24);
-    status->SetTextColor(Theme::TextPrimary);
+    status->SetForeground(New<SolidColorBrush>(Theme::TextPrimary));
 
     auto newProjectButton = Components::MakeButton(String(L"+ New Project"));
     newProjectButton->SetMargin(Thickness(16, 0, 0, 0));

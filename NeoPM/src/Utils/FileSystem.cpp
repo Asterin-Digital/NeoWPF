@@ -4,20 +4,23 @@
 
 #include <boost/dll/runtime_symbol_info.hpp>
 
+#ifdef CreateDirectory
+#undef CreateDirectory
+#endif
+#ifdef DeleteFile
+#undef DeleteFile
+#endif
+
 namespace NeoPM::Utils {
     namespace {
-        std::unique_ptr<Winux::Contracts::IPlatform> CreatePlatform() {
-            return Winux::Platform::create();
-        }
-
         std::optional<std::filesystem::path> ReadEnvironmentPath(
             Winux::Contracts::IEnvironment& environment,
             const wchar_t* name) {
-            const auto value = environment.get_env(name);
-            if (value.failed() || value.value().empty()) {
+            const auto value = environment.GetEnv(name);
+            if (value.Failed() || value.Value().empty()) {
                 return std::nullopt;
             }
-            return std::filesystem::path(value.value());
+            return std::filesystem::path(value.Value());
         }
     }
 
@@ -37,8 +40,7 @@ namespace NeoPM::Utils {
     }
 
     std::optional<std::filesystem::path> FileSystem::GetUserDocumentsPath() {
-        const auto platform = CreatePlatform();
-        if (const auto documents = ReadEnvironmentPath(platform->environment(), L"XDG_DOCUMENTS_DIR")) {
+        if (const auto documents = ReadEnvironmentPath(Winux::Get<Winux::Environment>(), L"XDG_DOCUMENTS_DIR")) {
             if (DirectoryExists(*documents)) return documents;
         }
         if (const auto home = GetUserHomePath()) {
@@ -49,29 +51,26 @@ namespace NeoPM::Utils {
     }
 
     std::optional<std::filesystem::path> FileSystem::GetUserHomePath() {
-        const auto platform = CreatePlatform();
-        const auto home = platform->file_system().home();
-        if (home.succeeded() && DirectoryExists(home.value())) {
-            return home.value();
+        const auto home = Winux::Get<Winux::FileSystem>().Home();
+        if (home.Succeeded() && DirectoryExists(home.Value())) {
+            return home.Value();
         }
         return std::nullopt;
     }
 
     std::optional<std::filesystem::path> FileSystem::GetUserDataPath() {
-        const auto platform = CreatePlatform();
-        const auto data = platform->file_system().app_data().local().start();
-        if (data.succeeded()) {
-            return data.value();
+        const auto data = Winux::Get<Winux::FileSystem>().AppData(Winux::AppDataScope::Local);
+        if (data.Succeeded()) {
+            return data.Value();
         }
         return std::nullopt;
     }
 
     std::optional<std::filesystem::path> FileSystem::GetUserConfigPath() {
-        const auto platform = CreatePlatform();
-        if (const auto config = ReadEnvironmentPath(platform->environment(), L"APPDATA")) {
+        if (const auto config = ReadEnvironmentPath(Winux::Get<Winux::Environment>(), L"APPDATA")) {
             return config;
         }
-        if (const auto config = ReadEnvironmentPath(platform->environment(), L"XDG_CONFIG_HOME")) {
+        if (const auto config = ReadEnvironmentPath(Winux::Get<Winux::Environment>(), L"XDG_CONFIG_HOME")) {
             return config;
         }
         if (const auto home = GetUserHomePath()) {
@@ -80,7 +79,7 @@ namespace NeoPM::Utils {
         return std::nullopt;
     }
 
-    bool FileSystem::CreateDirectory(const std::filesystem::path& path) {
+    bool (FileSystem::CreateDirectory)(const std::filesystem::path& path) {
         try {
             return std::filesystem::create_directory(path);
         }
@@ -113,7 +112,7 @@ namespace NeoPM::Utils {
         }
     }
 
-    bool FileSystem::DeleteFile(const std::filesystem::path& path) {
+    bool (FileSystem::DeleteFile)(const std::filesystem::path& path) {
         try {
             return std::filesystem::remove(path) != 0;
         }

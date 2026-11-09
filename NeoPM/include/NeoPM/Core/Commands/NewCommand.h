@@ -9,6 +9,7 @@ See LICENSE file in the project root for full license text.
 #include <optional>
 #include <string>
 #include <filesystem>
+#include <vector>
 
 namespace NeoPM::Core::Commands {
     class NewCommand : public ICommand {
@@ -18,7 +19,7 @@ namespace NeoPM::Core::Commands {
             const std::optional<std::string>& outputPath = std::nullopt,
             const std::string& sdkSource = "production",
             const std::string& sdkConfiguration = "debug",
-            const std::optional<std::string>& sdkIncludePath = std::nullopt,
+            const std::vector<std::string>& sdkIncludeDirectories = {},
             const std::optional<std::string>& sdkLibraryPath = std::nullopt
         );
 
@@ -31,7 +32,7 @@ namespace NeoPM::Core::Commands {
         std::optional<std::string> m_outputPath;
         std::string m_sdkSource;
         std::string m_sdkConfiguration;
-        std::optional<std::string> m_sdkIncludePath;
+        std::vector<std::string> m_sdkIncludeDirectories;
         std::optional<std::string> m_sdkLibraryPath;
 
         bool ValidateProjectName() const;

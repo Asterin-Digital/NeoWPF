@@ -6,17 +6,12 @@ namespace NeoPM::Utils {
 
 std::optional<std::wstring> User::GetCurrentUsername()
 {
-    const auto platform = Winux::Platform::create();
-    if (!platform) {
+    const auto username = Winux::Get<Winux::System>().GetUsername();
+    if (username.Failed() || username.Value().empty()) {
         return std::nullopt;
     }
 
-    const auto username = platform->system().get_username();
-    if (username.failed() || username.value().empty()) {
-        return std::nullopt;
-    }
-
-    return username.value();
+    return username.Value();
 }
 
 }

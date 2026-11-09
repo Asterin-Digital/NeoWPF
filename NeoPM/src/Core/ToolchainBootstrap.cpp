@@ -15,7 +15,7 @@ namespace NeoPM::Core {
 
         if (!Utils::FileSystem::DirectoryExists(toolDirectory)) {
             if (!Utils::FileSystem::CreateDirectories(toolDirectory)) {
-                logger.Error("ToolchainBootstrap", "Failed to create LocalAppData NeoWPF directory");
+                logger.Error("ToolchainBootstrap", "Failed to create LocalAppData Asterin Digital directory");
                 return false;
             }
         }
@@ -75,7 +75,7 @@ namespace NeoPM::Core {
     }
 
     std::filesystem::path ToolchainBootstrap::GetToolDirectory() {
-        return GetLocalAppDataDirectory() / "NeoWPF";
+        return GetLocalAppDataDirectory() / "Asterin Digital";
     }
 
     std::filesystem::path ToolchainBootstrap::GetCMakeModulePath() {
@@ -109,12 +109,12 @@ namespace NeoPM::Core {
             "      endif()\n"
             "    endif()\n"
             "    if(NOT NEOPM_EXECUTABLE AND WIN32)\n"
-            "      set(NEOPM_EXECUTABLE \"$ENV{LOCALAPPDATA}/NeoWPF/NeoPM.exe\")\n"
+            "      set(NEOPM_EXECUTABLE \"$ENV{LOCALAPPDATA}/Asterin Digital/NeoPM.exe\")\n"
             "    elseif(NOT NEOPM_EXECUTABLE)\n"
             "      if(DEFINED ENV{XDG_DATA_HOME} AND NOT \"$ENV{XDG_DATA_HOME}\" STREQUAL \"\")\n"
-            "        set(NEOPM_EXECUTABLE \"$ENV{XDG_DATA_HOME}/NeoWPF/NeoPM\")\n"
+            "        set(NEOPM_EXECUTABLE \"$ENV{XDG_DATA_HOME}/Asterin Digital/NeoPM\")\n"
             "      else()\n"
-            "        set(NEOPM_EXECUTABLE \"$ENV{HOME}/.local/share/NeoWPF/NeoPM\")\n"
+            "        set(NEOPM_EXECUTABLE \"$ENV{HOME}/.local/share/Asterin Digital/NeoPM\")\n"
             "      endif()\n"
             "    endif()\n"
             "  endif()\n"

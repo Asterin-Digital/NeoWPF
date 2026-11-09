@@ -6,15 +6,23 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <filesystem>
-#include <optional>
+#include <map>
 #include <string>
+#include <vector>
 
 namespace NeoPM::Contracts {
+    struct SdkPlatformConfiguration {
+        std::string version;
+        std::vector<std::filesystem::path> includeDirectories;
+        std::filesystem::path debugLibraryPath;
+        std::filesystem::path releaseLibraryPath;
+    };
+
     struct ProjectGenerationContext {
         std::string projectName;
         std::filesystem::path projectRoot;
-        std::optional<std::filesystem::path> sdkIncludePath;
-        std::optional<std::filesystem::path> sdkLibraryPath;
+        std::string defaultConfiguration;
+        std::map<std::string, SdkPlatformConfiguration> sdkPlatforms;
     };
 
     class IProjectType {

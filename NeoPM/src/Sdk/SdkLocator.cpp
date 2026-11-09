@@ -1,6 +1,10 @@
 #include <NeoPM/Sdk/SdkLocator.h>
+#include <NeoPM/Sdk/SdkManifest.h>
+#include <NeoPM/Sdk/SdkVersionManager.h>
 #include <NeoPM/Utils/Logger.h>
 
+#include <algorithm>
+#include <fstream>
 #include <utility>
 
 namespace NeoPM::Core {
@@ -13,11 +17,25 @@ SdkLocator::SdkLocator(const std::filesystem::path& sdkRoot, std::string platfor
 std::optional<std::filesystem::path> SdkLocator::FindSdk(
     const std::string& architecture) const
 {
-    auto sdkFolder = m_sdkRoot / (m_platform + "-" + architecture);
-    if (std::filesystem::is_directory(sdkFolder)) {
-        return sdkFolder;
+    const auto version = SdkVersionManager(m_sdkRoot).GetInstalledVersion(m_platform, architecture);
+    return version.empty() ? std::nullopt : FindSdk(architecture, version);
+}
+
+std::optional<std::filesystem::path> SdkLocator::FindSdk(
+    const std::string& architecture,
+    const std::string& version) const
+{
+    const std::filesystem::path versionPath(version);
+    if (!SdkManifestParser::IsSafeRelativePath(version) ||
+        versionPath.has_parent_path() || versionPath.filename().string() != version) {
+        return std::nullopt;
     }
-    return std::nullopt;
+
+    const auto sdkFolder = SdkVersionManager(m_sdkRoot).GetVersionDirectory(
+        m_platform, architecture, version);
+    return std::filesystem::is_directory(sdkFolder)
+        ? std::optional<std::filesystem::path>(sdkFolder)
+        : std::nullopt;
 }
 
 std::optional<std::filesystem::path> SdkLocator::FindLibrary(
@@ -25,12 +43,23 @@ std::optional<std::filesystem::path> SdkLocator::FindLibrary(
     const std::string& architecture) const
 {
     auto sdkPath = FindSdk(architecture);
+    if (!sdkPath) return std::nullopt;
+    const auto version = SdkVersionManager(m_sdkRoot).GetInstalledVersion(m_platform, architecture);
+    return FindLibrary(configuration, architecture, version);
+}
+
+std::optional<std::filesystem::path> SdkLocator::FindLibrary(
+    const std::string& configuration,
+    const std::string& architecture,
+    const std::string& version) const
+{
+    auto sdkPath = FindSdk(architecture, version);
     if (!sdkPath) {
         return std::nullopt;
     }
 
     try {
-        const auto configurationName = configuration == "debug" ? "Debug" :
+        const std::string configurationName = configuration == "debug" ? "Debug" :
             configuration == "release" ? "Release" : "";
         if (configurationName.empty()) {
             return std::nullopt;
@@ -52,19 +81,46 @@ std::optional<std::filesystem::path> SdkLocator::FindLibrary(
     return std::nullopt;
 }
 
-std::optional<std::filesystem::path> SdkLocator::FindIncludeDirectory(
+std::vector<std::filesystem::path> SdkLocator::FindIncludeDirectories(
     const std::string& architecture) const
 {
     auto sdkPath = FindSdk(architecture);
+    if (!sdkPath) return {};
+    const auto version = SdkVersionManager(m_sdkRoot).GetInstalledVersion(m_platform, architecture);
+    return FindIncludeDirectories(architecture, version);
+}
+
+std::vector<std::filesystem::path> SdkLocator::FindIncludeDirectories(
+    const std::string& architecture,
+    const std::string& version) const
+{
+    auto sdkPath = FindSdk(architecture, version);
     if (!sdkPath) {
-        return std::nullopt;
+        return {};
     }
 
     try {
-        const auto includePath = sdkPath.value() / "include";
-        if (std::filesystem::is_directory(includePath / "NeoWPF") &&
-            std::filesystem::is_directory(includePath / "NeoNaml")) {
-            return includePath;
+        std::ifstream includePathsFile(sdkPath.value() / ".include_paths");
+        if (!includePathsFile) {
+            return {};
+        }
+
+        std::vector<std::filesystem::path> includeDirectories;
+        std::string relativePath;
+        while (std::getline(includePathsFile, relativePath)) {
+            if (!SdkManifestParser::IsSafeRelativePath(relativePath)) return {};
+            const auto includePath = sdkPath.value() / relativePath;
+            if (!std::filesystem::is_directory(includePath)) return {};
+            includeDirectories.push_back(includePath);
+        }
+
+        const auto hasDirectory = [&includeDirectories](const char* name) {
+            return std::any_of(includeDirectories.begin(), includeDirectories.end(), [name](const auto& path) {
+                return std::filesystem::is_directory(path / name);
+            });
+        };
+        if (!includeDirectories.empty() && hasDirectory("NeoWPF") && hasDirectory("NeoNaml")) {
+            return includeDirectories;
         }
     }
     catch (const std::exception& e) {
@@ -72,7 +128,7 @@ std::optional<std::filesystem::path> SdkLocator::FindIncludeDirectory(
         logger.Debug("SdkLocator", "Error searching for include directory: " + std::string(e.what()));
     }
 
-    return std::nullopt;
+    return {};
 }
 
 bool SdkLocator::HasAnySdk() const {
@@ -88,7 +144,7 @@ bool SdkLocator::HasAnySdk() const {
             }
 
             auto architecture = entry.path().filename().string().substr(m_platform.size() + 1);
-            if (FindIncludeDirectory(architecture) &&
+            if (!FindIncludeDirectories(architecture).empty() &&
                 FindLibrary("debug", architecture) &&
                 FindLibrary("release", architecture)) {
                 return true;

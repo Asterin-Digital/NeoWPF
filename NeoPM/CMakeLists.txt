@@ -175,7 +175,7 @@ target_include_directories(
 if(ANDROID)
     target_compile_definitions(NeoPM PRIVATE
         NEOPM_SDK_PLATFORM="Android"
-        NEOPM_SDK_ARCHITECTURE="arm64"
+        NEOPM_SDK_ARCHITECTURE="arm64-v8a"
     )
 elseif(WIN32)
     target_compile_definitions(NeoPM PRIVATE
@@ -220,6 +220,7 @@ if(BUILD_TESTING)
     add_executable(NeoPM.Tests
         tests/ProjectTypeTests.cpp
         tests/SdkLocatorTests.cpp
+        tests/Automated/SdkManifestTests.cpp
         tests/XamlCodegenTests.cpp
     )
 
@@ -243,6 +244,9 @@ if(BUILD_TESTING)
         NeoPM.Tests
         PRIVATE
             src/Core/Project/CMakeListsBuilder.cpp
+            src/Sdk/SdkArchiveInstaller.cpp
+            src/Sdk/SdkManifest.cpp
+            src/Sdk/SdkVersionManager.cpp
             src/Sdk/SdkLocator.cpp
             src/Resources/ResourceManifest.cpp
                 src/Resources/XamlCodegen.cpp

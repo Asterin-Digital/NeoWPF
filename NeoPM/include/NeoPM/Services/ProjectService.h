@@ -7,6 +7,7 @@ See LICENSE file in the project root for full license text.
 
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace NeoPM::Services {
 
@@ -15,7 +16,7 @@ struct ProjectCreationRequest {
     std::optional<std::string> outputPath;
     std::string sdkSource;
     std::string sdkConfiguration;
-    std::optional<std::string> sdkIncludePath;
+    std::vector<std::string> sdkIncludeDirectories;
     std::optional<std::string> sdkLibraryPath;
 };
 
