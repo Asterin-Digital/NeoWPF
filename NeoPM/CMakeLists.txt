@@ -220,6 +220,7 @@ if(BUILD_TESTING)
     add_executable(NeoPM.Tests
         tests/ProjectTypeTests.cpp
         tests/SdkLocatorTests.cpp
+        tests/Automated/GuidTests.cpp
         tests/Automated/SdkManifestTests.cpp
         tests/XamlCodegenTests.cpp
     )

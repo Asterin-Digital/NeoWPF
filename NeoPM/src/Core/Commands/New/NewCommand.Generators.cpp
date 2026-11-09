@@ -2,6 +2,7 @@
 #include <NeoPM/Core/Project/CMakeListsBuilder.h>
 #include <NeoPM/Core/ToolchainBootstrap.h>
 #include <NeoPM/Sdk/SdkManager.h>
+#include <NeoPM/Utils/Guid.h>
 #include <NeoPM/Utils/Logger.h>
 
 #include <fstream>
@@ -145,6 +146,7 @@ namespace NeoPM::Core::Commands {
     bool NewCommand::GenerateAssemblyInfo(
         const std::filesystem::path& projectRoot
     ) {
+        const auto uuid = NeoPM::Utils::GenerateGuid();
         auto headerPath = projectRoot / "include" / m_projectName / "AssemblyInfo.h";
         auto sourcePath = projectRoot / "AssemblyInfo.cpp";
 
@@ -153,6 +155,7 @@ namespace NeoPM::Core::Commands {
             "namespace " + m_projectName + " {\n"
             "    namespace AssemblyInfo {\n"
             "        extern const wchar_t* Name;\n"
+            "        extern const char* Uuid;\n"
             "        extern const char* Version;\n"
             "        extern const char* Company;\n"
             "        extern const char* Description;\n"
@@ -164,6 +167,7 @@ namespace NeoPM::Core::Commands {
             "namespace " + m_projectName + " {\n"
             "    namespace AssemblyInfo {\n"
             "        const wchar_t* Name = L\"" + m_projectName + "\";\n"
+            "        const char* Uuid = \"" + uuid + "\";\n"
             "        const char* Version = \"1.0.0\";\n"
             "        const char* Company = \"\";\n"
             "        const char* Description = \"\";\n"

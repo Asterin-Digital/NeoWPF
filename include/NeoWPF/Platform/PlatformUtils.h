@@ -184,4 +184,16 @@ int TryParseInt(const std::string& value, int fallback = 0);
 */
 bool TryParseUInt32Hex(const std::string& value, std::uint32_t& output);
 
+/*
+	@summary
+	Checks whether a string has the dashed hexadecimal UUID format.
+
+	@param value
+	The string to validate.
+
+	@return
+	`true` when the string is a UUID; otherwise `false`.
+*/
+bool IsValidUuid(const std::string& value) noexcept;
+
 }

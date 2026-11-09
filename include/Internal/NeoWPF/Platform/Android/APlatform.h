@@ -21,7 +21,7 @@ namespace NeoWPF::Platform::Android {
 */
 class APlatform final : public NeoWPF::Contracts::IPlatform {
 public:
-    APlatform();
+    explicit APlatform(std::filesystem::path applicationDataDirectory);
     ~APlatform() override;
 
     /*
@@ -89,6 +89,13 @@ public:
         @internal
     */
     std::filesystem::path GetExecutableDirectory() const override;
+    /*
+        @summary
+        Returns the Android Activity's private data directory.
+
+        @internal
+    */
+    NeoWPF::Result<std::filesystem::path> GetAppDataDirectory() const override;
     /*
         @summary
         HTTP access is not implemented yet.
@@ -198,6 +205,7 @@ public:
 
 private:
     std::unique_ptr<NeoWPF::Contracts::IClipboard> m_clipboard;
+    std::filesystem::path m_applicationDataDirectory;
     AWindowing m_windowing;
     NeoWPF::Rendering::Vulkan::VulkanRendering m_rendering;
 };

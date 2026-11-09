@@ -151,6 +151,33 @@ bool TryParseUInt32Hex(const std::string& value, std::uint32_t& output)
     }
 }
 
+bool IsValidUuid(const std::string& value) noexcept
+{
+    if (value.size() != 36) {
+        return false;
+    }
+
+    for (std::size_t index = 0; index < value.size(); ++index) {
+        if (index == 8 || index == 13 || index == 18 || index == 23) {
+            if (value[index] != '-') {
+                return false;
+            }
+            continue;
+        }
+
+        const char character = value[index];
+        const bool isHexDigit =
+            (character >= '0' && character <= '9') ||
+            (character >= 'a' && character <= 'f') ||
+            (character >= 'A' && character <= 'F');
+        if (!isHexDigit) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 std::string WideToUtf8(const std::wstring& input)
 {
     auto converted = Cudev::Wide::ToUtf8(input);

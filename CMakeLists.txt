@@ -973,11 +973,11 @@ if(BUILD_TESTING AND NOT ANDROID)
         tests/Automated/ApplicationHostTests.cpp
         tests/Automated/ApplicationWindowSessionTests.cpp
         tests/Automated/ApplicationResourcesTests.cpp
+        tests/Automated/ApplicationStorageTests.cpp
         tests/Automated/EmbeddedResourceProviderTests.cpp
         tests/Automated/ResourceKeyTests.cpp
         tests/Automated/ExternalFileResourceProviderTests.cpp
         tests/Automated/NamlArtifactTests.cpp
-        tests/Automated/ResultTests.cpp
         tests/Automated/NotificationTests.cpp
         tests/Automated/LocalizationTests.cpp
         tests/Automated/ApplicationThemeTests.cpp

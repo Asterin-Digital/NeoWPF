@@ -52,8 +52,9 @@ bool LoadEmbeddedFallbackFont()
 
 }
 
-APlatform::APlatform()
-    : m_clipboard(std::make_unique<AClipboard>())
+APlatform::APlatform(std::filesystem::path applicationDataDirectory)
+        : m_clipboard(std::make_unique<AClipboard>()),
+            m_applicationDataDirectory(std::move(applicationDataDirectory))
 {
 }
 
@@ -94,6 +95,15 @@ bool APlatform::LoadResourceData(const std::wstring&, std::vector<std::uint8_t>&
 std::filesystem::path APlatform::GetExecutableDirectory() const
 {
     return {};
+}
+
+NeoWPF::Result<std::filesystem::path> APlatform::GetAppDataDirectory() const
+{
+    if (m_applicationDataDirectory.empty() || !m_applicationDataDirectory.is_absolute()) {
+        return NeoWPF::Fail<std::string>{"Android did not provide a valid private application data directory."};
+    }
+
+    return NeoWPF::Success<std::filesystem::path>{m_applicationDataDirectory};
 }
 
 bool APlatform::FetchHttpResource(const std::wstring&, std::vector<std::uint8_t>& outData)
