@@ -56,7 +56,7 @@ bool SdkManifestParser::IsSafeRelativePath(const std::string& value)
     }
 
     const std::filesystem::path path(value);
-    return !path.is_absolute() && !path.has_root_name() && path != "." &&
+    return !path.is_absolute() && !path.has_root_name() &&
         std::none_of(path.begin(), path.end(), [](const auto& part) {
             return part == "..";
         });

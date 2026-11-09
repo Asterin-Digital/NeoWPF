@@ -47,22 +47,40 @@ bool SdkArchiveInstaller::Install(
         std::filesystem::copy_options::overwrite_existing, error);
     if (error) return false;
 
+    std::vector<std::string> installedIncludePaths;
     for (const auto& relativePath : release.includePaths) {
         if (!SdkManifestParser::IsSafeRelativePath(relativePath)) return false;
         const auto source = archiveRoot / relativePath;
         if (!std::filesystem::is_directory(source)) return false;
 
-        const auto destination = sdkRoot / relativePath;
+        const auto installedRelativePath = relativePath == "."
+            ? std::filesystem::path("include")
+            : std::filesystem::path(relativePath);
+        const auto destination = sdkRoot / installedRelativePath;
         std::filesystem::create_directories(destination.parent_path(), error);
         if (error) return false;
-        std::filesystem::copy(source, destination,
-            std::filesystem::copy_options::recursive |
-                std::filesystem::copy_options::overwrite_existing, error);
-        if (error) return false;
+        if (relativePath == ".") {
+            std::filesystem::create_directories(destination, error);
+            if (error) return false;
+            for (const auto* headerDirectory : {"NeoWPF", "NeoNaml"}) {
+                const auto headerSource = source / headerDirectory;
+                if (!std::filesystem::is_directory(headerSource)) return false;
+                std::filesystem::copy(headerSource, destination / headerDirectory,
+                    std::filesystem::copy_options::recursive |
+                        std::filesystem::copy_options::overwrite_existing, error);
+                if (error) return false;
+            }
+        } else {
+            std::filesystem::copy(source, destination,
+                std::filesystem::copy_options::recursive |
+                    std::filesystem::copy_options::overwrite_existing, error);
+            if (error) return false;
+        }
+        installedIncludePaths.push_back(installedRelativePath.generic_string());
     }
 
-    const auto containsHeaderDirectory = [&release, &sdkRoot](const char* name) {
-        return std::any_of(release.includePaths.begin(), release.includePaths.end(),
+    const auto containsHeaderDirectory = [&installedIncludePaths, &sdkRoot](const char* name) {
+        return std::any_of(installedIncludePaths.begin(), installedIncludePaths.end(),
             [&sdkRoot, name](const auto& relativePath) {
                 return std::filesystem::is_directory(sdkRoot / relativePath / name);
             });
@@ -73,7 +91,7 @@ bool SdkArchiveInstaller::Install(
 
     std::ofstream includePathsFile(sdkRoot / ".include_paths", std::ios::out | std::ios::trunc);
     if (!includePathsFile) return false;
-    for (const auto& relativePath : release.includePaths) {
+    for (const auto& relativePath : installedIncludePaths) {
         includePathsFile << relativePath << '\n';
     }
     return static_cast<bool>(includePathsFile);

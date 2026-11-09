@@ -4,8 +4,7 @@
   "download_url": "https://github.com/Asterin-Digital/NeoWPF/releases/download/v0.1.0-beta.1/NeoWPF-0.1.0-all-platforms.zip",
   "shared": {
     "include_dirs": [
-      "NeoWPF",
-      "NeoNaml"
+      "."
     ],
     "license": "LICENSE"
   },

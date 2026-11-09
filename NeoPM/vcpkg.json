@@ -6,12 +6,23 @@
             "name": "curl",
             "default-features": false,
             "features": [
-                "mbedtls",
                 "ssl"
-            ]
+            ],
+            "platform": "windows"
+        },
+        {
+            "name": "curl",
+            "default-features": false,
+            "features": [
+                "mbedtls"
+            ],
+            "platform": "!windows"
         },
         {
             "name": "nlohmann-json"
+        },
+        {
+            "name": "mbedtls"
         },
         {
             "name": "libzip"
