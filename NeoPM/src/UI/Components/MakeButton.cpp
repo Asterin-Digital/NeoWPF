@@ -47,12 +47,12 @@ private:
             if (auto templateVisual = dynamic_cast<Templates::TemplateVisual*>(visual)) {
             if (useButtonColors) {
                     if (auto button = dynamic_cast<Button*>(element)) {
-                        templateVisual->SetFillColor(button->GetBackgroundColor().ToArgb());
-                        templateVisual->SetBorderColor(button->GetBorderColor().ToArgb());
+                        templateVisual->SetFillBrush(button->GetBackgroundBrush());
+                        templateVisual->SetBorderBrush(button->GetBorderBrush());
                     }
                 } else {
-                    templateVisual->SetFillColor(backgroundColor);
-                    templateVisual->SetBorderColor(borderColor);
+                    templateVisual->SetFillBrush(New<SolidColorBrush>(backgroundColor));
+                    templateVisual->SetBorderBrush(New<SolidColorBrush>(borderColor));
                 }
             }
             if (element) {
@@ -71,9 +71,9 @@ void SetButtonSelected(
         return;
     }
 
-    button->SetBackgroundColor(selected ? Theme::ButtonSelectedBackground : Theme::ButtonBackground);
-    button->SetBorderColor(selected ? Theme::ButtonSelectedBorder : Theme::ButtonBorder);
-    button->SetTextColor(selected ? Theme::ButtonSelectedText : Theme::ButtonText);
+    button->SetBackgroundBrush(New<SolidColorBrush>(selected ? Theme::ButtonSelectedBackground : Theme::ButtonBackground));
+    button->SetBorderBrush(New<SolidColorBrush>(selected ? Theme::ButtonSelectedBorder : Theme::ButtonBorder));
+    button->SetForeground(New<SolidColorBrush>(selected ? Theme::ButtonSelectedText : Theme::ButtonText));
 }
 
 void EnableSelectionToggle(const Ref<Button>& button)

@@ -23,8 +23,9 @@ namespace NeoPM::Core {
         std::string sdkSource = "production";
         std::string sdkConfiguration = "debug";
         bool sdkConfigurationSpecified = false;
-        std::optional<std::string> sdkIncludePath;
+        std::vector<std::string> sdkIncludeDirectories;
         std::optional<std::string> sdkLibraryPath;
+        std::optional<std::string> invalidOption;
         bool daemonBackground = false;
 
         bool showHelp = false;

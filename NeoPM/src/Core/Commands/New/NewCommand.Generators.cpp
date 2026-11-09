@@ -5,6 +5,7 @@
 #include <NeoPM/Utils/Logger.h>
 
 #include <fstream>
+#include <map>
 #include <vector>
 
 namespace NeoPM::Core::Commands {
@@ -190,41 +191,50 @@ namespace NeoPM::Core::Commands {
     ) {
         auto& logger = Utils::Logger::Instance();
 
-        std::optional<std::filesystem::path> sdkLibPath;
-        std::optional<std::filesystem::path> sdkIncludePath;
+        std::map<std::string, NeoPM::Contracts::SdkPlatformConfiguration> sdkPlatforms;
 
         if (m_sdkSource == "user") {
-            sdkLibPath = std::filesystem::path(*m_sdkLibraryPath);
-            const auto configurationDirectory = sdkLibPath.value() /
-                (m_sdkConfiguration == "debug" ? "Debug" : "Release");
-            for (const auto& entry : std::filesystem::directory_iterator(configurationDirectory)) {
-                if (entry.is_regular_file() &&
-                    (entry.path().extension() == ".lib" || entry.path().extension() == ".a")) {
-                    sdkLibPath = entry.path();
-                    break;
+            const auto findLibrary = [](const std::filesystem::path& directory) {
+                for (const auto& entry : std::filesystem::directory_iterator(directory)) {
+                    if (entry.is_regular_file() &&
+                        (entry.path().extension() == ".lib" || entry.path().extension() == ".a")) {
+                        return entry.path();
+                    }
                 }
+                return std::filesystem::path{};
+            };
+            NeoPM::Contracts::SdkPlatformConfiguration configuration;
+            configuration.version = "user";
+            for (const auto& includeDirectory : m_sdkIncludeDirectories) {
+                configuration.includeDirectories.emplace_back(includeDirectory);
             }
-            sdkIncludePath = std::filesystem::path(*m_sdkIncludePath);
+            const auto libraryRoot = std::filesystem::path(*m_sdkLibraryPath);
+            configuration.debugLibraryPath = findLibrary(libraryRoot / "Debug");
+            configuration.releaseLibraryPath = findLibrary(libraryRoot / "Release");
+            sdkPlatforms.emplace(NEOPM_SDK_PLATFORM, std::move(configuration));
             logger.Info("NewCommand", "Using user SDK (" + m_sdkConfiguration + ")");
         }
         else {
             SdkManager sdkManager;
             logger.Info("NewCommand", "Checking production NeoWPF SDK availability...");
-            if (!sdkManager.RefreshSdks() || !sdkManager.HasLocalSdks()) {
-                logger.Error("NewCommand", "No complete platform SDK with Debug and Release libraries is available");
+            if (!sdkManager.RefreshSdks()) {
+                logger.Error("NewCommand", "No complete SDK is available for the current platform");
                 return false;
             }
-
-            sdkLibPath = sdkManager.GetSdkLibraryPath(m_sdkConfiguration);
-            sdkIncludePath = sdkManager.GetSdkIncludePath();
-        }
-
-        if (sdkLibPath) {
-            logger.Info("NewCommand", "Using SDK library: " + sdkLibPath.value().string());
-        }
-
-        if (sdkIncludePath) {
-            logger.Info("NewCommand", "Using SDK include: " + sdkIncludePath.value().string());
+            for (const auto& [platform, architecture] : {
+                     std::pair<std::string, std::string>{"Windows", "x64"},
+                     {"Linux", "x64"}}) {
+                const auto installation = sdkManager.GetSdkInstallation(platform, architecture);
+                if (!installation) {
+                    logger.Error("NewCommand", "No pinned SDK is installed for " + platform + "-" + architecture);
+                    return false;
+                }
+                sdkPlatforms.emplace(platform, NeoPM::Contracts::SdkPlatformConfiguration{
+                    installation->version,
+                    installation->includeDirectories,
+                    installation->debugLibraryPath,
+                    installation->releaseLibraryPath});
+            }
         }
 
         auto cmakeModuleDir = projectRoot / "cmake";
@@ -254,18 +264,13 @@ namespace NeoPM::Core::Commands {
             .AddResourceAssetGlob()
             .AddResourceSyncModule("cmake/NeoWPFResources.cmake");
 
-        if (sdkLibPath) {
-            cmakeBuilder.AddSdkLibrary(sdkLibPath.value());
-        }
-        if (sdkIncludePath) {
-            cmakeBuilder.AddSdkIncludePath(sdkIncludePath.value());
-        }
+        cmakeBuilder.SetSdkPlatforms(sdkPlatforms);
 
         NeoPM::Contracts::ProjectGenerationContext context{
             m_projectName,
             projectRoot,
-            sdkIncludePath,
-            sdkLibPath
+            m_sdkConfiguration,
+            sdkPlatforms
         };
 
         if (!cmakeBuilder.Generate(context)) {

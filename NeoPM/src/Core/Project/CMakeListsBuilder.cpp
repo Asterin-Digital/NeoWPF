@@ -1,5 +1,7 @@
 #include <NeoPM/Core/Project/CMakeListsBuilder.h>
 
+#include <nlohmann/json.hpp>
+
 #include <algorithm>
 #include <fstream>
 #include <sstream>
@@ -11,6 +13,61 @@ namespace NeoPM::Core::Project {
             std::replace(normalized.begin(), normalized.end(), '\\', '/');
             return normalized;
         }
+
+        std::string JoinCMakePaths(const std::vector<std::filesystem::path>& paths) {
+            std::string result;
+            for (const auto& path : paths) {
+                if (!result.empty()) result += ';';
+                result += NormalizeCMakePath(path.string());
+            }
+            return result;
+        }
+
+        const NeoPM::Contracts::SdkPlatformConfiguration* FindPlatformConfiguration(
+            const std::map<std::string, NeoPM::Contracts::SdkPlatformConfiguration>& platforms,
+            const std::string& platform)
+        {
+            const auto found = platforms.find(platform);
+            return found == platforms.end() ? nullptr : &found->second;
+        }
+
+        void WritePlatformDefaults(
+            std::ostringstream& stream,
+            const NeoPM::Contracts::SdkPlatformConfiguration* configuration)
+        {
+            if (!configuration) {
+                stream << "    if(NOT DEFINED NEOWPF_INCLUDE_DIRECTORIES)\n"
+                       << "        set(NEOWPF_INCLUDE_DIRECTORIES \"${CMAKE_CURRENT_SOURCE_DIR}/../NeoWPF/include\")\n"
+                       << "    endif()\n"
+                       << "    if(NOT DEFINED NEOWPF_SDK_VERSION)\n"
+                       << "        set(NEOWPF_SDK_VERSION \"\")\n"
+                       << "    endif()\n"
+                       << "    if(NOT DEFINED NEOWPF_LIBRARY_DEBUG)\n"
+                       << "        set(NEOWPF_LIBRARY_DEBUG \"\")\n"
+                       << "    endif()\n"
+                       << "    if(NOT DEFINED NEOWPF_LIBRARY_RELEASE)\n"
+                       << "        set(NEOWPF_LIBRARY_RELEASE \"\")\n"
+                       << "    endif()\n";
+                return;
+            }
+
+            stream << "    if(NOT DEFINED NEOWPF_INCLUDE_DIRECTORIES)\n"
+                   << "        set(NEOWPF_INCLUDE_DIRECTORIES \""
+                   << NormalizeCMakePath(JoinCMakePaths(configuration->includeDirectories)) << "\")\n"
+                   << "    endif()\n"
+                   << "    if(NOT DEFINED NEOWPF_SDK_VERSION)\n"
+                   << "        set(NEOWPF_SDK_VERSION \"" << configuration->version << "\")\n"
+                   << "    endif()\n"
+                   << "    if(NOT DEFINED NEOWPF_LIBRARY_DEBUG)\n"
+                   << "        set(NEOWPF_LIBRARY_DEBUG \""
+                   << NormalizeCMakePath(configuration->debugLibraryPath.string()) << "\")\n"
+                   << "    endif()\n"
+                   << "    if(NOT DEFINED NEOWPF_LIBRARY_RELEASE)\n"
+                   << "        set(NEOWPF_LIBRARY_RELEASE \""
+                   << NormalizeCMakePath(configuration->releaseLibraryPath.string()) << "\")\n"
+                   << "    endif()\n";
+        }
+
     }
 
     CMakeListsBuilder::CMakeListsBuilder(const std::string& projectName)
@@ -27,8 +84,8 @@ namespace NeoPM::Core::Project {
         }
 
         m_projectName = context.projectName;
-        m_sdkIncludePath = context.sdkIncludePath.value_or(std::filesystem::path{});
-        m_sdkLibraryPath = context.sdkLibraryPath.value_or(std::filesystem::path{});
+        m_defaultConfiguration = context.defaultConfiguration;
+        m_sdkPlatforms = context.sdkPlatforms;
 
         const auto projectPath = context.projectRoot / "CMakeLists.txt";
         std::ofstream output(projectPath, std::ios::out | std::ios::trunc);
@@ -76,13 +133,9 @@ namespace NeoPM::Core::Project {
         return *this;
     }
 
-    CMakeListsBuilder& CMakeListsBuilder::AddSdkLibrary(const std::filesystem::path& libPath) {
-        m_sdkLibraryPath = libPath;
-        return *this;
-    }
-
-    CMakeListsBuilder& CMakeListsBuilder::AddSdkIncludePath(const std::filesystem::path& includePath) {
-        m_sdkIncludePath = includePath;
+    CMakeListsBuilder& CMakeListsBuilder::SetSdkPlatforms(
+        const std::map<std::string, NeoPM::Contracts::SdkPlatformConfiguration>& sdkPlatforms) {
+        m_sdkPlatforms = sdkPlatforms;
         return *this;
     }
 
@@ -93,18 +146,44 @@ namespace NeoPM::Core::Project {
         ss << "project(\"" << m_projectName << "\" LANGUAGES CXX)\n\n";
         ss << "set(CMAKE_CXX_STANDARD 20)\n";
         ss << "set(CMAKE_CXX_STANDARD_REQUIRED ON)\n\n";
+        if (m_defaultConfiguration == "debug" || m_defaultConfiguration == "release") {
+            ss << "if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)\n"
+               << "    set(CMAKE_BUILD_TYPE \""
+               << (m_defaultConfiguration == "debug" ? "Debug" : "Release")
+               << "\" CACHE STRING \"Build configuration\" FORCE)\n"
+               << "endif()\n\n";
+        }
 
-        ss << "set(NEOWPF_ROOT \"${CMAKE_CURRENT_SOURCE_DIR}/../NeoWPF/include\" CACHE PATH \"Path to the NeoWPF include root\")\n";
-        if (!m_sdkIncludePath.empty()) {
-            ss << "set(NEOWPF_ROOT \"" << NormalizeCMakePath(m_sdkIncludePath.string()) << "\" CACHE PATH \"Path to the NeoWPF include root\" FORCE)\n";
+        if (m_sdkPlatforms.empty()) {
+            ss << "set(NEOWPF_INCLUDE_DIRECTORIES \"${CMAKE_CURRENT_SOURCE_DIR}/../NeoWPF/include\")\n";
+        } else {
+            ss << "if(WIN32)\n";
+            WritePlatformDefaults(ss, FindPlatformConfiguration(m_sdkPlatforms, "Windows"));
+            ss << "elseif(UNIX AND NOT APPLE)\n";
+            WritePlatformDefaults(ss, FindPlatformConfiguration(m_sdkPlatforms, "Linux"));
+            ss << "else()\n";
+            ss << "    message(FATAL_ERROR \"No pinned NeoWPF SDK mapping exists for this platform\")\n";
+            ss << "endif()\n";
         }
-        ss << "set(NEOWPF_LIBRARY \"\" CACHE FILEPATH \"Path to the NeoWPF library\")\n";
-        if (!m_sdkLibraryPath.empty()) {
-            ss << "set(NEOWPF_LIBRARY \"" << NormalizeCMakePath(m_sdkLibraryPath.string()) << "\" CACHE FILEPATH \"Path to the NeoWPF library\" FORCE)\n";
-        }
-        ss << "if(NOT EXISTS \"${NEOWPF_ROOT}/NeoWPF\")\n";
-        ss << "    message(FATAL_ERROR \"NEOWPF_ROOT does not contain NeoWPF: ${NEOWPF_ROOT}\")\n";
+        ss << "\n";
+        ss << "set(_NEOWPF_HAS_HEADERS FALSE)\n";
+        ss << "set(_NEONAML_HAS_HEADERS FALSE)\n";
+        ss << "foreach(_NEOWPF_INCLUDE_DIRECTORY IN LISTS NEOWPF_INCLUDE_DIRECTORIES)\n";
+        ss << "    if(EXISTS \"${_NEOWPF_INCLUDE_DIRECTORY}/NeoWPF\")\n";
+        ss << "        set(_NEOWPF_HAS_HEADERS TRUE)\n";
+        ss << "    endif()\n";
+        ss << "    if(EXISTS \"${_NEOWPF_INCLUDE_DIRECTORY}/NeoNaml\")\n";
+        ss << "        set(_NEONAML_HAS_HEADERS TRUE)\n";
+        ss << "    endif()\n";
+        ss << "endforeach()\n";
+        ss << "if(NOT _NEOWPF_HAS_HEADERS OR NOT _NEONAML_HAS_HEADERS)\n";
+        ss << "    message(FATAL_ERROR \"NEOWPF_INCLUDE_DIRECTORIES must contain NeoWPF and NeoNaml headers\")\n";
         ss << "endif()\n\n";
+        if (!m_sdkPlatforms.empty()) {
+            ss << "if(NOT EXISTS \"${NEOWPF_LIBRARY_DEBUG}\" OR NOT EXISTS \"${NEOWPF_LIBRARY_RELEASE}\")\n";
+            ss << "    message(FATAL_ERROR \"Pinned NeoWPF SDK libraries are missing for ${NEOWPF_SDK_VERSION}\")\n";
+            ss << "endif()\n\n";
+        }
 
         ss << "add_executable(" << m_projectName << "\n";
         for (const auto& file : m_compileFiles) {
@@ -121,11 +200,14 @@ namespace NeoPM::Core::Project {
 
         ss << "target_include_directories(" << m_projectName << " PRIVATE\n";
         ss << "    \"${CMAKE_CURRENT_SOURCE_DIR}/include\"\n";
-        ss << "    \"${NEOWPF_ROOT}\"\n";
+        ss << "    ${NEOWPF_INCLUDE_DIRECTORIES}\n";
         ss << ")\n\n";
 
-        if (!m_sdkLibraryPath.empty()) {
-            ss << "target_link_libraries(" << m_projectName << " PRIVATE \"${NEOWPF_LIBRARY}\")\n\n";
+        if (!m_sdkPlatforms.empty()) {
+            ss << "target_link_libraries(" << m_projectName << " PRIVATE\n"
+               << "    \"$<$<CONFIG:Debug>:${NEOWPF_LIBRARY_DEBUG}>\"\n"
+               << "    \"$<$<NOT:$<CONFIG:Debug>>:${NEOWPF_LIBRARY_RELEASE}>\"\n"
+               << ")\n\n";
         }
 
         if (m_addResourceAssetGlob) {
@@ -142,114 +224,59 @@ namespace NeoPM::Core::Project {
     }
 
     std::string CMakeListsBuilder::BuildCMakePresets() const {
-        std::ostringstream ss;
+        using json = nlohmann::json;
 
-        ss << "{\n";
-        ss << "  \"version\": 3,\n";
-        ss << "  \"configurePresets\": [\n";
-        ss << "    {\n";
-        ss << "      \"name\": \"windows-base\",\n";
-        ss << "      \"hidden\": true,\n";
-        ss << "      \"generator\": \"Ninja Multi-Config\",\n";
-        ss << "      \"binaryDir\": \"${sourceDir}/out/build/${presetName}\",\n";
-        ss << "      \"cacheVariables\": {\n";
-        ss << "        \"CMAKE_BUILD_TYPE\": \"Debug\",\n";
-        ss << "        \"CMAKE_CXX_STANDARD\": \"20\"";
-        if (!m_sdkIncludePath.empty()) {
-            ss << ",\n        \"NEOWPF_ROOT\": \"" << NormalizeCMakePath(m_sdkIncludePath.string()) << "\"";
-        } else {
-            ss << ",\n        \"NEOWPF_ROOT\": \"${sourceDir}/../NeoWPF/include\"";
-        }
-        if (!m_sdkLibraryPath.empty()) {
-            ss << ",\n        \"NEOWPF_LIBRARY\": \"" << NormalizeCMakePath(m_sdkLibraryPath.string()) << "\"";
-        }
-        ss << "\n      },\n";
-        ss << "      \"condition\": {\n";
-        ss << "        \"type\": \"equals\",\n";
-        ss << "        \"lhs\": \"${hostSystemName}\",\n";
-        ss << "        \"rhs\": \"Windows\"\n";
-        ss << "      }\n";
-        ss << "    },\n";
-        ss << "    {\n";
-        ss << "      \"name\": \"linux-base\",\n";
-        ss << "      \"hidden\": true,\n";
-        ss << "      \"generator\": \"Ninja Multi-Config\",\n";
-        ss << "      \"binaryDir\": \"${sourceDir}/out/build/${presetName}\",\n";
-        ss << "      \"cacheVariables\": {\n";
-        ss << "        \"CMAKE_BUILD_TYPE\": \"Debug\",\n";
-        ss << "        \"CMAKE_CXX_STANDARD\": \"20\"";
-        if (!m_sdkIncludePath.empty()) {
-            ss << ",\n        \"NEOWPF_ROOT\": \"" << NormalizeCMakePath(m_sdkIncludePath.string()) << "\"";
-        } else {
-            ss << ",\n        \"NEOWPF_ROOT\": \"${sourceDir}/../NeoWPF/include\"";
-        }
-        if (!m_sdkLibraryPath.empty()) {
-            ss << ",\n        \"NEOWPF_LIBRARY\": \"" << NormalizeCMakePath(m_sdkLibraryPath.string()) << "\"";
-        }
-        ss << "\n      },\n";
-        ss << "      \"condition\": {\n";
-        ss << "        \"type\": \"equals\",\n";
-        ss << "        \"lhs\": \"${hostSystemName}\",\n";
-        ss << "        \"rhs\": \"Linux\"\n";
-        ss << "      }\n";
-        ss << "    },\n";
-        ss << "    {\n";
-        ss << "      \"name\": \"windows-debug\",\n";
-        ss << "      \"displayName\": \"Windows Debug\",\n";
-        ss << "      \"inherits\": \"windows-base\",\n";
-        ss << "      \"cacheVariables\": {\n";
-        ss << "        \"CMAKE_BUILD_TYPE\": \"Debug\"\n";
-        ss << "      }\n";
-        ss << "    },\n";
-        ss << "    {\n";
-        ss << "      \"name\": \"windows-release\",\n";
-        ss << "      \"displayName\": \"Windows Release\",\n";
-        ss << "      \"inherits\": \"windows-base\",\n";
-        ss << "      \"cacheVariables\": {\n";
-        ss << "        \"CMAKE_BUILD_TYPE\": \"Release\"\n";
-        ss << "      }\n";
-        ss << "    },\n";
-        ss << "    {\n";
-        ss << "      \"name\": \"linux-debug\",\n";
-        ss << "      \"displayName\": \"Linux Debug\",\n";
-        ss << "      \"inherits\": \"linux-base\",\n";
-        ss << "      \"cacheVariables\": {\n";
-        ss << "        \"CMAKE_BUILD_TYPE\": \"Debug\"\n";
-        ss << "      }\n";
-        ss << "    },\n";
-        ss << "    {\n";
-        ss << "      \"name\": \"linux-release\",\n";
-        ss << "      \"displayName\": \"Linux Release\",\n";
-        ss << "      \"inherits\": \"linux-base\",\n";
-        ss << "      \"cacheVariables\": {\n";
-        ss << "        \"CMAKE_BUILD_TYPE\": \"Release\"\n";
-        ss << "      }\n";
-        ss << "    }\n";
-        ss << "  ],\n";
-        ss << "  \"buildPresets\": [\n";
-        ss << "    {\n";
-        ss << "      \"name\": \"windows-debug\",\n";
-        ss << "      \"configurePreset\": \"windows-debug\",\n";
-        ss << "      \"configuration\": \"Debug\"\n";
-        ss << "    },\n";
-        ss << "    {\n";
-        ss << "      \"name\": \"windows-release\",\n";
-        ss << "      \"configurePreset\": \"windows-release\",\n";
-        ss << "      \"configuration\": \"Release\"\n";
-        ss << "    },\n";
-        ss << "    {\n";
-        ss << "      \"name\": \"linux-debug\",\n";
-        ss << "      \"configurePreset\": \"linux-debug\",\n";
-        ss << "      \"configuration\": \"Debug\"\n";
-        ss << "    },\n";
-        ss << "    {\n";
-        ss << "      \"name\": \"linux-release\",\n";
-        ss << "      \"configurePreset\": \"linux-release\",\n";
-        ss << "      \"configuration\": \"Release\"\n";
-        ss << "    }\n";
-        ss << "  ]\n";
-        ss << "}\n";
+        json presets = {
+            {"version", 3},
+            {"configurePresets", json::array()},
+            {"buildPresets", json::array()}};
 
-        return ss.str();
+        const auto appendPlatformPresets = [this, &presets](
+            const std::string& platform,
+            const std::string& presetName) {
+            const auto* sdk = FindPlatformConfiguration(m_sdkPlatforms, platform);
+            if (!sdk && !m_sdkPlatforms.empty()) return;
+
+            json cacheVariables = {
+                {"CMAKE_BUILD_TYPE", "Debug"},
+                {"CMAKE_CXX_STANDARD", "20"}};
+            if (sdk) {
+                cacheVariables["NEOWPF_INCLUDE_DIRECTORIES"] = JoinCMakePaths(sdk->includeDirectories);
+                cacheVariables["NEOWPF_SDK_VERSION"] = sdk->version;
+                cacheVariables["NEOWPF_LIBRARY_DEBUG"] = NormalizeCMakePath(sdk->debugLibraryPath.string());
+                cacheVariables["NEOWPF_LIBRARY_RELEASE"] = NormalizeCMakePath(sdk->releaseLibraryPath.string());
+            } else {
+                cacheVariables["NEOWPF_INCLUDE_DIRECTORIES"] = "${sourceDir}/../NeoWPF/include";
+            }
+
+            presets["configurePresets"].push_back({
+                {"name", presetName + "-base"},
+                {"hidden", true},
+                {"generator", "Ninja Multi-Config"},
+                {"binaryDir", "${sourceDir}/out/build/${presetName}"},
+                {"cacheVariables", cacheVariables},
+                {"condition", {
+                    {"type", "equals"},
+                    {"lhs", "${hostSystemName}"},
+                    {"rhs", platform}}}});
+
+            for (const auto& [configuration, displayName] : {
+                     std::pair<std::string, std::string>{"debug", "Debug"},
+                     {"release", "Release"}}) {
+                presets["configurePresets"].push_back({
+                    {"name", presetName + "-" + configuration},
+                    {"displayName", platform + " " + displayName},
+                    {"inherits", presetName + "-base"},
+                    {"cacheVariables", {{"CMAKE_BUILD_TYPE", displayName}}}});
+                presets["buildPresets"].push_back({
+                    {"name", presetName + "-" + configuration},
+                    {"configurePreset", presetName + "-" + configuration},
+                    {"configuration", displayName}});
+            }
+        };
+
+        appendPlatformPresets("Windows", "windows");
+        appendPlatformPresets("Linux", "linux");
+        return presets.dump(2) + "\n";
     }
 }

@@ -7,7 +7,9 @@
 
 #include <NeoWPF/NeoWPF.h>
 
+#include <algorithm>
 #include <any>
+#include <cctype>
 
 namespace NeoPM::UI::Project {
 
@@ -21,7 +23,7 @@ Ref<TextBox> AddTextField(
     const std::wstring& placeholder)
 {
     auto labelBlock = New<TextBlock>(label);
-    labelBlock->SetTextColor(Theme::TextMuted);
+    labelBlock->SetForeground(New<SolidColorBrush>(Theme::TextMuted));
     labelBlock->SetFontSize(13);
     panel->AddChild(labelBlock);
 
@@ -39,7 +41,7 @@ Ref<ComboBox> AddComboField(
     const std::vector<std::wstring>& values)
 {
     auto labelBlock = New<TextBlock>(label);
-    labelBlock->SetTextColor(Theme::TextMuted);
+    labelBlock->SetForeground(New<SolidColorBrush>(Theme::TextMuted));
     labelBlock->SetFontSize(13);
     panel->AddChild(labelBlock);
 
@@ -70,6 +72,29 @@ std::optional<std::string> OptionalValue(const Ref<TextBox>& textBox)
     return Utils::WideToUtf8(textBox->GetText());
 }
 
+std::vector<std::string> PathListValue(const Ref<TextBox>& textBox)
+{
+    const auto text = Utils::WideToUtf8(textBox->GetText());
+    std::vector<std::string> paths;
+    std::size_t start = 0;
+    while (start < text.size()) {
+        const auto end = text.find(';', start);
+        auto path = text.substr(start, end == std::string::npos ? end : end - start);
+        const auto first = std::find_if_not(path.begin(), path.end(), [](unsigned char character) {
+            return std::isspace(character) != 0;
+        });
+        const auto last = std::find_if_not(path.rbegin(), path.rend(), [](unsigned char character) {
+            return std::isspace(character) != 0;
+        }).base();
+        if (first < last) {
+            paths.emplace_back(first, last);
+        }
+        if (end == std::string::npos) break;
+        start = end + 1;
+    }
+    return paths;
+}
+
 }
 
 void ShowProjectDialog(
@@ -77,14 +102,14 @@ void ShowProjectDialog(
     PopupPlacement placement)
 {
     auto content = New<StackPanel>();
-    content->SetBackgroundColor(Theme::Surface);
+    content->SetBackgroundBrush(New<SolidColorBrush>(Theme::Surface));
     content->SetPadding(Thickness(24));
     content->SetWidth(520);
 
     auto title = New<TextBlock>(L"Create a new project");
     title->SetFontSize(22);
     title->SetFontWeight(700);
-    title->SetTextColor(Theme::TextPrimary);
+    title->SetForeground(New<SolidColorBrush>(Theme::TextPrimary));
     title->SetMargin(Thickness(0, 0, 0, 16));
     content->AddChild(title);
 
@@ -92,7 +117,7 @@ void ShowProjectDialog(
     auto outputPath = AddTextField(content, L"Parent path", L"Optional");
     auto sdkSource = AddComboField(content, L"SDK source", {L"production", L"user"});
     auto sdkConfiguration = AddComboField(content, L"SDK configuration", {L"debug", L"release"});
-    auto sdkIncludePath = AddTextField(content, L"SDK include root", L"Contains NeoWPF and NeoNaml");
+    auto sdkIncludeDirectories = AddTextField(content, L"SDK include directories", L"Semicolon-separated paths");
     auto sdkLibraryPath = AddTextField(content, L"SDK library root", L"Contains Debug and Release");
 
     auto actions = New<StackPanel>();
@@ -118,7 +143,7 @@ void ShowProjectDialog(
         outputPath,
         sdkSource,
         sdkConfiguration,
-        sdkIncludePath,
+        sdkIncludeDirectories,
         sdkLibraryPath
     ]() {
         Services::ProjectCreationRequest request{
@@ -126,7 +151,7 @@ void ShowProjectDialog(
             OptionalValue(outputPath),
             SelectedValue(sdkSource),
             SelectedValue(sdkConfiguration),
-            OptionalValue(sdkIncludePath),
+            PathListValue(sdkIncludeDirectories),
             OptionalValue(sdkLibraryPath)
         };
 

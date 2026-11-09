@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "version": "0.1.0",
+  "download_url": "https://github.com/Asterin-Digital/NeoWPF/releases/download/v0.1.0-beta.1/NeoWPF-0.1.0-all-platforms.zip",
+  "shared": {
+    "include_dirs": [
+      "NeoWPF",
+      "NeoNaml"
+    ],
+    "license": "LICENSE"
+  },
+  "platforms": {
+    "windows": {
+      "debug": {
+        "libraries": [
+          "Windows/Debug/NeoWPF.Windows.Debug.0.1.0.lib"
+        ]
+      },
+      "release": {
+        "libraries": [
+          "Windows/Release/NeoWPF.Windows.Release.0.1.0.lib"
+        ]
+      }
+    },
+    "linux": {
+      "debug": {
+        "libraries": [
+          "Linux/Debug/NeoWPF.Linux.Debug.0.1.0.a"
+        ]
+      },
+      "release": {
+        "libraries": [
+          "Linux/Release/NeoWPF.Linux.Release.0.1.0.a"
+        ]
+      }
+    },
+    "android": {
+      "debug": {
+        "libraries": [
+          "Android/Debug/NeoWPF.Android.Debug.0.1.0.a"
+        ]
+      },
+      "release": {
+        "libraries": [
+          "Android/Release/NeoWPF.Android.Release.0.1.0.a"
+        ]
+      }
+    }
+  }
+}

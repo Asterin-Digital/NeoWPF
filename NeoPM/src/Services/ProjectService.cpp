@@ -20,7 +20,7 @@ int ProjectService::Create(const ProjectCreationRequest& request)
         request.outputPath,
         sdkSource,
         sdkConfiguration,
-        request.sdkIncludePath,
+        request.sdkIncludeDirectories,
         request.sdkLibraryPath);
     return command.Execute();
 }

@@ -20,6 +20,11 @@ public:
     // Save the version of an installed SDK
     void SaveInstalledVersion(const std::string& platform, const std::string& architecture, const std::string& version);
 
+    std::filesystem::path GetVersionDirectory(
+        const std::string& platform,
+        const std::string& architecture,
+        const std::string& version) const;
+
 private:
     std::filesystem::path m_sdkRoot;
     std::filesystem::path GetVersionFilePath(const std::string& platform, const std::string& architecture) const;

@@ -8,6 +8,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoPM/Contracts/IProjectType.h>
 
 #include <filesystem>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -24,20 +25,20 @@ namespace NeoPM::Core::Project {
         CMakeListsBuilder& AddHeaderFile(const std::string& relativePath);
         CMakeListsBuilder& AddResourceAssetGlob();
         CMakeListsBuilder& AddResourceSyncModule(const std::string& modulePath);
-        CMakeListsBuilder& AddSdkLibrary(const std::filesystem::path& libPath);
-        CMakeListsBuilder& AddSdkIncludePath(const std::filesystem::path& includePath);
+        CMakeListsBuilder& SetSdkPlatforms(
+            const std::map<std::string, NeoPM::Contracts::SdkPlatformConfiguration>& sdkPlatforms);
 
         std::string BuildCMakeLists() const;
         std::string BuildCMakePresets() const;
 
     private:
         std::string m_projectName;
+        std::string m_defaultConfiguration;
         std::vector<std::string> m_compileFiles;
         std::vector<std::string> m_headerFiles;
         bool m_addGeneratedXamlSources = false;
         bool m_addResourceAssetGlob = false;
         std::string m_resourceSyncModulePath;
-        std::filesystem::path m_sdkLibraryPath;
-        std::filesystem::path m_sdkIncludePath;
+        std::map<std::string, NeoPM::Contracts::SdkPlatformConfiguration> m_sdkPlatforms;
     };
 }

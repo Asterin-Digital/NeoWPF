@@ -7,6 +7,7 @@
 #include <NeoPM/Utils/Logger.h>
 
 #include <iostream>
+#include <algorithm>
 #include <regex>
 #include <vector>
 
@@ -17,14 +18,14 @@ namespace NeoPM::Core::Commands {
         const std::optional<std::string>& outputPath,
         const std::string& sdkSource,
         const std::string& sdkConfiguration,
-        const std::optional<std::string>& sdkIncludePath,
+        const std::vector<std::string>& sdkIncludeDirectories,
         const std::optional<std::string>& sdkLibraryPath
     )
         : m_projectName(projectName),
           m_outputPath(outputPath),
           m_sdkSource(sdkSource),
           m_sdkConfiguration(sdkConfiguration),
-          m_sdkIncludePath(sdkIncludePath),
+          m_sdkIncludeDirectories(sdkIncludeDirectories),
           m_sdkLibraryPath(sdkLibraryPath) {
     }
 
@@ -138,25 +139,31 @@ namespace NeoPM::Core::Commands {
             return true;
         }
 
-        if (!m_sdkIncludePath || !m_sdkLibraryPath) {
+        if (m_sdkIncludeDirectories.empty() || !m_sdkLibraryPath) {
             logger.Error(
                 "NewCommand",
-                "User SDKs require --sdk-include and --sdk-lib"
+                "User SDKs require at least one --sdk-include-dir and --sdk-lib"
             );
             return false;
         }
 
-        auto includePath = std::filesystem::path(*m_sdkIncludePath);
         auto libraryPath = std::filesystem::path(*m_sdkLibraryPath);
-
-        if (!std::filesystem::is_directory(includePath)) {
-            logger.Error("NewCommand", "SDK include directory does not exist: " + includePath.string());
-            return false;
+        std::vector<std::filesystem::path> includeDirectories;
+        for (const auto& includeDirectory : m_sdkIncludeDirectories) {
+            const auto path = std::filesystem::path(includeDirectory);
+            if (!std::filesystem::is_directory(path)) {
+                logger.Error("NewCommand", "SDK include directory does not exist: " + path.string());
+                return false;
+            }
+            includeDirectories.push_back(path);
         }
-
-        if (!std::filesystem::is_directory(includePath / "NeoWPF") ||
-            !std::filesystem::is_directory(includePath / "NeoNaml")) {
-            logger.Error("NewCommand", "SDK include root must contain NeoWPF and NeoNaml folders");
+        const auto containsDirectory = [&includeDirectories](const char* name) {
+            return std::any_of(includeDirectories.begin(), includeDirectories.end(), [name](const auto& path) {
+                return std::filesystem::is_directory(path / name);
+            });
+        };
+        if (!containsDirectory("NeoWPF") || !containsDirectory("NeoNaml")) {
+            logger.Error("NewCommand", "SDK include directories must contain NeoWPF and NeoNaml folders");
             return false;
         }
 

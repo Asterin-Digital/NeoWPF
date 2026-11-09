@@ -31,11 +31,14 @@ namespace {
     };
 
     void CreatePlatformSdk(const std::filesystem::path& sdkRoot) {
-        const auto sdkPath = sdkRoot / "Windows-x64";
+        const auto platformPath = sdkRoot / "Windows-x64";
+        const auto sdkPath = platformPath / "1.4.0";
         std::filesystem::create_directories(sdkPath / "Debug");
         std::filesystem::create_directories(sdkPath / "Release");
         std::filesystem::create_directories(sdkPath / "include" / "NeoWPF");
-        std::filesystem::create_directories(sdkPath / "include" / "NeoNaml");
+        std::filesystem::create_directories(sdkPath / "third_party" / "include" / "NeoNaml");
+        std::ofstream(sdkPath / ".include_paths") << "include\nthird_party/include\n";
+        std::ofstream(platformPath / ".version") << "1.4.0";
         std::ofstream(sdkPath / "Debug" / "NeoWPF.Windows.Debug.1.0.0.lib");
         std::ofstream(sdkPath / "Release" / "NeoWPF.Windows.Release.1.0.0.lib");
     }
@@ -49,20 +52,25 @@ TEST(SdkLocatorTests, FindsBothConfigurationsInPlatformArchiveLayout) {
 
     EXPECT_EQ(
         locator.FindLibrary("debug", "x64"),
-        directory.Path() / "Windows-x64" / "Debug" / "NeoWPF.Windows.Debug.1.0.0.lib");
+        directory.Path() / "Windows-x64" / "1.4.0" / "Debug" / "NeoWPF.Windows.Debug.1.0.0.lib");
     EXPECT_EQ(
         locator.FindLibrary("release", "x64"),
-        directory.Path() / "Windows-x64" / "Release" / "NeoWPF.Windows.Release.1.0.0.lib");
-    EXPECT_EQ(locator.FindIncludeDirectory("x64"), directory.Path() / "Windows-x64" / "include");
+        directory.Path() / "Windows-x64" / "1.4.0" / "Release" / "NeoWPF.Windows.Release.1.0.0.lib");
+    EXPECT_EQ(locator.FindIncludeDirectories("x64"), (std::vector<std::filesystem::path>{
+        directory.Path() / "Windows-x64" / "1.4.0" / "include",
+        directory.Path() / "Windows-x64" / "1.4.0" / "third_party" / "include"}));
     EXPECT_TRUE(locator.HasAnySdk());
 }
 
 TEST(SdkLocatorTests, RejectsPlatformSdkMissingAConfiguration) {
     TemporarySdkDirectory directory;
-    const auto sdkPath = directory.Path() / "Windows-x64";
+    const auto sdkPath = directory.Path() / "Windows-x64" / "1.4.0";
+    const auto platformPath = directory.Path() / "Windows-x64";
     std::filesystem::create_directories(sdkPath / "Debug");
     std::filesystem::create_directories(sdkPath / "include" / "NeoWPF");
-    std::filesystem::create_directories(sdkPath / "include" / "NeoNaml");
+    std::filesystem::create_directories(sdkPath / "third_party" / "include" / "NeoNaml");
+    std::ofstream(sdkPath / ".include_paths") << "include\nthird_party/include\n";
+    std::ofstream(platformPath / ".version") << "1.4.0";
     std::ofstream(sdkPath / "Debug" / "NeoWPF.Windows.Debug.1.0.0.lib");
 
     NeoPM::Core::SdkLocator locator(directory.Path(), "Windows");

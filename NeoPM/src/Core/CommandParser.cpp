@@ -7,11 +7,137 @@
 #include <NeoPM/Core/ToolchainBootstrap.h>
 #include <NeoPM/Utils/Logger.h>
 #include <NeoPM/Utils/TextEncoding.h>
-#include <iostream>
 #include <algorithm>
+#include <array>
 #include <cctype>
+#include <iostream>
+#include <string_view>
 
 namespace NeoPM::Core {
+        namespace {
+                struct CommandHelp {
+                        std::string_view name;
+                        std::string_view text;
+                };
+
+                constexpr std::string_view UsageText = R"(NeoPM - NeoWPF Project Manager
+
+Usage:
+    NeoPM <command> [options]
+
+Commands:
+    new <name>                      Create a new NeoWPF project
+    daemon                          Run the NeoPM resource daemon
+    sync-resources <manifest>       Synchronize resources and generate code
+    refresh-sdk                     Download and install latest NeoWPF SDKs
+    repair <project-path>           Repair project tooling without deleting project files
+    install-tools                   Install the NeoPM resource sync helper
+    bootstrap                       Alias for install-tools
+    help [command]                  Show command help
+    --help, -h                      Show this help message
+    --version, -v                   Show version information
+
+Options:
+    --output, -o <path>             Specify generated source output directory
+    --copy-to <path>                Copy external resources to this directory as well
+    --template, -t <name>           Specify project template
+    --sdk <production|user>         Select downloaded production or local user SDK
+    --sdk-config <debug|release>    Select SDK configuration (default: debug)
+
+Examples:
+    NeoPM new MyApp
+    NeoPM new MyApp --output C:\Projects
+    NeoPM sync-resources Resources/resources.json --output Generated
+    NeoPM refresh-sdk
+    NeoPM help new
+)";
+
+                constexpr std::array<CommandHelp, 5> CommandHelpTexts{{
+                        {"new", R"(NeoPM new - Create a new NeoWPF project
+
+Usage:
+    NeoPM new <name> [options]
+
+Arguments:
+    <name>                  Project name
+
+Project files:
+    CMakeLists.txt and CMakePresets.json
+
+Options:
+    --output, -o <path>             Output directory (default: auto-discover)
+    --template, -t <name>           Project template: blank, mvvm (default: blank)
+    --sdk <production|user>         SDK source (default: production)
+    --sdk-config <debug|release>    SDK configuration (default: debug)
+    --sdk-include-dir <path>        User SDK include directory (repeatable)
+    --sdk-lib <path>                User SDK library root with Debug and Release subdirectories
+    --help, -h                      Show this help message
+
+Examples:
+    NeoPM new MyApplication
+    NeoPM new MyApp --output D:\Projects
+    NeoPM new MyApp --template mvvm
+    NeoPM new MyApp --sdk user --sdk-config debug --sdk-include-dir C:\NeoWPF\include --sdk-include-dir C:\NeoWPF\third_party\include --sdk-lib C:\NeoWPF\x64
+)"},
+                        {"sync-resources", R"(NeoPM sync-resources - Synchronize resources and generate code
+
+Usage:
+    NeoPM sync-resources <manifest> [options]
+
+Arguments:
+    <manifest>              Path to resources.json manifest file
+
+Options:
+    --output, -o <path>     Output directory for generated files (default: Generated/)
+    --copy-to <path>        Copy external resources to this directory as well
+    --help, -h              Show this help message
+
+Examples:
+    NeoPM sync-resources Resources/resources.json
+    NeoPM sync-resources Resources/resources.json --output Generated
+)"},
+                        {"refresh-sdk", R"(NeoPM refresh-sdk - Download and install latest NeoWPF SDKs
+
+Usage:
+    NeoPM refresh-sdk
+
+This downloads and installs the supported platform SDKs from GitHub.
+The SDKs are stored under:
+    %LocalAppData%\Asterin Digital\SDK\<platform>-<architecture>\<version>\
+
+Examples:
+    NeoPM refresh-sdk
+)"},
+                        {"repair", R"(NeoPM repair - Repair an existing NeoWPF project
+
+Usage:
+    NeoPM repair <project-path>
+
+Repairs NeoWPF build targets and resource integration without deleting project files.
+)"},
+                        {"install-tools", R"(NeoPM install-tools - Install the resource sync helper
+
+Usage:
+    NeoPM install-tools
+
+Installs the CMake resource sync module at:
+    %LocalAppData%\Asterin Digital\NeoWPFResources.cmake
+)"}
+                }};
+
+                bool IsKnownCommand(std::string_view command)
+                {
+                        return command == "new" || command == "daemon" || command == "sync-resources" ||
+                                command == "refresh-sdk" || command == "repair" || command == "install-tools" ||
+                                command == "bootstrap";
+                }
+
+                bool RequiresToolchainBootstrap(std::string_view command)
+                {
+                        return command == "new" || command == "daemon" || command == "sync-resources";
+                }
+        }
+
     CommandParser& CommandParser::Instance() {
         static CommandParser instance;
         return instance;
@@ -47,13 +173,39 @@ namespace NeoPM::Core {
             return nullptr;
         }
 
-        if (!args.commandName.empty() && 
-            args.commandName != "install-tools" && 
-            args.commandName != "bootstrap" && 
-            args.commandName != "refresh-sdk" &&
-            args.commandName != "repair") {
+        if (args.commandName == "help") {
+            if (args.projectName.empty()) {
+                PrintUsage();
+            }
+            else {
+                PrintCommandHelp(args.projectName);
+            }
+            return nullptr;
+        }
+
+        if (args.invalidOption) {
+            logger.Error("CommandParser", "Unknown option: " + *args.invalidOption);
+            if (!args.commandName.empty()) {
+                PrintCommandHelp(args.commandName);
+            } else {
+                PrintUsage();
+            }
+            return nullptr;
+        }
+
+        if (!IsKnownCommand(args.commandName)) {
+            if (args.commandName.empty()) {
+                PrintUsage();
+            } else {
+                logger.Error("CommandParser", "Unknown command: " + args.commandName);
+                PrintUsage();
+            }
+            return nullptr;
+        }
+
+        if (RequiresToolchainBootstrap(args.commandName)) {
             if (!NeoPM::Core::ToolchainBootstrap::EnsureInstalled()) {
-                logger.Error("CommandParser", "Failed to install NeoWPF LocalAppData toolchain bootstrap");
+                logger.Error("CommandParser", "Failed to install the Asterin Digital resource sync helper");
                 return nullptr;
             }
         }
@@ -65,10 +217,10 @@ namespace NeoPM::Core {
                 return nullptr;
             }
             if (args.sdkSource == "user" &&
-                (!args.sdkConfigurationSpecified || !args.sdkIncludePath || !args.sdkLibraryPath)) {
+                (!args.sdkConfigurationSpecified || args.sdkIncludeDirectories.empty() || !args.sdkLibraryPath)) {
                 logger.Error(
                     "CommandParser",
-                    "User SDKs require --sdk-config, --sdk-include, and --sdk-lib"
+                    "User SDKs require --sdk-config, at least one --sdk-include-dir, and --sdk-lib"
                 );
                 PrintCommandHelp("new");
                 return nullptr;
@@ -78,7 +230,7 @@ namespace NeoPM::Core {
                 args.outputPath,
                 args.sdkSource,
                 args.sdkConfiguration,
-                args.sdkIncludePath,
+                args.sdkIncludeDirectories,
                 args.sdkLibraryPath
             );
         }
@@ -121,8 +273,6 @@ namespace NeoPM::Core {
             return nullptr;
         }
 
-        logger.Error("CommandParser", "Unknown command: " + args.commandName);
-        PrintUsage();
         return nullptr;
     }
 
@@ -131,38 +281,7 @@ namespace NeoPM::Core {
     }
 
     void CommandParser::PrintUsage() const {
-        std::cout << R"(NeoPM - NeoWPF Project Manager
-
-Usage:
-  NeoPM <command> [options]
-
-Commands:
-  new <name>                      Create a new NeoWPF project
-    daemon                          Run the NeoPM resource daemon
-  sync-resources <manifest>       Synchronize resources and generate code
-  refresh-sdk                     Download and install latest NeoWPF SDKs
-  repair <project-path>           Repair project tooling without deleting project files
-  install-tools                   Install LocalAppData NeoWPF build targets (rarely needed)
-  bootstrap                       Alias for install-tools
-  --help, -h                      Show this help message
-  --version, -v                   Show version information
-
-Options:
-  --output, -o <path>             Specify generated source output directory
-  --copy-to <path>                Copy external resources to this directory as well
-  --template, -t <name>           Specify project template
-  --sdk <production|user>         Select downloaded production or local user SDK
-  --sdk-config <debug|release>    Select SDK configuration (default: debug)
-    --sdk-include <path>            User SDK include root containing NeoWPF and NeoNaml
-    --sdk-lib <path>                User SDK root containing Debug and Release libraries
-
-Examples:
-  NeoPM new MyApp
-  NeoPM new MyApp --output C:\Projects
-  NeoPM sync-resources Resources/resources.json --output Generated
-  NeoPM refresh-sdk
-  NeoPM new --help
-)" << std::endl;
+                std::cout << UsageText;
     }
 
     namespace {
@@ -189,7 +308,7 @@ Examples:
 
             if (arg == "--help" || arg == "-h") {
                 args.showHelp = true;
-                if (i > 1) {
+                if (i > 1 && argv[1][0] != '-') {
                     args.commandName = argv[1];
                 }
                 continue;
@@ -247,9 +366,9 @@ Examples:
                 continue;
             }
 
-            if (arg == "--sdk-include") {
+            if (arg == "--sdk-include-dir") {
                 if (i + 1 < argc) {
-                    args.sdkIncludePath = NormalizePathArgument(argv[++i]);
+                    args.sdkIncludeDirectories.push_back(NormalizePathArgument(argv[++i]));
                 }
                 continue;
             }
@@ -277,6 +396,8 @@ Examples:
                         args.projectName = arg;
                     }
                 }
+            } else {
+                args.invalidOption = arg;
             }
         }
 
@@ -284,90 +405,17 @@ Examples:
     }
 
     void CommandParser::PrintCommandHelp(const std::string& commandName) const {
-        if (commandName == "new") {
-            std::cout << R"(NeoPM new - Create a new NeoWPF project
+                const auto help = std::find_if(CommandHelpTexts.begin(), CommandHelpTexts.end(),
+                        [&commandName](const auto& entry) {
+                                return entry.name == commandName ||
+                                        (commandName == "bootstrap" && entry.name == "install-tools");
+                        });
+                if (help != CommandHelpTexts.end()) {
+                        std::cout << help->text;
+                        return;
+                }
 
-Usage:
-  NeoPM new <name> [options]
-
-Arguments:
-  <name>                  Project name
-
-Options:
-  --output, -o <path>             Output directory (default: auto-discover)
-  --template, -t <name>           Project template: blank, mvvm (default: blank)
-  --sdk <production|user>         SDK source (default: production)
-  --sdk-config <debug|release>    SDK configuration (default: debug)
-    --sdk-include <path>            User SDK include root containing NeoWPF and NeoNaml
-    --sdk-lib <path>                User SDK root containing Debug and Release libraries
-  --help, -h                      Show this help message
-
-Examples:
-  NeoPM new MyApplication
-  NeoPM new MyApp --output D:\Projects
-  NeoPM new MyApp --template mvvm
-  NeoPM new MyApp --sdk user --sdk-config debug --sdk-include C:\NeoWPF\include --sdk-lib C:\NeoWPF\x64\Debug
-)" << std::endl;
-            return;
-        }
-
-        if (commandName == "sync-resources") {
-            std::cout << R"(NeoPM sync-resources - Synchronize resources and generate code
-
-Usage:
-  NeoPM sync-resources <manifest> [options]
-
-Arguments:
-  <manifest>              Path to resources.json manifest file
-
-Options:
-  --output, -o <path>     Output directory for generated files (default: Generated/)
-  --help, -h              Show this help message
-
-Examples:
-  NeoPM sync-resources Resources/resources.json
-  NeoPM sync-resources Resources/resources.json --output Generated
-)" << std::endl;
-            return;
-        }
-
-        if (commandName == "refresh-sdk") {
-            std::cout << R"(NeoPM refresh-sdk - Download and install latest NeoWPF SDKs
-
-Usage:
-  NeoPM refresh-sdk
-
-This downloads and installs the latest Debug and Release x64 NeoWPF SDKs from GitHub.
-The SDKs are extracted to:
-    <NeoWPF>/sdk/<platform>-<architecture>/
-
-Examples:
-  NeoPM refresh-sdk
-)" << std::endl;
-            return;
-        }
-
-        if (commandName == "repair") {
-            std::cout << "NeoPM repair - Repair an existing NeoWPF project\n\n"
-                         "Usage:\n"
-                         "  NeoPM repair <project-path>\n\n"
-                         "Repairs NeoWPF build targets and resource integration without deleting project files.\n"
-                      << std::endl;
-            return;
-        }
-
-        if (commandName == "install-tools" || commandName == "bootstrap") {
-            std::cout << R"(NeoPM install-tools - Install the NeoWPF LocalAppData build bootstrap
-
-Usage:
-  NeoPM install-tools
-
-This installs the CMake resource sync module used by generated projects at:
-    %LocalAppData%\NeoWPF\NeoWPFResources.cmake
-)" << std::endl;
-            return;
-        }
-
-        std::cout << "Unknown command: " << commandName << std::endl;
+                std::cout << "Unknown help topic: " << commandName << "\n\n";
+                PrintUsage();
     }
 }

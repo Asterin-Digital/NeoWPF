@@ -24,7 +24,7 @@ int Run()
     auto& application = NeoWPF::Core::Application::Current();
     auto windowHost = New<NeoWPF::UI::Window>();
     windowHost->SetTitle(L"NeoPM");
-    windowHost->SetBackgroundColor(Theme::WindowBackground);
+    windowHost->SetBackgroundBrush(New<NeoWPF::UI::SolidColorBrush>(Theme::WindowBackground));
 
     auto window = application.CreateWindow(windowHost, 960, 640);
     if (!window.Handle()) {
