@@ -4,14 +4,37 @@
 #include <NeoPM/Sdk/SdkLocator.h>
 #include <NeoPM/Core/ToolchainBootstrap.h>
 #include <NeoPM/Utils/Http.h>
+#include <NeoPM/Utils/FileSystem.h>
 #include <NeoPM/Utils/Logger.h>
 #include <NeoPM/Utils/TextEncoding.h>
 #include <NeoPM/Utils/Archive.h>
 
 #include <array>
 #include <fstream>
+#include <iterator>
 
 namespace NeoPM::Core {
+namespace {
+
+std::optional<std::filesystem::path> FindRepositorySdkManifest()
+{
+    auto directory = Utils::FileSystem::GetExecutableDirectory();
+    while (directory) {
+        const auto candidate = *directory / "sdk-releases.json";
+        if (std::filesystem::is_regular_file(candidate) &&
+            std::filesystem::is_regular_file(*directory / "NeoPM" / "CMakeLists.txt") &&
+            std::filesystem::is_regular_file(*directory / "scripts" / "PackNeoWPF.py")) {
+            return candidate;
+        }
+
+        const auto parent = directory->parent_path();
+        if (parent == *directory) break;
+        directory = parent;
+    }
+    return std::nullopt;
+}
+
+}
 
 SdkManager::SdkManager()
         : m_sdkPlatform(NEOPM_SDK_PLATFORM),
@@ -28,27 +51,46 @@ bool SdkManager::RefreshSdks() {
 
     logger.Info("SdkManager", "Refreshing NeoWPF SDKs...");
 
-    Net::CurlClient client;
     std::string manifestJson;
-    const std::string manifestUrl = Net::NEOWPF_SDK_RELEASES_URL;
-    const std::wstring wideManifestUrl(manifestUrl.begin(), manifestUrl.end());
-
-    auto outcome = client.DownloadToBuffer(
-        wideManifestUrl,
-        manifestJson,
-        [&](uint64_t got, uint64_t total) {
-            logger.Debug("SdkManager", "Downloading manifest: " + std::to_string(got) + "/" + std::to_string(total) + " bytes");
-            return true;
-        });
-
-    if (!outcome.Ok()) {
-        logger.Warning("SdkManager", "Failed to download SDK manifest, using local SDKs if available");
-        if (HasLocalSdks()) {
-            logger.Info("SdkManager", "Local SDKs found, proceeding");
-            return true;
+    const auto repositoryManifest = FindRepositorySdkManifest();
+    if (repositoryManifest) {
+        std::ifstream manifestFile(*repositoryManifest, std::ios::binary);
+        if (!manifestFile) {
+            logger.Error("SdkManager", "Failed to read repository SDK manifest: " + repositoryManifest->string());
+            return false;
         }
-        logger.Error("SdkManager", "No local SDKs available");
-        return false;
+        manifestJson.assign(std::istreambuf_iterator<char>(manifestFile), std::istreambuf_iterator<char>());
+        if (manifestFile.bad()) {
+            logger.Error("SdkManager", "Failed while reading repository SDK manifest: " + repositoryManifest->string());
+            return false;
+        }
+        logger.Info("SdkManager", "Using repository SDK manifest: " + repositoryManifest->string());
+    } else {
+        Net::CurlClient client;
+        const std::string manifestUrl = Net::NEOWPF_SDK_RELEASES_URL;
+        const std::wstring wideManifestUrl(manifestUrl.begin(), manifestUrl.end());
+        const auto outcome = client.DownloadToBuffer(
+            wideManifestUrl,
+            manifestJson,
+            [&](uint64_t got, uint64_t total) {
+                logger.Debug("SdkManager", "Downloading manifest: " + std::to_string(got) + "/" + std::to_string(total) + " bytes");
+                return true;
+            });
+
+        if (!outcome.Ok()) {
+            logger.Warning(
+                "SdkManager",
+                "Failed to download SDK manifest: " + Utils::WideToUtf8(outcome.message) +
+                    " (HTTP " + std::to_string(outcome.httpStatusCode) +
+                    ", attempts " + std::to_string(outcome.attemptsMade) +
+                    "); using local SDKs if available");
+            if (HasLocalSdks()) {
+                logger.Info("SdkManager", "Local SDKs found, proceeding");
+                return true;
+            }
+            logger.Error("SdkManager", "No local SDKs available");
+            return false;
+        }
     }
 
     logger.Debug("SdkManager", "SDK manifest downloaded: " + std::to_string(manifestJson.size()) + " bytes");

@@ -156,3 +156,39 @@ TEST(SdkManifestTests, InstallerRejectsUnsafeLibraryPaths) {
         temporaryDirectory.Path() / "archive",
         temporaryDirectory.Path() / "installed"));
 }
+
+TEST(SdkManifestTests, InstallsPackNeoWpfCombinedRootLayout) {
+    TemporarySdkDirectory temporaryDirectory;
+    const auto archiveRoot = temporaryDirectory.Path() / "archive";
+    const auto sdkRoot = temporaryDirectory.Path() / "installed";
+    std::filesystem::create_directories(archiveRoot / "Windows/Debug");
+    std::filesystem::create_directories(archiveRoot / "Windows/Release");
+    std::filesystem::create_directories(archiveRoot / "NeoWPF");
+    std::filesystem::create_directories(archiveRoot / "NeoNaml");
+    std::ofstream(archiveRoot / "Windows/Debug/NeoWPF.Windows.Debug.0.1.0.lib");
+    std::ofstream(archiveRoot / "Windows/Release/NeoWPF.Windows.Release.0.1.0.lib");
+    std::ofstream(archiveRoot / "NeoWPF/Control.h");
+    std::ofstream(archiveRoot / "NeoNaml/Document.h");
+    std::ofstream(archiveRoot / "LICENSE");
+
+    auto manifest = nlohmann::json::parse(ValidManifest);
+    manifest["shared"]["include_dirs"] = {"."};
+    manifest["platforms"]["windows"]["debug"]["libraries"] = {
+        "Windows/Debug/NeoWPF.Windows.Debug.0.1.0.lib"};
+    manifest["platforms"]["windows"]["release"]["libraries"] = {
+        "Windows/Release/NeoWPF.Windows.Release.0.1.0.lib"};
+    const auto release = NeoPM::Core::SdkManifestParser::Parse(
+        manifest.dump(), "Windows", "x64");
+    ASSERT_TRUE(release);
+    ASSERT_TRUE(NeoPM::Core::SdkArchiveInstaller::Install(*release, archiveRoot, sdkRoot));
+
+    EXPECT_TRUE(std::filesystem::is_regular_file(sdkRoot / "include/NeoWPF/Control.h"));
+    EXPECT_TRUE(std::filesystem::is_regular_file(sdkRoot / "include/NeoNaml/Document.h"));
+    EXPECT_FALSE(std::filesystem::exists(sdkRoot / "Windows"));
+
+    std::ifstream includePathsFile(sdkRoot / ".include_paths");
+    const std::string includePaths{
+        std::istreambuf_iterator<char>(includePathsFile),
+        std::istreambuf_iterator<char>()};
+    EXPECT_EQ(includePaths, "include\n");
+}
