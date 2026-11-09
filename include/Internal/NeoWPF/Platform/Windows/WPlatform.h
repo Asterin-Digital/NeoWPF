@@ -103,6 +103,13 @@ public:
     std::filesystem::path GetExecutableDirectory() const override;
     /*
         @summary
+        Returns the Windows Local AppData directory.
+
+        @internal
+    */
+    NeoWPF::Result<std::filesystem::path> GetAppDataDirectory() const override;
+    /*
+        @summary
         Downloads a resource into a byte buffer.
 
         @param url

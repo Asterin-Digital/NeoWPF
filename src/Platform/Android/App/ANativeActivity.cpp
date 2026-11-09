@@ -225,7 +225,8 @@ extern "C" void ANativeActivity_onCreate(
         auto host = std::make_unique<NeoWPF::Platform::Android::AActivityHost>();
         host->activity = activity;
         NeoWPF::Platform::RegisterPlatform(
-            std::make_unique<NeoWPF::Platform::Android::APlatform>());
+            std::make_unique<NeoWPF::Platform::Android::APlatform>(
+                activity->internalDataPath ? activity->internalDataPath : ""));
         auto* const windowing = NeoWPF::Platform::Android::GetWindowing();
         host->windowOperations = NeoWPF::Platform::Android::WindowOperations;
         host->surfaceAvailable = &NeoWPF::Platform::Android::QueueSurfaceAvailable;

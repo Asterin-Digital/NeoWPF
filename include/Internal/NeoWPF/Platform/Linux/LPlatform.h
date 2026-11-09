@@ -36,6 +36,13 @@ public:
     int RunApplication(std::chrono::seconds startupTimeout) override;
     bool LoadResourceData(const std::wstring& resourcePath, std::vector<std::uint8_t>& outData) override;
     std::filesystem::path GetExecutableDirectory() const override;
+    /*
+        @summary
+        Returns the Linux per-user data directory.
+
+        @internal
+    */
+    NeoWPF::Result<std::filesystem::path> GetAppDataDirectory() const override;
     bool FetchHttpResource(const std::wstring& url, std::vector<std::uint8_t>& outData) override;
     NeoWPF::Contracts::FileDialogResult ShowOpenFileDialog(
         const std::wstring& title,
@@ -62,6 +69,7 @@ public:
     std::uint32_t CurrentThreadId() const noexcept override;
 
 private:
+    std::filesystem::path m_applicationDataDirectory;
     NeoWPF::Platform::CurlHttp m_http;
     LImageDecoding m_imageDecoding;
     LWindowing m_windowing;

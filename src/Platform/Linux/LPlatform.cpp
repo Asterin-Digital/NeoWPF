@@ -11,7 +11,9 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <cstdlib>
 #include <cwctype>
+#include <mutex>
 #include <unistd.h>
 
 namespace NeoWPF::Platform::Linux {
@@ -35,6 +37,41 @@ std::wstring NormalizeFamily(std::wstring family)
         }
     }
     return normalized;
+}
+
+std::filesystem::path AbsoluteEnvironmentPath(const char* name)
+{
+    static std::mutex environmentMutex;
+    std::string valueCopy;
+    {
+        std::lock_guard<std::mutex> lock(environmentMutex);
+        const char* value = std::getenv(name);
+        if (!value) {
+            return {};
+        }
+        valueCopy.assign(value);
+    }
+    if (valueCopy.empty()) {
+        return {};
+    }
+
+    std::filesystem::path path(valueCopy);
+    return path.is_absolute() ? path : std::filesystem::path{};
+}
+
+std::filesystem::path ResolveApplicationDataDirectory()
+{
+    auto directory = AbsoluteEnvironmentPath("XDG_DATA_HOME");
+    if (!directory.empty()) {
+        return directory;
+    }
+
+    const auto homeDirectory = AbsoluteEnvironmentPath("HOME");
+    if (homeDirectory.empty()) {
+        return {};
+    }
+
+    return homeDirectory / ".local" / "share";
 }
 
 bool LoadEmbeddedFallbackFont()
@@ -96,7 +133,8 @@ bool LoadSystemFontFamily(const std::wstring& requestedFamily)
 }
 
 LPlatform::LPlatform()
-    : m_clipboard(m_windowing)
+        : m_applicationDataDirectory(ResolveApplicationDataDirectory()),
+            m_clipboard(m_windowing)
 {
 }
 
@@ -122,6 +160,15 @@ int LPlatform::RunApplication(std::chrono::seconds startupTimeout)
 
 bool LPlatform::LoadResourceData(const std::wstring&, std::vector<std::uint8_t>&) { return false; }
 std::filesystem::path LPlatform::GetExecutableDirectory() const { return std::filesystem::current_path(); }
+NeoWPF::Result<std::filesystem::path> LPlatform::GetAppDataDirectory() const
+{
+    if (m_applicationDataDirectory.empty()) {
+        return NeoWPF::Fail<std::string>{"XDG_DATA_HOME and HOME do not provide a valid absolute data directory."};
+    }
+
+    return NeoWPF::Success<std::filesystem::path>{m_applicationDataDirectory};
+}
+
 bool LPlatform::FetchHttpResource(const std::wstring& url, std::vector<std::uint8_t>& outData)
 {
     return m_http.Fetch(url, outData);

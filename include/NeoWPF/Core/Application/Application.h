@@ -11,11 +11,13 @@ See LICENSE file in the project root for full license text.
 
 #include <chrono>
 #include <cstddef>
+#include <filesystem>
 #include <string>
 #include <vector>
 #include <any>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/Core/Application/Resources/ResourceManager.h>
+#include <NeoWPF/Etc/Result.h>
 #include <NeoWPF/Core/Application/DeviceCategory.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>
@@ -97,6 +99,21 @@ public:
         Desktop or Mobile.
     */
     DeviceCategory GetDeviceCategory() const noexcept;
+
+    /*
+        @summary
+        Returns the application storage directory for a UUID.
+
+        @details
+        The UUID directory is created under the platform's per-user `Asterin Digital/Apps` directory.
+
+        @param uuid
+        The dashed UUID identifying the application.
+
+        @returns
+        The storage directory, or an error when the UUID or filesystem operation is invalid.
+    */
+    static NeoWPF::Result<std::filesystem::path> GetStorageDirectory(const std::string& uuid);
 
     /*
         @summary

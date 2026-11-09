@@ -17,6 +17,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/Contracts/IWindowChrome.h>
 #include <NeoWPF/Contracts/IRendering.h>
 #include <NeoWPF/Contracts/IWindowing.h>
+#include <NeoWPF/Etc/Result.h>
 #include <NeoWPF/Platform/Capabilities.h>
 
 namespace NeoWPF::Diagnostics {
@@ -103,6 +104,17 @@ public:
         Returns the directory containing the application executable.
     */
     virtual std::filesystem::path GetExecutableDirectory() const = 0;
+
+    /*
+        @summary
+        Returns the platform's per-user application data directory.
+
+        @returns
+        The absolute data directory, or an empty path when it is unavailable.
+
+        @internal
+    */
+    virtual NeoWPF::Result<std::filesystem::path> GetAppDataDirectory() const = 0;
 
     /*
         @summary

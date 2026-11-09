@@ -205,6 +205,27 @@ std::filesystem::path WPlatform::GetExecutableDirectory() const
     return NeoWPF::Platform::GetExecutableDirectory();
 }
 
+NeoWPF::Result<std::filesystem::path> WPlatform::GetAppDataDirectory() const
+{
+    PWSTR knownFolder = nullptr;
+    const HRESULT result = ::SHGetKnownFolderPath(
+        FOLDERID_LocalAppData, KF_FLAG_DEFAULT, nullptr, &knownFolder);
+    if (FAILED(result) || !knownFolder) {
+        if (knownFolder) {
+            ::CoTaskMemFree(knownFolder);
+        }
+        return NeoWPF::Fail<std::string>{"Failed to resolve the Windows Local AppData directory."};
+    }
+
+    std::filesystem::path directory(knownFolder);
+    ::CoTaskMemFree(knownFolder);
+    if (directory.empty() || !directory.is_absolute()) {
+        return NeoWPF::Fail<std::string>{"Windows returned an invalid Local AppData directory."};
+    }
+
+    return NeoWPF::Success<std::filesystem::path>{directory};
+}
+
 bool WPlatform::FetchHttpResource(const std::wstring& url, std::vector<std::uint8_t>& outData)
 {
     return m_http.Fetch(url, outData);
