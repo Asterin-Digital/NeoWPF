@@ -144,7 +144,8 @@ std::shared_ptr<NeoWPF::UI::Popup> CreateDeveloperWarningPopup(
     std::weak_ptr<NeoWPF::UI::Button> weakCopy = copy;
     copy->Click += [copyText, weakCopy]() {
         if (auto button = weakCopy.lock()) {
-            button->SetText(NeoWPF::UI::Clipboard().SetText(copyText) ? L"Copied" : L"Copy failed");
+            const auto result = NeoWPF::UI::Clipboard().SetText(copyText);
+            button->SetText(result.Success() ? L"Copied" : L"Copy failed");
         }
     };
 

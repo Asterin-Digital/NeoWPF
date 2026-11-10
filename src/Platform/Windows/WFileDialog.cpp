@@ -57,13 +57,11 @@ void AppendResult(std::vector<std::wstring>& fileNames, IShellItem* item)
 
 NeoWPF::Contracts::FileDialogResult MakeResult(std::vector<std::wstring>&& fileNames)
 {
-    NeoWPF::Contracts::FileDialogResult result;
-    result.Succeeded = !fileNames.empty();
-    if (!fileNames.empty()) {
-        result.FileName = fileNames.front();
-        result.FileNames = std::move(fileNames);
+    if (fileNames.empty()) {
+        return NeoWPF::Success<std::optional<NeoWPF::Contracts::FileDialogSelection>>{std::nullopt};
     }
-    return result;
+    return NeoWPF::Success<std::optional<NeoWPF::Contracts::FileDialogSelection>>{
+        NeoWPF::Contracts::FileDialogSelection{fileNames.front(), std::move(fileNames)}};
 }
 
 }
@@ -133,7 +131,7 @@ NeoWPF::Contracts::FileDialogResult WFileDialog::ShowOpenFileDialog(
             NeoWPF::Diagnostics::Level::Info,
             "[WFileDialog] CoInitializeEx failed for open dialog hr=0x%08x",
             static_cast<unsigned int>(hr));
-        return {};
+        return NeoWPF::Fail<std::string>{"Windows could not initialize COM for the file dialog"};
     }
 
     IFileOpenDialog* dialog = nullptr;
@@ -146,7 +144,7 @@ NeoWPF::Contracts::FileDialogResult WFileDialog::ShowOpenFileDialog(
         if (comInitializedHere) {
             CoUninitialize();
         }
-        return {};
+        return NeoWPF::Fail<std::string>{"Windows could not create the open file dialog"};
     }
 
     std::vector<std::wstring> filterNames;
@@ -207,7 +205,10 @@ NeoWPF::Contracts::FileDialogResult WFileDialog::ShowOpenFileDialog(
         if (comInitializedHere) {
             CoUninitialize();
         }
-        return {};
+        if (result == HRESULT_FROM_WIN32(ERROR_CANCELLED)) {
+            return NeoWPF::Success<std::optional<NeoWPF::Contracts::FileDialogSelection>>{std::nullopt};
+        }
+        return NeoWPF::Fail<std::string>{"Windows open file dialog failed"};
     }
 
     IShellItemArray* items = nullptr;
@@ -266,7 +267,7 @@ NeoWPF::Contracts::FileDialogResult WFileDialog::ShowSaveFileDialog(
             NeoWPF::Diagnostics::Level::Info,
             "[WFileDialog] CoInitializeEx failed for save dialog hr=0x%08x",
             static_cast<unsigned int>(hr));
-        return {};
+        return NeoWPF::Fail<std::string>{"Windows could not initialize COM for the file dialog"};
     }
 
     IFileSaveDialog* dialog = nullptr;
@@ -279,7 +280,7 @@ NeoWPF::Contracts::FileDialogResult WFileDialog::ShowSaveFileDialog(
         if (comInitializedHere) {
             CoUninitialize();
         }
-        return {};
+        return NeoWPF::Fail<std::string>{"Windows could not create the save file dialog"};
     }
 
     std::vector<std::wstring> filterNames;
@@ -340,7 +341,10 @@ NeoWPF::Contracts::FileDialogResult WFileDialog::ShowSaveFileDialog(
         if (comInitializedHere) {
             CoUninitialize();
         }
-        return {};
+        if (result == HRESULT_FROM_WIN32(ERROR_CANCELLED)) {
+            return NeoWPF::Success<std::optional<NeoWPF::Contracts::FileDialogSelection>>{std::nullopt};
+        }
+        return NeoWPF::Fail<std::string>{"Windows save file dialog failed"};
     }
 
     IShellItem* shellItem = nullptr;
@@ -359,8 +363,10 @@ NeoWPF::Contracts::FileDialogResult WFileDialog::ShowSaveFileDialog(
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Files,
         NeoWPF::Diagnostics::Level::Info,
         "[WFileDialog] ShowSaveFileDialog complete succeeded=%d selectedCount=%zu",
-        finalResult.Succeeded,
-        finalResult.FileNames.size());
+        finalResult.Success() && finalResult.Value().has_value(),
+        finalResult.Success() && finalResult.Value().has_value()
+            ? finalResult.Value()->FileNames.size()
+            : 0u);
     return finalResult;
 }
 

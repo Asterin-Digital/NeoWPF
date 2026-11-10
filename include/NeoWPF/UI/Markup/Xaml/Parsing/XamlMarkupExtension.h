@@ -12,6 +12,8 @@ See LICENSE file in the project root for full license text.
 #include <string_view>
 #include <unordered_map>
 
+#include <NeoWPF/Etc/Result.h>
+
 namespace NeoWPF::UI::Properties {
 class DependencyObject;
 class DependencyProperty;
@@ -36,15 +38,40 @@ class XamlMarkupExtension {
 public:
     virtual ~XamlMarkupExtension() = default;
 
-    virtual bool Apply(NeoWPF::UI::Properties::DependencyObject& target,
-                       const NeoWPF::UI::Properties::DependencyProperty& property,
-                       std::string& error) const = 0;
+    /*
+        @summary
+        Applies this markup extension to a dependency property.
+
+        @param target
+        Object receiving the extension value.
+
+        @param property
+        Property receiving the extension value.
+
+        @returns
+        Success when the value is applied, or the failure reason.
+    */
+    virtual NeoWPF::Result<void> Apply(
+        NeoWPF::UI::Properties::DependencyObject& target,
+        const NeoWPF::UI::Properties::DependencyProperty& property) const = 0;
 };
 
-using XamlMarkupExtensionFactory = std::function<std::shared_ptr<XamlMarkupExtension>(
+/*
+    @summary
+    Creates a markup extension from its arguments and parsing context.
+
+    @param arguments
+    Text following the extension name.
+
+    @param context
+    Context available while creating the extension.
+
+    @returns
+    The created extension, or the failure reason.
+*/
+using XamlMarkupExtensionFactory = std::function<NeoWPF::Result<std::shared_ptr<XamlMarkupExtension>>(
     std::string_view,
-    const XamlMarkupExtensionContext&,
-    std::string&)>;
+    const XamlMarkupExtensionContext&)>;
 
 class XamlMarkupExtensionRegistry {
 public:
@@ -59,10 +86,22 @@ private:
     std::unordered_map<std::string, XamlMarkupExtensionFactory> m_factories;
 };
 
-std::shared_ptr<XamlMarkupExtension> ParseXamlMarkupExtension(
+/*
+    @summary
+    Parses a XAML markup extension expression.
+
+    @param value
+    Markup extension expression.
+
+    @param context
+    Context available while parsing the extension.
+
+    @returns
+    The parsed extension, or the failure reason.
+*/
+NeoWPF::Result<std::shared_ptr<XamlMarkupExtension>> ParseXamlMarkupExtension(
     std::string_view value,
-    const XamlMarkupExtensionContext& context,
-    std::string& error);
+    const XamlMarkupExtensionContext& context);
 
 bool TryGetXamlBinding(const XamlMarkupExtension& extension, XamlBindingInfo& outBinding);
 

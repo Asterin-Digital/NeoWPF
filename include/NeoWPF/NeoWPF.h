@@ -79,6 +79,7 @@
 #include <NeoWPF/Core/Threading/MainThreadExecutor.h>
 #include <NeoWPF/Core/Threading/Task.h>
 #include <NeoWPF/Core/Threading/ThreadAffinity.h>
+#include <NeoWPF/Platform/Capabilities.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/Platform/NativeWindow.h>
 #include <NeoWPF/Rendering/Renderer.h>

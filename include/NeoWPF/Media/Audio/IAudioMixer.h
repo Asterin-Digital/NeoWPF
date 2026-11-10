@@ -8,7 +8,8 @@ See LICENSE file in the project root for full license text.
 #include <chrono>
 #include <cstdint>
 
-#include <NeoWPF/Media/Core/MediaResult.h>
+#include <NeoWPF/Etc/Result.h>
+#include <NeoWPF/Media/Core/MediaError.h>
 #include <NeoWPF/Media/Core/MediaSource.h>
 #include <NeoWPF/Media/Core/MediaState.h>
 
@@ -20,21 +21,21 @@ public:
 
     virtual ~IAudioMixer() = default;
 
-    virtual MediaResult OpenSource(const MediaSource& source, SourceId& id) = 0;
-    virtual MediaResult RemoveSource(SourceId id) = 0;
+    virtual NeoWPF::Result<SourceId, MediaError> OpenSource(const MediaSource& source) = 0;
+    virtual NeoWPF::Result<void, MediaError> RemoveSource(SourceId id) = 0;
 
-    virtual MediaResult Play() = 0;
-    virtual MediaResult Pause() = 0;
-    virtual MediaResult Stop() = 0;
-    virtual MediaResult Seek(SourceId id, std::chrono::milliseconds position) = 0;
-    virtual MediaResult SetSourceVolume(SourceId id, float volume) = 0;
-    virtual MediaResult SetSourceLoop(SourceId id, bool enabled) = 0;
+    virtual NeoWPF::Result<void, MediaError> Play() = 0;
+    virtual NeoWPF::Result<void, MediaError> Pause() = 0;
+    virtual NeoWPF::Result<void, MediaError> Stop() = 0;
+    virtual NeoWPF::Result<void, MediaError> Seek(SourceId id, std::chrono::milliseconds position) = 0;
+    virtual NeoWPF::Result<void, MediaError> SetSourceVolume(SourceId id, float volume) = 0;
+    virtual NeoWPF::Result<void, MediaError> SetSourceLoop(SourceId id, bool enabled) = 0;
 
     virtual MediaState GetState() const noexcept = 0;
     virtual std::chrono::milliseconds GetSourcePosition(SourceId id) const noexcept = 0;
     virtual bool IsSourceFinished(SourceId id) const noexcept = 0;
     virtual std::size_t GetSourceCount() const noexcept = 0;
-    virtual const MediaResult& GetLastResult() const noexcept = 0;
+    virtual const NeoWPF::Result<void, MediaError>& GetLastResult() const noexcept = 0;
 };
 
 }

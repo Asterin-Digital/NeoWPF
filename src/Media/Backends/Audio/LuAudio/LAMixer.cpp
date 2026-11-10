@@ -1,11 +1,11 @@
-#include <Media/Backends/Audio/LuAudio/LAMixer.h>
+#include <NeoWPF/Media/Backends/Audio/LuAudio/LAMixer.h>
 
 #include <cmath>
 #include <limits>
 
 #include <LuAudio/Audio/Contracts/AudioBackendFactory.h>
 
-#include <Media/Backends/Audio/LuAudio/LAResult.h>
+#include <NeoWPF/Media/Backends/Audio/LuAudio/LAResult.h>
 
 namespace NeoWPF::Media::LA {
 
@@ -48,27 +48,30 @@ LAMixer::~LAMixer()
     }
 }
 
-MediaResult LAMixer::OpenSource(const MediaSource& source, SourceId& id)
+NeoWPF::Result<IAudioMixer::SourceId, MediaError> LAMixer::OpenSource(const MediaSource& source)
 {
     LASource audioSource;
     auto result = audioSource.Open(source);
-    if (!result.Succeeded()) {
-        return Store(std::move(result));
+    if (result.Fail()) {
+        lastResult_ = NeoWPF::Fail<MediaError>{result.Error()};
+        return NeoWPF::Fail<MediaError>{result.Error()};
     }
 
     auto reader = audioSource.TakeReader();
     if (!reader) {
-        return Store(MediaResult::Failure(
-            MediaResultCode::InvalidState,
-            "Audio source did not produce a reader"));
+        lastResult_ = NeoWPF::Fail<MediaError>{MediaError{
+            MediaErrorCode::InvalidState,
+            "Audio source did not produce a reader"}};
+        return NeoWPF::Fail<MediaError>{lastResult_.Error()};
     }
 
     if (!mixer_) {
         backend_ = LuAudio::Audio::CreateBackend();
         if (!backend_) {
-            return Store(MediaResult::Failure(
-                MediaResultCode::BackendUnavailable,
-                "LuAudio did not provide an audio backend"));
+            lastResult_ = NeoWPF::Fail<MediaError>{MediaError{
+                MediaErrorCode::BackendUnavailable,
+                "LuAudio did not provide an audio backend"}};
+            return NeoWPF::Fail<MediaError>{lastResult_.Error()};
         }
 
         LuAudio::Audio::AudioStreamConfig config;
@@ -76,101 +79,108 @@ MediaResult LAMixer::OpenSource(const MediaSource& source, SourceId& id)
         sampleRate_ = config.format.sampleRate;
         mixer_ = std::make_unique<LuAudio::Audio::AudioMixer>(*backend_, 64);
         result = TranslateResult(mixer_->Open(config));
-        if (!result.Succeeded()) {
+        if (result.Fail()) {
             mixer_.reset();
             backend_.reset();
-            return Store(std::move(result));
+            lastResult_ = NeoWPF::Fail<MediaError>{result.Error()};
+            return NeoWPF::Fail<MediaError>{result.Error()};
         }
         state_ = MediaState::Stopped;
     }
 
+    SourceId id = 0;
     result = TranslateResult(mixer_->AddSource(std::move(reader), id));
-    return Store(std::move(result));
+    if (result.Fail()) {
+        lastResult_ = NeoWPF::Fail<MediaError>{result.Error()};
+        return NeoWPF::Fail<MediaError>{result.Error()};
+    }
+    lastResult_ = NeoWPF::Success<void>{};
+    return NeoWPF::Success<SourceId>{id};
 }
 
-MediaResult LAMixer::RemoveSource(SourceId id)
+NeoWPF::Result<void, MediaError> LAMixer::RemoveSource(SourceId id)
 {
     if (!mixer_) {
-        return Store(MediaResult::Failure(
-            MediaResultCode::InvalidState,
-            "Audio mixer is not open"));
+        return Store(NeoWPF::Fail<MediaError>{MediaError{
+            MediaErrorCode::InvalidState,
+            "Audio mixer is not open"}});
     }
     return Store(TranslateResult(mixer_->RemoveSource(id)));
 }
 
-MediaResult LAMixer::Play()
+NeoWPF::Result<void, MediaError> LAMixer::Play()
 {
     if (!mixer_) {
-        return Store(MediaResult::Failure(
-            MediaResultCode::InvalidState,
-            "Audio mixer is not open"));
+        return Store(NeoWPF::Fail<MediaError>{MediaError{
+            MediaErrorCode::InvalidState,
+            "Audio mixer is not open"}});
     }
     const auto result = TranslateResult(mixer_->Start());
-    if (result.Succeeded()) {
+    if (result.Success()) {
         state_ = MediaState::Playing;
     }
     return Store(result);
 }
 
-MediaResult LAMixer::Pause()
+NeoWPF::Result<void, MediaError> LAMixer::Pause()
 {
     if (!mixer_) {
-        return Store(MediaResult::Failure(
-            MediaResultCode::InvalidState,
-            "Audio mixer is not open"));
+        return Store(NeoWPF::Fail<MediaError>{MediaError{
+            MediaErrorCode::InvalidState,
+            "Audio mixer is not open"}});
     }
     const auto result = TranslateResult(mixer_->Stop());
-    if (result.Succeeded()) {
+    if (result.Success()) {
         state_ = MediaState::Paused;
     }
     return Store(result);
 }
 
-MediaResult LAMixer::Stop()
+NeoWPF::Result<void, MediaError> LAMixer::Stop()
 {
     if (!mixer_) {
-        return Store(MediaResult::Failure(
-            MediaResultCode::InvalidState,
-            "Audio mixer is not open"));
+        return Store(NeoWPF::Fail<MediaError>{MediaError{
+            MediaErrorCode::InvalidState,
+            "Audio mixer is not open"}});
     }
     const auto result = TranslateResult(mixer_->Stop());
-    if (result.Succeeded()) {
+    if (result.Success()) {
         state_ = MediaState::Stopped;
     }
     return Store(result);
 }
 
-MediaResult LAMixer::Seek(SourceId id, std::chrono::milliseconds position)
+NeoWPF::Result<void, MediaError> LAMixer::Seek(SourceId id, std::chrono::milliseconds position)
 {
     if (!mixer_) {
-        return Store(MediaResult::Failure(
-            MediaResultCode::InvalidState,
-            "Audio mixer is not open"));
+        return Store(NeoWPF::Fail<MediaError>{MediaError{
+            MediaErrorCode::InvalidState,
+            "Audio mixer is not open"}});
     }
     if (position.count() < 0) {
-        return Store(MediaResult::Failure(
-            MediaResultCode::InvalidArgument,
-            "Audio seek position cannot be negative"));
+        return Store(NeoWPF::Fail<MediaError>{MediaError{
+            MediaErrorCode::InvalidArgument,
+            "Audio seek position cannot be negative"}});
     }
     return Store(TranslateResult(mixer_->SeekSource(
         id, ToFrames(position, sampleRate_))));
 }
 
-MediaResult LAMixer::SetSourceVolume(SourceId id, float volume)
+NeoWPF::Result<void, MediaError> LAMixer::SetSourceVolume(SourceId id, float volume)
 {
     if (!std::isfinite(volume) || volume < 0.0F) {
-        return Store(MediaResult::Failure(
-            MediaResultCode::InvalidArgument,
-            "Audio source volume cannot be negative or non-finite"));
+        return Store(NeoWPF::Fail<MediaError>{MediaError{
+            MediaErrorCode::InvalidArgument,
+            "Audio source volume cannot be negative or non-finite"}});
     }
     return Store(TranslateResult(mixer_->SetSourceGain(id, volume)));
 }
 
-MediaResult LAMixer::SetSourceLoop(SourceId, bool)
+NeoWPF::Result<void, MediaError> LAMixer::SetSourceLoop(SourceId, bool)
 {
-    return Store(MediaResult::Failure(
-        MediaResultCode::Unsupported,
-        "Audio source looping is not implemented yet"));
+    return Store(NeoWPF::Fail<MediaError>{MediaError{
+        MediaErrorCode::Unsupported,
+        "Audio source looping is not implemented yet"}});
 }
 
 MediaState LAMixer::GetState() const noexcept
@@ -194,12 +204,13 @@ std::size_t LAMixer::GetSourceCount() const noexcept
     return mixer_ ? mixer_->ActiveSourceCount() : 0;
 }
 
-const MediaResult& LAMixer::GetLastResult() const noexcept
+const NeoWPF::Result<void, MediaError>& LAMixer::GetLastResult() const noexcept
 {
     return lastResult_;
 }
 
-MediaResult LAMixer::Store(MediaResult result)
+NeoWPF::Result<void, MediaError> LAMixer::Store(
+    NeoWPF::Result<void, MediaError> result)
 {
     lastResult_ = std::move(result);
     return lastResult_;

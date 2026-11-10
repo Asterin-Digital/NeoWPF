@@ -160,16 +160,13 @@ std::string BuildCommonCommandPrefix(const std::wstring& title,
 
 NeoWPF::Contracts::FileDialogResult MakeResultFromOutput(const std::wstring& rawOutput)
 {
-    NeoWPF::Contracts::FileDialogResult result;
     const auto paths = SplitSelectedValues(rawOutput);
     if (paths.empty()) {
-        return result;
+        return NeoWPF::Success<std::optional<NeoWPF::Contracts::FileDialogSelection>>{std::nullopt};
     }
 
-    result.Succeeded = true;
-    result.FileName = paths.front();
-    result.FileNames = paths;
-    return result;
+    return NeoWPF::Success<std::optional<NeoWPF::Contracts::FileDialogSelection>>{
+        NeoWPF::Contracts::FileDialogSelection{paths.front(), paths}};
 }
 
 NeoWPF::Contracts::FileDialogResult TryZenityDialog(const std::wstring& title,
@@ -180,13 +177,13 @@ NeoWPF::Contracts::FileDialogResult TryZenityDialog(const std::wstring& title,
                                                   bool allowMultiSelect)
 {
     if (std::system("command -v zenity >/dev/null 2>&1") != 0) {
-        return {};
+        return NeoWPF::Fail<std::string>{"Zenity is not installed"};
     }
 
     const auto command = BuildCommonCommandPrefix(title, initialDirectory, defaultFileName, saveDialog, allowMultiSelect, filters);
     const auto output = CaptureCommandOutput(command);
     if (output.empty()) {
-        return {};
+        return NeoWPF::Success<std::optional<NeoWPF::Contracts::FileDialogSelection>>{std::nullopt};
     }
 
     return MakeResultFromOutput(NeoWPF::Platform::Utf8ToWide(output));
@@ -200,7 +197,7 @@ NeoWPF::Contracts::FileDialogResult TryKDialogDialog(const std::wstring& title,
                                                    bool allowMultiSelect)
 {
     if (std::system("command -v kdialog >/dev/null 2>&1") != 0) {
-        return {};
+        return NeoWPF::Fail<std::string>{"KDialog is not installed"};
     }
 
     std::string command = "kdialog";
@@ -241,7 +238,7 @@ NeoWPF::Contracts::FileDialogResult TryKDialogDialog(const std::wstring& title,
 
     const auto output = CaptureCommandOutput(command);
     if (output.empty()) {
-        return {};
+        return NeoWPF::Success<std::optional<NeoWPF::Contracts::FileDialogSelection>>{std::nullopt};
     }
 
     return MakeResultFromOutput(NeoWPF::Platform::Utf8ToWide(output));
@@ -299,15 +296,17 @@ NeoWPF::Contracts::FileDialogResult LFileDialog::ShowOpenFileDialog(
 {
     const auto normalizedFilters = BuildFilterSpecs(filters);
 
-    if (const auto result = TryZenityDialog(title, initialDirectory, {}, normalizedFilters, false, allowMultiSelect); result.Succeeded) {
+    auto result = TryZenityDialog(title, initialDirectory, {}, normalizedFilters, false, allowMultiSelect);
+    if (result.Success()) {
         return result;
     }
 
-    if (const auto result = TryKDialogDialog(title, initialDirectory, {}, normalizedFilters, false, allowMultiSelect); result.Succeeded) {
-        return result;
+    auto fallback = TryKDialogDialog(title, initialDirectory, {}, normalizedFilters, false, allowMultiSelect);
+    if (fallback.Success()) {
+        return fallback;
     }
 
-    return {};
+    return NeoWPF::Fail<std::string>{result.Error() + "; " + fallback.Error()};
 }
 
 NeoWPF::Contracts::FileDialogResult LFileDialog::ShowSaveFileDialog(
@@ -318,15 +317,17 @@ NeoWPF::Contracts::FileDialogResult LFileDialog::ShowSaveFileDialog(
 {
     const auto normalizedFilters = BuildFilterSpecs(filters);
 
-    if (const auto result = TryZenityDialog(title, initialDirectory, defaultFileName, normalizedFilters, true, false); result.Succeeded) {
+    auto result = TryZenityDialog(title, initialDirectory, defaultFileName, normalizedFilters, true, false);
+    if (result.Success()) {
         return result;
     }
 
-    if (const auto result = TryKDialogDialog(title, initialDirectory, defaultFileName, normalizedFilters, true, false); result.Succeeded) {
-        return result;
+    auto fallback = TryKDialogDialog(title, initialDirectory, defaultFileName, normalizedFilters, true, false);
+    if (fallback.Success()) {
+        return fallback;
     }
 
-    return {};
+    return NeoWPF::Fail<std::string>{result.Error() + "; " + fallback.Error()};
 }
 
 }

@@ -86,15 +86,14 @@ int APlatform::RunApplication(std::chrono::seconds startupTimeout)
     return result;
 }
 
-bool APlatform::LoadResourceData(const std::wstring&, std::vector<std::uint8_t>& outData)
+NeoWPF::Result<std::vector<std::uint8_t>> APlatform::LoadResourceData(const std::wstring&)
 {
-    outData.clear();
-    return false;
+    return NeoWPF::Fail<std::string>{"Android embedded resource loading is not implemented"};
 }
 
 std::filesystem::path APlatform::GetExecutableDirectory() const
 {
-    return {};
+    return NeoWPF::Fail<std::string>{"Android document picker is not implemented"};
 }
 
 NeoWPF::Result<std::filesystem::path> APlatform::GetAppDataDirectory() const
@@ -106,17 +105,16 @@ NeoWPF::Result<std::filesystem::path> APlatform::GetAppDataDirectory() const
     return NeoWPF::Success<std::filesystem::path>{m_applicationDataDirectory};
 }
 
-bool APlatform::FetchHttpResource(const std::wstring&, std::vector<std::uint8_t>& outData)
+NeoWPF::Result<std::vector<std::uint8_t>> APlatform::FetchHttpResource(const std::wstring&)
 {
-    outData.clear();
-    return false;
+    return NeoWPF::Fail<std::string>{"Android HTTP resource fetching is not implemented"};
 }
 
 NeoWPF::Contracts::FileDialogResult APlatform::ShowOpenFileDialog(
     const std::wstring&, const std::wstring&,
     const std::vector<NeoWPF::Contracts::FileDialogFilter>&, bool)
 {
-    return {};
+    return NeoWPF::Fail<std::string>{"Android document picker is not implemented"};
 }
 
 NeoWPF::Contracts::FileDialogResult APlatform::ShowSaveFileDialog(
@@ -126,34 +124,33 @@ NeoWPF::Contracts::FileDialogResult APlatform::ShowSaveFileDialog(
     return {};
 }
 
-bool APlatform::DecodeImageFromMemory(const std::vector<std::uint8_t>&,
-                                      std::vector<std::uint8_t>& outPixels,
-                                      int& outWidth, int& outHeight, int, int)
+NeoWPF::Result<NeoWPF::Contracts::DecodedImage> APlatform::DecodeImageFromMemory(
+    const std::vector<std::uint8_t>&, int, int)
 {
-    outPixels.clear();
-    outWidth = 0;
-    outHeight = 0;
-    return false;
+    return NeoWPF::Fail<std::string>{"Android image decoding is not implemented"};
 }
 
-bool APlatform::DecodeImageFile(const std::wstring&, std::vector<std::uint8_t>& outPixels,
-                                int& outWidth, int& outHeight, int, int)
+NeoWPF::Result<NeoWPF::Contracts::DecodedImage> APlatform::DecodeImageFile(
+    const std::wstring&, int, int)
 {
-    outPixels.clear();
-    outWidth = 0;
-    outHeight = 0;
-    return false;
+    return NeoWPF::Fail<std::string>{"Android image decoding is not implemented"};
 }
 
-bool APlatform::RegisterFontFile(const std::wstring& filePath)
+NeoWPF::Result<void> APlatform::RegisterFontFile(const std::wstring& filePath)
 {
-    return NeoWPF::Rendering::Text::RegisterFontFile(filePath);
+    if (!NeoWPF::Rendering::Text::RegisterFontFile(filePath)) {
+        return NeoWPF::Fail<std::string>{"Font file could not be registered"};
+    }
+    return NeoWPF::Success<void>{};
 }
 
-bool APlatform::RegisterFontMemory(const unsigned char* data, std::size_t size,
-                                   const std::wstring& familyName)
+NeoWPF::Result<void> APlatform::RegisterFontMemory(
+    const unsigned char* data, std::size_t size, const std::wstring& familyName)
 {
-    return NeoWPF::Rendering::Text::RegisterFontMemory(data, size, familyName);
+    if (!NeoWPF::Rendering::Text::RegisterFontMemory(data, size, familyName)) {
+        return NeoWPF::Fail<std::string>{"Font data could not be registered"};
+    }
+    return NeoWPF::Success<void>{};
 }
 
 std::wstring APlatform::ResolveFontFamily(const std::wstring& requestedFontFamily)

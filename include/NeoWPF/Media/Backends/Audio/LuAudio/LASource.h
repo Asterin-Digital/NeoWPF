@@ -10,14 +10,15 @@ See LICENSE file in the project root for full license text.
 
 #include <LuAudio/Audio/Sources/IAudioReader.h>
 
-#include <NeoWPF/Media/Core/MediaResult.h>
+#include <NeoWPF/Etc/Result.h>
+#include <NeoWPF/Media/Core/MediaError.h>
 #include <NeoWPF/Media/Core/MediaSource.h>
 
 namespace NeoWPF::Media::LA {
 
 class LASource final {
 public:
-    MediaResult Open(const MediaSource& source);
+    NeoWPF::Result<void, MediaError> Open(const MediaSource& source);
     void Close() noexcept;
 
     std::unique_ptr<LuAudio::Audio::IAudioReader> TakeReader() noexcept;

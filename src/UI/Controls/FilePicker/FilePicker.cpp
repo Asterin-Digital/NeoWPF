@@ -150,14 +150,16 @@ NeoWPF::Contracts::FileDialogResult FilePicker::ShowOpenFileDialog()
 
     if (auto* platform = NeoWPF::Platform::CurrentPlatform()) {
         const auto result = platform->ShowOpenFileDialog(m_title, m_initialDirectory, m_filters, m_allowMultiSelect);
+        const auto hasSelection = result.Success() && result.Value().has_value();
+        const auto fileCount = hasSelection ? result.Value()->FileNames.size() : 0u;
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Files,
             NeoWPF::Diagnostics::Level::Info,
             "[FilePicker] ShowOpenFileDialog result ptr=%p succeeded=%d fileCount=%zu",
             this,
-            result.Succeeded,
-            result.FileNames.size());
-        if (result.Succeeded && !result.FileName.empty()) {
-            SetSelectedFile(result.FileName);
+            hasSelection,
+            fileCount);
+        if (hasSelection && !result.Value()->FileName.empty()) {
+            SetSelectedFile(result.Value()->FileName);
         }
         FilePicked.Invoke(result);
         return result;
@@ -167,7 +169,7 @@ NeoWPF::Contracts::FileDialogResult FilePicker::ShowOpenFileDialog()
         NeoWPF::Diagnostics::Level::Info,
         "[FilePicker] ShowOpenFileDialog missing platform ptr=%p",
         this);
-    return {};
+    return NeoWPF::Fail<std::string>{"No platform is registered for file dialogs"};
 }
 
 NeoWPF::Contracts::FileDialogResult FilePicker::ShowSaveFileDialog()
@@ -185,14 +187,16 @@ NeoWPF::Contracts::FileDialogResult FilePicker::ShowSaveFileDialog()
 
     if (auto* platform = NeoWPF::Platform::CurrentPlatform()) {
         const auto result = platform->ShowSaveFileDialog(m_title, m_initialDirectory, m_defaultFileName, m_filters);
+        const auto hasSelection = result.Success() && result.Value().has_value();
+        const auto fileCount = hasSelection ? result.Value()->FileNames.size() : 0u;
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Files,
             NeoWPF::Diagnostics::Level::Info,
             "[FilePicker] ShowSaveFileDialog result ptr=%p succeeded=%d fileCount=%zu",
             this,
-            result.Succeeded,
-            result.FileNames.size());
-        if (result.Succeeded && !result.FileName.empty()) {
-            SetSelectedFile(result.FileName);
+            hasSelection,
+            fileCount);
+        if (hasSelection && !result.Value()->FileName.empty()) {
+            SetSelectedFile(result.Value()->FileName);
         }
         FilePicked.Invoke(result);
         return result;
@@ -202,7 +206,7 @@ NeoWPF::Contracts::FileDialogResult FilePicker::ShowSaveFileDialog()
         NeoWPF::Diagnostics::Level::Info,
         "[FilePicker] ShowSaveFileDialog missing platform ptr=%p",
         this);
-    return {};
+    return NeoWPF::Fail<std::string>{"No platform is registered for file dialogs"};
 }
 
 NeoWPF::Contracts::FileDialogResult FilePicker::ShowDialog()

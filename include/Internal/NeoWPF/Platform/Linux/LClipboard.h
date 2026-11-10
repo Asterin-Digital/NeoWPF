@@ -23,9 +23,9 @@ public:
     LClipboard(const LClipboard&) = delete;
     LClipboard& operator=(const LClipboard&) = delete;
 
-    bool SetText(const std::wstring& text) override;
+    NeoWPF::Result<void> SetText(const std::wstring& text) override;
     void TryGetText(TextCallback callback) override;
-    bool Clear() override;
+    NeoWPF::Result<void> Clear() override;
 
     void ProcessPendingReads() noexcept;
     const std::wstring& OwnedText() const noexcept { return m_ownedText; }
@@ -36,7 +36,7 @@ public:
 
 private:
     bool EnsureDevice() noexcept;
-    void CompleteRead(bool succeeded, std::wstring text) noexcept;
+    void CompleteRead(NeoWPF::Contracts::ClipboardTextResult result) noexcept;
     void ResetOffer() noexcept;
 
     LWindowing& m_windowing;

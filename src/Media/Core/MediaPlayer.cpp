@@ -1,16 +1,17 @@
 #include <NeoWPF/Media/MediaPlayer.h>
 
-#include <Media/Backends/Audio/LuAudio/LABackend.h>
+#include <NeoWPF/Media/Backends/Audio/LuAudio/LABackend.h>
 
 namespace NeoWPF::Media {
 
 MediaPlayer::MediaPlayer()
 {
     LA::LABackend backend;
-    MediaResult result;
-    mixer_ = backend.CreateAudioMixer(result);
-    if (!mixer_) {
-        lastResult_ = std::move(result);
+    auto result = backend.CreateAudioMixer();
+    if (result.Fail()) {
+        lastResult_ = NeoWPF::Fail<MediaError>{result.Error()};
+    } else {
+        mixer_ = std::move(result).Value();
     }
 }
 
@@ -19,22 +20,28 @@ MediaPlayer::~MediaPlayer()
     Close();
 }
 
-MediaResult MediaPlayer::Open(const MediaSource& source)
+NeoWPF::Result<void, MediaError> MediaPlayer::Open(const MediaSource& source)
 {
     if (!mixer_) {
         return lastResult_;
     }
 
     if (sourceId_.has_value()) {
-        mixer_->RemoveSource(*sourceId_);
+        const auto removeResult = mixer_->RemoveSource(*sourceId_);
+        if (removeResult.Fail()) {
+            lastResult_ = NeoWPF::Fail<MediaError>{removeResult.Error()};
+            return lastResult_;
+        }
         sourceId_.reset();
     }
 
-    IAudioMixer::SourceId sourceId = 0;
-    lastResult_ = mixer_->OpenSource(source, sourceId);
-    if (lastResult_.Succeeded()) {
-        sourceId_ = sourceId;
+    auto result = mixer_->OpenSource(source);
+    if (result.Fail()) {
+        lastResult_ = NeoWPF::Fail<MediaError>{result.Error()};
+        return lastResult_;
     }
+    sourceId_ = std::move(result).Value();
+    lastResult_ = NeoWPF::Success<void>{};
     return lastResult_;
 }
 
@@ -46,57 +53,60 @@ void MediaPlayer::Close() noexcept
     }
 }
 
-MediaResult MediaPlayer::Play()
+NeoWPF::Result<void, MediaError> MediaPlayer::Play()
 {
-    lastResult_ = mixer_ ? mixer_->Play() : MediaResult::Failure(
-        MediaResultCode::InvalidState,
-        "Media player is not initialized");
+    lastResult_ = mixer_ ? mixer_->Play() : NeoWPF::Result<void, MediaError>(
+        NeoWPF::Fail<MediaError>{MediaError{
+            MediaErrorCode::InvalidState,
+            "Media player is not initialized"}});
     return lastResult_;
 }
 
-MediaResult MediaPlayer::Pause()
+NeoWPF::Result<void, MediaError> MediaPlayer::Pause()
 {
-    lastResult_ = mixer_ ? mixer_->Pause() : MediaResult::Failure(
-        MediaResultCode::InvalidState,
-        "Media player is not initialized");
+    lastResult_ = mixer_ ? mixer_->Pause() : NeoWPF::Result<void, MediaError>(
+        NeoWPF::Fail<MediaError>{MediaError{
+            MediaErrorCode::InvalidState,
+            "Media player is not initialized"}});
     return lastResult_;
 }
 
-MediaResult MediaPlayer::Stop()
+NeoWPF::Result<void, MediaError> MediaPlayer::Stop()
 {
-    lastResult_ = mixer_ ? mixer_->Stop() : MediaResult::Failure(
-        MediaResultCode::InvalidState,
-        "Media player is not initialized");
+    lastResult_ = mixer_ ? mixer_->Stop() : NeoWPF::Result<void, MediaError>(
+        NeoWPF::Fail<MediaError>{MediaError{
+            MediaErrorCode::InvalidState,
+            "Media player is not initialized"}});
     return lastResult_;
 }
 
-MediaResult MediaPlayer::Seek(std::chrono::milliseconds position)
+NeoWPF::Result<void, MediaError> MediaPlayer::Seek(std::chrono::milliseconds position)
 {
     lastResult_ = mixer_ && sourceId_.has_value()
         ? mixer_->Seek(*sourceId_, position)
-        : MediaResult::Failure(
-            MediaResultCode::InvalidState,
-            "Media player has no open source");
+        : NeoWPF::Result<void, MediaError>(NeoWPF::Fail<MediaError>{MediaError{
+            MediaErrorCode::InvalidState,
+            "Media player has no open source"}});
     return lastResult_;
 }
 
-MediaResult MediaPlayer::SetVolume(float volume)
+NeoWPF::Result<void, MediaError> MediaPlayer::SetVolume(float volume)
 {
     lastResult_ = mixer_ && sourceId_.has_value()
         ? mixer_->SetSourceVolume(*sourceId_, volume)
-        : MediaResult::Failure(
-            MediaResultCode::InvalidState,
-            "Media player has no open source");
+        : NeoWPF::Result<void, MediaError>(NeoWPF::Fail<MediaError>{MediaError{
+            MediaErrorCode::InvalidState,
+            "Media player has no open source"}});
     return lastResult_;
 }
 
-MediaResult MediaPlayer::SetLoop(bool enabled)
+NeoWPF::Result<void, MediaError> MediaPlayer::SetLoop(bool enabled)
 {
     lastResult_ = mixer_ && sourceId_.has_value()
         ? mixer_->SetSourceLoop(*sourceId_, enabled)
-        : MediaResult::Failure(
-            MediaResultCode::InvalidState,
-            "Media player has no open source");
+        : NeoWPF::Result<void, MediaError>(NeoWPF::Fail<MediaError>{MediaError{
+            MediaErrorCode::InvalidState,
+            "Media player has no open source"}});
     return lastResult_;
 }
 
@@ -117,7 +127,7 @@ bool MediaPlayer::IsFinished() const noexcept
     return mixer_ && sourceId_.has_value() && mixer_->IsSourceFinished(*sourceId_);
 }
 
-const MediaResult& MediaPlayer::GetLastResult() const noexcept
+const NeoWPF::Result<void, MediaError>& MediaPlayer::GetLastResult() const noexcept
 {
     return mixer_ ? mixer_->GetLastResult() : lastResult_;
 }

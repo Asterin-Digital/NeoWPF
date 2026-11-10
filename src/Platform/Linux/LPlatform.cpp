@@ -158,7 +158,10 @@ int LPlatform::RunApplication(std::chrono::seconds startupTimeout)
     return NeoWPF::Core::RunDesktopApp(startupTimeout);
 }
 
-bool LPlatform::LoadResourceData(const std::wstring&, std::vector<std::uint8_t>&) { return false; }
+NeoWPF::Result<std::vector<std::uint8_t>> LPlatform::LoadResourceData(const std::wstring&)
+{
+    return NeoWPF::Fail<std::string>{"Linux embedded resource loading is unavailable"};
+}
 std::filesystem::path LPlatform::GetExecutableDirectory() const { return std::filesystem::current_path(); }
 NeoWPF::Result<std::filesystem::path> LPlatform::GetAppDataDirectory() const
 {
@@ -169,9 +172,9 @@ NeoWPF::Result<std::filesystem::path> LPlatform::GetAppDataDirectory() const
     return NeoWPF::Success<std::filesystem::path>{m_applicationDataDirectory};
 }
 
-bool LPlatform::FetchHttpResource(const std::wstring& url, std::vector<std::uint8_t>& outData)
+NeoWPF::Result<std::vector<std::uint8_t>> LPlatform::FetchHttpResource(const std::wstring& url)
 {
-    return m_http.Fetch(url, outData);
+    return m_http.Fetch(url);
 }
 
 NeoWPF::Contracts::FileDialogResult LPlatform::ShowOpenFileDialog(
@@ -192,32 +195,43 @@ NeoWPF::Contracts::FileDialogResult LPlatform::ShowSaveFileDialog(
     return NeoWPF::Platform::Linux::LFileDialog::ShowSaveFileDialog(title, initialDirectory, defaultFileName, filters);
 }
 
-bool LPlatform::DecodeImageFromMemory(const std::vector<std::uint8_t>& data,
-                                      std::vector<std::uint8_t>& outPixels,
-                                      int& outWidth, int& outHeight,
-                                      int decodeWidth, int decodeHeight)
+NeoWPF::Result<NeoWPF::Contracts::DecodedImage> LPlatform::DecodeImageFromMemory(
+    const std::vector<std::uint8_t>& data, int decodeWidth, int decodeHeight)
 {
-    return m_imageDecoding.DecodeImageFromMemory(data, outPixels, outWidth, outHeight,
-                                                 decodeWidth, decodeHeight);
+    NeoWPF::Contracts::DecodedImage image;
+    if (!m_imageDecoding.DecodeImageFromMemory(data, image.Pixels, image.Width, image.Height,
+                                               decodeWidth, decodeHeight)) {
+        return NeoWPF::Fail<std::string>{"Image data could not be decoded"};
+    }
+    return NeoWPF::Success<NeoWPF::Contracts::DecodedImage>{std::move(image)};
 }
 
-bool LPlatform::DecodeImageFile(const std::wstring& filePath,
-                                std::vector<std::uint8_t>& outPixels,
-                                int& outWidth, int& outHeight,
-                                int decodeWidth, int decodeHeight)
+NeoWPF::Result<NeoWPF::Contracts::DecodedImage> LPlatform::DecodeImageFile(
+    const std::wstring& filePath, int decodeWidth, int decodeHeight)
 {
-    return m_imageDecoding.DecodeImageFile(filePath, outPixels, outWidth, outHeight,
-                                           decodeWidth, decodeHeight);
+    NeoWPF::Contracts::DecodedImage image;
+    if (!m_imageDecoding.DecodeImageFile(filePath, image.Pixels, image.Width, image.Height,
+                                         decodeWidth, decodeHeight)) {
+        return NeoWPF::Fail<std::string>{"Image file could not be decoded"};
+    }
+    return NeoWPF::Success<NeoWPF::Contracts::DecodedImage>{std::move(image)};
 }
 
-bool LPlatform::RegisterFontFile(const std::wstring& filePath)
+NeoWPF::Result<void> LPlatform::RegisterFontFile(const std::wstring& filePath)
 {
-    return NeoWPF::Rendering::Text::RegisterFontFile(filePath);
+    if (!NeoWPF::Rendering::Text::RegisterFontFile(filePath)) {
+        return NeoWPF::Fail<std::string>{"Font file could not be registered"};
+    }
+    return NeoWPF::Success<void>{};
 }
 
-bool LPlatform::RegisterFontMemory(const unsigned char* data, std::size_t size, const std::wstring& familyName)
+NeoWPF::Result<void> LPlatform::RegisterFontMemory(
+    const unsigned char* data, std::size_t size, const std::wstring& familyName)
 {
-    return NeoWPF::Rendering::Text::RegisterFontMemory(data, size, familyName);
+    if (!NeoWPF::Rendering::Text::RegisterFontMemory(data, size, familyName)) {
+        return NeoWPF::Fail<std::string>{"Font data could not be registered"};
+    }
+    return NeoWPF::Success<void>{};
 }
 
 std::wstring LPlatform::ResolveFontFamily(const std::wstring& requestedFontFamily)

@@ -20,15 +20,14 @@ public:
     {
     }
 
-    bool Apply(NeoWPF::UI::Properties::DependencyObject& target,
-               const NeoWPF::UI::Properties::DependencyProperty& property,
-               std::string& error) const override
+    NeoWPF::Result<void> Apply(
+        NeoWPF::UI::Properties::DependencyObject& target,
+        const NeoWPF::UI::Properties::DependencyProperty& property) const override
     {
         if (NeoWPF::UI::Data::BindingOperations::SetBinding(target, property, m_binding)) {
-            return true;
+            return NeoWPF::Success<void>{};
         }
-        error = "binding could not be attached to the target property";
-        return false;
+        return NeoWPF::Fail<std::string>{"binding could not be attached to the target property"};
     }
 
     const NeoWPF::UI::Data::Binding& GetBinding() const noexcept
@@ -48,31 +47,29 @@ public:
     {
     }
 
-    bool Apply(NeoWPF::UI::Properties::DependencyObject& target,
-               const NeoWPF::UI::Properties::DependencyProperty& property,
-               std::string& error) const override
+    NeoWPF::Result<void> Apply(
+        NeoWPF::UI::Properties::DependencyObject& target,
+        const NeoWPF::UI::Properties::DependencyProperty& property) const override
     {
         if (!m_resolver) {
-            error = "StaticResource has no resource scope";
-            return false;
+            return NeoWPF::Fail<std::string>{"StaticResource has no resource scope"};
         }
 
         std::any value;
         if (!m_resolver(m_key, value)) {
-            error = "resource was not found: " + m_key;
-            return false;
+            return NeoWPF::Fail<std::string>{"resource was not found: " + m_key};
         }
 
         if (const auto* binding = property.GetXamlBinding()) {
             if (const auto* resourceObject =
                     std::any_cast<std::shared_ptr<NeoWPF::UI::Properties::DependencyObject>>(&value)) {
                 binding->Assign(target, *resourceObject);
-                return true;
+                return NeoWPF::Success<void>{};
             }
         }
 
         target.SetValue(property, value);
-        return true;
+        return NeoWPF::Success<void>{};
     }
 
     const std::string& GetKey() const noexcept
@@ -92,15 +89,14 @@ public:
     {
     }
 
-    bool Apply(NeoWPF::UI::Properties::DependencyObject& target,
-               const NeoWPF::UI::Properties::DependencyProperty& property,
-               std::string& error) const override
+    NeoWPF::Result<void> Apply(
+        NeoWPF::UI::Properties::DependencyObject& target,
+        const NeoWPF::UI::Properties::DependencyProperty& property) const override
     {
         if (!NeoWPF::UI::Localization::LocaleOperations::SetLocale(target, property, m_key)) {
-            error = "Locale could not be attached to the target property";
-            return false;
+            return NeoWPF::Fail<std::string>{"Locale could not be attached to the target property"};
         }
-        return true;
+        return NeoWPF::Success<void>{};
     }
 
     const std::wstring& GetKey() const noexcept
@@ -172,15 +168,13 @@ const XamlMarkupExtensionFactory* XamlMarkupExtensionRegistry::Find(std::string_
     return iterator == m_factories.end() ? nullptr : &iterator->second;
 }
 
-std::shared_ptr<XamlMarkupExtension> ParseXamlMarkupExtension(
+NeoWPF::Result<std::shared_ptr<XamlMarkupExtension>> ParseXamlMarkupExtension(
     std::string_view value,
-    const XamlMarkupExtensionContext& context,
-    std::string& error)
+    const XamlMarkupExtensionContext& context)
 {
     const auto expression = NeoWPF::Platform::Trim(std::string(value));
     if (expression.size() < 3 || expression.front() != '{' || expression.back() != '}') {
-        error = "markup extension must be enclosed in '{' and '}'";
-        return nullptr;
+        return NeoWPF::Fail<std::string>{"markup extension must be enclosed in '{' and '}'"};
     }
 
     const auto body = NeoWPF::Platform::Trim(
@@ -189,11 +183,10 @@ std::shared_ptr<XamlMarkupExtension> ParseXamlMarkupExtension(
     const auto name = body.substr(0, separator);
     const auto* factory = XamlMarkupExtensionRegistry::Get().Find(name);
     if (!factory) {
-        error = "markup extension is not registered: " + std::string(name);
-        return nullptr;
+        return NeoWPF::Fail<std::string>{"markup extension is not registered: " + std::string(name)};
     }
 
-    return (*factory)(separator == std::string::npos ? std::string_view() : body.substr(separator + 1), context, error);
+    return (*factory)(separator == std::string::npos ? std::string_view() : body.substr(separator + 1), context);
 }
 
 bool TryGetXamlBinding(const XamlMarkupExtension& extension, XamlBindingInfo& outBinding)
@@ -238,23 +231,20 @@ void RegisterXamlMarkupExtensions()
 {
     XamlMarkupExtensionRegistry::Get().Register("Binding",
         [](std::string_view arguments,
-           const XamlMarkupExtensionContext&,
-           std::string& error) {
+           const XamlMarkupExtensionContext&) -> NeoWPF::Result<std::shared_ptr<XamlMarkupExtension>> {
             std::string path;
             auto mode = NeoWPF::UI::Data::BindingMode::OneWay;
             bool modeSpecified = false;
 
             for (const auto& argument : SplitArguments(arguments)) {
                 if (argument.empty()) {
-                    error = "binding contains an empty argument";
-                    return std::shared_ptr<XamlMarkupExtension>();
+                    return NeoWPF::Fail<std::string>{"binding contains an empty argument"};
                 }
 
                 const auto equals = argument.find('=');
                 if (equals == std::string::npos) {
                     if (!path.empty()) {
-                        error = "binding path was specified more than once";
-                        return std::shared_ptr<XamlMarkupExtension>();
+                        return NeoWPF::Fail<std::string>{"binding path was specified more than once"};
                     }
                     path = NeoWPF::Platform::Trim(argument);
                     continue;
@@ -266,66 +256,56 @@ void RegisterXamlMarkupExtensions()
                     std::string(std::string_view(argument).substr(equals + 1)));
                 if (key == "Path") {
                     if (!path.empty() || rawValue.empty()) {
-                        error = "binding Path is missing or duplicated";
-                        return std::shared_ptr<XamlMarkupExtension>();
+                        return NeoWPF::Fail<std::string>{"binding Path is missing or duplicated"};
                     }
                     path = rawValue;
                 } else if (key == "Mode") {
                     if (modeSpecified || !ParseBindingMode(rawValue, mode)) {
-                        error = "binding Mode is invalid or duplicated";
-                        return std::shared_ptr<XamlMarkupExtension>();
+                        return NeoWPF::Fail<std::string>{"binding Mode is invalid or duplicated"};
                     }
                     modeSpecified = true;
                 } else {
-                    error = "unsupported binding argument: " + key;
-                    return std::shared_ptr<XamlMarkupExtension>();
+                    return NeoWPF::Fail<std::string>{"unsupported binding argument: " + key};
                 }
             }
 
             if (path.empty()) {
-                error = "binding Path is required";
-                return std::shared_ptr<XamlMarkupExtension>();
+                return NeoWPF::Fail<std::string>{"binding Path is required"};
             }
 
-            return std::shared_ptr<XamlMarkupExtension>(
-                std::make_shared<BindingMarkupExtension>(NeoWPF::UI::Data::Binding(path, mode)));
+            return NeoWPF::Success<std::shared_ptr<XamlMarkupExtension>>{
+                std::make_shared<BindingMarkupExtension>(NeoWPF::UI::Data::Binding(path, mode))};
         });
 
     XamlMarkupExtensionRegistry::Get().Register("StaticResource",
         [](std::string_view arguments,
-           const XamlMarkupExtensionContext& context,
-           std::string& error) {
+           const XamlMarkupExtensionContext& context) -> NeoWPF::Result<std::shared_ptr<XamlMarkupExtension>> {
             const auto key = NeoWPF::Platform::Trim(std::string(arguments));
             if (key.empty()) {
-                error = "StaticResource key is required";
-                return std::shared_ptr<XamlMarkupExtension>();
+                return NeoWPF::Fail<std::string>{"StaticResource key is required"};
             }
-            return std::shared_ptr<XamlMarkupExtension>(
-                std::make_shared<StaticResourceMarkupExtension>(key, context.ResolveResource));
+            return NeoWPF::Success<std::shared_ptr<XamlMarkupExtension>>{
+                std::make_shared<StaticResourceMarkupExtension>(key, context.ResolveResource)};
         });
 
     XamlMarkupExtensionRegistry::Get().Register("Locale",
         [](std::string_view arguments,
-           const XamlMarkupExtensionContext&,
-           std::string& error) {
+           const XamlMarkupExtensionContext&) -> NeoWPF::Result<std::shared_ptr<XamlMarkupExtension>> {
             const auto trimmedArguments = NeoWPF::Platform::Trim(std::string(arguments));
             if (trimmedArguments.empty()) {
-                error = "Locale key is required";
-                return std::shared_ptr<XamlMarkupExtension>();
+                return NeoWPF::Fail<std::string>{"Locale key is required"};
             }
 
             std::string key;
             for (const auto& argument : SplitArguments(trimmedArguments)) {
                 if (argument.empty()) {
-                    error = "Locale contains an empty argument";
-                    return std::shared_ptr<XamlMarkupExtension>();
+                    return NeoWPF::Fail<std::string>{"Locale contains an empty argument"};
                 }
 
                 const auto equals = argument.find('=');
                 if (equals == std::string::npos) {
                     if (!key.empty()) {
-                        error = "Locale key was specified more than once";
-                        return std::shared_ptr<XamlMarkupExtension>();
+                        return NeoWPF::Fail<std::string>{"Locale key was specified more than once"};
                     }
                     key = NeoWPF::Platform::Trim(argument);
                     continue;
@@ -336,24 +316,21 @@ void RegisterXamlMarkupExtensions()
                 const auto value = NeoWPF::Platform::Trim(
                     std::string(std::string_view(argument).substr(equals + 1)));
                 if (name != "Key" || value.empty() || !key.empty()) {
-                    error = "Locale Key is invalid or duplicated";
-                    return std::shared_ptr<XamlMarkupExtension>();
+                    return NeoWPF::Fail<std::string>{"Locale Key is invalid or duplicated"};
                 }
                 key = value;
             }
 
             if (key.empty()) {
-                error = "Locale key is required";
-                return std::shared_ptr<XamlMarkupExtension>();
+                return NeoWPF::Fail<std::string>{"Locale key is required"};
             }
 
             const auto wideKey = NeoWPF::Platform::Utf8ToWide(key);
             if (wideKey.empty()) {
-                error = "Locale key is not valid UTF-8";
-                return std::shared_ptr<XamlMarkupExtension>();
+                return NeoWPF::Fail<std::string>{"Locale key is not valid UTF-8"};
             }
-            return std::shared_ptr<XamlMarkupExtension>(
-                std::make_shared<LocaleMarkupExtension>(wideKey));
+            return NeoWPF::Success<std::shared_ptr<XamlMarkupExtension>>{
+                std::make_shared<LocaleMarkupExtension>(wideKey)};
         });
 }
 

@@ -313,25 +313,25 @@ NeoWPF::ResourceManager& Application::Resources()
     return NeoWPF::ResourceManager::Instance();
 }
 
-bool Application::LoadFontFromFile(const std::wstring& filePath)
+NeoWPF::Result<void> Application::LoadFontFromFile(const std::wstring& filePath)
 {
     NEO_WPF_STARTUP_ACTION("Application.LoadFontFromFile");
     if (filePath.empty()) {
         NeoWPF::Diagnostics::LogError("Application::LoadFontFromFile: empty file path supplied");
-        return false;
+        return NeoWPF::Fail<std::string>{"Font file path cannot be empty"};
     }
 
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info, "Application::LoadFontFromFile: attempting to load custom font '%ls'", filePath.c_str());
 
-    const bool registered = NeoWPF::Platform::CurrentPlatform()->RegisterFontFile(filePath);
-    if (!registered) {
-        NeoWPF::Diagnostics::LogError("Application::LoadFontFromFile: RegisterFontFile failed for '%ls'", filePath.c_str());
+    auto* platform = NeoWPF::Platform::CurrentPlatform();
+    if (!platform) {
+        return NeoWPF::Fail<std::string>{"No platform is registered for font loading"};
     }
 
-    return registered;
+    return platform->RegisterFontFile(filePath);
 }
 
-bool Application::LoadFontFromMemory(
+NeoWPF::Result<void> Application::LoadFontFromMemory(
     const unsigned char* data,
     size_t size,
     const std::wstring& familyName)
@@ -339,7 +339,7 @@ bool Application::LoadFontFromMemory(
     NEO_WPF_STARTUP_ACTION("Application.LoadFontFromMemory");
     if (!data || size == 0 || familyName.empty()) {
         NeoWPF::Diagnostics::LogError("Application::LoadFontFromMemory: invalid font data or family name");
-        return false;
+        return NeoWPF::Fail<std::string>{"Font data and family name must be provided"};
     }
 
     NeoWPF::Diagnostics::Log(
@@ -348,13 +348,11 @@ bool Application::LoadFontFromMemory(
         "Application::LoadFontFromMemory: registering '%ls' (%zu bytes)",
         familyName.c_str(), size);
 
-    const bool registered = NeoWPF::Platform::CurrentPlatform()->RegisterFontMemory(data, size, familyName);
-    NeoWPF::Diagnostics::Log(
-        NeoWPF::Diagnostics::Category::Application,
-        NeoWPF::Diagnostics::Level::Info,
-        "Application::LoadFontFromMemory: '%ls' registration %s",
-        familyName.c_str(), registered ? "succeeded" : "failed");
-    return registered;
+    auto* platform = NeoWPF::Platform::CurrentPlatform();
+    if (!platform) {
+        return NeoWPF::Fail<std::string>{"No platform is registered for font loading"};
+    }
+    return platform->RegisterFontMemory(data, size, familyName);
 }
 
 Application& Application::Current()

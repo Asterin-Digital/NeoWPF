@@ -154,7 +154,7 @@ bool LClipboard::EnsureDevice() noexcept
     return true;
 }
 
-bool LClipboard::SetText(const std::wstring& text)
+NeoWPF::Result<void> LClipboard::SetText(const std::wstring& text)
 {
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Clipboard,
         NeoWPF::Diagnostics::Level::Info,
@@ -165,7 +165,7 @@ bool LClipboard::SetText(const std::wstring& text)
             NeoWPF::Diagnostics::Level::Info,
             "[LinuxClipboard] SetText rejected: device=%p serial=%u",
             static_cast<void*>(m_dataDevice), m_windowing.LastInputSerial());
-        return false;
+        return NeoWPF::Fail<std::string>{"Linux clipboard is unavailable for writing"};
     }
 
     if (m_source) {
@@ -182,7 +182,7 @@ bool LClipboard::SetText(const std::wstring& text)
             wl_data_source_destroy(m_source);
             m_source = nullptr;
         }
-        return false;
+        return NeoWPF::Fail<std::string>{"Linux clipboard data source could not be created"};
     }
 
     m_ownedText = text;
@@ -198,7 +198,10 @@ bool LClipboard::SetText(const std::wstring& text)
         flushed ? "succeeded" : "failed to flush display",
         static_cast<void*>(m_source), Utf8MimeType, PlainMimeType,
         flushResult, flushError);
-    return flushed;
+    if (!flushed) {
+        return NeoWPF::Fail<std::string>{"Linux clipboard update could not be flushed"};
+    }
+    return NeoWPF::Success<void>{};
 }
 
 void LClipboard::SourceCancelled(wl_data_source* source) noexcept
@@ -270,9 +273,22 @@ void LClipboard::TryGetText(TextCallback callback)
         NeoWPF::Diagnostics::Level::Info,
         "[LinuxClipboard] TryGetText requested: callback=%d pendingFd=%d offer=%p",
         callback != nullptr, m_pendingReadFd, static_cast<void*>(m_selectionOffer));
-    if (!callback || m_pendingReadFd >= 0 || !EnsureDevice() || !m_selectionOffer) {
+    if (!callback) {
+        return;
+    }
+    if (m_pendingReadFd >= 0) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Clipboard,
             NeoWPF::Diagnostics::Level::Info, "[LinuxClipboard] TryGetText rejected");
+        return;
+    }
+    if (!EnsureDevice()) {
+        m_pendingCallback = std::move(callback);
+        CompleteRead(NeoWPF::Fail<std::string>{"Linux clipboard is unavailable for reading"});
+        return;
+    }
+    if (!m_selectionOffer) {
+        m_pendingCallback = std::move(callback);
+        CompleteRead(NeoWPF::Success<std::optional<std::wstring>>{std::nullopt});
         return;
     }
 
@@ -286,7 +302,8 @@ void LClipboard::TryGetText(TextCallback callback)
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Clipboard,
             NeoWPF::Diagnostics::Level::Info,
             "[LinuxClipboard] TryGetText found no supported MIME type");
-        CompleteRead(false, {});
+        m_pendingCallback = std::move(callback);
+        CompleteRead(NeoWPF::Fail<std::string>{"Clipboard selection has no supported text format"});
         return;
     }
 
@@ -295,7 +312,8 @@ void LClipboard::TryGetText(TextCallback callback)
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Clipboard,
             NeoWPF::Diagnostics::Level::Info,
             "[LinuxClipboard] TryGetText pipe failed: errno=%d", errno);
-        CompleteRead(false, {});
+        m_pendingCallback = std::move(callback);
+        CompleteRead(NeoWPF::Fail<std::string>{"Linux clipboard read pipe could not be created"});
         return;
     }
     const int flags = fcntl(pipeDescriptors[0], F_GETFL, 0);
@@ -316,7 +334,7 @@ void LClipboard::TryGetText(TextCallback callback)
     }
 }
 
-bool LClipboard::Clear()
+NeoWPF::Result<void> LClipboard::Clear()
 {
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Clipboard,
         NeoWPF::Diagnostics::Level::Info,
@@ -325,7 +343,7 @@ bool LClipboard::Clear()
     if (!EnsureDevice() || m_windowing.LastInputSerial() == 0) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Clipboard,
             NeoWPF::Diagnostics::Level::Info, "[LinuxClipboard] Clear rejected");
-        return false;
+        return NeoWPF::Fail<std::string>{"Linux clipboard is unavailable for clearing"};
     }
     wl_data_device_set_selection(m_dataDevice, nullptr, m_windowing.LastInputSerial());
     if (m_source) {
@@ -338,7 +356,10 @@ bool LClipboard::Clear()
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Clipboard,
         NeoWPF::Diagnostics::Level::Info, "[LinuxClipboard] Clear %s",
         flushed ? "succeeded" : "failed to flush display");
-    return flushed;
+    if (!flushed) {
+        return NeoWPF::Fail<std::string>{"Linux clipboard clear could not be flushed"};
+    }
+    return NeoWPF::Success<void>{};
 }
 
 void LClipboard::ProcessPendingReads() noexcept
@@ -361,13 +382,17 @@ void LClipboard::ProcessPendingReads() noexcept
             NeoWPF::Diagnostics::Level::Debug,
             "[LinuxClipboard] Clipboard read completed: bytes=%zd succeeded=%d errno=%d",
             count, succeeded, count < 0 ? errno : 0);
-        const auto text = succeeded ? NeoWPF::Platform::Utf8ToWide(m_pendingReadText) : std::wstring{};
-        CompleteRead(succeeded, text);
+        if (succeeded) {
+            CompleteRead(NeoWPF::Success<std::optional<std::wstring>>{
+                NeoWPF::Platform::Utf8ToWide(m_pendingReadText)});
+        } else {
+            CompleteRead(NeoWPF::Fail<std::string>{"Linux clipboard text could not be read"});
+        }
         return;
     }
 }
 
-void LClipboard::CompleteRead(bool succeeded, std::wstring text) noexcept
+void LClipboard::CompleteRead(NeoWPF::Contracts::ClipboardTextResult result) noexcept
 {
     if (m_pendingReadFd >= 0) {
         close(m_pendingReadFd);
@@ -377,8 +402,8 @@ void LClipboard::CompleteRead(bool succeeded, std::wstring text) noexcept
     m_pendingReadText.clear();
     auto& appState = NeoWPF::Core::GetAppState();
     if (callback && appState.mainThreadExecutor) {
-        appState.mainThreadExecutor->Post([callback = std::move(callback), succeeded, text = std::move(text)]() mutable {
-            callback({succeeded, std::move(text)});
+        appState.mainThreadExecutor->Post([callback = std::move(callback), result = std::move(result)]() mutable {
+            callback(std::move(result));
         });
     }
 }

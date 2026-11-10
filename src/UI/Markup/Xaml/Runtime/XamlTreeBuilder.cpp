@@ -70,18 +70,25 @@ void ApplyAttributes(const XamlNode& node,
         }();
 
         if (!trimmedValue.empty() && trimmedValue.front() == '{') {
-            std::string error;
             XamlMarkupExtensionContext extensionContext{node.Line, node.Column,
                 CreateXamlResourceResolver(target, context)};
-            const auto extension = ParseXamlMarkupExtension(trimmedValue, extensionContext, error);
-            if (!extension || !extension->Apply(target, *property, error)) {
+            const auto extensionResult = ParseXamlMarkupExtension(trimmedValue, extensionContext);
+            if (extensionResult.Fail()) {
                 NeoWPF::Diagnostics::QueueDeveloperWarning(
                     NeoWPF::Diagnostics::DeveloperWarnings::kXamlMarkupExtensionCode,
                     NeoWPF::Platform::Utf8ToWide(
-                        error.empty() ? "markup extension could not be applied" : error) +
+                        extensionResult.Error()) +
                         L" on property '" + NeoWPF::Platform::Utf8ToWide(name) + L"'",
                     NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
                 continue;
+            }
+            const auto applyResult = extensionResult.Value()->Apply(target, *property);
+            if (applyResult.Fail()) {
+                NeoWPF::Diagnostics::QueueDeveloperWarning(
+                    NeoWPF::Diagnostics::DeveloperWarnings::kXamlMarkupExtensionCode,
+                    NeoWPF::Platform::Utf8ToWide(applyResult.Error()) +
+                        L" on property '" + NeoWPF::Platform::Utf8ToWide(name) + L"'",
+                    NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
             }
             continue;
         }

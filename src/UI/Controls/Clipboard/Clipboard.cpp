@@ -7,10 +7,13 @@
 
 namespace NeoWPF::UI {
 
-bool Clipboard::SetText(const std::wstring& text)
+NeoWPF::Result<void> Clipboard::SetText(const std::wstring& text)
 {
     auto* platform = NeoWPF::Platform::CurrentPlatform();
-    return platform && platform->Clipboard().SetText(text);
+    if (!platform) {
+        return NeoWPF::Fail<std::string>{"No platform is registered for clipboard access"};
+    }
+    return platform->Clipboard().SetText(text);
 }
 
 void Clipboard::TryGetText(TextCallback callback)
@@ -20,7 +23,7 @@ void Clipboard::TryGetText(TextCallback callback)
         auto& appState = NeoWPF::Core::GetAppState();
         if (callback && appState.mainThreadExecutor) {
             appState.mainThreadExecutor->Post([callback = std::move(callback)]() mutable {
-                callback(false, {});
+                callback(NeoWPF::Fail<std::string>{"No platform is registered for clipboard access"});
             });
         }
         return;
@@ -29,15 +32,18 @@ void Clipboard::TryGetText(TextCallback callback)
     platform->Clipboard().TryGetText([callback = std::move(callback)](
                                           NeoWPF::Contracts::ClipboardTextResult result) {
         if (callback) {
-            callback(result.Succeeded, std::move(result.Text));
+            callback(std::move(result));
         }
     });
 }
 
-bool Clipboard::Clear()
+NeoWPF::Result<void> Clipboard::Clear()
 {
     auto* platform = NeoWPF::Platform::CurrentPlatform();
-    return platform && platform->Clipboard().Clear();
+    if (!platform) {
+        return NeoWPF::Fail<std::string>{"No platform is registered for clipboard access"};
+    }
+    return platform->Clipboard().Clear();
 }
 
 }

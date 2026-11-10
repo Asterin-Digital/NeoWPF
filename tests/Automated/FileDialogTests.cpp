@@ -48,4 +48,22 @@ TEST(FileDialogTests, BuildsAllFilesFallbackWhenNoFiltersAreProvided)
     EXPECT_EQ(specs[0].Extensions[0], L"*");
 }
 
+TEST(FileDialogTests, CancellationIsSuccessfulWithoutASelection)
+{
+    NeoWPF::Contracts::FileDialogResult result =
+        NeoWPF::Success<std::optional<NeoWPF::Contracts::FileDialogSelection>>{std::nullopt};
+
+    ASSERT_TRUE(result.Success());
+    EXPECT_FALSE(result.Value().has_value());
+}
+
+TEST(FileDialogTests, MissingClipboardTextIsSuccessfulWithoutAValue)
+{
+    NeoWPF::Contracts::ClipboardTextResult result =
+        NeoWPF::Success<std::optional<std::wstring>>{std::nullopt};
+
+    ASSERT_TRUE(result.Success());
+    EXPECT_FALSE(result.Value().has_value());
+}
+
 } // namespace
