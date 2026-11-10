@@ -216,17 +216,12 @@ private:
         std::any parsedValue;
         if (record.value.kind == NeoNaml::NamlValueKind::MarkupExtension &&
             !record.value.text.empty()) {
-            std::string extensionError;
-            const auto extension = ParseXamlMarkupExtension(
-                record.value.text,
-                {},
-                extensionError);
-            if (!extension) {
-                m_error = extensionError.empty()
-                    ? "compiled markup extension could not be parsed"
-                    : extensionError;
+            const auto extensionResult = ParseXamlMarkupExtension(record.value.text, {});
+            if (extensionResult.Fail()) {
+                m_error = extensionResult.Error();
                 return false;
             }
+            const auto& extension = extensionResult.Value();
 
             std::string localeKey;
             if (TryGetXamlLocaleKey(*extension, localeKey)) {
@@ -425,44 +420,38 @@ private:
 
 }
 
-std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> LoadCompiledXaml(
+NeoWPF::Result<std::shared_ptr<NeoWPF::UI::Properties::DependencyObject>> LoadCompiledXaml(
     const NeoWPF::ResourceKey& key,
-    XamlNamescope* namescope,
-    std::string* error)
+    XamlNamescope* namescope)
 {
-    std::string localError;
-    auto& failure = error ? *error : localError;
-    failure.clear();
+    std::string error;
 
     NeoWPF::ResourceBlob blob;
     if (!NeoWPF::ResourceManager::Instance().TryGetBlob(key, blob)) {
-        failure = "compiled XAML resource was not found: " + std::string(key.Name());
-        return nullptr;
+        return NeoWPF::Fail<std::string>{"compiled XAML resource was not found: " + std::string(key.Name())};
     }
     if (blob.Type != NeoWPF::ResourceType::Xaml) {
-        failure = "resource is not a compiled XAML artifact: " + std::string(key.Name());
-        return nullptr;
+        return NeoWPF::Fail<std::string>{"resource is not a compiled XAML artifact: " + std::string(key.Name())};
     }
 
     NamlArtifact artifact;
-    if (!DeserializeNaml(blob.Data, blob.Size, artifact, failure)) return nullptr;
+    if (!DeserializeNaml(blob.Data, blob.Size, artifact, error)) {
+        return NeoWPF::Fail<std::string>{std::move(error)};
+    }
 
     for (const auto& object : artifact.objects) {
         if (object.id != &object - artifact.objects.data()) {
-            failure = "NAML object identifiers are not contiguous";
-            return nullptr;
+            return NeoWPF::Fail<std::string>{"NAML object identifiers are not contiguous"};
         }
     }
 
-    ArtifactTreeBuilder builder(artifact, namescope, failure);
-    return builder.Build();
-}
-
-std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> LoadCompiledXaml(
-    const NeoWPF::ResourceKey& key,
-    std::string* error)
-{
-    return LoadCompiledXaml(key, nullptr, error);
+    ArtifactTreeBuilder builder(artifact, namescope, error);
+    auto root = builder.Build();
+    if (!root) {
+        return NeoWPF::Fail<std::string>{std::move(error)};
+    }
+    return NeoWPF::Success<std::shared_ptr<NeoWPF::UI::Properties::DependencyObject>>{
+        std::move(root)};
 }
 
 }

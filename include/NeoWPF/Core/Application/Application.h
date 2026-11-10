@@ -330,9 +330,9 @@ public:
         The path to a .ttf or .otf font file available to the app.
 
         @returns
-        True if the font was registered successfully.
+            Success when the font was registered, or the failure reason.
     */
-    static bool LoadFontFromFile(const std::wstring& filePath);
+        static NeoWPF::Result<void> LoadFontFromFile(const std::wstring& filePath);
 
     /*
         @summary
@@ -348,9 +348,9 @@ public:
         The family name used by controls, normally the font filename without its extension.
 
         @returns
-        True if the font was registered successfully.
+            Success when the font was registered, or the failure reason.
     */
-    static bool LoadFontFromMemory(
+        static NeoWPF::Result<void> LoadFontFromMemory(
         const unsigned char* data,
         size_t size,
         const std::wstring& familyName);

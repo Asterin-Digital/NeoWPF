@@ -73,17 +73,25 @@ std::shared_ptr<UI::Core::Media::BitmapSource> ResourceManager::FindImage(const 
         return nullptr;
     }
 
-    std::vector<uint8_t> pixels;
-    int width = 0;
-    int height = 0;
     auto* platform = NeoWPF::Platform::CurrentPlatform();
-    if (!platform || !platform->DecodeImageFromMemory(std::vector<uint8_t>(blob.Data, blob.Data + blob.Size), pixels, width, height, 0, 0)) {
+    if (!platform) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
-            "[ResourceManager] DecodeImageFromMemory failed for '%s' (%zu bytes)", key.Name(), blob.Size);
+            "[ResourceManager] DecodeImageFromMemory failed for '%s' because no platform is registered", key.Name());
         return nullptr;
     }
 
-    return UI::Core::Media::BitmapSource::Create(width, height, std::move(pixels));
+    auto decodeResult = platform->DecodeImageFromMemory(
+        std::vector<uint8_t>(blob.Data, blob.Data + blob.Size), 0, 0);
+    if (decodeResult.Fail()) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Application, NeoWPF::Diagnostics::Level::Info,
+            "[ResourceManager] DecodeImageFromMemory failed for '%s' (%zu bytes): %s",
+            key.Name(), blob.Size, decodeResult.Error().c_str());
+        return nullptr;
+    }
+
+    auto image = std::move(decodeResult).Value();
+    return UI::Core::Media::BitmapSource::Create(
+        image.Width, image.Height, std::move(image.Pixels));
 }
 
 std::shared_ptr<IDWriteFontFace> ResourceManager::FindFont(const ResourceKey& key)

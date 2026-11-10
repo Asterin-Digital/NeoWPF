@@ -18,25 +18,25 @@ public:
     MediaPlayer();
     ~MediaPlayer();
 
-    MediaResult Open(const MediaSource& source);
+    NeoWPF::Result<void, MediaError> Open(const MediaSource& source);
     void Close() noexcept;
 
-    MediaResult Play();
-    MediaResult Pause();
-    MediaResult Stop();
-    MediaResult Seek(std::chrono::milliseconds position);
-    MediaResult SetVolume(float volume);
-    MediaResult SetLoop(bool enabled);
+    NeoWPF::Result<void, MediaError> Play();
+    NeoWPF::Result<void, MediaError> Pause();
+    NeoWPF::Result<void, MediaError> Stop();
+    NeoWPF::Result<void, MediaError> Seek(std::chrono::milliseconds position);
+    NeoWPF::Result<void, MediaError> SetVolume(float volume);
+    NeoWPF::Result<void, MediaError> SetLoop(bool enabled);
 
     MediaState GetState() const noexcept;
     std::chrono::milliseconds GetPosition() const noexcept;
     bool IsFinished() const noexcept;
-    const MediaResult& GetLastResult() const noexcept;
+    const NeoWPF::Result<void, MediaError>& GetLastResult() const noexcept;
 
 private:
     std::unique_ptr<IAudioMixer> mixer_;
     std::optional<IAudioMixer::SourceId> sourceId_;
-    MediaResult lastResult_ = MediaResult::Success();
+    NeoWPF::Result<void, MediaError> lastResult_ = NeoWPF::Success<void>{};
 };
 
 }

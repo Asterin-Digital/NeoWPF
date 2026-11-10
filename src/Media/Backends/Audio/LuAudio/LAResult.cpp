@@ -1,32 +1,32 @@
-#include <Media/Backends/Audio/LuAudio/LAResult.h>
+#include <NeoWPF/Media/Backends/Audio/LuAudio/LAResult.h>
 
 namespace NeoWPF::Media::LA {
 
-MediaResult TranslateResult(const LuAudio::Audio::Result& result)
+NeoWPF::Result<void, MediaError> TranslateResult(const LuAudio::Audio::Result& result)
 {
     if (result.Succeeded()) {
-        return MediaResult::Success();
+        return NeoWPF::Success<void>{};
     }
 
-    MediaResultCode code = MediaResultCode::ProcessingFailed;
+    MediaErrorCode code = MediaErrorCode::ProcessingFailed;
     switch (result.Code()) {
     case LuAudio::Audio::ResultCode::InvalidArgument:
-        code = MediaResultCode::InvalidArgument;
+        code = MediaErrorCode::InvalidArgument;
         break;
     case LuAudio::Audio::ResultCode::InvalidState:
-        code = MediaResultCode::InvalidState;
+        code = MediaErrorCode::InvalidState;
         break;
     case LuAudio::Audio::ResultCode::BackendUnavailable:
-        code = MediaResultCode::BackendUnavailable;
+        code = MediaErrorCode::BackendUnavailable;
         break;
     case LuAudio::Audio::ResultCode::ProcessingFailed:
-        code = MediaResultCode::ProcessingFailed;
+        code = MediaErrorCode::ProcessingFailed;
         break;
     case LuAudio::Audio::ResultCode::Success:
-        return MediaResult::Success();
+        return NeoWPF::Success<void>{};
     }
 
-    return MediaResult::Failure(code, result.Message());
+    return NeoWPF::Fail<MediaError>{MediaError{code, result.Message()}};
 }
 
 }

@@ -3,23 +3,26 @@
 #include <string>
 #include <filesystem>
 
+#include <NeoWPF/Etc/Result.h>
+#include <NeoWPF/Platform/PlatformUtils.h>
+
 namespace NeoWPF::Platform {
 
-bool LoadResourceData(const std::wstring& resourcePath, std::vector<uint8_t>& outData) {
+NeoWPF::Result<std::vector<uint8_t>> LoadResourceData(const std::wstring& resourcePath) {
     HRSRC hResource = FindResourceW(nullptr, resourcePath.c_str(), RT_RCDATA);
-    if (!hResource) return false;
+    if (!hResource) return NeoWPF::Fail<std::string>{"Windows resource was not found"};
 
     HGLOBAL hGlobal = LoadResource(nullptr, hResource);
-    if (!hGlobal) return false;
+    if (!hGlobal) return NeoWPF::Fail<std::string>{"Windows resource could not be loaded"};
 
     LPVOID pData = LockResource(hGlobal);
-    if (!pData) return false;
+    if (!pData) return NeoWPF::Fail<std::string>{"Windows resource data could not be accessed"};
 
     DWORD dwSize = SizeofResource(nullptr, hResource);
-    if (dwSize == 0) return false;
+    if (dwSize == 0) return NeoWPF::Fail<std::string>{"Windows resource is empty"};
 
-    outData.assign(static_cast<uint8_t*>(pData), static_cast<uint8_t*>(pData) + dwSize);
-    return true;
+    return NeoWPF::Success<std::vector<uint8_t>>{
+        std::vector<uint8_t>(static_cast<uint8_t*>(pData), static_cast<uint8_t*>(pData) + dwSize)};
 }
 
 std::filesystem::path GetExecutableDirectory() {

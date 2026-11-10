@@ -12,7 +12,7 @@ See LICENSE file in the project root for full license text.
 
 #include <NeoWPF/Media/Audio/IAudioMixer.h>
 
-#include <Media/Backends/Audio/LuAudio/LASource.h>
+#include <NeoWPF/Media/Backends/Audio/LuAudio/LASource.h>
 
 namespace NeoWPF::Media::LA {
 
@@ -20,29 +20,29 @@ class LAMixer final : public IAudioMixer {
 public:
     ~LAMixer() override;
 
-    MediaResult OpenSource(const MediaSource& source, SourceId& id) override;
-    MediaResult RemoveSource(SourceId id) override;
+    NeoWPF::Result<SourceId, MediaError> OpenSource(const MediaSource& source) override;
+    NeoWPF::Result<void, MediaError> RemoveSource(SourceId id) override;
 
-    MediaResult Play() override;
-    MediaResult Pause() override;
-    MediaResult Stop() override;
-    MediaResult Seek(SourceId id, std::chrono::milliseconds position) override;
-    MediaResult SetSourceVolume(SourceId id, float volume) override;
-    MediaResult SetSourceLoop(SourceId id, bool enabled) override;
+    NeoWPF::Result<void, MediaError> Play() override;
+    NeoWPF::Result<void, MediaError> Pause() override;
+    NeoWPF::Result<void, MediaError> Stop() override;
+    NeoWPF::Result<void, MediaError> Seek(SourceId id, std::chrono::milliseconds position) override;
+    NeoWPF::Result<void, MediaError> SetSourceVolume(SourceId id, float volume) override;
+    NeoWPF::Result<void, MediaError> SetSourceLoop(SourceId id, bool enabled) override;
 
     MediaState GetState() const noexcept override;
     std::chrono::milliseconds GetSourcePosition(SourceId id) const noexcept override;
     bool IsSourceFinished(SourceId id) const noexcept override;
     std::size_t GetSourceCount() const noexcept override;
-    const MediaResult& GetLastResult() const noexcept override;
+    const NeoWPF::Result<void, MediaError>& GetLastResult() const noexcept override;
 
 private:
-    MediaResult Store(MediaResult result);
+    NeoWPF::Result<void, MediaError> Store(NeoWPF::Result<void, MediaError> result);
 
     std::unique_ptr<LuAudio::Audio::IAudioBackend> backend_;
     std::unique_ptr<LuAudio::Audio::AudioMixer> mixer_;
     MediaState state_ = MediaState::Closed;
-    MediaResult lastResult_ = MediaResult::Success();
+    NeoWPF::Result<void, MediaError> lastResult_ = NeoWPF::Success<void>{};
     std::uint32_t sampleRate_ = 0;
 };
 

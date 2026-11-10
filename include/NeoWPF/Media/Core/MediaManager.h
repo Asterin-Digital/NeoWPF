@@ -11,15 +11,16 @@ See LICENSE file in the project root for full license text.
 
 #include <NeoWPF/Media/Audio/IAudioMixer.h>
 #include <NeoWPF/Media/Backends/IMediaBackend.h>
-#include <NeoWPF/Media/Core/MediaResult.h>
+#include <NeoWPF/Etc/Result.h>
+#include <NeoWPF/Media/Core/MediaError.h>
 
 namespace NeoWPF::Media {
 
 class MediaManager final {
 public:
-    MediaResult RegisterBackend(std::shared_ptr<IMediaBackend> backend);
+    NeoWPF::Result<void, MediaError> RegisterBackend(std::shared_ptr<IMediaBackend> backend);
 
-    MediaResult UnregisterBackend(const std::string& name);
+    NeoWPF::Result<void, MediaError> UnregisterBackend(const std::string& name);
 
     std::shared_ptr<IMediaBackend> GetBackend(const std::string& name) const;
 
@@ -37,9 +38,8 @@ public:
         return backend ? backend->TryGetNativeBackend<T>() : nullptr;
     }
 
-    std::unique_ptr<IAudioMixer> CreateAudioMixer(
-        const std::string& backendName,
-        MediaResult& result) const;
+    NeoWPF::Result<std::unique_ptr<IAudioMixer>, MediaError> CreateAudioMixer(
+        const std::string& backendName) const;
 
     bool HasBackend(const std::string& name) const noexcept;
 

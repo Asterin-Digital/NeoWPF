@@ -7,10 +7,11 @@ See LICENSE file in the project root for full license text.
 
 #include <LuAudio/Audio/Contracts/Result.h>
 
-#include <NeoWPF/Media/Core/MediaResult.h>
+#include <NeoWPF/Etc/Result.h>
+#include <NeoWPF/Media/Core/MediaError.h>
 
 namespace NeoWPF::Media::LA {
 
-MediaResult TranslateResult(const LuAudio::Audio::Result& result);
+NeoWPF::Result<void, MediaError> TranslateResult(const LuAudio::Audio::Result& result);
 
 }

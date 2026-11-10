@@ -80,8 +80,8 @@ public:
 
         @internal
     */
-    bool LoadResourceData(const std::wstring& resourcePath,
-                          std::vector<std::uint8_t>& outData) override;
+    NeoWPF::Result<std::vector<std::uint8_t>> LoadResourceData(
+        const std::wstring& resourcePath) override;
     /*
         @summary
         Android has no executable directory.
@@ -102,8 +102,8 @@ public:
 
         @internal
     */
-    bool FetchHttpResource(const std::wstring& url,
-                           std::vector<std::uint8_t>& outData) override;
+    NeoWPF::Result<std::vector<std::uint8_t>> FetchHttpResource(
+        const std::wstring& url) override;
     /*
         @summary
         Document picker is not implemented yet.
@@ -130,35 +130,31 @@ public:
 
         @internal
     */
-    bool DecodeImageFromMemory(const std::vector<std::uint8_t>& data,
-                               std::vector<std::uint8_t>& outPixels,
-                               int& outWidth, int& outHeight,
-                               int decodeWidth, int decodeHeight) override;
+    NeoWPF::Result<NeoWPF::Contracts::DecodedImage> DecodeImageFromMemory(
+        const std::vector<std::uint8_t>& data, int decodeWidth, int decodeHeight) override;
     /*
         @summary
         Image decoding is not implemented yet.
 
         @internal
     */
-    bool DecodeImageFile(const std::wstring& filePath,
-                         std::vector<std::uint8_t>& outPixels,
-                         int& outWidth, int& outHeight,
-                         int decodeWidth, int decodeHeight) override;
+    NeoWPF::Result<NeoWPF::Contracts::DecodedImage> DecodeImageFile(
+        const std::wstring& filePath, int decodeWidth, int decodeHeight) override;
     /*
         @summary
         Registers a font file with the shared text renderer.
 
         @internal
     */
-    bool RegisterFontFile(const std::wstring& filePath) override;
+    NeoWPF::Result<void> RegisterFontFile(const std::wstring& filePath) override;
     /*
         @summary
         Registers font data with the shared text renderer.
 
         @internal
     */
-    bool RegisterFontMemory(const unsigned char* data, std::size_t size,
-                            const std::wstring& familyName) override;
+    NeoWPF::Result<void> RegisterFontMemory(const unsigned char* data, std::size_t size,
+                                           const std::wstring& familyName) override;
     /*
         @summary
         Resolves font requests using registered fonts and the embedded fallback font.

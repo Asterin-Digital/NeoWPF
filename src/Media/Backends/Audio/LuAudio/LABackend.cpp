@@ -1,6 +1,6 @@
-#include <Media/Backends/Audio/LuAudio/LABackend.h>
+#include <NeoWPF/Media/Backends/Audio/LuAudio/LABackend.h>
 
-#include <Media/Backends/Audio/LuAudio/LAMixer.h>
+#include <NeoWPF/Media/Backends/Audio/LuAudio/LAMixer.h>
 
 namespace NeoWPF::Media::LA {
 
@@ -16,11 +16,10 @@ std::string_view LABackend::GetName() const noexcept
     return "default-audio";
 }
 
-std::unique_ptr<IAudioMixer> LABackend::CreateAudioMixer(
-    MediaResult& result)
+NeoWPF::Result<std::unique_ptr<IAudioMixer>, MediaError> LABackend::CreateAudioMixer()
 {
-    result = MediaResult::Success();
-    return std::make_unique<LAMixer>();
+    return NeoWPF::Success<std::unique_ptr<IAudioMixer>>{
+        std::make_unique<LAMixer>()};
 }
 
 LuAudio::Audio::Result LABackend::Open(const LuAudio::Audio::AudioStreamConfig& requestedConfig)

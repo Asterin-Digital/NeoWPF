@@ -11,9 +11,9 @@ namespace NeoWPF::Platform::Windows {
 
 class WClipboard final : public NeoWPF::Contracts::IClipboard {
 public:
-    bool SetText(const std::wstring& text) override;
+    NeoWPF::Result<void> SetText(const std::wstring& text) override;
     void TryGetText(TextCallback callback) override;
-    bool Clear() override;
+    NeoWPF::Result<void> Clear() override;
 };
 
 }

@@ -146,14 +146,12 @@ TEST(XamlMarkupExtensionTests, ParsesRegisteredBindingExtension)
 {
     NeoWPF::Core::Application::Initialize();
 
-    std::string error;
-    const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
+    const auto extensionResult = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
         "{Binding Name, Mode=TwoWay}",
-        {1, 1},
-        error);
+        {1, 1});
 
-    EXPECT_NE(extension, nullptr);
-    EXPECT_TRUE(error.empty());
+    ASSERT_TRUE(extensionResult.Success());
+    EXPECT_NE(extensionResult.Value(), nullptr);
 
     NeoWPF::Core::Application::Shutdown();
 }
@@ -163,10 +161,9 @@ TEST(XamlMarkupExtensionTests, RejectsInvalidBindingArguments)
     NeoWPF::Core::Application::Initialize();
 
     for (const auto& value : {"{Binding}", "{Binding Name, Mode=Invalid}", "{Binding Name, Unknown=Value}"}) {
-        std::string error;
-        const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(value, {1, 1}, error);
-        EXPECT_EQ(extension, nullptr) << value;
-        EXPECT_FALSE(error.empty()) << value;
+        const auto extensionResult = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(value, {1, 1});
+        ASSERT_TRUE(extensionResult.Fail()) << value;
+        EXPECT_FALSE(extensionResult.Error().empty()) << value;
     }
 
     NeoWPF::Core::Application::Shutdown();
@@ -177,11 +174,12 @@ TEST(XamlMarkupExtensionTests, ParsesLocaleExtension)
     NeoWPF::Core::Application::Initialize();
 
     for (const auto& value : {"{Locale Greeting}", "{Locale Key=Greeting}"}) {
-        std::string error;
-        const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
-            value, {1, 1}, error);
+        const auto extensionResult = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
+            value, {1, 1});
 
-        ASSERT_NE(extension, nullptr) << value << ": " << error;
+        ASSERT_TRUE(extensionResult.Success()) << value << ": " << extensionResult.Error();
+        const auto& extension = extensionResult.Value();
+        ASSERT_NE(extension, nullptr) << value;
         std::string key;
         ASSERT_TRUE(NeoWPF::UI::Markup::Xaml::TryGetXamlLocaleKey(*extension, key));
         EXPECT_EQ(key, "Greeting");
@@ -200,12 +198,11 @@ TEST(XamlMarkupExtensionTests, RejectsInvalidLocaleArguments)
              "{Locale Key=Greeting, Key=Other}",
              "{Locale Greeting, Other}",
              "{Locale Unknown=Greeting}"}) {
-        std::string error;
-        const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
-            value, {1, 1}, error);
+        const auto extensionResult = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
+            value, {1, 1});
 
-        EXPECT_EQ(extension, nullptr) << value;
-        EXPECT_FALSE(error.empty()) << value;
+        ASSERT_TRUE(extensionResult.Fail()) << value;
+        EXPECT_FALSE(extensionResult.Error().empty()) << value;
     }
 
     NeoWPF::Core::Application::Shutdown();
@@ -304,12 +301,11 @@ TEST(XamlMarkupExtensionTests, RejectsEmptyStaticResourceKey)
 {
     NeoWPF::Core::Application::Initialize();
 
-    std::string error;
-    const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
-        "{StaticResource}", {1, 1}, error);
+    const auto extensionResult = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
+        "{StaticResource}", {1, 1});
 
-    EXPECT_EQ(extension, nullptr);
-    EXPECT_EQ(error, "StaticResource key is required");
+    ASSERT_TRUE(extensionResult.Fail());
+    EXPECT_EQ(extensionResult.Error(), "StaticResource key is required");
 
     NeoWPF::Core::Application::Shutdown();
 }
@@ -413,8 +409,7 @@ TEST(XamlMarkupExtensionTests, ResolvesStaticResourceThroughContext)
     NeoWPF::UI::Properties::RegisterCoreControlProperties();
 
     auto button = std::make_shared<NeoWPF::UI::Button>();
-    std::string error;
-    const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
+    const auto extensionResult = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
         "{StaticResource Accent}",
         {1, 1, [](std::string_view key, std::any& value) {
             if (key != "Accent") {
@@ -422,15 +417,15 @@ TEST(XamlMarkupExtensionTests, ResolvesStaticResourceThroughContext)
             }
             value = std::wstring(L"Resolved accent");
             return true;
-        }},
-        error);
+        }});
 
+    ASSERT_TRUE(extensionResult.Success()) << extensionResult.Error();
+    const auto& extension = extensionResult.Value();
     ASSERT_NE(extension, nullptr);
-    ASSERT_TRUE(error.empty());
-    ASSERT_TRUE(extension->Apply(
+    const auto applyResult = extension->Apply(
         *button,
-        NeoWPF::UI::Button::TextProperty(),
-        error)) << error;
+        NeoWPF::UI::Button::TextProperty());
+    ASSERT_TRUE(applyResult.Success()) << applyResult.Error();
     EXPECT_EQ(button->GetText(), L"Resolved accent");
 
     NeoWPF::Core::Application::Shutdown();

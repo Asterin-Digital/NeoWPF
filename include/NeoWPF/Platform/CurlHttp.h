@@ -9,11 +9,13 @@ See LICENSE file in the project root for full license text.
 #include <string>
 #include <vector>
 
+#include <NeoWPF/Etc/Result.h>
+
 namespace NeoWPF::Platform {
 
 class CurlHttp final {
 public:
-    bool Fetch(const std::wstring& url, std::vector<std::uint8_t>& outData) const;
+    NeoWPF::Result<std::vector<std::uint8_t>> Fetch(const std::wstring& url) const;
 };
 
 }

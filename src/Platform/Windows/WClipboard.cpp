@@ -9,10 +9,10 @@
 
 namespace NeoWPF::Platform::Windows {
 
-bool WClipboard::SetText(const std::wstring& text)
+NeoWPF::Result<void> WClipboard::SetText(const std::wstring& text)
 {
     if (!OpenClipboard(nullptr)) {
-        return false;
+        return NeoWPF::Fail<std::string>{"Windows clipboard could not be opened"};
     }
 
     const auto closeClipboard = [] {
@@ -21,21 +21,21 @@ bool WClipboard::SetText(const std::wstring& text)
 
     if (!EmptyClipboard()) {
         closeClipboard();
-        return false;
+        return NeoWPF::Fail<std::string>{"Windows clipboard could not be cleared before writing"};
     }
 
     const auto byteCount = (text.size() + 1) * sizeof(wchar_t);
     HGLOBAL memory = GlobalAlloc(GMEM_MOVEABLE, byteCount);
     if (!memory) {
         closeClipboard();
-        return false;
+        return NeoWPF::Fail<std::string>{"Windows clipboard text storage could not be allocated"};
     }
 
     void* data = GlobalLock(memory);
     if (!data) {
         GlobalFree(memory);
         closeClipboard();
-        return false;
+        return NeoWPF::Fail<std::string>{"Windows clipboard text storage could not be locked"};
     }
 
     std::memcpy(data, text.c_str(), byteCount);
@@ -44,25 +44,30 @@ bool WClipboard::SetText(const std::wstring& text)
     if (!SetClipboardData(CF_UNICODETEXT, memory)) {
         GlobalFree(memory);
         closeClipboard();
-        return false;
+        return NeoWPF::Fail<std::string>{"Windows clipboard text could not be written"};
     }
 
     closeClipboard();
-    return true;
+    return NeoWPF::Success<void>{};
 }
 
 void WClipboard::TryGetText(TextCallback callback)
 {
-    NeoWPF::Contracts::ClipboardTextResult result;
+    NeoWPF::Contracts::ClipboardTextResult result =
+        NeoWPF::Success<std::optional<std::wstring>>{std::nullopt};
 
-    if (OpenClipboard(nullptr)) {
+    if (!OpenClipboard(nullptr)) {
+        result = NeoWPF::Fail<std::string>{"Windows clipboard could not be opened for reading"};
+    } else {
         if (IsClipboardFormatAvailable(CF_UNICODETEXT)) {
-            if (const HGLOBAL memory = static_cast<HGLOBAL>(GetClipboardData(CF_UNICODETEXT))) {
-                if (const auto* data = static_cast<const wchar_t*>(GlobalLock(memory))) {
-                    result.Text.assign(data);
-                    result.Succeeded = true;
-                    GlobalUnlock(memory);
-                }
+            const HGLOBAL memory = static_cast<HGLOBAL>(GetClipboardData(CF_UNICODETEXT));
+            if (!memory) {
+                result = NeoWPF::Fail<std::string>{"Windows clipboard text could not be accessed"};
+            } else if (const auto* data = static_cast<const wchar_t*>(GlobalLock(memory))) {
+                result = NeoWPF::Success<std::optional<std::wstring>>{std::wstring(data)};
+                GlobalUnlock(memory);
+            } else {
+                result = NeoWPF::Fail<std::string>{"Windows clipboard text could not be locked"};
             }
         }
         CloseClipboard();
@@ -76,15 +81,18 @@ void WClipboard::TryGetText(TextCallback callback)
     }
 }
 
-bool WClipboard::Clear()
+NeoWPF::Result<void> WClipboard::Clear()
 {
     if (!OpenClipboard(nullptr)) {
-        return false;
+        return NeoWPF::Fail<std::string>{"Windows clipboard could not be opened"};
     }
 
     const bool cleared = EmptyClipboard() != FALSE;
     CloseClipboard();
-    return cleared;
+    if (!cleared) {
+        return NeoWPF::Fail<std::string>{"Windows clipboard could not be cleared"};
+    }
+    return NeoWPF::Success<void>{};
 }
 
 }

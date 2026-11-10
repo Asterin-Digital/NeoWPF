@@ -18,8 +18,6 @@ namespace NeoWPF::UI::Markup::Xaml {
 
     @details
     Runtime XAML is intended for development diagnostics and is not a public API contract.
-    NeoCM, NeoPM, and other tooling may still rely on the parser behavior while the feature
-    remains under active evolution.
 */
 
 #if defined(NEOWPF_ENABLE_RUNTIME_XAML)

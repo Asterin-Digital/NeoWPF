@@ -8,6 +8,8 @@ See LICENSE file in the project root for full license text.
 #include <functional>
 #include <string>
 
+#include <NeoWPF/Contracts/IGeneral.h>
+
 namespace NeoWPF::UI {
 
 /*
@@ -20,13 +22,10 @@ public:
         @summary
         Receives the result of an asynchronous clipboard text read.
 
-        @param succeeded
-        `true` when clipboard text was read successfully; otherwise `false`.
-
-        @param text
-        The clipboard text when the read succeeds, or an empty string otherwise.
+        @param result
+        The clipboard text, an empty result when no text is available, or a failure reason.
     */
-    using TextCallback = std::function<void(bool succeeded, std::wstring text)>;
+    using TextCallback = NeoWPF::Contracts::IClipboard::TextCallback;
 
     /*
         @summary
@@ -36,9 +35,9 @@ public:
         The text to place on the clipboard.
 
         @returns
-        `true` when the clipboard contents were replaced successfully otherwise false.
+        Success when the clipboard contents were replaced, or the failure reason.
     */
-    bool SetText(const std::wstring& text);
+    NeoWPF::Result<void> SetText(const std::wstring& text);
 
     /*
         @summary
@@ -54,9 +53,9 @@ public:
         Clears the system clipboard contents.
 
         @returns
-        `true` when the clipboard was cleared successfully; otherwise `false`.
+        Success when the clipboard was cleared, or the failure reason.
     */
-    bool Clear();
+    NeoWPF::Result<void> Clear();
 };
 
 }

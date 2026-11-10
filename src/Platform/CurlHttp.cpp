@@ -44,21 +44,24 @@ bool InitializeCurl()
 
 }
 
-bool CurlHttp::Fetch(const std::wstring& url, std::vector<std::uint8_t>& outData) const
+NeoWPF::Result<std::vector<std::uint8_t>> CurlHttp::Fetch(const std::wstring& url) const
 {
-    outData.clear();
-    if (url.empty() || !InitializeCurl()) {
-        return false;
+    if (url.empty()) {
+        return NeoWPF::Fail<std::string>{"HTTP resource URL cannot be empty"};
+    }
+    if (!InitializeCurl()) {
+        return NeoWPF::Fail<std::string>{"HTTP client initialization failed"};
     }
 
     CURL* handle = curl_easy_init();
     if (!handle) {
         NeoWPF::Diagnostics::LogError("CurlHttp: curl_easy_init failed");
-        return false;
+        return NeoWPF::Fail<std::string>{"HTTP request initialization failed"};
     }
 
     const std::string urlUtf8 = NeoWPF::Platform::WideToUtf8(url);
-    CurlBuffer buffer{&outData};
+    std::vector<std::uint8_t> data;
+    CurlBuffer buffer{&data};
     curl_easy_setopt(handle, CURLOPT_URL, urlUtf8.c_str());
     curl_easy_setopt(handle, CURLOPT_HTTPGET, 1L);
     curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
@@ -76,15 +79,14 @@ bool CurlHttp::Fetch(const std::wstring& url, std::vector<std::uint8_t>& outData
     curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &responseCode);
     curl_easy_cleanup(handle);
 
-    if (result != CURLE_OK || responseCode < 200 || responseCode >= 300 || outData.empty()) {
-        outData.clear();
+    if (result != CURLE_OK || responseCode < 200 || responseCode >= 300 || data.empty()) {
         NeoWPF::Diagnostics::LogError(
             "CurlHttp: request failed for URL '%s' (curl=%d, HTTP=%ld)",
             urlUtf8.c_str(), static_cast<int>(result), responseCode);
-        return false;
+        return NeoWPF::Fail<std::string>{"HTTP resource request failed"};
     }
 
-    return true;
+    return NeoWPF::Success<std::vector<std::uint8_t>>{std::move(data)};
 }
 
 }

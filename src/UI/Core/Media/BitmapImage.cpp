@@ -75,20 +75,23 @@ void BitmapImage::LoadFromMemory(const std::vector<std::uint8_t>& data)
         return;
     }
 
-    std::vector<std::uint8_t> pixels;
-    int width = 0;
-    int height = 0;
-
     auto* platform = NeoWPF::Platform::CurrentPlatform();
-    if (!platform || !platform->DecodeImageFromMemory(data, pixels, width, height, m_decodePixelWidth, m_decodePixelHeight)) {
-        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed to decode image data");
+    if (!platform) {
+        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed because no platform is registered");
         return;
     }
+    auto result = platform->DecodeImageFromMemory(data, m_decodePixelWidth, m_decodePixelHeight);
+    if (result.Fail()) {
+        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed to decode image data: %s",
+                                      result.Error().c_str());
+        return;
+    }
+    auto image = std::move(result).Value();
 
     m_uriSource.clear();
-    m_width = width;
-    m_height = height;
-    m_pixels = std::move(pixels);
+    m_width = image.Width;
+    m_height = image.Height;
+    m_pixels = std::move(image.Pixels);
     m_isInitialized = true;
     m_isInitPending = false;
     m_isLoading = false;
@@ -101,20 +104,23 @@ void BitmapImage::LoadFromMemory(std::vector<std::uint8_t>&& data)
         return;
     }
 
-    std::vector<std::uint8_t> pixels;
-    int width = 0;
-    int height = 0;
-
     auto* platform = NeoWPF::Platform::CurrentPlatform();
-    if (!platform || !platform->DecodeImageFromMemory(data, pixels, width, height, m_decodePixelWidth, m_decodePixelHeight)) {
-        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed to decode image data");
+    if (!platform) {
+        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed because no platform is registered");
         return;
     }
+    auto result = platform->DecodeImageFromMemory(data, m_decodePixelWidth, m_decodePixelHeight);
+    if (result.Fail()) {
+        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed to decode image data: %s",
+                                      result.Error().c_str());
+        return;
+    }
+    auto image = std::move(result).Value();
 
     m_uriSource.clear();
-    m_width = width;
-    m_height = height;
-    m_pixels = std::move(pixels);
+    m_width = image.Width;
+    m_height = image.Height;
+    m_pixels = std::move(image.Pixels);
     m_isInitialized = true;
     m_isInitPending = false;
     m_isLoading = false;
@@ -214,40 +220,63 @@ bool BitmapImage::TryLoad()
         }
     }
 
-    std::vector<std::uint8_t> pixels;
-    int width = 0, height = 0;
+    NeoWPF::Contracts::DecodedImage image;
     bool success = false;
 
     if (IsLocalFileUri(m_uriSource)) {
         const std::wstring filePath = NormalizeFilePath(m_uriSource);
         auto* platform = NeoWPF::Platform::CurrentPlatform();
-        success = platform && platform->DecodeImageFile(filePath, pixels, width, height, m_decodePixelWidth, m_decodePixelHeight);
+        if (platform) {
+            auto result = platform->DecodeImageFile(filePath, m_decodePixelWidth, m_decodePixelHeight);
+            if (result.Success()) {
+                image = std::move(result).Value();
+                success = true;
+            }
+        }
         if (!success) {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Info, "TryLoad DecodeImageFile failed for: %ls", filePath.c_str());
         }
     } else if (IsHttpUri(m_uriSource)) {
-        std::vector<uint8_t> httpData;
         auto* platform = NeoWPF::Platform::CurrentPlatform();
-        if (platform && platform->FetchHttpResource(m_uriSource, httpData)) {
+        if (platform) {
+            auto fetchResult = platform->FetchHttpResource(m_uriSource);
+            if (fetchResult.Fail()) {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Info,
+                    "FetchHttpResource failed for: %ls (%s)", m_uriSource.c_str(), fetchResult.Error().c_str());
+            } else {
+                auto httpData = std::move(fetchResult).Value();
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Debug, "FetchHttpResource succeeded, fetched %u bytes", static_cast<unsigned int>(httpData.size()));
-            success = platform->DecodeImageFromMemory(httpData, pixels, width, height, m_decodePixelWidth, m_decodePixelHeight);
-            if (!success) {
+                auto decodeResult = platform->DecodeImageFromMemory(httpData, m_decodePixelWidth, m_decodePixelHeight);
+                success = decodeResult.Success();
+                if (success) {
+                    image = std::move(decodeResult).Value();
+                } else {
                 NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Info, "DecodeImageFromMemory failed after fetching %u bytes from: %ls", static_cast<unsigned int>(httpData.size()), m_uriSource.c_str());
+                }
             }
-        } else {
-            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Info, "FetchHttpResource failed for: %ls", m_uriSource.c_str());
         }
     } else if (IsResourceUri(m_uriSource)) {
         std::wstring resourcePath = ExtractResourcePath(m_uriSource);
-        std::vector<uint8_t> resourceData;
         auto* platform = NeoWPF::Platform::CurrentPlatform();
-        if (platform && platform->LoadResourceData(resourcePath, resourceData)) {
-            success = platform->DecodeImageFromMemory(resourceData, pixels, width, height, m_decodePixelWidth, m_decodePixelHeight);
-            if (!success) {
-                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Info, "DecodeImageFromMemory failed for resource: %ls", resourcePath.c_str());
+        if (platform) {
+            auto resourceResult = platform->LoadResourceData(resourcePath);
+            if (resourceResult.Success()) {
+                auto resourceData = std::move(resourceResult).Value();
+                auto decodeResult = platform->DecodeImageFromMemory(
+                    resourceData, m_decodePixelWidth, m_decodePixelHeight);
+                success = decodeResult.Success();
+                if (success) {
+                    image = std::move(decodeResult).Value();
+                } else {
+                    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image,
+                        NeoWPF::Diagnostics::Level::Info,
+                        "DecodeImageFromMemory failed for resource: %ls", resourcePath.c_str());
+                }
+            } else {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image,
+                    NeoWPF::Diagnostics::Level::Info,
+                    "LoadResourceData failed for: %ls (%s)", resourcePath.c_str(), resourceResult.Error().c_str());
             }
-        } else {
-            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Info, "LoadResourceData failed for: %ls", resourcePath.c_str());
         }
     } else {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Image, NeoWPF::Diagnostics::Level::Info, "Unsupported URI scheme: %ls", m_uriSource.c_str());
@@ -255,9 +284,9 @@ bool BitmapImage::TryLoad()
     }
 
     if (success) {
-        m_width = width;
-        m_height = height;
-        m_pixels = std::move(pixels);
+        m_width = image.Width;
+        m_height = image.Height;
+        m_pixels = std::move(image.Pixels);
 
         if (m_cachePolicy == CachePolicy::OnLoad) {
             std::lock_guard<std::mutex> lock(g_cacheMutex);

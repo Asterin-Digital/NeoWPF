@@ -34,7 +34,7 @@ public:
     NeoWPF::Platform::Capabilities::PlatformId GetPlatformId() const noexcept override;
     NeoWPF::Core::DeviceCategory GetDeviceCategory() const noexcept override;
     int RunApplication(std::chrono::seconds startupTimeout) override;
-    bool LoadResourceData(const std::wstring& resourcePath, std::vector<std::uint8_t>& outData) override;
+    NeoWPF::Result<std::vector<std::uint8_t>> LoadResourceData(const std::wstring& resourcePath) override;
     std::filesystem::path GetExecutableDirectory() const override;
     /*
         @summary
@@ -43,7 +43,7 @@ public:
         @internal
     */
     NeoWPF::Result<std::filesystem::path> GetAppDataDirectory() const override;
-    bool FetchHttpResource(const std::wstring& url, std::vector<std::uint8_t>& outData) override;
+    NeoWPF::Result<std::vector<std::uint8_t>> FetchHttpResource(const std::wstring& url) override;
     NeoWPF::Contracts::FileDialogResult ShowOpenFileDialog(
         const std::wstring& title,
         const std::wstring& initialDirectory,
@@ -54,12 +54,13 @@ public:
         const std::wstring& initialDirectory,
         const std::wstring& defaultFileName,
         const std::vector<NeoWPF::Contracts::FileDialogFilter>& filters) override;
-    bool DecodeImageFromMemory(const std::vector<std::uint8_t>& data, std::vector<std::uint8_t>& outPixels,
-                               int& outWidth, int& outHeight, int decodeWidth, int decodeHeight) override;
-    bool DecodeImageFile(const std::wstring& filePath, std::vector<std::uint8_t>& outPixels,
-                         int& outWidth, int& outHeight, int decodeWidth, int decodeHeight) override;
-    bool RegisterFontFile(const std::wstring& filePath) override;
-    bool RegisterFontMemory(const unsigned char* data, std::size_t size, const std::wstring& familyName) override;
+    NeoWPF::Result<NeoWPF::Contracts::DecodedImage> DecodeImageFromMemory(
+        const std::vector<std::uint8_t>& data, int decodeWidth, int decodeHeight) override;
+    NeoWPF::Result<NeoWPF::Contracts::DecodedImage> DecodeImageFile(
+        const std::wstring& filePath, int decodeWidth, int decodeHeight) override;
+    NeoWPF::Result<void> RegisterFontFile(const std::wstring& filePath) override;
+    NeoWPF::Result<void> RegisterFontMemory(
+        const unsigned char* data, std::size_t size, const std::wstring& familyName) override;
     std::wstring ResolveFontFamily(const std::wstring& requestedFontFamily) override;
     int CaptureCallStack(NeoWPF::Diagnostics::CallStackEntry* entries,
                          int maxEntries, int skipFrames) noexcept override;

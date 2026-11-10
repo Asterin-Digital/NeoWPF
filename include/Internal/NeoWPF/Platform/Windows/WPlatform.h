@@ -82,15 +82,12 @@ public:
         @param resourcePath
         Resource path to load.
 
-        @param outData
-        Receives the loaded bytes.
-
         @returns
-        True when the resource was loaded.
+        The loaded bytes, or the failure reason.
 
         @internal
     */
-    bool LoadResourceData(const std::wstring& resourcePath, std::vector<std::uint8_t>& outData) override;
+    NeoWPF::Result<std::vector<std::uint8_t>> LoadResourceData(const std::wstring& resourcePath) override;
     /*
         @summary
         Returns the directory containing the Windows executable.
@@ -115,15 +112,12 @@ public:
         @param url
         Resource URL.
 
-        @param outData
-        Receives the downloaded bytes.
-
         @returns
-        True when the resource was retrieved.
+        The downloaded bytes, or the failure reason.
 
         @internal
     */
-    bool FetchHttpResource(const std::wstring& url, std::vector<std::uint8_t>& outData) override;
+    NeoWPF::Result<std::vector<std::uint8_t>> FetchHttpResource(const std::wstring& url) override;
     /*
         @summary
         Displays a Windows file-open dialog.
@@ -139,6 +133,9 @@ public:
 
         @param allowMultiSelect
         Whether multiple files may be selected.
+
+        @returns
+        The selected files, an empty value when canceled, or the failure reason.
 
         @internal
     */
@@ -163,6 +160,9 @@ public:
         @param filters
         File types offered by the dialog.
 
+        @returns
+        The selected file, an empty value when canceled, or the failure reason.
+
         @internal
     */
     NeoWPF::Contracts::FileDialogResult ShowSaveFileDialog(
@@ -177,15 +177,6 @@ public:
         @param data
         Encoded image bytes.
 
-        @param outPixels
-        Receives decoded pixel data.
-
-        @param outWidth
-        Receives the decoded image width.
-
-        @param outHeight
-        Receives the decoded image height.
-
         @param decodeWidth
         Requested output width.
 
@@ -193,12 +184,12 @@ public:
         Requested output height.
 
         @returns
-        True when decoding succeeds.
+        The decoded image pixels and dimensions, or the failure reason.
 
         @internal
     */
-    bool DecodeImageFromMemory(const std::vector<std::uint8_t>& data, std::vector<std::uint8_t>& outPixels,
-                               int& outWidth, int& outHeight, int decodeWidth, int decodeHeight) override;
+    NeoWPF::Result<NeoWPF::Contracts::DecodedImage> DecodeImageFromMemory(
+        const std::vector<std::uint8_t>& data, int decodeWidth, int decodeHeight) override;
     /*
         @summary
         Decodes image pixels from a file.
@@ -206,15 +197,6 @@ public:
         @param filePath
         Path to the encoded image.
 
-        @param outPixels
-        Receives decoded pixel data.
-
-        @param outWidth
-        Receives the decoded image width.
-
-        @param outHeight
-        Receives the decoded image height.
-
         @param decodeWidth
         Requested output width.
 
@@ -222,12 +204,12 @@ public:
         Requested output height.
 
         @returns
-        True when decoding succeeds.
+        The decoded image pixels and dimensions, or the failure reason.
 
         @internal
     */
-    bool DecodeImageFile(const std::wstring& filePath, std::vector<std::uint8_t>& outPixels,
-                         int& outWidth, int& outHeight, int decodeWidth, int decodeHeight) override;
+    NeoWPF::Result<NeoWPF::Contracts::DecodedImage> DecodeImageFile(
+        const std::wstring& filePath, int decodeWidth, int decodeHeight) override;
     /*
         @summary
         Registers a font from a file.
@@ -236,11 +218,11 @@ public:
         Font file path.
 
         @returns
-        True when the font was registered.
+        Success when the font was registered, or the failure reason.
 
         @internal
     */
-    bool RegisterFontFile(const std::wstring& filePath) override;
+    NeoWPF::Result<void> RegisterFontFile(const std::wstring& filePath) override;
     /*
         @summary
         Registers font data.
@@ -255,11 +237,12 @@ public:
         Font family name.
 
         @returns
-        True when the font was registered.
+        Success when the font was registered, or the failure reason.
 
         @internal
     */
-    bool RegisterFontMemory(const unsigned char* data, std::size_t size, const std::wstring& familyName) override;
+    NeoWPF::Result<void> RegisterFontMemory(
+        const unsigned char* data, std::size_t size, const std::wstring& familyName) override;
     /*
         @summary
         Resolves a requested font family.

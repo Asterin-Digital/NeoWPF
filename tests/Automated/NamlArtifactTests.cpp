@@ -178,9 +178,10 @@ TEST(NamlArtifactTests, LoadsLocaleReferenceAndUpdates)
         reinterpret_cast<const unsigned char*>(serialized.data()),
         serialized.size());
 
-    std::string error;
-    const auto root = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error);
-    ASSERT_NE(root, nullptr) << error;
+    const auto result = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key);
+    ASSERT_TRUE(result.Success());
+    const auto root = result.Value();
+    ASSERT_NE(root, nullptr);
     const auto textBlock = std::dynamic_pointer_cast<NeoWPF::UI::TextBlock>(root);
     ASSERT_NE(textBlock, nullptr);
     EXPECT_EQ(textBlock->GetText(), L"Hello");
@@ -218,8 +219,9 @@ TEST(NamlArtifactTests, LoadsApplicationLocaleTable)
         reinterpret_cast<const unsigned char*>(serialized.data()),
         serialized.size());
 
-    std::string error;
-    ASSERT_NE(NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error), nullptr) << error;
+    const auto result = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key);
+    ASSERT_TRUE(result.Success());
+    ASSERT_NE(result.Value(), nullptr);
     ASSERT_TRUE(manager.SetActiveLocale(L"en-US"));
     EXPECT_EQ(manager.Resolve(L"Greeting"), L"Hello from compiled XAML");
 
@@ -255,11 +257,12 @@ TEST(NamlArtifactTests, LoadsImplicitContentThroughRegisteredContentProperty)
         reinterpret_cast<const unsigned char*>(serialized.data()),
         serialized.size());
 
-    std::string error;
     NeoWPF::UI::Markup::Xaml::XamlNamescope namescope;
-    const auto root = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &namescope, &error);
+    const auto result = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &namescope);
 
-    ASSERT_NE(root, nullptr) << error;
+    ASSERT_TRUE(result.Success());
+    const auto root = result.Value();
+    ASSERT_NE(root, nullptr);
     const auto grid = std::dynamic_pointer_cast<NeoWPF::UI::Grid>(root);
     ASSERT_NE(grid, nullptr);
     const auto children = grid->GetLogicalChildren();
@@ -303,9 +306,10 @@ TEST(NamlArtifactTests, LoadsKeyedResourcesWithoutAddingThemToVisualChildren)
         reinterpret_cast<const unsigned char*>(serialized.data()),
         serialized.size());
 
-    std::string error;
-    const auto root = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error);
-    ASSERT_NE(root, nullptr) << error;
+    const auto result = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key);
+    ASSERT_TRUE(result.Success());
+    const auto root = result.Value();
+    ASSERT_NE(root, nullptr);
     const auto visualRoot = std::dynamic_pointer_cast<NeoWPF::UI::Visual>(root);
     ASSERT_NE(visualRoot, nullptr);
     ASSERT_EQ(visualRoot->GetVisualChildren().size(), 0u);
@@ -359,9 +363,10 @@ TEST(NamlArtifactTests, LoadsImplicitStylesWithoutAResourceKey)
         key, NeoWPF::ResourceType::Xaml,
         reinterpret_cast<const unsigned char*>(serialized.data()), serialized.size());
 
-    std::string error;
-    const auto root = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error);
-    ASSERT_NE(root, nullptr) << error;
+    const auto result = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key);
+    ASSERT_TRUE(result.Success());
+    const auto root = result.Value();
+    ASSERT_NE(root, nullptr);
     const auto grid = std::dynamic_pointer_cast<NeoWPF::UI::Grid>(root);
     ASSERT_NE(grid, nullptr);
     ASSERT_EQ(grid->GetVisualChildren().size(), 1u);
@@ -407,9 +412,10 @@ TEST(NamlArtifactTests, ResolvesStaticResourceIntoContentProperty)
         reinterpret_cast<const unsigned char*>(serialized.data()),
         serialized.size());
 
-    std::string error;
-    const auto root = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error);
-    ASSERT_NE(root, nullptr) << error;
+    const auto result = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key);
+    ASSERT_TRUE(result.Success());
+    const auto root = result.Value();
+    ASSERT_NE(root, nullptr);
     const auto border = std::dynamic_pointer_cast<NeoWPF::UI::Border>(root);
     ASSERT_NE(border, nullptr);
     ASSERT_NE(border->GetChild(), nullptr);
@@ -441,11 +447,12 @@ TEST(NamlRootTests, LoadsWindowRootWithoutDiscardingWindowState)
         key, NeoWPF::ResourceType::Xaml,
         reinterpret_cast<const unsigned char*>(serialized.data()), serialized.size());
 
-    std::string error;
     NeoWPF::UI::Markup::Xaml::XamlNamescope namescope;
-    const auto root = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &namescope, &error);
+    const auto result = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &namescope);
+    ASSERT_TRUE(result.Success());
+    const auto root = result.Value();
     const auto window = std::dynamic_pointer_cast<NeoWPF::UI::Window>(root);
-    ASSERT_NE(window, nullptr) << error;
+    ASSERT_NE(window, nullptr);
     EXPECT_STREQ(window->GetTitle(), L"Compiled title");
     EXPECT_EQ(namescope.Find<NeoWPF::UI::Window>("MainWindow").get(), window.get());
 
@@ -477,9 +484,9 @@ TEST(NamlRootTests, LoadsApplicationResourcesIntoApplicationStore)
         key, NeoWPF::ResourceType::Xaml,
         reinterpret_cast<const unsigned char*>(serialized.data()), serialized.size());
 
-    std::string error;
-    const auto root = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error);
-    ASSERT_NE(std::dynamic_pointer_cast<NeoWPF::Core::Application>(root), nullptr) << error;
+    const auto result = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key);
+    ASSERT_TRUE(result.Success());
+    ASSERT_NE(std::dynamic_pointer_cast<NeoWPF::Core::Application>(result.Value()), nullptr);
 
     std::any resource;
     ASSERT_TRUE(NeoWPF::Core::Application::TryFindResource("Accent", resource));
@@ -512,9 +519,9 @@ TEST(NamlArtifactTests, RejectsCompiledResourceWithoutKey)
         key, NeoWPF::ResourceType::Xaml,
         reinterpret_cast<const unsigned char*>(serialized.data()), serialized.size());
 
-    std::string error;
-    EXPECT_EQ(NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error), nullptr);
-    EXPECT_NE(error.find("missing a key"), std::string::npos);
+    const auto result = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key);
+    ASSERT_TRUE(result.Fail());
+    EXPECT_NE(result.Error().find("missing a key"), std::string::npos);
 
     NeoWPF::EmbeddedResourceProvider::Instance().Unregister(key);
     NeoWPF::Core::Application::Shutdown();
@@ -540,9 +547,9 @@ TEST(NamlArtifactTests, RejectsMissingCompiledStaticResource)
         key, NeoWPF::ResourceType::Xaml,
         reinterpret_cast<const unsigned char*>(serialized.data()), serialized.size());
 
-    std::string error;
-    EXPECT_EQ(NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error), nullptr);
-    EXPECT_NE(error.find("StaticResource was not found"), std::string::npos);
+    const auto result = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key);
+    ASSERT_TRUE(result.Fail());
+    EXPECT_NE(result.Error().find("StaticResource was not found"), std::string::npos);
 
     NeoWPF::EmbeddedResourceProvider::Instance().Unregister(key);
     NeoWPF::Core::Application::Shutdown();
@@ -576,9 +583,10 @@ TEST(NamlArtifactTests, ResolvesResourceFromAncestorScope)
         key, NeoWPF::ResourceType::Xaml,
         reinterpret_cast<const unsigned char*>(serialized.data()), serialized.size());
 
-    std::string error;
-    const auto root = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error);
-    ASSERT_NE(root, nullptr) << error;
+    const auto result = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key);
+    ASSERT_TRUE(result.Success());
+    const auto root = result.Value();
+    ASSERT_NE(root, nullptr);
     const auto grid = std::dynamic_pointer_cast<NeoWPF::UI::Grid>(root);
     ASSERT_NE(grid, nullptr);
     ASSERT_EQ(grid->GetVisualChildren().size(), 1u);
@@ -620,9 +628,9 @@ TEST(NamlArtifactTests, RejectsDuplicateKeysInOneCompiledScope)
         key, NeoWPF::ResourceType::Xaml,
         reinterpret_cast<const unsigned char*>(serialized.data()), serialized.size());
 
-    std::string error;
-    EXPECT_EQ(NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key, &error), nullptr);
-    EXPECT_NE(error.find("duplicate NAML resource key"), std::string::npos);
+    const auto result = NeoWPF::UI::Markup::Xaml::LoadCompiledXaml(key);
+    ASSERT_TRUE(result.Fail());
+    EXPECT_NE(result.Error().find("duplicate NAML resource key"), std::string::npos);
 
     NeoWPF::EmbeddedResourceProvider::Instance().Unregister(key);
     NeoWPF::Core::Application::Shutdown();

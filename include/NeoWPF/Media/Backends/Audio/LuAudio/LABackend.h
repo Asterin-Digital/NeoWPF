@@ -22,8 +22,7 @@ public:
 
     std::string_view GetName() const noexcept override;
 
-    std::unique_ptr<IAudioMixer> CreateAudioMixer(
-        MediaResult& result) override;
+    NeoWPF::Result<std::unique_ptr<IAudioMixer>, MediaError> CreateAudioMixer() override;
 
     LuAudio::Audio::Result Open(const LuAudio::Audio::AudioStreamConfig& requestedConfig) override;
     LuAudio::Audio::Result Start() override;
