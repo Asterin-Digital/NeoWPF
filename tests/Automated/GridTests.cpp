@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Layout/Grid/ColumnDefinition.h>
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
+#include <NeoWPF/UI/Layout/Grid/RowDefinition.h>
 
 #include <limits>
 #include <memory>
@@ -25,6 +27,20 @@ public:
 private:
     int width;
     int height;
+};
+
+class GridThatDestroysAnotherOwner final : public NeoWPF::UI::Grid {
+public:
+    std::shared_ptr<NeoWPF::UI::Grid>* ownerToDestroy = nullptr;
+
+    void InvalidateMeasure() override
+    {
+        NeoWPF::UI::Grid::InvalidateMeasure();
+        if (ownerToDestroy) {
+            ownerToDestroy->reset();
+            ownerToDestroy = nullptr;
+        }
+    }
 };
 
 struct GridPlacementSpec {
@@ -71,6 +87,92 @@ TEST(GridTests, ArrangesChildrenAcrossFixedAndStarCells)
     EXPECT_EQ(second->GetLayoutOffsetY(), 20);
     EXPECT_EQ(second->GetFinalWidth(), 70);
     EXPECT_EQ(second->GetFinalHeight(), 60);
+}
+
+TEST(GridTests, DefinitionsDefaultToWeightedStar)
+{
+    NeoWPF::UI::RowDefinition row;
+    NeoWPF::UI::ColumnDefinition column;
+
+    EXPECT_EQ(row.GetHeight().Mode, NeoWPF::UI::SizeMode::Star);
+    EXPECT_EQ(row.GetHeight().Value, 1);
+    EXPECT_EQ(column.GetWidth().Mode, NeoWPF::UI::SizeMode::Star);
+    EXPECT_EQ(column.GetWidth().Value, 1);
+}
+
+TEST(GridTests, DefinitionChangesAfterInsertionInvalidateGridLayout)
+{
+    NeoWPF::UI::Grid grid;
+    auto row = std::make_shared<NeoWPF::UI::RowDefinition>();
+    auto column = std::make_shared<NeoWPF::UI::ColumnDefinition>();
+    row->SetHeight(NeoWPF::UI::Grid::GridLength::Fixed(20));
+    column->SetWidth(NeoWPF::UI::Grid::GridLength::Fixed(30));
+    grid.AddRowDefinition(row);
+    grid.AddColumnDefinition(column);
+
+    auto child = std::make_shared<FixedGridChild>(10, 10);
+    grid.AddChild(child, 0, 0);
+    grid.Measure(100, 100);
+    grid.Arrange(100, 100);
+    EXPECT_EQ(child->GetFinalWidth(), 30);
+    EXPECT_EQ(child->GetFinalHeight(), 20);
+
+    grid.ClearLayoutDirty();
+    row->SetHeight(NeoWPF::UI::Grid::GridLength::Fixed(35));
+    EXPECT_TRUE(grid.IsLayoutDirty());
+    grid.ClearLayoutDirty();
+    column->SetWidth(NeoWPF::UI::Grid::GridLength::Fixed(45));
+    EXPECT_TRUE(grid.IsLayoutDirty());
+    EXPECT_EQ(grid.GetRowDefinitions()[0].value, 35);
+    EXPECT_EQ(grid.GetColumnDefinitions()[0].value, 45);
+
+    grid.Measure(100, 100);
+    grid.Arrange(100, 100);
+    EXPECT_EQ(child->GetFinalWidth(), 45);
+    EXPECT_EQ(child->GetFinalHeight(), 35);
+}
+
+TEST(GridTests, SharedDefinitionOwnersSurviveReentrantDestruction)
+{
+    auto row = std::make_shared<NeoWPF::UI::RowDefinition>();
+    auto column = std::make_shared<NeoWPF::UI::ColumnDefinition>();
+    auto first = std::make_shared<GridThatDestroysAnotherOwner>();
+    auto second = std::make_shared<NeoWPF::UI::Grid>();
+
+    first->AddRowDefinition(row);
+    first->AddColumnDefinition(column);
+    second->AddRowDefinition(row);
+    second->AddColumnDefinition(column);
+    second->ClearLayoutDirty();
+    first->ownerToDestroy = &second;
+
+    row->SetHeight(NeoWPF::UI::Grid::GridLength::Fixed(25));
+
+    EXPECT_EQ(second, nullptr);
+    EXPECT_EQ(first->GetRowDefinitions()[0].value, 25);
+    EXPECT_NO_THROW(row->SetHeight(NeoWPF::UI::Grid::GridLength::Fixed(30)));
+    EXPECT_EQ(first->GetRowDefinitions()[0].value, 30);
+
+    EXPECT_NO_THROW(column->SetWidth(NeoWPF::UI::Grid::GridLength::Fixed(40)));
+    EXPECT_EQ(first->GetColumnDefinitions()[0].value, 40);
+}
+
+TEST(GridTests, SharedDefinitionInvalidatesEveryLiveGrid)
+{
+    auto row = std::make_shared<NeoWPF::UI::RowDefinition>();
+    auto first = std::make_shared<NeoWPF::UI::Grid>();
+    auto second = std::make_shared<NeoWPF::UI::Grid>();
+    first->AddRowDefinition(row);
+    second->AddRowDefinition(row);
+    first->ClearLayoutDirty();
+    second->ClearLayoutDirty();
+
+    row->SetHeight(NeoWPF::UI::Grid::GridLength::Fixed(25));
+
+    EXPECT_TRUE(first->IsLayoutDirty());
+    EXPECT_TRUE(second->IsLayoutDirty());
+    EXPECT_EQ(first->GetRowDefinitions()[0].value, 25);
+    EXPECT_EQ(second->GetRowDefinitions()[0].value, 25);
 }
 
 TEST(GridTests, ArrangesSpanningChildAcrossMultipleCells)

@@ -27,6 +27,17 @@ namespace {
 
 namespace NeoWPF::UI {
 
+    Grid::~Grid()
+    {
+        m_definitionOwner->owner = nullptr;
+        for (const auto& rowDefinition : m_rowDefinitionObjects) {
+            rowDefinition->RemoveOwner(m_definitionOwner);
+        }
+        for (const auto& columnDefinition : m_columnDefinitionObjects) {
+            columnDefinition->RemoveOwner(m_definitionOwner);
+        }
+    }
+
     void Grid::AddRow(SizeMode mode, int value)
     {
         auto rowDefinition = std::make_shared<RowDefinition>();
@@ -119,6 +130,10 @@ namespace NeoWPF::UI {
         if (!rowDef) return;
 
         const auto height = rowDef->GetHeight();
+        m_rowDefinitionObjects.reserve(m_rowDefinitionObjects.size() + 1);
+        m_rowDefs.reserve(m_rowDefs.size() + 1);
+        rowDef->AddOwner(m_definitionOwner);
+        m_rowDefinitionObjects.push_back(rowDef);
         m_rowDefs.push_back({height.Mode, height.Value});
     }
 
@@ -127,7 +142,39 @@ namespace NeoWPF::UI {
         if (!colDef) return;
 
         const auto width = colDef->GetWidth();
+        m_columnDefinitionObjects.reserve(m_columnDefinitionObjects.size() + 1);
+        m_colDefs.reserve(m_colDefs.size() + 1);
+        colDef->AddOwner(m_definitionOwner);
+        m_columnDefinitionObjects.push_back(colDef);
         m_colDefs.push_back({width.Mode, width.Value});
+    }
+
+    void Grid::OnRowDefinitionChanged(RowDefinition* definition)
+    {
+        if (!definition) return;
+
+        const auto height = definition->GetHeight();
+        for (std::size_t i = 0; i < m_rowDefinitionObjects.size(); ++i) {
+            if (m_rowDefinitionObjects[i].get() == definition) {
+                m_rowDefs[i] = {height.Mode, height.Value};
+            }
+        }
+        m_autoRowHeights.clear();
+        InvalidateMeasure();
+    }
+
+    void Grid::OnColumnDefinitionChanged(ColumnDefinition* definition)
+    {
+        if (!definition) return;
+
+        const auto width = definition->GetWidth();
+        for (std::size_t i = 0; i < m_columnDefinitionObjects.size(); ++i) {
+            if (m_columnDefinitionObjects[i].get() == definition) {
+                m_colDefs[i] = {width.Mode, width.Value};
+            }
+        }
+        m_autoColWidths.clear();
+        InvalidateMeasure();
     }
 
     void Grid::OnRemoveVisualChild(Visual* child)

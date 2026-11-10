@@ -8,6 +8,8 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <any>
+#include <vector>
 
 namespace NeoWPF::UI {
 
@@ -62,6 +64,40 @@ public:
         The sizing mode as an int (cast from SizeMode enum).
     */
     int GetMode() const;
+
+protected:
+    /*
+        @summary
+        Notifies owning Grids when the column width changes.
+
+        @internal
+    */
+    void OnDependencyPropertyChanged(const Properties::DependencyProperty& property,
+                                     const Properties::PropertyMetadata& metadata,
+                                     const std::any& oldValue,
+                                     const std::any& newValue,
+                                     Properties::PropertyValueSource source) override;
+
+private:
+    friend class Grid;
+
+    /*
+        @summary
+        Registers a Grid that uses this definition.
+
+        @internal
+    */
+    void AddOwner(const std::shared_ptr<GridDefinitionOwner>& owner);
+
+    /*
+        @summary
+        Removes a Grid that no longer uses this definition.
+
+        @internal
+    */
+    void RemoveOwner(const std::shared_ptr<GridDefinitionOwner>& owner) noexcept;
+
+    std::vector<std::shared_ptr<GridDefinitionOwner>> m_owners;
 };
 
 }

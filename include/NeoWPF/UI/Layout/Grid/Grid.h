@@ -16,6 +16,17 @@ namespace NeoWPF::UI {
 
 class RowDefinition;
 class ColumnDefinition;
+class Grid;
+
+/*
+    @summary
+    Tracks a Grid's lifetime while definitions notify their owners.
+
+    @internal
+*/
+struct GridDefinitionOwner {
+    Grid* owner = nullptr;
+};
 
 
 /*
@@ -90,8 +101,10 @@ public:
         static GridLength Fixed(int pixels) noexcept { return {SizeMode::Fixed, pixels > 0 ? pixels : 0}; }
     };
 
-    Grid() {
+    Grid() : m_definitionOwner(std::make_shared<GridDefinitionOwner>(GridDefinitionOwner{this})) {
     }
+
+    ~Grid() override;
 
     static const NeoWPF::UI::Properties::DependencyProperty& RowProperty();
     static const NeoWPF::UI::Properties::DependencyProperty& ColumnProperty();
@@ -347,8 +360,30 @@ protected:
     void OnRemoveVisualChild(Visual* child) override;
 
 private:
+    friend class RowDefinition;
+    friend class ColumnDefinition;
+
+    /*
+        @summary
+        Updates the cached row definition after its value changes.
+
+        @internal
+    */
+    void OnRowDefinitionChanged(RowDefinition* definition);
+
+    /*
+        @summary
+        Updates the cached column definition after its value changes.
+
+        @internal
+    */
+    void OnColumnDefinitionChanged(ColumnDefinition* definition);
+
+    std::shared_ptr<GridDefinitionOwner> m_definitionOwner;
     std::vector<Definition> m_rowDefs;
     std::vector<Definition> m_colDefs;
+    std::vector<std::shared_ptr<RowDefinition>> m_rowDefinitionObjects;
+    std::vector<std::shared_ptr<ColumnDefinition>> m_columnDefinitionObjects;
     std::vector<double> m_autoRowHeights;
     std::vector<double> m_autoColWidths;
 };
