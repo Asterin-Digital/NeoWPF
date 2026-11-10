@@ -96,8 +96,6 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Controls/Base/ToggleBase/ToggleBase.h>
 #include <NeoWPF/UI/Controls/Base/GroupedToggleBase/GroupedToggleBase.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
-#include <NeoWPF/UI/Controls/FilePicker/FilePicker.h>
-#include <NeoWPF/UI/Controls/Clipboard/Clipboard.h>
 #include <NeoWPF/UI/Controls/Checkbox/Checkbox.h>
 #include <NeoWPF/UI/Controls/ToggleSwitch/ToggleSwitch.h>
 #include <NeoWPF/UI/Controls/RadioButton/RadioButton.h>
