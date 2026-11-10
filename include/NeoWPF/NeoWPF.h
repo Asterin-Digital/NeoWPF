@@ -82,6 +82,7 @@
 #include <NeoWPF/Platform/Capabilities.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/Platform/NativeWindow.h>
+#include <NeoWPF/Platform/Services/Services.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/UI.h>
 #include <NeoWPF/Input/Input.h>
@@ -254,6 +255,8 @@ namespace NeoWPF {
     
     namespace Threading = Core::Threading;
 
+    namespace Services = Platform::Services;
+
     using Core::Application;
 
     using Core::ApplicationThemes::ThemeDefinition;
@@ -347,8 +350,6 @@ namespace NeoWPF {
     }
 
     using UI::Button;
-
-    using UI::FilePicker;
 
     using UI::Checkbox;
 

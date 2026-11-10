@@ -1,128 +1,29 @@
-#include <NeoWPF/UI/Controls/FilePicker/FilePicker.h>
+#include <NeoWPF/Platform/Services/FilePicker.h>
 
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Platform/PlatformRegistry.h>
-#include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 
-namespace NeoWPF::UI {
-
-FilePicker::FilePicker()
-    : Button(L"Browse")
-{
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Files,
-        NeoWPF::Diagnostics::Level::Debug,
-        "[FilePicker] constructed ptr=%p defaultMode=Open",
-        this);
-    Click += [this]() {
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Files,
-            NeoWPF::Diagnostics::Level::Debug,
-            "[FilePicker] click handler ptr=%p mode=%d",
-            this,
-            static_cast<int>(m_dialogMode));
-        ShowDialog();
-    };
-    m_title = L"Open File";
-}
-
-FilePicker::FilePicker(const std::wstring& label)
-    : Button(label)
-{
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Files,
-        NeoWPF::Diagnostics::Level::Debug,
-        "[FilePicker] constructed ptr=%p label=%zu chars mode=Open",
-        this,
-        label.size());
-    Click += [this]() {
-        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Files,
-            NeoWPF::Diagnostics::Level::Debug,
-            "[FilePicker] click handler ptr=%p mode=%d",
-            this,
-            static_cast<int>(m_dialogMode));
-        ShowDialog();
-    };
-    m_title = L"Open File";
-}
-
-FilePicker::~FilePicker() = default;
+namespace NeoWPF::Platform::Services {
 
 void FilePicker::SetTitle(const std::wstring& title)
 {
-    if (!IsApplyingPropertyValue()) {
-        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Title", *this);
-        if (property) {
-            SetValue(*property, title);
-            return;
-        }
-    }
-
     m_title = title;
-    InvalidateVisual();
 }
 
 void FilePicker::SetInitialDirectory(const std::wstring& directory)
 {
-    if (!IsApplyingPropertyValue()) {
-        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("InitialDirectory", *this);
-        if (property) {
-            SetValue(*property, directory);
-            return;
-        }
-    }
-
     m_initialDirectory = directory;
-    InvalidateVisual();
 }
 
 void FilePicker::SetDefaultFileName(const std::wstring& fileName)
 {
-    if (!IsApplyingPropertyValue()) {
-        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("DefaultFileName", *this);
-        if (property) {
-            SetValue(*property, fileName);
-            return;
-        }
-    }
-
     m_defaultFileName = fileName;
-    InvalidateVisual();
-}
-
-void FilePicker::SetSelectedFile(const std::wstring& fileName)
-{
-    NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Files,
-        NeoWPF::Diagnostics::Level::Debug,
-        "[FilePicker] SetSelectedFile ptr=%p fileNameEmpty=%d",
-        this,
-        fileName.empty());
-
-    if (!IsApplyingPropertyValue()) {
-        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("SelectedFile", *this);
-        if (property) {
-            SetValue(*property, fileName);
-            return;
-        }
-    }
-
-    m_selectedFile = fileName;
-    if (!fileName.empty()) {
-        SetText(fileName);
-    }
-    InvalidateVisual();
 }
 
 void FilePicker::SetAllowMultiSelect(bool value) noexcept
 {
-    if (!IsApplyingPropertyValue()) {
-        const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("AllowMultiSelect", *this);
-        if (property) {
-            SetValue(*property, value);
-            return;
-        }
-    }
-
     m_allowMultiSelect = value;
-    InvalidateVisual();
 }
 
 void FilePicker::SetDialogMode(FilePickerMode mode) noexcept
@@ -158,9 +59,6 @@ NeoWPF::Contracts::FileDialogResult FilePicker::ShowOpenFileDialog()
             this,
             hasSelection,
             fileCount);
-        if (hasSelection && !result.Value()->FileName.empty()) {
-            SetSelectedFile(result.Value()->FileName);
-        }
         FilePicked.Invoke(result);
         return result;
     }
@@ -195,9 +93,6 @@ NeoWPF::Contracts::FileDialogResult FilePicker::ShowSaveFileDialog()
             this,
             hasSelection,
             fileCount);
-        if (hasSelection && !result.Value()->FileName.empty()) {
-            SetSelectedFile(result.Value()->FileName);
-        }
         FilePicked.Invoke(result);
         return result;
     }

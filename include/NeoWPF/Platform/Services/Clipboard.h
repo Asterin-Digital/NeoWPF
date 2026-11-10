@@ -10,7 +10,7 @@ See LICENSE file in the project root for full license text.
 
 #include <NeoWPF/Contracts/IGeneral.h>
 
-namespace NeoWPF::UI {
+namespace NeoWPF::Platform::Services {
 
 /*
     @summary

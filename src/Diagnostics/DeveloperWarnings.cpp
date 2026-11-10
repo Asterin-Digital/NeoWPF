@@ -2,7 +2,7 @@
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Controls/Button/Button.h>
-#include <NeoWPF/UI/Controls/Clipboard/Clipboard.h>
+#include <NeoWPF/Platform/Services/Clipboard.h>
 #include <NeoWPF/UI/Controls/Popup/Popup.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Layout/Border/Border.h>
@@ -144,7 +144,7 @@ std::shared_ptr<NeoWPF::UI::Popup> CreateDeveloperWarningPopup(
     std::weak_ptr<NeoWPF::UI::Button> weakCopy = copy;
     copy->Click += [copyText, weakCopy]() {
         if (auto button = weakCopy.lock()) {
-            const auto result = NeoWPF::UI::Clipboard().SetText(copyText);
+            const auto result = NeoWPF::Platform::Services::Clipboard().SetText(copyText);
             button->SetText(result.Success() ? L"Copied" : L"Copy failed");
         }
     };

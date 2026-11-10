@@ -8,28 +8,18 @@ See LICENSE file in the project root for full license text.
 #include <string>
 #include <vector>
 
+#include <NeoWPF/Core/Events/Event.h>
 #include <NeoWPF/Contracts/IGeneral.h>
-#include <NeoWPF/UI/Controls/Button/Button.h>
 
-namespace NeoWPF::UI {
+namespace NeoWPF::Platform::Services {
 
 enum class FilePickerMode {
     Open,
     Save
 };
 
-class FilePicker : public Button {
+class FilePicker {
 public:
-    static const Properties::DependencyProperty& TitleProperty();
-    static const Properties::DependencyProperty& InitialDirectoryProperty();
-    static const Properties::DependencyProperty& DefaultFileNameProperty();
-    static const Properties::DependencyProperty& SelectedFileProperty();
-    static const Properties::DependencyProperty& AllowMultiSelectProperty();
-
-    FilePicker();
-    explicit FilePicker(const std::wstring& label);
-    ~FilePicker();
-
     void SetTitle(const std::wstring& title);
     const std::wstring& GetTitle() const noexcept { return m_title; }
 
@@ -38,9 +28,6 @@ public:
 
     void SetDefaultFileName(const std::wstring& fileName);
     const std::wstring& GetDefaultFileName() const noexcept { return m_defaultFileName; }
-
-    void SetSelectedFile(const std::wstring& fileName);
-    const std::wstring& GetSelectedFile() const noexcept { return m_selectedFile; }
 
     void SetAllowMultiSelect(bool value) noexcept;
     bool GetAllowMultiSelect() const noexcept { return m_allowMultiSelect; }
@@ -58,11 +45,9 @@ public:
     NeoWPF::Core::Event<const NeoWPF::Contracts::FileDialogResult&> FilePicked;
 
 private:
-    std::wstring m_title;
+    std::wstring m_title = L"Open File";
     std::wstring m_initialDirectory;
     std::wstring m_defaultFileName;
-    std::wstring m_selectedFile;
-    std::vector<std::wstring> m_selectedFiles;
     std::vector<NeoWPF::Contracts::FileDialogFilter> m_filters;
     bool m_allowMultiSelect = false;
     FilePickerMode m_dialogMode = FilePickerMode::Open;

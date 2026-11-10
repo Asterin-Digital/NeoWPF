@@ -1,11 +1,11 @@
-#include <NeoWPF/UI/Controls/Clipboard/Clipboard.h>
+#include <NeoWPF/Platform/Services/Clipboard.h>
 
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Platform/PlatformRegistry.h>
 
 #include <utility>
 
-namespace NeoWPF::UI {
+namespace NeoWPF::Platform::Services {
 
 NeoWPF::Result<void> Clipboard::SetText(const std::wstring& text)
 {
