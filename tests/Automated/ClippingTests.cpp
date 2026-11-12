@@ -41,7 +41,7 @@ public:
                           GetLayoutOffsetY(),
                           GetFinalWidth(),
                           GetFinalHeight(),
-                          0xFF123456u,
+                          NeoWPF::Rendering::Paint::Solid(0xFF123456u),
                           1.0f,
                           GetClipRect());
     }

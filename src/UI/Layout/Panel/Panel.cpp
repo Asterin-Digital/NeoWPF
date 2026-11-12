@@ -100,7 +100,7 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             cornerRadius.TopRight,
             cornerRadius.BottomRight,
             cornerRadius.BottomLeft,
-                backgroundBrush->GetArgb(),
+                NeoWPF::Rendering::Paint::Solid(backgroundBrush->GetArgb()),
                 static_cast<float>(GetOpacity() * backgroundBrush->GetOpacity()));
     }
 

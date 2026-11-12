@@ -72,7 +72,7 @@ std::uint32_t GetRenderedTrackColor(NeoWPF::UI::ToggleSwitch& toggleSwitch)
     NeoWPF::Rendering::CommandList commands;
     toggleSwitch.BuildRenderCommands(commands);
     const auto rectangles = GetRoundedRectCommands(commands);
-    return rectangles.empty() ? 0u : rectangles.front().color;
+    return rectangles.empty() ? 0u : rectangles.front().paint.color;
 }
 
 }
@@ -192,7 +192,7 @@ TEST_F(ToggleSwitchTests, CheckedStateUsesTheThemeAccentTrack)
     const auto rectangles = GetRoundedRectCommands(commands);
     ASSERT_EQ(rectangles.size(), 2u);
 
-    EXPECT_EQ(rectangles[0].color, GetBrushColor(
+    EXPECT_EQ(rectangles[0].paint.color, GetBrushColor(
         NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
             NeoWPF::Core::ApplicationThemes::PaletteBrush::Accent)));
 }
@@ -210,7 +210,7 @@ TEST_F(ToggleSwitchTests, DisabledStateUsesTheThemeDisabledSurface)
     const auto rectangles = GetRoundedRectCommands(commands);
     ASSERT_EQ(rectangles.size(), 2u);
 
-    EXPECT_EQ(rectangles[0].color, GetBrushColor(
+    EXPECT_EQ(rectangles[0].paint.color, GetBrushColor(
         NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
             NeoWPF::Core::ApplicationThemes::PaletteBrush::DisabledSurface)));
 }

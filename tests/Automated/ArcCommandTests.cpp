@@ -15,9 +15,12 @@ TEST(ArcCommandTests, PreservesCommandOrderAndArcPayload)
 {
     NeoWPF::Rendering::CommandList commands;
     const NeoWPF::Rendering::ClipRect clip{10.0, 20.0, 30.0, 40.0, true};
-    commands.DrawRect(1.0, 2.0, 3.0, 4.0, 0xFF112233u);
-    commands.DrawArc(50.0, 60.0, 12.0, 4.0, 0.25, 1.5, 0xFF445566u, 0.75f, clip);
-    commands.DrawTexturedQuad(5.0, 6.0, 7.0, 8.0, 0.0f, 0.0f, 1.0f, 1.0f, 42u, 0xFFFFFFFFu);
+    commands.DrawRect(1.0, 2.0, 3.0, 4.0,
+                      NeoWPF::Rendering::Paint::Solid(0xFF112233u));
+    commands.DrawArc(50.0, 60.0, 12.0, 4.0, 0.25, 1.5,
+                     NeoWPF::Rendering::Paint::Solid(0xFF445566u), 0.75f, clip);
+    commands.DrawTexturedQuad(5.0, 6.0, 7.0, 8.0, 0.0f, 0.0f, 1.0f, 1.0f,
+                              42u, NeoWPF::Rendering::Paint::Solid(0xFFFFFFFFu));
 
     ASSERT_EQ(commands.commands.size(), 3u);
     EXPECT_EQ(commands.commands[0].kind, NeoWPF::Rendering::CommandList::CommandKind::Rect);
@@ -31,7 +34,7 @@ TEST(ArcCommandTests, PreservesCommandOrderAndArcPayload)
     EXPECT_DOUBLE_EQ(arc.thickness, 4.0);
     EXPECT_DOUBLE_EQ(arc.startAngleRadians, 0.25);
     EXPECT_DOUBLE_EQ(arc.sweepAngleRadians, 1.5);
-    EXPECT_EQ(arc.color, 0xFF445566u);
+    EXPECT_EQ(arc.paint.color, 0xFF445566u);
     EXPECT_FLOAT_EQ(arc.opacity, 0.75f);
     EXPECT_DOUBLE_EQ(arc.clip.x, 10.0);
     EXPECT_DOUBLE_EQ(arc.clip.y, 20.0);

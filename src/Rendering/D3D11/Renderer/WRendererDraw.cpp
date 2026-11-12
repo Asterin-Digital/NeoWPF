@@ -111,7 +111,7 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
                 NeoWPF::Diagnostics::Level::Trace,
                 "[D3D11] RoundedRect index=%zu rect=%.1f,%.1fx%.1f,%.1f color=0x%08X opacity=%.2f",
                 index, rounded.x, rounded.y, rounded.w, rounded.h,
-                rounded.color, rounded.opacity);
+                rounded.paint.color, rounded.opacity);
         }
     }
 
@@ -279,10 +279,10 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
     };
 
     auto pushArc = [&](const CommandList::ArcData& arc) {
-        const float baseAlpha = ((arc.color >> 24) & 0xFF) / 255.0f;
-        const float red = ((arc.color >> 16) & 0xFF) / 255.0f;
-        const float green = ((arc.color >> 8) & 0xFF) / 255.0f;
-        const float blue = (arc.color & 0xFF) / 255.0f;
+        const float baseAlpha = ((arc.paint.color >> 24) & 0xFF) / 255.0f;
+        const float red = ((arc.paint.color >> 16) & 0xFF) / 255.0f;
+        const float green = ((arc.paint.color >> 8) & 0xFF) / 255.0f;
+        const float blue = (arc.paint.color & 0xFF) / 255.0f;
         const auto vertices = TessellateAnnularArc(
             arc.centerX,
             arc.centerY,
@@ -483,10 +483,10 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
         switch (command.kind) {
         case CommandList::CommandKind::Rect: {
             const auto& r = command.rect;
-            const float baseAlpha = ((r.color >> 24) & 0xFF) / 255.0f;
-            const float red = ((r.color >> 16) & 0xFF) / 255.0f;
-            const float green = ((r.color >> 8) & 0xFF) / 255.0f;
-            const float blue = (r.color & 0xFF) / 255.0f;
+            const float baseAlpha = ((r.paint.color >> 24) & 0xFF) / 255.0f;
+            const float red = ((r.paint.color >> 16) & 0xFF) / 255.0f;
+            const float green = ((r.paint.color >> 8) & 0xFF) / 255.0f;
+            const float blue = (r.paint.color & 0xFF) / 255.0f;
             const float alpha = baseAlpha * r.opacity;
 
             if (std::fabs(r.rotationRadians) < 1e-6f) {
@@ -511,10 +511,10 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
         }
         case CommandList::CommandKind::RoundedRect: {
             const auto& r = command.roundedRect;
-            const float baseAlpha = ((r.color >> 24) & 0xFF) / 255.0f;
-            const float red = ((r.color >> 16) & 0xFF) / 255.0f;
-            const float green = ((r.color >> 8) & 0xFF) / 255.0f;
-            const float blue = (r.color & 0xFF) / 255.0f;
+            const float baseAlpha = ((r.paint.color >> 24) & 0xFF) / 255.0f;
+            const float red = ((r.paint.color >> 16) & 0xFF) / 255.0f;
+            const float green = ((r.paint.color >> 8) & 0xFF) / 255.0f;
+            const float blue = (r.paint.color & 0xFF) / 255.0f;
             const float alpha = baseAlpha * r.opacity;
 
             if (std::fabs(r.rotationRadians) < 1e-6f) {
@@ -564,13 +564,13 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
                         const float newV0 = static_cast<float>(q.v0 + (yDelta / q.h) * vSpan);
                         const float newU1 = static_cast<float>(newU0 + (clippedW / q.w) * uSpan);
                         const float newV1 = static_cast<float>(newV0 + (clippedH / q.h) * vSpan);
-                        pushTextQuad(static_cast<float>(clippedX), static_cast<float>(clippedY), static_cast<float>(clippedW), static_cast<float>(clippedH), newU0, newV0, newU1, newV1, q.tintColor, q.opacity, q.textureId);
+                        pushTextQuad(static_cast<float>(clippedX), static_cast<float>(clippedY), static_cast<float>(clippedW), static_cast<float>(clippedH), newU0, newV0, newU1, newV1, q.tint.color, q.opacity, q.textureId);
                     }
                 } else {
-                    pushTextQuad(static_cast<float>(q.x), static_cast<float>(q.y), static_cast<float>(q.w), static_cast<float>(q.h), q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId);
+                    pushTextQuad(static_cast<float>(q.x), static_cast<float>(q.y), static_cast<float>(q.w), static_cast<float>(q.h), q.u0, q.v0, q.u1, q.v1, q.tint.color, q.opacity, q.textureId);
                 }
             } else {
-                pushTextQuad(static_cast<float>(q.x), static_cast<float>(q.y), static_cast<float>(q.w), static_cast<float>(q.h), q.u0, q.v0, q.u1, q.v1, q.tintColor, q.opacity, q.textureId, q.rotationRadians, static_cast<float>(q.pivotX), static_cast<float>(q.pivotY));
+                pushTextQuad(static_cast<float>(q.x), static_cast<float>(q.y), static_cast<float>(q.w), static_cast<float>(q.h), q.u0, q.v0, q.u1, q.v1, q.tint.color, q.opacity, q.textureId, q.rotationRadians, static_cast<float>(q.pivotX), static_cast<float>(q.pivotY));
             }
             lastKind = command.kind;
             hasPendingKind = true;
