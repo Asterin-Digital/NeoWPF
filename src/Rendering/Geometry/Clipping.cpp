@@ -1,4 +1,4 @@
-#include <NeoWPF/Rendering/Clipping.h>
+#include <NeoWPF/Rendering/Geometry/Clipping.h>
 
 #include <algorithm>
 #include <cmath>

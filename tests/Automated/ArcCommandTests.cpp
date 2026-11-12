@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <NeoWPF/Rendering/ArcTessellation.h>
+#include <NeoWPF/Rendering/Geometry/ArcTessellation.h>
 #include <NeoWPF/Rendering/Renderer.h>
 
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <vector>
 
 namespace {
 
@@ -23,11 +24,11 @@ TEST(ArcCommandTests, PreservesCommandOrderAndArcPayload)
                               42u, NeoWPF::Rendering::Paint::Solid(0xFFFFFFFFu));
 
     ASSERT_EQ(commands.commands.size(), 3u);
-    EXPECT_EQ(commands.commands[0].kind, NeoWPF::Rendering::CommandList::CommandKind::Rect);
-    EXPECT_EQ(commands.commands[1].kind, NeoWPF::Rendering::CommandList::CommandKind::Arc);
-    EXPECT_EQ(commands.commands[2].kind, NeoWPF::Rendering::CommandList::CommandKind::TexturedQuad);
+    EXPECT_EQ(commands.commands[0].GetKind(), NeoWPF::Rendering::CommandList::CommandKind::Rect);
+    EXPECT_EQ(commands.commands[1].GetKind(), NeoWPF::Rendering::CommandList::CommandKind::Arc);
+    EXPECT_EQ(commands.commands[2].GetKind(), NeoWPF::Rendering::CommandList::CommandKind::TexturedQuad);
 
-    const auto& arc = commands.commands[1].arc;
+    const auto& arc = commands.commands[1].GetArc();
     EXPECT_DOUBLE_EQ(arc.centerX, 50.0);
     EXPECT_DOUBLE_EQ(arc.centerY, 60.0);
     EXPECT_DOUBLE_EQ(arc.radius, 12.0);
@@ -45,8 +46,9 @@ TEST(ArcCommandTests, PreservesCommandOrderAndArcPayload)
 
 TEST(ArcCommandTests, TessellatesPositiveQuarterSweepClockwiseFromTop)
 {
-    const auto vertices = NeoWPF::Rendering::TessellateAnnularArc(
-        50.0, 50.0, 10.0, 2.0, 0.0, kPi * 0.5, {});
+    std::vector<NeoWPF::Rendering::GeometryVertex> vertices;
+    NeoWPF::Rendering::TessellateAnnularArc(
+        vertices, 50.0, 50.0, 10.0, 2.0, 0.0, kPi * 0.5, {});
 
     ASSERT_FALSE(vertices.empty());
     ASSERT_EQ(vertices.size() % 3, 0u);
@@ -69,10 +71,12 @@ TEST(ArcCommandTests, TessellatesPositiveQuarterSweepClockwiseFromTop)
 
 TEST(ArcCommandTests, ClampsSweepsToOneRevolution)
 {
-    const auto oneRevolution = NeoWPF::Rendering::TessellateAnnularArc(
-        0.0, 0.0, 10.0, 2.0, 0.0, 2.0 * kPi, {});
-    const auto twoRevolutions = NeoWPF::Rendering::TessellateAnnularArc(
-        0.0, 0.0, 10.0, 2.0, 0.0, 4.0 * kPi, {});
+    std::vector<NeoWPF::Rendering::GeometryVertex> oneRevolution;
+    std::vector<NeoWPF::Rendering::GeometryVertex> twoRevolutions;
+    NeoWPF::Rendering::TessellateAnnularArc(
+        oneRevolution, 0.0, 0.0, 10.0, 2.0, 0.0, 2.0 * kPi, {});
+    NeoWPF::Rendering::TessellateAnnularArc(
+        twoRevolutions, 0.0, 0.0, 10.0, 2.0, 0.0, 4.0 * kPi, {});
 
     ASSERT_FALSE(oneRevolution.empty());
     EXPECT_EQ(twoRevolutions.size(), oneRevolution.size());
@@ -80,23 +84,26 @@ TEST(ArcCommandTests, ClampsSweepsToOneRevolution)
 
 TEST(ArcCommandTests, ReturnsEmptyGeometryForInvalidOrZeroSweep)
 {
-    EXPECT_TRUE(NeoWPF::Rendering::TessellateAnnularArc(
-        0.0, 0.0, 0.0, 2.0, 0.0, kPi, {}).empty());
-    EXPECT_TRUE(NeoWPF::Rendering::TessellateAnnularArc(
-        0.0, 0.0, 10.0, 0.0, 0.0, kPi, {}).empty());
-    EXPECT_TRUE(NeoWPF::Rendering::TessellateAnnularArc(
-        0.0, 0.0, 10.0, 21.0, 0.0, kPi, {}).empty());
-    EXPECT_TRUE(NeoWPF::Rendering::TessellateAnnularArc(
-        0.0, 0.0, 10.0, 2.0, 0.0, 0.0, {}).empty());
-    EXPECT_TRUE(NeoWPF::Rendering::TessellateAnnularArc(
-        std::numeric_limits<double>::infinity(), 0.0, 10.0, 2.0, 0.0, kPi, {}).empty());
+    std::vector<NeoWPF::Rendering::GeometryVertex> vertices;
+    NeoWPF::Rendering::TessellateAnnularArc(vertices, 0.0, 0.0, 0.0, 2.0, 0.0, kPi, {});
+    EXPECT_TRUE(vertices.empty());
+    NeoWPF::Rendering::TessellateAnnularArc(vertices, 0.0, 0.0, 10.0, 0.0, 0.0, kPi, {});
+    EXPECT_TRUE(vertices.empty());
+    NeoWPF::Rendering::TessellateAnnularArc(vertices, 0.0, 0.0, 10.0, 21.0, 0.0, kPi, {});
+    EXPECT_TRUE(vertices.empty());
+    NeoWPF::Rendering::TessellateAnnularArc(vertices, 0.0, 0.0, 10.0, 2.0, 0.0, 0.0, {});
+    EXPECT_TRUE(vertices.empty());
+    NeoWPF::Rendering::TessellateAnnularArc(
+        vertices, std::numeric_limits<double>::infinity(), 0.0, 10.0, 2.0, 0.0, kPi, {});
+    EXPECT_TRUE(vertices.empty());
 }
 
 TEST(ArcCommandTests, ClipsGeneratedTrianglesToClipBounds)
 {
     const NeoWPF::Rendering::ClipRect clip{8.0, -5.0, 4.0, 5.0, true};
-    const auto vertices = NeoWPF::Rendering::TessellateAnnularArc(
-        0.0, 0.0, 10.0, 2.0, 0.0, kPi * 0.5, clip);
+    std::vector<NeoWPF::Rendering::GeometryVertex> vertices;
+    NeoWPF::Rendering::TessellateAnnularArc(
+        vertices, 0.0, 0.0, 10.0, 2.0, 0.0, kPi * 0.5, clip);
 
     ASSERT_FALSE(vertices.empty());
     ASSERT_EQ(vertices.size() % 3, 0u);
@@ -111,8 +118,10 @@ TEST(ArcCommandTests, ClipsGeneratedTrianglesToClipBounds)
 TEST(ArcCommandTests, ReturnsEmptyGeometryWhenClipExcludesArc)
 {
     const NeoWPF::Rendering::ClipRect clip{20.0, 20.0, 5.0, 5.0, true};
-    EXPECT_TRUE(NeoWPF::Rendering::TessellateAnnularArc(
-        0.0, 0.0, 10.0, 2.0, 0.0, kPi * 0.5, clip).empty());
+    std::vector<NeoWPF::Rendering::GeometryVertex> vertices;
+    NeoWPF::Rendering::TessellateAnnularArc(
+        vertices, 0.0, 0.0, 10.0, 2.0, 0.0, kPi * 0.5, clip);
+    EXPECT_TRUE(vertices.empty());
 }
 
 }

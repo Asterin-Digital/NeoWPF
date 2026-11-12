@@ -1,7 +1,8 @@
 #include <NeoWPF/Rendering/Renderer.h>
-#include <NeoWPF/Rendering/ArcTessellation.h>
+#include <NeoWPF/Rendering/Geometry/ArcTessellation.h>
+#include <NeoWPF/Rendering/Geometry/PrimitiveTessellation.h>
 #include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
-#include <NeoWPF/Rendering/Clipping.h>
+#include <NeoWPF/Rendering/Geometry/Clipping.h>
 #include <d3d11.h>
 #include <wrl.h>
 #include <algorithm>
@@ -68,7 +69,7 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
 
     std::size_t textCommandCount = 0;
     for (const auto& command : cmd.commands) {
-        if (command.kind == CommandList::CommandKind::TexturedQuad) {
+        if (command.GetKind() == CommandList::CommandKind::TexturedQuad) {
             ++textCommandCount;
         }
     }
@@ -76,11 +77,11 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
     std::size_t arcCount = 0;
     std::size_t rectCount = 0;
     for (const auto& command : cmd.commands) {
-        if (command.kind == CommandList::CommandKind::RoundedRect) {
+        if (command.GetKind() == CommandList::CommandKind::RoundedRect) {
             ++roundedRectCount;
-        } else if (command.kind == CommandList::CommandKind::Arc) {
+        } else if (command.GetKind() == CommandList::CommandKind::Arc) {
             ++arcCount;
-        } else if (command.kind == CommandList::CommandKind::Rect) {
+        } else if (command.GetKind() == CommandList::CommandKind::Rect) {
             ++rectCount;
         }
     }
@@ -103,10 +104,10 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
         lastTextCommandCount = textCommandCount;
         for (std::size_t index = 0; index < cmd.commands.size(); ++index) {
             const auto& command = cmd.commands[index];
-            if (command.kind != CommandList::CommandKind::RoundedRect) {
+            if (command.GetKind() != CommandList::CommandKind::RoundedRect) {
                 continue;
             }
-            const auto& rounded = command.roundedRect;
+            const auto& rounded = command.GetRoundedRect();
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
                 NeoWPF::Diagnostics::Level::Trace,
                 "[D3D11] RoundedRect index=%zu rect=%.1f,%.1fx%.1f,%.1f color=0x%08X opacity=%.2f",
@@ -169,112 +170,30 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
     constexpr size_t kVertexBufferCapacity = 1 << 20;
     constexpr size_t kMaxSolidVertices = (kVertexBufferCapacity / sizeof(Vertex) / 3) * 3;
     std::vector<Vertex> rectVerts;
+    std::vector<GeometryVertex> geometry;
     rectVerts.reserve(cmd.commands.size() * 2);
 
-    struct Point2 { float x; float y; };
-    const auto rotatePoint = [](float x, float y, float centerX, float centerY, float angleRadians) {
-        const float cosA = std::cos(angleRadians);
-        const float sinA = std::sin(angleRadians);
-        const float dx = x - centerX;
-        const float dy = y - centerY;
-        return Point2{centerX + dx * cosA - dy * sinA, centerY + dx * sinA + dy * cosA};
+    const auto pushRect = [&](double x, double y, double w, double h,
+        float red, float green, float blue, float alpha, float rotationRadians,
+        double pivotX, double pivotY, const ClipRect& clip) {
+        TessellateRect(geometry,
+            x, y, w, h, clip, rotationRadians, pivotX, pivotY);
+        for (const auto& vertex : geometry) {
+            rectVerts.push_back({static_cast<float>(vertex.x), static_cast<float>(vertex.y),
+                                 red, green, blue, alpha});
+        }
     };
 
-    auto pushRect = [&](float x, float y, float w, float h, float r, float g, float b, float a, float rotationRadians, float pivotX, float pivotY) {
-        if (w <= 0.0f || h <= 0.0f) {
-            return;
-        }
-
-        const float centerX = pivotX;
-        const float centerY = pivotY;
-        const auto emitVertex = [&](float px, float py) {
-            rectVerts.push_back({px, py, r, g, b, a});
-        };
-
-        if (std::fabs(rotationRadians) < 1e-6f) {
-            emitVertex(x, y);
-            emitVertex(x + w, y);
-            emitVertex(x + w, y + h);
-            emitVertex(x + w, y + h);
-            emitVertex(x, y + h);
-            emitVertex(x, y);
-            return;
-        }
-
-        const Point2 p1 = rotatePoint(x, y, centerX, centerY, rotationRadians);
-        const Point2 p2 = rotatePoint(x + w, y, centerX, centerY, rotationRadians);
-        const Point2 p3 = rotatePoint(x + w, y + h, centerX, centerY, rotationRadians);
-        const Point2 p4 = rotatePoint(x, y + h, centerX, centerY, rotationRadians);
-
-        emitVertex(p1.x, p1.y);
-        emitVertex(p2.x, p2.y);
-        emitVertex(p3.x, p3.y);
-        emitVertex(p3.x, p3.y);
-        emitVertex(p4.x, p4.y);
-        emitVertex(p1.x, p1.y);
-    };
-
-    auto pushRoundedRect = [&](float x, float y, float w, float h,
-        float topLeft, float topRight, float bottomRight, float bottomLeft,
-        float r, float g, float b, float a, float rotationRadians, float pivotX, float pivotY) {
-        if (w <= 0.0f || h <= 0.0f) {
-            return;
-        }
-
-        const auto clampRadius = [](float radius, float maxExtent) {
-            return std::max(0.0f, std::min(radius, maxExtent));
-        };
-
-        const float tl = clampRadius(topLeft, std::min(w * 0.5f, h * 0.5f));
-        const float tr = clampRadius(topRight, std::min(w * 0.5f, h * 0.5f));
-        const float br = clampRadius(bottomRight, std::min(w * 0.5f, h * 0.5f));
-        const float bl = clampRadius(bottomLeft, std::min(w * 0.5f, h * 0.5f));
-
-        std::vector<Point2> points;
-        points.reserve(64);
-
-        const auto addArc = [&](float centerX, float centerY, float startAngle, float endAngle, float radius, int segments) {
-            if (radius <= 0.0f) {
-                return;
-            }
-            for (int i = 0; i <= segments; ++i) {
-                const float t = static_cast<float>(i) / static_cast<float>(segments);
-                const float angle = startAngle + (endAngle - startAngle) * t;
-                points.push_back({centerX + radius * std::cos(angle), centerY + radius * std::sin(angle)});
-            }
-        };
-
-        points.push_back({x + tl, y});
-        points.push_back({x + w - tr, y});
-        addArc(x + w - tr, y + tr, -static_cast<float>(3.14159265358979323846) / 2.0f, 0.0f, tr, 8);
-        points.push_back({x + w, y + h - br});
-        addArc(x + w - br, y + h - br, 0.0f, static_cast<float>(3.14159265358979323846) / 2.0f, br, 8);
-        points.push_back({x + bl, y + h});
-        addArc(x + bl, y + h - bl, static_cast<float>(3.14159265358979323846) / 2.0f, static_cast<float>(3.14159265358979323846), bl, 8);
-        points.push_back({x, y + tl});
-        addArc(x + tl, y + tl, static_cast<float>(3.14159265358979323846), 3.0f * static_cast<float>(3.14159265358979323846) / 2.0f, tl, 8);
-
-        if (points.size() < 3) {
-            return;
-        }
-
-        const float centerX = pivotX;
-        const float centerY = pivotY;
-        std::vector<Point2> transformedPoints;
-        transformedPoints.reserve(points.size());
-
-        if (std::fabs(rotationRadians) < 1e-6f) {
-            transformedPoints = points;
-        } else {
-            for (const auto& point : points) {
-                transformedPoints.push_back(rotatePoint(point.x, point.y, centerX, centerY, rotationRadians));
-            }
-        }
-
-        for (size_t i = 1; i + 1 < transformedPoints.size(); ++i) {
-            rectVerts.push_back({transformedPoints[0].x, transformedPoints[0].y, r, g, b, a});
-            rectVerts.push_back({transformedPoints[i].x, transformedPoints[i].y, r, g, b, a});
-            rectVerts.push_back({transformedPoints[i + 1].x, transformedPoints[i + 1].y, r, g, b, a});
+    const auto pushRoundedRect = [&](double x, double y, double w, double h,
+        double topLeft, double topRight, double bottomRight, double bottomLeft,
+        float red, float green, float blue, float alpha, float rotationRadians,
+        double pivotX, double pivotY, const ClipRect& clip) {
+        TessellateRoundedRect(geometry,
+            x, y, w, h, topLeft, topRight, bottomRight, bottomLeft,
+            clip, rotationRadians, pivotX, pivotY);
+        for (const auto& vertex : geometry) {
+            rectVerts.push_back({static_cast<float>(vertex.x), static_cast<float>(vertex.y),
+                                 red, green, blue, alpha});
         }
     };
 
@@ -283,7 +202,7 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
         const float red = ((arc.paint.color >> 16) & 0xFF) / 255.0f;
         const float green = ((arc.paint.color >> 8) & 0xFF) / 255.0f;
         const float blue = (arc.paint.color & 0xFF) / 255.0f;
-        const auto vertices = TessellateAnnularArc(
+        TessellateAnnularArc(geometry,
             arc.centerX,
             arc.centerY,
             arc.radius,
@@ -291,8 +210,7 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
             arc.startAngleRadians,
             arc.sweepAngleRadians,
             arc.clip);
-        rectVerts.reserve(rectVerts.size() + vertices.size());
-        for (const auto& vertex : vertices) {
+        for (const auto& vertex : geometry) {
             rectVerts.push_back({
                 static_cast<float>(vertex.x),
                 static_cast<float>(vertex.y),
@@ -305,53 +223,30 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
     };
 
     struct TextVertex { float x, y; float u, v; float r, g, b, a; };
-    constexpr size_t kMaxTextVertices = kVertexBufferCapacity / sizeof(TextVertex);
+    constexpr size_t kMaxTextVertices = (kVertexBufferCapacity / sizeof(TextVertex) / 3) * 3;
     std::vector<TextVertex> textVerts;
-    std::vector<uint32_t> textQuadTextureIds;
+    struct TextDrawRange { uint32_t textureId; size_t firstVertex; size_t vertexCount; };
+    std::vector<TextDrawRange> textDrawRanges;
 
-    auto pushTextQuad = [&](float x, float y, float w, float h, float u0, float v0, float u1, float v1, uint32_t tintColor, float opacity, uint32_t textureId, float rotationRadians = 0.0f, float pivotX = 0.0f, float pivotY = 0.0f) {
+    auto pushTextQuad = [&](double x, double y, double w, double h,
+        float u0, float v0, float u1, float v1, uint32_t tintColor, float opacity,
+        uint32_t textureId, const ClipRect& clip, float rotationRadians,
+        double pivotX, double pivotY) {
         const float baseAlpha = ((tintColor >> 24) & 0xFF) / 255.0f;
         const float red = ((tintColor >> 16) & 0xFF) / 255.0f;
         const float green = ((tintColor >> 8) & 0xFF) / 255.0f;
         const float blue = (tintColor & 0xFF) / 255.0f;
         const float finalAlpha = baseAlpha * opacity;
-
-        if (rotationRadians == 0.0f) {
-            textVerts.push_back({x, y, u0, v0, red, green, blue, finalAlpha});
-            textVerts.push_back({x + w, y, u1, v0, red, green, blue, finalAlpha});
-            textVerts.push_back({x + w, y + h, u1, v1, red, green, blue, finalAlpha});
-            textVerts.push_back({x + w, y + h, u1, v1, red, green, blue, finalAlpha});
-            textVerts.push_back({x, y + h, u0, v1, red, green, blue, finalAlpha});
-            textVerts.push_back({x, y, u0, v0, red, green, blue, finalAlpha});
-            textQuadTextureIds.push_back(textureId);
-            return;
+        TessellateRect(geometry,
+            x, y, w, h, clip, rotationRadians, pivotX, pivotY, u0, v0, u1, v1);
+        const size_t firstVertex = textVerts.size();
+        for (const auto& vertex : geometry) {
+            textVerts.push_back({static_cast<float>(vertex.x), static_cast<float>(vertex.y),
+                                 vertex.u, vertex.v, red, green, blue, finalAlpha});
         }
-
-        const float cx = pivotX;
-        const float cy = pivotY;
-        const float cos_a = std::cos(rotationRadians);
-        const float sin_a = std::sin(rotationRadians);
-
-        auto rotPoint = [&](float px, float py) {
-            const float dx = px - cx;
-            const float dy = py - cy;
-            const float rx = dx * cos_a - dy * sin_a + cx;
-            const float ry = dx * sin_a + dy * cos_a + cy;
-            return std::pair<float, float>(rx, ry);
-        };
-
-        auto p0 = rotPoint(x, y);
-        auto p1 = rotPoint(x + w, y);
-        auto p2 = rotPoint(x + w, y + h);
-        auto p3 = rotPoint(x, y + h);
-
-        textVerts.push_back({p0.first, p0.second, u0, v0, red, green, blue, finalAlpha});
-        textVerts.push_back({p1.first, p1.second, u1, v0, red, green, blue, finalAlpha});
-        textVerts.push_back({p2.first, p2.second, u1, v1, red, green, blue, finalAlpha});
-        textVerts.push_back({p2.first, p2.second, u1, v1, red, green, blue, finalAlpha});
-        textVerts.push_back({p3.first, p3.second, u0, v1, red, green, blue, finalAlpha});
-        textVerts.push_back({p0.first, p0.second, u0, v0, red, green, blue, finalAlpha});
-        textQuadTextureIds.push_back(textureId);
+        if (textVerts.size() > firstVertex) {
+            textDrawRanges.push_back({textureId, firstVertex, textVerts.size() - firstVertex});
+        }
     };
 
     auto flushSolidBatch = [&]() {
@@ -383,10 +278,16 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
         while (remainingVertices > 0) {
             size_t chunkVertices = std::min(remainingVertices, kMaxSolidVertices);
             D3D11_MAPPED_SUBRESOURCE vmap = {};
-            if (SUCCEEDED(g_context->Map(g_vertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &vmap))) {
-                memcpy(vmap.pData, rectVerts.data() + vertexOffset, chunkVertices * sizeof(Vertex));
-                g_context->Unmap(g_vertexBuffer.Get(), 0);
+            if (FAILED(g_context->Map(g_vertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &vmap))) {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+                    NeoWPF::Diagnostics::Level::Debug,
+                    "[D3D11] Failed to map the solid vertex stream");
+                remainingVertices -= chunkVertices;
+                vertexOffset += chunkVertices;
+                continue;
             }
+            memcpy(vmap.pData, rectVerts.data() + vertexOffset, chunkVertices * sizeof(Vertex));
+            g_context->Unmap(g_vertexBuffer.Get(), 0);
             g_context->Draw(static_cast<UINT>(chunkVertices), 0);
             remainingVertices -= chunkVertices;
             vertexOffset += chunkVertices;
@@ -407,7 +308,7 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
             NeoWPF::Diagnostics::Level::Debug,
             "[D3D11] flush text batch vertices=%zu quads=%zu textures=%zu",
-            textVerts.size(), textVerts.size() / 6, textQuadTextureIds.size());
+            textVerts.size(), textDrawRanges.size(), textDrawRanges.size());
 
         const float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         g_context->OMSetBlendState(blendState.Get(), blendFactor, 0xffffffff);
@@ -434,29 +335,50 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
         while (remainingVertices > 0) {
             size_t chunkVertices = std::min(remainingVertices, kMaxTextVertices);
             D3D11_MAPPED_SUBRESOURCE vmap = {};
-            if (SUCCEEDED(g_context->Map(g_vertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &vmap))) {
-                memcpy(vmap.pData, textVerts.data() + vertexOffset, chunkVertices * sizeof(TextVertex));
-                g_context->Unmap(g_vertexBuffer.Get(), 0);
+            if (FAILED(g_context->Map(g_vertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &vmap))) {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+                    NeoWPF::Diagnostics::Level::Debug,
+                    "[D3D11] Failed to map the textured vertex stream");
+                remainingVertices -= chunkVertices;
+                vertexOffset += chunkVertices;
+                continue;
             }
+            memcpy(vmap.pData, textVerts.data() + vertexOffset, chunkVertices * sizeof(TextVertex));
+            g_context->Unmap(g_vertexBuffer.Get(), 0);
 
-            size_t chunkQuads = chunkVertices / 6;
-            size_t quadOffset = vertexOffset / 6;
-            size_t quadsDrawn = 0;
-            while (quadsDrawn < chunkQuads) {
-                size_t qi = quadOffset + quadsDrawn;
-                uint32_t texId = textQuadTextureIds[qi];
-                size_t batchCount = 1;
-                while (qi + batchCount < textQuadTextureIds.size() && batchCount < chunkQuads - quadsDrawn && textQuadTextureIds[qi + batchCount] == texId) {
-                    ++batchCount;
+            size_t rangeIndex = 0;
+            const size_t chunkEnd = vertexOffset + chunkVertices;
+            while (rangeIndex < textDrawRanges.size()) {
+                const auto& range = textDrawRanges[rangeIndex];
+                const size_t rangeEnd = range.firstVertex + range.vertexCount;
+                if (rangeEnd <= vertexOffset) {
+                    ++rangeIndex;
+                    continue;
+                }
+                if (range.firstVertex >= chunkEnd) {
+                    break;
                 }
 
-                ComPtr<ID3D11ShaderResourceView> srv = GetTextureShaderResourceView(texId);
+                const uint32_t textureId = range.textureId;
+                const size_t drawStart = (std::max)(range.firstVertex, vertexOffset);
+                size_t drawEnd = (std::min)(rangeEnd, chunkEnd);
+                size_t nextRange = rangeIndex + 1;
+                while (nextRange < textDrawRanges.size() &&
+                       textDrawRanges[nextRange].textureId == textureId &&
+                       textDrawRanges[nextRange].firstVertex == drawEnd && drawEnd < chunkEnd) {
+                    drawEnd = (std::min)(
+                        textDrawRanges[nextRange].firstVertex + textDrawRanges[nextRange].vertexCount,
+                        chunkEnd);
+                    ++nextRange;
+                }
+
+                ComPtr<ID3D11ShaderResourceView> srv = GetTextureShaderResourceView(textureId);
                 if (srv) {
                     g_context->PSSetShaderResources(0, 1, srv.GetAddressOf());
-                    g_context->Draw(static_cast<UINT>(batchCount * 6), static_cast<UINT>((quadsDrawn * 6)));
+                    g_context->Draw(static_cast<UINT>(drawEnd - drawStart),
+                                    static_cast<UINT>(drawStart - vertexOffset));
                 }
-
-                quadsDrawn += batchCount;
+                rangeIndex = nextRange;
             }
 
             remainingVertices -= chunkVertices;
@@ -465,114 +387,65 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
 
         g_context->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
         textVerts.clear();
-        textQuadTextureIds.clear();
+        textDrawRanges.clear();
     };
 
     CommandList::CommandKind lastKind = CommandList::CommandKind::Rect;
     bool hasPendingKind = false;
 
     for (const auto& command : cmd.commands) {
-        if (hasPendingKind && command.kind != lastKind) {
-            if (lastKind == CommandList::CommandKind::TexturedQuad) {
+        const bool isTextured = command.GetKind() == CommandList::CommandKind::TexturedQuad;
+        const bool wasTextured = lastKind == CommandList::CommandKind::TexturedQuad;
+        if (hasPendingKind && isTextured != wasTextured) {
+            if (wasTextured) {
                 flushTextBatch();
             } else {
                 flushSolidBatch();
             }
         }
 
-        switch (command.kind) {
+        switch (command.GetKind()) {
         case CommandList::CommandKind::Rect: {
-            const auto& r = command.rect;
+            const auto& r = command.GetRect();
             const float baseAlpha = ((r.paint.color >> 24) & 0xFF) / 255.0f;
             const float red = ((r.paint.color >> 16) & 0xFF) / 255.0f;
             const float green = ((r.paint.color >> 8) & 0xFF) / 255.0f;
             const float blue = (r.paint.color & 0xFF) / 255.0f;
             const float alpha = baseAlpha * r.opacity;
 
-            if (std::fabs(r.rotationRadians) < 1e-6f) {
-                double clippedX = 0.0;
-                double clippedY = 0.0;
-                double clippedW = 0.0;
-                double clippedH = 0.0;
-                const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
-                if (clipped) {
-                    if (clippedW > 0.0f && clippedH > 0.0f) {
-                        pushRect(static_cast<float>(clippedX), static_cast<float>(clippedY), static_cast<float>(clippedW), static_cast<float>(clippedH), red, green, blue, alpha, r.rotationRadians, static_cast<float>(r.pivotX), static_cast<float>(r.pivotY));
-                    }
-                } else {
-                    pushRect(static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h), red, green, blue, alpha, r.rotationRadians, static_cast<float>(r.pivotX), static_cast<float>(r.pivotY));
-                }
-            } else {
-                pushRect(static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h), red, green, blue, alpha, r.rotationRadians, static_cast<float>(r.pivotX), static_cast<float>(r.pivotY));
-            }
-            lastKind = command.kind;
+            pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha,
+                     r.rotationRadians, r.pivotX, r.pivotY, r.clip);
+            lastKind = command.GetKind();
             hasPendingKind = true;
             break;
         }
         case CommandList::CommandKind::RoundedRect: {
-            const auto& r = command.roundedRect;
+            const auto& r = command.GetRoundedRect();
             const float baseAlpha = ((r.paint.color >> 24) & 0xFF) / 255.0f;
             const float red = ((r.paint.color >> 16) & 0xFF) / 255.0f;
             const float green = ((r.paint.color >> 8) & 0xFF) / 255.0f;
             const float blue = (r.paint.color & 0xFF) / 255.0f;
             const float alpha = baseAlpha * r.opacity;
 
-            if (std::fabs(r.rotationRadians) < 1e-6f) {
-                double clippedX = 0.0;
-                double clippedY = 0.0;
-                double clippedW = 0.0;
-                double clippedH = 0.0;
-                const bool clipped = ClipRectToBounds(r.x, r.y, r.w, r.h, r.clip, clippedX, clippedY, clippedW, clippedH);
-                if (clipped) {
-                    if (clippedW > 0.0f && clippedH > 0.0f) {
-                        pushRoundedRect(static_cast<float>(clippedX), static_cast<float>(clippedY), static_cast<float>(clippedW), static_cast<float>(clippedH), static_cast<float>(r.topLeft), static_cast<float>(r.topRight), static_cast<float>(r.bottomRight), static_cast<float>(r.bottomLeft), red, green, blue, alpha, r.rotationRadians, static_cast<float>(r.pivotX), static_cast<float>(r.pivotY));
-                    }
-                } else {
-                    pushRoundedRect(static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h), static_cast<float>(r.topLeft), static_cast<float>(r.topRight), static_cast<float>(r.bottomRight), static_cast<float>(r.bottomLeft), red, green, blue, alpha, r.rotationRadians, static_cast<float>(r.pivotX), static_cast<float>(r.pivotY));
-                }
-            } else {
-                pushRoundedRect(static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h), static_cast<float>(r.topLeft), static_cast<float>(r.topRight), static_cast<float>(r.bottomRight), static_cast<float>(r.bottomLeft), red, green, blue, alpha, r.rotationRadians, static_cast<float>(r.pivotX), static_cast<float>(r.pivotY));
-            }
-            lastKind = command.kind;
+            pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight,
+                            r.bottomRight, r.bottomLeft, red, green, blue, alpha,
+                            r.rotationRadians, r.pivotX, r.pivotY, r.clip);
+            lastKind = command.GetKind();
             hasPendingKind = true;
             break;
         }
         case CommandList::CommandKind::Arc: {
-            pushArc(command.arc);
-            lastKind = command.kind;
+            pushArc(command.GetArc());
+            lastKind = command.GetKind();
             hasPendingKind = true;
             break;
         }
         case CommandList::CommandKind::TexturedQuad: {
-            const auto& q = command.texturedQuad;
-            if (hasPendingKind && lastKind != CommandList::CommandKind::TexturedQuad) {
-                flushSolidBatch();
-            }
-            double clippedX = 0.0;
-            double clippedY = 0.0;
-            double clippedW = 0.0;
-            double clippedH = 0.0;
-            if (q.rotationRadians == 0.0f) {
-                const bool clipped = ClipRectToBounds(q.x, q.y, q.w, q.h, q.clip, clippedX, clippedY, clippedW, clippedH);
-                if (clipped) {
-                    if (clippedW > 0.0f && clippedH > 0.0f) {
-                        const float uSpan = q.u1 - q.u0;
-                        const float vSpan = q.v1 - q.v0;
-                        const double xDelta = clippedX - q.x;
-                        const double yDelta = clippedY - q.y;
-                        const float newU0 = static_cast<float>(q.u0 + (xDelta / q.w) * uSpan);
-                        const float newV0 = static_cast<float>(q.v0 + (yDelta / q.h) * vSpan);
-                        const float newU1 = static_cast<float>(newU0 + (clippedW / q.w) * uSpan);
-                        const float newV1 = static_cast<float>(newV0 + (clippedH / q.h) * vSpan);
-                        pushTextQuad(static_cast<float>(clippedX), static_cast<float>(clippedY), static_cast<float>(clippedW), static_cast<float>(clippedH), newU0, newV0, newU1, newV1, q.tint.color, q.opacity, q.textureId);
-                    }
-                } else {
-                    pushTextQuad(static_cast<float>(q.x), static_cast<float>(q.y), static_cast<float>(q.w), static_cast<float>(q.h), q.u0, q.v0, q.u1, q.v1, q.tint.color, q.opacity, q.textureId);
-                }
-            } else {
-                pushTextQuad(static_cast<float>(q.x), static_cast<float>(q.y), static_cast<float>(q.w), static_cast<float>(q.h), q.u0, q.v0, q.u1, q.v1, q.tint.color, q.opacity, q.textureId, q.rotationRadians, static_cast<float>(q.pivotX), static_cast<float>(q.pivotY));
-            }
-            lastKind = command.kind;
+            const auto& q = command.GetTexturedQuad();
+            pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1,
+                         q.tint.color, q.opacity, q.textureId, q.clip,
+                         q.rotationRadians, q.pivotX, q.pivotY);
+            lastKind = command.GetKind();
             hasPendingKind = true;
             break;
         }

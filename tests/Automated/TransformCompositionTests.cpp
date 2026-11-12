@@ -92,7 +92,7 @@ TEST(TransformCompositionTests, TextBlockUsesUnrotatedAbsoluteOriginWhenParentRo
     text->BuildRenderCommands(commands);
 
     ASSERT_FALSE(commands.commands.empty());
-    const auto& quad = commands.commands[0].texturedQuad;
+    const auto& quad = commands.commands[0].GetTexturedQuad();
     const auto origin = parent->GetRenderTransformOrigin();
     const float expectedPivotX = static_cast<float>(parent->GetFinalWidth()) * origin.X;
     const float expectedPivotY = static_cast<float>(parent->GetFinalHeight()) * origin.Y;

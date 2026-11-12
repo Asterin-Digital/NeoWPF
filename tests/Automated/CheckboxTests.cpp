@@ -27,7 +27,7 @@ protected:
     }
 };
 
-using RoundedRectData = decltype(std::declval<NeoWPF::Rendering::CommandList::Command>().roundedRect);
+using RoundedRectData = NeoWPF::Rendering::CommandList::RoundedRectData;
 
 struct Point {
     double x;
@@ -59,9 +59,9 @@ std::vector<const RoundedRectData*> FindRoundedRects(
 {
     std::vector<const RoundedRectData*> matches;
     for (const auto& command : commands.commands) {
-        if (command.kind == NeoWPF::Rendering::CommandList::CommandKind::RoundedRect &&
-            command.roundedRect.paint.color == color) {
-            matches.push_back(&command.roundedRect);
+        if (command.GetKind() == NeoWPF::Rendering::CommandList::CommandKind::RoundedRect &&
+            command.GetRoundedRect().paint.color == color) {
+            matches.push_back(&command.GetRoundedRect());
         }
     }
     return matches;
@@ -131,13 +131,13 @@ TEST_F(CheckboxTests, CheckmarkAndBoxFollowCheckboxRotation)
     std::size_t boxCommandCount = 0;
     const auto expectedBoxCenter = RotatePoint(originalBoxCenter, controlPivot, controlAngle);
     for (const auto& command : commands.commands) {
-        if (command.kind != NeoWPF::Rendering::CommandList::CommandKind::RoundedRect ||
-            command.roundedRect.paint.color == checkColor) {
+        if (command.GetKind() != NeoWPF::Rendering::CommandList::CommandKind::RoundedRect ||
+            command.GetRoundedRect().paint.color == checkColor) {
             continue;
         }
 
         ++boxCommandCount;
-        const auto boxCenter = GetRenderedCenter(command.roundedRect);
+        const auto boxCenter = GetRenderedCenter(command.GetRoundedRect());
         EXPECT_NEAR(boxCenter.x, expectedBoxCenter.x, 0.0001);
         EXPECT_NEAR(boxCenter.y, expectedBoxCenter.y, 0.0001);
     }

@@ -55,20 +55,6 @@ bool HasDeviceExtension(VkPhysicalDevice device, const char* name)
     return HasExtension(extensions, name);
 }
 
-std::uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, std::uint32_t typeFilter,
-                             VkMemoryPropertyFlags properties)
-{
-    VkPhysicalDeviceMemoryProperties memoryProperties{};
-    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
-    for (std::uint32_t index = 0; index < memoryProperties.memoryTypeCount; ++index) {
-        if ((typeFilter & (1u << index)) &&
-            (memoryProperties.memoryTypes[index].propertyFlags & properties) == properties) {
-            return index;
-        }
-    }
-    return std::numeric_limits<std::uint32_t>::max();
-}
-
 VkShaderModule CreateShaderModule(VkDevice device, const std::uint32_t* code, std::size_t codeSize)
 {
     const VkShaderModuleCreateInfo createInfo{
@@ -174,30 +160,22 @@ bool VulkanRendering::InitializeDeviceForSurface(VkSurfaceKHR surface)
     return true;
 }
 
-void VulkanRendering::DestroySolidPipeline() noexcept
+void VulkanRendering::DestroySolidPipeline(WindowContext& context) noexcept
 {
     if (m_device == VK_NULL_HANDLE) {
         return;
     }
-    if (m_solidPipeline != VK_NULL_HANDLE) {
-        vkDestroyPipeline(m_device, m_solidPipeline, nullptr);
-        m_solidPipeline = VK_NULL_HANDLE;
+    if (context.solidPipeline != VK_NULL_HANDLE) {
+        vkDestroyPipeline(m_device, context.solidPipeline, nullptr);
+        context.solidPipeline = VK_NULL_HANDLE;
     }
-    if (m_solidPipelineLayout != VK_NULL_HANDLE) {
-        vkDestroyPipelineLayout(m_device, m_solidPipelineLayout, nullptr);
-        m_solidPipelineLayout = VK_NULL_HANDLE;
-    }
-    if (m_solidVertexBuffer != VK_NULL_HANDLE) {
-        vkDestroyBuffer(m_device, m_solidVertexBuffer, nullptr);
-        m_solidVertexBuffer = VK_NULL_HANDLE;
-    }
-    if (m_solidVertexMemory != VK_NULL_HANDLE) {
-        vkFreeMemory(m_device, m_solidVertexMemory, nullptr);
-        m_solidVertexMemory = VK_NULL_HANDLE;
+    if (context.solidPipelineLayout != VK_NULL_HANDLE) {
+        vkDestroyPipelineLayout(m_device, context.solidPipelineLayout, nullptr);
+        context.solidPipelineLayout = VK_NULL_HANDLE;
     }
 }
 
-bool VulkanRendering::CreateSolidPipeline(VkRenderPass renderPass)
+bool VulkanRendering::CreateSolidPipeline(WindowContext& context, VkRenderPass renderPass)
 {
     if (renderPass == VK_NULL_HANDLE) {
         NeoWPF::Diagnostics::LogError("[Vulkan] Cannot create solid pipeline without a render pass");
@@ -206,7 +184,7 @@ bool VulkanRendering::CreateSolidPipeline(VkRenderPass renderPass)
     const VkPushConstantRange pushConstants{VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(float) * 2};
     const VkPipelineLayoutCreateInfo layoutInfo{
         VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO, nullptr, 0, 0, nullptr, 1, &pushConstants};
-    if (vkCreatePipelineLayout(m_device, &layoutInfo, nullptr, &m_solidPipelineLayout) != VK_SUCCESS) {
+    if (vkCreatePipelineLayout(m_device, &layoutInfo, nullptr, &context.solidPipelineLayout) != VK_SUCCESS) {
         NeoWPF::Diagnostics::LogError("[Vulkan] vkCreatePipelineLayout failed for solid pipeline");
         return false;
     }
@@ -259,9 +237,9 @@ bool VulkanRendering::CreateSolidPipeline(VkRenderPass renderPass)
     const VkGraphicsPipelineCreateInfo pipelineInfo{
         VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, nullptr, 0, 2, shaderStages,
         &vertexInput, &inputAssembly, nullptr, &viewportState, &rasterization, &multisample,
-        nullptr, &blend, &dynamicState, m_solidPipelineLayout, renderPass, 0, VK_NULL_HANDLE, -1};
+        nullptr, &blend, &dynamicState, context.solidPipelineLayout, renderPass, 0, VK_NULL_HANDLE, -1};
     const VkResult pipelineResult = vkCreateGraphicsPipelines(
-        m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_solidPipeline);
+        m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &context.solidPipeline);
     vkDestroyShaderModule(m_device, vertexShader, nullptr);
     vkDestroyShaderModule(m_device, fragmentShader, nullptr);
     if (pipelineResult != VK_SUCCESS) {
@@ -270,29 +248,6 @@ bool VulkanRendering::CreateSolidPipeline(VkRenderPass renderPass)
         return false;
     }
 
-    const VkBufferCreateInfo bufferInfo{
-        VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, nullptr, 0, 1024 * 1024,
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE, 0, nullptr};
-    if (vkCreateBuffer(m_device, &bufferInfo, nullptr, &m_solidVertexBuffer) != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] vkCreateBuffer failed for solid vertices");
-        return false;
-    }
-    VkMemoryRequirements memoryRequirements{};
-    vkGetBufferMemoryRequirements(m_device, m_solidVertexBuffer, &memoryRequirements);
-    const std::uint32_t memoryType = FindMemoryType(
-        m_physicalDevice, memoryRequirements.memoryTypeBits,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    if (memoryType == std::numeric_limits<std::uint32_t>::max()) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] No host-visible memory type for solid vertices");
-        return false;
-    }
-    const VkMemoryAllocateInfo allocationInfo{
-        VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, nullptr, memoryRequirements.size, memoryType};
-    if (vkAllocateMemory(m_device, &allocationInfo, nullptr, &m_solidVertexMemory) != VK_SUCCESS ||
-        vkBindBufferMemory(m_device, m_solidVertexBuffer, m_solidVertexMemory, 0) != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Solid vertex buffer memory setup failed");
-        return false;
-    }
     return true;
 }
 

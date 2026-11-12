@@ -181,9 +181,9 @@ TEST(ScrollViewerClippingTests, ScrolledContentAndDrawCommandsStayInsideViewport
     NeoWPF::Rendering::CommandList commands;
     viewer.BuildRenderCommands(commands);
     ASSERT_EQ(commands.commands.size(), 1u);
-    ASSERT_EQ(commands.commands[0].kind,
+    ASSERT_EQ(commands.commands[0].GetKind(),
               NeoWPF::Rendering::CommandList::CommandKind::Rect);
-    ExpectClip(commands.commands[0].rect.clip, 0, 0, 80, 40);
+    ExpectClip(commands.commands[0].GetRect().clip, 0, 0, 80, 40);
 }
 
 TEST(ItemsControlClippingTests, VirtualizedPartialRowClipsHorizontallyAndVertically)
@@ -210,7 +210,7 @@ TEST(ItemsControlClippingTests, VirtualizedPartialRowClipsHorizontallyAndVertica
     NeoWPF::Rendering::CommandList commands;
     partiallyVisible->BuildRenderCommands(commands);
     ASSERT_EQ(commands.commands.size(), 1u);
-    ExpectClip(commands.commands[0].rect.clip, 0, 20, 60, 5);
+    ExpectClip(commands.commands[0].GetRect().clip, 0, 20, 60, 5);
 }
 
 TEST(ItemsControlClippingTests, BufferedRowsOutsideScrolledViewportHaveEmptyClips)
@@ -335,9 +335,9 @@ TEST(ItemsControlClippingTests, TenThousandItemsKeepRealizedClipsBoundedAcrossSc
                 ++emptyClipCount;
             }
 
-            ASSERT_EQ(commands.commands[childIndex].kind,
+            ASSERT_EQ(commands.commands[childIndex].GetKind(),
                       NeoWPF::Rendering::CommandList::CommandKind::Rect);
-            const auto& commandClip = commands.commands[childIndex].rect.clip;
+            const auto& commandClip = commands.commands[childIndex].GetRect().clip;
             ExpectClipWithin(commandClip, viewportClip);
         }
 

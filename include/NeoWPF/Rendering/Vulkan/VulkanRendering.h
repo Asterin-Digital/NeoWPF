@@ -34,7 +34,19 @@ public:
     void ClearTextures() noexcept override;
 
 private:
+    struct VertexBuffer {
+        VkBuffer buffer = VK_NULL_HANDLE;
+        VkDeviceMemory memory = VK_NULL_HANDLE;
+        VkDeviceSize capacity = 0;
+    };
+
     struct WindowContext {
+        VertexBuffer solidBuffer;
+        VertexBuffer texturedBuffer;
+        VkPipelineLayout solidPipelineLayout = VK_NULL_HANDLE;
+        VkPipeline solidPipeline = VK_NULL_HANDLE;
+        VkPipelineLayout texturedPipelineLayout = VK_NULL_HANDLE;
+        VkPipeline texturedPipeline = VK_NULL_HANDLE;
         VkSurfaceKHR surface = VK_NULL_HANDLE;
         VkSwapchainKHR swapchain = VK_NULL_HANDLE;
         VkFormat swapchainFormat = VK_FORMAT_UNDEFINED;
@@ -60,12 +72,38 @@ private:
     WindowContext* FirstWindowContext() noexcept;
     const WindowContext* FirstWindowContext() const noexcept;
     void DestroySwapchainResources(WindowContext&) noexcept;
-    void DestroySolidPipeline() noexcept;
-    bool CreateSolidPipeline(VkRenderPass renderPass);
-    void DestroyTexturedPipeline() noexcept;
+
+    /*
+        @summary
+        Recreates a window's swapchain after an acquired frame cannot be submitted.
+
+        @internal
+    */
+    void RecreateSwapchain(const NeoWPF::Rendering::RenderSurface&, WindowContext&) noexcept;
+
+    void DestroySolidPipeline(WindowContext&) noexcept;
+    bool CreateSolidPipeline(WindowContext&, VkRenderPass renderPass);
+    void DestroyTexturedPipeline(WindowContext&) noexcept;
     void DestroyTextureResources() noexcept;
-    bool CreateTexturedPipeline(VkRenderPass renderPass);
+    bool CreateTexturedPipeline(WindowContext&, VkRenderPass renderPass);
     bool CreateSwapchainResources(WindowContext&, unsigned int width, unsigned int height);
+
+    /*
+        @summary
+        Grows a window-owned vertex buffer to fit the requested data.
+
+        @param buffer
+        The vertex buffer to grow.
+
+        @param requiredSize
+        The required byte capacity.
+
+        @returns
+        True when the buffer can hold the data.
+
+        @internal
+    */
+    bool EnsureVertexBuffer(VertexBuffer& buffer, VkDeviceSize requiredSize);
 
     VkInstance m_instance = VK_NULL_HANDLE;
     VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
@@ -74,18 +112,9 @@ private:
     VkQueue m_presentQueue = VK_NULL_HANDLE;
     std::uint32_t m_graphicsQueueFamily = 0;
     std::uint32_t m_presentQueueFamily = 0;
-    VkPipelineLayout m_solidPipelineLayout = VK_NULL_HANDLE;
-    VkPipeline m_solidPipeline = VK_NULL_HANDLE;
-    VkBuffer m_solidVertexBuffer = VK_NULL_HANDLE;
-    VkDeviceMemory m_solidVertexMemory = VK_NULL_HANDLE;
-    VkPipelineLayout m_texturedPipelineLayout = VK_NULL_HANDLE;
-    VkPipeline m_texturedPipeline = VK_NULL_HANDLE;
     VkDescriptorSetLayout m_textureSetLayout = VK_NULL_HANDLE;
     VkDescriptorPool m_textureDescriptorPool = VK_NULL_HANDLE;
     VkSampler m_textureSampler = VK_NULL_HANDLE;
-    VkBuffer m_texturedVertexBuffer = VK_NULL_HANDLE;
-    VkDeviceMemory m_texturedVertexMemory = VK_NULL_HANDLE;
-
     struct TextureResource {
         VkImage image = VK_NULL_HANDLE;
         VkDeviceMemory memory = VK_NULL_HANDLE;

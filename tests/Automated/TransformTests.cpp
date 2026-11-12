@@ -45,15 +45,15 @@ protected:
 
 NeoWPF::Platform::Window TextBlockRenderCommandTest::testWindow;
 
-using TexturedQuadData = decltype(std::declval<NeoWPF::Rendering::CommandList::Command>().texturedQuad);
-using RoundedRectData = decltype(std::declval<NeoWPF::Rendering::CommandList::Command>().roundedRect);
+using TexturedQuadData = NeoWPF::Rendering::CommandList::TexturedQuadData;
+using RoundedRectData = NeoWPF::Rendering::CommandList::RoundedRectData;
 
 const TexturedQuadData* FindTextQuad(
     const NeoWPF::Rendering::CommandList& commands)
 {
     for (const auto& command : commands.commands) {
-        if (command.kind == NeoWPF::Rendering::CommandList::CommandKind::TexturedQuad) {
-            return &command.texturedQuad;
+        if (command.GetKind() == NeoWPF::Rendering::CommandList::CommandKind::TexturedQuad) {
+            return &command.GetTexturedQuad();
         }
     }
     return nullptr;
@@ -63,8 +63,8 @@ const RoundedRectData* FindRoundedRect(
     const NeoWPF::Rendering::CommandList& commands)
 {
     for (const auto& command : commands.commands) {
-        if (command.kind == NeoWPF::Rendering::CommandList::CommandKind::RoundedRect) {
-            return &command.roundedRect;
+        if (command.GetKind() == NeoWPF::Rendering::CommandList::CommandKind::RoundedRect) {
+            return &command.GetRoundedRect();
         }
     }
     return nullptr;

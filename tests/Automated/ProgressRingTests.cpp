@@ -114,12 +114,12 @@ TEST(ProgressRingTests, EmitsTrackArcForArrangedBounds)
     progressRing.BuildRenderCommands(commands);
 
     ASSERT_FALSE(commands.commands.empty());
-    ASSERT_EQ(commands.commands.front().kind, NeoWPF::Rendering::CommandList::CommandKind::Arc);
-    EXPECT_DOUBLE_EQ(commands.commands.front().arc.centerX, 24.0);
-    EXPECT_DOUBLE_EQ(commands.commands.front().arc.centerY, 24.0);
-    EXPECT_DOUBLE_EQ(commands.commands.front().arc.radius, 21.0);
-    EXPECT_DOUBLE_EQ(commands.commands.front().arc.thickness, 6.0);
-    EXPECT_DOUBLE_EQ(commands.commands.front().arc.sweepAngleRadians, 6.28318530717958647692);
+    ASSERT_EQ(commands.commands.front().GetKind(), NeoWPF::Rendering::CommandList::CommandKind::Arc);
+    EXPECT_DOUBLE_EQ(commands.commands.front().GetArc().centerX, 24.0);
+    EXPECT_DOUBLE_EQ(commands.commands.front().GetArc().centerY, 24.0);
+    EXPECT_DOUBLE_EQ(commands.commands.front().GetArc().radius, 21.0);
+    EXPECT_DOUBLE_EQ(commands.commands.front().GetArc().thickness, 6.0);
+    EXPECT_DOUBLE_EQ(commands.commands.front().GetArc().sweepAngleRadians, 6.28318530717958647692);
 }
 
 }
