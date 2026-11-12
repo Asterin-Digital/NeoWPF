@@ -156,7 +156,7 @@ TEST_F(TextBlockRenderCommandTest, TextBoxRefreshesAndRendersItsTextCache)
     const auto foregroundBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(textBox.GetForeground());
     ASSERT_NE(foregroundBrush, nullptr);
     EXPECT_EQ(foregroundBrush->GetArgb(), 0xFF252925u);
-    EXPECT_EQ(textQuad->tintColor, foregroundBrush->GetArgb());
+    EXPECT_EQ(textQuad->tint.color, foregroundBrush->GetArgb());
 }
 
 TEST_F(TextBlockRenderCommandTest, ButtonBackgroundAndBitmapTextShareScaleTransform)

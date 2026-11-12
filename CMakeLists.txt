@@ -1003,6 +1003,8 @@ if(BUILD_TESTING AND NOT ANDROID)
         tests/Automated/TransformCompositionTests.cpp
         tests/Automated/ArcCommandTests.cpp
         tests/Automated/RenderCommandTests.cpp
+        tests/Automated/PaintTests.cpp
+        tests/Automated/CommandListHashTests.cpp
         tests/Automated/GridTests.cpp
         tests/Automated/PanelTests.cpp
         tests/Automated/StackPanelTests.cpp

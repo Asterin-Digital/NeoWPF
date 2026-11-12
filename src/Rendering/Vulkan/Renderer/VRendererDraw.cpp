@@ -165,10 +165,10 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::RenderSurface& surface,
     for (const auto& command : commands.commands) {
         if (command.kind == NeoWPF::Rendering::CommandList::CommandKind::Arc) {
             const auto& arc = command.arc;
-            const float alpha = ((arc.color >> 24) & 0xFF) / 255.0f * arc.opacity;
-            const float red = ((arc.color >> 16) & 0xFF) / 255.0f;
-            const float green = ((arc.color >> 8) & 0xFF) / 255.0f;
-            const float blue = (arc.color & 0xFF) / 255.0f;
+            const float alpha = ((arc.paint.color >> 24) & 0xFF) / 255.0f * arc.opacity;
+            const float red = ((arc.paint.color >> 16) & 0xFF) / 255.0f;
+            const float green = ((arc.paint.color >> 8) & 0xFF) / 255.0f;
+            const float blue = (arc.paint.color & 0xFF) / 255.0f;
             const auto arcVertices = TessellateAnnularArc(
                 arc.centerX,
                 arc.centerY,
@@ -191,7 +191,7 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::RenderSurface& surface,
         const double yValue = rounded ? command.roundedRect.y : command.rect.y;
         const double widthValue = rounded ? command.roundedRect.w : command.rect.w;
         const double heightValue = rounded ? command.roundedRect.h : command.rect.h;
-        const std::uint32_t color = rounded ? command.roundedRect.color : command.rect.color;
+        const std::uint32_t color = rounded ? command.roundedRect.paint.color : command.rect.paint.color;
         const float opacity = rounded ? command.roundedRect.opacity : command.rect.opacity;
         const float rotation = rounded ? command.roundedRect.rotationRadians : command.rect.rotationRadians;
         double x = xValue;
@@ -313,10 +313,10 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::RenderSurface& surface,
         if (width <= 0.0f || height <= 0.0f) {
             continue;
         }
-        const float alpha = ((quad.tintColor >> 24) & 0xFF) / 255.0f * quad.opacity;
-        const float red = ((quad.tintColor >> 16) & 0xFF) / 255.0f;
-        const float green = ((quad.tintColor >> 8) & 0xFF) / 255.0f;
-        const float blue = (quad.tintColor & 0xFF) / 255.0f;
+        const float alpha = ((quad.tint.color >> 24) & 0xFF) / 255.0f * quad.opacity;
+        const float red = ((quad.tint.color >> 16) & 0xFF) / 255.0f;
+        const float green = ((quad.tint.color >> 8) & 0xFF) / 255.0f;
+        const float blue = (quad.tint.color & 0xFF) / 255.0f;
         const Point center = makePoint(quad.pivotX, quad.pivotY);
         const Point points[] = {makePoint(x, y), makePoint(x + width, y), makePoint(x + width, y + height),
                     makePoint(x + width, y + height), makePoint(x, y + height), makePoint(x, y)};

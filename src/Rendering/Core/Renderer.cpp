@@ -43,17 +43,121 @@ WindowFrameState* FindWindowFrameState(const NeoWPF::Rendering::RenderSurface& s
     return &state->second;
 }
 
-std::uint64_t HashCommandList(const NeoWPF::Rendering::CommandList& commands) noexcept
+void HashBytes(std::uint64_t& hash, const void* value, std::size_t size) noexcept
 {
-    constexpr std::uint64_t offset = 14695981039346656037ull;
     constexpr std::uint64_t prime = 1099511628211ull;
-    std::uint64_t hash = offset;
-    const auto* bytes = reinterpret_cast<const std::byte*>(commands.commands.data());
-    const std::size_t byteCount = commands.commands.size() * sizeof(NeoWPF::Rendering::CommandList::Command);
-    for (std::size_t index = 0; index < byteCount; ++index) {
+    const auto* bytes = static_cast<const std::byte*>(value);
+    for (std::size_t index = 0; index < size; ++index) {
         hash ^= static_cast<std::uint8_t>(bytes[index]);
         hash *= prime;
     }
+}
+
+template <typename T>
+void HashValue(std::uint64_t& hash, const T& value) noexcept
+{
+    HashBytes(hash, &value, sizeof(value));
+}
+
+void HashValue(std::uint64_t& hash, bool value) noexcept
+{
+    const std::uint8_t normalized = value ? 1u : 0u;
+    HashValue(hash, normalized);
+}
+
+void HashClip(std::uint64_t& hash, const NeoWPF::Rendering::ClipRect& clip) noexcept
+{
+    HashValue(hash, clip.x);
+    HashValue(hash, clip.y);
+    HashValue(hash, clip.w);
+    HashValue(hash, clip.h);
+    HashValue(hash, clip.active);
+}
+
+std::uint64_t HashCommandList(const NeoWPF::Rendering::CommandList& commands) noexcept
+{
+    using CommandList = NeoWPF::Rendering::CommandList;
+    constexpr std::uint64_t offset = 14695981039346656037ull;
+    std::uint64_t hash = offset;
+    HashValue(hash, commands.commands.size());
+
+    for (const auto& command : commands.commands) {
+        HashValue(hash, command.kind);
+        switch (command.kind) {
+        case CommandList::CommandKind::Rect: {
+            const auto& rect = command.rect;
+            HashValue(hash, rect.x);
+            HashValue(hash, rect.y);
+            HashValue(hash, rect.w);
+            HashValue(hash, rect.h);
+            HashValue(hash, rect.paint.kind);
+            HashValue(hash, rect.paint.kind);
+            HashValue(hash, rect.paint.color);
+            HashValue(hash, rect.opacity);
+            HashClip(hash, rect.clip);
+            HashValue(hash, rect.rotationRadians);
+            HashValue(hash, rect.pivotX);
+            HashValue(hash, rect.pivotY);
+            break;
+        }
+        case CommandList::CommandKind::RoundedRect: {
+            const auto& rect = command.roundedRect;
+            HashValue(hash, rect.x);
+            HashValue(hash, rect.y);
+            HashValue(hash, rect.w);
+            HashValue(hash, rect.h);
+            HashValue(hash, rect.topLeft);
+            HashValue(hash, rect.topRight);
+            HashValue(hash, rect.bottomRight);
+            HashValue(hash, rect.bottomLeft);
+            HashValue(hash, rect.paint.kind);
+            HashValue(hash, rect.paint.color);
+            HashValue(hash, rect.opacity);
+            HashClip(hash, rect.clip);
+            HashValue(hash, rect.rotationRadians);
+            HashValue(hash, rect.pivotX);
+            HashValue(hash, rect.pivotY);
+            break;
+        }
+        case CommandList::CommandKind::Arc: {
+            const auto& arc = command.arc;
+            HashValue(hash, arc.centerX);
+            HashValue(hash, arc.centerY);
+            HashValue(hash, arc.radius);
+            HashValue(hash, arc.thickness);
+            HashValue(hash, arc.startAngleRadians);
+            HashValue(hash, arc.sweepAngleRadians);
+            HashValue(hash, arc.paint.kind);
+            HashValue(hash, arc.paint.color);
+            HashValue(hash, arc.opacity);
+            HashClip(hash, arc.clip);
+            break;
+        }
+        case CommandList::CommandKind::TexturedQuad: {
+            const auto& quad = command.texturedQuad;
+            HashValue(hash, quad.x);
+            HashValue(hash, quad.y);
+            HashValue(hash, quad.w);
+            HashValue(hash, quad.h);
+            HashValue(hash, quad.u0);
+            HashValue(hash, quad.v0);
+            HashValue(hash, quad.u1);
+            HashValue(hash, quad.v1);
+            HashValue(hash, quad.textureId);
+            HashValue(hash, quad.tint.kind);
+            HashValue(hash, quad.tint.color);
+            HashValue(hash, quad.opacity);
+            HashClip(hash, quad.clip);
+            HashValue(hash, quad.rotationRadians);
+            HashValue(hash, quad.pivotX);
+            HashValue(hash, quad.pivotY);
+            break;
+        }
+        }
+    }
+
+    HashValue(hash, commands.clearColor);
+    HashValue(hash, commands.hasClearColor);
     return hash;
 }
 
@@ -63,6 +167,11 @@ NeoWPF::Contracts::IRendering* CurrentRendering() noexcept
     return platform ? &platform->Rendering() : nullptr;
 }
 
+}
+
+std::uint64_t NeoWPF::Rendering::CommandList::ComputeHash() const noexcept
+{
+    return HashCommandList(*this);
 }
 
 bool NeoWPF::Rendering::Renderer_Initialize(const RenderSurface& surface)
@@ -241,7 +350,7 @@ void NeoWPF::Rendering::Renderer_Execute(const RenderSurface& surface, const Com
     if (!state->framePending) {
         return;
     }
-    const auto commandHash = HashCommandList(cmd);
+    const auto commandHash = cmd.ComputeHash();
     if (state->hasCommandHash && commandHash == state->lastCommandHash) {
         state->framePending = false;
         return;

@@ -384,10 +384,10 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         track->BuildRenderCommands(commands);
     } else if (isVertical) {
         const auto trackBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetTrackBrush());
-        commands.DrawRoundedRect(absX, absY, trackThickness, trackLength, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, trackBrush ? trackBrush->GetArgb() : 0u, GetOpacity(), clip);
+        commands.DrawRoundedRect(absX, absY, trackThickness, trackLength, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, NeoWPF::Rendering::Paint::Solid(trackBrush ? trackBrush->GetArgb() : 0u), GetOpacity(), clip);
     } else {
         const auto trackBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetTrackBrush());
-        commands.DrawRoundedRect(absX, absY, trackLength, trackThickness, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, trackBrush ? trackBrush->GetArgb() : 0u, GetOpacity(), clip);
+        commands.DrawRoundedRect(absX, absY, trackLength, trackThickness, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, NeoWPF::Rendering::Paint::Solid(trackBrush ? trackBrush->GetArgb() : 0u), GetOpacity(), clip);
     }
 
     if (auto thumbControl = std::dynamic_pointer_cast<Thumb>(FindTemplateChild("PART_Thumb"))) {

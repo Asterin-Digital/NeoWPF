@@ -60,7 +60,7 @@ std::vector<const RoundedRectData*> FindRoundedRects(
     std::vector<const RoundedRectData*> matches;
     for (const auto& command : commands.commands) {
         if (command.kind == NeoWPF::Rendering::CommandList::CommandKind::RoundedRect &&
-            command.roundedRect.color == color) {
+            command.roundedRect.paint.color == color) {
             matches.push_back(&command.roundedRect);
         }
     }
@@ -132,7 +132,7 @@ TEST_F(CheckboxTests, CheckmarkAndBoxFollowCheckboxRotation)
     const auto expectedBoxCenter = RotatePoint(originalBoxCenter, controlPivot, controlAngle);
     for (const auto& command : commands.commands) {
         if (command.kind != NeoWPF::Rendering::CommandList::CommandKind::RoundedRect ||
-            command.roundedRect.color == checkColor) {
+            command.roundedRect.paint.color == checkColor) {
             continue;
         }
 

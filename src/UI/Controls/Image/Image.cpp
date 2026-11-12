@@ -214,7 +214,7 @@ void Image::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         1.0f,
         1.0f,
         m_textureId,
-        0xFFFFFFFFu,
+        NeoWPF::Rendering::Paint::Solid(0xFFFFFFFFu),
         GetOpacity(),
         clip,
         renderTransform.rotationRadians,

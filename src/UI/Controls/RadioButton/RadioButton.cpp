@@ -251,17 +251,17 @@ void RadioButton::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const auto backgroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
         const auto borderBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBorderBrush());
         commands.DrawRoundedRect(left, indicatorTop, indicatorSize, indicatorSize, 9.0f, 9.0f, 9.0f, 9.0f,
-            backgroundBrush ? backgroundBrush->GetArgb() : 0x00000000u, GetOpacity(), NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
+            NeoWPF::Rendering::Paint::Solid(backgroundBrush ? backgroundBrush->GetArgb() : 0x00000000u), GetOpacity(), NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
         commands.DrawRoundedRect(left, indicatorTop, indicatorSize, indicatorSize, 9.0f, 9.0f, 9.0f, 9.0f,
-            borderBrush ? borderBrush->GetArgb() : 0x00000000u, GetOpacity(), NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
+            NeoWPF::Rendering::Paint::Solid(borderBrush ? borderBrush->GetArgb() : 0x00000000u), GetOpacity(), NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
     }
 
     if (IsChecked()) {
         const double dotSize = 8.0;
         commands.DrawRoundedRect(left + (indicatorSize - dotSize) / 2.0, indicatorTop + (indicatorSize - dotSize) / 2.0,
             dotSize, dotSize, 4.0f, 4.0f, 4.0f, 4.0f,
-            std::dynamic_pointer_cast<SolidColorBrush>(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
-                NeoWPF::Core::ApplicationThemes::PaletteBrush::Accent))->GetArgb(), GetOpacity(),
+            NeoWPF::Rendering::Paint::Solid(std::dynamic_pointer_cast<SolidColorBrush>(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+                NeoWPF::Core::ApplicationThemes::PaletteBrush::Accent))->GetArgb()), GetOpacity(),
             NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
     }
 

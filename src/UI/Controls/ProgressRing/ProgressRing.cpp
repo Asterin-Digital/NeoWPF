@@ -270,7 +270,7 @@ void ProgressRing::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     const auto track = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
     if (track) {
         commands.DrawArc(centerX, centerY, radius, thickness, 0.0, kTwoPi,
-            track->GetArgb(), static_cast<float>(GetOpacity() * track->GetOpacity()), clip);
+            NeoWPF::Rendering::Paint::Solid(track->GetArgb()), static_cast<float>(GetOpacity() * track->GetOpacity()), clip);
     }
 
     const auto accent = std::dynamic_pointer_cast<SolidColorBrush>(
@@ -291,7 +291,7 @@ void ProgressRing::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
 
     commands.DrawArc(centerX, centerY, radius, thickness, startAngle, sweepAngle,
-        accent->GetArgb(), static_cast<float>(GetOpacity() * accent->GetOpacity()), clip);
+        NeoWPF::Rendering::Paint::Solid(accent->GetArgb()), static_cast<float>(GetOpacity() * accent->GetOpacity()), clip);
 }
 
 }

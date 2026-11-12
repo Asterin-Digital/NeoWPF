@@ -354,7 +354,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             borderTR,
             borderBR,
             borderBL,
-            borderColor,
+            NeoWPF::Rendering::Paint::Solid(borderColor),
             GetOpacity(),
             NeoWPF::Rendering::ClipRect{},
             rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
@@ -379,7 +379,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 innerTR,
                 innerBR,
                 innerBL,
-                backgroundBrush ? backgroundBrush->GetArgb() : 0x00000000u,
+                NeoWPF::Rendering::Paint::Solid(backgroundBrush ? backgroundBrush->GetArgb() : 0x00000000u),
                 GetOpacity(),
                 NeoWPF::Rendering::ClipRect{},
                 rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);

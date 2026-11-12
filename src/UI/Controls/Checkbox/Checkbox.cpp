@@ -305,8 +305,8 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const auto radius = GetCornerRadius();
         const auto background = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
         const auto border = std::dynamic_pointer_cast<SolidColorBrush>(GetBorderBrush());
-        commands.DrawRoundedRect(boxLeft, boxTop, boxSize, boxSize, radius.TopLeft, radius.TopRight, radius.BottomRight, radius.BottomLeft, background ? background->GetArgb() : 0u, GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
-        commands.DrawRoundedRect(boxLeft, boxTop, boxSize, boxSize, radius.TopLeft, radius.TopRight, radius.BottomRight, radius.BottomLeft, border ? border->GetArgb() : 0u, GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
+        commands.DrawRoundedRect(boxLeft, boxTop, boxSize, boxSize, radius.TopLeft, radius.TopRight, radius.BottomRight, radius.BottomLeft, NeoWPF::Rendering::Paint::Solid(background ? background->GetArgb() : 0u), GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
+        commands.DrawRoundedRect(boxLeft, boxTop, boxSize, boxSize, radius.TopLeft, radius.TopRight, radius.BottomRight, radius.BottomLeft, NeoWPF::Rendering::Paint::Solid(border ? border->GetArgb() : 0u), GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
     }
 
     if (IsChecked()) {
@@ -327,7 +327,7 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             const double x = strokeCenterX - width * 0.5;
             const double y = strokeCenterY - height * 0.5;
             commands.DrawRoundedRect(x, y, width, height, 0.0f, 0.0f, 0.0f, 0.0f,
-                                    foreground ? foreground->GetArgb() : 0u, GetOpacity(),
+                                    NeoWPF::Rendering::Paint::Solid(foreground ? foreground->GetArgb() : 0u), GetOpacity(),
                                     NeoWPF::Rendering::ClipRect{}, rotationRadians + renderTransform.rotationRadians,
                                     strokeCenterX, strokeCenterY);
         };

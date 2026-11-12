@@ -21,9 +21,12 @@ namespace {
 TEST(RenderCommandTests, PreservesCommandOrderAndPayload)
 {
     NeoWPF::Rendering::CommandList commands;
-    commands.DrawRect(1.0f, 2.0f, 30.0f, 40.0f, 0xFF112233u);
-    commands.DrawRoundedRect(3.0f, 4.0f, 20.0f, 10.0f, 1.0f, 2.0f, 3.0f, 4.0f, 0xFF445566u);
-    commands.DrawTexturedQuad(5.0f, 6.0f, 7.0f, 8.0f, 0.0f, 0.0f, 1.0f, 1.0f, 42u, 0xFFFFFFFFu);
+    commands.DrawRect(1.0f, 2.0f, 30.0f, 40.0f,
+                      NeoWPF::Rendering::Paint::Solid(0xFF112233u));
+    commands.DrawRoundedRect(3.0f, 4.0f, 20.0f, 10.0f, 1.0f, 2.0f, 3.0f, 4.0f,
+                             NeoWPF::Rendering::Paint::Solid(0xFF445566u));
+    commands.DrawTexturedQuad(5.0f, 6.0f, 7.0f, 8.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+                              42u, NeoWPF::Rendering::Paint::Solid(0xFFFFFFFFu));
 
     ASSERT_EQ(commands.commands.size(), 3u);
     EXPECT_EQ(commands.commands[0].kind, NeoWPF::Rendering::CommandList::CommandKind::Rect);
@@ -37,7 +40,8 @@ TEST(RenderCommandTests, PreservesCommandOrderAndPayload)
 TEST(RenderCommandTests, ClearRemovesAllQueuedCommands)
 {
     NeoWPF::Rendering::CommandList commands;
-    commands.DrawRect(0.0f, 0.0f, 1.0f, 1.0f, 0xFFFFFFFFu);
+    commands.DrawRect(0.0f, 0.0f, 1.0f, 1.0f,
+                      NeoWPF::Rendering::Paint::Solid(0xFFFFFFFFu));
     commands.Clear();
 
     EXPECT_TRUE(commands.commands.empty());
@@ -85,7 +89,8 @@ TEST(WindowRenderLifecycleTests, CreatesTwoIndependentWindowsAndBindsEachRenderT
 
     NeoWPF::Rendering::Renderer_Resize(leftSurface, 320, 240);
     NeoWPF::Rendering::CommandList leftCommands;
-    leftCommands.DrawRect(10.0, 10.0, 100.0, 80.0, 0xFF336699u);
+    leftCommands.DrawRect(10.0, 10.0, 100.0, 80.0,
+                          NeoWPF::Rendering::Paint::Solid(0xFF336699u));
     NeoWPF::Rendering::Renderer_BeginFrame(leftSurface);
     NeoWPF::Rendering::Renderer_Execute(leftSurface, leftCommands);
     NeoWPF::Rendering::Renderer_Present(leftSurface);
@@ -93,7 +98,8 @@ TEST(WindowRenderLifecycleTests, CreatesTwoIndependentWindowsAndBindsEachRenderT
     ASSERT_TRUE(NeoWPF::Rendering::Renderer_Initialize(rightSurface));
     NeoWPF::Rendering::Renderer_Resize(rightSurface, 640, 480);
     NeoWPF::Rendering::CommandList rightCommands;
-    rightCommands.DrawRect(20.0, 20.0, 200.0, 160.0, 0xFF993366u);
+    rightCommands.DrawRect(20.0, 20.0, 200.0, 160.0,
+                           NeoWPF::Rendering::Paint::Solid(0xFF993366u));
     NeoWPF::Rendering::Renderer_BeginFrame(rightSurface);
     NeoWPF::Rendering::Renderer_Execute(rightSurface, rightCommands);
     NeoWPF::Rendering::Renderer_Present(rightSurface);

@@ -552,7 +552,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 cornerRadius.TopRight,
                 cornerRadius.BottomRight,
                 cornerRadius.BottomLeft,
-                borderBrush->GetArgb(),
+                NeoWPF::Rendering::Paint::Solid(borderBrush->GetArgb()),
                 GetOpacity(),
                 NeoWPF::Rendering::ClipRect{},
                 renderTransform.rotationRadians,
@@ -577,7 +577,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 radiusTR,
                 radiusBR,
                 radiusBL,
-                backgroundBrush->GetArgb(),
+                NeoWPF::Rendering::Paint::Solid(backgroundBrush->GetArgb()),
                 GetOpacity(),
                 NeoWPF::Rendering::ClipRect{},
                 renderTransform.rotationRadians,
@@ -650,7 +650,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             0.0f, 0.0f,
             1.0f, 1.0f,
             textureId,
-            drawArgb,
+            NeoWPF::Rendering::Paint::Solid(drawArgb),
             GetOpacity(),
             clip);
 
@@ -675,9 +675,9 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             0.0f, 0.0f,
             1.0f, 1.0f,
             caretTextureId,
-            (std::dynamic_pointer_cast<SolidColorBrush>(GetCaretBrush())
+            NeoWPF::Rendering::Paint::Solid((std::dynamic_pointer_cast<SolidColorBrush>(GetCaretBrush())
                 ? std::dynamic_pointer_cast<SolidColorBrush>(GetCaretBrush())->GetArgb()
-                : 0u),
+                : 0u)),
             GetOpacity(),
             clip);
     }

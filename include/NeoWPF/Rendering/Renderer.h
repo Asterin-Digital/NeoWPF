@@ -14,6 +14,52 @@ namespace NeoWPF::Rendering {
 
 /*
     @summary
+    Describes a backend-neutral fill.
+
+    @internal
+*/
+struct Paint {
+    enum class Kind : std::uint8_t {
+        Solid,
+    };
+
+    Kind kind = Kind::Solid;
+    std::uint32_t color = 0;
+
+    /*
+        @summary
+        Creates a solid-color paint.
+
+        @param argb
+        The fill color, encoded as an ARGB value.
+
+        @returns
+        A solid paint containing the color.
+
+        @internal
+    */
+    static Paint Solid(std::uint32_t argb) noexcept
+    {
+        return {Kind::Solid, argb};
+    }
+
+    /*
+        @summary
+        Checks whether this paint has no visible color.
+
+        @returns
+        True when the paint is fully transparent.
+
+        @internal
+    */
+    bool IsEmpty() const noexcept
+    {
+        return kind == Kind::Solid && ((color >> 24) & 0xFFu) == 0;
+    }
+};
+
+/*
+    @summary
     Holds the drawing commands for a single frame.
 
     @details
@@ -37,7 +83,7 @@ struct CommandList {
 
         @internal
     */
-    struct DrawRect { double x; double y; double w; double h; uint32_t color; float opacity; ClipRect clip; float rotationRadians = 0.0f; double pivotX = 0.0; double pivotY = 0.0; };
+    struct DrawRect { double x; double y; double w; double h; Paint paint; float opacity; ClipRect clip; float rotationRadians = 0.0f; double pivotX = 0.0; double pivotY = 0.0; };
 
     /*
         @summary
@@ -45,7 +91,7 @@ struct CommandList {
 
         @internal
     */
-    struct DrawRoundedRect { double x; double y; double w; double h; double topLeft; double topRight; double bottomRight; double bottomLeft; uint32_t color; float opacity; ClipRect clip; float rotationRadians = 0.0f; double pivotX = 0.0; double pivotY = 0.0; };
+    struct DrawRoundedRect { double x; double y; double w; double h; double topLeft; double topRight; double bottomRight; double bottomLeft; Paint paint; float opacity; ClipRect clip; float rotationRadians = 0.0f; double pivotX = 0.0; double pivotY = 0.0; };
 
     /*
         @summary
@@ -53,7 +99,7 @@ struct CommandList {
 
         @internal
     */
-    struct ArcData { double centerX; double centerY; double radius; double thickness; double startAngleRadians; double sweepAngleRadians; uint32_t color; float opacity; ClipRect clip; };
+    struct ArcData { double centerX; double centerY; double radius; double thickness; double startAngleRadians; double sweepAngleRadians; Paint paint; float opacity; ClipRect clip; };
 
     /*
         @summary
@@ -61,7 +107,7 @@ struct CommandList {
 
         @internal
     */
-    struct DrawTexturedQuad { double x; double y; double w; double h; float u0; float v0; float u1; float v1; uint32_t textureId; uint32_t tintColor; float opacity; ClipRect clip; float rotationRadians = 0.0f; double pivotX = 0.0; double pivotY = 0.0; };
+    struct DrawTexturedQuad { double x; double y; double w; double h; float u0; float v0; float u1; float v1; uint32_t textureId; Paint tint; float opacity; ClipRect clip; float rotationRadians = 0.0f; double pivotX = 0.0; double pivotY = 0.0; };
 
     struct Command {
         CommandKind kind;
@@ -85,6 +131,17 @@ struct CommandList {
 
     /*
         @summary
+        Computes a hash of the commands and clear state.
+
+        @returns
+        A hash representing the render state in this command list.
+
+        @internal
+    */
+    std::uint64_t ComputeHash() const noexcept;
+
+    /*
+        @summary
         Adds a filled rectangle to the draw queue.
 
         @param x
@@ -99,8 +156,8 @@ struct CommandList {
         @param h
         The rectangle height.
 
-        @param color
-        The fill color, encoded as an ARGB value.
+        @param paint
+        The fill to draw.
 
         @param opacity
         The opacity applied to the draw.
@@ -119,8 +176,8 @@ struct CommandList {
 
         @internal
     */
-    void DrawRect(double x, double y, double w, double h, uint32_t color, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f, double pivotX = 0.0, double pivotY = 0.0) {
-        commands.push_back({CommandKind::Rect, {x, y, w, h, color, opacity, clip, rotationRadians, pivotX, pivotY}, {}, {}});
+    void DrawRect(double x, double y, double w, double h, Paint paint, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f, double pivotX = 0.0, double pivotY = 0.0) {
+        commands.push_back({CommandKind::Rect, {x, y, w, h, paint, opacity, clip, rotationRadians, pivotX, pivotY}, {}, {}});
     }
 
     /*
@@ -151,8 +208,8 @@ struct CommandList {
         @param bottomLeft
         The radius of the bottom-left corner.
 
-        @param color
-        The fill color, encoded as an ARGB value.
+        @param paint
+        The fill to draw.
 
         @param opacity
         The opacity applied to the draw.
@@ -171,8 +228,8 @@ struct CommandList {
 
         @internal
     */
-    void DrawRoundedRect(double x, double y, double w, double h, double topLeft, double topRight, double bottomRight, double bottomLeft, uint32_t color, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f, double pivotX = 0.0, double pivotY = 0.0) {
-        commands.push_back({CommandKind::RoundedRect, {}, {x, y, w, h, topLeft, topRight, bottomRight, bottomLeft, color, opacity, clip, rotationRadians, pivotX, pivotY}, {}});
+    void DrawRoundedRect(double x, double y, double w, double h, double topLeft, double topRight, double bottomRight, double bottomLeft, Paint paint, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f, double pivotX = 0.0, double pivotY = 0.0) {
+        commands.push_back({CommandKind::RoundedRect, {}, {x, y, w, h, topLeft, topRight, bottomRight, bottomLeft, paint, opacity, clip, rotationRadians, pivotX, pivotY}, {}});
     }
 
     /*
@@ -197,8 +254,8 @@ struct CommandList {
         @param sweepAngleRadians
         The signed sweep angle, clamped to one revolution in either direction.
 
-        @param color
-        The fill color, encoded as an ARGB value.
+        @param paint
+        The fill to draw.
 
         @param opacity
         The opacity applied to the draw.
@@ -208,8 +265,8 @@ struct CommandList {
 
         @internal
     */
-    void DrawArc(double centerX, double centerY, double radius, double thickness, double startAngleRadians, double sweepAngleRadians, uint32_t color, float opacity = 1.0f, const ClipRect& clip = ClipRect{}) {
-        commands.push_back({CommandKind::Arc, {}, {}, {}, {centerX, centerY, radius, thickness, startAngleRadians, sweepAngleRadians, color, opacity, clip}});
+    void DrawArc(double centerX, double centerY, double radius, double thickness, double startAngleRadians, double sweepAngleRadians, Paint paint, float opacity = 1.0f, const ClipRect& clip = ClipRect{}) {
+        commands.push_back({CommandKind::Arc, {}, {}, {}, {centerX, centerY, radius, thickness, startAngleRadians, sweepAngleRadians, paint, opacity, clip}});
     }
 
     /*
@@ -243,6 +300,9 @@ struct CommandList {
         @param tex
         The texture identifier.
 
+        @param tint
+        The paint applied to the texture.
+
         @param opacity
         The opacity applied to the draw.
 
@@ -251,8 +311,8 @@ struct CommandList {
 
         @internal
     */
-    void DrawTexturedQuad(double x, double y, double w, double h, float u0, float v0, float u1, float v1, uint32_t tex, uint32_t tintColor, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f, double pivotX = 0.0, double pivotY = 0.0) {
-        commands.push_back({CommandKind::TexturedQuad, {}, {}, {x, y, w, h, u0, v0, u1, v1, tex, tintColor, opacity, clip, rotationRadians, pivotX, pivotY}});
+    void DrawTexturedQuad(double x, double y, double w, double h, float u0, float v0, float u1, float v1, uint32_t tex, Paint tint, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f, double pivotX = 0.0, double pivotY = 0.0) {
+        commands.push_back({CommandKind::TexturedQuad, {}, {}, {x, y, w, h, u0, v0, u1, v1, tex, tint, opacity, clip, rotationRadians, pivotX, pivotY}});
     }
 };
 
