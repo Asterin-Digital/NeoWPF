@@ -100,7 +100,42 @@ bool SubmitImmediate(VkDevice device, VkCommandPool commandPool, VkQueue queue,
 
 }
 
-bool VulkanRendering::CreateTexturedPipeline(VkRenderPass renderPass)
+bool VulkanRendering::EnsureVertexBuffer(VertexBuffer& buffer, VkDeviceSize requiredSize)
+{
+    if (requiredSize <= buffer.capacity && buffer.buffer != VK_NULL_HANDLE &&
+        buffer.memory != VK_NULL_HANDLE) {
+        return true;
+    }
+    if (m_device == VK_NULL_HANDLE) {
+        return false;
+    }
+
+    VkDeviceSize newCapacity = buffer.capacity > 0 ? buffer.capacity : 1024 * 1024;
+    while (newCapacity < requiredSize) {
+        if (newCapacity > std::numeric_limits<VkDeviceSize>::max() / 2) {
+            newCapacity = requiredSize;
+            break;
+        }
+        newCapacity *= 2;
+    }
+
+    VkBuffer newBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory newMemory = VK_NULL_HANDLE;
+    if (!CreateBuffer(m_physicalDevice, m_device, newCapacity,
+                      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                      newBuffer, newMemory)) {
+        return false;
+    }
+    if (buffer.buffer != VK_NULL_HANDLE) vkDestroyBuffer(m_device, buffer.buffer, nullptr);
+    if (buffer.memory != VK_NULL_HANDLE) vkFreeMemory(m_device, buffer.memory, nullptr);
+    buffer.buffer = newBuffer;
+    buffer.memory = newMemory;
+    buffer.capacity = newCapacity;
+    return true;
+}
+
+bool VulkanRendering::CreateTexturedPipeline(WindowContext& context, VkRenderPass renderPass)
 {
     if (renderPass == VK_NULL_HANDLE) {
         NeoWPF::Diagnostics::LogError("[Vulkan] Cannot create textured pipeline without a render pass");
@@ -135,7 +170,7 @@ bool VulkanRendering::CreateTexturedPipeline(VkRenderPass renderPass)
     const VkPipelineLayoutCreateInfo layoutInfo{
         VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO, nullptr, 0, 1, &m_textureSetLayout,
         1, &pushConstants};
-    if (vkCreatePipelineLayout(m_device, &layoutInfo, nullptr, &m_texturedPipelineLayout) != VK_SUCCESS) {
+    if (vkCreatePipelineLayout(m_device, &layoutInfo, nullptr, &context.texturedPipelineLayout) != VK_SUCCESS) {
         return false;
     }
     const VkShaderModule vertexShader = CreateShaderModule(
@@ -185,33 +220,26 @@ bool VulkanRendering::CreateTexturedPipeline(VkRenderPass renderPass)
     const VkGraphicsPipelineCreateInfo pipelineInfo{
         VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, nullptr, 0, 2, stages,
         &vertexInput, &inputAssembly, nullptr, &viewportState, &rasterization, &multisample,
-        nullptr, &blend, &dynamicState, m_texturedPipelineLayout, renderPass, 0, VK_NULL_HANDLE, -1};
+        nullptr, &blend, &dynamicState, context.texturedPipelineLayout, renderPass, 0, VK_NULL_HANDLE, -1};
     const VkResult pipelineResult = vkCreateGraphicsPipelines(
-        m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_texturedPipeline);
+        m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &context.texturedPipeline);
     vkDestroyShaderModule(m_device, vertexShader, nullptr);
     vkDestroyShaderModule(m_device, fragmentShader, nullptr);
     if (pipelineResult != VK_SUCCESS) {
         return false;
     }
-    return CreateBuffer(m_physicalDevice, m_device, 1024 * 1024,
-                        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                        m_texturedVertexBuffer, m_texturedVertexMemory);
+    return true;
 }
 
-void VulkanRendering::DestroyTexturedPipeline() noexcept
+void VulkanRendering::DestroyTexturedPipeline(WindowContext& context) noexcept
 {
     if (m_device == VK_NULL_HANDLE) {
         return;
     }
-    if (m_texturedPipeline != VK_NULL_HANDLE) vkDestroyPipeline(m_device, m_texturedPipeline, nullptr);
-    if (m_texturedPipelineLayout != VK_NULL_HANDLE) vkDestroyPipelineLayout(m_device, m_texturedPipelineLayout, nullptr);
-    if (m_texturedVertexBuffer != VK_NULL_HANDLE) vkDestroyBuffer(m_device, m_texturedVertexBuffer, nullptr);
-    if (m_texturedVertexMemory != VK_NULL_HANDLE) vkFreeMemory(m_device, m_texturedVertexMemory, nullptr);
-    m_texturedPipeline = VK_NULL_HANDLE;
-    m_texturedPipelineLayout = VK_NULL_HANDLE;
-    m_texturedVertexBuffer = VK_NULL_HANDLE;
-    m_texturedVertexMemory = VK_NULL_HANDLE;
+    if (context.texturedPipeline != VK_NULL_HANDLE) vkDestroyPipeline(m_device, context.texturedPipeline, nullptr);
+    if (context.texturedPipelineLayout != VK_NULL_HANDLE) vkDestroyPipelineLayout(m_device, context.texturedPipelineLayout, nullptr);
+    context.texturedPipeline = VK_NULL_HANDLE;
+    context.texturedPipelineLayout = VK_NULL_HANDLE;
 }
 
 void VulkanRendering::DestroyTextureResources() noexcept
@@ -231,7 +259,17 @@ void VulkanRendering::DestroyTextureResources() noexcept
 std::uint32_t VulkanRendering::CreateTexture(unsigned int width, unsigned int height, const void* rgbaData)
 {
     std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
-    auto* context = FirstWindowContext();
+    WindowContext* context = nullptr;
+    {
+        std::lock_guard<std::mutex> contextLock(m_windowContextsMutex);
+        for (const auto& [handle, window] : m_windowContexts) {
+            (void)handle;
+            if (window->renderPass != VK_NULL_HANDLE && window->commandPool != VK_NULL_HANDLE) {
+                context = window.get();
+                break;
+            }
+        }
+    }
     NeoWPF::Diagnostics::Log(
         NeoWPF::Diagnostics::Category::TextRendering,
         NeoWPF::Diagnostics::Level::Debug,
@@ -242,9 +280,23 @@ std::uint32_t VulkanRendering::CreateTexture(unsigned int width, unsigned int he
         width == 0 || height == 0 || rgbaData == nullptr) {
         return 0;
     }
-    if (m_textureDescriptorPool == VK_NULL_HANDLE && !CreateTexturedPipeline(context->renderPass)) {
+    if (m_textureDescriptorPool == VK_NULL_HANDLE && !CreateTexturedPipeline(*context, context->renderPass)) {
         NeoWPF::Diagnostics::LogError("[Vulkan] Failed to initialize textured resources on demand");
         return 0;
+    }
+    {
+        std::lock_guard<std::mutex> contextLock(m_windowContextsMutex);
+        for (const auto& [handle, window] : m_windowContexts) {
+            (void)handle;
+            if (window.get() != context && window->renderPass != VK_NULL_HANDLE &&
+                window->commandPool != VK_NULL_HANDLE && window->texturedPipeline == VK_NULL_HANDLE &&
+                !CreateTexturedPipeline(*window, window->renderPass)) {
+                NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+                    NeoWPF::Diagnostics::Level::Debug,
+                    "[Vulkan] Failed to create the textured pipeline for an open window");
+                return 0;
+            }
+        }
     }
     const VkDeviceSize dataSize = static_cast<VkDeviceSize>(width) * height * 4;
     VkBuffer stagingBuffer = VK_NULL_HANDLE;

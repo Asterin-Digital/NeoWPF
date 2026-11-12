@@ -18,6 +18,11 @@ void BM_RenderCommandsBuild(benchmark::State& state)
         benchmark::DoNotOptimize(commandList.commands.data());
         benchmark::ClobberMemory();
     }
+    const auto commandCount = commandList.commands.size();
+    state.counters["CommandCount"] = static_cast<double>(commandCount);
+    state.counters["CommandSizeBytes"] = sizeof(NeoWPF::Rendering::CommandList::Command);
+    state.counters["CommandStorageBytes"] = static_cast<double>(
+        commandCount * sizeof(NeoWPF::Rendering::CommandList::Command));
     state.SetItemsProcessed(state.iterations() * NeoWPF::Benchmarks::kStackChildCount);
 }
 BENCHMARK(BM_RenderCommandsBuild);

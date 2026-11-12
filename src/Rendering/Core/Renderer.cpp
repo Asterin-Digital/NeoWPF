@@ -82,15 +82,15 @@ std::uint64_t HashCommandList(const NeoWPF::Rendering::CommandList& commands) no
     HashValue(hash, commands.commands.size());
 
     for (const auto& command : commands.commands) {
-        HashValue(hash, command.kind);
-        switch (command.kind) {
+        const auto kind = command.GetKind();
+        HashValue(hash, kind);
+        switch (kind) {
         case CommandList::CommandKind::Rect: {
-            const auto& rect = command.rect;
+            const auto& rect = command.GetRect();
             HashValue(hash, rect.x);
             HashValue(hash, rect.y);
             HashValue(hash, rect.w);
             HashValue(hash, rect.h);
-            HashValue(hash, rect.paint.kind);
             HashValue(hash, rect.paint.kind);
             HashValue(hash, rect.paint.color);
             HashValue(hash, rect.opacity);
@@ -101,7 +101,7 @@ std::uint64_t HashCommandList(const NeoWPF::Rendering::CommandList& commands) no
             break;
         }
         case CommandList::CommandKind::RoundedRect: {
-            const auto& rect = command.roundedRect;
+            const auto& rect = command.GetRoundedRect();
             HashValue(hash, rect.x);
             HashValue(hash, rect.y);
             HashValue(hash, rect.w);
@@ -120,7 +120,7 @@ std::uint64_t HashCommandList(const NeoWPF::Rendering::CommandList& commands) no
             break;
         }
         case CommandList::CommandKind::Arc: {
-            const auto& arc = command.arc;
+            const auto& arc = command.GetArc();
             HashValue(hash, arc.centerX);
             HashValue(hash, arc.centerY);
             HashValue(hash, arc.radius);
@@ -134,7 +134,7 @@ std::uint64_t HashCommandList(const NeoWPF::Rendering::CommandList& commands) no
             break;
         }
         case CommandList::CommandKind::TexturedQuad: {
-            const auto& quad = command.texturedQuad;
+            const auto& quad = command.GetTexturedQuad();
             HashValue(hash, quad.x);
             HashValue(hash, quad.y);
             HashValue(hash, quad.w);

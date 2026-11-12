@@ -1,6 +1,7 @@
 #include <NeoWPF/Rendering/Vulkan/VulkanRendering.h>
 #include <NeoWPF/Rendering/Vulkan/SurfaceAlpha.h>
 #include <NeoWPF/Diagnostics/Logger.h>
+#include <NeoWPF/Platform/PlatformRegistry.h>
 
 #include <algorithm>
 #include <array>
@@ -14,8 +15,15 @@ void VulkanRendering::DestroySwapchainResources(WindowContext& context) noexcept
     if (m_device == VK_NULL_HANDLE) {
         return;
     }
-    DestroyTexturedPipeline();
-    DestroySolidPipeline();
+    DestroyTexturedPipeline(context);
+    DestroySolidPipeline(context);
+    const auto destroyVertexBuffer = [this](VertexBuffer& buffer) {
+        if (buffer.buffer != VK_NULL_HANDLE) vkDestroyBuffer(m_device, buffer.buffer, nullptr);
+        if (buffer.memory != VK_NULL_HANDLE) vkFreeMemory(m_device, buffer.memory, nullptr);
+        buffer = {};
+    };
+    destroyVertexBuffer(context.solidBuffer);
+    destroyVertexBuffer(context.texturedBuffer);
     for (auto framebuffer : context.framebuffers) {
         vkDestroyFramebuffer(m_device, framebuffer, nullptr);
     }
@@ -49,6 +57,37 @@ void VulkanRendering::DestroySwapchainResources(WindowContext& context) noexcept
     context.renderFinished = VK_NULL_HANDLE;
     context.inFlight = VK_NULL_HANDLE;
     context.commandBuffers.clear();
+}
+
+void VulkanRendering::RecreateSwapchain(
+    const NeoWPF::Rendering::RenderSurface& surface, WindowContext& context) noexcept
+{
+    context.frameActive = false;
+    const VkResult idleResult = vkDeviceWaitIdle(m_device);
+    if (idleResult != VK_SUCCESS) {
+        context.swapchainExtent = {};
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[Vulkan] Could not idle the device while recovering a window frame: %d",
+            static_cast<int>(idleResult));
+        return;
+    }
+    unsigned int width = 0;
+    unsigned int height = 0;
+    if (auto* platform = NeoWPF::Platform::CurrentPlatform()) {
+        platform->Windowing().GetWindowSize(surface.nativeWindowHandle, width, height);
+    }
+    if (width == 0 || height == 0) {
+        DestroySwapchainResources(context);
+        context.swapchainExtent = {};
+        return;
+    }
+    if (!CreateSwapchainResources(context, width, height)) {
+        context.swapchainExtent = {};
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[Vulkan] Could not recreate the swapchain after a failed frame");
+    }
 }
 
 bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned int width, unsigned int height)
@@ -211,12 +250,12 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
         DestroySwapchainResources(context);
         return false;
     }
-    if (!CreateSolidPipeline(context.renderPass)) {
+    if (!CreateSolidPipeline(context, context.renderPass)) {
         NeoWPF::Diagnostics::LogError("[Vulkan] Solid pipeline creation failed");
         DestroySwapchainResources(context);
         return false;
     }
-    if (m_textureDescriptorPool != VK_NULL_HANDLE && !CreateTexturedPipeline(context.renderPass)) {
+    if (m_textureDescriptorPool != VK_NULL_HANDLE && !CreateTexturedPipeline(context, context.renderPass)) {
         NeoWPF::Diagnostics::LogError("[Vulkan] Textured pipeline recreation failed");
         DestroySwapchainResources(context);
         return false;

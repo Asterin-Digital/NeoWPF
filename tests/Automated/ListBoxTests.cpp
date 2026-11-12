@@ -110,9 +110,9 @@ TEST(ListBoxItemTests, SelectedStateAddsSelectionRenderCommands)
     NeoWPF::Rendering::CommandList selectedCommands;
     item.BuildRenderCommands(selectedCommands);
     ASSERT_EQ(selectedCommands.commands.size(), 2u);
-    EXPECT_EQ(selectedCommands.commands[0].kind,
+    EXPECT_EQ(selectedCommands.commands[0].GetKind(),
               NeoWPF::Rendering::CommandList::CommandKind::RoundedRect);
-    EXPECT_EQ(selectedCommands.commands[1].kind,
+    EXPECT_EQ(selectedCommands.commands[1].GetKind(),
               NeoWPF::Rendering::CommandList::CommandKind::RoundedRect);
 }
 

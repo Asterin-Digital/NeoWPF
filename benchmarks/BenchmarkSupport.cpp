@@ -27,7 +27,7 @@ public:
             GetLayoutOffsetY(),
             GetFinalWidth(),
             GetFinalHeight(),
-            0xFF336699u);
+            NeoWPF::Rendering::Paint::Solid(0xFF336699u));
     }
 };
 

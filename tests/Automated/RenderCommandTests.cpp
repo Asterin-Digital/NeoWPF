@@ -8,7 +8,7 @@
 #endif
 
 #include <NeoWPF/Core/Application/Application.h>
-#include <NeoWPF/Rendering/Clipping.h>
+#include <NeoWPF/Rendering/Geometry/Clipping.h>
 #include <NeoWPF/Rendering/Renderer.h>
 
 #if !defined(_WIN32)
@@ -29,12 +29,12 @@ TEST(RenderCommandTests, PreservesCommandOrderAndPayload)
                               42u, NeoWPF::Rendering::Paint::Solid(0xFFFFFFFFu));
 
     ASSERT_EQ(commands.commands.size(), 3u);
-    EXPECT_EQ(commands.commands[0].kind, NeoWPF::Rendering::CommandList::CommandKind::Rect);
-    EXPECT_EQ(commands.commands[1].kind, NeoWPF::Rendering::CommandList::CommandKind::RoundedRect);
-    EXPECT_EQ(commands.commands[2].kind, NeoWPF::Rendering::CommandList::CommandKind::TexturedQuad);
-    EXPECT_DOUBLE_EQ(commands.commands[0].rect.x, 1.0);
-    EXPECT_DOUBLE_EQ(commands.commands[1].roundedRect.bottomLeft, 4.0);
-    EXPECT_EQ(commands.commands[2].texturedQuad.textureId, 42u);
+    EXPECT_EQ(commands.commands[0].GetKind(), NeoWPF::Rendering::CommandList::CommandKind::Rect);
+    EXPECT_EQ(commands.commands[1].GetKind(), NeoWPF::Rendering::CommandList::CommandKind::RoundedRect);
+    EXPECT_EQ(commands.commands[2].GetKind(), NeoWPF::Rendering::CommandList::CommandKind::TexturedQuad);
+    EXPECT_DOUBLE_EQ(commands.commands[0].GetRect().x, 1.0);
+    EXPECT_DOUBLE_EQ(commands.commands[1].GetRoundedRect().bottomLeft, 4.0);
+    EXPECT_EQ(commands.commands[2].GetTexturedQuad().textureId, 42u);
 }
 
 TEST(RenderCommandTests, ClearRemovesAllQueuedCommands)
@@ -45,6 +45,17 @@ TEST(RenderCommandTests, ClearRemovesAllQueuedCommands)
     commands.Clear();
 
     EXPECT_TRUE(commands.commands.empty());
+}
+
+TEST(RenderCommandTests, StoresOnlyOnePayload)
+{
+    using Command = NeoWPF::Rendering::CommandList::Command;
+    using CommandList = NeoWPF::Rendering::CommandList;
+    constexpr std::size_t oldInlinePayloadSize = sizeof(CommandList::RectData) +
+        sizeof(CommandList::RoundedRectData) + sizeof(CommandList::ArcData) +
+        sizeof(CommandList::TexturedQuadData);
+
+    EXPECT_LT(sizeof(Command), oldInlinePayloadSize);
 }
 
 TEST(RenderCommandTests, ClipsRectangleAndReportsVisibleIntersection)

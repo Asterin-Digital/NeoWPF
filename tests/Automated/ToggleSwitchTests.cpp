@@ -33,8 +33,7 @@ void RaisePointerEvent(NeoWPF::UI::ToggleSwitch& toggleSwitch,
     toggleSwitch.RaiseEvent(&args);
 }
 
-using RoundedRectData = decltype(
-    std::declval<NeoWPF::Rendering::CommandList::Command>().roundedRect);
+using RoundedRectData = NeoWPF::Rendering::CommandList::RoundedRectData;
 
 class ToggleSwitchTests : public ::testing::Test {
 protected:
@@ -54,8 +53,8 @@ std::vector<RoundedRectData> GetRoundedRectCommands(
 {
     std::vector<RoundedRectData> rectangles;
     for (const auto& command : commands.commands) {
-        if (command.kind == NeoWPF::Rendering::CommandList::CommandKind::RoundedRect) {
-            rectangles.push_back(command.roundedRect);
+        if (command.GetKind() == NeoWPF::Rendering::CommandList::CommandKind::RoundedRect) {
+            rectangles.push_back(command.GetRoundedRect());
         }
     }
     return rectangles;

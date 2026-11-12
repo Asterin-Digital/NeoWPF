@@ -5,25 +5,18 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
-#include <NeoWPF/Rendering/Clipping.h>
+#include <NeoWPF/Rendering/Geometry/PrimitiveTessellation.h>
+
 #include <vector>
 
 namespace NeoWPF::Rendering {
 
 /*
     @summary
-    Represents a two-dimensional vertex in tessellated arc geometry.
+    Tessellates an annular arc into clipped triangle-list vertices.
 
-    @internal
-*/
-struct ArcVertex {
-    double x;
-    double y;
-};
-
-/*
-    @summary
-    Tessellates a clipped annular arc into triangle-list vertices.
+    @param vertices
+    The output triangle-list vertices. Existing contents are replaced.
 
     @param centerX
     The horizontal coordinate of the arc center.
@@ -44,14 +37,12 @@ struct ArcVertex {
     The signed sweep angle, clamped to one revolution in either direction.
 
     @param clip
-    The clipping rectangle to constrain the generated geometry.
-
-    @returns
-    Triangle-list vertices, or an empty vector when the input is invalid or invisible.
+    The clipping rectangle.
 
     @internal
 */
-std::vector<ArcVertex> TessellateAnnularArc(
+void TessellateAnnularArc(
+    std::vector<GeometryVertex>& vertices,
     double centerX,
     double centerY,
     double radius,

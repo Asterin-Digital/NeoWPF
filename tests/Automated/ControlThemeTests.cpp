@@ -36,8 +36,8 @@ protected:
 bool ContainsRoundedRectColor(const NeoWPF::Rendering::CommandList& commands, std::uint32_t color)
 {
     for (const auto& command : commands.commands) {
-        if (command.kind == NeoWPF::Rendering::CommandList::CommandKind::RoundedRect &&
-            command.roundedRect.paint.color == color) {
+        if (command.GetKind() == NeoWPF::Rendering::CommandList::CommandKind::RoundedRect &&
+            command.GetRoundedRect().paint.color == color) {
             return true;
         }
     }

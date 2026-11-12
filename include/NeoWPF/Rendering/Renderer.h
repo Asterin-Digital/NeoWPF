@@ -5,10 +5,12 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
-#include <NeoWPF/Rendering/Clipping.h>
+#include <NeoWPF/Rendering/Geometry/Clipping.h>
 #include <NeoWPF/Rendering/RenderSurface.h>
 #include <vector>
 #include <cstdint>
+#include <utility>
+#include <variant>
 
 namespace NeoWPF::Rendering {
 
@@ -83,7 +85,7 @@ struct CommandList {
 
         @internal
     */
-    struct DrawRect { double x; double y; double w; double h; Paint paint; float opacity; ClipRect clip; float rotationRadians = 0.0f; double pivotX = 0.0; double pivotY = 0.0; };
+    struct RectData { double x; double y; double w; double h; Paint paint; float opacity; ClipRect clip; float rotationRadians = 0.0f; double pivotX = 0.0; double pivotY = 0.0; };
 
     /*
         @summary
@@ -91,7 +93,7 @@ struct CommandList {
 
         @internal
     */
-    struct DrawRoundedRect { double x; double y; double w; double h; double topLeft; double topRight; double bottomRight; double bottomLeft; Paint paint; float opacity; ClipRect clip; float rotationRadians = 0.0f; double pivotX = 0.0; double pivotY = 0.0; };
+    struct RoundedRectData { double x; double y; double w; double h; double topLeft; double topRight; double bottomRight; double bottomLeft; Paint paint; float opacity; ClipRect clip; float rotationRadians = 0.0f; double pivotX = 0.0; double pivotY = 0.0; };
 
     /*
         @summary
@@ -107,14 +109,95 @@ struct CommandList {
 
         @internal
     */
-    struct DrawTexturedQuad { double x; double y; double w; double h; float u0; float v0; float u1; float v1; uint32_t textureId; Paint tint; float opacity; ClipRect clip; float rotationRadians = 0.0f; double pivotX = 0.0; double pivotY = 0.0; };
+    struct TexturedQuadData { double x; double y; double w; double h; float u0; float v0; float u1; float v1; uint32_t textureId; Paint tint; float opacity; ClipRect clip; float rotationRadians = 0.0f; double pivotX = 0.0; double pivotY = 0.0; };
 
     struct Command {
-        CommandKind kind;
-        DrawRect rect{};
-        DrawRoundedRect roundedRect{};
-        DrawTexturedQuad texturedQuad{};
-        ArcData arc{};
+        using Payload = std::variant<RectData, RoundedRectData, ArcData, TexturedQuadData>;
+
+        explicit Command(RectData rect)
+            : payload(std::move(rect))
+        {
+        }
+
+        explicit Command(RoundedRectData roundedRect)
+            : payload(std::move(roundedRect))
+        {
+        }
+
+        explicit Command(ArcData arc)
+            : payload(std::move(arc))
+        {
+        }
+
+        explicit Command(TexturedQuadData texturedQuad)
+            : payload(std::move(texturedQuad))
+        {
+        }
+
+        /*
+            @summary
+            Returns the active command kind.
+
+            @returns
+            The kind matching the active payload.
+
+            @internal
+        */
+        CommandKind GetKind() const noexcept
+        {
+            switch (payload.index()) {
+            case 0: return CommandKind::Rect;
+            case 1: return CommandKind::RoundedRect;
+            case 2: return CommandKind::Arc;
+            default: return CommandKind::TexturedQuad;
+            }
+        }
+
+        /*
+            @summary
+            Returns the rectangle payload.
+
+            @returns
+            The active rectangle command.
+
+            @internal
+        */
+        const RectData& GetRect() const noexcept { return std::get<0>(payload); }
+
+        /*
+            @summary
+            Returns the rounded-rectangle payload.
+
+            @returns
+            The active rounded-rectangle command.
+
+            @internal
+        */
+        const RoundedRectData& GetRoundedRect() const noexcept { return std::get<1>(payload); }
+
+        /*
+            @summary
+            Returns the arc payload.
+
+            @returns
+            The active arc command.
+
+            @internal
+        */
+        const ArcData& GetArc() const noexcept { return std::get<2>(payload); }
+
+        /*
+            @summary
+            Returns the textured-quad payload.
+
+            @returns
+            The active textured-quad command.
+
+            @internal
+        */
+        const TexturedQuadData& GetTexturedQuad() const noexcept { return std::get<3>(payload); }
+
+        Payload payload;
     };
 
     std::vector<Command> commands;
@@ -177,7 +260,7 @@ struct CommandList {
         @internal
     */
     void DrawRect(double x, double y, double w, double h, Paint paint, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f, double pivotX = 0.0, double pivotY = 0.0) {
-        commands.push_back({CommandKind::Rect, {x, y, w, h, paint, opacity, clip, rotationRadians, pivotX, pivotY}, {}, {}});
+        commands.emplace_back(RectData{x, y, w, h, paint, opacity, clip, rotationRadians, pivotX, pivotY});
     }
 
     /*
@@ -229,7 +312,7 @@ struct CommandList {
         @internal
     */
     void DrawRoundedRect(double x, double y, double w, double h, double topLeft, double topRight, double bottomRight, double bottomLeft, Paint paint, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f, double pivotX = 0.0, double pivotY = 0.0) {
-        commands.push_back({CommandKind::RoundedRect, {}, {x, y, w, h, topLeft, topRight, bottomRight, bottomLeft, paint, opacity, clip, rotationRadians, pivotX, pivotY}, {}});
+        commands.emplace_back(RoundedRectData{x, y, w, h, topLeft, topRight, bottomRight, bottomLeft, paint, opacity, clip, rotationRadians, pivotX, pivotY});
     }
 
     /*
@@ -266,7 +349,7 @@ struct CommandList {
         @internal
     */
     void DrawArc(double centerX, double centerY, double radius, double thickness, double startAngleRadians, double sweepAngleRadians, Paint paint, float opacity = 1.0f, const ClipRect& clip = ClipRect{}) {
-        commands.push_back({CommandKind::Arc, {}, {}, {}, {centerX, centerY, radius, thickness, startAngleRadians, sweepAngleRadians, paint, opacity, clip}});
+        commands.emplace_back(ArcData{centerX, centerY, radius, thickness, startAngleRadians, sweepAngleRadians, paint, opacity, clip});
     }
 
     /*
@@ -312,7 +395,7 @@ struct CommandList {
         @internal
     */
     void DrawTexturedQuad(double x, double y, double w, double h, float u0, float v0, float u1, float v1, uint32_t tex, Paint tint, float opacity = 1.0f, const ClipRect& clip = ClipRect{}, float rotationRadians = 0.0f, double pivotX = 0.0, double pivotY = 0.0) {
-        commands.push_back({CommandKind::TexturedQuad, {}, {}, {x, y, w, h, u0, v0, u1, v1, tex, tint, opacity, clip, rotationRadians, pivotX, pivotY}});
+        commands.emplace_back(TexturedQuadData{x, y, w, h, u0, v0, u1, v1, tex, tint, opacity, clip, rotationRadians, pivotX, pivotY});
     }
 };
 

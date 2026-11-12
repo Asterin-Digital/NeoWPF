@@ -3,7 +3,7 @@
 #include <NeoWPF/Contracts/IWindowing.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Platform/PlatformRegistry.h>
-#include <NeoWPF/Rendering/Clipping.h>
+#include <NeoWPF/Rendering/Geometry/Clipping.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/Vulkan/SurfaceAlpha.h>
 
@@ -318,7 +318,6 @@ void VulkanRendering::ShutdownDevice() noexcept
     if (m_device != VK_NULL_HANDLE) {
         vkDeviceWaitIdle(m_device);
     }
-    DestroyTextureResources();
     {
         std::lock_guard<std::mutex> contextLock(m_windowContextsMutex);
         for (const auto& [handle, context] : m_windowContexts) {
@@ -330,6 +329,7 @@ void VulkanRendering::ShutdownDevice() noexcept
         }
         m_windowContexts.clear();
     }
+    DestroyTextureResources();
     if (m_device != VK_NULL_HANDLE) {
         vkDestroyDevice(m_device, nullptr);
         m_device = VK_NULL_HANDLE;
@@ -369,9 +369,17 @@ void VulkanRendering::BeginFrame(const NeoWPF::Rendering::RenderSurface& surface
     if (!m_initialized || !context || context->swapchainExtent.width == 0 || context->swapchainExtent.height == 0) {
         return;
     }
+    if (context->inFlight == VK_NULL_HANDLE) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[Vulkan] BeginFrame skipped because the window fence is unavailable");
+        return;
+    }
     VkResult result = vkWaitForFences(m_device, 1, &context->inFlight, VK_TRUE, UINT64_MAX);
     if (result != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] vkWaitForFences failed: %s (%d)",
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[Vulkan] vkWaitForFences failed: %s (%d)",
             VkResultName(result), static_cast<int>(result));
         return;
     }
@@ -384,28 +392,33 @@ void VulkanRendering::BeginFrame(const NeoWPF::Rendering::RenderSurface& surface
             surface.nativeWindowHandle,
             static_cast<unsigned long long>(surface.GetGenerationId()),
             VkResultName(result), static_cast<int>(result));
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+            RecreateSwapchain(surface, *context);
+        }
         return;
     }
     if (result == VK_SUBOPTIMAL_KHR) {
-        NeoWPF::Diagnostics::LogWarn("[Vulkan] vkAcquireNextImageKHR returned VK_SUBOPTIMAL_KHR");
-    }
-    result = vkResetFences(m_device, 1, &context->inFlight);
-    if (result != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] vkResetFences failed: %s (%d)",
-            VkResultName(result), static_cast<int>(result));
-        return;
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Info,
+            "[Vulkan] vkAcquireNextImageKHR returned VK_SUBOPTIMAL_KHR");
     }
     result = vkResetCommandBuffer(context->commandBuffers[context->currentImage], 0);
     if (result != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] vkResetCommandBuffer failed: %s (%d)",
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[Vulkan] vkResetCommandBuffer failed: %s (%d)",
             VkResultName(result), static_cast<int>(result));
+        RecreateSwapchain(surface, *context);
         return;
     }
     const VkCommandBufferBeginInfo beginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr, 0, nullptr};
     result = vkBeginCommandBuffer(context->commandBuffers[context->currentImage], &beginInfo);
     if (result != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] vkBeginCommandBuffer failed: %s (%d)",
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[Vulkan] vkBeginCommandBuffer failed: %s (%d)",
             VkResultName(result), static_cast<int>(result));
+        RecreateSwapchain(surface, *context);
         return;
     }
     const VkClearValue clearValue{{0.0f, 0.0f, 0.0f, 1.0f}};
@@ -426,9 +439,20 @@ void VulkanRendering::Present(const NeoWPF::Rendering::RenderSurface& surface)
     vkCmdEndRenderPass(context->commandBuffers[context->currentImage]);
     VkResult result = vkEndCommandBuffer(context->commandBuffers[context->currentImage]);
     if (result != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] vkEndCommandBuffer failed: %s (%d)",
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[Vulkan] vkEndCommandBuffer failed: %s (%d)",
             VkResultName(result), static_cast<int>(result));
-        context->frameActive = false;
+        RecreateSwapchain(surface, *context);
+        return;
+    }
+    result = vkResetFences(m_device, 1, &context->inFlight);
+    if (result != VK_SUCCESS) {
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[Vulkan] Could not reset the window fence: %s (%d)",
+            VkResultName(result), static_cast<int>(result));
+        RecreateSwapchain(surface, *context);
         return;
     }
     const VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -438,12 +462,12 @@ void VulkanRendering::Present(const NeoWPF::Rendering::RenderSurface& surface)
     result = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, context->inFlight);
     if (result != VK_SUCCESS) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
-            NeoWPF::Diagnostics::Level::Info,
+            NeoWPF::Diagnostics::Level::Debug,
             "[Vulkan/Frame] submit failed: handle=%p generation=%llu image=%u result=%s (%d)",
             surface.nativeWindowHandle,
             static_cast<unsigned long long>(surface.GetGenerationId()), context->currentImage,
             VkResultName(result), static_cast<int>(result));
-        context->frameActive = false;
+        RecreateSwapchain(surface, *context);
         return;
     }
     const VkPresentInfoKHR presentInfo{
@@ -457,8 +481,14 @@ void VulkanRendering::Present(const NeoWPF::Rendering::RenderSurface& surface)
             surface.nativeWindowHandle,
             static_cast<unsigned long long>(surface.GetGenerationId()), context->currentImage,
             VkResultName(result), static_cast<int>(result));
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+            RecreateSwapchain(surface, *context);
+            return;
+        }
     } else if (result == VK_SUBOPTIMAL_KHR) {
-        NeoWPF::Diagnostics::LogWarn("[Vulkan] vkQueuePresentKHR returned VK_SUBOPTIMAL_KHR");
+        NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
+            NeoWPF::Diagnostics::Level::Info,
+            "[Vulkan] vkQueuePresentKHR returned VK_SUBOPTIMAL_KHR");
     }
     if (!context->hasPresentedFrame && (result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR)) {
         context->hasPresentedFrame = true;
