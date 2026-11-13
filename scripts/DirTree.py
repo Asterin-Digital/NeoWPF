@@ -1,5 +1,5 @@
 
-# cpython "C:\Users\Katsu\source\repos\NeoWPF\scripts\DirTree.py" "C:\Users\Katsu\source\repos\NeoWPF" > misc/TreeOutput.txtimport os
+import os
 import sys
 
 IGNORED_NAMES = {
@@ -142,3 +142,5 @@ if __name__ == "__main__":
 
     print(root)
     build_tree(root, is_ignored)
+
+# python "C:\Users\Katsu\source\repos\NeoWPF\scripts\DirTree.py" "C:\Users\Katsu\source\repos\NeoWPF" > misc/TreeOutput.txt

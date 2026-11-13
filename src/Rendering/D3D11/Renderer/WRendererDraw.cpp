@@ -1,10 +1,6 @@
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/Geometry/ArcTessellation.h>
 #include <NeoWPF/Rendering/Geometry/PrimitiveTessellation.h>
-<<<<<<< HEAD
-=======
-#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
->>>>>>> 32fba71e27e8d22835fe2c345795c72f32463c81
 #include <NeoWPF/Rendering/Geometry/Clipping.h>
 #include <d3d11.h>
 #include <wrl.h>

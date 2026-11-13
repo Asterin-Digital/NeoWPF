@@ -1,7 +1,7 @@
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
-#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
 #include <algorithm>
 
 namespace NeoWPF::UI {
@@ -88,20 +88,23 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     double absY = 0.0;
     GetAbsolutePosition(absX, absY);
 
-    if (const auto backgroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
-        backgroundBrush && backgroundBrush->GetArgb() != 0x00000000u) {
+    if (const auto backgroundBrush = GetBackgroundBrush()) {
+        const auto paint = backgroundBrush->ResolvePaint(
+            commands, absX, absY, GetFinalWidth(), GetFinalHeight());
         const auto cornerRadius = GetCornerRadius();
-        commands.DrawRoundedRect(
-            absX,
-            absY,
-            GetFinalWidth(),
-            GetFinalHeight(),
-            cornerRadius.TopLeft,
-            cornerRadius.TopRight,
-            cornerRadius.BottomRight,
-            cornerRadius.BottomLeft,
-                NeoWPF::Rendering::Paint::Solid(backgroundBrush->GetArgb()),
-                static_cast<float>(GetOpacity() * backgroundBrush->GetOpacity()));
+        if (!paint.IsEmpty()) {
+            commands.DrawRoundedRect(
+                absX,
+                absY,
+                GetFinalWidth(),
+                GetFinalHeight(),
+                cornerRadius.TopLeft,
+                cornerRadius.TopRight,
+                cornerRadius.BottomRight,
+                cornerRadius.BottomLeft,
+                paint,
+                static_cast<float>(GetOpacity()));
+        }
     }
 
     for (auto child : GetVisualChildrenInZOrder()) {
