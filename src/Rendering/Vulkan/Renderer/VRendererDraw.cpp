@@ -1,4 +1,8 @@
 #include <NeoWPF/Diagnostics/Logger.h>
+<<<<<<< HEAD
+=======
+#include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
+>>>>>>> 32fba71e27e8d22835fe2c345795c72f32463c81
 #include <NeoWPF/Rendering/Geometry/Clipping.h>
 #include <NeoWPF/Rendering/Geometry/ArcTessellation.h>
 #include <NeoWPF/Rendering/Geometry/PrimitiveTessellation.h>

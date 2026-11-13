@@ -392,7 +392,11 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
         commands.DrawTexturedQuad(drawX, drawY, drawWidth, drawHeight,
                                   0.0f, 0.0f, 1.0f, 1.0f,
+<<<<<<< HEAD
                                   textureId, foregroundPaint, GetOpacity(), clip,
+=======
+                                  textureId, NeoWPF::Rendering::Paint::Solid(foregroundArgb), GetOpacity(), clip,
+>>>>>>> 32fba71e27e8d22835fe2c345795c72f32463c81
                                   rotationRadians, pivotX, pivotY);
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
             NeoWPF::Diagnostics::Level::Debug,
