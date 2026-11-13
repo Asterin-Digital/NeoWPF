@@ -1,6 +1,6 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
-#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
@@ -334,6 +334,14 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     const auto& lines = m_textCache.GetLines();
     if (m_text.empty() || lines.empty()) return;
 
+    double boundsX = 0.0;
+    double boundsY = 0.0;
+    GetAbsolutePosition(boundsX, boundsY);
+    const auto foregroundBrush = GetForeground();
+    const auto foregroundPaint = foregroundBrush
+        ? foregroundBrush->ResolvePaint(commands, boundsX, boundsY, GetFinalWidth(), GetFinalHeight())
+        : NeoWPF::Rendering::Paint::Solid(0u);
+
     const auto clip = GetClipRect();
 
     const double blockOffsetY = TextAlignment::GetBlockVerticalOffsetF(
@@ -382,17 +390,9 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const double drawWidth = std::abs(right - drawX);
         const double drawHeight = std::abs(bottom - drawY);
 
-        const auto foregroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetForeground());
-        std::uint32_t foregroundArgb = foregroundBrush ? foregroundBrush->GetArgb() : 0u;
-        const auto brushOpacity = foregroundBrush
-            ? (std::clamp)(foregroundBrush->GetOpacity(), 0.0, 1.0)
-            : 0.0;
-        const auto alpha = static_cast<std::uint32_t>(
-            ((foregroundArgb >> 24) & 0xFFu) * brushOpacity);
-        foregroundArgb = (foregroundArgb & 0x00FFFFFFu) | (alpha << 24);
         commands.DrawTexturedQuad(drawX, drawY, drawWidth, drawHeight,
                                   0.0f, 0.0f, 1.0f, 1.0f,
-                                  textureId, NeoWPF::Rendering::Paint::Solid(foregroundArgb), GetOpacity(), clip,
+                                  textureId, foregroundPaint, GetOpacity(), clip,
                                   rotationRadians, pivotX, pivotY);
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
             NeoWPF::Diagnostics::Level::Debug,

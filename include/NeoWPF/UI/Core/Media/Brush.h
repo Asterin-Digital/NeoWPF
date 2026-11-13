@@ -13,6 +13,11 @@ See LICENSE file in the project root for full license text.
 #include <memory>
 #include <unordered_map>
 
+namespace NeoWPF::Rendering {
+struct Paint;
+struct CommandList;
+}
+
 namespace NeoWPF::UI {
 
 /*
@@ -28,6 +33,37 @@ public:
     using ChangedHandler = std::function<void()>;
 
     virtual ~Brush() = 0;
+
+    /*
+        @summary
+        Resolves this brush for a render-command list and paint bounds.
+
+        @param commandList
+        The command list receiving any brush-specific render data.
+
+        @param boundsX
+        The left edge of the paint bounds.
+
+        @param boundsY
+        The top edge of the paint bounds.
+
+        @param boundsWidth
+        The width of the paint bounds.
+
+        @param boundsHeight
+        The height of the paint bounds.
+
+        @returns
+        The resolved paint value.
+
+        @internal
+    */
+    virtual NeoWPF::Rendering::Paint ResolvePaint(
+        NeoWPF::Rendering::CommandList& commandList,
+        double boundsX,
+        double boundsY,
+        double boundsWidth,
+        double boundsHeight) const = 0;
 
     static const Properties::DependencyProperty& OpacityProperty();
     static const Properties::DependencyProperty& TransformProperty();

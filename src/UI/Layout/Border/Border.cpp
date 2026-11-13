@@ -2,7 +2,7 @@
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
-#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
+#include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 
@@ -150,21 +150,25 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     const auto clip = GetClipRect();
 
-    const auto borderBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBorderBrush());
-    const auto backgroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
+    const auto borderBrush = GetBorderBrush();
+    const auto backgroundBrush = GetBackgroundBrush();
+    const auto borderPaint = borderBrush
+        ? borderBrush->ResolvePaint(commands, absX, absY, GetFinalWidth(), GetFinalHeight())
+        : NeoWPF::Rendering::Paint::Solid(0u);
     if (GetBorderThickness() > 0 && borderBrush) {
         const auto border = GetBorderThicknessValue();
-        const auto paint = NeoWPF::Rendering::Paint::Solid(borderBrush->GetArgb());
-        const auto opacity = static_cast<float>(GetOpacity() * borderBrush->GetOpacity());
-        if (!paint.IsEmpty()) {
-            if (border.Top > 0) commands.DrawRect(absX, absY, GetFinalWidth(), border.Top, paint, opacity, clip);
-            if (border.Bottom > 0) commands.DrawRect(absX, absY + GetFinalHeight() - border.Bottom, GetFinalWidth(), border.Bottom, paint, opacity, clip);
-            if (border.Left > 0) commands.DrawRect(absX, absY + border.Top, border.Left, (std::max)(0.0, GetFinalHeight() - border.Top - border.Bottom), paint, opacity, clip);
-            if (border.Right > 0) commands.DrawRect(absX + GetFinalWidth() - border.Right, absY + border.Top, border.Right, (std::max)(0.0, GetFinalHeight() - border.Top - border.Bottom), paint, opacity, clip);
+        if (!borderPaint.IsEmpty()) {
+            if (border.Top > 0) commands.DrawRect(absX, absY, GetFinalWidth(), border.Top, borderPaint, static_cast<float>(GetOpacity()), clip);
+            if (border.Bottom > 0) commands.DrawRect(absX, absY + GetFinalHeight() - border.Bottom, GetFinalWidth(), border.Bottom, borderPaint, static_cast<float>(GetOpacity()), clip);
+            if (border.Left > 0) commands.DrawRect(absX, absY + border.Top, border.Left, (std::max)(0.0, GetFinalHeight() - border.Top - border.Bottom), borderPaint, static_cast<float>(GetOpacity()), clip);
+            if (border.Right > 0) commands.DrawRect(absX + GetFinalWidth() - border.Right, absY + border.Top, border.Right, (std::max)(0.0, GetFinalHeight() - border.Top - border.Bottom), borderPaint, static_cast<float>(GetOpacity()), clip);
         }
     }
 
-    if (backgroundBrush && backgroundBrush->GetArgb() != 0x00000000u) {
+    const auto backgroundPaint = backgroundBrush
+        ? backgroundBrush->ResolvePaint(commands, absX, absY, GetFinalWidth(), GetFinalHeight())
+        : NeoWPF::Rendering::Paint::Solid(0u);
+    if (!backgroundPaint.IsEmpty()) {
         const auto border = GetBorderThicknessValue();
         const double inset = std::max({border.Left, border.Top, border.Right, border.Bottom});
         commands.DrawRoundedRect(
@@ -176,8 +180,8 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             std::max(0.0, cornerRadius.TopRight - inset),
             std::max(0.0, cornerRadius.BottomRight - inset),
             std::max(0.0, cornerRadius.BottomLeft - inset),
-            NeoWPF::Rendering::Paint::Solid(backgroundBrush->GetArgb()),
-            static_cast<float>(GetOpacity() * backgroundBrush->GetOpacity()),
+            backgroundPaint,
+            static_cast<float>(GetOpacity()),
             clip,
             0.0f);
     }
