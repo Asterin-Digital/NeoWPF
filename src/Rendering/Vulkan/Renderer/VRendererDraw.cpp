@@ -1,11 +1,9 @@
 #include <NeoWPF/Diagnostics/Logger.h>
-#include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/Rendering/Geometry/Clipping.h>
 #include <NeoWPF/Rendering/Geometry/ArcTessellation.h>
 #include <NeoWPF/Rendering/Geometry/PrimitiveTessellation.h>
 #include <NeoWPF/Rendering/Geometry/DrawBatcher.h>
 #include <NeoWPF/Rendering/Renderer.h>
-#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/Rendering/Vulkan/VulkanRendering.h>
 #include <NeoWPF/Rendering/Vulkan/SurfaceAlpha.h>
 
@@ -72,18 +70,9 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::RenderSurface& surface,
         lastTexturedQuadCount = texturedQuadCount;
     }
 
-    std::uint32_t backgroundColor = 0xFFFFFFFFu;
-    if (commands.hasClearColor) {
-        backgroundColor = commands.clearColor;
-    } else {
-        std::shared_ptr<NeoWPF::UI::Brush> resourceBrush;
-        if (NeoWPF::Core::ApplicationResources::Resources::TryGetBrush(
-                "Window.BackgroundBrush", resourceBrush)) {
-            if (const auto solidBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(resourceBrush)) {
-                backgroundColor = solidBrush->GetArgb();
-            }
-        }
-    }
+    const std::uint32_t backgroundColor = commands.hasClearColor
+        ? commands.clearColor
+        : 0xFFFFFFFFu;
     const auto clearColor = ToSurfaceClearColor(backgroundColor, context->transparent);
     const VkClearAttachment clearAttachment{
         VK_IMAGE_ASPECT_COLOR_BIT,

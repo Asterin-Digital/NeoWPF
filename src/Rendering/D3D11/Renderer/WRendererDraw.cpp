@@ -1,7 +1,6 @@
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/Geometry/ArcTessellation.h>
 #include <NeoWPF/Rendering/Geometry/PrimitiveTessellation.h>
-#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/Rendering/Geometry/Clipping.h>
 #include <d3d11.h>
 #include <wrl.h>
@@ -11,9 +10,7 @@
 #include <cstring>
 #include <cmath>
 #include <Windows.h>
-#include <any>
 #include <limits>
-#include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 
 #ifdef min
@@ -123,18 +120,7 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
     D3D11_VIEWPORT vp = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
     g_context->RSSetViewports(1, &vp);
 
-    uint32_t bgColor = 0xFFFFFFFFu;
-    if (cmd.hasClearColor) {
-        bgColor = cmd.clearColor;
-    } else {
-        std::shared_ptr<NeoWPF::UI::Brush> resourceBrush;
-        if (NeoWPF::Core::ApplicationResources::Resources::TryGetBrush(
-                "Window.BackgroundBrush", resourceBrush)) {
-            if (const auto solidBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(resourceBrush)) {
-                bgColor = solidBrush->GetArgb();
-            }
-        }
-    }
+    const uint32_t bgColor = cmd.hasClearColor ? cmd.clearColor : 0xFFFFFFFFu;
 
     const float a = ((bgColor >> 24) & 0xFF) / 255.0f;
     float r = ((bgColor >> 16) & 0xFF) / 255.0f;
