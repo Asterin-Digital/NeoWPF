@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <NeoWPF/UI/Core/Media/Color.h>
+#include <NeoWPF/UI/Core/Media/Colors.h>
 #include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>

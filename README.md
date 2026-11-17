@@ -29,7 +29,10 @@ Half the maturity here means that Linux is less used then Windows, not that it's
 ### Quick Start
 ```cpp
 #include <NeoWPF/NeoWPF.h>
-#include <memory>
+
+/* @note
+/  NeoWPF.h includes all of the stuff you need, do not include internal header files.
+*/
 
 int main()
 {
@@ -58,7 +61,7 @@ int main()
     button->SetHeight(45);
     button->SetBackgroundBrush(std::make_shared<SolidColorBrush>(0xFF4F86C6u));
     button->Click += []() {
-        // ur click logic
+        // click logic
     };
     panel->AddChild(button);
 
@@ -108,6 +111,10 @@ Full control listings are in UI/Controls and UI/Layout; the remaining subsystems
 API index and full documentation: **https://neowpf.github.io/Docs/**
 
 Source files: [NeoWPF/Docs](https://github.com/NeoWPF/Docs).
+
+### Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the project's contribution and ownership notice.
 
 ### License
 

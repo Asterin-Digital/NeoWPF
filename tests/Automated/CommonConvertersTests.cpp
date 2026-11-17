@@ -2,7 +2,6 @@
 
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 
-#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Controls/Popup/Popup.h>
 #include <NeoWPF/UI/Controls/Selector/Selector.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
