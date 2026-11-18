@@ -2,7 +2,6 @@
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
-#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Localization/LocaleOperations.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/Input/Core/RoutedEvent.h>
@@ -248,20 +247,21 @@ void RadioButton::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         circle->BuildRenderCommands(commands);
     }
     else {
-        const auto backgroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
-        const auto borderBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBorderBrush());
+        const auto backgroundBrush = GetBackgroundBrush();
+        const auto borderBrush = GetBorderBrush();
         commands.DrawRoundedRect(left, indicatorTop, indicatorSize, indicatorSize, 9.0f, 9.0f, 9.0f, 9.0f,
-            NeoWPF::Rendering::Paint::Solid(backgroundBrush ? backgroundBrush->GetArgb() : 0x00000000u), GetOpacity(), NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
+            ResolveBrushPaint(backgroundBrush, commands, left, indicatorTop, indicatorSize, indicatorSize), GetOpacity(), NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
         commands.DrawRoundedRect(left, indicatorTop, indicatorSize, indicatorSize, 9.0f, 9.0f, 9.0f, 9.0f,
-            NeoWPF::Rendering::Paint::Solid(borderBrush ? borderBrush->GetArgb() : 0x00000000u), GetOpacity(), NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
+            ResolveBrushPaint(borderBrush, commands, left, indicatorTop, indicatorSize, indicatorSize), GetOpacity(), NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
     }
 
     if (IsChecked()) {
         const double dotSize = 8.0;
+        const auto accentBrush = NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+            NeoWPF::Core::ApplicationThemes::PaletteBrush::Accent);
         commands.DrawRoundedRect(left + (indicatorSize - dotSize) / 2.0, indicatorTop + (indicatorSize - dotSize) / 2.0,
             dotSize, dotSize, 4.0f, 4.0f, 4.0f, 4.0f,
-            NeoWPF::Rendering::Paint::Solid(std::dynamic_pointer_cast<SolidColorBrush>(NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
-                NeoWPF::Core::ApplicationThemes::PaletteBrush::Accent))->GetArgb()), GetOpacity(),
+            ResolveBrushPaint(accentBrush, commands, left, indicatorTop, indicatorSize, indicatorSize), GetOpacity(),
             NeoWPF::Rendering::ClipRect{}, transform.rotationRadians, transform.pivot.X, transform.pivot.Y);
     }
 

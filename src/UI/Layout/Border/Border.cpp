@@ -152,9 +152,8 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     const auto borderBrush = GetBorderBrush();
     const auto backgroundBrush = GetBackgroundBrush();
-    const auto borderPaint = borderBrush
-        ? borderBrush->ResolvePaint(commands, absX, absY, GetFinalWidth(), GetFinalHeight())
-        : NeoWPF::Rendering::Paint::Solid(0u);
+    const auto borderPaint = ResolveBrushPaint(
+        borderBrush, commands, absX, absY, GetFinalWidth(), GetFinalHeight());
     if (GetBorderThickness() > 0 && borderBrush) {
         const auto border = GetBorderThicknessValue();
         if (!borderPaint.IsEmpty()) {
@@ -165,9 +164,8 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         }
     }
 
-    const auto backgroundPaint = backgroundBrush
-        ? backgroundBrush->ResolvePaint(commands, absX, absY, GetFinalWidth(), GetFinalHeight())
-        : NeoWPF::Rendering::Paint::Solid(0u);
+    const auto backgroundPaint = ResolveBrushPaint(
+        backgroundBrush, commands, absX, absY, GetFinalWidth(), GetFinalHeight());
     if (!backgroundPaint.IsEmpty()) {
         const auto border = GetBorderThicknessValue();
         const double inset = std::max({border.Left, border.Top, border.Right, border.Bottom});

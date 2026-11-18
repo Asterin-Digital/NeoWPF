@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
 #include <cmath>
+#include <utility>
 
 namespace NeoWPF::UI {
 
@@ -67,9 +68,97 @@ bool Transform::HasRotation() const noexcept {
     return false;
 }
 
+std::size_t Transform::AddChangedHandler(std::function<void()> handler)
+{
+    return m_changed.Subscribe(std::move(handler));
+}
+
+void Transform::RemoveChangedHandler(std::size_t handlerId)
+{
+    m_changed.Unsubscribe(handlerId);
+}
+
+void Transform::NotifyChanged()
+{
+    m_changed.Publish();
+}
+
+TransformSubscription::TransformSubscription(TransformSubscription&& other) noexcept
+    : m_transform(std::move(other.m_transform)),
+      m_handlerId(std::exchange(other.m_handlerId, 0))
+{
+}
+
+TransformSubscription& TransformSubscription::operator=(TransformSubscription&& other) noexcept
+{
+    if (this != &other) {
+        Reset();
+        m_transform = std::move(other.m_transform);
+        m_handlerId = std::exchange(other.m_handlerId, 0);
+    }
+    return *this;
+}
+
+TransformSubscription::~TransformSubscription()
+{
+    Reset();
+}
+
+void TransformSubscription::Subscribe(
+    const std::shared_ptr<Transform>& transform,
+    std::function<void()> handler)
+{
+    Reset();
+    if (!transform || !handler) {
+        return;
+    }
+
+    m_handlerId = transform->AddChangedHandler(std::move(handler));
+    if (m_handlerId != 0) {
+        m_transform = transform;
+    }
+}
+
+void TransformSubscription::Reset() noexcept
+{
+    if (const auto transform = m_transform.lock(); transform && m_handlerId != 0) {
+        transform->RemoveChangedHandler(m_handlerId);
+    }
+    m_transform.reset();
+    m_handlerId = 0;
+}
+
 void Matrix4::TransformPoint(double x, double y, double& outX, double& outY) const noexcept {
     outX = x * m[0][0] + y * m[1][0] + m[3][0];
     outY = x * m[0][1] + y * m[1][1] + m[3][1];
+}
+
+std::optional<Matrix4> Matrix4::TryInverse2D() const noexcept
+{
+    if (m[0][2] != 0.0f || m[1][2] != 0.0f || m[2][0] != 0.0f ||
+        m[2][1] != 0.0f || m[2][2] != 1.0f || m[3][2] != 0.0f ||
+        m[0][3] != 0.0f || m[1][3] != 0.0f || m[2][3] != 0.0f ||
+        m[3][3] != 1.0f) {
+        return std::nullopt;
+    }
+
+    const float determinant = m[0][0] * m[1][1] - m[0][1] * m[1][0];
+    if (!std::isfinite(m[0][0]) || !std::isfinite(m[0][1]) ||
+        !std::isfinite(m[1][0]) || !std::isfinite(m[1][1]) ||
+        !std::isfinite(m[3][0]) || !std::isfinite(m[3][1]) ||
+        !std::isfinite(determinant) || determinant == 0.0f) {
+        return std::nullopt;
+    }
+
+    const float inverseDeterminant = 1.0f / determinant;
+    Matrix4 inverse;
+    inverse.m[0][0] = m[1][1] * inverseDeterminant;
+    inverse.m[0][1] = -m[0][1] * inverseDeterminant;
+    inverse.m[1][0] = -m[1][0] * inverseDeterminant;
+    inverse.m[1][1] = m[0][0] * inverseDeterminant;
+    inverse.m[3][0] = -(m[3][0] * inverse.m[0][0] + m[3][1] * inverse.m[1][0]);
+    inverse.m[3][1] = -(m[3][0] * inverse.m[0][1] + m[3][1] * inverse.m[1][1]);
+    return inverse;
 }
 
 ScaleTransform::ScaleTransform(float scaleX, float scaleY, float centerX, float centerY)
@@ -80,11 +169,10 @@ float ScaleTransform::GetScaleY() const { return m_scaleY; }
 float ScaleTransform::GetCenterX() const { return m_centerX; }
 float ScaleTransform::GetCenterY() const { return m_centerY; }
 
-void ScaleTransform::SetScaleX(float value) { m_scaleX = value; if (m_invalidateCallback) { m_invalidateCallback(); } }
-void ScaleTransform::SetScaleY(float value) { m_scaleY = value; if (m_invalidateCallback) { m_invalidateCallback(); } }
-void ScaleTransform::SetCenterX(float value) { m_centerX = value; }
-void ScaleTransform::SetCenterY(float value) { m_centerY = value; }
-void ScaleTransform::SetInvalidateCallback(std::function<void()> callback) { m_invalidateCallback = std::move(callback); }
+void ScaleTransform::SetScaleX(float value) { m_scaleX = value; NotifyChanged(); }
+void ScaleTransform::SetScaleY(float value) { m_scaleY = value; NotifyChanged(); }
+void ScaleTransform::SetCenterX(float value) { m_centerX = value; NotifyChanged(); }
+void ScaleTransform::SetCenterY(float value) { m_centerY = value; NotifyChanged(); }
 
 Matrix4 ScaleTransform::GetMatrix() const {
     Matrix4 toCenter = Matrix4::Translation(-m_centerX, -m_centerY);
@@ -119,8 +207,8 @@ TranslateTransform::TranslateTransform(float x, float y)
 float TranslateTransform::GetX() const { return m_x; }
 float TranslateTransform::GetY() const { return m_y; }
 
-void TranslateTransform::SetX(float value) { m_x = value; }
-void TranslateTransform::SetY(float value) { m_y = value; }
+void TranslateTransform::SetX(float value) { m_x = value; NotifyChanged(); }
+void TranslateTransform::SetY(float value) { m_y = value; NotifyChanged(); }
 
 Matrix4 TranslateTransform::GetMatrix() const {
     return Matrix4::Translation(m_x, m_y);
@@ -137,10 +225,9 @@ float RotateTransform::GetAngle() const { return m_angle; }
 float RotateTransform::GetCenterX() const { return m_centerX; }
 float RotateTransform::GetCenterY() const { return m_centerY; }
 
-void RotateTransform::SetAngle(float value) { m_angle = value; if (m_invalidateCallback) { m_invalidateCallback(); } }
-void RotateTransform::SetCenterX(float value) { m_centerX = value; if (m_invalidateCallback) { m_invalidateCallback(); } }
-void RotateTransform::SetCenterY(float value) { m_centerY = value; if (m_invalidateCallback) { m_invalidateCallback(); } }
-void RotateTransform::SetInvalidateCallback(std::function<void()> callback) { m_invalidateCallback = std::move(callback); }
+void RotateTransform::SetAngle(float value) { m_angle = value; NotifyChanged(); }
+void RotateTransform::SetCenterX(float value) { m_centerX = value; NotifyChanged(); }
+void RotateTransform::SetCenterY(float value) { m_centerY = value; NotifyChanged(); }
 
 Matrix4 RotateTransform::GetMatrix() const {
     Matrix4 toCenter = Matrix4::Translation(-m_centerX, -m_centerY);
@@ -169,7 +256,7 @@ MatrixTransform::MatrixTransform(const Matrix4& matrix)
     : m_matrix(matrix) {}
 
 Matrix4 MatrixTransform::GetMatrixValue() const { return m_matrix; }
-void MatrixTransform::SetMatrix(const Matrix4& matrix) { m_matrix = matrix; }
+void MatrixTransform::SetMatrix(const Matrix4& matrix) { m_matrix = matrix; NotifyChanged(); }
 
 Matrix4 MatrixTransform::GetMatrix() const {
     return m_matrix;
@@ -181,14 +268,27 @@ std::shared_ptr<Transform> MatrixTransform::Clone() const {
 
 TransformGroup::TransformGroup() {}
 
+TransformGroup::~TransformGroup() = default;
+
 void TransformGroup::AddChild(std::shared_ptr<Transform> transform) {
     if (transform) {
-        m_children.push_back(transform);
+        TransformSubscription subscription;
+        subscription.Subscribe(transform, [this] {
+            NotifyChanged();
+        });
+        m_childChangedSubscriptions.push_back(std::move(subscription));
+        m_children.push_back(std::move(transform));
+        NotifyChanged();
     }
 }
 
 void TransformGroup::ClearChildren() {
+    if (m_children.empty()) {
+        return;
+    }
+    m_childChangedSubscriptions.clear();
     m_children.clear();
+    NotifyChanged();
 }
 
 size_t TransformGroup::GetChildCount() const {

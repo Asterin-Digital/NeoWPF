@@ -47,6 +47,23 @@ TEST(RenderCommandTests, ClearRemovesAllQueuedCommands)
     EXPECT_TRUE(commands.commands.empty());
 }
 
+TEST(RenderCommandTests, ClearRemovesGradientDataAndHashIncludesIt)
+{
+    NeoWPF::Rendering::CommandList commands;
+    commands.gradients.push_back({});
+    commands.gradientStops.push_back({0.25f, 0xFF123456u});
+    const auto hashWithGradient = commands.ComputeHash();
+    ASSERT_FALSE(commands.gradients.empty());
+    ASSERT_FALSE(commands.gradientStops.empty());
+
+    commands.gradientStops[0].color = 0xFF654321u;
+    EXPECT_NE(commands.ComputeHash(), hashWithGradient);
+
+    commands.Clear();
+    EXPECT_TRUE(commands.gradients.empty());
+    EXPECT_TRUE(commands.gradientStops.empty());
+}
+
 TEST(RenderCommandTests, StoresOnlyOnePayload)
 {
     using Command = NeoWPF::Rendering::CommandList::Command;

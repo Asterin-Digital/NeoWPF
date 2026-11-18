@@ -1,7 +1,6 @@
 #include <NeoWPF/UI/Controls/ScrollBar/ScrollBar.h>
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
-#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
@@ -383,11 +382,9 @@ void ScrollBar::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         track->SetClipRect(clip);
         track->BuildRenderCommands(commands);
     } else if (isVertical) {
-        const auto trackBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetTrackBrush());
-        commands.DrawRoundedRect(absX, absY, trackThickness, trackLength, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, NeoWPF::Rendering::Paint::Solid(trackBrush ? trackBrush->GetArgb() : 0u), GetOpacity(), clip);
+        commands.DrawRoundedRect(absX, absY, trackThickness, trackLength, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, ResolveBrushPaint(GetTrackBrush(), commands, absX, absY, trackThickness, trackLength), GetOpacity(), clip);
     } else {
-        const auto trackBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetTrackBrush());
-        commands.DrawRoundedRect(absX, absY, trackLength, trackThickness, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, NeoWPF::Rendering::Paint::Solid(trackBrush ? trackBrush->GetArgb() : 0u), GetOpacity(), clip);
+        commands.DrawRoundedRect(absX, absY, trackLength, trackThickness, cornerRadius.TopLeft, cornerRadius.TopRight, cornerRadius.BottomRight, cornerRadius.BottomLeft, ResolveBrushPaint(GetTrackBrush(), commands, absX, absY, trackLength, trackThickness), GetOpacity(), clip);
     }
 
     if (auto thumbControl = std::dynamic_pointer_cast<Thumb>(FindTemplateChild("PART_Thumb"))) {

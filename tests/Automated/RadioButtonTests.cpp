@@ -3,6 +3,8 @@
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/UI/Controls/RadioButton/RadioButton.h>
+#include <NeoWPF/Rendering/Renderer.h>
+#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Markup/Xaml/Parsing/XamlParser.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTreeBuilder.h>
@@ -78,6 +80,30 @@ TEST_F(RadioButtonTests, DirectClearingIsAllowed)
     radio->SetChecked(true);
     radio->SetChecked(false);
     EXPECT_FALSE(radio->IsChecked());
+}
+
+TEST_F(RadioButtonTests, BuildRenderCommandsResolvesBackgroundAndBorderPaints)
+{
+    NeoWPF::UI::RadioButton radioButton;
+    radioButton.SetTemplate(nullptr);
+    auto background = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF123456u);
+    auto border = std::make_shared<NeoWPF::UI::SolidColorBrush>(0xFF123456u);
+    background->SetOpacity(0.5);
+    border->SetOpacity(0.5);
+    radioButton.SetBackgroundBrush(background);
+    radioButton.SetBorderBrush(border);
+    radioButton.Arrange(40.0, 24.0);
+
+    NeoWPF::Rendering::CommandList commands;
+    radioButton.BuildRenderCommands(commands);
+
+    ASSERT_EQ(commands.commands.size(), 2u);
+    ASSERT_EQ(commands.commands[0].GetKind(),
+              NeoWPF::Rendering::CommandList::CommandKind::RoundedRect);
+    ASSERT_EQ(commands.commands[1].GetKind(),
+              NeoWPF::Rendering::CommandList::CommandKind::RoundedRect);
+    EXPECT_EQ(commands.commands[0].GetRoundedRect().paint.color, 0x7F123456u);
+    EXPECT_EQ(commands.commands[1].GetRoundedRect().paint.color, 0x7F123456u);
 }
 
 TEST_F(RadioButtonTests, PrimaryPointerReleaseSelectsAndRaisesClick)

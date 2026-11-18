@@ -89,8 +89,8 @@ void Panel::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     GetAbsolutePosition(absX, absY);
 
     if (const auto backgroundBrush = GetBackgroundBrush()) {
-        const auto paint = backgroundBrush->ResolvePaint(
-            commands, absX, absY, GetFinalWidth(), GetFinalHeight());
+        const auto paint = ResolveBrushPaint(
+            backgroundBrush, commands, absX, absY, GetFinalWidth(), GetFinalHeight());
         const auto cornerRadius = GetCornerRadius();
         if (!paint.IsEmpty()) {
             commands.DrawRoundedRect(

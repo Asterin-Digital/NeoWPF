@@ -2,9 +2,11 @@
 
 #include <NeoWPF/UI/Core/Media/Color.h>
 #include <NeoWPF/UI/Core/Media/Colors.h>
+#include <NeoWPF/UI/Core/Media/GradientBrush.h>
 #include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <NeoWPF/Rendering/Renderer.h>
 
 namespace {
 
@@ -68,6 +70,164 @@ TEST(BrushTests, NotifiesAndCanRemoveChangedHandlersDuringNotification)
     brush.SetOpacity(0.25);
 
     EXPECT_EQ(notificationCount, 1u);
+}
+
+TEST(BrushTests, BrushSubscriptionTracksBrushAndTransformChanges)
+{
+    auto brush = std::make_shared<NeoWPF::UI::SolidColorBrush>();
+    auto transform = std::make_shared<NeoWPF::UI::TranslateTransform>();
+    brush->SetTransform(transform);
+
+    std::size_t notificationCount = 0;
+    {
+        NeoWPF::UI::BrushSubscription subscription;
+        subscription.Subscribe(brush, [&] {
+            ++notificationCount;
+        });
+
+        brush->SetOpacity(0.5);
+        transform->SetX(10.0f);
+        EXPECT_EQ(notificationCount, 2u);
+    }
+
+    brush->SetOpacity(0.75);
+    EXPECT_EQ(notificationCount, 2u);
+}
+
+TEST(BrushTests, GradientBrushesOwnIndependentStopCollections)
+{
+    auto first = std::make_shared<NeoWPF::UI::LinearGradientBrush>();
+    auto second = std::make_shared<NeoWPF::UI::LinearGradientBrush>();
+
+    ASSERT_NE(first->GetGradientStops(), nullptr);
+    ASSERT_NE(second->GetGradientStops(), nullptr);
+    EXPECT_NE(first->GetGradientStops(), second->GetGradientStops());
+
+    std::size_t notificationCount = 0;
+    NeoWPF::UI::BrushSubscription subscription;
+    subscription.Subscribe(first, [&] { ++notificationCount; });
+
+    auto stop = std::make_shared<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromArgb(0xFFFF0000u), 0.25);
+    first->GetGradientStops()->Add(stop);
+    stop->SetOffset(0.75);
+    EXPECT_EQ(notificationCount, 2u);
+    EXPECT_TRUE(second->GetGradientStops()->empty());
+}
+
+TEST(BrushTests, LinearGradientResolvesSortedClampedStopsAndMapping)
+{
+    NeoWPF::UI::LinearGradientBrush brush;
+    brush.SetStartPoint({0.0, 0.0});
+    brush.SetEndPoint({1.0, 0.0});
+    brush.SetOpacity(0.5);
+    brush.GetGradientStops()->Add(std::make_shared<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromArgb(0xFF0000FFu), 2.0));
+    brush.GetGradientStops()->Add(std::make_shared<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromArgb(0xFFFF0000u), -1.0));
+
+    NeoWPF::Rendering::CommandList commands;
+    const auto paint = brush.ResolvePaint(commands, 10.0, 20.0, 100.0, 50.0);
+
+    ASSERT_EQ(paint.kind, NeoWPF::Rendering::Paint::Kind::LinearGradient);
+    ASSERT_EQ(commands.gradients.size(), 1u);
+    ASSERT_EQ(commands.gradientStops.size(), 2u);
+    EXPECT_EQ(commands.gradientStops[0].offset, 0.0f);
+    EXPECT_EQ(commands.gradientStops[0].color, 0xFFFF0000u);
+    EXPECT_EQ(commands.gradientStops[1].offset, 1.0f);
+    EXPECT_EQ(commands.gradientStops[1].color, 0xFF0000FFu);
+    EXPECT_NEAR(commands.gradients[0].mapping[0], 0.01, 1e-12);
+    EXPECT_NEAR(commands.gradients[0].mapping[4], -0.1, 1e-12);
+    EXPECT_FLOAT_EQ(commands.gradients[0].opacity, 0.5f);
+}
+
+TEST(BrushTests, GradientMappingComposesRelativeAndAbsoluteTransforms)
+{
+    NeoWPF::UI::LinearGradientBrush brush;
+    brush.SetStartPoint({0.0, 0.0});
+    brush.SetEndPoint({1.0, 0.0});
+    brush.SetRelativeTransform(std::make_shared<NeoWPF::UI::TranslateTransform>(0.25f, 0.0f));
+    brush.SetTransform(std::make_shared<NeoWPF::UI::TranslateTransform>(10.0f, 0.0f));
+    brush.GetGradientStops()->Add(std::make_shared<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromArgb(0xFFFF0000u), 0.0));
+    brush.GetGradientStops()->Add(std::make_shared<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromArgb(0xFF0000FFu), 1.0));
+
+    NeoWPF::Rendering::CommandList commands;
+    brush.ResolvePaint(commands, 10.0, 20.0, 100.0, 50.0);
+    ASSERT_EQ(commands.gradients.size(), 1u);
+    EXPECT_NEAR(commands.gradients[0].mapping[0], 0.01, 1e-12);
+    EXPECT_NEAR(commands.gradients[0].mapping[4], -0.45, 1e-12);
+
+    brush.SetMappingMode(NeoWPF::UI::BrushMappingMode::Absolute);
+    commands.Clear();
+    brush.ResolvePaint(commands, 10.0, 20.0, 100.0, 50.0);
+    ASSERT_EQ(commands.gradients.size(), 1u);
+    EXPECT_NEAR(commands.gradients[0].mapping[0], 1.0, 1e-12);
+    EXPECT_NEAR(commands.gradients[0].mapping[4], -45.0, 1e-12);
+}
+
+TEST(BrushTests, GradientSnapshotTracksStopEditsAndDegenerateLinearGeometry)
+{
+    NeoWPF::UI::LinearGradientBrush brush;
+    auto first = std::make_shared<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromArgb(0xFF112233u), 0.0);
+    auto last = std::make_shared<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromArgb(0xFF445566u), 1.0);
+    brush.GetGradientStops()->Add(first);
+    brush.GetGradientStops()->Add(last);
+
+    NeoWPF::Rendering::CommandList commands;
+    const auto paint = brush.ResolvePaint(commands, 0.0, 0.0, 100.0, 100.0);
+    ASSERT_EQ(paint.kind, NeoWPF::Rendering::Paint::Kind::LinearGradient);
+    EXPECT_EQ(commands.gradients.size(), 1u);
+
+    first->SetColor(NeoWPF::UI::Color::FromArgb(0xFFABCDEFu));
+    commands.Clear();
+    const auto degeneratePaint = brush.ResolvePaint(commands, 0.0, 0.0, 100.0, 100.0);
+    ASSERT_EQ(degeneratePaint.kind, NeoWPF::Rendering::Paint::Kind::LinearGradient);
+    EXPECT_EQ(commands.gradientStops[0].color, 0xFFABCDEFu);
+
+    brush.SetEndPoint(brush.GetStartPoint());
+    commands.Clear();
+    const auto solidPaint = brush.ResolvePaint(commands, 0.0, 0.0, 100.0, 100.0);
+    EXPECT_EQ(solidPaint.kind, NeoWPF::Rendering::Paint::Kind::Solid);
+    EXPECT_EQ(solidPaint.color, 0xFF445566u);
+    EXPECT_TRUE(commands.gradients.empty());
+}
+
+TEST(BrushTests, GradientFallbackColorSamplesMidpoint)
+{
+    NeoWPF::UI::LinearGradientBrush brush;
+    brush.SetOpacity(0.5);
+    brush.GetGradientStops()->Add(std::make_shared<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromArgb(0xFFFF0000u), 0.0));
+    brush.GetGradientStops()->Add(std::make_shared<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromArgb(0xFF0000FFu), 1.0));
+
+    EXPECT_EQ(brush.ResolveFallbackColor(), 0x7F800080u);
+}
+
+TEST(BrushTests, RadialGradientResolvesGeometryAndRejectsSingularTransforms)
+{
+    NeoWPF::UI::RadialGradientBrush brush;
+    brush.GetGradientStops()->Add(std::make_shared<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromArgb(0xFFFFFFFFu), 0.0));
+    brush.GetGradientStops()->Add(std::make_shared<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromArgb(0xFF000000u), 1.0));
+
+    NeoWPF::Rendering::CommandList commands;
+    const auto paint = brush.ResolvePaint(commands, 0.0, 0.0, 200.0, 100.0);
+    ASSERT_EQ(paint.kind, NeoWPF::Rendering::Paint::Kind::RadialGradient);
+    ASSERT_EQ(commands.gradients.size(), 1u);
+    EXPECT_NEAR(commands.gradients[0].mapping[0], 0.01, 1e-12);
+    EXPECT_NEAR(commands.gradients[0].mapping[3], 0.02, 1e-12);
+
+    brush.SetTransform(std::make_shared<NeoWPF::UI::ScaleTransform>(0.0f, 1.0f));
+    commands.Clear();
+    const auto invisiblePaint = brush.ResolvePaint(commands, 0.0, 0.0, 200.0, 100.0);
+    EXPECT_TRUE(invisiblePaint.IsEmpty());
+    EXPECT_TRUE(commands.gradients.empty());
 }
 
 TEST(BrushTests, RegistersSolidColorBrushAsAnInstantiableXamlType)

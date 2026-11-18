@@ -3,7 +3,6 @@
 #include <NeoWPF/UI/Animation/Definitions/DoubleAnimation.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
-#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 
 #include <algorithm>
 #include <cmath>
@@ -267,16 +266,25 @@ void ProgressRing::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     const double centerY = absoluteY + height * 0.5;
     const auto clip = GetClipRect();
 
-    const auto track = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
-    if (track) {
+    const auto track = GetBackgroundBrush();
+    const auto trackPaint = ResolveBrushPaint(track, commands,
+        centerX - radius - thickness * 0.5,
+        centerY - radius - thickness * 0.5,
+        2.0 * (radius + thickness * 0.5),
+        2.0 * (radius + thickness * 0.5));
+    if (!trackPaint.IsEmpty()) {
         commands.DrawArc(centerX, centerY, radius, thickness, 0.0, kTwoPi,
-            NeoWPF::Rendering::Paint::Solid(track->GetArgb()), static_cast<float>(GetOpacity() * track->GetOpacity()), clip);
+            trackPaint, static_cast<float>(GetOpacity()), clip);
     }
 
-    const auto accent = std::dynamic_pointer_cast<SolidColorBrush>(
-        NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
-            NeoWPF::Core::ApplicationThemes::PaletteBrush::Accent));
-    if (!accent) {
+    const auto accent = NeoWPF::Core::ApplicationThemes::GetPaletteBrush(
+        NeoWPF::Core::ApplicationThemes::PaletteBrush::Accent);
+    const auto accentPaint = ResolveBrushPaint(accent, commands,
+        centerX - radius - thickness * 0.5,
+        centerY - radius - thickness * 0.5,
+        2.0 * (radius + thickness * 0.5),
+        2.0 * (radius + thickness * 0.5));
+    if (accentPaint.IsEmpty()) {
         return;
     }
 
@@ -291,7 +299,7 @@ void ProgressRing::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
 
     commands.DrawArc(centerX, centerY, radius, thickness, startAngle, sweepAngle,
-        NeoWPF::Rendering::Paint::Solid(accent->GetArgb()), static_cast<float>(GetOpacity() * accent->GetOpacity()), clip);
+        accentPaint, static_cast<float>(GetOpacity()), clip);
 }
 
 }

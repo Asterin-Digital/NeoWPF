@@ -197,6 +197,10 @@ namespace NeoWPF::UI::Properties {
 
     void RegisterBrushProperties();
     void RegisterSolidColorBrushProperties();
+    void RegisterGradientStopProperties();
+    void RegisterGradientBrushProperties();
+    void RegisterLinearGradientBrushProperties();
+    void RegisterRadialGradientBrushProperties();
     void RegisterUIElementProperties();
     void RegisterFrameworkElementProperties();
     void RegisterControlProperties();

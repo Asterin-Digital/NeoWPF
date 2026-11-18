@@ -7,11 +7,11 @@ See LICENSE file in the project root for full license text.
 
 #include <NeoWPF/UI/Core/Transform/Transform.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
+#include <NeoWPF/Core/Events/Notification.h>
 
 #include <cstddef>
 #include <functional>
 #include <memory>
-#include <unordered_map>
 
 namespace NeoWPF::Rendering {
 struct Paint;
@@ -145,6 +145,7 @@ public:
     void RemoveChangedHandler(std::size_t handlerId);
 
 protected:
+    void NotifyChanged();
     void OnDependencyPropertyChanged(const Properties::DependencyProperty& property,
                                      const Properties::PropertyMetadata& metadata,
                                      const std::any& oldValue,
@@ -152,8 +153,37 @@ protected:
                                      Properties::PropertyValueSource source) override;
 
 private:
-    std::unordered_map<std::size_t, ChangedHandler> m_changedHandlers;
-    std::size_t m_nextChangedHandlerId = 1;
+    void RefreshTransformSubscriptions();
+
+    NeoWPF::Core::Notification<> m_changed;
+    Core::TransformSubscription m_transformSubscription;
+    Core::TransformSubscription m_relativeTransformSubscription;
 };
+
+class BrushSubscription final {
+public:
+    BrushSubscription() = default;
+    BrushSubscription(const BrushSubscription&) = delete;
+    BrushSubscription& operator=(const BrushSubscription&) = delete;
+    BrushSubscription(BrushSubscription&& other) noexcept;
+    BrushSubscription& operator=(BrushSubscription&& other) noexcept;
+    ~BrushSubscription();
+
+    void Subscribe(const std::shared_ptr<Brush>& brush, Brush::ChangedHandler handler);
+    void Reset() noexcept;
+    bool IsSubscribed() const noexcept;
+
+private:
+    std::weak_ptr<Brush> m_brush;
+    std::size_t m_handlerId = 0;
+};
+
+NeoWPF::Rendering::Paint ResolveBrushPaint(
+    const std::shared_ptr<Brush>& brush,
+    NeoWPF::Rendering::CommandList& commandList,
+    double boundsX,
+    double boundsY,
+    double boundsWidth,
+    double boundsHeight);
 
 }

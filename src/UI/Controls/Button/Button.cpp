@@ -3,7 +3,6 @@
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
-#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <NeoWPF/UI/Core/Transform/Transform.h>
@@ -82,10 +81,6 @@ Button::Button(const std::wstring& text)
 
 Button::~Button()
 {
-    if (const auto brush = m_subscribedForeground.lock();
-        brush && m_foregroundChangedHandlerId != 0) {
-        brush->RemoveChangedHandler(m_foregroundChangedHandlerId);
-    }
     NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().UnsubscribeThemeApplied(
         m_themeAppliedSubscriptionId);
     NeoWPF::UI::Localization::LocaleOperations::ClearLocale(*this, TextProperty());
@@ -159,18 +154,9 @@ void Button::SetForeground(std::shared_ptr<Brush> brush)
         return;
     }
 
-    if (const auto oldBrush = m_subscribedForeground.lock();
-        oldBrush && m_foregroundChangedHandlerId != 0) {
-        oldBrush->RemoveChangedHandler(m_foregroundChangedHandlerId);
-        m_foregroundChangedHandlerId = 0;
-    }
-    m_subscribedForeground = brush;
-    if (brush) {
-        m_foregroundChangedHandlerId = brush->AddChangedHandler([this] {
-            UpdateForegroundBrush();
-            InvalidateVisual();
-        });
-    }
+    m_foregroundBrushSubscription.Subscribe(brush, [this] {
+        InvalidateVisual();
+    });
     UpdateForegroundBrush();
     InvalidateVisual();
 }
@@ -331,14 +317,14 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
     else {
         const double borderThickness = 1.0;
-        const auto borderBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBorderBrush());
-        const auto backgroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
-        const uint32_t borderColor = borderBrush ? borderBrush->GetArgb() : 0x00000000u;
+        const auto backgroundBrush = GetBackgroundBrush();
         const double borderInset = borderThickness * 0.5;
         const double borderX = drawX + borderInset;
         const double borderY = drawY + borderInset;
         const double borderW = drawWidth > borderThickness ? drawWidth - borderThickness : 0.0;
         const double borderH = drawHeight > borderThickness ? drawHeight - borderThickness : 0.0;
+        const auto borderPaint = ResolveBrushPaint(
+            GetBorderBrush(), commands, borderX, borderY, borderW, borderH);
 
         const double borderTL = cornerRadius.TopLeft > borderInset ? cornerRadius.TopLeft - borderInset : 0.0;
         const double borderTR = cornerRadius.TopRight > borderInset ? cornerRadius.TopRight - borderInset : 0.0;
@@ -354,7 +340,7 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             borderTR,
             borderBR,
             borderBL,
-            NeoWPF::Rendering::Paint::Solid(borderColor),
+            borderPaint,
             GetOpacity(),
             NeoWPF::Rendering::ClipRect{},
             rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
@@ -379,7 +365,8 @@ void Button::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 innerTR,
                 innerBR,
                 innerBL,
-                NeoWPF::Rendering::Paint::Solid(backgroundBrush ? backgroundBrush->GetArgb() : 0x00000000u),
+                ResolveBrushPaint(
+                    backgroundBrush, commands, innerX, innerY, innerW, innerH),
                 GetOpacity(),
                 NeoWPF::Rendering::ClipRect{},
                 rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);

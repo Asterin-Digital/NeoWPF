@@ -38,6 +38,42 @@ TEST(TransformCompositionTests, TranslationTransformsLocalPoint)
     EXPECT_DOUBLE_EQ(y, 27.0);
 }
 
+TEST(TransformCompositionTests, RenderTransformChangesInvalidateTheCachedWorldMatrix)
+{
+    TestElement element;
+    auto translation = std::make_shared<NeoWPF::UI::TranslateTransform>();
+    element.SetRenderTransform(translation);
+
+    double beforeX = 0.0;
+    double beforeY = 0.0;
+    element.GetWorldTransformMatrix().TransformPoint(0.0, 0.0, beforeX, beforeY);
+
+    translation->SetX(13.0f);
+    double afterX = 0.0;
+    double afterY = 0.0;
+    element.GetWorldTransformMatrix().TransformPoint(0.0, 0.0, afterX, afterY);
+
+    EXPECT_DOUBLE_EQ(beforeX, 0.0);
+    EXPECT_DOUBLE_EQ(afterX, 13.0);
+    EXPECT_DOUBLE_EQ(afterY, 0.0);
+}
+
+TEST(TransformCompositionTests, TransformDispatchSupportsMultipleSubscribers)
+{
+    auto transform = std::make_shared<NeoWPF::UI::TranslateTransform>();
+    std::size_t firstCount = 0;
+    std::size_t secondCount = 0;
+    NeoWPF::UI::Core::TransformSubscription first;
+    NeoWPF::UI::Core::TransformSubscription second;
+    first.Subscribe(transform, [&] { ++firstCount; });
+    second.Subscribe(transform, [&] { ++secondCount; });
+
+    transform->SetY(9.0f);
+
+    EXPECT_EQ(firstCount, 1u);
+    EXPECT_EQ(secondCount, 1u);
+}
+
 TEST(TransformCompositionTests, ChildWorldTransformIncludesParentTransform)
 {
     auto parent = std::make_shared<TestElement>();
@@ -135,6 +171,50 @@ TEST(TransformCompositionTests, TryGetRotationRejectsMixedTransformGroup)
     mixed.AddChild(std::make_shared<NeoWPF::UI::ScaleTransform>(2.0f, 2.0f));
 
     EXPECT_FALSE(mixed.TryGetRotation().has_value());
+}
+
+TEST(TransformCompositionTests, Matrix4ComputesAnInverseForAffine2DTransforms)
+{
+    const auto matrix = NeoWPF::UI::Matrix4::Translation(12.0f, -7.0f)
+        * NeoWPF::UI::Matrix4::Rotation(0.4f)
+        * NeoWPF::UI::Matrix4::Scale(2.0f, 3.0f);
+    const auto inverse = matrix.TryInverse2D();
+    ASSERT_TRUE(inverse.has_value());
+
+    double x = 0.0;
+    double y = 0.0;
+    matrix.TransformPoint(5.0, -9.0, x, y);
+    inverse->TransformPoint(x, y, x, y);
+
+    EXPECT_NEAR(x, 5.0, 1e-5);
+    EXPECT_NEAR(y, -9.0, 1e-5);
+}
+
+TEST(TransformCompositionTests, Matrix4RejectsSingularAndNon2DTransforms)
+{
+    EXPECT_FALSE(NeoWPF::UI::Matrix4::Scale(0.0f, 1.0f).TryInverse2D().has_value());
+    auto perspective = NeoWPF::UI::Matrix4::Identity();
+    perspective.m[0][3] = 0.25f;
+    EXPECT_FALSE(perspective.TryInverse2D().has_value());
+}
+
+TEST(TransformCompositionTests, TransformGroupRelaysChildChanges)
+{
+    NeoWPF::UI::TransformGroup group;
+    auto translation = std::make_shared<NeoWPF::UI::TranslateTransform>();
+    group.AddChild(translation);
+
+    std::size_t changeCount = 0;
+    const auto handlerId = group.AddChangedHandler([&] {
+        ++changeCount;
+    });
+
+    translation->SetX(3.0f);
+    group.ClearChildren();
+    translation->SetY(5.0f);
+
+    group.RemoveChangedHandler(handlerId);
+    EXPECT_EQ(changeCount, 2u);
 }
 
 }

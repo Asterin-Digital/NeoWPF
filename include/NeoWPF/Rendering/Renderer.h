@@ -6,6 +6,8 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoWPF/Rendering/Geometry/Clipping.h>
+#include <NeoWPF/Rendering/Paint/GradientDesc.h>
+#include <NeoWPF/Rendering/Paint/Paint.h>
 #include <NeoWPF/Rendering/RenderSurface.h>
 #include <vector>
 #include <cstdint>
@@ -13,52 +15,6 @@ See LICENSE file in the project root for full license text.
 #include <variant>
 
 namespace NeoWPF::Rendering {
-
-/*
-    @summary
-    Describes a backend-neutral fill.
-
-    @internal
-*/
-struct Paint {
-    enum class Kind : std::uint8_t {
-        Solid,
-    };
-
-    Kind kind = Kind::Solid;
-    std::uint32_t color = 0;
-
-    /*
-        @summary
-        Creates a solid-color paint.
-
-        @param argb
-        The fill color, encoded as an ARGB value.
-
-        @returns
-        A solid paint containing the color.
-
-        @internal
-    */
-    static Paint Solid(std::uint32_t argb) noexcept
-    {
-        return {Kind::Solid, argb};
-    }
-
-    /*
-        @summary
-        Checks whether this paint has no visible color.
-
-        @returns
-        True when the paint is fully transparent.
-
-        @internal
-    */
-    bool IsEmpty() const noexcept
-    {
-        return kind == Kind::Solid && ((color >> 24) & 0xFFu) == 0;
-    }
-};
 
 /*
     @summary
@@ -201,6 +157,8 @@ struct CommandList {
     };
 
     std::vector<Command> commands;
+    std::vector<GradientDesc> gradients;
+    std::vector<GradientStopDesc> gradientStops;
     std::uint32_t clearColor = 0xFFFFFFFFu;
     bool hasClearColor = false;
 
@@ -210,7 +168,12 @@ struct CommandList {
 
         @internal
     */
-    void Clear() { commands.clear(); }
+    void Clear()
+    {
+        commands.clear();
+        gradients.clear();
+        gradientStops.clear();
+    }
 
     /*
         @summary

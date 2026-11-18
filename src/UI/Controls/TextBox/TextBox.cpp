@@ -2,7 +2,6 @@
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
-#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/UI/Localization/LocaleOperations.h>
 #include <NeoWPF/Diagnostics/Logger.h>
@@ -540,9 +539,10 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
     else {
         const auto cornerRadius = GetCornerRadius();
-        const auto borderBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBorderBrush());
-        const auto backgroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
-        if (borderBrush && borderBrush->GetArgb() != 0x00000000u) {
+        const auto borderPaint = ResolveBrushPaint(
+            GetBorderBrush(), commands, absX, absY, GetFinalWidth(), GetFinalHeight());
+        const auto backgroundBrush = GetBackgroundBrush();
+        if (!borderPaint.IsEmpty()) {
             commands.DrawRoundedRect(
                 absX,
                 absY,
@@ -552,37 +552,39 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                 cornerRadius.TopRight,
                 cornerRadius.BottomRight,
                 cornerRadius.BottomLeft,
-                NeoWPF::Rendering::Paint::Solid(borderBrush->GetArgb()),
+                borderPaint,
                 GetOpacity(),
                 NeoWPF::Rendering::ClipRect{},
                 renderTransform.rotationRadians,
                 renderTransform.pivot.X,
                 renderTransform.pivot.Y);
-            }
-        if (backgroundBrush && backgroundBrush->GetArgb() != 0x00000000u) {
+        }
+        if (backgroundBrush) {
             const double innerWidth = GetFinalWidth() - 2.0 > 0.0 ? GetFinalWidth() - 2.0 : 0.0;
             const double innerHeight = GetFinalHeight() - 2.0 > 0.0 ? GetFinalHeight() - 2.0 : 0.0;
-            const float radiusTL = cornerRadius.TopLeft > 1.0f ? cornerRadius.TopLeft - 1.0f : 0.0f;
-            const float radiusTR = cornerRadius.TopRight > 1.0f ? cornerRadius.TopRight - 1.0f : 0.0f;
-            const float radiusBR = cornerRadius.BottomRight > 1.0f ? cornerRadius.BottomRight - 1.0f : 0.0f;
-            const float radiusBL = cornerRadius.BottomLeft > 1.0f ? cornerRadius.BottomLeft - 1.0f : 0.0f;
-            const double innerRenderWidth = innerWidth;
-            const double innerRenderHeight = innerHeight;
-            commands.DrawRoundedRect(
-                absX + 1.0f,
-                absY + 1.0f,
-                innerRenderWidth,
-                innerRenderHeight,
-                radiusTL,
-                radiusTR,
-                radiusBR,
-                radiusBL,
-                NeoWPF::Rendering::Paint::Solid(backgroundBrush->GetArgb()),
-                GetOpacity(),
-                NeoWPF::Rendering::ClipRect{},
-                renderTransform.rotationRadians,
-                renderTransform.pivot.X,
-                renderTransform.pivot.Y);
+            const auto backgroundPaint = ResolveBrushPaint(
+                backgroundBrush, commands, absX + 1.0, absY + 1.0, innerWidth, innerHeight);
+            if (!backgroundPaint.IsEmpty()) {
+                const float radiusTL = cornerRadius.TopLeft > 1.0f ? cornerRadius.TopLeft - 1.0f : 0.0f;
+                const float radiusTR = cornerRadius.TopRight > 1.0f ? cornerRadius.TopRight - 1.0f : 0.0f;
+                const float radiusBR = cornerRadius.BottomRight > 1.0f ? cornerRadius.BottomRight - 1.0f : 0.0f;
+                const float radiusBL = cornerRadius.BottomLeft > 1.0f ? cornerRadius.BottomLeft - 1.0f : 0.0f;
+                commands.DrawRoundedRect(
+                    absX + 1.0f,
+                    absY + 1.0f,
+                    innerWidth,
+                    innerHeight,
+                    radiusTL,
+                    radiusTR,
+                    radiusBR,
+                    radiusBL,
+                    backgroundPaint,
+                    GetOpacity(),
+                    NeoWPF::Rendering::ClipRect{},
+                    renderTransform.rotationRadians,
+                    renderTransform.pivot.X,
+                    renderTransform.pivot.Y);
+            }
         }
     }
 
@@ -611,8 +613,9 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     const auto clip = NeoWPF::Rendering::ClipRect{ clipX, clipY, clipW, clipH, true };
 
     const bool showingPlaceholder = m_text.empty() && !m_placeholderText.empty();
-    const auto textBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetForeground());
-    std::uint32_t drawArgb = textBrush ? textBrush->GetArgb() : 0u;
+    const auto textPaint = ResolveBrushPaint(
+        GetForeground(), commands, absX, absY, GetFinalWidth(), GetFinalHeight());
+    std::uint32_t drawArgb = textPaint.color;
     if (showingPlaceholder) {
         const auto textAlpha = ((drawArgb >> 24) & 0xFFu) / 2u;
         const auto placeholderAlpha = (std::max)(textAlpha, 0x40u);
@@ -666,6 +669,12 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         }
         const int caretHeight = GetCaretHeight() > 1 ? GetCaretHeight() : 1;
 
+        const auto caretPaint = ResolveBrushPaint(
+            GetCaretBrush(), commands,
+            contentHostX + caretX - m_scrollOffsetX,
+            contentHostY + verticalAlignmentOffset + caretY - m_scrollOffsetY,
+            1.0,
+            static_cast<double>(caretHeight));
         const uint32_t caretTextureId = GetCaretTextureId();
         commands.DrawTexturedQuad(
             contentHostX + caretX - m_scrollOffsetX,
@@ -675,9 +684,7 @@ void TextBox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             0.0f, 0.0f,
             1.0f, 1.0f,
             caretTextureId,
-            NeoWPF::Rendering::Paint::Solid((std::dynamic_pointer_cast<SolidColorBrush>(GetCaretBrush())
-                ? std::dynamic_pointer_cast<SolidColorBrush>(GetCaretBrush())->GetArgb()
-                : 0u)),
+            caretPaint,
             GetOpacity(),
             clip);
     }

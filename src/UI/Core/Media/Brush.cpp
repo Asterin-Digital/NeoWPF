@@ -1,8 +1,20 @@
 #include <NeoWPF/UI/Core/Media/Brush.h>
-
-#include <vector>
+#include <NeoWPF/Rendering/Renderer.h>
 
 namespace NeoWPF::UI {
+
+NeoWPF::Rendering::Paint ResolveBrushPaint(
+    const std::shared_ptr<Brush>& brush,
+    NeoWPF::Rendering::CommandList& commandList,
+    double boundsX,
+    double boundsY,
+    double boundsWidth,
+    double boundsHeight)
+{
+    return brush
+        ? brush->ResolvePaint(commandList, boundsX, boundsY, boundsWidth, boundsHeight)
+        : NeoWPF::Rendering::Paint::Solid(0);
+}
 
 Brush::~Brush() = default;
 
@@ -38,18 +50,27 @@ void Brush::SetRelativeTransform(std::shared_ptr<Core::Transform> transform)
 
 std::size_t Brush::AddChangedHandler(ChangedHandler handler)
 {
-    if (!handler) {
-        return 0;
-    }
-
-    const auto handlerId = m_nextChangedHandlerId++;
-    m_changedHandlers.emplace(handlerId, std::move(handler));
-    return handlerId;
+    return m_changed.Subscribe(std::move(handler));
 }
 
 void Brush::RemoveChangedHandler(std::size_t handlerId)
 {
-    m_changedHandlers.erase(handlerId);
+    m_changed.Unsubscribe(handlerId);
+}
+
+void Brush::NotifyChanged()
+{
+    m_changed.Publish();
+}
+
+void Brush::RefreshTransformSubscriptions()
+{
+    m_transformSubscription.Subscribe(GetTransform(), [this] {
+        NotifyChanged();
+    });
+    m_relativeTransformSubscription.Subscribe(GetRelativeTransform(), [this] {
+        NotifyChanged();
+    });
 }
 
 void Brush::OnDependencyPropertyChanged(const Properties::DependencyProperty& property,
@@ -61,16 +82,62 @@ void Brush::OnDependencyPropertyChanged(const Properties::DependencyProperty& pr
     Properties::DependencyObject::OnDependencyPropertyChanged(
         property, metadata, oldValue, newValue, source);
 
-    std::vector<ChangedHandler> handlers;
-    handlers.reserve(m_changedHandlers.size());
-    for (const auto& [handlerId, handler] : m_changedHandlers) {
-        (void)handlerId;
-        handlers.push_back(handler);
+    if (property.GetName() == "Transform" ||
+        property.GetName() == "RelativeTransform") {
+        RefreshTransformSubscriptions();
     }
 
-    for (const auto& handler : handlers) {
-        handler();
+    NotifyChanged();
+}
+
+BrushSubscription::BrushSubscription(BrushSubscription&& other) noexcept
+    : m_brush(std::move(other.m_brush)),
+      m_handlerId(std::exchange(other.m_handlerId, 0))
+{
+}
+
+BrushSubscription& BrushSubscription::operator=(BrushSubscription&& other) noexcept
+{
+    if (this != &other) {
+        Reset();
+        m_brush = std::move(other.m_brush);
+        m_handlerId = std::exchange(other.m_handlerId, 0);
     }
+    return *this;
+}
+
+BrushSubscription::~BrushSubscription()
+{
+    Reset();
+}
+
+void BrushSubscription::Subscribe(
+    const std::shared_ptr<Brush>& brush,
+    Brush::ChangedHandler handler)
+{
+    Reset();
+    if (!brush || !handler) {
+        return;
+    }
+
+    m_handlerId = brush->AddChangedHandler(std::move(handler));
+    if (m_handlerId != 0) {
+        m_brush = brush;
+    }
+}
+
+void BrushSubscription::Reset() noexcept
+{
+    if (const auto brush = m_brush.lock(); brush && m_handlerId != 0) {
+        brush->RemoveChangedHandler(m_handlerId);
+    }
+    m_brush.reset();
+    m_handlerId = 0;
+}
+
+bool BrushSubscription::IsSubscribed() const noexcept
+{
+    return m_handlerId != 0 && !m_brush.expired();
 }
 
 }

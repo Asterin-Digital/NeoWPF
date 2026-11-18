@@ -5,17 +5,7 @@
 
 namespace NeoWPF::UI {
 
-Control::~Control()
-{
-    if (const auto brush = m_subscribedBackgroundBrush.lock();
-        brush && m_backgroundBrushChangedHandlerId != 0) {
-        brush->RemoveChangedHandler(m_backgroundBrushChangedHandlerId);
-    }
-    if (const auto brush = m_subscribedBorderBrush.lock();
-        brush && m_borderBrushChangedHandlerId != 0) {
-        brush->RemoveChangedHandler(m_borderBrushChangedHandlerId);
-    }
-}
+Control::~Control() = default;
 
 Thickness Control::GetPadding() const noexcept {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Padding", *this);
@@ -78,22 +68,15 @@ void Control::SetBackgroundBrush(std::shared_ptr<Brush> brush) {
         return;
     }
 
-    if (m_subscribedBackgroundBrush.lock() == brush) {
+    if (m_backgroundBrushSubscription.IsSubscribed() &&
+        GetBackgroundBrush() == brush) {
         OnBackgroundBrushChanged(brush);
         return;
     }
-    if (const auto oldBrush = m_subscribedBackgroundBrush.lock();
-        oldBrush && m_backgroundBrushChangedHandlerId != 0) {
-        oldBrush->RemoveChangedHandler(m_backgroundBrushChangedHandlerId);
-        m_backgroundBrushChangedHandlerId = 0;
-    }
-    m_subscribedBackgroundBrush = brush;
-    if (brush) {
-        m_backgroundBrushChangedHandlerId = brush->AddChangedHandler([this] {
-            OnBackgroundBrushChanged(GetBackgroundBrush());
-            InvalidateVisual();
-        });
-    }
+    m_backgroundBrushSubscription.Subscribe(brush, [this] {
+        OnBackgroundBrushChanged(GetBackgroundBrush());
+        InvalidateVisual();
+    });
     OnBackgroundBrushChanged(brush);
 }
 
@@ -109,22 +92,15 @@ void Control::SetBorderBrush(std::shared_ptr<Brush> brush) {
         return;
     }
 
-    if (m_subscribedBorderBrush.lock() == brush) {
+    if (m_borderBrushSubscription.IsSubscribed() &&
+        GetBorderBrush() == brush) {
         OnBorderBrushChanged(brush);
         return;
     }
-    if (const auto oldBrush = m_subscribedBorderBrush.lock();
-        oldBrush && m_borderBrushChangedHandlerId != 0) {
-        oldBrush->RemoveChangedHandler(m_borderBrushChangedHandlerId);
-        m_borderBrushChangedHandlerId = 0;
-    }
-    m_subscribedBorderBrush = brush;
-    if (brush) {
-        m_borderBrushChangedHandlerId = brush->AddChangedHandler([this] {
-            OnBorderBrushChanged(GetBorderBrush());
-            InvalidateVisual();
-        });
-    }
+    m_borderBrushSubscription.Subscribe(brush, [this] {
+        OnBorderBrushChanged(GetBorderBrush());
+        InvalidateVisual();
+    });
     OnBorderBrushChanged(brush);
 }
 

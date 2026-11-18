@@ -4,7 +4,6 @@
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
-#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 
 #include <algorithm>
 
@@ -96,8 +95,8 @@ void ListBoxItem::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
         const double height = (std::max)(0.0, GetFinalHeight());
 
         if (width > 0.0f && height > 0.0f) {
-            const auto borderBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBorderBrush());
-            const auto backgroundBrush = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
+            const auto borderBrush = GetBorderBrush();
+            const auto backgroundBrush = GetBackgroundBrush();
                 commands.DrawRoundedRect(
                     absoluteX,
                     absoluteY,
@@ -107,7 +106,7 @@ void ListBoxItem::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                     0.0f,
                     0.0f,
                     0.0f,
-                    NeoWPF::Rendering::Paint::Solid(borderBrush ? borderBrush->GetArgb() : 0x00000000u),
+                    ResolveBrushPaint(borderBrush, commands, absoluteX, absoluteY, width, height),
                     GetOpacity(),
                     GetClipRect(),
                     renderTransform.rotationRadians,
@@ -122,7 +121,8 @@ void ListBoxItem::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
                     0.0f,
                     0.0f,
                     0.0f,
-                    NeoWPF::Rendering::Paint::Solid(backgroundBrush ? backgroundBrush->GetArgb() : 0x00000000u),
+                    ResolveBrushPaint(backgroundBrush, commands, absoluteX + 1.0, absoluteY + 1.0,
+                                      std::max(0.0, width - 2.0), std::max(0.0, height - 2.0)),
                     GetOpacity(),
                     GetClipRect(),
                     renderTransform.rotationRadians,

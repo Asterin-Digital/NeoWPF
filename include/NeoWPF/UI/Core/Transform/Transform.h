@@ -3,11 +3,6 @@ Apache 2.0 License — Copyright (c) 2026 Asterin Digital
 See LICENSE file in the project root for full license text.
 */
 
-
-
-
-
-
 #pragma once
 
 #include <memory>
@@ -15,6 +10,8 @@ See LICENSE file in the project root for full license text.
 #include <functional>
 #include <cstdint>
 #include <optional>
+#include <cstddef>
+#include <NeoWPF/Core/Events/Notification.h>
 
 namespace NeoWPF::UI {
 class UIElement;
@@ -33,6 +30,7 @@ struct Matrix4 {
     static Matrix4 Rotation(float angleRadians);
 
     void TransformPoint(double x, double y, double& outX, double& outY) const noexcept;
+    std::optional<Matrix4> TryInverse2D() const noexcept;
 };
 
 class Transform {
@@ -55,6 +53,33 @@ public:
     virtual bool HasRotation() const noexcept;
     virtual std::optional<float> TryGetRotation() const noexcept;
     virtual std::shared_ptr<Transform> Clone() const = 0;
+
+    std::size_t AddChangedHandler(std::function<void()> handler);
+    void RemoveChangedHandler(std::size_t handlerId);
+
+protected:
+    void NotifyChanged();
+
+private:
+    NeoWPF::Core::Notification<> m_changed;
+};
+
+class TransformSubscription final {
+public:
+    TransformSubscription() = default;
+    TransformSubscription(const TransformSubscription&) = delete;
+    TransformSubscription& operator=(const TransformSubscription&) = delete;
+    TransformSubscription(TransformSubscription&& other) noexcept;
+    TransformSubscription& operator=(TransformSubscription&& other) noexcept;
+    ~TransformSubscription();
+
+    void Subscribe(const std::shared_ptr<Transform>& transform,
+                   std::function<void()> handler);
+    void Reset() noexcept;
+
+private:
+    std::weak_ptr<Transform> m_transform;
+    std::size_t m_handlerId = 0;
 };
 
 struct FloatAnimation {
@@ -79,7 +104,6 @@ public:
     void SetScaleY(float value);
     void SetCenterX(float value);
     void SetCenterY(float value);
-    void SetInvalidateCallback(std::function<void()> callback);
 
     Matrix4 GetMatrix() const override;
     std::shared_ptr<Transform> Clone() const override;
@@ -90,7 +114,6 @@ private:
     float m_scaleY;
     float m_centerX;
     float m_centerY;
-    std::function<void()> m_invalidateCallback;
     std::uint64_t m_animationHandle = 0;
     friend class NeoWPF::UI::UIElement;
 };
@@ -124,7 +147,6 @@ public:
     void SetAngle(float value);
     void SetCenterX(float value);
     void SetCenterY(float value);
-    void SetInvalidateCallback(std::function<void()> callback);
 
     Matrix4 GetMatrix() const override;
     Matrix4 GetPositionMatrix() const override;
@@ -136,7 +158,6 @@ private:
     float m_angle;
     float m_centerX;
     float m_centerY;
-    std::function<void()> m_invalidateCallback;
     friend class NeoWPF::UI::UIElement;
 };
 
@@ -157,6 +178,7 @@ private:
 class TransformGroup : public Transform {
 public:
     TransformGroup();
+    ~TransformGroup() override;
 
     void AddChild(std::shared_ptr<Transform> transform);
     void ClearChildren();
@@ -171,6 +193,7 @@ public:
 
 private:
     std::vector<std::shared_ptr<Transform>> m_children;
+    std::vector<TransformSubscription> m_childChangedSubscriptions;
 };
 
 }

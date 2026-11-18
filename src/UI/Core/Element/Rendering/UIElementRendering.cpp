@@ -225,55 +225,16 @@ float UIElement::GetWorldRotationRadians() const noexcept {
     return std::atan2(matrix.m[1][0], matrix.m[0][0]);
 }
 
-namespace {
-
-void ClearTransformInvalidateCallbacks(const std::shared_ptr<NeoWPF::UI::Core::Transform>& transform) {
-    if (!transform) {
-        return;
-    }
-
-    if (auto scaleTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::ScaleTransform>(transform)) {
-        scaleTransform->SetInvalidateCallback(nullptr);
-    }
-    if (auto rotateTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::RotateTransform>(transform)) {
-        rotateTransform->SetInvalidateCallback(nullptr);
-    }
-    if (auto transformGroup = std::dynamic_pointer_cast<NeoWPF::UI::Core::TransformGroup>(transform)) {
-        for (size_t i = 0; i < transformGroup->GetChildCount(); ++i) {
-            ClearTransformInvalidateCallbacks(transformGroup->GetChild(i));
-        }
-    }
-}
-
-void SetTransformInvalidateCallbacks(const std::shared_ptr<NeoWPF::UI::Core::Transform>& transform,
-                                     const std::function<void()>& callback) {
-    if (!transform) {
-        return;
-    }
-
-    if (auto scaleTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::ScaleTransform>(transform)) {
-        scaleTransform->SetInvalidateCallback(callback);
-    }
-    if (auto rotateTransform = std::dynamic_pointer_cast<NeoWPF::UI::Core::RotateTransform>(transform)) {
-        rotateTransform->SetInvalidateCallback(callback);
-    }
-    if (auto transformGroup = std::dynamic_pointer_cast<NeoWPF::UI::Core::TransformGroup>(transform)) {
-        for (size_t i = 0; i < transformGroup->GetChildCount(); ++i) {
-            SetTransformInvalidateCallbacks(transformGroup->GetChild(i), callback);
-        }
-    }
-}
-
-}
-
 void UIElement::SetRenderTransform(std::shared_ptr<NeoWPF::UI::Core::Transform> transform) noexcept {
-    ClearTransformInvalidateCallbacks(m_renderTransform);
+    m_renderTransformSubscription.Reset();
 
     m_renderTransform = transform;
-    SetTransformInvalidateCallbacks(transform, [this]() {
-        this->InvalidateVisual();
+    if (m_renderTransform) {
+    m_renderTransformSubscription.Subscribe(m_renderTransform, [this]() {
+        InvalidateVisual();
         this->InvalidateTransformCache();
     });
+    }
 
     InvalidateTransformCache();
     InvalidateVisual();

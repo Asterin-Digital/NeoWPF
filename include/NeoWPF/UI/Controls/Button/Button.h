@@ -240,8 +240,7 @@ private:
 
 private:
     std::wstring m_text;
-    std::weak_ptr<Brush> m_subscribedForeground;
-    std::size_t m_foregroundChangedHandlerId = 0;
+    BrushSubscription m_foregroundBrushSubscription;
     int m_fontSize = 16;
     std::wstring m_fontFamily;
     int m_fontWeight = 400;

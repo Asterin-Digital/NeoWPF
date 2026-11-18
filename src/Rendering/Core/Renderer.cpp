@@ -74,6 +74,13 @@ void HashClip(std::uint64_t& hash, const NeoWPF::Rendering::ClipRect& clip) noex
     HashValue(hash, clip.active);
 }
 
+void HashPaint(std::uint64_t& hash, const NeoWPF::Rendering::Paint& paint) noexcept
+{
+    HashValue(hash, paint.kind);
+    HashValue(hash, paint.color);
+    HashValue(hash, paint.gradientIndex);
+}
+
 std::uint64_t HashCommandList(const NeoWPF::Rendering::CommandList& commands) noexcept
 {
     using CommandList = NeoWPF::Rendering::CommandList;
@@ -91,8 +98,7 @@ std::uint64_t HashCommandList(const NeoWPF::Rendering::CommandList& commands) no
             HashValue(hash, rect.y);
             HashValue(hash, rect.w);
             HashValue(hash, rect.h);
-            HashValue(hash, rect.paint.kind);
-            HashValue(hash, rect.paint.color);
+            HashPaint(hash, rect.paint);
             HashValue(hash, rect.opacity);
             HashClip(hash, rect.clip);
             HashValue(hash, rect.rotationRadians);
@@ -110,8 +116,7 @@ std::uint64_t HashCommandList(const NeoWPF::Rendering::CommandList& commands) no
             HashValue(hash, rect.topRight);
             HashValue(hash, rect.bottomRight);
             HashValue(hash, rect.bottomLeft);
-            HashValue(hash, rect.paint.kind);
-            HashValue(hash, rect.paint.color);
+            HashPaint(hash, rect.paint);
             HashValue(hash, rect.opacity);
             HashClip(hash, rect.clip);
             HashValue(hash, rect.rotationRadians);
@@ -127,8 +132,7 @@ std::uint64_t HashCommandList(const NeoWPF::Rendering::CommandList& commands) no
             HashValue(hash, arc.thickness);
             HashValue(hash, arc.startAngleRadians);
             HashValue(hash, arc.sweepAngleRadians);
-            HashValue(hash, arc.paint.kind);
-            HashValue(hash, arc.paint.color);
+            HashPaint(hash, arc.paint);
             HashValue(hash, arc.opacity);
             HashClip(hash, arc.clip);
             break;
@@ -144,8 +148,7 @@ std::uint64_t HashCommandList(const NeoWPF::Rendering::CommandList& commands) no
             HashValue(hash, quad.u1);
             HashValue(hash, quad.v1);
             HashValue(hash, quad.textureId);
-            HashValue(hash, quad.tint.kind);
-            HashValue(hash, quad.tint.color);
+            HashPaint(hash, quad.tint);
             HashValue(hash, quad.opacity);
             HashClip(hash, quad.clip);
             HashValue(hash, quad.rotationRadians);
@@ -158,6 +161,24 @@ std::uint64_t HashCommandList(const NeoWPF::Rendering::CommandList& commands) no
 
     HashValue(hash, commands.clearColor);
     HashValue(hash, commands.hasClearColor);
+    HashValue(hash, commands.gradients.size());
+    for (const auto& gradient : commands.gradients) {
+        HashValue(hash, gradient.kind);
+        HashValue(hash, gradient.spread);
+        for (const auto value : gradient.mapping) {
+            HashValue(hash, value);
+        }
+        HashValue(hash, gradient.focalX);
+        HashValue(hash, gradient.focalY);
+        HashValue(hash, gradient.opacity);
+        HashValue(hash, gradient.stopOffset);
+        HashValue(hash, gradient.stopCount);
+    }
+    HashValue(hash, commands.gradientStops.size());
+    for (const auto& stop : commands.gradientStops) {
+        HashValue(hash, stop.offset);
+        HashValue(hash, stop.color);
+    }
     return hash;
 }
 

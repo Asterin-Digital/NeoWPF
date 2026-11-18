@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/UI/Core/Media/Brush.h>
+#include <NeoWPF/UI/Core/Media/GradientBrush.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Layout/Placement/TextAlignment.h>
@@ -71,6 +72,9 @@ void TextBlock::SetForeground(std::shared_ptr<Brush> brush)
         return;
     }
 
+    m_foregroundBrushSubscription.Subscribe(brush, [this] {
+        InvalidateVisual();
+    });
     InvalidateVisual();
 }
 
@@ -338,9 +342,12 @@ void TextBlock::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     double boundsY = 0.0;
     GetAbsolutePosition(boundsX, boundsY);
     const auto foregroundBrush = GetForeground();
-    const auto foregroundPaint = foregroundBrush
-        ? foregroundBrush->ResolvePaint(commands, boundsX, boundsY, GetFinalWidth(), GetFinalHeight())
-        : NeoWPF::Rendering::Paint::Solid(0u);
+    const auto gradientForeground =
+        std::dynamic_pointer_cast<GradientBrush>(foregroundBrush);
+    const auto foregroundPaint = gradientForeground
+        ? NeoWPF::Rendering::Paint::Solid(gradientForeground->ResolveFallbackColor())
+        : ResolveBrushPaint(
+            foregroundBrush, commands, boundsX, boundsY, GetFinalWidth(), GetFinalHeight());
 
     const auto clip = GetClipRect();
 

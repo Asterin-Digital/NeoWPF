@@ -306,6 +306,7 @@ private:
     int m_lastArrangeWidth = -1;
     std::uint64_t m_lastTextFontGeneration = 0;
     std::size_t m_themeAppliedSubscriptionId = 0;
+    BrushSubscription m_foregroundBrushSubscription;
 
     NeoWPF::UI::Text::TextRasterCache m_textCache;
 

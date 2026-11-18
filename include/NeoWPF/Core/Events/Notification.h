@@ -5,10 +5,12 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
+#include <array>
+#include <atomic>
 #include <cstddef>
 #include <functional>
 #include <mutex>
-#include <shared_mutex>
+#include <memory>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -20,7 +22,8 @@ namespace NeoWPF::Core {
     Stores subscribers and publishes typed notifications.
 
     @details
-    Subscription identifiers are local to each Notification instance. Handlers are copied under a shared lock and invoked after the lock is released.
+    Subscription identifiers are local to each Notification instance. A cached immutable
+    snapshot lets Publish invoke handlers without taking a lock or allocating.
 */
 template <typename... Args>
 class Notification {
@@ -44,6 +47,7 @@ public:
         std::unique_lock lock(m_mutex);
         const auto subscriptionId = m_nextSubscriptionId++;
         m_subscribers.emplace(subscriptionId, std::move(handler));
+        RebuildSnapshot();
         return subscriptionId;
     }
 
@@ -61,7 +65,9 @@ public:
         }
 
         std::unique_lock lock(m_mutex);
-        m_subscribers.erase(subscriptionId);
+        if (m_subscribers.erase(subscriptionId) != 0) {
+            RebuildSnapshot();
+        }
     }
 
     /*
@@ -76,26 +82,47 @@ public:
     */
     void Publish(Args... args) const
     {
-        std::vector<std::function<void(Args...)>> subscribers;
-        {
-            std::shared_lock lock(m_mutex);
-            subscribers.reserve(m_subscribers.size());
-            for (const auto& [subscriptionId, handler] : m_subscribers) {
-                (void)subscriptionId;
-                if (handler) {
-                    subscribers.push_back(handler);
-                }
-            }
+        const auto snapshot = m_snapshot.load(std::memory_order_acquire);
+        for (std::size_t index = 0; index < snapshot->inlineCount; ++index) {
+            snapshot->inlineHandlers[index](args...);
         }
-
-        for (const auto& handler : subscribers) {
+        for (const auto& handler : snapshot->overflowHandlers) {
             handler(args...);
         }
     }
 
 private:
-    mutable std::shared_mutex m_mutex;
+    struct SubscriberSnapshot {
+        std::array<std::function<void(Args...)>, 4> inlineHandlers;
+        std::size_t inlineCount = 0;
+        std::vector<std::function<void(Args...)>> overflowHandlers;
+    };
+
+    void RebuildSnapshot()
+    {
+        auto snapshot = std::make_shared<SubscriberSnapshot>();
+        const auto overflowCount = m_subscribers.size() > snapshot->inlineHandlers.size()
+            ? m_subscribers.size() - snapshot->inlineHandlers.size()
+            : 0;
+        snapshot->overflowHandlers.reserve(overflowCount);
+
+        for (const auto& [subscriptionId, handler] : m_subscribers) {
+            (void)subscriptionId;
+            if (snapshot->inlineCount < snapshot->inlineHandlers.size()) {
+                snapshot->inlineHandlers[snapshot->inlineCount++] = handler;
+            } else {
+                snapshot->overflowHandlers.push_back(handler);
+            }
+        }
+
+        std::shared_ptr<const SubscriberSnapshot> immutableSnapshot = std::move(snapshot);
+        m_snapshot.store(std::move(immutableSnapshot), std::memory_order_release);
+    }
+
+    mutable std::mutex m_mutex;
     std::unordered_map<std::size_t, std::function<void(Args...)>> m_subscribers;
+    std::atomic<std::shared_ptr<const SubscriberSnapshot>> m_snapshot{
+        std::make_shared<const SubscriberSnapshot>()};
     std::size_t m_nextSubscriptionId = 1;
 };
 

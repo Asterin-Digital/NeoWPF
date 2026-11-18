@@ -3,7 +3,6 @@
 #include <NeoWPF/UI/Content/ContentPresenter.h>
 #include <NeoWPF/UI/Controls/Templates/TemplateVisual.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
-#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Localization/LocaleOperations.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/Rendering/Renderer.h>
@@ -303,14 +302,12 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
     }
     else {
         const auto radius = GetCornerRadius();
-        const auto background = std::dynamic_pointer_cast<SolidColorBrush>(GetBackgroundBrush());
-        const auto border = std::dynamic_pointer_cast<SolidColorBrush>(GetBorderBrush());
-        commands.DrawRoundedRect(boxLeft, boxTop, boxSize, boxSize, radius.TopLeft, radius.TopRight, radius.BottomRight, radius.BottomLeft, NeoWPF::Rendering::Paint::Solid(background ? background->GetArgb() : 0u), GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
-        commands.DrawRoundedRect(boxLeft, boxTop, boxSize, boxSize, radius.TopLeft, radius.TopRight, radius.BottomRight, radius.BottomLeft, NeoWPF::Rendering::Paint::Solid(border ? border->GetArgb() : 0u), GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
+        commands.DrawRoundedRect(boxLeft, boxTop, boxSize, boxSize, radius.TopLeft, radius.TopRight, radius.BottomRight, radius.BottomLeft, ResolveBrushPaint(GetBackgroundBrush(), commands, boxLeft, boxTop, boxSize, boxSize), GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
+        commands.DrawRoundedRect(boxLeft, boxTop, boxSize, boxSize, radius.TopLeft, radius.TopRight, radius.BottomRight, radius.BottomLeft, ResolveBrushPaint(GetBorderBrush(), commands, boxLeft, boxTop, boxSize, boxSize), GetOpacity(), NeoWPF::Rendering::ClipRect{}, renderTransform.rotationRadians, renderTransform.pivot.X, renderTransform.pivot.Y);
     }
 
     if (IsChecked()) {
-        const auto foreground = std::dynamic_pointer_cast<SolidColorBrush>(GetForeground());
+        const auto foreground = GetForeground();
         const double checkCenterX = boxLeft + boxSize * 0.5;
         const double checkCenterY = boxTop + boxSize * 0.5;
         constexpr float kCheckAngle = 0.68f;
@@ -327,7 +324,7 @@ void Checkbox::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
             const double x = strokeCenterX - width * 0.5;
             const double y = strokeCenterY - height * 0.5;
             commands.DrawRoundedRect(x, y, width, height, 0.0f, 0.0f, 0.0f, 0.0f,
-                                    NeoWPF::Rendering::Paint::Solid(foreground ? foreground->GetArgb() : 0u), GetOpacity(),
+                                    ResolveBrushPaint(foreground, commands, x, y, width, height), GetOpacity(),
                                     NeoWPF::Rendering::ClipRect{}, rotationRadians + renderTransform.rotationRadians,
                                     strokeCenterX, strokeCenterY);
         };

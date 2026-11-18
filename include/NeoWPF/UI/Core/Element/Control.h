@@ -8,7 +8,6 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Core/Media/Brush.h>
 
-#include <cstddef>
 #include <memory>
 
 namespace NeoWPF::UI {
@@ -52,10 +51,8 @@ protected:
 
 protected:
     Thickness m_padding{};
-    std::weak_ptr<Brush> m_subscribedBackgroundBrush;
-    std::weak_ptr<Brush> m_subscribedBorderBrush;
-    std::size_t m_backgroundBrushChangedHandlerId = 0;
-    std::size_t m_borderBrushChangedHandlerId = 0;
+    BrushSubscription m_backgroundBrushSubscription;
+    BrushSubscription m_borderBrushSubscription;
     double m_borderThickness = 0.0;
 };
 
