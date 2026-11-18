@@ -7,7 +7,6 @@
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
-#include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 #include <NeoWPF/UI/Controls/Window.h>
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
@@ -157,25 +156,40 @@ WindowState GetWindowState(const WindowSession& windowSession)
     return state;
 }
 
-void BuildWindowVisualTree(WindowSession& windowSession, unsigned int width, unsigned int height, bool layoutRequired)
+void BuildWindowCommands(
+    WindowSession& windowSession,
+    unsigned int width,
+    unsigned int height,
+    bool layoutRequired)
 {
-    NEO_WPF_STARTUP_ACTION("BuildWindowVisualTree");
+    NEO_WPF_STARTUP_ACTION("BuildWindowCommands");
     const auto layoutStart = std::chrono::steady_clock::now();
     windowSession.buildCommandList.Clear();
-    const auto clearBrush = std::dynamic_pointer_cast<NeoWPF::UI::SolidColorBrush>(
-        windowSession.windowHost->GetBackgroundBrush());
-    windowSession.buildCommandList.clearColor = clearBrush ? clearBrush->GetArgb() : 0u;
+    const auto backgroundPaint = NeoWPF::UI::ResolveBrushPaint(
+        windowSession.windowHost->GetBackgroundBrush(),
+        windowSession.buildCommandList,
+        0.0,
+        0.0,
+        width,
+        height);
+    if (backgroundPaint.kind == NeoWPF::Rendering::Paint::Kind::Solid) {
+        windowSession.buildCommandList.clearColor = backgroundPaint.color;
+    } else {
+        windowSession.buildCommandList.clearColor = 0u;
+        windowSession.buildCommandList.DrawRect(
+            0.0, 0.0, width, height, backgroundPaint);
+    }
     windowSession.buildCommandList.hasClearColor = true;
 
     auto rootVisual = windowSession.windowHost->GetContent();
     {
-        NEO_WPF_ACTION("BuildWindowVisualTree.Initialize");
+        NEO_WPF_ACTION("BuildWindowCommands.Initialize");
         if (rootVisual) {
             rootVisual->Initialize();
         }
     }
     if (layoutRequired) {
-        NEO_WPF_ACTION("BuildWindowVisualTree.MeasureArrange");
+        NEO_WPF_ACTION("BuildWindowCommands.MeasureArrange");
         LayoutVisualTree(rootVisual.get(), width, height);
         for (const auto& overlay : windowSession.windowHost->GetOverlays()) {
             if (!overlay) {
@@ -188,10 +202,10 @@ void BuildWindowVisualTree(WindowSession& windowSession, unsigned int width, uns
             }
         }
     } else {
-        NEO_WPF_ACTION("BuildWindowVisualTree.MeasureArrangeSkipped");
+        NEO_WPF_ACTION("BuildWindowCommands.MeasureArrangeSkipped");
     }
     {
-        NEO_WPF_ACTION("BuildWindowVisualTree.BuildRenderCommands");
+        NEO_WPF_ACTION("BuildWindowCommands.BuildRenderCommands");
         BuildVisualTreeCommands(rootVisual.get(), windowSession.buildCommandList);
         for (const auto& overlay : windowSession.windowHost->GetOverlays()) {
             BuildVisualTreeCommands(overlay.get(), windowSession.buildCommandList);
@@ -200,7 +214,7 @@ void BuildWindowVisualTree(WindowSession& windowSession, unsigned int width, uns
     const auto layoutElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - layoutStart).count();
     NeoWPF::Diagnostics::PerformanceMetrics::RecordLayoutPass(layoutElapsed);
     {
-        NEO_WPF_ACTION("BuildWindowVisualTree.PublishCommandList");
+        NEO_WPF_ACTION("BuildWindowCommands.PublishCommandList");
         std::lock_guard<std::mutex> lock(s_appState.commandListMutex);
         windowSession.renderCommandList = windowSession.buildCommandList;
     }
@@ -428,7 +442,7 @@ int RunMessageLoop()
             if (windowWidth == 0 || windowHeight == 0) {
                 continue;
             }
-            BuildWindowVisualTree(windowSession, windowWidth, windowHeight, true);
+            BuildWindowCommands(windowSession, windowWidth, windowHeight, true);
             windowSession.width = windowWidth;
             windowSession.height = windowHeight;
             initialWindows.push_back(windowSession.renderSurface.nativeWindowHandle);
@@ -563,7 +577,7 @@ int RunMessageLoop()
                     windowSession.width != windowWidth || windowSession.height != windowHeight ||
                     (rootVisual && rootVisual->IsLayoutDirty()) ||
                     (windowSession.windowHost && OverlayLayoutDirty(*windowSession.windowHost));
-                BuildWindowVisualTree(windowSession, windowWidth, windowHeight, layoutRequired);
+                BuildWindowCommands(windowSession, windowWidth, windowHeight, layoutRequired);
                 windowSession.width = windowWidth;
                 windowSession.height = windowHeight;
             }

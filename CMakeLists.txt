@@ -987,6 +987,7 @@ if(BUILD_TESTING AND NOT ANDROID)
         tests/Automated/DiagnosticsTests.cpp
         tests/Automated/BrushTests.cpp
         tests/Automated/BrushPaintResolutionTests.cpp
+        tests/Automated/WindowBackgroundPaintTests.cpp
         tests/Automated/PanelPaintTests.cpp
         tests/Automated/ControlPaintTests.cpp
         tests/Automated/CheckboxTests.cpp

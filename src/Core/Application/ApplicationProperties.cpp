@@ -28,6 +28,7 @@ const NeoWPF::UI::Properties::DependencyProperty& Application::LocalesProperty()
 
 }
 
+
 namespace NeoWPF::UI::Properties {
 
 void RegisterApplicationProperties()

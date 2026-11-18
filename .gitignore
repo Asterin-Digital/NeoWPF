@@ -22,9 +22,11 @@ __pycache__/
 /samples/Android/local.properties
 /NeoWPF/
 paths.neo
-tools/
 
 # Misc
+tools/*
+!tools/src/
+!tools/src/**
 out.txt
 output.txt
 

@@ -152,9 +152,9 @@ void Border::BuildRenderCommands(NeoWPF::Rendering::CommandList& commands)
 
     const auto borderBrush = GetBorderBrush();
     const auto backgroundBrush = GetBackgroundBrush();
-    const auto borderPaint = ResolveBrushPaint(
-        borderBrush, commands, absX, absY, GetFinalWidth(), GetFinalHeight());
     if (GetBorderThickness() > 0 && borderBrush) {
+        const auto borderPaint = ResolveBrushPaint(
+            borderBrush, commands, absX, absY, GetFinalWidth(), GetFinalHeight());
         const auto border = GetBorderThicknessValue();
         if (!borderPaint.IsEmpty()) {
             if (border.Top > 0) commands.DrawRect(absX, absY, GetFinalWidth(), border.Top, borderPaint, static_cast<float>(GetOpacity()), clip);

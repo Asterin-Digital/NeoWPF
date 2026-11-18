@@ -197,6 +197,30 @@ WindowState GetWindowState(const WindowSession& windowSession);
 
 /*
     @summary
+    Builds and publishes render commands for a window.
+
+    @param windowSession
+    Window session whose visual tree is rendered.
+
+    @param width
+    Current surface width.
+
+    @param height
+    Current surface height.
+
+    @param layoutRequired
+    Whether the visual tree requires measure and arrange.
+
+    @internal
+*/
+void BuildWindowCommands(
+    WindowSession& windowSession,
+    unsigned int width,
+    unsigned int height,
+    bool layoutRequired);
+
+/*
+    @summary
     Shuts down the application runtime.
 
     @internal
