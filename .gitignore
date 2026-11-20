@@ -21,6 +21,8 @@ __pycache__/
 /samples/Android/app/.cxx/
 /samples/Android/local.properties
 /NeoWPF/
+.gradle
+.cxx
 paths.neo
 
 # Misc

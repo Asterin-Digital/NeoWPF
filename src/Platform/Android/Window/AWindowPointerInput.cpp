@@ -62,13 +62,14 @@ std::uint32_t TranslateButtonState(int buttonState) noexcept
 
 void SubmitPointer(AInputEvent* event, std::size_t pointerIndex,
                    PointerPhase phase, std::uint32_t buttons,
-                   std::uint32_t changedButton, double wheelDelta = 0.0)
+                   std::uint32_t changedButton, double scaleFactor,
+                   double wheelDelta = 0.0)
 {
     const auto pointerId = static_cast<std::uint32_t>(
         AMotionEvent_getPointerId(event, pointerIndex));
     const auto deviceType = GetPointerDeviceType(event, pointerIndex);
-    const double x = AMotionEvent_getX(event, pointerIndex);
-    const double y = AMotionEvent_getY(event, pointerIndex);
+    const double x = AMotionEvent_getX(event, pointerIndex) / scaleFactor;
+    const double y = AMotionEvent_getY(event, pointerIndex) / scaleFactor;
     const float pressure = AMotionEvent_getPressure(event, pointerIndex);
 
     if (phase != PointerPhase::Move) {
@@ -98,6 +99,13 @@ int AWindowing::HandlePointerInputEvent(AInputEvent* inputEvent) noexcept
     }
 
     NeoWPF::Core::SetInputRoot(m_windows.front().get());
+    double scaleFactor = 0.0;
+    if (!GetWindowScaleFactor(m_windows.front().get(), scaleFactor)) {
+        NeoWPF::Diagnostics::LogError(
+            "Android pointer input rejected because the window scale is unavailable");
+        return 0;
+    }
+
     const int action = AMotionEvent_getAction(inputEvent);
     const int maskedAction = action & AMOTION_EVENT_ACTION_MASK;
     const std::size_t actionIndex = static_cast<std::size_t>(
@@ -118,9 +126,9 @@ int AWindowing::HandlePointerInputEvent(AInputEvent* inputEvent) noexcept
             buttons |= PrimaryButton;
         }
         SubmitPointer(inputEvent, actionIndex, PointerPhase::Enter,
-                      buttons, changedButton);
+                      buttons, changedButton, scaleFactor);
         SubmitPointer(inputEvent, actionIndex, PointerPhase::Down,
-                      buttons, changedButton);
+                      buttons, changedButton, scaleFactor);
         return 1;
     }
     case AMOTION_EVENT_ACTION_UP:
@@ -135,9 +143,10 @@ int AWindowing::HandlePointerInputEvent(AInputEvent* inputEvent) noexcept
             buttons &= ~changedButton;
         }
         SubmitPointer(inputEvent, actionIndex, PointerPhase::Up,
-                      buttons, changedButton);
+                      buttons, changedButton, scaleFactor);
         if (deviceType == PointerDeviceType::Touch) {
-            SubmitPointer(inputEvent, actionIndex, PointerPhase::Leave, 0, 0);
+            SubmitPointer(inputEvent, actionIndex, PointerPhase::Leave, 0, 0,
+                          scaleFactor);
         }
         auto& appState = NeoWPF::Core::GetAppState();
         std::lock_guard<std::mutex> lock(appState.windowSessionsMutex);
@@ -163,13 +172,15 @@ int AWindowing::HandlePointerInputEvent(AInputEvent* inputEvent) noexcept
                 buttons |= PrimaryButton;
             }
             SubmitPointer(inputEvent, pointerIndex, PointerPhase::Move,
-                          buttons, 0);
+                          buttons, 0, scaleFactor);
         }
         return 1;
     case AMOTION_EVENT_ACTION_CANCEL:
         for (std::size_t pointerIndex = 0; pointerIndex < pointerCount; ++pointerIndex) {
-            SubmitPointer(inputEvent, pointerIndex, PointerPhase::Cancel, 0, 0);
-            SubmitPointer(inputEvent, pointerIndex, PointerPhase::Leave, 0, 0);
+            SubmitPointer(inputEvent, pointerIndex, PointerPhase::Cancel, 0, 0,
+                          scaleFactor);
+            SubmitPointer(inputEvent, pointerIndex, PointerPhase::Leave, 0, 0,
+                          scaleFactor);
         }
         return 1;
     case AMOTION_EVENT_ACTION_HOVER_ENTER:
@@ -184,7 +195,8 @@ int AWindowing::HandlePointerInputEvent(AInputEvent* inputEvent) noexcept
             : (maskedAction == AMOTION_EVENT_ACTION_HOVER_EXIT
                 ? PointerPhase::Leave : PointerPhase::Move);
         SubmitPointer(inputEvent, actionIndex, phase,
-            TranslateButtonState(AMotionEvent_getButtonState(inputEvent)), 0);
+            TranslateButtonState(AMotionEvent_getButtonState(inputEvent)), 0,
+            scaleFactor);
         return 1;
     }
     case AMOTION_EVENT_ACTION_SCROLL: {
@@ -198,7 +210,7 @@ int AWindowing::HandlePointerInputEvent(AInputEvent* inputEvent) noexcept
         }
         SubmitPointer(inputEvent, actionIndex, PointerPhase::Wheel,
             TranslateButtonState(AMotionEvent_getButtonState(inputEvent)),
-            0, wheelDelta);
+            0, scaleFactor, wheelDelta);
         return 1;
     }
     default:

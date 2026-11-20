@@ -273,6 +273,8 @@ namespace NeoWPF::UI {
 
     void Grid::Measure(double availableWidth, double availableHeight)
     {
+        EvaluateResponsiveRules(availableWidth, availableHeight);
+
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
             "[Grid::Measure] Available: %gx%g", availableWidth, availableHeight);
 

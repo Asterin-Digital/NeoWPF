@@ -177,11 +177,17 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     if(NOT EXISTS "${NEOWPF_XDG_DECORATION_XML}")
         message(FATAL_ERROR "Could not find xdg-decoration protocol XML in ${WAYLAND_PROTOCOLS_DATADIR}")
     endif()
+    set(NEOWPF_FRACTIONAL_SCALE_XML "${WAYLAND_PROTOCOLS_DATADIR}/staging/fractional-scale/fractional-scale-v1.xml")
+    if(NOT EXISTS "${NEOWPF_FRACTIONAL_SCALE_XML}")
+        message(FATAL_ERROR "Could not find fractional-scale-v1 protocol XML in ${WAYLAND_PROTOCOLS_DATADIR}")
+    endif()
     set(NEOWPF_WAYLAND_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/wayland")
     set(NEOWPF_XDG_SHELL_HEADER "${NEOWPF_WAYLAND_GENERATED_DIR}/xdg-shell-client-protocol.h")
     set(NEOWPF_XDG_SHELL_SOURCE "${NEOWPF_WAYLAND_GENERATED_DIR}/xdg-shell-protocol.cpp")
     set(NEOWPF_XDG_DECORATION_HEADER "${NEOWPF_WAYLAND_GENERATED_DIR}/xdg-decoration-client-protocol.h")
     set(NEOWPF_XDG_DECORATION_SOURCE "${NEOWPF_WAYLAND_GENERATED_DIR}/xdg-decoration-protocol.cpp")
+    set(NEOWPF_FRACTIONAL_SCALE_HEADER "${NEOWPF_WAYLAND_GENERATED_DIR}/fractional-scale-v1-client-protocol.h")
+    set(NEOWPF_FRACTIONAL_SCALE_SOURCE "${NEOWPF_WAYLAND_GENERATED_DIR}/fractional-scale-v1-protocol.cpp")
     add_custom_command(
         OUTPUT "${NEOWPF_XDG_SHELL_HEADER}" "${NEOWPF_XDG_SHELL_SOURCE}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_WAYLAND_GENERATED_DIR}"
@@ -198,10 +204,20 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         DEPENDS "${NEOWPF_XDG_DECORATION_XML}"
         VERBATIM
     )
+    add_custom_command(
+        OUTPUT "${NEOWPF_FRACTIONAL_SCALE_HEADER}" "${NEOWPF_FRACTIONAL_SCALE_SOURCE}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_WAYLAND_GENERATED_DIR}"
+        COMMAND "${WAYLAND_SCANNER}" client-header "${NEOWPF_FRACTIONAL_SCALE_XML}" "${NEOWPF_FRACTIONAL_SCALE_HEADER}"
+        COMMAND "${WAYLAND_SCANNER}" private-code "${NEOWPF_FRACTIONAL_SCALE_XML}" "${NEOWPF_FRACTIONAL_SCALE_SOURCE}"
+        DEPENDS "${NEOWPF_FRACTIONAL_SCALE_XML}"
+        VERBATIM
+    )
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         set_source_files_properties("${NEOWPF_XDG_SHELL_SOURCE}"
             PROPERTIES COMPILE_OPTIONS "-Wno-attributes")
         set_source_files_properties("${NEOWPF_XDG_DECORATION_SOURCE}"
+            PROPERTIES COMPILE_OPTIONS "-Wno-attributes")
+        set_source_files_properties("${NEOWPF_FRACTIONAL_SCALE_SOURCE}"
             PROPERTIES COMPILE_OPTIONS "-Wno-attributes")
     endif()
 endif()
@@ -481,9 +497,11 @@ endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_SHELL_HEADER}")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_DECORATION_HEADER}")
+    list(APPEND NEOWPF_HEADERS "${NEOWPF_FRACTIONAL_SCALE_HEADER}")
     list(APPEND NEOWPF_GENERATED_ASSET_OUTPUTS
         "${NEOWPF_XDG_SHELL_HEADER}" "${NEOWPF_XDG_SHELL_SOURCE}"
-        "${NEOWPF_XDG_DECORATION_HEADER}" "${NEOWPF_XDG_DECORATION_SOURCE}")
+        "${NEOWPF_XDG_DECORATION_HEADER}" "${NEOWPF_XDG_DECORATION_SOURCE}"
+        "${NEOWPF_FRACTIONAL_SCALE_HEADER}" "${NEOWPF_FRACTIONAL_SCALE_SOURCE}")
 endif()
 if(NEOWPF_GENERATED_ASSET_OUTPUTS)
     add_custom_target(NeoWPF.GeneratedAssets

@@ -8,7 +8,7 @@
 
 namespace NeoWPF::Input
 {
-    NeoWPF::UI::UIElement* InputManager::HitTest(int x, int y)
+    NeoWPF::UI::UIElement* InputManager::HitTest(double x, double y)
     {
         NEO_WPF_ACTION("Input.HitTest");
 
@@ -32,13 +32,13 @@ namespace NeoWPF::Input
         if ((m_lastHitTestResult == nullptr) != (result == nullptr))
         {
             NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Debug,
-                "[HitTest] HitTest boundary changed: %s at (%d, %d)", result ? "HIT element" : "NO HIT", x, y);
+                "[HitTest] HitTest boundary changed: %s at (%g, %g)", result ? "HIT element" : "NO HIT", x, y);
         }
         m_lastHitTestResult = result;
         return result;
     }
 
-    NeoWPF::UI::UIElement* InputManager::HitTestVisual(NeoWPF::UI::Visual* visual, int x, int y, int depth)
+    NeoWPF::UI::UIElement* InputManager::HitTestVisual(NeoWPF::UI::Visual* visual, double x, double y, int depth)
     {
         if (!visual)
         {
@@ -83,7 +83,7 @@ namespace NeoWPF::Input
         return nullptr;
     }
 
-    NeoWPF::UI::UIElement* InputManager::HitTestElement(NeoWPF::UI::UIElement* element, int x, int y, int depth)
+    NeoWPF::UI::UIElement* InputManager::HitTestElement(NeoWPF::UI::UIElement* element, double x, double y, int depth)
     {
         if (!element)
         {
@@ -118,7 +118,7 @@ namespace NeoWPF::Input
             elementWidth = fw->GetFinalWidth();
             elementHeight = fw->GetFinalHeight();
 
-            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Trace, "[HitTest] %s  Bounds: (%g, %g) size (%g x %g), Test point: (%d, %d)",
+            NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::HitTest, NeoWPF::Diagnostics::Level::Trace, "[HitTest] %s  Bounds: (%g, %g) size (%g x %g), Test point: (%g, %g)",
                 indent, absX, absY, elementWidth, elementHeight, x, y);
 
             if (x < absX || x >= absX + elementWidth || y < absY || y >= absY + elementHeight)

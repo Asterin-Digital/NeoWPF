@@ -6,9 +6,13 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoWPF/UI/Properties/DependencyObject.h>
+#include <NeoWPF/Core/Events/Notification.h>
 
 #include <any>
 #include <string>
+#include <cstddef>
+#include <functional>
+#include <memory>
 
 namespace NeoWPF::UI {
 class UIElement;
@@ -25,6 +29,10 @@ public:
     using Properties::DependencyObject::SetValue;
 
     Setter() = default;
+    Setter(const Setter& other);
+    Setter& operator=(const Setter& other);
+    Setter(Setter&& other) noexcept;
+    Setter& operator=(Setter&& other) noexcept;
     /*
         @summary
         Creates a setter for a property value.
@@ -53,7 +61,7 @@ public:
         @summary
         Returns the dependency property name targeted by the setter.
     */
-    const std::string& GetProperty() const noexcept;
+    std::string GetProperty() const;
 
     /*
         @summary
@@ -68,7 +76,7 @@ public:
         @summary
         Returns the value applied by the setter.
     */
-    const std::any& GetValue() const noexcept;
+    std::any GetValue() const;
 
     /*
         @summary
@@ -79,9 +87,20 @@ public:
     */
     void Apply(UIElement* element) const;
 
+    std::size_t AddChangedHandler(std::function<void()> handler);
+    void RemoveChangedHandler(std::size_t handlerId);
+
+protected:
+    void OnDependencyPropertyChanged(
+        const Properties::DependencyProperty& property,
+        const Properties::PropertyMetadata& metadata,
+        const std::any& oldValue,
+        const std::any& newValue,
+        Properties::PropertyValueSource source) override;
+
 private:
-    std::string m_propertyName;
-    std::any m_value;
+    std::shared_ptr<::NeoWPF::Core::Notification<>> m_changed =
+        std::make_shared<::NeoWPF::Core::Notification<>>();
 };
 
 }

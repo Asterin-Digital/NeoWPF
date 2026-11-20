@@ -9,6 +9,7 @@
 #include <android/input.h>
 #include <android/native_activity.h>
 #include <android/native_window.h>
+#include <android/configuration.h>
 
 #include <exception>
 #include <memory>
@@ -177,6 +178,34 @@ void OnInputQueueDestroyed(ANativeActivity* activity, AInputQueue* inputQueue) n
     }
 }
 
+bool UpdateScaleFactor(ANativeActivity* activity) noexcept
+{
+    auto* const windowing = GetWindowing();
+    if (!activity || !windowing) {
+        return false;
+    }
+
+    AConfiguration* const configuration = AConfiguration_new();
+    if (!configuration) {
+        NeoWPF::Diagnostics::LogError(
+            "Failed to read Android display density");
+        return false;
+    }
+
+    AConfiguration_fromAssetManager(configuration, activity->assetManager);
+    const int densityDpi = AConfiguration_getDensity(configuration);
+    AConfiguration_delete(configuration);
+    return windowing->SetDensityDpi(densityDpi);
+}
+
+void OnConfigurationChanged(ANativeActivity* activity) noexcept
+{
+    if (!UpdateScaleFactor(activity)) {
+        NeoWPF::Diagnostics::LogError(
+            "Android reported an unavailable display density");
+    }
+}
+
 void OnDestroy(ANativeActivity* activity) noexcept
 {
     auto* const host = static_cast<AActivityHost*>(activity->instance);
@@ -241,6 +270,15 @@ extern "C" void ANativeActivity_onCreate(
         host->activityDestroyedContext = windowing;
         activity->instance = host.get();
         NeoWPF::Platform::Android::ARegisterActivityCallbacks(*activity->callbacks);
+        activity->callbacks->onConfigurationChanged =
+            &NeoWPF::Platform::Android::OnConfigurationChanged;
+        if (!NeoWPF::Platform::Android::UpdateScaleFactor(activity)) {
+            NeoWPF::Diagnostics::LogError(
+                "Android display density is unavailable");
+            activity->instance = nullptr;
+            ANativeActivity_finish(activity);
+            return;
+        }
         host->applicationThread = std::thread(
             &NeoWPF::Platform::Android::RunApplication, host.get());
         host.release();

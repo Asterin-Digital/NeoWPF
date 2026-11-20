@@ -27,7 +27,8 @@ public:
                 unsigned int width, unsigned int height) noexcept override;
     void BeginFrame(const NeoWPF::Rendering::RenderSurface& surface) override;
     void Execute(const NeoWPF::Rendering::RenderSurface& surface,
-                 const NeoWPF::Rendering::CommandList& commands) override;
+                 const NeoWPF::Rendering::CommandList& commands,
+                 double scaleFactor) override;
     void Present(const NeoWPF::Rendering::RenderSurface& surface) override;
     std::uint32_t CreateTexture(unsigned int width, unsigned int height, const void* rgbaData) override;
     void DestroyTexture(std::uint32_t id) noexcept override;

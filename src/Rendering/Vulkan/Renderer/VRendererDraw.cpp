@@ -17,7 +17,8 @@
 namespace NeoWPF::Rendering::Vulkan {
 
 void VulkanRendering::Execute(const NeoWPF::Rendering::RenderSurface& surface,
-                              const NeoWPF::Rendering::CommandList& commands)
+                              const NeoWPF::Rendering::CommandList& commands,
+                              double scaleFactor)
 {
     std::lock_guard<std::recursive_mutex> renderLock(m_renderMutex);
     auto* context = FindWindowContext(surface.nativeWindowHandle);
@@ -84,7 +85,9 @@ void VulkanRendering::Execute(const NeoWPF::Rendering::RenderSurface& surface,
     struct Vertex { float x, y, r, g, b, a; };
     struct TexturedVertex { float x, y, u, v, r, g, b, a; };
     const VkDeviceSize offset = 0;
-    const float viewport[] = {static_cast<float>(context->swapchainExtent.width), static_cast<float>(context->swapchainExtent.height)};
+    const float viewport[] = {
+        static_cast<float>(static_cast<double>(context->swapchainExtent.width) / scaleFactor),
+        static_cast<float>(static_cast<double>(context->swapchainExtent.height) / scaleFactor)};
     const VkViewport vkViewport{0.0f, static_cast<float>(context->swapchainExtent.height),
                                 static_cast<float>(context->swapchainExtent.width),
                                 -static_cast<float>(context->swapchainExtent.height), 0.0f, 1.0f};

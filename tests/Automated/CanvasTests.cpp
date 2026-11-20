@@ -246,8 +246,8 @@ TEST(CanvasTests, HitTestingUsesUpdatedCoordinates)
     NeoWPF::UI::Canvas canvas;
     auto child = std::make_shared<InteractiveCanvasChild>(40.0, 30.0);
     canvas.AddChild(child);
-    NeoWPF::UI::Canvas::SetLeft(child.get(), 50.0);
-    NeoWPF::UI::Canvas::SetTop(child.get(), 60.0);
+    NeoWPF::UI::Canvas::SetLeft(child.get(), 50.2);
+    NeoWPF::UI::Canvas::SetTop(child.get(), 60.2);
 
     canvas.Measure(200.0, 160.0);
     canvas.Arrange(200.0, 160.0);
@@ -255,6 +255,7 @@ TEST(CanvasTests, HitTestingUsesUpdatedCoordinates)
     auto& input = NeoWPF::Input::InputManager::GetInstance();
     input.SetRootElement(&canvas);
     EXPECT_EQ(input.HitTest(55, 65), child.get());
+    EXPECT_EQ(input.HitTest(90.3, 70.0), nullptr);
     EXPECT_EQ(input.HitTest(5, 5), nullptr);
     input.SetRootElement(nullptr);
 }

@@ -10,7 +10,8 @@ void DestroySurface(HWND hwnd) noexcept;
 void ShutdownDevice();
 void Resize(HWND hwnd, unsigned int width, unsigned int height);
 void BeginFrame(HWND hwnd);
-void Execute(HWND hwnd, const NeoWPF::Rendering::CommandList& commands);
+void Execute(HWND hwnd, const NeoWPF::Rendering::CommandList& commands,
+             double scaleFactor);
 void Present(HWND hwnd);
 std::uint32_t CreateTexture(unsigned int width, unsigned int height, const void* rgbaData);
 void DestroyTexture(std::uint32_t id);
@@ -58,9 +59,11 @@ void WRendering::BeginFrame(const NeoWPF::Rendering::RenderSurface& surface)
 }
 
 void WRendering::Execute(const NeoWPF::Rendering::RenderSurface& surface,
-                         const NeoWPF::Rendering::CommandList& commands)
+                         const NeoWPF::Rendering::CommandList& commands,
+                         double scaleFactor)
 {
-    NeoWPF::Rendering::D3D11::Execute(static_cast<HWND>(surface.nativeWindowHandle), commands);
+    NeoWPF::Rendering::D3D11::Execute(
+        static_cast<HWND>(surface.nativeWindowHandle), commands, scaleFactor);
 }
 
 void WRendering::Present(const NeoWPF::Rendering::RenderSurface& surface)

@@ -68,7 +68,7 @@ void ClearVisualTreeDirtyForRoot(NeoWPF::UI::Visual* rootVisual)
     }
 }
 
-void LayoutVisualTree(NeoWPF::UI::Visual* rootVisual, unsigned int width, unsigned int height)
+void LayoutVisualTree(NeoWPF::UI::Visual* rootVisual, double width, double height)
 {
     if (!rootVisual) {
         return;
@@ -91,6 +91,26 @@ void BuildVisualTreeCommands(NeoWPF::UI::Visual* rootVisual, NeoWPF::Rendering::
     if (platform && platform->Rendering().IsInitialized()) {
         rootVisual->BuildRenderCommands(buildCommandList);
     }
+}
+
+bool TryGetWindowScaleFactor(
+    WindowSession& windowSession,
+    NeoWPF::Contracts::IWindowing& windowing,
+    double& outScaleFactor)
+{
+    if (windowing.GetWindowScaleFactor(
+            windowSession.renderSurface.nativeWindowHandle, outScaleFactor)) {
+        windowSession.scaleFactorFailureReported = false;
+        return true;
+    }
+
+    windowSession.hasScaleFactor = false;
+    if (!windowSession.scaleFactorFailureReported) {
+        NeoWPF::Diagnostics::LogError(
+            "Window layout and rendering paused because the window scale is unavailable");
+        windowSession.scaleFactorFailureReported = true;
+    }
+    return false;
 }
 
 bool OverlayDirty(const NeoWPF::UI::Window& window)
@@ -164,20 +184,22 @@ void BuildWindowCommands(
 {
     NEO_WPF_STARTUP_ACTION("BuildWindowCommands");
     const auto layoutStart = std::chrono::steady_clock::now();
+    const double logicalWidth = static_cast<double>(width) / windowSession.scaleFactor;
+    const double logicalHeight = static_cast<double>(height) / windowSession.scaleFactor;
     windowSession.buildCommandList.Clear();
     const auto backgroundPaint = NeoWPF::UI::ResolveBrushPaint(
         windowSession.windowHost->GetBackgroundBrush(),
         windowSession.buildCommandList,
         0.0,
         0.0,
-        width,
-        height);
+        logicalWidth,
+        logicalHeight);
     if (backgroundPaint.kind == NeoWPF::Rendering::Paint::Kind::Solid) {
         windowSession.buildCommandList.clearColor = backgroundPaint.color;
     } else {
         windowSession.buildCommandList.clearColor = 0u;
         windowSession.buildCommandList.DrawRect(
-            0.0, 0.0, width, height, backgroundPaint);
+            0.0, 0.0, logicalWidth, logicalHeight, backgroundPaint);
     }
     windowSession.buildCommandList.hasClearColor = true;
 
@@ -190,14 +212,14 @@ void BuildWindowCommands(
     }
     if (layoutRequired) {
         NEO_WPF_ACTION("BuildWindowCommands.MeasureArrange");
-        LayoutVisualTree(rootVisual.get(), width, height);
+        LayoutVisualTree(rootVisual.get(), logicalWidth, logicalHeight);
         for (const auto& overlay : windowSession.windowHost->GetOverlays()) {
             if (!overlay) {
                 continue;
             }
             overlay->Initialize();
             if (auto* element = dynamic_cast<NeoWPF::UI::FrameworkElement*>(overlay.get())) {
-                element->Measure(width, height);
+                element->Measure(logicalWidth, logicalHeight);
                 element->Arrange(element->GetDesiredWidth(), element->GetDesiredHeight());
             }
         }
@@ -338,7 +360,9 @@ void StartRenderThread()
             }
 
             for (auto& windowSession : windowSessionsSnapshot) {
-                if (!windowSession.lifecycle.IsActive() || !windowSession.renderSurface.IsValid()) {
+                if (!windowSession.lifecycle.IsActive() ||
+                    !windowSession.hasScaleFactor ||
+                    !windowSession.renderSurface.IsValid()) {
                     continue;
                 }
                 const auto& surface = windowSession.renderSurface;
@@ -375,7 +399,8 @@ void StartRenderThread()
                             toRender = windowSession.renderCommandList;
                         }
 
-                        NeoWPF::Rendering::Renderer_Execute(surface, toRender);
+                        NeoWPF::Rendering::Renderer_Execute(
+                            surface, toRender, windowSession.scaleFactor);
                         NeoWPF::Rendering::Renderer_Present(surface);
                         const auto renderElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - renderStart).count();
                         NeoWPF::Diagnostics::PerformanceMetrics::RecordRenderPass(renderElapsed);
@@ -442,9 +467,16 @@ int RunMessageLoop()
             if (windowWidth == 0 || windowHeight == 0) {
                 continue;
             }
+            double scaleFactor = 0.0;
+            if (!TryGetWindowScaleFactor(windowSession, windowing, scaleFactor)) {
+                continue;
+            }
+            windowSession.scaleFactor = scaleFactor;
+            windowSession.hasScaleFactor = true;
             BuildWindowCommands(windowSession, windowWidth, windowHeight, true);
             windowSession.width = windowWidth;
             windowSession.height = windowHeight;
+            windowSession.needsLayout = false;
             initialWindows.push_back(windowSession.renderSurface.nativeWindowHandle);
         }
         for (const auto& windowSession : s_appState.windowSessions) {
@@ -526,7 +558,19 @@ int RunMessageLoop()
                 if (windowAlive) {
                     windowing.GetWindowSize(windowSession.renderSurface.nativeWindowHandle, windowWidth, windowHeight);
                 }
-                const bool hasPositiveSize = windowWidth > 0 && windowHeight > 0;
+                double scaleFactor = 0.0;
+                const bool hasScaleFactor = windowAlive &&
+                    TryGetWindowScaleFactor(windowSession, windowing, scaleFactor);
+                const bool scaleChanged = hasScaleFactor &&
+                    (!windowSession.hasScaleFactor ||
+                     windowSession.scaleFactor != scaleFactor);
+                if (scaleChanged) {
+                    windowSession.scaleFactor = scaleFactor;
+                    windowSession.hasScaleFactor = true;
+                    windowSession.needsLayout = true;
+                }
+                const bool hasPositiveSize = windowWidth > 0 && windowHeight > 0 &&
+                    hasScaleFactor;
                 const bool widthChanged = windowSession.width != windowWidth;
                 const bool heightChanged = windowSession.height != windowHeight;
                 const bool hostTreeDirty = windowSession.windowHost && windowSession.windowHost->IsTreeDirty();
@@ -548,7 +592,8 @@ int RunMessageLoop()
                     continue;
                 }
                 const bool sessionNeedsUpdate = hasPositiveSize &&
-                    (!windowSession.commandListInitialized || widthChanged || heightChanged ||
+                    (!windowSession.commandListInitialized || windowSession.needsLayout ||
+                     widthChanged || heightChanged ||
                      hostTreeDirty || overlayTreeDirty);
                 needsUpdate = needsUpdate || sessionNeedsUpdate;
                 if (needsUpdate && !emitDirtyProbe) {
@@ -571,15 +616,27 @@ int RunMessageLoop()
                 if (windowWidth == 0 || windowHeight == 0) {
                     continue;
                 }
+                double scaleFactor = 0.0;
+                if (!TryGetWindowScaleFactor(windowSession, windowing, scaleFactor)) {
+                    continue;
+                }
+                const bool scaleChanged = !windowSession.hasScaleFactor ||
+                    windowSession.scaleFactor != scaleFactor;
+                if (scaleChanged) {
+                    windowSession.scaleFactor = scaleFactor;
+                    windowSession.hasScaleFactor = true;
+                }
                 auto rootVisual = windowSession.windowHost ? windowSession.windowHost->GetContent() : nullptr;
                 const bool layoutRequired =
                     !windowSession.commandListInitialized ||
+                    windowSession.needsLayout || scaleChanged ||
                     windowSession.width != windowWidth || windowSession.height != windowHeight ||
                     (rootVisual && rootVisual->IsLayoutDirty()) ||
                     (windowSession.windowHost && OverlayLayoutDirty(*windowSession.windowHost));
                 BuildWindowCommands(windowSession, windowWidth, windowHeight, layoutRequired);
                 windowSession.width = windowWidth;
                 windowSession.height = windowHeight;
+                windowSession.needsLayout = false;
             }
             for (auto& windowSession : s_appState.windowSessions) {
                 if (windowSession.windowHost) {

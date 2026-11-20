@@ -96,7 +96,7 @@ namespace NeoWPF::Input
             @param y
             Vertical position.
         */
-        NeoWPF::UI::UIElement* HitTest(int x, int y);
+        NeoWPF::UI::UIElement* HitTest(double x, double y);
 
         /*
             @summary
@@ -172,8 +172,8 @@ namespace NeoWPF::Input
         InputManager(const InputManager&) = delete;
         InputManager& operator=(const InputManager&) = delete;
 
-        NeoWPF::UI::UIElement* HitTestVisual(NeoWPF::UI::Visual* visual, int x, int y, int depth = 0);
-        NeoWPF::UI::UIElement* HitTestElement(NeoWPF::UI::UIElement* element, int x, int y, int depth = 0);
+        NeoWPF::UI::UIElement* HitTestVisual(NeoWPF::UI::Visual* visual, double x, double y, int depth = 0);
+        NeoWPF::UI::UIElement* HitTestElement(NeoWPF::UI::UIElement* element, double x, double y, int depth = 0);
 
         void RoutePointerEvent(NeoWPF::UI::UIElement* targetElement,
                       const Core::PointerEventArgs& eventArgs);

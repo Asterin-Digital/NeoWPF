@@ -7,6 +7,11 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <NeoWPF/UI/Layout/Panel/Panel.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
+#include <NeoWPF/UI/Layout/Canvas/Canvas.h>
+#include <NeoWPF/UI/Layout/Grid/Grid.h>
+#include <NeoWPF/UI/Layout/UniformGrid/UniformGrid.h>
+#include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
+#include <NeoWPF/UI/Styling/Triggers/Setter.h>
 
 #include <memory>
 #include <vector>
@@ -31,6 +36,16 @@ private:
     double m_width;
     double m_height;
 };
+
+void EnsureResponsiveTestPropertiesRegistered()
+{
+    static const bool registered = [] {
+        NeoWPF::UI::Properties::RegisterPanelProperties();
+        NeoWPF::UI::Control::PaddingProperty();
+        return true;
+    }();
+    (void)registered;
+}
 
 TEST(PanelTests, MeasuresAndArrangesMixedControls)
 {
@@ -171,6 +186,235 @@ TEST(PanelTests, LargePanelPreservesAllChildrenAndRenders)
 
     EXPECT_EQ(panel.GetVisualChildren().size(), static_cast<std::size_t>(childCount));
     EXPECT_DOUBLE_EQ(panel.GetDesiredWidth(), childCount * 2.0 + (childCount - 1) * 1.0);
+}
+
+TEST(PanelTests, ResponsiveRulesUseOrderedInclusiveMinimumAndExclusiveMaximumBounds)
+{
+    EnsureResponsiveTestPropertiesRegistered();
+    NeoWPF::UI::StackPanel panel;
+    const auto* const orientationProperty =
+        panel.FindDependencyProperty("Orientation");
+    ASSERT_NE(orientationProperty, nullptr);
+
+    auto wideRule = std::make_shared<NeoWPF::UI::ResponsiveRule>();
+    wideRule->SetMinWidth(100.0);
+    wideRule->SetMaxWidth(200.0);
+    wideRule->SetMinHeight(50.0);
+    wideRule->SetMaxHeight(150.0);
+    wideRule->AddSetter(std::make_shared<NeoWPF::UI::Styling::Triggers::Setter>(
+        "Orientation", static_cast<int>(NeoWPF::UI::Orientation::Horizontal)));
+
+    auto overlappingRule = std::make_shared<NeoWPF::UI::ResponsiveRule>();
+    overlappingRule->SetMinWidth(150.0);
+    overlappingRule->SetMaxWidth(250.0);
+    overlappingRule->SetMinHeight(50.0);
+    overlappingRule->SetMaxHeight(150.0);
+    overlappingRule->AddSetter(std::make_shared<NeoWPF::UI::Styling::Triggers::Setter>(
+        "Orientation", static_cast<int>(NeoWPF::UI::Orientation::Vertical)));
+
+    panel.AddResponsiveRule(wideRule);
+    panel.AddResponsiveRule(overlappingRule);
+
+    panel.Measure(100.0, 50.0);
+    EXPECT_EQ(panel.GetOrientation(), NeoWPF::UI::Orientation::Horizontal);
+    EXPECT_EQ(panel.GetValueSource(orientationProperty),
+              NeoWPF::UI::Properties::PropertyValueSource::Responsive);
+
+    panel.Measure(150.0, 50.0);
+    EXPECT_EQ(panel.GetOrientation(), NeoWPF::UI::Orientation::Vertical);
+
+    panel.Measure(200.0, 149.999);
+    EXPECT_EQ(panel.GetValueSource(orientationProperty),
+              NeoWPF::UI::Properties::PropertyValueSource::Responsive);
+
+    panel.Measure(250.0, 149.999);
+    EXPECT_EQ(panel.GetValueSource(orientationProperty),
+              NeoWPF::UI::Properties::PropertyValueSource::Default);
+    EXPECT_EQ(panel.GetOrientation(), NeoWPF::UI::Orientation::Vertical);
+
+    panel.Measure(100.0, 150.0);
+    EXPECT_EQ(panel.GetValueSource(orientationProperty),
+              NeoWPF::UI::Properties::PropertyValueSource::Default);
+}
+
+TEST(PanelTests, ResponsiveRulesRespectLocalValuesAndRestoreThemAfterRemoval)
+{
+    EnsureResponsiveTestPropertiesRegistered();
+    NeoWPF::UI::StackPanel panel;
+    const auto* const orientationProperty =
+        panel.FindDependencyProperty("Orientation");
+    ASSERT_NE(orientationProperty, nullptr);
+
+    auto rule = std::make_shared<NeoWPF::UI::ResponsiveRule>();
+    rule->SetMinWidth(100.0);
+    rule->AddSetter(std::make_shared<NeoWPF::UI::Styling::Triggers::Setter>(
+        "Orientation", static_cast<int>(NeoWPF::UI::Orientation::Vertical)));
+    panel.AddResponsiveRule(rule);
+
+    panel.Measure(120.0, 80.0);
+    panel.SetValue(
+        *orientationProperty,
+        static_cast<int>(NeoWPF::UI::Orientation::Horizontal));
+    panel.Measure(120.0, 80.0);
+    EXPECT_EQ(panel.GetOrientation(), NeoWPF::UI::Orientation::Horizontal);
+    EXPECT_EQ(panel.GetValueSource(orientationProperty),
+              NeoWPF::UI::Properties::PropertyValueSource::Local);
+
+    panel.ClearValue(orientationProperty);
+    EXPECT_EQ(panel.GetOrientation(), NeoWPF::UI::Orientation::Vertical);
+    EXPECT_EQ(panel.GetValueSource(orientationProperty),
+              NeoWPF::UI::Properties::PropertyValueSource::Responsive);
+
+    panel.Measure(99.0, 80.0);
+    EXPECT_EQ(panel.GetValueSource(orientationProperty),
+              NeoWPF::UI::Properties::PropertyValueSource::Default);
+}
+
+TEST(PanelTests, ResponsiveRulesAreEvaluatedByEveryBuiltInPanel)
+{
+    EnsureResponsiveTestPropertiesRegistered();
+    NeoWPF::UI::Control::PaddingProperty();
+    NeoWPF::UI::Panel panel;
+    NeoWPF::UI::StackPanel stackPanel;
+    NeoWPF::UI::Canvas canvas;
+    NeoWPF::UI::Grid grid;
+    NeoWPF::UI::UniformGrid uniformGrid;
+    NeoWPF::UI::Panel* const panels[] = {
+        &panel, &stackPanel, &canvas, &grid, &uniformGrid};
+
+    for (auto* const current : panels) {
+        auto rule = std::make_shared<NeoWPF::UI::ResponsiveRule>();
+        rule->SetMinWidth(80.0);
+        rule->AddSetter(std::make_shared<NeoWPF::UI::Styling::Triggers::Setter>(
+            "Padding", NeoWPF::UI::Thickness(12.0, 0.0, 0.0, 0.0)));
+        current->AddResponsiveRule(std::move(rule));
+
+        current->Measure(100.0, 60.0);
+        EXPECT_DOUBLE_EQ(current->GetPadding().Left, 12.0);
+
+        current->Measure(79.0, 60.0);
+        EXPECT_DOUBLE_EQ(current->GetPadding().Left, 0.0);
+    }
+}
+
+TEST(PanelTests, ResponsiveRuleChangesInvalidateAttachedPanel)
+{
+    EnsureResponsiveTestPropertiesRegistered();
+
+    class InvalidationTrackingStackPanel final : public NeoWPF::UI::StackPanel
+    {
+    public:
+        void InvalidateMeasure() override
+        {
+            ++invalidationCount;
+            StackPanel::InvalidateMeasure();
+        }
+
+        int invalidationCount = 0;
+    };
+
+    InvalidationTrackingStackPanel panel;
+    InvalidationTrackingStackPanel otherPanel;
+    auto rule = std::make_shared<NeoWPF::UI::ResponsiveRule>();
+    panel.AddResponsiveRule(rule);
+    otherPanel.AddResponsiveRule(rule);
+
+    int observedInvalidations = panel.invalidationCount;
+    int observedOtherInvalidations = otherPanel.invalidationCount;
+    rule->SetMinWidth(80.0);
+    EXPECT_GT(panel.invalidationCount, observedInvalidations);
+    EXPECT_GT(otherPanel.invalidationCount, observedOtherInvalidations);
+
+    observedInvalidations = panel.invalidationCount;
+    observedOtherInvalidations = otherPanel.invalidationCount;
+    rule->AddSetter(std::make_shared<NeoWPF::UI::Styling::Triggers::Setter>(
+        "Padding", NeoWPF::UI::Thickness(12.0, 0.0, 0.0, 0.0)));
+    EXPECT_GT(panel.invalidationCount, observedInvalidations);
+    EXPECT_GT(otherPanel.invalidationCount, observedOtherInvalidations);
+}
+
+TEST(PanelTests, ResponsiveCollectionsAreStoredInDependencyProperties)
+{
+    EnsureResponsiveTestPropertiesRegistered();
+    NeoWPF::UI::StackPanel panel;
+    auto rule = std::make_shared<NeoWPF::UI::ResponsiveRule>();
+    auto setter = std::make_shared<NeoWPF::UI::Styling::Triggers::Setter>(
+        "Padding", NeoWPF::UI::Thickness(12.0, 0.0, 0.0, 0.0));
+
+    rule->AddSetter(setter);
+    panel.AddResponsiveRule(rule);
+
+    const auto& panelRules =
+        panel.GetValue<std::vector<std::shared_ptr<NeoWPF::UI::ResponsiveRule>>>(
+            NeoWPF::UI::Panel::ResponsiveRulesProperty());
+    ASSERT_EQ(panelRules.size(), 1u);
+    EXPECT_EQ(panelRules.front(), rule);
+
+    const auto& ruleSetters =
+        rule->GetValue<std::vector<std::shared_ptr<NeoWPF::UI::Styling::Triggers::Setter>>>(
+            NeoWPF::UI::ResponsiveRule::SettersProperty());
+    ASSERT_EQ(ruleSetters.size(), 1u);
+    EXPECT_EQ(ruleSetters.front(), setter);
+
+    EXPECT_EQ(panel.GetResponsiveRules().size(), 1u);
+    EXPECT_EQ(rule->GetSetters().size(), 1u);
+
+    auto replacementSetter =
+        std::make_shared<NeoWPF::UI::Styling::Triggers::Setter>(
+            "Padding", NeoWPF::UI::Thickness(20.0, 0.0, 0.0, 0.0));
+    rule->SetValue(
+        NeoWPF::UI::ResponsiveRule::SettersProperty(),
+        std::vector<std::shared_ptr<NeoWPF::UI::Styling::Triggers::Setter>>{
+            replacementSetter});
+    ASSERT_EQ(rule->GetSetters().size(), 1u);
+    EXPECT_EQ(rule->GetSetters().front(), replacementSetter);
+
+    auto replacementRule = std::make_shared<NeoWPF::UI::ResponsiveRule>();
+    panel.SetValue(
+        NeoWPF::UI::Panel::ResponsiveRulesProperty(),
+        std::vector<std::shared_ptr<NeoWPF::UI::ResponsiveRule>>{
+            replacementRule});
+    ASSERT_EQ(panel.GetResponsiveRules().size(), 1u);
+    EXPECT_EQ(panel.GetResponsiveRules().front(), replacementRule);
+}
+
+TEST(PanelTests, ChangingAttachedSetterInvalidatesAttachedPanels)
+{
+    EnsureResponsiveTestPropertiesRegistered();
+
+    class InvalidationTrackingStackPanel final : public NeoWPF::UI::StackPanel
+    {
+    public:
+        void InvalidateMeasure() override
+        {
+            ++invalidationCount;
+            StackPanel::InvalidateMeasure();
+        }
+
+        int invalidationCount = 0;
+    };
+
+    InvalidationTrackingStackPanel panel;
+    auto rule = std::make_shared<NeoWPF::UI::ResponsiveRule>();
+    rule->SetMinWidth(80.0);
+    auto setter = std::make_shared<NeoWPF::UI::Styling::Triggers::Setter>(
+        "Padding", NeoWPF::UI::Thickness(12.0, 0.0, 0.0, 0.0));
+    rule->AddSetter(setter);
+    panel.AddResponsiveRule(rule);
+
+    panel.Measure(100.0, 60.0);
+    EXPECT_DOUBLE_EQ(panel.GetPadding().Left, 12.0);
+
+    const int observedInvalidations = panel.invalidationCount;
+    setter->SetValue(NeoWPF::UI::Thickness(24.0, 0.0, 0.0, 0.0));
+    EXPECT_GT(panel.invalidationCount, observedInvalidations);
+
+    panel.Measure(100.0, 60.0);
+    EXPECT_DOUBLE_EQ(panel.GetPadding().Left, 24.0);
+
+    setter->SetProperty("UnknownPaddingProperty");
+    panel.Measure(100.0, 60.0);
+    EXPECT_DOUBLE_EQ(panel.GetPadding().Left, 0.0);
 }
 
 } 

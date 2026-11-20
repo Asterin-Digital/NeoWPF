@@ -51,10 +51,11 @@ const Properties::DependencyProperty& Setter::PropertyProperty()
 
 const Properties::DependencyProperty& Setter::ValueProperty()
 {
-    static const auto& property = Properties::DependencyProperty::Register<Setter, std::string>(
-        "Value", MakeSetterMetadata([](Setter& setter, const std::any& value) {
-            setter.SetValue(ReadSetterString(value));
-        }));
+    Properties::PropertyMetadata metadata;
+    metadata.DefaultValue = std::any{};
+    static const auto& property =
+        Properties::DependencyProperty::Register<Setter, std::any>(
+            "Value", metadata);
     return property;
 }
 

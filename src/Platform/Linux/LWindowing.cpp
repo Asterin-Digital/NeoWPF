@@ -17,12 +17,14 @@
 #pragma GCC diagnostic ignored "-Wattributes"
 #endif
 #include <xdg-shell-protocol.cpp>
+#include <fractional-scale-v1-protocol.cpp>
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
 
 #include <algorithm>
 #include <cstdint>
+#include <cmath>
 #include <cstring>
 #include <poll.h>
 
@@ -190,6 +192,21 @@ void LWindowing::GetWindowSize(void* nativeWindowHandle, unsigned int& outWidth,
     }
 }
 
+bool LWindowing::GetWindowScaleFactor(void* nativeWindowHandle,
+                                      double& outScaleFactor) const noexcept
+{
+    outScaleFactor = 0.0;
+    const auto* window = FindWindow(nativeWindowHandle);
+    if (!window || !window->IsConfigured() || window->IsClosed()) {
+        return false;
+    }
+    if (!std::isfinite(window->ScaleFactor()) || window->ScaleFactor() <= 0.0) {
+        return false;
+    }
+    outScaleFactor = window->ScaleFactor();
+    return true;
+}
+
 void LWindowing::ResizeWindow(void* nativeWindowHandle, int width, int height) noexcept
 {
     if (auto* window = FindWindow(nativeWindowHandle)) {
@@ -323,6 +340,10 @@ void LWindowing::Disconnect() noexcept
         xdg_wm_base_destroy(m_xdgWmBase);
         m_xdgWmBase = nullptr;
     }
+    if (m_fractionalScaleManager) {
+        wp_fractional_scale_manager_v1_destroy(m_fractionalScaleManager);
+        m_fractionalScaleManager = nullptr;
+    }
     if (m_registry) {
         wl_registry_destroy(m_registry);
         m_registry = nullptr;
@@ -393,6 +414,12 @@ xdg_wm_base* LWindowing::XdgWmBase() const noexcept
     return m_xdgWmBase;
 }
 
+wp_fractional_scale_manager_v1*
+LWindowing::FractionalScaleManager() const noexcept
+{
+    return m_fractionalScaleManager;
+}
+
 bool LWindowing::HasXdgShell() const noexcept
 {
     return m_hasXdgShell;
@@ -425,6 +452,12 @@ void LWindowing::HandleGlobal(void* data, wl_registry* registry, std::uint32_t n
             xdg_wm_base_add_listener(windowing->m_xdgWmBase, &XdgWmBaseListener, windowing);
             windowing->m_hasXdgShell = true;
         }
+    } else if (std::strcmp(interface,
+                          wp_fractional_scale_manager_v1_interface.name) == 0) {
+        windowing->m_fractionalScaleManager =
+            static_cast<wp_fractional_scale_manager_v1*>(wl_registry_bind(
+                registry, name, &wp_fractional_scale_manager_v1_interface,
+                std::min(version, 1u)));
     }
 }
 

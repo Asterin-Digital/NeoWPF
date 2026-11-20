@@ -35,6 +35,7 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
                source != PropertyValueSource::Theme &&
                source != PropertyValueSource::Animation &&
                source != PropertyValueSource::Trigger &&
+               source != PropertyValueSource::Responsive &&
                source != PropertyValueSource::Style) {
         ClearBindingExpression(property);
     }
@@ -43,6 +44,8 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
         m_animatedValues[&property] = std::move(value);
     } else if (source == PropertyValueSource::Trigger) {
         m_triggerValues[&property] = std::move(value);
+    } else if (source == PropertyValueSource::Responsive) {
+        m_responsiveValues[&property] = std::move(value);
     } else if (source == PropertyValueSource::Theme) {
         m_themeValues[&property] = std::move(value);
     } else if (source == PropertyValueSource::Style) {
@@ -57,7 +60,27 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
     }
 
     const std::any newValue = GetRawValue(property);
+    if (source == PropertyValueSource::Responsive &&
+        ValuesEqual(oldValue, newValue)) {
+        return;
+    }
     NotifyDependencyPropertyChanged(property, oldValue, newValue, source);
+}
+
+void DependencyObject::ClearResponsiveValue(const DependencyProperty& property)
+{
+    const auto value = m_responsiveValues.find(&property);
+    if (value == m_responsiveValues.end()) {
+        return;
+    }
+
+    const std::any oldValue = GetRawValue(property);
+    m_responsiveValues.erase(value);
+    const std::any newValue = GetRawValue(property);
+    if (!ValuesEqual(oldValue, newValue)) {
+        NotifyDependencyPropertyChanged(
+            property, oldValue, newValue, PropertyValueSource::Responsive);
+    }
 }
 
 void DependencyObject::SetBindingExpression(const DependencyProperty& property,
@@ -202,6 +225,9 @@ PropertyValueSource DependencyObject::GetValueSource(const DependencyProperty& p
     if (m_triggerValues.find(&property) != m_triggerValues.end()) {
         return PropertyValueSource::Trigger;
     }
+    if (m_responsiveValues.find(&property) != m_responsiveValues.end()) {
+        return PropertyValueSource::Responsive;
+    }
     if (m_styleValues.find(&property) != m_styleValues.end()) {
         return PropertyValueSource::Style;
     }
@@ -223,6 +249,9 @@ std::any DependencyObject::GetRawValue(const DependencyProperty& property) const
         return it->second;
     }
     if (auto it = m_triggerValues.find(&property); it != m_triggerValues.end()) {
+        return it->second;
+    }
+    if (auto it = m_responsiveValues.find(&property); it != m_responsiveValues.end()) {
         return it->second;
     }
     if (auto it = m_styleValues.find(&property); it != m_styleValues.end()) {

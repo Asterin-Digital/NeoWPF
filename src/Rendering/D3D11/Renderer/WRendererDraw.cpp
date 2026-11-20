@@ -50,7 +50,7 @@ namespace NeoWPF::Rendering::D3D11 {
 
 namespace NeoWPF::Rendering::D3D11 {
 
-void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
+void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
 {
     ID3D11RenderTargetView* rtv = GetRendererTargetView(hwnd);
     static bool loggedMissingTarget = false;
@@ -242,7 +242,9 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
 
         D3D11_MAPPED_SUBRESOURCE mapped = {};
         if (SUCCEEDED(g_context->Map(g_constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
-            const float vp[2] = {static_cast<float>(width), static_cast<float>(height)};
+            const float vp[2] = {
+                static_cast<float>(static_cast<double>(width) / scaleFactor),
+                static_cast<float>(static_cast<double>(height) / scaleFactor)};
             memcpy(mapped.pData, vp, sizeof(vp));
             g_context->Unmap(g_constantBuffer.Get(), 0);
         }
@@ -301,7 +303,9 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd)
 
         D3D11_MAPPED_SUBRESOURCE mapped = {};
         if (SUCCEEDED(g_context->Map(g_constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
-            const float vp[2] = {static_cast<float>(width), static_cast<float>(height)};
+            const float vp[2] = {
+                static_cast<float>(static_cast<double>(width) / scaleFactor),
+                static_cast<float>(static_cast<double>(height) / scaleFactor)};
             memcpy(mapped.pData, vp, sizeof(vp));
             g_context->Unmap(g_constantBuffer.Get(), 0);
         }

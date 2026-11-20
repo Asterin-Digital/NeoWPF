@@ -7,6 +7,8 @@ namespace NeoWPF::UI {
 
 void StackPanel::Measure(double availableWidth, double availableHeight)
 {
+    EvaluateResponsiveRules(availableWidth, availableHeight);
+
     const bool isHorizontal = m_orientation == Orientation::Horizontal;
     const double itemSpacing = isHorizontal ? GetHorizontalSpacing() : GetVerticalSpacing();
     double totalMainExtent = 0.0;

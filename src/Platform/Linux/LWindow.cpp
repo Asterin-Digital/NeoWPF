@@ -19,6 +19,21 @@ const xdg_toplevel_listener ToplevelListener = {
     &LWindow::HandleToplevelClose,
 };
 
+void HandlePreferredScale(void* data,
+                          wp_fractional_scale_v1*,
+                          std::uint32_t preferredScale)
+{
+    auto* window = static_cast<LWindow*>(data);
+    if (!window || preferredScale == 0) {
+        return;
+    }
+    window->SetScaleFactor(static_cast<double>(preferredScale) / 120.0);
+}
+
+const wp_fractional_scale_v1_listener FractionalScaleListener = {
+    &HandlePreferredScale,
+};
+
 }
 
 LWindow::LWindow(LWindowing& windowing, const wchar_t* title, int width, int height,
@@ -53,6 +68,14 @@ LWindow::LWindow(LWindowing& windowing, const wchar_t* title, int width, int hei
     if (windowing.Seat()) {
         AttachInputDevices();
     }
+    if (m_surface && windowing.FractionalScaleManager()) {
+        m_fractionalScale = wp_fractional_scale_manager_v1_get_fractional_scale(
+            windowing.FractionalScaleManager(), m_surface);
+        if (m_fractionalScale) {
+            wp_fractional_scale_v1_add_listener(
+                m_fractionalScale, &FractionalScaleListener, this);
+        }
+    }
 }
 
 LWindow::~LWindow()
@@ -67,6 +90,10 @@ bool LWindow::IsValid() const noexcept
 
 void LWindow::Close() noexcept
 {
+    if (m_fractionalScale) {
+        wp_fractional_scale_v1_destroy(m_fractionalScale);
+        m_fractionalScale = nullptr;
+    }
     if (m_keyboard) {
         wl_keyboard_release(m_keyboard);
         m_keyboard = nullptr;
@@ -150,6 +177,18 @@ bool LWindow::IsClosed() const noexcept
 bool LWindow::IsMaximized() const noexcept
 {
     return m_maximized;
+}
+
+double LWindow::ScaleFactor() const noexcept
+{
+    return m_scaleFactor;
+}
+
+void LWindow::SetScaleFactor(double scaleFactor) noexcept
+{
+    if (scaleFactor > 0.0) {
+        m_scaleFactor = scaleFactor;
+    }
 }
 
 void LWindow::Minimize() noexcept

@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <cmath>
 
 namespace NeoWPF::Platform::Linux {
 namespace {
@@ -178,8 +179,12 @@ void LWindow::HandlePointerEnter(void* data, wl_pointer*, std::uint32_t, wl_surf
 {
     auto* window = static_cast<LWindow*>(data);
     NeoWPF::Core::SetInputRoot(window);
-    window->m_pointerX = wl_fixed_to_int(sx);
-    window->m_pointerY = wl_fixed_to_int(sy);
+    const double scaleFactor = window->ScaleFactor();
+    if (!std::isfinite(scaleFactor) || scaleFactor <= 0.0) {
+        return;
+    }
+    window->m_pointerX = wl_fixed_to_double(sx) / scaleFactor;
+    window->m_pointerY = wl_fixed_to_double(sy) / scaleFactor;
     SubmitPointerInput(NeoWPF::Input::Core::PointerPhase::Enter,
                        window->m_pointerX, window->m_pointerY,
                        window->m_pointerButtonState);
@@ -203,8 +208,12 @@ void LWindow::HandlePointerMotion(void* data, wl_pointer*, std::uint32_t, wl_fix
         return;
     }
     NeoWPF::Core::SetInputRoot(window);
-    window->m_pointerX = wl_fixed_to_int(sx);
-    window->m_pointerY = wl_fixed_to_int(sy);
+    const double scaleFactor = window->ScaleFactor();
+    if (!std::isfinite(scaleFactor) || scaleFactor <= 0.0) {
+        return;
+    }
+    window->m_pointerX = wl_fixed_to_double(sx) / scaleFactor;
+    window->m_pointerY = wl_fixed_to_double(sy) / scaleFactor;
     SubmitPointerInput(NeoWPF::Input::Core::PointerPhase::Move,
                        window->m_pointerX, window->m_pointerY,
                        window->m_pointerButtonState);

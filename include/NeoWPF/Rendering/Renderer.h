@@ -433,9 +433,13 @@ void Renderer_BeginFrame(const RenderSurface& surface);
     @param cmd
     The command list containing the draw operations to execute.
 
+    @param scaleFactor
+    Physical pixels per device-independent unit for the target window.
+
     @internal
 */
-void Renderer_Execute(const RenderSurface& surface, const CommandList& cmd);
+void Renderer_Execute(const RenderSurface& surface, const CommandList& cmd,
+                      double scaleFactor = 1.0);
 
 /*
     @summary

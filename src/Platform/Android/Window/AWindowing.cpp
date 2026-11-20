@@ -12,9 +12,11 @@
 #include <vulkan/vulkan_android.h>
 
 #include <android/looper.h>
+#include <android/configuration.h>
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <limits>
 #include <utility>
 #include <unistd.h>
@@ -109,6 +111,41 @@ void AWindowing::GetWindowSize(void* nativeWindowHandle,
     if (const auto* window = FindWindow(nativeWindowHandle)) {
         window->GetSize(outWidth, outHeight);
     }
+}
+
+bool AWindowing::GetWindowScaleFactor(void* nativeWindowHandle,
+                                      double& outScaleFactor) const noexcept
+{
+    outScaleFactor = 0.0;
+    if (!IsWindowAlive(nativeWindowHandle) ||
+        !m_scaleFactorAvailable.load(std::memory_order_acquire)) {
+        return false;
+    }
+
+    const double scaleFactor = m_scaleFactor.load(std::memory_order_acquire);
+    if (!std::isfinite(scaleFactor) || scaleFactor <= 0.0) {
+        return false;
+    }
+
+    outScaleFactor = scaleFactor;
+    return true;
+}
+
+bool AWindowing::SetDensityDpi(int densityDpi) noexcept
+{
+    if (densityDpi == ACONFIGURATION_DENSITY_DEFAULT) {
+        densityDpi = 160;
+    }
+    if (densityDpi <= 0 || densityDpi == ACONFIGURATION_DENSITY_NONE) {
+        m_scaleFactorAvailable.store(false, std::memory_order_release);
+        return false;
+    }
+
+    m_scaleFactor.store(static_cast<double>(densityDpi) / 160.0,
+                        std::memory_order_release);
+    m_scaleFactorAvailable.store(true, std::memory_order_release);
+    WakeEventPump();
+    return true;
 }
 
 void AWindowing::ResizeWindow(void*, int, int) noexcept

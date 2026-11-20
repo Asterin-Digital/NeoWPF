@@ -20,14 +20,22 @@ namespace {
 
 class AClipboard final : public NeoWPF::Contracts::IClipboard {
 public:
-    bool SetText(const std::wstring&) override { return false; }
+    NeoWPF::Result<void> SetText(const std::wstring&) override
+    {
+        return NeoWPF::Fail<std::string>{"Android clipboard access is not implemented"};
+    }
+
     void TryGetText(TextCallback callback) override
     {
         if (callback) {
-            callback({});
+            callback(NeoWPF::Fail<std::string>{"Android clipboard access is not implemented"});
         }
     }
-    bool Clear() override { return false; }
+
+    NeoWPF::Result<void> Clear() override
+    {
+        return NeoWPF::Fail<std::string>{"Android clipboard access is not implemented"};
+    }
 };
 
 bool LoadEmbeddedFallbackFont()
@@ -93,7 +101,7 @@ NeoWPF::Result<std::vector<std::uint8_t>> APlatform::LoadResourceData(const std:
 
 std::filesystem::path APlatform::GetExecutableDirectory() const
 {
-    return NeoWPF::Fail<std::string>{"Android document picker is not implemented"};
+    return {};
 }
 
 NeoWPF::Result<std::filesystem::path> APlatform::GetAppDataDirectory() const
@@ -121,7 +129,7 @@ NeoWPF::Contracts::FileDialogResult APlatform::ShowSaveFileDialog(
     const std::wstring&, const std::wstring&, const std::wstring&,
     const std::vector<NeoWPF::Contracts::FileDialogFilter>&)
 {
-    return {};
+    return NeoWPF::Fail<std::string>{"Android document picker is not implemented"};
 }
 
 NeoWPF::Result<NeoWPF::Contracts::DecodedImage> APlatform::DecodeImageFromMemory(

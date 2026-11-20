@@ -19,8 +19,24 @@
 #endif
 
 #include <cstdio>
+#include <cmath>
 
 namespace NeoWPF::Platform::Windows {
+namespace {
+
+bool EnsurePerMonitorDpiAwareness() noexcept
+{
+    static const bool isPerMonitorAware = [] {
+        if (::SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)) {
+            return true;
+        }
+        return ::GetAwarenessFromDpiAwarenessContext(::GetThreadDpiAwarenessContext()) ==
+            DPI_AWARENESS_PER_MONITOR_AWARE;
+    }();
+    return isPerMonitorAware;
+}
+
+}
 
 void* WWindowing::CreateWindow(
     const wchar_t* title,
@@ -31,6 +47,12 @@ void* WWindowing::CreateWindow(
     auto& app = NeoWPF::Core::GetAppState();
     if (!app.hInst) {
         app.hInst = ::GetModuleHandleW(nullptr);
+    }
+
+    if (!EnsurePerMonitorDpiAwareness()) {
+        NeoWPF::Diagnostics::LogError(
+            "CreateWindow requires per-monitor DPI awareness");
+        return nullptr;
     }
 
     const bool transparent = windowHost && windowHost->IsTransparent();
@@ -103,6 +125,23 @@ void WWindowing::GetWindowSize(void* nativeWindowHandle, unsigned int& outWidth,
         outWidth = static_cast<unsigned int>(clientRect.right - clientRect.left);
         outHeight = static_cast<unsigned int>(clientRect.bottom - clientRect.top);
     }
+}
+
+bool WWindowing::GetWindowScaleFactor(void* nativeWindowHandle,
+                                      double& outScaleFactor) const noexcept
+{
+    outScaleFactor = 0.0;
+    if (!IsWindowAlive(nativeWindowHandle)) {
+        return false;
+    }
+
+    const UINT dpi = ::GetDpiForWindow(static_cast<HWND>(nativeWindowHandle));
+    if (dpi == 0) {
+        return false;
+    }
+
+    outScaleFactor = static_cast<double>(dpi) / 96.0;
+    return std::isfinite(outScaleFactor) && outScaleFactor > 0.0;
 }
 
 void WWindowing::ResizeWindow(void* nativeWindowHandle, int width, int height) noexcept

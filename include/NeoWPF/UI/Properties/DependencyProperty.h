@@ -31,6 +31,7 @@ enum class PropertyValueSource {
     Local,
     Style,
     Trigger,
+    Responsive,
     Expression,
     Animation,
 };
@@ -460,6 +461,9 @@ private:
 template<typename TOwner, typename TProperty>
 const DependencyProperty& DependencyProperty::Register(const std::string& name, const PropertyMetadata& metadata)
 {
+    if constexpr (TypeTraits::IsAnyEqualityComparable<TProperty>::value) {
+        RegisterAnyEqualityComparer<TProperty>();
+    }
     auto& registry = DependencyPropertyRegistry::Get();
     return registry.RegisterProperty<TOwner>(name, typeid(TProperty), metadata);
 }

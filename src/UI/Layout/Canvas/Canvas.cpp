@@ -33,6 +33,8 @@ Canvas::Canvas() noexcept
 
 void Canvas::Measure(double availableWidth, double availableHeight)
 {
+    EvaluateResponsiveRules(availableWidth, availableHeight);
+
     for (auto child : GetVisualChildren()) {
         if (!child) {
             continue;

@@ -180,6 +180,8 @@ void UniformGrid::SetFirstColumn(int firstColumn)
 
 void UniformGrid::Measure(double availableWidth, double availableHeight)
 {
+    EvaluateResponsiveRules(availableWidth, availableHeight);
+
     const auto children = GetParticipatingChildren(*this);
     const auto dimensions = ComputeDimensions(*this, children.size());
     const double cellAvailableWidth = (std::max)(

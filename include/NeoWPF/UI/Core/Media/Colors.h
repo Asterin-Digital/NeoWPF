@@ -5,6 +5,7 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
+#include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/UI/Core/Media/SolidColorBrush.h>
 
 #include <cstdint>

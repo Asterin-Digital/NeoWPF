@@ -101,9 +101,13 @@ public:
 
         @param commands
         Commands to execute.
+
+        @param scaleFactor
+        Physical pixels per device-independent unit.
     */
     virtual void Execute(const NeoWPF::Rendering::RenderSurface& surface,
-                         const NeoWPF::Rendering::CommandList& commands) = 0;
+                         const NeoWPF::Rendering::CommandList& commands,
+                         double scaleFactor) = 0;
     /*
         @summary
         Presents the completed frame for a surface.

@@ -31,6 +31,12 @@ public:
         outHeight = 0;
     }
 
+    bool GetWindowScaleFactor(void*, double& outScaleFactor) const noexcept override
+    {
+        outScaleFactor = 0.0;
+        return false;
+    }
+
     void ResizeWindow(void*, int, int) noexcept override {}
     void ShowWindow(void*) noexcept override {}
     void HideWindow(void*) noexcept override {}

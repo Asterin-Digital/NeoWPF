@@ -27,7 +27,7 @@ namespace NeoWPF::Rendering::D3D11 {
     unsigned int GetRendererWidth(HWND hwnd);
     unsigned int GetRendererHeight(HWND hwnd);
     ID3D11RenderTargetView* GetRendererTargetView(HWND hwnd);
-    void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd);
+    void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor);
     void CreateDevice();
     HRESULT CreateSwapChainForWindow(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain);
     void InitializeCommonResources();
@@ -89,9 +89,9 @@ void BeginFrame(HWND)
 { // leave it
 }
 
-void Execute(HWND hwnd, const CommandList& cmd)
+void Execute(HWND hwnd, const CommandList& cmd, double scaleFactor)
 {
-    ExecuteRendererDraw(hwnd, cmd);
+    ExecuteRendererDraw(hwnd, cmd, scaleFactor);
 }
 
 void Present(HWND hwnd)

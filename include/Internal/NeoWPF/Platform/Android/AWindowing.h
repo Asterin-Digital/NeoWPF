@@ -119,6 +119,38 @@ public:
 
     /*
         @summary
+        Returns the Android density scale for a live window.
+
+        @param nativeWindowHandle
+        Stable Android window handle.
+
+        @param outScaleFactor
+        Receives the physical-pixel scale.
+
+        @returns
+        True when the density scale is available.
+
+        @internal
+    */
+    bool GetWindowScaleFactor(void* nativeWindowHandle,
+                              double& outScaleFactor) const noexcept override;
+
+    /*
+        @summary
+        Updates the density scale from the current Activity configuration.
+
+        @param densityDpi
+        Current display density in dots per inch.
+
+        @returns
+        True when the supplied density is valid.
+
+        @internal
+    */
+    bool SetDensityDpi(int densityDpi) noexcept;
+
+    /*
+        @summary
         Android surface dimensions are controlled by the Activity.
 
         @internal
@@ -399,6 +431,8 @@ private:
     std::vector<std::unique_ptr<AWindow>> m_windows;
     std::atomic<bool> m_activityAlive{true};
     std::atomic<int> m_exitCode{0};
+    std::atomic<double> m_scaleFactor{0.0};
+    std::atomic<bool> m_scaleFactorAvailable{false};
     mutable std::mutex m_eventMutex;
     std::deque<Event> m_events;
     ALooper* m_looper = nullptr;

@@ -6,6 +6,7 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoWPF/Platform/Linux/LWindowing.h>
+#include <fractional-scale-v1-client-protocol.h>
 
 #include <string>
 #include <chrono>
@@ -50,6 +51,8 @@ public:
     bool IsConfigured() const noexcept;
     bool IsClosed() const noexcept;
     bool IsMaximized() const noexcept;
+    double ScaleFactor() const noexcept;
+    void SetScaleFactor(double scaleFactor) noexcept;
     void Minimize() noexcept;
     void Maximize(bool maximize) noexcept;
     void AcknowledgeConfigure() noexcept;
@@ -96,20 +99,22 @@ private:
     wl_keyboard* m_keyboard = nullptr;
     xdg_surface* m_xdgSurface = nullptr;
     xdg_toplevel* m_xdgToplevel = nullptr;
+    wp_fractional_scale_v1* m_fractionalScale = nullptr;
     xkb_context* m_xkbContext = nullptr;
     xkb_keymap* m_xkbKeymap = nullptr;
     xkb_state* m_xkbState = nullptr;
     std::wstring m_title;
     int m_width = 0;
     int m_height = 0;
-    int m_pointerX = 0;
-    int m_pointerY = 0;
+    double m_pointerX = 0.0;
+    double m_pointerY = 0.0;
     std::uint32_t m_pointerButtonState = 0;
     std::uint32_t m_configureSerial = 0;
     bool m_configured = false;
     bool m_closed = false;
     bool m_maximized = false;
     bool m_transparent = false;
+    double m_scaleFactor = 0.0;
     std::uint32_t m_repeatKey = 0;
     bool m_repeatActive = false;
     std::chrono::steady_clock::time_point m_repeatNext{};

@@ -47,6 +47,23 @@ public:
     bool GetNativeWindowInfo(void* nativeWindowHandle, NeoWPF::Contracts::NativeWindowInfo& outInfo) const noexcept override;
     bool IsWindowAlive(void* nativeWindowHandle) const noexcept override;
     void GetWindowSize(void* nativeWindowHandle, unsigned int& outWidth, unsigned int& outHeight) const noexcept override;
+    /*
+        @summary
+        Returns the per-monitor DPI scale for a live window.
+
+        @param nativeWindowHandle
+        Native window handle.
+
+        @param outScaleFactor
+        Receives the physical-pixel scale.
+
+        @returns
+        True when the scale is available.
+
+        @internal
+    */
+    bool GetWindowScaleFactor(void* nativeWindowHandle,
+                              double& outScaleFactor) const noexcept override;
     void ResizeWindow(void* nativeWindowHandle, int width, int height) noexcept override;
     void ShowWindow(void* nativeWindowHandle) noexcept override;
     void HideWindow(void* nativeWindowHandle) noexcept override;

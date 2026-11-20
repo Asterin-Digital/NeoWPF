@@ -349,6 +349,17 @@ namespace NeoWPF::UI::Properties {
 
         /*
             @summary
+            Removes a responsive-layer value from a dependency property.
+
+            @param property
+            Property whose responsive value is removed.
+
+            @internal
+        */
+        void ClearResponsiveValue(const DependencyProperty& property);
+
+        /*
+            @summary
             Invoked when a dependency property changes value.
 
             @param property
@@ -420,6 +431,7 @@ namespace NeoWPF::UI::Properties {
         std::unordered_map<const DependencyProperty*, std::any> m_themeValues;
         std::unordered_map<const DependencyProperty*, std::any> m_styleValues;
         std::unordered_map<const DependencyProperty*, std::any> m_triggerValues;
+        std::unordered_map<const DependencyProperty*, std::any> m_responsiveValues;
         std::unordered_map<const DependencyProperty*, std::any> m_animatedValues;
         std::unordered_map<const DependencyProperty*, std::unordered_map<std::size_t, std::function<void(const std::any&, const std::any&)>>> m_dependencyPropertyChangedHandlers;
         std::size_t m_nextDependencyPropertyChangedHandlerId = 1;

@@ -82,7 +82,7 @@ public:
     */
     void Publish(Args... args) const
     {
-        const auto snapshot = m_snapshot.load(std::memory_order_acquire);
+        const auto snapshot = std::atomic_load_explicit(&m_snapshot, std::memory_order_acquire);
         for (std::size_t index = 0; index < snapshot->inlineCount; ++index) {
             snapshot->inlineHandlers[index](args...);
         }
@@ -116,12 +116,13 @@ private:
         }
 
         std::shared_ptr<const SubscriberSnapshot> immutableSnapshot = std::move(snapshot);
-        m_snapshot.store(std::move(immutableSnapshot), std::memory_order_release);
+        std::atomic_store_explicit(&m_snapshot, std::move(immutableSnapshot),
+                                   std::memory_order_release);
     }
 
     mutable std::mutex m_mutex;
     std::unordered_map<std::size_t, std::function<void(Args...)>> m_subscribers;
-    std::atomic<std::shared_ptr<const SubscriberSnapshot>> m_snapshot{
+    std::shared_ptr<const SubscriberSnapshot> m_snapshot{
         std::make_shared<const SubscriberSnapshot>()};
     std::size_t m_nextSubscriptionId = 1;
 };

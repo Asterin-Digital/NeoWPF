@@ -37,6 +37,9 @@ struct WindowSession {
     SessionLifecycle lifecycle;
     unsigned int width = 0;
     unsigned int height = 0;
+    double scaleFactor = 1.0;
+    bool hasScaleFactor = false;
+    bool scaleFactorFailureReported = false;
     bool needsLayout = true;
     std::shared_ptr<NeoWPF::UI::Window> windowHost;
     NeoWPF::UI::Visual* contentRoot = nullptr;

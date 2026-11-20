@@ -198,7 +198,7 @@ namespace NeoWPF::Input
             const auto capture = m_pointerCaptures.find(pointerKey);
             target = capture != m_pointerCaptures.end()
                 ? capture->second
-                : HitTest(static_cast<int>(eventArgs.GetX()), static_cast<int>(eventArgs.GetY()));
+                : HitTest(eventArgs.GetX(), eventArgs.GetY());
         }
 
         const auto send = [this, &eventArgs](NeoWPF::UI::UIElement* targetElement,

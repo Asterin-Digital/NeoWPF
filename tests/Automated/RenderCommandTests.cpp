@@ -222,7 +222,7 @@ TEST(VulkanRenderingTests, FrameAndTextureOperationsAreSafeBeforeInitialization)
 
     const NeoWPF::Rendering::RenderSurface surface{};
     rendering.BeginFrame(surface);
-    rendering.Execute(surface, commands);
+    rendering.Execute(surface, commands, 1.0);
     rendering.Present(surface);
     rendering.DestroyTexture(1);
     rendering.ClearTextures();

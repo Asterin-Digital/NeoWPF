@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cmath>
 #include <unordered_map>
 
 namespace {
@@ -11,6 +12,7 @@ namespace {
 struct WindowFrameState {
     std::uint64_t generationId = 0;
     std::uint64_t lastCommandHash = 0;
+    double lastScaleFactor = 1.0;
     bool hasCommandHash = false;
     unsigned int lastWidth = 0;
     unsigned int lastHeight = 0;
@@ -357,8 +359,15 @@ void NeoWPF::Rendering::Renderer_BeginFrame(const RenderSurface& surface)
     state->frameSubmitted = false;
 }
 
-void NeoWPF::Rendering::Renderer_Execute(const RenderSurface& surface, const CommandList& cmd)
+void NeoWPF::Rendering::Renderer_Execute(
+    const RenderSurface& surface, const CommandList& cmd, double scaleFactor)
 {
+    if (!std::isfinite(scaleFactor) || scaleFactor <= 0.0) {
+        NeoWPF::Diagnostics::LogError(
+            "Render commands rejected because the window scale is invalid");
+        return;
+    }
+
     auto surfaceUse = surface.TryAcquireUse();
     if (!surfaceUse.owns_lock()) {
         return;
@@ -372,14 +381,16 @@ void NeoWPF::Rendering::Renderer_Execute(const RenderSurface& surface, const Com
         return;
     }
     const auto commandHash = cmd.ComputeHash();
-    if (state->hasCommandHash && commandHash == state->lastCommandHash) {
+    if (state->hasCommandHash && commandHash == state->lastCommandHash &&
+        scaleFactor == state->lastScaleFactor) {
         state->framePending = false;
         return;
     }
     if (auto* rendering = CurrentRendering()) {
         rendering->BeginFrame(surface);
-        rendering->Execute(surface, cmd);
+        rendering->Execute(surface, cmd, scaleFactor);
         state->lastCommandHash = commandHash;
+        state->lastScaleFactor = scaleFactor;
         state->hasCommandHash = true;
         state->frameSubmitted = true;
     }
