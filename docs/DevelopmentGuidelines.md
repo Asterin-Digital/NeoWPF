@@ -169,3 +169,7 @@ Do not use the logger's public API to change logging levels. Only consumers and 
 When creating a new file you should think about where you put it, and if the folder name fit's the context of what the code is doing.
 If it's near impossible to properly categorize, put it under Etc/
 Only reviewed files are allowed to be put in there, creating a file without prior notice under Etc/ is not allowed and will be deleted.
+
+22. ## User Diagnostics
+
+Use Logger.h for technical, complex details and verbose paths. Use Hints for simple user-facing notes (what to try and do next after x failed). Never use hints for diagnostics, or complex/technical details.
