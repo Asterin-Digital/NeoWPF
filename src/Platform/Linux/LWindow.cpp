@@ -3,8 +3,10 @@
 #include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 
 #include <algorithm>
+#include <cmath>
 
 namespace NeoWPF::Platform::Linux {
 
@@ -19,6 +21,11 @@ const xdg_toplevel_listener ToplevelListener = {
     &LWindow::HandleToplevelClose,
 };
 
+const wl_surface_listener WindowSurfaceListener = {
+    &LWindow::HandleSurfaceEnter,
+    &LWindow::HandleSurfaceLeave,
+};
+
 void HandlePreferredScale(void* data,
                           wp_fractional_scale_v1*,
                           std::uint32_t preferredScale)
@@ -27,7 +34,7 @@ void HandlePreferredScale(void* data,
     if (!window || preferredScale == 0) {
         return;
     }
-    window->SetScaleFactor(static_cast<double>(preferredScale) / 120.0);
+    window->SetFractionalScaleFactor(static_cast<double>(preferredScale) / 120.0);
 }
 
 const wp_fractional_scale_v1_listener FractionalScaleListener = {
@@ -48,6 +55,17 @@ LWindow::LWindow(LWindowing& windowing, const wchar_t* title, int width, int hei
 {
     if (windowing.IsConnected() && windowing.Compositor()) {
         m_surface = wl_compositor_create_surface(windowing.Compositor());
+        if (m_surface) {
+            wl_surface_add_listener(m_surface, &WindowSurfaceListener, this);
+            if (windowing.FractionalScaleManager()) {
+                m_fractionalScale = wp_fractional_scale_manager_v1_get_fractional_scale(
+                    windowing.FractionalScaleManager(), m_surface);
+                if (m_fractionalScale) {
+                    wp_fractional_scale_v1_add_listener(
+                        m_fractionalScale, &FractionalScaleListener, this);
+                }
+            }
+        }
         if (m_surface && windowing.XdgWmBase()) {
             m_xdgSurface = xdg_wm_base_get_xdg_surface(windowing.XdgWmBase(), m_surface);
             if (m_xdgSurface) {
@@ -67,14 +85,6 @@ LWindow::LWindow(LWindowing& windowing, const wchar_t* title, int width, int hei
 
     if (windowing.Seat()) {
         AttachInputDevices();
-    }
-    if (m_surface && windowing.FractionalScaleManager()) {
-        m_fractionalScale = wp_fractional_scale_manager_v1_get_fractional_scale(
-            windowing.FractionalScaleManager(), m_surface);
-        if (m_fractionalScale) {
-            wp_fractional_scale_v1_add_listener(
-                m_fractionalScale, &FractionalScaleListener, this);
-        }
     }
 }
 
@@ -184,11 +194,55 @@ double LWindow::ScaleFactor() const noexcept
     return m_scaleFactor;
 }
 
-void LWindow::SetScaleFactor(double scaleFactor) noexcept
+const char* LWindow::ScaleFactorUnavailableReason() const noexcept
 {
-    if (scaleFactor > 0.0) {
-        m_scaleFactor = scaleFactor;
+    if (m_outputs.empty()) {
+        return m_fractionalScale
+            ? "waiting for the preferred fractional-scale event; the surface has not entered an output"
+            : "the fractional-scale object is unavailable and the surface has not entered an output";
     }
+    return "no usable integer scale is available for the entered outputs";
+}
+
+void LWindow::SetFractionalScaleFactor(double scaleFactor) noexcept
+{
+    if (!std::isfinite(scaleFactor) || scaleFactor <= 0.0) {
+        return;
+    }
+    if (m_scaleFactor != scaleFactor || !m_hasFractionalScale) {
+        NeoWPF::Diagnostics::LogInfo(
+            "[Wayland] Using fractional scale factor=%.2f", scaleFactor);
+    }
+    m_scaleFactor = scaleFactor;
+    m_hasFractionalScale = true;
+}
+
+void LWindow::UpdateIntegerScaleFactor() noexcept
+{
+    if (m_hasFractionalScale) {
+        return;
+    }
+
+    int scaleFactor = 0;
+    for (wl_output* output : m_outputs) {
+        scaleFactor = (std::max)(scaleFactor, m_windowing.GetOutputScale(output));
+    }
+    if (scaleFactor <= 0) {
+        return;
+    }
+
+    if (m_scaleFactor != static_cast<double>(scaleFactor) || m_hasFractionalScale) {
+        NeoWPF::Diagnostics::LogInfo(
+            "[Wayland] Using integer scale factor=%d", scaleFactor);
+    }
+    m_scaleFactor = static_cast<double>(scaleFactor);
+    m_hasFractionalScale = false;
+}
+
+void LWindow::RemoveOutput(wl_output* output) noexcept
+{
+    m_outputs.erase(std::remove(m_outputs.begin(), m_outputs.end(), output), m_outputs.end());
+    UpdateIntegerScaleFactor();
 }
 
 void LWindow::Minimize() noexcept
@@ -246,6 +300,27 @@ void LWindow::HandleToplevelClose(void* data, xdg_toplevel*)
     auto* window = static_cast<LWindow*>(data);
     if (window) {
         window->m_closed = true;
+    }
+}
+
+void LWindow::HandleSurfaceEnter(void* data, wl_surface*, wl_output* output)
+{
+    auto* window = static_cast<LWindow*>(data);
+    if (!window || !output) {
+        return;
+    }
+    if (std::find(window->m_outputs.begin(), window->m_outputs.end(), output) ==
+        window->m_outputs.end()) {
+        window->m_outputs.push_back(output);
+    }
+    window->UpdateIntegerScaleFactor();
+}
+
+void LWindow::HandleSurfaceLeave(void* data, wl_surface*, wl_output* output)
+{
+    auto* window = static_cast<LWindow*>(data);
+    if (window && output) {
+        window->RemoveOutput(output);
     }
 }
 

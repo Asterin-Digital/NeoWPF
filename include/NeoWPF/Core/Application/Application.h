@@ -6,7 +6,11 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #ifndef NEOWPF_SLOW_ENV
+#if defined(__linux__)
+#define NEOWPF_SLOW_ENV 4
+#else
 #define NEOWPF_SLOW_ENV 2
+#endif
 #endif
 
 #include <chrono>

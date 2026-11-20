@@ -75,6 +75,19 @@ public:
     wl_shm* Shm() const noexcept;
     wl_seat* Seat() const noexcept;
     wl_data_device_manager* DataDeviceManager() const noexcept;
+    /*
+        @summary
+        Returns the integer scale reported for an output.
+
+        @param output
+        Wayland output.
+
+        @returns
+        The output scale, or zero when the output is unknown.
+
+        @internal
+    */
+    int GetOutputScale(wl_output* output) const noexcept;
     void AttachClipboard(LClipboard* clipboard) noexcept;
     void DetachClipboard(LClipboard* clipboard) noexcept;
     void RegisterInputSerial(std::uint32_t serial) noexcept;
@@ -86,8 +99,21 @@ public:
     static void HandleGlobal(void* data, wl_registry* registry, std::uint32_t name,
                              const char* interface, std::uint32_t version);
     static void HandleGlobalRemove(void* data, wl_registry* registry, std::uint32_t name);
+    /*
+        @summary
+        Updates the integer scale reported by a Wayland output.
+
+        @internal
+    */
+    static void HandleOutputScale(void* data, wl_output* output, int32_t scale);
 
 private:
+    struct OutputState {
+        std::uint32_t name = 0;
+        wl_output* output = nullptr;
+        int scale = 1;
+    };
+
     LWindow* FindWindow(void* nativeWindowHandle) noexcept;
     const LWindow* FindWindow(void* nativeWindowHandle) const noexcept;
 
@@ -99,6 +125,7 @@ private:
     wl_data_device_manager* m_dataDeviceManager = nullptr;
     xdg_wm_base* m_xdgWmBase = nullptr;
     wp_fractional_scale_manager_v1* m_fractionalScaleManager = nullptr;
+    std::vector<OutputState> m_outputs;
     bool m_hasXdgShell = false;
     LClipboard* m_clipboard = nullptr;
     std::uint32_t m_lastInputSerial = 0;

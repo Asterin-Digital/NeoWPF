@@ -5,6 +5,8 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
+#include <NeoWPF/Etc/Hints.h>
+
 #include <string>
 #include <utility>
 #include <variant>
@@ -51,9 +53,13 @@ struct Fail final {
 
     @param E
     Type of the error returned on failure. Defaults to std::string.
+
+    @details
+    An optional hint may provide brief user-facing guidance. Use the error
+    value for technical failure details.
 */
 template<typename T, typename E = std::string>
-class Result final {
+class Result final : public Hints<Result<T, E>> {
 public:
     Result(NeoWPF::Success<T> success)
         : state_(std::move(success))
@@ -160,7 +166,7 @@ private:
 };
 
 template<typename E>
-class Result<void, E> final {
+class Result<void, E> final : public Hints<Result<void, E>> {
 public:
     Result(NeoWPF::Success<void> success)
         : state_(std::move(success))

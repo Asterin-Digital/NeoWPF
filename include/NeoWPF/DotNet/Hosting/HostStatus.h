@@ -5,9 +5,10 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
+#include <NeoWPF/Etc/Hints.h>
+
 #include <cstdint>
 #include <string>
-#include <utility>
 
 namespace NeoWPF::DotNet::Hosting {
 
@@ -26,7 +27,7 @@ enum class HostStatusCode : std::uint32_t {
     Stopped,
 };
 
-class HostStatus {
+class HostStatus : public NeoWPF::Hints<HostStatus> {
 public:
     HostStatus() = default;
     explicit HostStatus(HostStatusCode code) noexcept : m_code(code) {}
@@ -41,7 +42,7 @@ public:
     std::int32_t GetRawHostFxrResult() const noexcept { return m_rawHostFxrResult; }
 
     const std::string& Message() const noexcept { return m_message; }
-    const std::string& Hint() const noexcept { return m_hint; }
+    const std::string& Hint() const noexcept { return GetHint(); }
 
     /*
         @summary
@@ -60,16 +61,10 @@ public:
         return *this;
     }
 
-    HostStatus& SetHint(std::string hint) {
-        m_hint = std::move(hint);
-        return *this;
-    }
-
 private:
     HostStatusCode m_code = HostStatusCode::Ok;
     std::int32_t m_rawHostFxrResult = 0;
     std::string m_message;
-    std::string m_hint;
 };
 
 }

@@ -26,6 +26,14 @@ TEST(ResultTests, FailureErrorSetsFailureState)
     EXPECT_EQ(result.Error(), "failed");
 }
 
+TEST(ResultTests, HintCanBeSetAndRetrieved)
+{
+    NeoWPF::Result<int> result = NeoWPF::Fail{std::string("failed")};
+
+    EXPECT_TRUE(result.GetHint().empty());
+    EXPECT_EQ(result.SetHint("Try again").GetHint(), "Try again");
+}
+
 TEST(ResultTests, BoolPayloadIsIndependentOfSuccessState)
 {
     const NeoWPF::Result<bool> success = NeoWPF::Success{false};

@@ -10,6 +10,7 @@ See LICENSE file in the project root for full license text.
 
 #include <string>
 #include <chrono>
+#include <vector>
 
 #include <xkbcommon/xkbcommon.h>
 
@@ -52,7 +53,37 @@ public:
     bool IsClosed() const noexcept;
     bool IsMaximized() const noexcept;
     double ScaleFactor() const noexcept;
-    void SetScaleFactor(double scaleFactor) noexcept;
+    /*
+        @summary
+        Explains why no usable scale factor is currently available.
+
+        @internal
+    */
+    const char* ScaleFactorUnavailableReason() const noexcept;
+    /*
+        @summary
+        Applies a scale reported by the fractional-scale protocol.
+
+        @internal
+    */
+    void SetFractionalScaleFactor(double scaleFactor) noexcept;
+    /*
+        @summary
+        Recalculates the integer scale from the outputs entered by the surface.
+
+        @internal
+    */
+    void UpdateIntegerScaleFactor() noexcept;
+    /*
+        @summary
+        Removes an output from the outputs entered by the surface.
+
+        @param output
+        Output that was removed.
+
+        @internal
+    */
+    void RemoveOutput(wl_output* output) noexcept;
     void Minimize() noexcept;
     void Maximize(bool maximize) noexcept;
     void AcknowledgeConfigure() noexcept;
@@ -63,6 +94,20 @@ public:
     static void HandleToplevelConfigure(void* data, xdg_toplevel* toplevel, int32_t width,
                                         int32_t height, wl_array* states);
     static void HandleToplevelClose(void* data, xdg_toplevel* toplevel);
+    /*
+        @summary
+        Tracks an output entered by the surface.
+
+        @internal
+    */
+    static void HandleSurfaceEnter(void* data, wl_surface* surface, wl_output* output);
+    /*
+        @summary
+        Tracks an output left by the surface.
+
+        @internal
+    */
+    static void HandleSurfaceLeave(void* data, wl_surface* surface, wl_output* output);
 
     static void HandlePointerEnter(void* data, wl_pointer* pointer, std::uint32_t serial,
                                    wl_surface* surface, wl_fixed_t sx, wl_fixed_t sy);
@@ -100,6 +145,7 @@ private:
     xdg_surface* m_xdgSurface = nullptr;
     xdg_toplevel* m_xdgToplevel = nullptr;
     wp_fractional_scale_v1* m_fractionalScale = nullptr;
+    std::vector<wl_output*> m_outputs;
     xkb_context* m_xkbContext = nullptr;
     xkb_keymap* m_xkbKeymap = nullptr;
     xkb_state* m_xkbState = nullptr;
@@ -114,6 +160,7 @@ private:
     bool m_closed = false;
     bool m_maximized = false;
     bool m_transparent = false;
+    bool m_hasFractionalScale = false;
     double m_scaleFactor = 0.0;
     std::uint32_t m_repeatKey = 0;
     bool m_repeatActive = false;

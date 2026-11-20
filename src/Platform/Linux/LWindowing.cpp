@@ -59,6 +59,26 @@ const wl_registry_listener RegistryListener = {
     &LWindowing::HandleGlobalRemove,
 };
 
+void HandleOutputGeometry(void*, wl_output*, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, const char*, const char*, int32_t)
+{
+}
+
+void HandleOutputMode(void*, wl_output*, std::uint32_t, int32_t, int32_t, int32_t)
+{
+}
+
+void HandleOutputDone(void*, wl_output*)
+{
+}
+
+const wl_output_listener OutputListener = {
+    &HandleOutputGeometry,
+    &HandleOutputMode,
+    &HandleOutputDone,
+    &LWindowing::HandleOutputScale,
+};
+
 void HandleXdgWmBasePing(void* data, xdg_wm_base* shell, std::uint32_t serial)
 {
     auto* windowing = static_cast<LWindowing*>(data);
@@ -197,10 +217,25 @@ bool LWindowing::GetWindowScaleFactor(void* nativeWindowHandle,
 {
     outScaleFactor = 0.0;
     const auto* window = FindWindow(nativeWindowHandle);
-    if (!window || !window->IsConfigured() || window->IsClosed()) {
+    if (!window) {
+        NeoWPF::Diagnostics::LogWarn(
+            "[Wayland] Window scale unavailable: native window handle is not registered");
+        return false;
+    }
+    if (window->IsClosed()) {
+        NeoWPF::Diagnostics::LogWarn(
+            "[Wayland] Window scale unavailable: window is closed");
+        return false;
+    }
+    if (!window->IsConfigured()) {
+        NeoWPF::Diagnostics::LogWarn(
+            "[Wayland] Window scale unavailable: waiting for the initial xdg-surface configure");
         return false;
     }
     if (!std::isfinite(window->ScaleFactor()) || window->ScaleFactor() <= 0.0) {
+        NeoWPF::Diagnostics::LogWarn(
+            "[Wayland] Window scale unavailable: %s",
+            window->ScaleFactorUnavailableReason());
         return false;
     }
     outScaleFactor = window->ScaleFactor();
@@ -344,6 +379,12 @@ void LWindowing::Disconnect() noexcept
         wp_fractional_scale_manager_v1_destroy(m_fractionalScaleManager);
         m_fractionalScaleManager = nullptr;
     }
+    for (auto& output : m_outputs) {
+        if (output.output) {
+            wl_output_destroy(output.output);
+        }
+    }
+    m_outputs.clear();
     if (m_registry) {
         wl_registry_destroy(m_registry);
         m_registry = nullptr;
@@ -383,6 +424,14 @@ wl_seat* LWindowing::Seat() const noexcept
 wl_data_device_manager* LWindowing::DataDeviceManager() const noexcept
 {
     return m_dataDeviceManager;
+}
+
+int LWindowing::GetOutputScale(wl_output* output) const noexcept
+{
+    const auto it = std::find_if(
+        m_outputs.begin(), m_outputs.end(),
+        [output](const OutputState& state) { return state.output == output; });
+    return it == m_outputs.end() ? 0 : it->scale;
 }
 
 void LWindowing::AttachClipboard(LClipboard* clipboard) noexcept
@@ -429,7 +478,14 @@ void LWindowing::HandleGlobal(void* data, wl_registry* registry, std::uint32_t n
                               const char* interface, std::uint32_t version)
 {
     auto* windowing = static_cast<LWindowing*>(data);
-    if (std::strcmp(interface, wl_compositor_interface.name) == 0) {
+    if (std::strcmp(interface, wl_output_interface.name) == 0) {
+        auto* output = static_cast<wl_output*>(wl_registry_bind(
+            registry, name, &wl_output_interface, std::min(version, 2u)));
+        if (output) {
+            wl_output_add_listener(output, &OutputListener, windowing);
+            windowing->m_outputs.push_back({name, output, 1});
+        }
+    } else if (std::strcmp(interface, wl_compositor_interface.name) == 0) {
         const auto bindVersion = std::min(version, 4u);
         windowing->m_compositor = static_cast<wl_compositor*>(wl_registry_bind(
             registry, name, &wl_compositor_interface, bindVersion));
@@ -461,8 +517,41 @@ void LWindowing::HandleGlobal(void* data, wl_registry* registry, std::uint32_t n
     }
 }
 
-void LWindowing::HandleGlobalRemove(void*, wl_registry*, std::uint32_t)
+void LWindowing::HandleGlobalRemove(void* data, wl_registry*, std::uint32_t name)
 {
+    auto* windowing = static_cast<LWindowing*>(data);
+    const auto outputIt = std::find_if(
+        windowing->m_outputs.begin(), windowing->m_outputs.end(),
+        [name](const OutputState& output) { return output.name == name; });
+    if (outputIt == windowing->m_outputs.end()) {
+        return;
+    }
+
+    wl_output* output = outputIt->output;
+    windowing->m_outputs.erase(outputIt);
+    for (auto& window : windowing->m_windows) {
+        window->RemoveOutput(output);
+    }
+    wl_output_destroy(output);
+}
+
+void LWindowing::HandleOutputScale(void* data, wl_output* output, int32_t scale)
+{
+    auto* windowing = static_cast<LWindowing*>(data);
+    if (!windowing || scale <= 0) {
+        return;
+    }
+    const auto outputIt = std::find_if(
+        windowing->m_outputs.begin(), windowing->m_outputs.end(),
+        [output](const OutputState& state) { return state.output == output; });
+    if (outputIt == windowing->m_outputs.end()) {
+        return;
+    }
+
+    outputIt->scale = scale;
+    for (auto& window : windowing->m_windows) {
+        window->UpdateIntegerScaleFactor();
+    }
 }
 
 }
