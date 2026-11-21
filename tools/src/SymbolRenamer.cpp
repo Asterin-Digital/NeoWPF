@@ -9,6 +9,8 @@
 #include <clang/AST/ASTConsumer.h>
 #include <clang/Frontend/FrontendActions.h>
 #include <clang/Lex/Lexer.h>
+#include <clang/Lex/PPCallbacks.h>
+#include <clang/Lex/Preprocessor.h>
 #include <clang/Tooling/CompilationDatabase.h>
 #include <clang/Tooling/Tooling.h>
 #include <clang/Tooling/Core/Replacement.h>
@@ -66,6 +68,7 @@ struct Edit {
     unsigned length;
     unsigned line;
     unsigned column;
+    std::string replacement;
 };
 
 struct RunState {
@@ -75,6 +78,7 @@ struct RunState {
     std::set<std::string> selectedFiles;
     std::set<SymbolKey> candidates;
     std::map<SymbolKey, std::vector<Edit>> edits;
+    std::vector<Edit> includeEdits;
     std::set<std::pair<std::string, unsigned>> editLocations;
     bool hadEditError = false;
 };
@@ -276,10 +280,11 @@ public:
         return true;
     }
 
-    bool TraverseTypeLoc(clang::TypeLoc typeLocation) {
+    bool TraverseTypeLoc(clang::TypeLoc typeLocation,
+        bool traverseQualifier = true) {
         addTypeOccurrence(typeLocation);
         return clang::RecursiveASTVisitor<OccurrenceVisitor>::TraverseTypeLoc(
-            typeLocation);
+            typeLocation, traverseQualifier);
     }
 
     bool TraverseNestedNameSpecifierLoc(
@@ -304,7 +309,7 @@ private:
             addOccurrence(tagLocation.getDecl(), tagLocation.getNameLoc());
         } else if (const auto typedefLocation =
                        typeLocation.getAs<clang::TypedefTypeLoc>()) {
-            addOccurrence(typedefLocation.getTypedefNameDecl(),
+            addOccurrence(typedefLocation.getTypePtr()->getDecl(),
                 typedefLocation.getNameLoc());
         }
 
@@ -324,26 +329,21 @@ private:
 
     void addNameSpecifierOccurrence(
         clang::NestedNameSpecifierLoc nameSpecifierLocation) {
-        if (nameSpecifierLocation.isInvalid()) {
+        if (!nameSpecifierLocation) {
             return;
         }
 
-        const clang::NestedNameSpecifier* nameSpecifier =
+        const clang::NestedNameSpecifier nameSpecifier =
             nameSpecifierLocation.getNestedNameSpecifier();
-        if (nameSpecifier == nullptr) {
+        if (nameSpecifier.getKind() ==
+            clang::NestedNameSpecifier::Kind::Namespace) {
+            addOccurrence(
+                nameSpecifier.getAsNamespaceAndPrefix().Namespace,
+                nameSpecifierLocation.getLocalBeginLoc());
             return;
         }
-        if (const clang::NamespaceDecl* nameSpace =
-                nameSpecifier->getAsNamespace()) {
-            addOccurrence(nameSpace, nameSpecifierLocation.getLocalBeginLoc());
-            return;
-        }
-        if (const clang::NamespaceAliasDecl* alias =
-                nameSpecifier->getAsNamespaceAlias()) {
-            addOccurrence(alias, nameSpecifierLocation.getLocalBeginLoc());
-            return;
-        }
-        if (const clang::Type* type = nameSpecifier->getAsType()) {
+        if (nameSpecifier.getKind() == clang::NestedNameSpecifier::Kind::Type) {
+            const clang::Type* type = nameSpecifier.getAsType();
             if (const auto* tagType = type->getAs<clang::TagType>()) {
                 addOccurrence(tagType->getDecl(),
                     nameSpecifierLocation.getLocalBeginLoc());
@@ -392,7 +392,8 @@ private:
 
         state_.edits[key].push_back({path, offset, length,
             sourceManager_.getSpellingLineNumber(fileLocation),
-            sourceManager_.getSpellingColumnNumber(fileLocation)});
+            sourceManager_.getSpellingColumnNumber(fileLocation),
+            state_.newName});
     }
 
     RunState& state_;
@@ -422,12 +423,168 @@ private:
     RunState& state_;
 };
 
+std::string symbolLeaf(const std::string& name) {
+    const std::size_t separator = name.rfind("::");
+    return separator == std::string::npos ? name : name.substr(separator + 2);
+}
+
+bool rewriteIncludeName(const std::string& fileName, const RunState& state,
+    std::string& updatedFileName) {
+    const std::string oldLeaf = symbolLeaf(state.oldName);
+    updatedFileName = fileName;
+    bool changed = false;
+
+    std::size_t componentStart = 0;
+    while (componentStart < updatedFileName.size()) {
+        const std::size_t separator =
+            updatedFileName.find_first_of("/\\", componentStart);
+        const std::size_t componentEnd =
+            separator == std::string::npos ? updatedFileName.size() : separator;
+        const std::string component =
+            updatedFileName.substr(componentStart, componentEnd - componentStart);
+        std::size_t stemLength = component.size();
+        if (separator == std::string::npos) {
+            const std::size_t extension = component.find_last_of('.');
+            if (extension != std::string::npos && extension != 0) {
+                stemLength = extension;
+            }
+        }
+
+        const bool matchingDirectory = separator != std::string::npos &&
+            component == oldLeaf;
+        const bool matchingHeader = separator == std::string::npos &&
+            stemLength < component.size() &&
+            component.substr(0, stemLength) == oldLeaf;
+        const bool matchingPathWithoutExtension =
+            separator == std::string::npos && component == oldLeaf;
+        if (matchingDirectory || matchingHeader || matchingPathWithoutExtension) {
+            updatedFileName.replace(
+                componentStart, stemLength, state.newName);
+            componentStart += state.newName.size();
+            changed = true;
+        } else {
+            componentStart = componentEnd;
+        }
+
+        if (componentStart < updatedFileName.size() &&
+            (updatedFileName[componentStart] == '/' ||
+                updatedFileName[componentStart] == '\\')) {
+            ++componentStart;
+        }
+    }
+
+    return changed;
+}
+
+class IncludeUpdateCallbacks final : public clang::PPCallbacks {
+public:
+    IncludeUpdateCallbacks(RunState& state, clang::SourceManager& sourceManager,
+        const clang::LangOptions& languageOptions)
+        : state_(state), sourceManager_(sourceManager),
+          languageOptions_(languageOptions) {}
+
+    void InclusionDirective(clang::SourceLocation,
+        const clang::Token&, llvm::StringRef fileName, bool isAngled,
+        clang::CharSourceRange filenameRange,
+        clang::OptionalFileEntryRef, llvm::StringRef, llvm::StringRef,
+        const clang::Module*, bool,
+        clang::SrcMgr::CharacteristicKind) override {
+        std::string updatedFileName;
+        if (!rewriteIncludeName(fileName.str(), state_, updatedFileName)) {
+            return;
+        }
+
+        const clang::SourceLocation begin = filenameRange.getBegin();
+        if (begin.isInvalid()) {
+            reportFailure(begin, fileName, "source location is invalid");
+            return;
+        }
+        const clang::SourceLocation directiveLocation =
+            sourceManager_.getExpansionLoc(begin);
+        const std::string path =
+            normalizedPath(sourceManager_.getFilename(directiveLocation).str());
+        if (!isAllowedPath(path, state_)) {
+            return;
+        }
+        if (begin.isMacroID()) {
+            reportFailure(begin, fileName, "include filename is macro-generated");
+            return;
+        }
+
+        const clang::CharSourceRange fileRange = clang::Lexer::makeFileCharRange(
+            filenameRange, sourceManager_, languageOptions_);
+        if (fileRange.isInvalid()) {
+            reportFailure(begin, fileName, "include filename range is not editable");
+            return;
+        }
+
+        bool invalid = false;
+        const llvm::StringRef originalText = clang::Lexer::getSourceText(
+            fileRange, sourceManager_, languageOptions_, &invalid);
+        if (invalid || originalText.empty()) {
+            reportFailure(begin, fileName, "include filename text could not be read");
+            return;
+        }
+
+        char delimiter = isAngled ? '<' : '"';
+        char closingDelimiter = isAngled ? '>' : '"';
+        if (originalText.size() >= 2 &&
+            (originalText.front() == '"' || originalText.front() == '<') &&
+            (originalText.back() == '"' || originalText.back() == '>')) {
+            delimiter = originalText.front();
+            closingDelimiter = originalText.back();
+        }
+        const std::string replacement =
+            std::string(1, delimiter) + updatedFileName + closingDelimiter;
+
+        const clang::SourceLocation fileBegin = fileRange.getBegin();
+        const clang::SourceLocation fileEnd = fileRange.getEnd();
+        const unsigned offset = sourceManager_.getFileOffset(fileBegin);
+        const unsigned endOffset = sourceManager_.getFileOffset(fileEnd);
+        if (endOffset <= offset) {
+            reportFailure(begin, fileName, "include filename range has no editable text");
+            return;
+        }
+
+        if (!state_.editLocations.emplace(path, offset).second) {
+            return;
+        }
+
+        state_.includeEdits.push_back({path, offset, endOffset - offset,
+            sourceManager_.getSpellingLineNumber(fileBegin),
+            sourceManager_.getSpellingColumnNumber(fileBegin), replacement});
+    }
+
+private:
+    void reportFailure(clang::SourceLocation location, llvm::StringRef fileName,
+        const char* reason) {
+        state_.hadEditError = true;
+        if (location.isValid()) {
+            location = sourceManager_.getExpansionLoc(location);
+            llvm::errs() << "Unable to update include \"" << fileName << "\" at "
+                         << sourceManager_.getFilename(location) << ":"
+                         << sourceManager_.getSpellingLineNumber(location) << ": "
+                         << reason << "\n";
+        } else {
+            llvm::errs() << "Unable to update include \"" << fileName
+                         << "\": " << reason << "\n";
+        }
+    }
+
+    RunState& state_;
+    clang::SourceManager& sourceManager_;
+    const clang::LangOptions& languageOptions_;
+};
+
 class RenamerAction final : public clang::ASTFrontendAction {
 public:
     explicit RenamerAction(RunState& state) : state_(state) {}
 
     std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
-        clang::CompilerInstance&, llvm::StringRef) override {
+        clang::CompilerInstance& compiler, llvm::StringRef) override {
+        compiler.getPreprocessor().addPPCallbacks(
+            std::make_unique<IncludeUpdateCallbacks>(
+                state_, compiler.getSourceManager(), compiler.getLangOpts()));
         return std::make_unique<RenamerConsumer>(state_);
     }
 
@@ -474,7 +631,7 @@ bool isValidIdentifier(const std::string& name) {
     languageOptions.CPlusPlus = true;
     languageOptions.CPlusPlus20 = true;
     clang::IdentifierTable identifiers(languageOptions);
-    return !identifiers.get(name)->isKeyword(languageOptions);
+    return !identifiers.get(name).isKeyword(languageOptions);
 }
 
 bool addRoot(RunState& state, const fs::path& path) {
@@ -546,18 +703,18 @@ bool prepareInputs(RunState& state, std::vector<std::string>& sources,
     return true;
 }
 
-bool applyEdits(const std::vector<Edit>& edits, const std::string& newName) {
+bool applyEdits(const std::vector<Edit>& edits) {
     if (DryRun) {
         for (const Edit& edit : edits) {
             llvm::outs() << edit.path << ":" << edit.line << ":" << edit.column
-                         << " -> " << newName << "\n";
+                         << " -> " << edit.replacement << "\n";
         }
     }
 
     std::map<std::string, clang::tooling::Replacements> replacementsByFile;
     for (const Edit& edit : edits) {
         clang::tooling::Replacement replacement(
-            edit.path, edit.offset, edit.length, newName);
+            edit.path, edit.offset, edit.length, edit.replacement);
         if (llvm::Error error =
                 replacementsByFile[edit.path].add(replacement)) {
             llvm::errs() << "Conflicting rename edits in " << edit.path << ": "
@@ -612,7 +769,8 @@ bool applyEdits(const std::vector<Edit>& edits, const std::string& newName) {
 int main(int argc, const char** argv) {
     llvm::cl::HideUnrelatedOptions(ToolCategory);
     llvm::cl::ParseCommandLineOptions(argc, argv,
-        "Rename a C++ symbol using Clang's AST and compilation database.\n");
+        "Rename a C++ symbol using Clang's AST and compilation database, "
+        "updating matching include paths.\n");
 
     std::string oldName = OldName;
     while (oldName.rfind("::", 0) == 0) {
@@ -666,18 +824,21 @@ int main(int argc, const char** argv) {
         return 1;
     }
 
-    const auto edits = state.edits.find(*state.candidates.begin());
-    if (edits == state.edits.end() || edits->second.empty()) {
+    const auto symbolEdits = state.edits.find(*state.candidates.begin());
+    if (symbolEdits == state.edits.end() ||
+        (symbolEdits->second.empty() && state.includeEdits.empty())) {
         llvm::errs() << "No editable occurrences were found for "
                      << state.oldName << "\n";
         return 1;
     }
 
-    if (!applyEdits(edits->second, state.newName)) {
+    std::vector<Edit> edits = symbolEdits->second;
+    edits.insert(edits.end(), state.includeEdits.begin(), state.includeEdits.end());
+    if (!applyEdits(edits)) {
         return 1;
     }
     llvm::outs() << (DryRun ? "Would rename " : "Renamed ")
                  << state.oldName << " to " << state.newName << " in "
-                 << edits->second.size() << " occurrence(s).\n";
+                 << edits.size() << " occurrence(s).\n";
     return 0;
 }
