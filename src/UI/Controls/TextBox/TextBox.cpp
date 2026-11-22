@@ -175,6 +175,7 @@ void TextBox::SetText(const std::wstring& text, bool resetScrollOffset)
                 SetScrollOffset(0, 0);
             }
         }
+        InvalidateMeasure();
         InvalidateVisual();
         TextChanged.Invoke(m_text);
         return;
@@ -199,6 +200,7 @@ void TextBox::SetText(const std::wstring& text, bool resetScrollOffset)
             SetScrollOffset(0, 0);
         }
     }
+    InvalidateMeasure();
     InvalidateVisual();
     TextChanged.Invoke(m_text);
     m_isUpdatingText = false;

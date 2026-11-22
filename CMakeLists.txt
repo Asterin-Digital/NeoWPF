@@ -160,6 +160,10 @@ endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(WAYLAND REQUIRED IMPORTED_TARGET wayland-client)
+    find_package(X11 REQUIRED)
+    if(NOT X11_Xfixes_FOUND)
+        message(FATAL_ERROR "NeoWPF requires libXfixes development files on Linux.")
+    endif()
     pkg_check_modules(XKBCOMMON REQUIRED IMPORTED_TARGET xkbcommon)
     pkg_check_modules(FREETYPE REQUIRED IMPORTED_TARGET freetype2)
     pkg_check_modules(HARFBUZZ REQUIRED IMPORTED_TARGET harfbuzz)
@@ -464,6 +468,7 @@ if(NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "vulkan")
 endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_include_directories(NeoWPF.Foundation SYSTEM PRIVATE "${NEOWPF_WAYLAND_GENERATED_DIR}")
+    target_include_directories(NeoWPF.Foundation SYSTEM PRIVATE ${X11_INCLUDE_DIR})
 endif()
 
 target_compile_definitions(NeoWPF.Foundation
@@ -712,6 +717,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         PUBLIC
             Vulkan::Vulkan
             PkgConfig::WAYLAND
+            ${X11_X11_LIB}
+            ${X11_Xfixes_LIB}
             PkgConfig::XKBCOMMON
             Freetype::Freetype
             PkgConfig::NEOWPF_HARFBUZZ_STATIC
@@ -724,6 +731,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         PUBLIC
             Vulkan::Vulkan
             PkgConfig::WAYLAND
+            ${X11_X11_LIB}
+            ${X11_Xfixes_LIB}
             PkgConfig::XKBCOMMON
             Freetype::Freetype
             PkgConfig::NEOWPF_HARFBUZZ_STATIC
@@ -1056,6 +1065,11 @@ if(BUILD_TESTING AND NOT ANDROID)
     if(NOT ANDROID)
         target_sources(NeoWPF.AutomatedTests PRIVATE
             src/Platform/Android/App/AActivityLifecycle.cpp
+        )
+    endif()
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        target_sources(NeoWPF.AutomatedTests PRIVATE
+            tests/Automated/LinuxBackendTests.cpp
         )
     endif()
 

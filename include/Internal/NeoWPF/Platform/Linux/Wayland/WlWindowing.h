@@ -15,19 +15,19 @@ See LICENSE file in the project root for full license text.
 #include <vector>
 
 namespace NeoWPF::Platform::Linux {
-class LWindow;
-class LClipboard;
+class WlWindow;
+class WlClipboard;
 }
 
 namespace NeoWPF::Platform::Linux {
 
-class LWindowing final : public NeoWPF::Contracts::IWindowing {
+class WlWindowing final : public NeoWPF::Contracts::IWindowing {
 public:
-    LWindowing() = default;
-    ~LWindowing();
+    WlWindowing() = default;
+    ~WlWindowing();
 
-    LWindowing(const LWindowing&) = delete;
-    LWindowing& operator=(const LWindowing&) = delete;
+    WlWindowing(const WlWindowing&) = delete;
+    WlWindowing& operator=(const WlWindowing&) = delete;
 
     void* CreateWindow(
         const wchar_t* title,
@@ -88,8 +88,8 @@ public:
         @internal
     */
     int GetOutputScale(wl_output* output) const noexcept;
-    void AttachClipboard(LClipboard* clipboard) noexcept;
-    void DetachClipboard(LClipboard* clipboard) noexcept;
+    void AttachClipboard(WlClipboard* clipboard) noexcept;
+    void DetachClipboard(WlClipboard* clipboard) noexcept;
     void RegisterInputSerial(std::uint32_t serial) noexcept;
     std::uint32_t LastInputSerial() const noexcept;
     xdg_wm_base* XdgWmBase() const noexcept;
@@ -114,8 +114,8 @@ private:
         int scale = 1;
     };
 
-    LWindow* FindWindow(void* nativeWindowHandle) noexcept;
-    const LWindow* FindWindow(void* nativeWindowHandle) const noexcept;
+    WlWindow* FindWindow(void* nativeWindowHandle) noexcept;
+    const WlWindow* FindWindow(void* nativeWindowHandle) const noexcept;
 
     wl_display* m_display = nullptr;
     wl_registry* m_registry = nullptr;
@@ -127,9 +127,9 @@ private:
     wp_fractional_scale_manager_v1* m_fractionalScaleManager = nullptr;
     std::vector<OutputState> m_outputs;
     bool m_hasXdgShell = false;
-    LClipboard* m_clipboard = nullptr;
+    WlClipboard* m_clipboard = nullptr;
     std::uint32_t m_lastInputSerial = 0;
-    std::vector<std::unique_ptr<LWindow>> m_windows;
+    std::vector<std::unique_ptr<WlWindow>> m_windows;
     int m_exitCode = 0;
     bool m_consoleVisible = false;
 };

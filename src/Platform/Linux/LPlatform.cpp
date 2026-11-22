@@ -2,7 +2,6 @@
 
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Core/Application/Resources/Embedded/FallbackFont.h>
-#include <NeoWPF/Platform/Linux/LWindow.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 
@@ -133,17 +132,31 @@ bool LoadSystemFontFamily(const std::wstring& requestedFamily)
 }
 
 LPlatform::LPlatform()
-        : m_applicationDataDirectory(ResolveApplicationDataDirectory()),
-            m_clipboard(m_windowing)
+    : m_applicationDataDirectory(ResolveApplicationDataDirectory())
 {
 }
 
 LPlatform::~LPlatform() = default;
 
-NeoWPF::Contracts::IClipboard& LPlatform::Clipboard() noexcept { return m_clipboard; }
-NeoWPF::Contracts::IWindowing& LPlatform::Windowing() noexcept { return m_windowing; }
-NeoWPF::Contracts::IRendering& LPlatform::Rendering() noexcept { return m_rendering; }
-NeoWPF::Contracts::IWindowChrome* LPlatform::Chrome() noexcept { return &m_chrome; }
+NeoWPF::Contracts::IClipboard& LPlatform::Clipboard() noexcept
+{
+    return m_compositor.Clipboard();
+}
+
+NeoWPF::Contracts::IWindowing& LPlatform::Windowing() noexcept
+{
+    return m_compositor.Windowing();
+}
+
+NeoWPF::Contracts::IRendering& LPlatform::Rendering() noexcept
+{
+    return m_rendering;
+}
+
+NeoWPF::Contracts::IWindowChrome* LPlatform::Chrome() noexcept
+{
+    return m_compositor.Chrome();
+}
 NeoWPF::Platform::Capabilities::PlatformId LPlatform::GetPlatformId() const noexcept
 {
     return NeoWPF::Platform::Capabilities::PlatformId::Linux;

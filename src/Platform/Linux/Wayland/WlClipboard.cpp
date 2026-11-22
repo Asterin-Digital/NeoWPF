@@ -1,8 +1,8 @@
-#include <NeoWPF/Platform/Linux/LClipboard.h>
+#include <NeoWPF/Platform/Linux/Wayland/WlClipboard.h>
 
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Diagnostics/Logger.h>
-#include <NeoWPF/Platform/Linux/LWindowing.h>
+#include <NeoWPF/Platform/Linux/Wayland/WlWindowing.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 
 #include <algorithm>
@@ -24,12 +24,12 @@ bool FlushSucceeded(int result, int error) noexcept
 
 void HandleDataSourceTarget(void* data, wl_data_source*, const char*)
 {
-    static_cast<LClipboard*>(data);
+    static_cast<WlClipboard*>(data);
 }
 
 void HandleDataSourceSend(void* data, wl_data_source*, const char*, int fd)
 {
-    auto* clipboard = static_cast<LClipboard*>(data);
+    auto* clipboard = static_cast<WlClipboard*>(data);
     const auto text = NeoWPF::Platform::WideToUtf8(clipboard->OwnedText());
     const char* cursor = text.data();
     std::size_t remaining = text.size();
@@ -46,7 +46,7 @@ void HandleDataSourceSend(void* data, wl_data_source*, const char*, int fd)
 
 void HandleDataSourceCancelled(void* data, wl_data_source* source)
 {
-    auto* clipboard = static_cast<LClipboard*>(data);
+    auto* clipboard = static_cast<WlClipboard*>(data);
     clipboard->SourceCancelled(source);
 }
 
@@ -61,12 +61,12 @@ const wl_data_source_listener DataSourceListener = {
 
 void HandleDataDeviceOffer(void* data, wl_data_device*, wl_data_offer* offer)
 {
-    static_cast<LClipboard*>(data)->OfferCreated(offer);
+    static_cast<WlClipboard*>(data)->OfferCreated(offer);
 }
 
 void HandleDataDeviceSelection(void* data, wl_data_device*, wl_data_offer* offer)
 {
-    static_cast<LClipboard*>(data)->SelectionChanged(offer);
+    static_cast<WlClipboard*>(data)->SelectionChanged(offer);
 }
 
 const wl_data_device_listener DataDeviceListener = {
@@ -80,7 +80,7 @@ const wl_data_device_listener DataDeviceListener = {
 
 void HandleOfferMime(void* data, wl_data_offer* offer, const char* mimeType)
 {
-    static_cast<LClipboard*>(data)->OfferMimeType(offer, mimeType);
+    static_cast<WlClipboard*>(data)->OfferMimeType(offer, mimeType);
 }
 
 const wl_data_offer_listener DataOfferListener = {
@@ -91,7 +91,7 @@ const wl_data_offer_listener DataOfferListener = {
 
 }
 
-LClipboard::LClipboard(LWindowing& windowing) noexcept
+WlClipboard::WlClipboard(WlWindowing& windowing) noexcept
     : m_windowing(windowing)
 {
     m_windowing.AttachClipboard(this);
@@ -99,7 +99,7 @@ LClipboard::LClipboard(LWindowing& windowing) noexcept
         NeoWPF::Diagnostics::Level::Info, "[LinuxClipboard] Attached clipboard");
 }
 
-LClipboard::~LClipboard()
+WlClipboard::~WlClipboard()
 {
     if (m_pendingReadFd >= 0) {
         close(m_pendingReadFd);
@@ -119,7 +119,7 @@ LClipboard::~LClipboard()
     m_windowing.DetachClipboard(this);
 }
 
-bool LClipboard::EnsureDevice() noexcept
+bool WlClipboard::EnsureDevice() noexcept
 {
     if (m_dataDevice) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Clipboard,
@@ -154,7 +154,7 @@ bool LClipboard::EnsureDevice() noexcept
     return true;
 }
 
-NeoWPF::Result<void> LClipboard::SetText(const std::wstring& text)
+NeoWPF::Result<void> WlClipboard::SetText(const std::wstring& text)
 {
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Clipboard,
         NeoWPF::Diagnostics::Level::Info,
@@ -204,7 +204,7 @@ NeoWPF::Result<void> LClipboard::SetText(const std::wstring& text)
     return NeoWPF::Success<void>{};
 }
 
-void LClipboard::SourceCancelled(wl_data_source* source) noexcept
+void WlClipboard::SourceCancelled(wl_data_source* source) noexcept
 {
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Clipboard,
         NeoWPF::Diagnostics::Level::Info, "[LinuxClipboard] Source cancelled: source=%p",
@@ -216,7 +216,7 @@ void LClipboard::SourceCancelled(wl_data_source* source) noexcept
     m_source = nullptr;
 }
 
-void LClipboard::OfferCreated(wl_data_offer* offer) noexcept
+void WlClipboard::OfferCreated(wl_data_offer* offer) noexcept
 {
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Clipboard,
         NeoWPF::Diagnostics::Level::Debug, "[LinuxClipboard] Offer created: offer=%p",
@@ -237,7 +237,7 @@ void LClipboard::OfferCreated(wl_data_offer* offer) noexcept
     }
 }
 
-void LClipboard::OfferMimeType(wl_data_offer* offer, const char* mimeType) noexcept
+void WlClipboard::OfferMimeType(wl_data_offer* offer, const char* mimeType) noexcept
 {
     if (offer == m_pendingOffer && mimeType) {
         m_offerMimeTypes.emplace_back(mimeType);
@@ -248,7 +248,7 @@ void LClipboard::OfferMimeType(wl_data_offer* offer, const char* mimeType) noexc
     }
 }
 
-void LClipboard::SelectionChanged(wl_data_offer* offer) noexcept
+void WlClipboard::SelectionChanged(wl_data_offer* offer) noexcept
 {
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Clipboard,
         NeoWPF::Diagnostics::Level::Debug,
@@ -267,7 +267,7 @@ void LClipboard::SelectionChanged(wl_data_offer* offer) noexcept
     }
 }
 
-void LClipboard::TryGetText(TextCallback callback)
+void WlClipboard::TryGetText(TextCallback callback)
 {
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Clipboard,
         NeoWPF::Diagnostics::Level::Info,
@@ -334,7 +334,7 @@ void LClipboard::TryGetText(TextCallback callback)
     }
 }
 
-NeoWPF::Result<void> LClipboard::Clear()
+NeoWPF::Result<void> WlClipboard::Clear()
 {
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Clipboard,
         NeoWPF::Diagnostics::Level::Info,
@@ -362,7 +362,7 @@ NeoWPF::Result<void> LClipboard::Clear()
     return NeoWPF::Success<void>{};
 }
 
-void LClipboard::ProcessPendingReads() noexcept
+void WlClipboard::ProcessPendingReads() noexcept
 {
     if (m_pendingReadFd < 0) {
         return;
@@ -392,7 +392,7 @@ void LClipboard::ProcessPendingReads() noexcept
     }
 }
 
-void LClipboard::CompleteRead(NeoWPF::Contracts::ClipboardTextResult result) noexcept
+void WlClipboard::CompleteRead(NeoWPF::Contracts::ClipboardTextResult result) noexcept
 {
     if (m_pendingReadFd >= 0) {
         close(m_pendingReadFd);
@@ -408,7 +408,7 @@ void LClipboard::CompleteRead(NeoWPF::Contracts::ClipboardTextResult result) noe
     }
 }
 
-void LClipboard::ResetOffer() noexcept
+void WlClipboard::ResetOffer() noexcept
 {
     if (m_selectionOffer) {
         wl_data_offer_destroy(m_selectionOffer);

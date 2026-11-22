@@ -7,7 +7,7 @@ See LICENSE file in the project root for full license text.
 
 #include <memory>
 
-#include <NeoWPF/Etc/Result.h>
+#include <NeoWPF/Feedback/Result.h>
 #include <NeoWPF/Core/Application/Resources/ResourceKey.h>
 #include <NeoWPF/UI/Properties/DependencyObject.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlNamescope.h>

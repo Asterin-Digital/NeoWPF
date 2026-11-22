@@ -11,7 +11,7 @@ See LICENSE file in the project root for full license text.
 
 #include <NeoWPF/Media/Audio/IAudioMixer.h>
 #include <NeoWPF/Media/Backends/IMediaBackend.h>
-#include <NeoWPF/Etc/Result.h>
+#include <NeoWPF/Feedback/Result.h>
 #include <NeoWPF/Media/Core/MediaError.h>
 
 namespace NeoWPF::Media {

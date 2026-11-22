@@ -11,7 +11,7 @@ See LICENSE file in the project root for full license text.
 #include <string>
 #include <vector>
 
-#include <NeoWPF/Etc/Result.h>
+#include <NeoWPF/Feedback/Result.h>
 
 namespace NeoWPF::Contracts {
 

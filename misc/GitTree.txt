@@ -1,3 +1,39 @@
+commit f5e675ddc21c0a610be81ca9b3369f1d00d51ac2
+Author: Yuki <kazolikescats@gmail.com>
+Date:   Sat Nov 21 18:22:32 2026 -0500
+
+    Feat (NeoWPF): Add hints messages for user-facing cases
+    
+    I switched to Linux recently, so this is gonna give me way more chances to properly test the Wayland backend and also add proper X11 support
+
+commit 06619e75e7e2bd9530c54b043ecac50eafaa9d40
+Author: Yuki <kazolikescats@gmail.com>
+Date:   Fri Nov 20 21:59:06 2026 +0200
+
+    Chore: Add a new dev guideline rule regarding diagnostics
+
+commit 88ca1b3fd7d474d09320bdb56406753409a34ef2
+Author: Yuki <kazolikescats@gmail.com>
+Date:   Fri Nov 20 21:51:54 2026 +0200
+
+    Chore: Add debug diagnostics for Linux UI scaling
+
+commit 085e65ddabf67382b3de3c25364c9fc1f186631a
+Author: Yuki <kazolikescats@gmail.com>
+Date:   Fri Nov 20 14:45:06 2026 +0200
+
+    Feat (NeoWPF): Add prototype implementation for responsive UI
+    
+    It was pretty annoying to do this since it was my first time working with DPI/advanced responsive so thid implementation isn't that good. Along with me needing help from some of my friends and AI assistance as well. I observed some issues with it on Android and Linux as well (though it was a bit worse on Linux, the window didn't even appear though the app starts fine.) I do know that it's gonna be more stable as i work more on it and stabilize it on all platforms. I think the Windows implementation is fine, but I will test it more now after this.
+    
+    AI Assisted
+
+commit bf553e3a327e718d4ad6477e0ecd8c31fb90526e
+Author: Yuki <kazolikescats@gmail.com>
+Date:   Wed Nov 18 14:18:03 2026 +0200
+
+    Refactor: Render gradient window backgrounds
+
 commit 046e2ff05a16ec9ea7919b911d3c98502d71659c
 Author: Yuki <kazolikescats@gmail.com>
 Date:   Wed Nov 18 09:08:23 2026 +0200

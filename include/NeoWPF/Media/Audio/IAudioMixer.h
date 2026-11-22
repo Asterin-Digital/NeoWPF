@@ -8,7 +8,7 @@ See LICENSE file in the project root for full license text.
 #include <chrono>
 #include <cstdint>
 
-#include <NeoWPF/Etc/Result.h>
+#include <NeoWPF/Feedback/Result.h>
 #include <NeoWPF/Media/Core/MediaError.h>
 #include <NeoWPF/Media/Core/MediaSource.h>
 #include <NeoWPF/Media/Core/MediaState.h>

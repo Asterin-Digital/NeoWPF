@@ -1,7 +1,7 @@
-#include <NeoWPF/Platform/Linux/LWindowing.h>
+#include <NeoWPF/Platform/Linux/Wayland/WlWindowing.h>
 #include <NeoWPF/Platform/Linux/LClientSideTitleBar.h>
-#include <NeoWPF/Platform/Linux/LWindow.h>
-#include <NeoWPF/Platform/Linux/LClipboard.h>
+#include <NeoWPF/Platform/Linux/Wayland/WlWindow.h>
+#include <NeoWPF/Platform/Linux/Wayland/WlClipboard.h>
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
@@ -55,8 +55,8 @@ bool CreateVulkanSurface(void*, void* instance, void* window, void* display,
 }
 
 const wl_registry_listener RegistryListener = {
-    &LWindowing::HandleGlobal,
-    &LWindowing::HandleGlobalRemove,
+    &WlWindowing::HandleGlobal,
+    &WlWindowing::HandleGlobalRemove,
 };
 
 void HandleOutputGeometry(void*, wl_output*, int32_t, int32_t, int32_t, int32_t,
@@ -76,12 +76,12 @@ const wl_output_listener OutputListener = {
     &HandleOutputGeometry,
     &HandleOutputMode,
     &HandleOutputDone,
-    &LWindowing::HandleOutputScale,
+    &WlWindowing::HandleOutputScale,
 };
 
 void HandleXdgWmBasePing(void* data, xdg_wm_base* shell, std::uint32_t serial)
 {
-    auto* windowing = static_cast<LWindowing*>(data);
+    auto* windowing = static_cast<WlWindowing*>(data);
     xdg_wm_base_pong(shell, serial);
     if (windowing->Display()) {
         wl_display_flush(windowing->Display());
@@ -94,12 +94,12 @@ const xdg_wm_base_listener XdgWmBaseListener = {
 
 }
 
-LWindowing::~LWindowing()
+WlWindowing::~WlWindowing()
 {
     Disconnect();
 }
 
-bool LWindowing::Connect()
+bool WlWindowing::Connect()
 {
     if (IsConnected()) {
         return true;
@@ -125,7 +125,7 @@ bool LWindowing::Connect()
     return m_compositor != nullptr && m_hasXdgShell;
 }
 
-void* LWindowing::CreateWindow(
+void* WlWindowing::CreateWindow(
     const wchar_t* title,
     int width,
     int height,
@@ -137,7 +137,7 @@ void* LWindowing::CreateWindow(
     }
 
     const bool transparent = windowHost && windowHost->IsTransparent();
-    auto window = std::make_unique<LWindow>(*this, title, width, height, transparent);
+    auto window = std::make_unique<WlWindow>(*this, title, width, height, transparent);
     if (!window->IsValid()) {
         return nullptr;
     }
@@ -174,7 +174,7 @@ void* LWindowing::CreateWindow(
     return nativeHandle;
 }
 
-bool LWindowing::GetNativeWindowInfo(void* nativeWindowHandle,
+bool WlWindowing::GetNativeWindowInfo(void* nativeWindowHandle,
                                      NeoWPF::Contracts::NativeWindowInfo& outInfo) const noexcept
 {
     outInfo = {};
@@ -194,13 +194,13 @@ bool LWindowing::GetNativeWindowInfo(void* nativeWindowHandle,
     return true;
 }
 
-bool LWindowing::IsWindowAlive(void* nativeWindowHandle) const noexcept
+bool WlWindowing::IsWindowAlive(void* nativeWindowHandle) const noexcept
 {
     const auto* window = FindWindow(nativeWindowHandle);
     return window && window->IsValid() && !window->IsClosed();
 }
 
-void LWindowing::GetWindowSize(void* nativeWindowHandle, unsigned int& outWidth,
+void WlWindowing::GetWindowSize(void* nativeWindowHandle, unsigned int& outWidth,
                                unsigned int& outHeight) const noexcept
 {
     outWidth = 0;
@@ -212,7 +212,7 @@ void LWindowing::GetWindowSize(void* nativeWindowHandle, unsigned int& outWidth,
     }
 }
 
-bool LWindowing::GetWindowScaleFactor(void* nativeWindowHandle,
+bool WlWindowing::GetWindowScaleFactor(void* nativeWindowHandle,
                                       double& outScaleFactor) const noexcept
 {
     outScaleFactor = 0.0;
@@ -242,7 +242,7 @@ bool LWindowing::GetWindowScaleFactor(void* nativeWindowHandle,
     return true;
 }
 
-void LWindowing::ResizeWindow(void* nativeWindowHandle, int width, int height) noexcept
+void WlWindowing::ResizeWindow(void* nativeWindowHandle, int width, int height) noexcept
 {
     if (auto* window = FindWindow(nativeWindowHandle)) {
         window->SetSize(width, height);
@@ -251,7 +251,7 @@ void LWindowing::ResizeWindow(void* nativeWindowHandle, int width, int height) n
     }
 }
 
-void LWindowing::ShowWindow(void* nativeWindowHandle) noexcept
+void WlWindowing::ShowWindow(void* nativeWindowHandle) noexcept
 {
     if (auto* window = FindWindow(nativeWindowHandle)) {
         wl_surface_commit(window->Surface());
@@ -259,11 +259,11 @@ void LWindowing::ShowWindow(void* nativeWindowHandle) noexcept
     }
 }
 
-void LWindowing::HideWindow(void*) noexcept
+void WlWindowing::HideWindow(void*) noexcept
 {
 }
 
-void LWindowing::CloseWindow(void* nativeWindowHandle) noexcept
+void WlWindowing::CloseWindow(void* nativeWindowHandle) noexcept
 {
     auto it = std::find_if(m_windows.begin(), m_windows.end(), [nativeWindowHandle](const auto& window) {
         return window.get() == nativeWindowHandle;
@@ -271,17 +271,17 @@ void LWindowing::CloseWindow(void* nativeWindowHandle) noexcept
     if (it == m_windows.end()) {
         return;
     }
-    (*it)->Close();
     NeoWPF::Core::CloseWindow(nativeWindowHandle);
+    (*it)->Close();
     m_windows.erase(it);
 }
 
-void LWindowing::InvalidateWindow(void* nativeWindowHandle) noexcept
+void WlWindowing::InvalidateWindow(void* nativeWindowHandle) noexcept
 {
     ShowWindow(nativeWindowHandle);
 }
 
-bool LWindowing::PumpMessages(std::chrono::milliseconds timeout)
+bool WlWindowing::PumpMessages(std::chrono::milliseconds timeout)
 {
     if (!m_display || wl_display_dispatch_pending(m_display) < 0) {
         return false;
@@ -309,12 +309,12 @@ bool LWindowing::PumpMessages(std::chrono::milliseconds timeout)
     return !m_windows.empty() && m_exitCode == 0;
 }
 
-int LWindowing::ExitCode() const noexcept
+int WlWindowing::ExitCode() const noexcept
 {
     return m_exitCode;
 }
 
-void LWindowing::RequestQuit(int exitCode) noexcept
+void WlWindowing::RequestQuit(int exitCode) noexcept
 {
     m_exitCode = exitCode;
     while (!m_windows.empty()) {
@@ -322,22 +322,22 @@ void LWindowing::RequestQuit(int exitCode) noexcept
     }
 }
 
-void LWindowing::ShowFatalError(const std::wstring&, const std::wstring& message) noexcept
+void WlWindowing::ShowFatalError(const std::wstring&, const std::wstring& message) noexcept
 {
     NeoWPF::Diagnostics::LogError("%s", NeoWPF::Platform::WideToUtf8(message).c_str());
 }
 
-void LWindowing::SetConsoleVisible(bool visible) noexcept
+void WlWindowing::SetConsoleVisible(bool visible) noexcept
 {
     m_consoleVisible = visible;
 }
 
-bool LWindowing::IsConsoleVisible() const noexcept
+bool WlWindowing::IsConsoleVisible() const noexcept
 {
     return m_consoleVisible;
 }
 
-LWindow* LWindowing::FindWindow(void* nativeWindowHandle) noexcept
+WlWindow* WlWindowing::FindWindow(void* nativeWindowHandle) noexcept
 {
     const auto it = std::find_if(m_windows.begin(), m_windows.end(), [nativeWindowHandle](const auto& window) {
         return window.get() == nativeWindowHandle;
@@ -345,7 +345,7 @@ LWindow* LWindowing::FindWindow(void* nativeWindowHandle) noexcept
     return it == m_windows.end() ? nullptr : it->get();
 }
 
-const LWindow* LWindowing::FindWindow(void* nativeWindowHandle) const noexcept
+const WlWindow* WlWindowing::FindWindow(void* nativeWindowHandle) const noexcept
 {
     const auto it = std::find_if(m_windows.begin(), m_windows.end(), [nativeWindowHandle](const auto& window) {
         return window.get() == nativeWindowHandle;
@@ -353,7 +353,7 @@ const LWindow* LWindowing::FindWindow(void* nativeWindowHandle) const noexcept
     return it == m_windows.end() ? nullptr : it->get();
 }
 
-void LWindowing::Disconnect() noexcept
+void WlWindowing::Disconnect() noexcept
 {
     for (auto& window : m_windows) {
         window->Close();
@@ -396,37 +396,37 @@ void LWindowing::Disconnect() noexcept
     m_hasXdgShell = false;
 }
 
-bool LWindowing::IsConnected() const noexcept
+bool WlWindowing::IsConnected() const noexcept
 {
     return m_display != nullptr && m_registry != nullptr;
 }
 
-wl_display* LWindowing::Display() const noexcept
+wl_display* WlWindowing::Display() const noexcept
 {
     return m_display;
 }
 
-wl_compositor* LWindowing::Compositor() const noexcept
+wl_compositor* WlWindowing::Compositor() const noexcept
 {
     return m_compositor;
 }
 
-wl_shm* LWindowing::Shm() const noexcept
+wl_shm* WlWindowing::Shm() const noexcept
 {
     return m_shm;
 }
 
-wl_seat* LWindowing::Seat() const noexcept
+wl_seat* WlWindowing::Seat() const noexcept
 {
     return m_seat;
 }
 
-wl_data_device_manager* LWindowing::DataDeviceManager() const noexcept
+wl_data_device_manager* WlWindowing::DataDeviceManager() const noexcept
 {
     return m_dataDeviceManager;
 }
 
-int LWindowing::GetOutputScale(wl_output* output) const noexcept
+int WlWindowing::GetOutputScale(wl_output* output) const noexcept
 {
     const auto it = std::find_if(
         m_outputs.begin(), m_outputs.end(),
@@ -434,50 +434,50 @@ int LWindowing::GetOutputScale(wl_output* output) const noexcept
     return it == m_outputs.end() ? 0 : it->scale;
 }
 
-void LWindowing::AttachClipboard(LClipboard* clipboard) noexcept
+void WlWindowing::AttachClipboard(WlClipboard* clipboard) noexcept
 {
     m_clipboard = clipboard;
 }
 
-void LWindowing::DetachClipboard(LClipboard* clipboard) noexcept
+void WlWindowing::DetachClipboard(WlClipboard* clipboard) noexcept
 {
     if (m_clipboard == clipboard) {
         m_clipboard = nullptr;
     }
 }
 
-void LWindowing::RegisterInputSerial(std::uint32_t serial) noexcept
+void WlWindowing::RegisterInputSerial(std::uint32_t serial) noexcept
 {
     if (serial != 0) {
         m_lastInputSerial = serial;
     }
 }
 
-std::uint32_t LWindowing::LastInputSerial() const noexcept
+std::uint32_t WlWindowing::LastInputSerial() const noexcept
 {
     return m_lastInputSerial;
 }
 
-xdg_wm_base* LWindowing::XdgWmBase() const noexcept
+xdg_wm_base* WlWindowing::XdgWmBase() const noexcept
 {
     return m_xdgWmBase;
 }
 
 wp_fractional_scale_manager_v1*
-LWindowing::FractionalScaleManager() const noexcept
+WlWindowing::FractionalScaleManager() const noexcept
 {
     return m_fractionalScaleManager;
 }
 
-bool LWindowing::HasXdgShell() const noexcept
+bool WlWindowing::HasXdgShell() const noexcept
 {
     return m_hasXdgShell;
 }
 
-void LWindowing::HandleGlobal(void* data, wl_registry* registry, std::uint32_t name,
+void WlWindowing::HandleGlobal(void* data, wl_registry* registry, std::uint32_t name,
                               const char* interface, std::uint32_t version)
 {
-    auto* windowing = static_cast<LWindowing*>(data);
+    auto* windowing = static_cast<WlWindowing*>(data);
     if (std::strcmp(interface, wl_output_interface.name) == 0) {
         auto* output = static_cast<wl_output*>(wl_registry_bind(
             registry, name, &wl_output_interface, std::min(version, 2u)));
@@ -517,9 +517,9 @@ void LWindowing::HandleGlobal(void* data, wl_registry* registry, std::uint32_t n
     }
 }
 
-void LWindowing::HandleGlobalRemove(void* data, wl_registry*, std::uint32_t name)
+void WlWindowing::HandleGlobalRemove(void* data, wl_registry*, std::uint32_t name)
 {
-    auto* windowing = static_cast<LWindowing*>(data);
+    auto* windowing = static_cast<WlWindowing*>(data);
     const auto outputIt = std::find_if(
         windowing->m_outputs.begin(), windowing->m_outputs.end(),
         [name](const OutputState& output) { return output.name == name; });
@@ -535,9 +535,9 @@ void LWindowing::HandleGlobalRemove(void* data, wl_registry*, std::uint32_t name
     wl_output_destroy(output);
 }
 
-void LWindowing::HandleOutputScale(void* data, wl_output* output, int32_t scale)
+void WlWindowing::HandleOutputScale(void* data, wl_output* output, int32_t scale)
 {
-    auto* windowing = static_cast<LWindowing*>(data);
+    auto* windowing = static_cast<WlWindowing*>(data);
     if (!windowing || scale <= 0) {
         return;
     }

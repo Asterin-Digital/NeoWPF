@@ -377,6 +377,7 @@ void VulkanRendering::BeginFrame(const NeoWPF::Rendering::RenderSurface& surface
     }
     VkResult result = vkWaitForFences(m_device, 1, &context->inFlight, VK_TRUE, UINT64_MAX);
     if (result != VK_SUCCESS) {
+        context->frameActive = false;
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
             NeoWPF::Diagnostics::Level::Debug,
             "[Vulkan] vkWaitForFences failed: %s (%d)",

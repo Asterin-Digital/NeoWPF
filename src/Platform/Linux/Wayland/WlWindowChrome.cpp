@@ -1,8 +1,8 @@
-#include <NeoWPF/Platform/Linux/LWindowChrome.h>
+#include <NeoWPF/Platform/Linux/Wayland/WlWindowChrome.h>
 
 #include <NeoWPF/Platform/Linux/LClientSideTitleBar.h>
-#include <NeoWPF/Platform/Linux/LWindow.h>
-#include <NeoWPF/Platform/Linux/LWindowing.h>
+#include <NeoWPF/Platform/Linux/Wayland/WlWindow.h>
+#include <NeoWPF/Platform/Linux/Wayland/WlWindowing.h>
 
 #include <unordered_map>
 
@@ -16,31 +16,31 @@ bool IsHandleValid(void* nativeWindowHandle) noexcept
 
 }
 
-std::recursive_mutex& LWindowChrome::StateMutex()
+std::recursive_mutex& WlWindowChrome::StateMutex()
 {
     static std::recursive_mutex mutex;
     return mutex;
 }
 
-std::unordered_map<void*, LWindowChrome::WindowState>& LWindowChrome::StateMap()
+std::unordered_map<void*, WlWindowChrome::WindowState>& WlWindowChrome::StateMap()
 {
     static std::unordered_map<void*, WindowState> map;
     return map;
 }
 
-NeoWPF::Contracts::ChromeMode LWindowChrome::DefaultChromeMode() const noexcept
+NeoWPF::Contracts::ChromeMode WlWindowChrome::DefaultChromeMode() const noexcept
 {
     return NeoWPF::Contracts::ChromeMode::Native;
 }
 
-bool LWindowChrome::SupportsMode(NeoWPF::Contracts::ChromeMode mode) const noexcept
+bool WlWindowChrome::SupportsMode(NeoWPF::Contracts::ChromeMode mode) const noexcept
 {
     return mode == NeoWPF::Contracts::ChromeMode::Native ||
            mode == NeoWPF::Contracts::ChromeMode::Custom ||
            mode == NeoWPF::Contracts::ChromeMode::None;
 }
 
-bool LWindowChrome::SetChromeMode(void* nativeWindowHandle, NeoWPF::Contracts::ChromeMode mode) noexcept
+bool WlWindowChrome::SetChromeMode(void* nativeWindowHandle, NeoWPF::Contracts::ChromeMode mode) noexcept
 {
     if (!IsHandleValid(nativeWindowHandle) || !SupportsMode(mode)) {
         return false;
@@ -59,7 +59,7 @@ bool LWindowChrome::SetChromeMode(void* nativeWindowHandle, NeoWPF::Contracts::C
     return true;
 }
 
-NeoWPF::Contracts::ChromeMode LWindowChrome::GetChromeMode(void* nativeWindowHandle) const noexcept
+NeoWPF::Contracts::ChromeMode WlWindowChrome::GetChromeMode(void* nativeWindowHandle) const noexcept
 {
     if (!IsHandleValid(nativeWindowHandle)) {
         return DefaultChromeMode();
@@ -70,7 +70,7 @@ NeoWPF::Contracts::ChromeMode LWindowChrome::GetChromeMode(void* nativeWindowHan
     return it == StateMap().end() ? DefaultChromeMode() : it->second.mode;
 }
 
-void LWindowChrome::SetTitleBarHitTest(void* nativeWindowHandle,
+void WlWindowChrome::SetTitleBarHitTest(void* nativeWindowHandle,
                                        NeoWPF::Contracts::ChromeHitTestCallback callback,
                                        void* userData) noexcept
 {
@@ -84,9 +84,9 @@ void LWindowChrome::SetTitleBarHitTest(void* nativeWindowHandle,
     state.hitTestUserData = userData;
 }
 
-void LWindowChrome::BeginInteractiveMove(void* nativeWindowHandle) noexcept
+void WlWindowChrome::BeginInteractiveMove(void* nativeWindowHandle) noexcept
 {
-    auto* window = static_cast<LWindow*>(nativeWindowHandle);
+    auto* window = static_cast<WlWindow*>(nativeWindowHandle);
     if (!window) {
         return;
     }
@@ -96,10 +96,10 @@ void LWindowChrome::BeginInteractiveMove(void* nativeWindowHandle) noexcept
     }
 }
 
-void LWindowChrome::BeginInteractiveResize(void* nativeWindowHandle,
+void WlWindowChrome::BeginInteractiveResize(void* nativeWindowHandle,
                                           NeoWPF::Contracts::ResizeEdge edge) noexcept
 {
-    auto* window = static_cast<LWindow*>(nativeWindowHandle);
+    auto* window = static_cast<WlWindow*>(nativeWindowHandle);
     if (!window) {
         return;
     }
@@ -110,9 +110,9 @@ void LWindowChrome::BeginInteractiveResize(void* nativeWindowHandle,
     }
 }
 
-void LWindowChrome::SetMaximized(void* nativeWindowHandle, bool maximized) noexcept
+void WlWindowChrome::SetMaximized(void* nativeWindowHandle, bool maximized) noexcept
 {
-    auto* window = static_cast<LWindow*>(nativeWindowHandle);
+    auto* window = static_cast<WlWindow*>(nativeWindowHandle);
     if (!window) {
         return;
     }
@@ -120,21 +120,21 @@ void LWindowChrome::SetMaximized(void* nativeWindowHandle, bool maximized) noexc
     window->Maximize(maximized);
 }
 
-bool LWindowChrome::IsZoomed(void* nativeWindowHandle) const noexcept
+bool WlWindowChrome::IsZoomed(void* nativeWindowHandle) const noexcept
 {
-    auto* window = static_cast<LWindow*>(nativeWindowHandle);
+    auto* window = static_cast<WlWindow*>(nativeWindowHandle);
     return window && window->IsMaximized();
 }
 
-bool LWindowChrome::IsMaximized(void* nativeWindowHandle) const noexcept
+bool WlWindowChrome::IsMaximized(void* nativeWindowHandle) const noexcept
 {
-    auto* window = static_cast<LWindow*>(nativeWindowHandle);
+    auto* window = static_cast<WlWindow*>(nativeWindowHandle);
     return window && window->IsMaximized();
 }
 
-void LWindowChrome::SetMinimized(void* nativeWindowHandle) noexcept
+void WlWindowChrome::SetMinimized(void* nativeWindowHandle) noexcept
 {
-    auto* window = static_cast<LWindow*>(nativeWindowHandle);
+    auto* window = static_cast<WlWindow*>(nativeWindowHandle);
     if (!window) {
         return;
     }
@@ -142,7 +142,7 @@ void LWindowChrome::SetMinimized(void* nativeWindowHandle) noexcept
     window->Minimize();
 }
 
-bool LWindowChrome::SetNativeCaptionColor(void* nativeWindowHandle, std::uint32_t argbColor) noexcept
+bool WlWindowChrome::SetNativeCaptionColor(void* nativeWindowHandle, std::uint32_t argbColor) noexcept
 {
     (void)nativeWindowHandle;
     (void)argbColor;

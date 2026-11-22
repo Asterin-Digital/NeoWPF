@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <NeoWPF/Etc/Result.h>
+#include <NeoWPF/Feedback/Result.h>
 
 #include <memory>
 #include <string>

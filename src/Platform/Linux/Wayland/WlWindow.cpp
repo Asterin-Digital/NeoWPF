@@ -1,4 +1,4 @@
-#include <NeoWPF/Platform/Linux/LWindow.h>
+#include <NeoWPF/Platform/Linux/Wayland/WlWindow.h>
 #include <NeoWPF/Platform/NativeWindow.h>
 #include <NeoWPF/Platform/PlatformRegistry.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
@@ -13,24 +13,24 @@ namespace NeoWPF::Platform::Linux {
 namespace {
 
 const xdg_surface_listener SurfaceListener = {
-    &LWindow::HandleSurfaceConfigure,
+    &WlWindow::HandleSurfaceConfigure,
 };
 
 const xdg_toplevel_listener ToplevelListener = {
-    &LWindow::HandleToplevelConfigure,
-    &LWindow::HandleToplevelClose,
+    &WlWindow::HandleToplevelConfigure,
+    &WlWindow::HandleToplevelClose,
 };
 
 const wl_surface_listener WindowSurfaceListener = {
-    &LWindow::HandleSurfaceEnter,
-    &LWindow::HandleSurfaceLeave,
+    &WlWindow::HandleSurfaceEnter,
+    &WlWindow::HandleSurfaceLeave,
 };
 
 void HandlePreferredScale(void* data,
                           wp_fractional_scale_v1*,
                           std::uint32_t preferredScale)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     if (!window || preferredScale == 0) {
         return;
     }
@@ -43,7 +43,7 @@ const wp_fractional_scale_v1_listener FractionalScaleListener = {
 
 }
 
-LWindow::LWindow(LWindowing& windowing, const wchar_t* title, int width, int height,
+WlWindow::WlWindow(WlWindowing& windowing, const wchar_t* title, int width, int height,
              bool transparent)
         : m_windowing(windowing),
             m_display(windowing.Display()),
@@ -88,17 +88,17 @@ LWindow::LWindow(LWindowing& windowing, const wchar_t* title, int width, int hei
     }
 }
 
-LWindow::~LWindow()
+WlWindow::~WlWindow()
 {
     Close();
 }
 
-bool LWindow::IsValid() const noexcept
+bool WlWindow::IsValid() const noexcept
 {
     return m_surface != nullptr && m_xdgSurface != nullptr && m_xdgToplevel != nullptr;
 }
 
-void LWindow::Close() noexcept
+void WlWindow::Close() noexcept
 {
     if (m_fractionalScale) {
         wp_fractional_scale_v1_destroy(m_fractionalScale);
@@ -138,63 +138,63 @@ void LWindow::Close() noexcept
     }
 }
 
-wl_surface* LWindow::Surface() const noexcept
+wl_surface* WlWindow::Surface() const noexcept
 {
     return m_surface;
 }
 
-wl_display* LWindow::Display() const noexcept
+wl_display* WlWindow::Display() const noexcept
 {
     return m_display;
 }
 
-const std::wstring& LWindow::Title() const noexcept
+const std::wstring& WlWindow::Title() const noexcept
 {
     return m_title;
 }
 
-int LWindow::Width() const noexcept
+int WlWindow::Width() const noexcept
 {
     return m_width;
 }
 
-int LWindow::Height() const noexcept
+int WlWindow::Height() const noexcept
 {
     return m_height;
 }
 
-bool LWindow::IsTransparent() const noexcept
+bool WlWindow::IsTransparent() const noexcept
 {
     return m_transparent;
 }
 
-void LWindow::SetSize(int width, int height) noexcept
+void WlWindow::SetSize(int width, int height) noexcept
 {
     m_width = (std::max)(width, 1);
     m_height = (std::max)(height, 1);
 }
 
-bool LWindow::IsConfigured() const noexcept
+bool WlWindow::IsConfigured() const noexcept
 {
     return m_configured;
 }
 
-bool LWindow::IsClosed() const noexcept
+bool WlWindow::IsClosed() const noexcept
 {
     return m_closed;
 }
 
-bool LWindow::IsMaximized() const noexcept
+bool WlWindow::IsMaximized() const noexcept
 {
     return m_maximized;
 }
 
-double LWindow::ScaleFactor() const noexcept
+double WlWindow::ScaleFactor() const noexcept
 {
     return m_scaleFactor;
 }
 
-const char* LWindow::ScaleFactorUnavailableReason() const noexcept
+const char* WlWindow::ScaleFactorUnavailableReason() const noexcept
 {
     if (m_outputs.empty()) {
         return m_fractionalScale
@@ -204,7 +204,7 @@ const char* LWindow::ScaleFactorUnavailableReason() const noexcept
     return "no usable integer scale is available for the entered outputs";
 }
 
-void LWindow::SetFractionalScaleFactor(double scaleFactor) noexcept
+void WlWindow::SetFractionalScaleFactor(double scaleFactor) noexcept
 {
     if (!std::isfinite(scaleFactor) || scaleFactor <= 0.0) {
         return;
@@ -217,7 +217,7 @@ void LWindow::SetFractionalScaleFactor(double scaleFactor) noexcept
     m_hasFractionalScale = true;
 }
 
-void LWindow::UpdateIntegerScaleFactor() noexcept
+void WlWindow::UpdateIntegerScaleFactor() noexcept
 {
     if (m_hasFractionalScale) {
         return;
@@ -239,20 +239,20 @@ void LWindow::UpdateIntegerScaleFactor() noexcept
     m_hasFractionalScale = false;
 }
 
-void LWindow::RemoveOutput(wl_output* output) noexcept
+void WlWindow::RemoveOutput(wl_output* output) noexcept
 {
     m_outputs.erase(std::remove(m_outputs.begin(), m_outputs.end(), output), m_outputs.end());
     UpdateIntegerScaleFactor();
 }
 
-void LWindow::Minimize() noexcept
+void WlWindow::Minimize() noexcept
 {
     if (m_xdgToplevel) {
         xdg_toplevel_set_minimized(m_xdgToplevel);
     }
 }
 
-void LWindow::Maximize(bool maximize) noexcept
+void WlWindow::Maximize(bool maximize) noexcept
 {
     if (!m_xdgToplevel) {
         return;
@@ -265,7 +265,7 @@ void LWindow::Maximize(bool maximize) noexcept
     }
 }
 
-void LWindow::AcknowledgeConfigure() noexcept
+void WlWindow::AcknowledgeConfigure() noexcept
 {
     if (m_xdgSurface && m_configureSerial != 0) {
         xdg_surface_ack_configure(m_xdgSurface, m_configureSerial);
@@ -273,9 +273,9 @@ void LWindow::AcknowledgeConfigure() noexcept
     }
 }
 
-void LWindow::HandleSurfaceConfigure(void* data, xdg_surface*, std::uint32_t serial)
+void WlWindow::HandleSurfaceConfigure(void* data, xdg_surface*, std::uint32_t serial)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     if (!window) {
         return;
     }
@@ -283,10 +283,10 @@ void LWindow::HandleSurfaceConfigure(void* data, xdg_surface*, std::uint32_t ser
     window->m_configured = true;
 }
 
-void LWindow::HandleToplevelConfigure(void* data, xdg_toplevel*, int32_t width,
+void WlWindow::HandleToplevelConfigure(void* data, xdg_toplevel*, int32_t width,
                                       int32_t height, wl_array*)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     if (!window) {
         return;
     }
@@ -295,17 +295,17 @@ void LWindow::HandleToplevelConfigure(void* data, xdg_toplevel*, int32_t width,
     }
 }
 
-void LWindow::HandleToplevelClose(void* data, xdg_toplevel*)
+void WlWindow::HandleToplevelClose(void* data, xdg_toplevel*)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     if (window) {
         window->m_closed = true;
     }
 }
 
-void LWindow::HandleSurfaceEnter(void* data, wl_surface*, wl_output* output)
+void WlWindow::HandleSurfaceEnter(void* data, wl_surface*, wl_output* output)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     if (!window || !output) {
         return;
     }
@@ -316,9 +316,9 @@ void LWindow::HandleSurfaceEnter(void* data, wl_surface*, wl_output* output)
     window->UpdateIntegerScaleFactor();
 }
 
-void LWindow::HandleSurfaceLeave(void* data, wl_surface*, wl_output* output)
+void WlWindow::HandleSurfaceLeave(void* data, wl_surface*, wl_output* output)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     if (window && output) {
         window->RemoveOutput(output);
     }

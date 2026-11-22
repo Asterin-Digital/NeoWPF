@@ -12,7 +12,7 @@ See LICENSE file in the project root for full license text.
 #include <string_view>
 #include <unordered_map>
 
-#include <NeoWPF/Etc/Result.h>
+#include <NeoWPF/Feedback/Result.h>
 
 namespace NeoWPF::UI::Properties {
 class DependencyObject;

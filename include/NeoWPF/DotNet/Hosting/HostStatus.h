@@ -5,7 +5,7 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
-#include <NeoWPF/Etc/Hints.h>
+#include <NeoWPF/Feedback/Hints.h>
 
 #include <cstdint>
 #include <string>

@@ -17,7 +17,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/Contracts/IWindowChrome.h>
 #include <NeoWPF/Contracts/IRendering.h>
 #include <NeoWPF/Contracts/IWindowing.h>
-#include <NeoWPF/Etc/Result.h>
+#include <NeoWPF/Feedback/Result.h>
 #include <NeoWPF/Platform/Capabilities.h>
 
 namespace NeoWPF::Diagnostics {

@@ -55,6 +55,23 @@ TEST(TextBoxTests, PointerPressPlacesCaretBeforeSubsequentCharacterInput)
     EXPECT_EQ(textBox.GetText(), L"xabc");
 }
 
+TEST(TextBoxTests, RapidCharacterInputKeepsTextAndCaretConsistent)
+{
+    TestTextBox textBox;
+    textBox.SetWidth(200.0);
+    textBox.SetHeight(40.0);
+    textBox.SetText(L"");
+    textBox.Measure(200.0, 40.0);
+    textBox.Arrange(200.0, 40.0);
+
+    for (int index = 0; index < 256; ++index) {
+        RaiseKeyDown(textBox, NeoWPF::Input::Key::A, L'a');
+    }
+
+    EXPECT_EQ(textBox.GetText().size(), 256u);
+    EXPECT_EQ(textBox.GetText(), std::wstring(256u, L'a'));
+}
+
 TEST(TextBoxTests, PointerWheelScrollInvalidatesVisualAndMarksEventHandled)
 {
     TestTextBox textBox;

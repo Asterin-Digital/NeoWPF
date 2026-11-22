@@ -9,7 +9,7 @@
 #include <NeoWPF/Platform/Android/AWindowing.h>
 #include <android/keycodes.h>
 #elif defined(__linux__)
-#include <NeoWPF/Platform/Linux/LWindow.h>
+#include <NeoWPF/Platform/Linux/LKeyboard.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
 #endif
 

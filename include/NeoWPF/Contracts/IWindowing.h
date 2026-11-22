@@ -19,6 +19,7 @@ namespace NeoWPF::Contracts {
 enum class NativeWindowSystem {
     Unknown,
     Win32,
+    X11,
     Wayland,
     Android,
 };

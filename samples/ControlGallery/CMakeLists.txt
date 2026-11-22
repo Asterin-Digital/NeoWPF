@@ -88,14 +88,20 @@ if(CONTROL_GALLERY_SOURCES)
     elseif(UNIX)
         find_package(PkgConfig REQUIRED)
         find_package(Vulkan REQUIRED)
+        find_package(X11 REQUIRED)
         pkg_check_modules(WAYLAND REQUIRED IMPORTED_TARGET wayland-client)
         pkg_check_modules(XKBCOMMON REQUIRED IMPORTED_TARGET xkbcommon)
+        if(NOT X11_Xfixes_FOUND)
+            message(FATAL_ERROR "NeoWPF Control Gallery requires libXfixes development files on Linux.")
+        endif()
 
         target_link_libraries(${NEOWPF_CONTROL_GALLERY_TARGET} PRIVATE
             "${NEOWPF_LIBRARY}"
             Vulkan::Vulkan
             PkgConfig::WAYLAND
             PkgConfig::XKBCOMMON
+            ${X11_X11_LIB}
+            ${X11_Xfixes_LIB}
         )
     else()
         target_link_libraries(${NEOWPF_CONTROL_GALLERY_TARGET} PRIVATE "${NEOWPF_LIBRARY}")

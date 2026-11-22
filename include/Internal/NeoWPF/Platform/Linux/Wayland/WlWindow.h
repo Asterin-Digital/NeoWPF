@@ -5,7 +5,8 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
-#include <NeoWPF/Platform/Linux/LWindowing.h>
+#include <NeoWPF/Platform/Linux/Wayland/WlWindowing.h>
+#include <NeoWPF/Platform/Linux/LKeyboard.h>
 #include <fractional-scale-v1-client-protocol.h>
 
 #include <string>
@@ -16,28 +17,14 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::Platform::Linux {
 
-/*
-    @summary
-    Converts an XKB keysym to a NeoWPF key code.
-
-    @param keysym
-    XKB keysym to translate.
-
-    @returns
-    The matching key code, or zero when it is not mapped.
-
-    @internal
-*/
-std::uint32_t TranslateXkbKeysymToVirtualKey(std::uint32_t keysym) noexcept;
-
-class LWindow final {
+class WlWindow final {
 public:
-        LWindow(LWindowing& windowing, const wchar_t* title, int width, int height,
+        WlWindow(WlWindowing& windowing, const wchar_t* title, int width, int height,
             bool transparent = false);
-    ~LWindow();
+    ~WlWindow();
 
-    LWindow(const LWindow&) = delete;
-    LWindow& operator=(const LWindow&) = delete;
+    WlWindow(const WlWindow&) = delete;
+    WlWindow& operator=(const WlWindow&) = delete;
 
     bool IsValid() const noexcept;
     void Close() noexcept;
@@ -136,7 +123,7 @@ private:
     void UpdateKeyStateFromWayland(std::uint32_t key, bool isPressed, wchar_t charCode);
     std::uint32_t WaylandButtonToNeoWPFButton(std::uint32_t button) const noexcept;
 
-    LWindowing& m_windowing;
+    WlWindowing& m_windowing;
     wl_display* m_display = nullptr;
     wl_surface* m_surface = nullptr;
     wl_seat* m_seat = nullptr;

@@ -6,13 +6,16 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoWPF/Contracts/IPlatform.h>
+#include <NeoWPF/Contracts/IGeneral.h>
+#include <NeoWPF/Contracts/IWindowChrome.h>
+#include <NeoWPF/Contracts/IWindowing.h>
 #include <NeoWPF/Platform/CurlHttp.h>
-#include <NeoWPF/Platform/Linux/LClipboard.h>
+#include <NeoWPF/Platform/Linux/LCompositor.h>
 #include <NeoWPF/Platform/Linux/LFileDialog.h>
 #include <NeoWPF/Platform/Linux/LImageDecoding.h>
-#include <NeoWPF/Platform/Linux/LWindowChrome.h>
-#include <NeoWPF/Platform/Linux/LWindowing.h>
 #include <NeoWPF/Rendering/Vulkan/VulkanRendering.h>
+
+#include <memory>
 
 namespace NeoWPF::Platform::Linux {
 
@@ -73,9 +76,7 @@ private:
     std::filesystem::path m_applicationDataDirectory;
     NeoWPF::Platform::CurlHttp m_http;
     LImageDecoding m_imageDecoding;
-    LWindowing m_windowing;
-    LClipboard m_clipboard;
-    LWindowChrome m_chrome;
+    LCompositor m_compositor;
     NeoWPF::Rendering::Vulkan::VulkanRendering m_rendering;
 };
 

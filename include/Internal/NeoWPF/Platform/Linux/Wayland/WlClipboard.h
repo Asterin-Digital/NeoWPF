@@ -13,15 +13,15 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::Platform::Linux {
 
-class LWindowing;
+class WlWindowing;
 
-class LClipboard final : public NeoWPF::Contracts::IClipboard {
+class WlClipboard final : public NeoWPF::Contracts::IClipboard {
 public:
-    explicit LClipboard(LWindowing& windowing) noexcept;
-    ~LClipboard() override;
+    explicit WlClipboard(WlWindowing& windowing) noexcept;
+    ~WlClipboard() override;
 
-    LClipboard(const LClipboard&) = delete;
-    LClipboard& operator=(const LClipboard&) = delete;
+    WlClipboard(const WlClipboard&) = delete;
+    WlClipboard& operator=(const WlClipboard&) = delete;
 
     NeoWPF::Result<void> SetText(const std::wstring& text) override;
     void TryGetText(TextCallback callback) override;
@@ -39,7 +39,7 @@ private:
     void CompleteRead(NeoWPF::Contracts::ClipboardTextResult result) noexcept;
     void ResetOffer() noexcept;
 
-    LWindowing& m_windowing;
+    WlWindowing& m_windowing;
     wl_data_device* m_dataDevice = nullptr;
     wl_data_source* m_source = nullptr;
     wl_data_offer* m_selectionOffer = nullptr;

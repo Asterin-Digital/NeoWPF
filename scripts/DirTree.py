@@ -144,3 +144,4 @@ if __name__ == "__main__":
     build_tree(root, is_ignored)
 
 # python "C:\Users\Katsu\source\repos\NeoWPF\scripts\DirTree.py" "C:\Users\Katsu\source\repos\NeoWPF" > misc/TreeOutput.txt
+# python3 "/home/katsu/Projects/NeoWPF/scripts/DirTree.py" "/home/katsu/Projects/NeoWPF" > misc/TreeOutput.txt

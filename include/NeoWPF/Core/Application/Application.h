@@ -21,7 +21,7 @@ See LICENSE file in the project root for full license text.
 #include <any>
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/Core/Application/Resources/ResourceManager.h>
-#include <NeoWPF/Etc/Result.h>
+#include <NeoWPF/Feedback/Result.h>
 #include <NeoWPF/Core/Application/DeviceCategory.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
 #include <NeoWPF/Diagnostics/VisualTreeDumper.h>

@@ -3,7 +3,7 @@
 #include <string>
 #include <filesystem>
 
-#include <NeoWPF/Etc/Result.h>
+#include <NeoWPF/Feedback/Result.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 
 namespace NeoWPF::Platform {

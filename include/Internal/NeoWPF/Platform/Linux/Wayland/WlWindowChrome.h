@@ -12,7 +12,7 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::Platform::Linux {
 
-class LWindowChrome final : public NeoWPF::Contracts::IWindowChrome {
+class WlWindowChrome final : public NeoWPF::Contracts::IWindowChrome {
 public:
     struct WindowState {
         NeoWPF::Contracts::ChromeMode mode = NeoWPF::Contracts::ChromeMode::Custom;
@@ -20,8 +20,8 @@ public:
         void* hitTestUserData = nullptr;
     };
 
-    LWindowChrome() = default;
-    ~LWindowChrome() override = default;
+    WlWindowChrome() = default;
+    ~WlWindowChrome() override = default;
 
     NeoWPF::Contracts::ChromeMode DefaultChromeMode() const noexcept override;
     bool SupportsMode(NeoWPF::Contracts::ChromeMode mode) const noexcept override;

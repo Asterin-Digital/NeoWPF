@@ -1,4 +1,5 @@
-#include <NeoWPF/Platform/Linux/LWindow.h>
+#include <NeoWPF/Platform/Linux/Wayland/WlWindow.h>
+#include <NeoWPF/Platform/Linux/LKeyboard.h>
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/Input/Keyboard.h>
@@ -24,24 +25,24 @@ void SubmitPointerInput(NeoWPF::Input::Core::PointerPhase phase,
 }
 
 const wl_pointer_listener PointerListener = {
-    &LWindow::HandlePointerEnter,
-    &LWindow::HandlePointerLeave,
-    &LWindow::HandlePointerMotion,
-    &LWindow::HandlePointerButton,
-    &LWindow::HandlePointerAxis,
+    &WlWindow::HandlePointerEnter,
+    &WlWindow::HandlePointerLeave,
+    &WlWindow::HandlePointerMotion,
+    &WlWindow::HandlePointerButton,
+    &WlWindow::HandlePointerAxis,
 };
 
 const wl_keyboard_listener KeyboardListener = {
-    &LWindow::HandleKeyboardKeymap,
-    &LWindow::HandleKeyboardEnter,
-    &LWindow::HandleKeyboardLeave,
-    &LWindow::HandleKeyboardKey,
-    &LWindow::HandleKeyboardModifiers,
+    &WlWindow::HandleKeyboardKeymap,
+    &WlWindow::HandleKeyboardEnter,
+    &WlWindow::HandleKeyboardLeave,
+    &WlWindow::HandleKeyboardKey,
+    &WlWindow::HandleKeyboardModifiers,
 };
 
 }
 
-void LWindow::AttachInputDevices()
+void WlWindow::AttachInputDevices()
 {
     if (!m_surface || !m_display || !m_seat) {
         return;
@@ -57,7 +58,7 @@ void LWindow::AttachInputDevices()
     }
 }
 
-std::uint32_t LWindow::WaylandButtonToNeoWPFButton(std::uint32_t button) const noexcept
+std::uint32_t WlWindow::WaylandButtonToNeoWPFButton(std::uint32_t button) const noexcept
 {
     switch (button) {
     case 0x110:
@@ -71,82 +72,8 @@ std::uint32_t LWindow::WaylandButtonToNeoWPFButton(std::uint32_t button) const n
     }
 }
 
-std::uint32_t TranslateXkbKeysymToVirtualKey(std::uint32_t keysym) noexcept
-{
-    using NeoWPF::Input::Key;
 
-    if (keysym >= XKB_KEY_F1 && keysym <= XKB_KEY_F24) {
-        return static_cast<std::uint32_t>(static_cast<int>(Key::F1) +
-            static_cast<int>(keysym - XKB_KEY_F1));
-    }
-    if (keysym >= XKB_KEY_KP_0 && keysym <= XKB_KEY_KP_9) {
-        return static_cast<std::uint32_t>(static_cast<int>(Key::NumPad0) +
-            static_cast<int>(keysym - XKB_KEY_KP_0));
-    }
-    if (keysym >= XKB_KEY_0 && keysym <= XKB_KEY_9) {
-        return static_cast<std::uint32_t>(static_cast<int>(Key::D0) +
-            static_cast<int>(keysym - XKB_KEY_0));
-    }
-    if (keysym >= XKB_KEY_a && keysym <= XKB_KEY_z) {
-        return static_cast<std::uint32_t>(static_cast<int>(Key::A) +
-            static_cast<int>(keysym - XKB_KEY_a));
-    }
-    if (keysym >= XKB_KEY_A && keysym <= XKB_KEY_Z) {
-        return static_cast<std::uint32_t>(static_cast<int>(Key::A) +
-            static_cast<int>(keysym - XKB_KEY_A));
-    }
-
-    switch (keysym) {
-    case XKB_KEY_BackSpace: return static_cast<std::uint32_t>(Key::Back);
-    case XKB_KEY_Tab: return static_cast<std::uint32_t>(Key::Tab);
-    case XKB_KEY_Return: return static_cast<std::uint32_t>(Key::Enter);
-    case XKB_KEY_Pause: return static_cast<std::uint32_t>(Key::Pause);
-    case XKB_KEY_Caps_Lock: return static_cast<std::uint32_t>(Key::CapsLock);
-    case XKB_KEY_Escape: return static_cast<std::uint32_t>(Key::Escape);
-    case XKB_KEY_Shift_L: case XKB_KEY_Shift_R: return static_cast<std::uint32_t>(Key::Shift);
-    case XKB_KEY_Control_L: case XKB_KEY_Control_R: return static_cast<std::uint32_t>(Key::Control);
-    case XKB_KEY_Alt_L: case XKB_KEY_Alt_R: return static_cast<std::uint32_t>(Key::Alt);
-    case XKB_KEY_Page_Up: return static_cast<std::uint32_t>(Key::PageUp);
-    case XKB_KEY_Page_Down: return static_cast<std::uint32_t>(Key::PageDown);
-    case XKB_KEY_End: return static_cast<std::uint32_t>(Key::End);
-    case XKB_KEY_Home: return static_cast<std::uint32_t>(Key::Home);
-    case XKB_KEY_Left: return static_cast<std::uint32_t>(Key::Left);
-    case XKB_KEY_Up: return static_cast<std::uint32_t>(Key::Up);
-    case XKB_KEY_Right: return static_cast<std::uint32_t>(Key::Right);
-    case XKB_KEY_Down: return static_cast<std::uint32_t>(Key::Down);
-    case XKB_KEY_Insert: return static_cast<std::uint32_t>(Key::Insert);
-    case XKB_KEY_Delete: return static_cast<std::uint32_t>(Key::Delete);
-    case XKB_KEY_KP_Enter: return static_cast<std::uint32_t>(Key::Enter);
-    case XKB_KEY_space: return static_cast<std::uint32_t>(Key::Space);
-    case XKB_KEY_KP_Multiply: return static_cast<std::uint32_t>(Key::Multiply);
-    case XKB_KEY_KP_Add: return static_cast<std::uint32_t>(Key::Add);
-    case XKB_KEY_KP_Separator: return static_cast<std::uint32_t>(Key::Separator);
-    case XKB_KEY_KP_Subtract: return static_cast<std::uint32_t>(Key::Subtract);
-    case XKB_KEY_KP_Decimal: return static_cast<std::uint32_t>(Key::Decimal);
-    case XKB_KEY_KP_Divide: return static_cast<std::uint32_t>(Key::Divide);
-    case XKB_KEY_semicolon: case XKB_KEY_colon: return static_cast<std::uint32_t>(Key::Oem1);
-    case XKB_KEY_equal: case XKB_KEY_plus: return static_cast<std::uint32_t>(Key::OemPlus);
-    case XKB_KEY_comma: case XKB_KEY_less: return static_cast<std::uint32_t>(Key::OemComma);
-    case XKB_KEY_minus: case XKB_KEY_underscore: return static_cast<std::uint32_t>(Key::OemMinus);
-    case XKB_KEY_period: case XKB_KEY_greater: return static_cast<std::uint32_t>(Key::OemPeriod);
-    case XKB_KEY_slash: case XKB_KEY_question: return static_cast<std::uint32_t>(Key::Oem2);
-    case XKB_KEY_grave: case XKB_KEY_asciitilde: return static_cast<std::uint32_t>(Key::Oem3);
-    case XKB_KEY_bracketleft: case XKB_KEY_braceleft: return static_cast<std::uint32_t>(Key::Oem4);
-    case XKB_KEY_backslash: case XKB_KEY_bar: return static_cast<std::uint32_t>(Key::Oem5);
-    case XKB_KEY_bracketright: case XKB_KEY_braceright: return static_cast<std::uint32_t>(Key::Oem6);
-    case XKB_KEY_apostrophe: case XKB_KEY_quotedbl: return static_cast<std::uint32_t>(Key::Oem7);
-    case XKB_KEY_XF86AudioMute: return static_cast<std::uint32_t>(Key::VolumeMute);
-    case XKB_KEY_XF86AudioLowerVolume: return static_cast<std::uint32_t>(Key::VolumeDown);
-    case XKB_KEY_XF86AudioRaiseVolume: return static_cast<std::uint32_t>(Key::VolumeUp);
-    case XKB_KEY_XF86AudioNext: return static_cast<std::uint32_t>(Key::MediaNextTrack);
-    case XKB_KEY_XF86AudioPrev: return static_cast<std::uint32_t>(Key::MediaPreviousTrack);
-    case XKB_KEY_XF86AudioStop: return static_cast<std::uint32_t>(Key::MediaStop);
-    case XKB_KEY_XF86AudioPlay: return static_cast<std::uint32_t>(Key::MediaPlayPause);
-    default: return static_cast<std::uint32_t>(Key::None);
-    }
-}
-
-void LWindow::UpdateKeyStateFromWayland(std::uint32_t key, bool isPressed, wchar_t charCode)
+void WlWindow::UpdateKeyStateFromWayland(std::uint32_t key, bool isPressed, wchar_t charCode)
 {
     if (key == 0 && charCode == 0) {
         return;
@@ -156,7 +83,7 @@ void LWindow::UpdateKeyStateFromWayland(std::uint32_t key, bool isPressed, wchar
         key == 0 ? -1 : static_cast<int>(key), isPressed, charCode, 1);
 }
 
-void LWindow::ProcessKeyRepeat()
+void WlWindow::ProcessKeyRepeat()
 {
     if (!m_repeatActive || !m_xkbState) {
         return;
@@ -175,9 +102,9 @@ void LWindow::ProcessKeyRepeat()
     }
 }
 
-void LWindow::HandlePointerEnter(void* data, wl_pointer*, std::uint32_t, wl_surface*, wl_fixed_t sx, wl_fixed_t sy)
+void WlWindow::HandlePointerEnter(void* data, wl_pointer*, std::uint32_t, wl_surface*, wl_fixed_t sx, wl_fixed_t sy)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     NeoWPF::Core::SetInputRoot(window);
     const double scaleFactor = window->ScaleFactor();
     if (!std::isfinite(scaleFactor) || scaleFactor <= 0.0) {
@@ -190,9 +117,9 @@ void LWindow::HandlePointerEnter(void* data, wl_pointer*, std::uint32_t, wl_surf
                        window->m_pointerButtonState);
 }
 
-void LWindow::HandlePointerLeave(void* data, wl_pointer*, std::uint32_t, wl_surface*)
+void WlWindow::HandlePointerLeave(void* data, wl_pointer*, std::uint32_t, wl_surface*)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     if (window) {
         NeoWPF::Core::SetInputRoot(window);
         SubmitPointerInput(NeoWPF::Input::Core::PointerPhase::Leave,
@@ -201,9 +128,9 @@ void LWindow::HandlePointerLeave(void* data, wl_pointer*, std::uint32_t, wl_surf
     }
 }
 
-void LWindow::HandlePointerMotion(void* data, wl_pointer*, std::uint32_t, wl_fixed_t sx, wl_fixed_t sy)
+void WlWindow::HandlePointerMotion(void* data, wl_pointer*, std::uint32_t, wl_fixed_t sx, wl_fixed_t sy)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     if (!window) {
         return;
     }
@@ -219,10 +146,10 @@ void LWindow::HandlePointerMotion(void* data, wl_pointer*, std::uint32_t, wl_fix
                        window->m_pointerButtonState);
 }
 
-void LWindow::HandlePointerButton(void* data, wl_pointer*, std::uint32_t serial, std::uint32_t, std::uint32_t button,
+void WlWindow::HandlePointerButton(void* data, wl_pointer*, std::uint32_t serial, std::uint32_t, std::uint32_t button,
                                  std::uint32_t state)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     if (!window) {
         return;
     }
@@ -245,9 +172,9 @@ void LWindow::HandlePointerButton(void* data, wl_pointer*, std::uint32_t serial,
         window->m_pointerButtonState, bit);
 }
 
-void LWindow::HandlePointerAxis(void* data, wl_pointer*, std::uint32_t, std::uint32_t axis, wl_fixed_t value)
+void WlWindow::HandlePointerAxis(void* data, wl_pointer*, std::uint32_t, std::uint32_t axis, wl_fixed_t value)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     if (!window) {
         return;
     }
@@ -258,9 +185,9 @@ void LWindow::HandlePointerAxis(void* data, wl_pointer*, std::uint32_t, std::uin
                        window->m_pointerButtonState, 0, wheelDelta);
 }
 
-void LWindow::HandleKeyboardKeymap(void* data, wl_keyboard*, std::uint32_t, int fd, std::uint32_t size)
+void WlWindow::HandleKeyboardKeymap(void* data, wl_keyboard*, std::uint32_t, int fd, std::uint32_t size)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     if (!window) {
         return;
     }
@@ -287,24 +214,24 @@ void LWindow::HandleKeyboardKeymap(void* data, wl_keyboard*, std::uint32_t, int 
     close(fd);
 }
 
-void LWindow::HandleKeyboardEnter(void* data, wl_keyboard*, std::uint32_t, wl_surface*, wl_array*)
+void WlWindow::HandleKeyboardEnter(void* data, wl_keyboard*, std::uint32_t, wl_surface*, wl_array*)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     NeoWPF::Core::SetInputRoot(window);
 }
 
-void LWindow::HandleKeyboardLeave(void* data, wl_keyboard*, std::uint32_t, wl_surface*)
+void WlWindow::HandleKeyboardLeave(void* data, wl_keyboard*, std::uint32_t, wl_surface*)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     if (window) {
         NeoWPF::Core::SetInputRoot(window);
     }
 }
 
-void LWindow::HandleKeyboardKey(void* data, wl_keyboard*, std::uint32_t serial, std::uint32_t, std::uint32_t key,
+void WlWindow::HandleKeyboardKey(void* data, wl_keyboard*, std::uint32_t serial, std::uint32_t, std::uint32_t key,
                                std::uint32_t state)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     if (!window || !window->m_xkbState) {
         return;
     }
@@ -331,10 +258,10 @@ void LWindow::HandleKeyboardKey(void* data, wl_keyboard*, std::uint32_t serial, 
     }
 }
 
-void LWindow::HandleKeyboardModifiers(void* data, wl_keyboard*, std::uint32_t, std::uint32_t mods_depressed,
+void WlWindow::HandleKeyboardModifiers(void* data, wl_keyboard*, std::uint32_t, std::uint32_t mods_depressed,
                                        std::uint32_t mods_latched, std::uint32_t mods_locked, std::uint32_t group)
 {
-    auto* window = static_cast<LWindow*>(data);
+    auto* window = static_cast<WlWindow*>(data);
     if (window && window->m_xkbState) {
         xkb_state_update_mask(window->m_xkbState,
                               mods_depressed,
