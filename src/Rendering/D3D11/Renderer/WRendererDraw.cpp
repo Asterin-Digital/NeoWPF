@@ -2,6 +2,8 @@
 #include <NeoWPF/Rendering/Geometry/ArcTessellation.h>
 #include <NeoWPF/Rendering/Geometry/PrimitiveTessellation.h>
 #include <NeoWPF/Rendering/Geometry/Clipping.h>
+#include <NeoWPF/Rendering/Geometry/DrawBatcher.h>
+#include <NeoWPF/Rendering/Paint/RampBaker.h>
 #include <d3d11.h>
 #include <wrl.h>
 #include <algorithm>
@@ -11,6 +13,7 @@
 #include <cmath>
 #include <Windows.h>
 #include <limits>
+#include <span>
 #include <NeoWPF/Diagnostics/Logger.h>
 
 #ifdef min
@@ -38,6 +41,9 @@ namespace NeoWPF::Rendering::D3D11 {
     extern ComPtr<ID3D11VertexShader> g_vsText;
     extern ComPtr<ID3D11PixelShader> g_psText;
     extern ComPtr<ID3D11InputLayout> g_inputLayoutText;
+    extern ComPtr<ID3D11VertexShader> g_vsGradient;
+    extern ComPtr<ID3D11PixelShader> g_psGradient;
+    extern ComPtr<ID3D11InputLayout> g_inputLayoutGradient;
     extern ComPtr<ID3D11SamplerState> g_samplerState;
     extern ComPtr<ID3D11Buffer> g_vertexBuffer;
     extern ComPtr<ID3D11Buffer> g_constantBuffer;
@@ -46,6 +52,8 @@ namespace NeoWPF::Rendering::D3D11 {
     ID3D11RenderTargetView* GetRendererTargetView(HWND hwnd);
     bool IsRendererTransparent(HWND hwnd);
     ComPtr<ID3D11ShaderResourceView> GetTextureShaderResourceView(uint32_t id);
+    uint32_t CreateTexture(unsigned int width, unsigned int height, const void* rgbaData);
+    void DestroyTexture(uint32_t id);
 }
 
 namespace NeoWPF::Rendering::D3D11 {
@@ -152,10 +160,15 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
             static_cast<unsigned int>(result), blendState ? 1 : 0);
     }
 
+    static std::uint64_t gradientTextureHash = 0;
+    static std::uint32_t gradientTextureId = 0;
+
     struct Vertex { float x, y; float r, g, b, a; };
+    struct GradientVertex { float x, y; float worldX, worldY; };
     constexpr size_t kVertexBufferCapacity = 1 << 20;
     constexpr size_t kMaxSolidVertices = (kVertexBufferCapacity / sizeof(Vertex) / 3) * 3;
     std::vector<Vertex> rectVerts;
+    std::vector<GradientVertex> gradientVerts;
     std::vector<GeometryVertex> geometry;
     rectVerts.reserve(cmd.commands.size() * 2);
 
@@ -380,73 +393,226 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
         textDrawRanges.clear();
     };
 
-    CommandList::CommandKind lastKind = CommandList::CommandKind::Rect;
-    bool hasPendingKind = false;
+    auto flushGradientBatch = [&](const DrawBatch& batch) {
+        if (gradientVerts.empty() ||
+            batch.gradientIndex >= cmd.gradients.size() ||
+            !g_vsGradient || !g_psGradient || !g_inputLayoutGradient ||
+            !g_vertexBuffer || !g_samplerState) {
+            gradientVerts.clear();
+            return;
+        }
 
-    for (const auto& command : cmd.commands) {
-        const bool isTextured = command.GetKind() == CommandList::CommandKind::TexturedQuad;
-        const bool wasTextured = lastKind == CommandList::CommandKind::TexturedQuad;
-        if (hasPendingKind && isTextured != wasTextured) {
-            if (wasTextured) {
-                flushTextBatch();
-            } else {
-                flushSolidBatch();
+        const std::uint64_t nextGradientTextureHash = cmd.ComputeHash();
+        if (gradientTextureId == 0 || gradientTextureHash != nextGradientTextureHash) {
+            constexpr std::uint32_t kRampWidth = 256;
+            constexpr std::uint32_t kRampHeight = 256;
+            std::vector<std::uint8_t> rgba(kRampWidth * kRampHeight * 4, 0);
+            std::vector<std::uint32_t> ramp(kRampWidth);
+            for (std::size_t gradientIndex = 0;
+                 gradientIndex < cmd.gradients.size() &&
+                 gradientIndex < kRampHeight;
+                 ++gradientIndex) {
+                const auto& gradient = cmd.gradients[gradientIndex];
+                const std::size_t stopOffset = gradient.stopOffset;
+                const std::size_t count = std::min(
+                    static_cast<std::size_t>(gradient.stopCount),
+                    cmd.gradientStops.size() > stopOffset
+                        ? cmd.gradientStops.size() - stopOffset
+                        : 0u);
+                if (count == 0) {
+                    continue;
+                }
+                BakeRamp(std::span<const GradientStopDesc>(
+                             cmd.gradientStops.data() + stopOffset, count),
+                         ramp, kRampWidth);
+                for (std::size_t pixelIndex = 0; pixelIndex < kRampWidth; ++pixelIndex) {
+                    const std::uint32_t argb = ramp[pixelIndex];
+                    const std::size_t rgbaIndex =
+                        (gradientIndex * kRampWidth + pixelIndex) * 4;
+                    rgba[rgbaIndex + 0] = static_cast<std::uint8_t>((argb >> 16) & 0xFFu);
+                    rgba[rgbaIndex + 1] = static_cast<std::uint8_t>((argb >> 8) & 0xFFu);
+                    rgba[rgbaIndex + 2] = static_cast<std::uint8_t>(argb & 0xFFu);
+                    rgba[rgbaIndex + 3] = static_cast<std::uint8_t>((argb >> 24) & 0xFFu);
+                }
             }
+            if (gradientTextureId != 0) {
+                DestroyTexture(gradientTextureId);
+            }
+            gradientTextureId = CreateTexture(kRampWidth, kRampHeight, rgba.data());
+            gradientTextureHash =
+                gradientTextureId != 0 ? nextGradientTextureHash : 0;
+        }
+        const auto srv = GetTextureShaderResourceView(gradientTextureId);
+        if (!srv) {
+            gradientVerts.clear();
+            return;
         }
 
-        switch (command.GetKind()) {
-        case CommandList::CommandKind::Rect: {
-            const auto& r = command.GetRect();
-            const float baseAlpha = ((r.paint.color >> 24) & 0xFF) / 255.0f;
-            const float red = ((r.paint.color >> 16) & 0xFF) / 255.0f;
-            const float green = ((r.paint.color >> 8) & 0xFF) / 255.0f;
-            const float blue = (r.paint.color & 0xFF) / 255.0f;
-            const float alpha = baseAlpha * r.opacity;
+        D3D11_MAPPED_SUBRESOURCE mapped = {};
+        if (FAILED(g_context->Map(g_constantBuffer.Get(), 0,
+                                  D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
+            gradientVerts.clear();
+            return;
+        }
+        const auto& gradient = cmd.gradients[batch.gradientIndex];
+        struct GradientConstants {
+            float viewport[2];
+            float mapping0[4];
+            float mapping1[4];
+            float gradient[4];
+        } constants{};
+        constants.viewport[0] = static_cast<float>(
+            static_cast<double>(width) / scaleFactor);
+        constants.viewport[1] = static_cast<float>(
+            static_cast<double>(height) / scaleFactor);
+        constants.mapping0[0] = static_cast<float>(gradient.mapping[0]);
+        constants.mapping0[1] = static_cast<float>(gradient.mapping[1]);
+        constants.mapping0[2] = static_cast<float>(gradient.mapping[2]);
+        constants.mapping0[3] = static_cast<float>(gradient.mapping[3]);
+        constants.mapping1[0] = static_cast<float>(gradient.mapping[4]);
+        constants.mapping1[1] = static_cast<float>(gradient.mapping[5]);
+        constants.mapping1[2] = static_cast<float>(gradient.focalX);
+        constants.mapping1[3] = static_cast<float>(gradient.focalY);
+        constants.gradient[0] =
+            batch.kind == DrawBatchKind::LinearGradient ? 0.0f : 1.0f;
+        constants.gradient[1] = gradient.spread == GradientSpreadMethod::Pad
+            ? 0.0f
+            : gradient.spread == GradientSpreadMethod::Reflect
+                ? 1.0f
+                : 2.0f;
+        constants.gradient[2] =
+            (static_cast<float>(batch.gradientIndex) + 0.5f) / 256.0f;
+        constants.gradient[3] = gradient.opacity;
+        memcpy(mapped.pData, &constants, sizeof(constants));
+        g_context->Unmap(g_constantBuffer.Get(), 0);
 
-            pushRect(r.x, r.y, r.w, r.h, red, green, blue, alpha,
-                     r.rotationRadians, r.pivotX, r.pivotY, r.clip);
-            lastKind = command.GetKind();
-            hasPendingKind = true;
-            break;
-        }
-        case CommandList::CommandKind::RoundedRect: {
-            const auto& r = command.GetRoundedRect();
-            const float baseAlpha = ((r.paint.color >> 24) & 0xFF) / 255.0f;
-            const float red = ((r.paint.color >> 16) & 0xFF) / 255.0f;
-            const float green = ((r.paint.color >> 8) & 0xFF) / 255.0f;
-            const float blue = (r.paint.color & 0xFF) / 255.0f;
-            const float alpha = baseAlpha * r.opacity;
+        const float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+        g_context->OMSetBlendState(blendState.Get(), blendFactor, 0xffffffff);
+        UINT stride = sizeof(GradientVertex);
+        UINT offset = 0;
+        g_context->IASetInputLayout(g_inputLayoutGradient.Get());
+        g_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        g_context->IASetVertexBuffers(0, 1, g_vertexBuffer.GetAddressOf(), &stride, &offset);
+        g_context->VSSetShader(g_vsGradient.Get(), nullptr, 0);
+        g_context->PSSetShader(g_psGradient.Get(), nullptr, 0);
+        g_context->VSSetConstantBuffers(0, 1, g_constantBuffer.GetAddressOf());
+        g_context->PSSetConstantBuffers(0, 1, g_constantBuffer.GetAddressOf());
+        g_context->PSSetShaderResources(0, 1, srv.GetAddressOf());
+        g_context->PSSetSamplers(0, 1, g_samplerState.GetAddressOf());
 
-            pushRoundedRect(r.x, r.y, r.w, r.h, r.topLeft, r.topRight,
-                            r.bottomRight, r.bottomLeft, red, green, blue, alpha,
-                            r.rotationRadians, r.pivotX, r.pivotY, r.clip);
-            lastKind = command.GetKind();
-            hasPendingKind = true;
-            break;
+        std::size_t remainingVertices = gradientVerts.size();
+        std::size_t vertexOffset = 0;
+        constexpr std::size_t kMaxGradientVertices =
+            (kVertexBufferCapacity / sizeof(GradientVertex) / 3) * 3;
+        while (remainingVertices > 0) {
+            const std::size_t chunkVertices =
+                (std::min)(remainingVertices, kMaxGradientVertices);
+            D3D11_MAPPED_SUBRESOURCE vertexMap = {};
+            if (SUCCEEDED(g_context->Map(g_vertexBuffer.Get(), 0,
+                                         D3D11_MAP_WRITE_DISCARD, 0, &vertexMap))) {
+                memcpy(vertexMap.pData, gradientVerts.data() + vertexOffset,
+                       chunkVertices * sizeof(GradientVertex));
+                g_context->Unmap(g_vertexBuffer.Get(), 0);
+                g_context->Draw(static_cast<UINT>(chunkVertices), 0);
+            }
+            remainingVertices -= chunkVertices;
+            vertexOffset += chunkVertices;
         }
-        case CommandList::CommandKind::Arc: {
-            pushArc(command.GetArc());
-            lastKind = command.GetKind();
-            hasPendingKind = true;
-            break;
-        }
-        case CommandList::CommandKind::TexturedQuad: {
-            const auto& q = command.GetTexturedQuad();
-            pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1,
-                         q.tint.color, q.opacity, q.textureId, q.clip,
-                         q.rotationRadians, q.pivotX, q.pivotY);
-            lastKind = command.GetKind();
-            hasPendingKind = true;
-            break;
-        }
-        }
-    }
+        g_context->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
+        gradientVerts.clear();
+    };
 
-    if (hasPendingKind) {
-        if (lastKind == CommandList::CommandKind::TexturedQuad) {
-            flushTextBatch();
-        } else {
+    const auto batches = BuildDrawBatches(cmd);
+    for (const auto& batch : batches) {
+        if (batch.kind == DrawBatchKind::Textured) {
             flushSolidBatch();
+            for (std::size_t index = batch.firstCommand;
+                 index < batch.firstCommand + batch.commandCount;
+                 ++index) {
+                const auto& q = cmd.commands[index].GetTexturedQuad();
+                pushTextQuad(q.x, q.y, q.w, q.h, q.u0, q.v0, q.u1, q.v1,
+                             q.tint.color, q.opacity, q.textureId, q.clip,
+                             q.rotationRadians, q.pivotX, q.pivotY);
+            }
+            flushTextBatch();
+            continue;
+        }
+
+        flushTextBatch();
+        if (batch.kind == DrawBatchKind::Solid) {
+            for (std::size_t index = batch.firstCommand;
+                 index < batch.firstCommand + batch.commandCount;
+                 ++index) {
+                const auto& command = cmd.commands[index];
+                switch (command.GetKind()) {
+                case CommandList::CommandKind::Rect: {
+                    const auto& r = command.GetRect();
+                    const float baseAlpha = ((r.paint.color >> 24) & 0xFF) / 255.0f;
+                    const float red = ((r.paint.color >> 16) & 0xFF) / 255.0f;
+                    const float green = ((r.paint.color >> 8) & 0xFF) / 255.0f;
+                    const float blue = (r.paint.color & 0xFF) / 255.0f;
+                    pushRect(r.x, r.y, r.w, r.h, red, green, blue,
+                             baseAlpha * r.opacity,
+                             r.rotationRadians, r.pivotX, r.pivotY, r.clip);
+                    break;
+                }
+                case CommandList::CommandKind::RoundedRect: {
+                    const auto& r = command.GetRoundedRect();
+                    const float baseAlpha = ((r.paint.color >> 24) & 0xFF) / 255.0f;
+                    const float red = ((r.paint.color >> 16) & 0xFF) / 255.0f;
+                    const float green = ((r.paint.color >> 8) & 0xFF) / 255.0f;
+                    const float blue = (r.paint.color & 0xFF) / 255.0f;
+                    pushRoundedRect(r.x, r.y, r.w, r.h,
+                                    r.topLeft, r.topRight, r.bottomRight, r.bottomLeft,
+                                    red, green, blue, baseAlpha * r.opacity,
+                                    r.rotationRadians, r.pivotX, r.pivotY, r.clip);
+                    break;
+                }
+                case CommandList::CommandKind::Arc:
+                    pushArc(command.GetArc());
+                    break;
+                case CommandList::CommandKind::TexturedQuad:
+                    break;
+                }
+            }
+            flushSolidBatch();
+            continue;
+        }
+
+        if (batch.kind == DrawBatchKind::LinearGradient ||
+            batch.kind == DrawBatchKind::RadialGradient) {
+            gradientVerts.reserve(batch.commandCount * 6);
+            for (std::size_t index = batch.firstCommand;
+                 index < batch.firstCommand + batch.commandCount;
+                 ++index) {
+                const auto& command = cmd.commands[index];
+                if (command.GetKind() == CommandList::CommandKind::Arc) {
+                    const auto& arc = command.GetArc();
+                    TessellateAnnularArc(
+                        geometry, arc.centerX, arc.centerY, arc.radius,
+                        arc.thickness, arc.startAngleRadians,
+                        arc.sweepAngleRadians, arc.clip);
+                } else if (command.GetKind() == CommandList::CommandKind::RoundedRect) {
+                    const auto& rect = command.GetRoundedRect();
+                    TessellateRoundedRect(
+                        geometry, rect.x, rect.y, rect.w, rect.h,
+                        rect.topLeft, rect.topRight, rect.bottomRight, rect.bottomLeft,
+                        rect.clip, rect.rotationRadians, rect.pivotX, rect.pivotY);
+                } else {
+                    const auto& rect = command.GetRect();
+                    TessellateRect(
+                        geometry, rect.x, rect.y, rect.w, rect.h,
+                        rect.clip, rect.rotationRadians, rect.pivotX, rect.pivotY);
+                }
+                for (const auto& vertex : geometry) {
+                    gradientVerts.push_back({
+                        static_cast<float>(vertex.x),
+                        static_cast<float>(vertex.y),
+                        static_cast<float>(vertex.x),
+                        static_cast<float>(vertex.y)});
+                }
+            }
+            flushGradientBatch(batch);
         }
     }
 }

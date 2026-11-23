@@ -11,9 +11,6 @@ vcpkg_installed/
 NWpfBuild/
 NeoLint/NLintBuild/
 
-# Dont commit private reports
-reports/
-
 # Junk
 __pycache__/
 *.vcxproj.user
@@ -39,15 +36,17 @@ Testing/
 
 # Things that should not get commited, private details
 private/
+reports/
 .vscode/
 .vcpkg-backup-windows.txt
 .github/*
+.nodum
+NeoWPF.code-workspace
+ToDo.md
+Designing
+
 # Keep things we want
 !.github/workflows/
 .github/workflows/*
 !.github/workflows/performance-benchmarks.yml
 
-# Private
-NeoWPF.code-workspace
-ToDo.md
-Designing

@@ -11,5 +11,7 @@ const char* GetRectVertexShaderSource();
 const char* GetRectPixelShaderSource();
 const char* GetTextVertexShaderSource();
 const char* GetTextPixelShaderSource();
+const char* GetGradientVertexShaderSource();
+const char* GetGradientPixelShaderSource();
 
 }

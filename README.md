@@ -3,7 +3,7 @@
 **Great apps start with you.**
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey)](Compile.md)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20Android-lightgrey)](Compile.md)
 [![C++](https://img.shields.io/badge/C%2B%2B-20-blue)](Compile.md)
 [![Docs](https://img.shields.io/badge/docs-website-informational)](https://neowpf.github.io/Docs/)
 [![Docs Source](https://img.shields.io/badge/docs-source-lightgrey)](https://github.com/NeoWPF/Docs)
@@ -22,9 +22,8 @@ There's a myriad of frameworks out there, and each may have their own reason to 
 | Platform | Status | Notes |
 |---|---|---|
 | Windows | ✅ Most mature | Primary development target |
-| Linux   | 🟡 Partial | Half the maturity of Windows |
-
-Half the maturity here means that Linux is less used then Windows, not that it's missing feature's or just doesn't work.
+| Linux   | ✅ Mature | Primary development target |
+| Android | 🟡 Partial | Under active development |
 
 ### Quick Start
 ```cpp
@@ -115,6 +114,10 @@ Source files: [NeoWPF/Docs](https://github.com/NeoWPF/Docs).
 ### Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the project's contribution and ownership notice.
+
+### Notice
+
+NeoWPF is an independent project. It is not made, endorsed, sponsored, or affiliated with Microsoft Corporation or any of its subsidiaries. Microsoft, Windows, WPF, and all other Microsoft names and marks are trademarks of Microsoft Corporation or its affiliates. NeoWPF is not supported or guaranteed by Microsoft.
 
 ### License
 

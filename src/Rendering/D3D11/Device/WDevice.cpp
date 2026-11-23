@@ -27,6 +27,9 @@ namespace NeoWPF::Rendering::D3D11 {
     ComPtr<ID3D11VertexShader> g_vsText;
     ComPtr<ID3D11PixelShader> g_psText;
     ComPtr<ID3D11InputLayout> g_inputLayoutText;
+    ComPtr<ID3D11VertexShader> g_vsGradient;
+    ComPtr<ID3D11PixelShader> g_psGradient;
+    ComPtr<ID3D11InputLayout> g_inputLayoutGradient;
     ComPtr<ID3D11SamplerState> g_samplerState;
     ComPtr<ID3D11Buffer> g_vertexBuffer;
     ComPtr<ID3D11Buffer> g_constantBuffer;
@@ -43,6 +46,10 @@ namespace NeoWPF::Rendering::D3D11 {
 
     const char* GetRectVertexShaderSource();
     const char* GetRectPixelShaderSource();
+    const char* GetTextVertexShaderSource();
+    const char* GetTextPixelShaderSource();
+    const char* GetGradientVertexShaderSource();
+    const char* GetGradientPixelShaderSource();
 }
 
 namespace NeoWPF::Rendering::D3D11 {
@@ -238,7 +245,10 @@ void EnsureCompilerLoaded()
 
 void CompileShaders()
 {
-    if (g_vs && g_ps && g_inputLayout && g_vsText && g_psText && g_inputLayoutText && g_samplerState) return;
+    if (g_vs && g_ps && g_inputLayout &&
+        g_vsText && g_psText && g_inputLayoutText &&
+        g_vsGradient && g_psGradient && g_inputLayoutGradient &&
+        g_samplerState) return;
     const bool injectedCompileFailure = ::NeoWPF::Diagnostics::GetFailureHookPoint() == ::NeoWPF::Diagnostics::FailureHookPoint::CompileShaders;
     EnsureCompilerLoaded();
 
@@ -295,8 +305,36 @@ void CompileShaders()
         ThrowIfFailed(g_device->CreatePixelShader(textPsBlob->GetBufferPointer(), textPsBlob->GetBufferSize(), nullptr, &g_psText), "Failed to create text pixel shader");
     }
 
+    {
+        std::string gradientVsSrc = D3D11::GetGradientVertexShaderSource();
+        std::string gradientPsSrc = D3D11::GetGradientPixelShaderSource();
+        ComPtr<ID3DBlob> gradientVsBlob;
+        ComPtr<ID3DBlob> gradientPsBlob;
+
+        compileShader(gradientVsSrc, "VSMain", "vs_4_0",
+                      gradientVsBlob, "Gradient vertex shader compilation failed");
+        ThrowIfFailed(g_device->CreateVertexShader(
+            gradientVsBlob->GetBufferPointer(), gradientVsBlob->GetBufferSize(),
+            nullptr, &g_vsGradient), "Failed to create gradient vertex shader");
+
+        D3D11_INPUT_ELEMENT_DESC gradientElems[] = {
+            {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+            {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        };
+        ThrowIfFailed(g_device->CreateInputLayout(
+            gradientElems, _countof(gradientElems),
+            gradientVsBlob->GetBufferPointer(), gradientVsBlob->GetBufferSize(),
+            &g_inputLayoutGradient), "Failed to create gradient input layout");
+
+        compileShader(gradientPsSrc, "PSMain", "ps_4_0",
+                      gradientPsBlob, "Gradient pixel shader compilation failed");
+        ThrowIfFailed(g_device->CreatePixelShader(
+            gradientPsBlob->GetBufferPointer(), gradientPsBlob->GetBufferSize(),
+            nullptr, &g_psGradient), "Failed to create gradient pixel shader");
+    }
+
     D3D11_SAMPLER_DESC sampDesc = {};
-    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
     sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
     sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -320,7 +358,7 @@ void EnsureBuffers()
 
     D3D11_BUFFER_DESC cbd = {};
     cbd.Usage = D3D11_USAGE_DYNAMIC;
-    cbd.ByteWidth = 16;
+    cbd.ByteWidth = 64;
     cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     hr = g_device->CreateBuffer(&cbd, nullptr, &g_constantBuffer);

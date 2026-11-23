@@ -141,6 +141,31 @@ TEST(BrushTests, LinearGradientResolvesSortedClampedStopsAndMapping)
     EXPECT_FLOAT_EQ(commands.gradients[0].opacity, 0.5f);
 }
 
+TEST(BrushTests, LinearGallerySizeMapsToZeroAndOne)
+{
+    NeoWPF::UI::LinearGradientBrush brush;
+    brush.SetStartPoint({0.0, 0.0});
+    brush.SetEndPoint({1.0, 1.0});
+    brush.GetGradientStops()->Add(std::make_shared<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromArgb(0xFF3A7BD5u), 0.0));
+    brush.GetGradientStops()->Add(std::make_shared<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromArgb(0xFF8A51DCu), 1.0));
+
+    NeoWPF::Rendering::CommandList commands;
+    const auto paint = brush.ResolvePaint(
+        commands, 300.0, 636.0, 180.0, 72.0);
+
+    ASSERT_EQ(paint.kind, NeoWPF::Rendering::Paint::Kind::LinearGradient);
+    ASSERT_EQ(commands.gradients.size(), 1u);
+    const auto& mapping = commands.gradients[0].mapping;
+    const double coordinateAtStart =
+        mapping[0] * 300.0 + mapping[2] * 636.0 + mapping[4];
+    const double coordinateAtEnd =
+        mapping[0] * 480.0 + mapping[2] * 708.0 + mapping[4];
+    EXPECT_NEAR(coordinateAtStart, 0.0, 1e-12);
+    EXPECT_NEAR(coordinateAtEnd, 1.0, 1e-12);
+}
+
 TEST(BrushTests, GradientMappingComposesRelativeAndAbsoluteTransforms)
 {
     NeoWPF::UI::LinearGradientBrush brush;

@@ -1,5 +1,7 @@
 #include <Gallery/Panels.h>
 #include <NeoWPF/NeoWPF.h>
+#include <NeoWPF/UI/Core/Media/GradientBrush.h>
+#include <NeoWPF/UI/Core/Media/GradientStop.h>
 
 namespace Gallery {
 namespace {
@@ -50,6 +52,48 @@ Ref<NeoWPF::UI::Border> MakeSection(const std::wstring& title, const Ref<NeoWPF:
     return section;
 }
 
+Ref<NeoWPF::UI::Border> MakeGradientSwatch(
+    const std::wstring& label,
+    const Ref<NeoWPF::UI::Brush>& brush)
+{
+    auto swatch = New<NeoWPF::UI::Border>();
+    swatch->SetWidth(180);
+    swatch->SetHeight(72);
+    swatch->SetCornerRadius(NeoWPF::UI::CornerRadius(6));
+    swatch->SetBorderThickness(1);
+    swatch->SetBorderBrush(GetPaletteBrush(PaletteBrush::Border));
+    swatch->SetBackgroundBrush(brush);
+
+    auto text = MakeText(label, 13, 600);
+    text->SetForeground(GetPaletteBrush(PaletteBrush::Surface));
+    swatch->SetChild(text);
+    return swatch;
+}
+
+Ref<NeoWPF::UI::LinearGradientBrush> MakeLinearGradient()
+{
+    auto brush = New<NeoWPF::UI::LinearGradientBrush>();
+    brush->SetStartPoint({0.0, 0.0});
+    brush->SetEndPoint({1.0, 1.0});
+    brush->GetGradientStops()->Add(New<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromRgb(58, 123, 213), 0.0));
+    brush->GetGradientStops()->Add(New<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromRgb(138, 81, 220), 1.0));
+    return brush;
+}
+
+Ref<NeoWPF::UI::RadialGradientBrush> MakeRadialGradient()
+{
+    auto brush = New<NeoWPF::UI::RadialGradientBrush>();
+    brush->SetCenter({0.5, 0.5});
+    brush->SetGradientOrigin({0.35, 0.35});
+    brush->GetGradientStops()->Add(New<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromRgb(255, 190, 92), 0.0));
+    brush->GetGradientStops()->Add(New<NeoWPF::UI::GradientStop>(
+        NeoWPF::UI::Color::FromRgb(224, 83, 128), 1.0));
+    return brush;
+}
+
 }
 
 Ref<NeoWPF::UI::UIElement> CreateButtonPanel()
@@ -91,6 +135,13 @@ Ref<NeoWPF::UI::UIElement> CreateButtonPanel()
     themeContent->AddChild(themeButton);
     themeContent->AddChild(MakeText(L"The gallery controls follow the active application theme."));
     page->AddChild(MakeSection(L"Theme", themeContent));
+
+    auto gradients = New<StackPanel>();
+    gradients->SetOrientation(Orientation::Horizontal);
+    gradients->SetSpacing(12);
+    gradients->AddChild(MakeGradientSwatch(L"Linear", MakeLinearGradient()));
+    gradients->AddChild(MakeGradientSwatch(L"Radial", MakeRadialGradient()));
+    page->AddChild(MakeSection(L"Gradients", gradients));
     return page;
 }
 

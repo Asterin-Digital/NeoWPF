@@ -33,6 +33,34 @@ PSIn VSMain(VSIn input) {
     o.col = input.col;
     return o;
 }
+
+const char* GetGradientVertexShaderSource()
+{
+    return R"(
+struct VSIn {
+    float2 pos : POSITION;
+    float2 worldPosition : TEXCOORD;
+};
+cbuffer GradientConstants {
+    float2 viewport;
+    float4 mapping0;
+    float4 mapping1;
+    float4 gradient;
+};
+struct PSIn {
+    float4 pos : SV_POSITION;
+    float2 worldPosition : TEXCOORD;
+};
+PSIn VSMain(VSIn input) {
+    PSIn output;
+    float2 halfPixel = float2(0.5f / viewport.x, 0.5f / viewport.y);
+    float2 ndc = ((input.pos + halfPixel) / viewport) * float2(2.0f, -2.0f) + float2(-1.0f, 1.0f);
+    output.pos = float4(ndc.xy, 0.0f, 1.0f);
+    output.worldPosition = input.worldPosition;
+    return output;
+}
+)";
+}
 )";
 }
 

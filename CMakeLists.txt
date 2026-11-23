@@ -120,6 +120,10 @@ if(NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "vulkan")
     set(NEOWPF_TEXTURED_FRAG_SPV "${NEOWPF_VULKAN_GENERATED_DIR}/textured.frag.spv")
     set(NEOWPF_TEXTURED_VERT_HEADER "${NEOWPF_VULKAN_GENERATED_DIR}/textured.vert.spv.h")
     set(NEOWPF_TEXTURED_FRAG_HEADER "${NEOWPF_VULKAN_GENERATED_DIR}/textured.frag.spv.h")
+    set(NEOWPF_GRADIENT_VERT_SPV "${NEOWPF_VULKAN_GENERATED_DIR}/gradient.vert.spv")
+    set(NEOWPF_GRADIENT_FRAG_SPV "${NEOWPF_VULKAN_GENERATED_DIR}/gradient.frag.spv")
+    set(NEOWPF_GRADIENT_VERT_HEADER "${NEOWPF_VULKAN_GENERATED_DIR}/gradient.vert.spv.h")
+    set(NEOWPF_GRADIENT_FRAG_HEADER "${NEOWPF_VULKAN_GENERATED_DIR}/gradient.frag.spv.h")
     add_custom_command(
         OUTPUT "${NEOWPF_SOLID_VERT_HEADER}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_VULKAN_GENERATED_DIR}"
@@ -152,8 +156,25 @@ if(NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "vulkan")
         DEPENDS "${NEOWPF_VULKAN_SHADER_DIR}/textured.frag" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/EmbedSpirv.cmake"
         VERBATIM
     )
+    add_custom_command(
+        OUTPUT "${NEOWPF_GRADIENT_VERT_HEADER}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_VULKAN_GENERATED_DIR}"
+        COMMAND "${NEOWPF_GLSLANG_VALIDATOR}" -V "${NEOWPF_VULKAN_SHADER_DIR}/gradient.vert" -o "${NEOWPF_GRADIENT_VERT_SPV}"
+        COMMAND ${CMAKE_COMMAND} -DINPUT=${NEOWPF_GRADIENT_VERT_SPV} -DOUTPUT=${NEOWPF_GRADIENT_VERT_HEADER} -DSYMBOL=neowpf_gradient_vert_spv -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/EmbedSpirv.cmake"
+        DEPENDS "${NEOWPF_VULKAN_SHADER_DIR}/gradient.vert" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/EmbedSpirv.cmake"
+        VERBATIM
+    )
+    add_custom_command(
+        OUTPUT "${NEOWPF_GRADIENT_FRAG_HEADER}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${NEOWPF_VULKAN_GENERATED_DIR}"
+        COMMAND "${NEOWPF_GLSLANG_VALIDATOR}" -V "${NEOWPF_VULKAN_SHADER_DIR}/gradient.frag" -o "${NEOWPF_GRADIENT_FRAG_SPV}"
+        COMMAND ${CMAKE_COMMAND} -DINPUT=${NEOWPF_GRADIENT_FRAG_SPV} -DOUTPUT=${NEOWPF_GRADIENT_FRAG_HEADER} -DSYMBOL=neowpf_gradient_frag_spv -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/EmbedSpirv.cmake"
+        DEPENDS "${NEOWPF_VULKAN_SHADER_DIR}/gradient.frag" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/EmbedSpirv.cmake"
+        VERBATIM
+    )
     set_source_files_properties("${NEOWPF_SOLID_VERT_HEADER}" "${NEOWPF_SOLID_FRAG_HEADER}"
         "${NEOWPF_TEXTURED_VERT_HEADER}" "${NEOWPF_TEXTURED_FRAG_HEADER}"
+        "${NEOWPF_GRADIENT_VERT_HEADER}" "${NEOWPF_GRADIENT_FRAG_HEADER}"
         PROPERTIES HEADER_FILE_ONLY TRUE)
 endif()
 
@@ -395,31 +416,6 @@ if(NEOWPF_BUILD_MEDIA)
     set(BUILD_TESTING "${NEOWPF_MEDIA_BUILD_TESTING}")
 endif()
 
-if(ANDROID)
-    if(NOT NEOWPF_HOST_TOOLS_DIR)
-        message(FATAL_ERROR
-            "NEOWPF_HOST_TOOLS_DIR must point to host-built tools when cross-compiling for Android.")
-    endif()
-    if(CMAKE_HOST_WIN32)
-        set(NEOWPF_HOST_EXECUTABLE_SUFFIX ".exe")
-    else()
-        set(NEOWPF_HOST_EXECUTABLE_SUFFIX "")
-    endif()
-    set(NEOWPF_XAML_COMPILER
-        "${NEOWPF_HOST_TOOLS_DIR}/XamlCompiler${NEOWPF_HOST_EXECUTABLE_SUFFIX}")
-    if(NOT EXISTS "${NEOWPF_XAML_COMPILER}")
-        message(FATAL_ERROR
-            "Host XAML compiler not found: ${NEOWPF_XAML_COMPILER}. "
-            "Set NEOWPF_HOST_TOOLS_DIR to the host tools directory.")
-    endif()
-elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tools/XamlCompiler${CMAKE_EXECUTABLE_SUFFIX}")
-    set(NEOWPF_XAML_COMPILER
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/XamlCompiler${CMAKE_EXECUTABLE_SUFFIX}")
-else()
-    set(NEOWPF_XAML_COMPILER
-        "${CMAKE_CURRENT_SOURCE_DIR}/NWpfBuild/${NEOWPF_PLATFORM}/$<CONFIG>/tools/XamlCompiler${CMAKE_EXECUTABLE_SUFFIX}")
-endif()
-
 include(cmake/NeoWPFSources.cmake)
 add_library(NeoNaml OBJECT
     src/NeoNaml/NamlArtifact.cpp
@@ -494,10 +490,12 @@ set(NEOWPF_GENERATED_ASSET_OUTPUTS)
 if(NEOWPF_RENDERER_BACKEND_LOWER STREQUAL "vulkan")
     list(APPEND NEOWPF_HEADERS
         "${NEOWPF_SOLID_VERT_HEADER}" "${NEOWPF_SOLID_FRAG_HEADER}"
-        "${NEOWPF_TEXTURED_VERT_HEADER}" "${NEOWPF_TEXTURED_FRAG_HEADER}")
+        "${NEOWPF_TEXTURED_VERT_HEADER}" "${NEOWPF_TEXTURED_FRAG_HEADER}"
+        "${NEOWPF_GRADIENT_VERT_HEADER}" "${NEOWPF_GRADIENT_FRAG_HEADER}")
     list(APPEND NEOWPF_GENERATED_ASSET_OUTPUTS
         "${NEOWPF_SOLID_VERT_HEADER}" "${NEOWPF_SOLID_FRAG_HEADER}"
-        "${NEOWPF_TEXTURED_VERT_HEADER}" "${NEOWPF_TEXTURED_FRAG_HEADER}")
+        "${NEOWPF_TEXTURED_VERT_HEADER}" "${NEOWPF_TEXTURED_FRAG_HEADER}"
+        "${NEOWPF_GRADIENT_VERT_HEADER}" "${NEOWPF_GRADIENT_FRAG_HEADER}")
 endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND NEOWPF_HEADERS "${NEOWPF_XDG_SHELL_HEADER}")
@@ -1037,6 +1035,7 @@ if(BUILD_TESTING AND NOT ANDROID)
         tests/Automated/PolygonClipTests.cpp
         tests/Automated/DrawBatcherTests.cpp
         tests/Automated/PaintTests.cpp
+        tests/Automated/RampBakerTests.cpp
         tests/Automated/CommandListHashTests.cpp
         tests/Automated/GridTests.cpp
         tests/Automated/PanelTests.cpp

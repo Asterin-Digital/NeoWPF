@@ -15,6 +15,9 @@ namespace NeoWPF::Rendering::D3D11 {
     extern ComPtr<ID3D11VertexShader> g_vsText;
     extern ComPtr<ID3D11PixelShader> g_psText;
     extern ComPtr<ID3D11InputLayout> g_inputLayoutText;
+    extern ComPtr<ID3D11VertexShader> g_vsGradient;
+    extern ComPtr<ID3D11PixelShader> g_psGradient;
+    extern ComPtr<ID3D11InputLayout> g_inputLayoutGradient;
     extern ComPtr<ID3D11SamplerState> g_samplerState;
     extern ComPtr<ID3D11Buffer> g_vertexBuffer;
     extern ComPtr<ID3D11Buffer> g_constantBuffer;
@@ -68,8 +71,11 @@ void ShutdownDevice()
     g_ps.Reset();
     g_vsText.Reset();
     g_psText.Reset();
+    g_vsGradient.Reset();
+    g_psGradient.Reset();
     g_inputLayout.Reset();
     g_inputLayoutText.Reset();
+    g_inputLayoutGradient.Reset();
     g_samplerState.Reset();
     g_vertexBuffer.Reset();
     g_constantBuffer.Reset();

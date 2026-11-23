@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional, Union
 
 
 PACKAGE_NAME = "com.asterin.neowpf.controlgallery"
@@ -14,7 +15,7 @@ REPOSITORY_DIR = PROJECT_DIR.parents[2]
 ANDROID_BUILD_DIR = REPOSITORY_DIR / "out" / "build" / "android-debug-preinstalled"
 
 
-def find_adb() -> str | None:
+def find_adb() -> Optional[str]:
     adb_name = "adb.exe" if os.name == "nt" else "adb"
     adb = shutil.which("adb")
     if adb:
@@ -29,7 +30,7 @@ def find_adb() -> str | None:
     return None
 
 
-def find_gradle() -> Path | None:
+def find_gradle() -> Optional[Path]:
     wrapper_name = "gradlew.bat" if os.name == "nt" else "gradlew"
     wrapper = PROJECT_DIR / wrapper_name
     if wrapper.is_file():
@@ -65,14 +66,60 @@ def find_android_build_tools(adb: str) -> tuple[str, str]:
     )
 
 
-def make_command(program: Path | str, *arguments: str) -> list[str]:
+def find_android_ndk(adb: str) -> Path:
+    for variable in ("ANDROID_NDK_HOME", "ANDROID_NDK_ROOT"):
+        candidate = os.environ.get(variable)
+        if candidate:
+            ndk = Path(candidate)
+            if (ndk / "build" / "cmake" / "android.toolchain.cmake").is_file():
+                return ndk
+
+    sdk_roots = [
+        Path(os.environ[variable])
+        for variable in ("ANDROID_SDK_ROOT", "ANDROID_HOME")
+        if os.environ.get(variable)
+    ]
+    sdk_roots.append(Path(adb).resolve().parent.parent)
+
+    for sdk_root in sdk_roots:
+        ndk_directory = sdk_root / "ndk"
+        if ndk_directory.is_dir():
+            candidates = sorted(
+                (
+                    path
+                    for path in ndk_directory.iterdir()
+                    if (path / "build" / "cmake" / "android.toolchain.cmake").is_file()
+                ),
+                reverse=True,
+            )
+            if candidates:
+                return candidates[0]
+    raise RuntimeError("Android NDK was not found under ANDROID_NDK_HOME or the Android SDK.")
+
+
+def find_android_sdk_root(adb: str, ndk: Path) -> Path:
+    sdk_roots = [
+        Path(os.environ[variable])
+        for variable in ("ANDROID_SDK_ROOT", "ANDROID_HOME")
+        if os.environ.get(variable)
+    ]
+    sdk_roots.extend((ndk.parent.parent, Path(adb).resolve().parent.parent))
+
+    adb_name = "adb.exe" if os.name == "nt" else "adb"
+    for sdk_root in sdk_roots:
+        if (sdk_root / "platform-tools" / adb_name).is_file():
+            return sdk_root
+    raise RuntimeError("Android SDK root was not found.")
+
+
+def make_command(program: Union[Path, str], *arguments: str) -> list[str]:
     command = str(program)
     if os.name == "nt" and Path(command).suffix.lower() in {".bat", ".cmd"}:
         return [os.environ.get("COMSPEC", "cmd.exe"), "/d", "/c", command, *arguments]
     return [command, *arguments]
 
 
-def get_device_serial(adb: str, requested_serial: str | None) -> str:
+def get_device_serial(adb: str, requested_serial: Optional[str]) -> str:
     result = subprocess.run(
         [adb, "devices"],
         check=True,
@@ -118,6 +165,8 @@ def main() -> int:
     try:
         serial = get_device_serial(adb, args.serial)
         cmake, ninja = find_android_build_tools(adb)
+        android_ndk = find_android_ndk(adb)
+        android_sdk = find_android_sdk_root(adb, android_ndk)
     except RuntimeError as error:
         parser.error(str(error))
 
@@ -132,6 +181,8 @@ def main() -> int:
             "--config",
             "Debug",
             "--android",
+            "--android-ndk",
+            str(android_ndk),
             "--cmake",
             cmake,
             "--target",
@@ -145,10 +196,14 @@ def main() -> int:
         check=True,
     )
 
+    gradle_environment = os.environ.copy()
+    gradle_environment["ANDROID_HOME"] = str(android_sdk)
+    gradle_environment["ANDROID_SDK_ROOT"] = str(android_sdk)
     subprocess.run(
         make_command(gradle, "assembleDebug"),
         cwd=PROJECT_DIR,
         check=True,
+        env=gradle_environment,
     )
 
     apk_directory = PROJECT_DIR / "build" / "outputs" / "apk" / "debug"

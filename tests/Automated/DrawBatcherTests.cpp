@@ -62,4 +62,28 @@ TEST(DrawBatcherTests, SplitsOnTextureChange)
     EXPECT_EQ(batches[1].textureId, 2u);
 }
 
+TEST(DrawBatcherTests, SplitsGradientKindsAndGradientIndices)
+{
+    CommandList commands;
+    commands.DrawRect(0.0, 0.0, 1.0, 1.0,
+                      NeoWPF::Rendering::Paint::LinearGradient(3u));
+    commands.DrawRoundedRect(0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                             NeoWPF::Rendering::Paint::LinearGradient(3u));
+    commands.DrawRect(0.0, 0.0, 1.0, 1.0,
+                      NeoWPF::Rendering::Paint::LinearGradient(4u));
+    commands.DrawArc(0.0, 0.0, 1.0, 0.5, 0.0, 1.0,
+                     NeoWPF::Rendering::Paint::RadialGradient(5u));
+
+    const auto batches = NeoWPF::Rendering::BuildDrawBatches(commands);
+
+    ASSERT_EQ(batches.size(), 3u);
+    EXPECT_EQ(batches[0].kind, DrawBatchKind::LinearGradient);
+    EXPECT_EQ(batches[0].gradientIndex, 3u);
+    EXPECT_EQ(batches[0].commandCount, 2u);
+    EXPECT_EQ(batches[1].kind, DrawBatchKind::LinearGradient);
+    EXPECT_EQ(batches[1].gradientIndex, 4u);
+    EXPECT_EQ(batches[2].kind, DrawBatchKind::RadialGradient);
+    EXPECT_EQ(batches[2].gradientIndex, 5u);
+}
+
 }

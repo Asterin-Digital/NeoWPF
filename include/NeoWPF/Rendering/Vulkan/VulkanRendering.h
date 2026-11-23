@@ -9,6 +9,7 @@ See LICENSE file in the project root for full license text.
 
 #include <vulkan/vulkan.h>
 
+#include <cstddef>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
@@ -30,11 +31,25 @@ public:
                  const NeoWPF::Rendering::CommandList& commands,
                  double scaleFactor) override;
     void Present(const NeoWPF::Rendering::RenderSurface& surface) override;
+    void PrepareGradientAtlas(const NeoWPF::Rendering::CommandList& commands) override;
     std::uint32_t CreateTexture(unsigned int width, unsigned int height, const void* rgbaData) override;
     void DestroyTexture(std::uint32_t id) noexcept override;
     void ClearTextures() noexcept override;
 
 private:
+    struct GradientPushConstants {
+        float viewport[2];
+        float padding[2];
+        float mapping0[4];
+        float mapping1[4];
+        float gradient[4];
+    };
+
+    static_assert(sizeof(GradientPushConstants) == 64);
+    static_assert(offsetof(GradientPushConstants, mapping0) == 16);
+    static_assert(offsetof(GradientPushConstants, mapping1) == 32);
+    static_assert(offsetof(GradientPushConstants, gradient) == 48);
+
     struct VertexBuffer {
         VkBuffer buffer = VK_NULL_HANDLE;
         VkDeviceMemory memory = VK_NULL_HANDLE;
@@ -44,10 +59,13 @@ private:
     struct WindowContext {
         VertexBuffer solidBuffer;
         VertexBuffer texturedBuffer;
+        VertexBuffer gradientBuffer;
         VkPipelineLayout solidPipelineLayout = VK_NULL_HANDLE;
         VkPipeline solidPipeline = VK_NULL_HANDLE;
         VkPipelineLayout texturedPipelineLayout = VK_NULL_HANDLE;
         VkPipeline texturedPipeline = VK_NULL_HANDLE;
+        VkPipelineLayout gradientPipelineLayout = VK_NULL_HANDLE;
+        VkPipeline gradientPipeline = VK_NULL_HANDLE;
         VkSurfaceKHR surface = VK_NULL_HANDLE;
         VkSwapchainKHR swapchain = VK_NULL_HANDLE;
         VkFormat swapchainFormat = VK_FORMAT_UNDEFINED;
@@ -87,6 +105,8 @@ private:
     void DestroyTexturedPipeline(WindowContext&) noexcept;
     void DestroyTextureResources() noexcept;
     bool CreateTexturedPipeline(WindowContext&, VkRenderPass renderPass);
+    void DestroyGradientPipeline(WindowContext&) noexcept;
+    bool CreateGradientPipeline(WindowContext&, VkRenderPass renderPass);
     bool CreateSwapchainResources(WindowContext&, unsigned int width, unsigned int height);
 
     /*
@@ -126,6 +146,8 @@ private:
     std::mutex m_textureMutex;
     std::recursive_mutex m_renderMutex;
     std::uint32_t m_nextTextureId = 1;
+    std::uint32_t m_gradientTextureId = 0;
+    std::uint64_t m_gradientTextureHash = 0;
     std::unordered_map<void*, std::shared_ptr<WindowContext>> m_windowContexts;
     mutable std::mutex m_windowContextsMutex;
     bool m_initialized = false;

@@ -16,6 +16,7 @@ void VulkanRendering::DestroySwapchainResources(WindowContext& context) noexcept
         return;
     }
     DestroyTexturedPipeline(context);
+    DestroyGradientPipeline(context);
     DestroySolidPipeline(context);
     const auto destroyVertexBuffer = [this](VertexBuffer& buffer) {
         if (buffer.buffer != VK_NULL_HANDLE) vkDestroyBuffer(m_device, buffer.buffer, nullptr);
@@ -24,6 +25,7 @@ void VulkanRendering::DestroySwapchainResources(WindowContext& context) noexcept
     };
     destroyVertexBuffer(context.solidBuffer);
     destroyVertexBuffer(context.texturedBuffer);
+    destroyVertexBuffer(context.gradientBuffer);
     for (auto framebuffer : context.framebuffers) {
         vkDestroyFramebuffer(m_device, framebuffer, nullptr);
     }
@@ -255,8 +257,13 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
         DestroySwapchainResources(context);
         return false;
     }
-    if (m_textureDescriptorPool != VK_NULL_HANDLE && !CreateTexturedPipeline(context, context.renderPass)) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Textured pipeline recreation failed");
+    if (!CreateTexturedPipeline(context, context.renderPass)) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Textured pipeline creation failed");
+        DestroySwapchainResources(context);
+        return false;
+    }
+    if (!CreateGradientPipeline(context, context.renderPass)) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Gradient pipeline creation failed");
         DestroySwapchainResources(context);
         return false;
     }

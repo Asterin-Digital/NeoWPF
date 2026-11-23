@@ -3,6 +3,8 @@
 
 #include "solid.frag.spv.h"
 #include "solid.vert.spv.h"
+#include "gradient.frag.spv.h"
+#include "gradient.vert.spv.h"
 
 #include <algorithm>
 #include <cstring>
@@ -248,6 +250,125 @@ bool VulkanRendering::CreateSolidPipeline(WindowContext& context, VkRenderPass r
         return false;
     }
 
+    return true;
+}
+
+void VulkanRendering::DestroyGradientPipeline(WindowContext& context) noexcept
+{
+    if (m_device == VK_NULL_HANDLE) {
+        return;
+    }
+    if (context.gradientPipeline != VK_NULL_HANDLE) {
+        vkDestroyPipeline(m_device, context.gradientPipeline, nullptr);
+        context.gradientPipeline = VK_NULL_HANDLE;
+    }
+    if (context.gradientPipelineLayout != VK_NULL_HANDLE) {
+        vkDestroyPipelineLayout(m_device, context.gradientPipelineLayout, nullptr);
+        context.gradientPipelineLayout = VK_NULL_HANDLE;
+    }
+}
+
+bool VulkanRendering::CreateGradientPipeline(WindowContext& context, VkRenderPass renderPass)
+{
+    if (renderPass == VK_NULL_HANDLE) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Cannot create gradient pipeline without a render pass");
+        return false;
+    }
+    if (m_textureDescriptorPool == VK_NULL_HANDLE) {
+        const VkDescriptorSetLayoutBinding binding{
+            0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
+            VK_SHADER_STAGE_FRAGMENT_BIT, nullptr};
+        const VkDescriptorSetLayoutCreateInfo setLayoutInfo{
+            VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO, nullptr, 0, 1, &binding};
+        if (vkCreateDescriptorSetLayout(m_device, &setLayoutInfo, nullptr, &m_textureSetLayout) != VK_SUCCESS) {
+            return false;
+        }
+        const VkDescriptorPoolSize poolSize{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1024};
+        const VkDescriptorPoolCreateInfo poolInfo{
+            VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO, nullptr, 0, 1024, 1, &poolSize};
+        if (vkCreateDescriptorPool(m_device, &poolInfo, nullptr, &m_textureDescriptorPool) != VK_SUCCESS) {
+            return false;
+        }
+        const VkSamplerCreateInfo samplerInfo{
+            VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO, nullptr, 0,
+            VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_MIPMAP_MODE_NEAREST,
+            VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+            VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 0.0f, VK_FALSE, 1.0f, VK_FALSE,
+            VK_COMPARE_OP_ALWAYS, 0.0f, 0.0f, VK_BORDER_COLOR_INT_OPAQUE_BLACK, VK_FALSE};
+        if (vkCreateSampler(m_device, &samplerInfo, nullptr, &m_textureSampler) != VK_SUCCESS) {
+            return false;
+        }
+    }
+
+    const VkPushConstantRange pushConstants{
+        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+        0, sizeof(GradientPushConstants)};
+    const VkPipelineLayoutCreateInfo layoutInfo{
+        VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO, nullptr, 0, 1, &m_textureSetLayout,
+        1, &pushConstants};
+    if (vkCreatePipelineLayout(m_device, &layoutInfo, nullptr, &context.gradientPipelineLayout) != VK_SUCCESS) {
+        return false;
+    }
+    const VkShaderModule vertexShader = CreateShaderModule(
+        m_device, neowpf_gradient_vert_spv, sizeof(neowpf_gradient_vert_spv));
+    const VkShaderModule fragmentShader = CreateShaderModule(
+        m_device, neowpf_gradient_frag_spv, sizeof(neowpf_gradient_frag_spv));
+    if (vertexShader == VK_NULL_HANDLE || fragmentShader == VK_NULL_HANDLE) {
+        if (vertexShader != VK_NULL_HANDLE) vkDestroyShaderModule(m_device, vertexShader, nullptr);
+        if (fragmentShader != VK_NULL_HANDLE) vkDestroyShaderModule(m_device, fragmentShader, nullptr);
+        return false;
+    }
+    const VkPipelineShaderStageCreateInfo shaderStages[] = {
+        {VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0,
+         VK_SHADER_STAGE_VERTEX_BIT, vertexShader, "main", nullptr},
+        {VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0,
+         VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader, "main", nullptr}};
+    const VkVertexInputBindingDescription binding{
+        0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX};
+    const VkVertexInputAttributeDescription attributes[] = {
+        {0, 0, VK_FORMAT_R32G32_SFLOAT, 0},
+        {1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 2},
+        {2, 0, VK_FORMAT_R32_SFLOAT, sizeof(float) * 4}};
+    const VkPipelineVertexInputStateCreateInfo vertexInput{
+        VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, nullptr, 0,
+        1, &binding, 3, attributes};
+    const VkPipelineInputAssemblyStateCreateInfo inputAssembly{
+        VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO, nullptr, 0,
+        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE};
+    const VkViewport viewport{0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
+    const VkRect2D scissor{{0, 0}, {1, 1}};
+    const VkPipelineViewportStateCreateInfo viewportState{
+        VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO, nullptr, 0, 1, &viewport, 1, &scissor};
+    const VkPipelineRasterizationStateCreateInfo rasterization{
+        VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO, nullptr, 0, VK_FALSE, VK_FALSE,
+        VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, VK_FALSE,
+        0.0f, 0.0f, 0.0f, 1.0f};
+    const VkPipelineMultisampleStateCreateInfo multisample{
+        VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO, nullptr, 0,
+        VK_SAMPLE_COUNT_1_BIT, VK_FALSE, 1.0f, nullptr, VK_FALSE, VK_FALSE};
+    const VkPipelineColorBlendAttachmentState blendAttachment{
+        VK_TRUE, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_OP_ADD,
+        VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_OP_ADD,
+        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT};
+    const VkPipelineColorBlendStateCreateInfo blend{
+        VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO, nullptr, 0, VK_FALSE,
+        VK_LOGIC_OP_COPY, 1, &blendAttachment, {1.0f, 1.0f, 1.0f, 1.0f}};
+    const VkDynamicState dynamicStates[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+    const VkPipelineDynamicStateCreateInfo dynamicState{
+        VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO, nullptr, 0, 2, dynamicStates};
+    const VkGraphicsPipelineCreateInfo pipelineInfo{
+        VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, nullptr, 0, 2, shaderStages,
+        &vertexInput, &inputAssembly, nullptr, &viewportState, &rasterization, &multisample,
+        nullptr, &blend, &dynamicState, context.gradientPipelineLayout, renderPass, 0, VK_NULL_HANDLE, -1};
+    const VkResult pipelineResult = vkCreateGraphicsPipelines(
+        m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &context.gradientPipeline);
+    vkDestroyShaderModule(m_device, vertexShader, nullptr);
+    vkDestroyShaderModule(m_device, fragmentShader, nullptr);
+    if (pipelineResult != VK_SUCCESS) {
+        NeoWPF::Diagnostics::LogError("[Vulkan] Gradient pipeline creation failed: %d",
+            static_cast<int>(pipelineResult));
+        return false;
+    }
     return true;
 }
 

@@ -21,6 +21,8 @@ namespace NeoWPF::Rendering {
 */
 enum class DrawBatchKind : std::uint8_t {
     Solid,
+    LinearGradient,
+    RadialGradient,
     Textured,
 };
 
@@ -35,6 +37,7 @@ struct DrawBatch {
     std::size_t firstCommand;
     std::size_t commandCount;
     std::uint32_t textureId;
+    std::uint32_t gradientIndex;
 };
 
 /*

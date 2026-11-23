@@ -387,6 +387,7 @@ void NeoWPF::Rendering::Renderer_Execute(
         return;
     }
     if (auto* rendering = CurrentRendering()) {
+        rendering->PrepareGradientAtlas(cmd);
         rendering->BeginFrame(surface);
         rendering->Execute(surface, cmd, scaleFactor);
         state->lastCommandHash = commandHash;

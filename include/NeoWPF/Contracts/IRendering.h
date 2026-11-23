@@ -115,6 +115,14 @@ public:
     virtual void Present(const NeoWPF::Rendering::RenderSurface& surface) = 0;
     /*
         @summary
+        Prepares gradient ramp resources before rendering a frame.
+
+        @param commands
+        The command list that contains gradient descriptions.
+    */
+    virtual void PrepareGradientAtlas(const NeoWPF::Rendering::CommandList& commands) {}
+    /*
+        @summary
         Creates a texture from RGBA pixel data.
 
         @param width
