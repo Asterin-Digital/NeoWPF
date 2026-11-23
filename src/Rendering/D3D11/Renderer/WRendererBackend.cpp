@@ -1,7 +1,7 @@
 #include <NeoWPF/Rendering/Renderer.h>
 #include <d3d11.h>
 #include <wrl.h>
-#include <Windows.h>
+#include <windows.h>
 
 using Microsoft::WRL::ComPtr;
 using namespace NeoWPF::Rendering;

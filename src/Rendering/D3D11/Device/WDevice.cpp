@@ -12,7 +12,7 @@
 #include <d3dcompiler.h>
 #include <string>
 #include <cstdint>
-#include <Windows.h>
+#include <windows.h>
 #include <mutex>
 
 using Microsoft::WRL::ComPtr;

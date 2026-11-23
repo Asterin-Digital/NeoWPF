@@ -1,6 +1,6 @@
 #include <NeoWPF/Rendering/D3D11/WRendering.h>
 #include <NeoWPF/Rendering/Renderer.h>
-#include <Windows.h>
+#include <windows.h>
 
 namespace NeoWPF::Rendering::D3D11 {
 

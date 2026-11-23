@@ -11,7 +11,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cmath>
-#include <Windows.h>
+#include <windows.h>
 #include <limits>
 #include <span>
 #include <NeoWPF/Diagnostics/Logger.h>

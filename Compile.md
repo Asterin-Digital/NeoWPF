@@ -263,6 +263,60 @@ NeoLint should be disabled for this build tree unless `compile_commands.json` is
 
 Do not reuse the same build directory after switching between Ninja and Visual Studio. CMake build trees are tied to their generator.
 
+## Cross-compiling Windows from Linux with MinGW-w64
+
+Install the x64 MinGW-w64 toolchain and CMake/Ninja. MinGW-w64 supplies the Windows API headers and import libraries used by this cross-build.
+
+Use the vcpkg community triplet and a separate install root so the Windows dependencies do not replace dependencies for another host triplet:
+
+```bash
+export VCPKG_ROOT="$HOME/vcpkg"
+export VCPKG_OVERLAY_TRIPLETS="$VCPKG_ROOT/triplets/community"
+
+"$VCPKG_ROOT/vcpkg" install \
+    --triplet x64-mingw-static \
+    --overlay-triplets "$VCPKG_OVERLAY_TRIPLETS" \
+    --x-manifest-root "$PWD" \
+    --x-install-root "$PWD/out/vcpkg-mingw"
+```
+
+Configure and build NeoWPF:
+
+```bash
+cmake -S . -B out/build/windows-mingw-debug \
+    -G Ninja \
+    -DCMAKE_SYSTEM_NAME=Windows \
+    -DCMAKE_SYSTEM_PROCESSOR=x86_64 \
+    -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+    -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+    -DCMAKE_RC_COMPILER=x86_64-w64-mingw32-windres \
+    -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+    -DVCPKG_TARGET_TRIPLET=x64-mingw-static \
+    -DVCPKG_OVERLAY_TRIPLETS="$VCPKG_OVERLAY_TRIPLETS" \
+    -DVCPKG_INSTALLED_DIR="$PWD/out/vcpkg-mingw" \
+    -DVCPKG_MANIFEST_MODE=OFF \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DBUILD_TESTING=OFF \
+    -DNEOWPF_USE_NEOLINT=OFF
+cmake --build out/build/windows-mingw-debug
+```
+
+To cross-compile and run the Control Gallery under Wine:
+
+```bash
+cmake -S samples/ControlGallery -B out/build/control-gallery-windows-mingw-debug \
+    -G Ninja \
+    -DCMAKE_SYSTEM_NAME=Windows \
+    -DCMAKE_SYSTEM_PROCESSOR=x86_64 \
+    -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DNEOWPF_ROOT="$PWD" \
+    -DNEOWPF_LIBRARY="$PWD/NWpfBuild/Windows/Debug/libNeoWPF.a"
+cmake --build out/build/control-gallery-windows-mingw-debug
+WINEPATH="$(dirname "$(x86_64-w64-mingw32-g++ -print-file-name=libstdc++-6.dll)")" \
+    wine out/build/control-gallery-windows-mingw-debug/NeoWPF.ControlGallerySample.exe
+```
+
 ## Linux
 
 ### Install system dependencies

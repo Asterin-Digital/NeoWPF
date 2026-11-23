@@ -32,6 +32,15 @@ struct TestObject : NeoWPF::UI::Properties::DependencyObject {
 struct DerivedTestObject : TestObject {
 };
 
+struct ComparableTestValue {
+    int value;
+
+    bool operator==(const ComparableTestValue& other) const noexcept
+    {
+        return value == other.value;
+    }
+};
+
 const auto& BindingValueProperty()
 {
     using namespace NeoWPF::UI::Properties;
@@ -205,6 +214,21 @@ TEST(DependencyPropertyTests, ValuesEqualSharesTheDependencyPropertyComparisonRu
     EXPECT_FALSE(NeoWPF::UI::Properties::ValuesEqual(std::any(std::string("item")), std::any(std::wstring(L"item"))));
     EXPECT_FALSE(NeoWPF::UI::Properties::ValuesEqual(std::any{}, std::any(42)));
     EXPECT_FALSE(NeoWPF::UI::Properties::ValuesEqual(std::any(42), std::any{}));
+}
+
+TEST(DependencyPropertyTests, ValuesEqualUsesRegisteredComparerForCustomTypes)
+{
+    using namespace NeoWPF::UI::Properties;
+
+    const auto& property = DependencyProperty::Register<TestObject, ComparableTestValue>(
+        "Automated.ComparableTestValue",
+        PropertyMetadata{ComparableTestValue{0}});
+
+    EXPECT_EQ(property.GetPropertyType(), std::type_index(typeid(ComparableTestValue)));
+    EXPECT_TRUE(ValuesEqual(std::any(ComparableTestValue{7}),
+                            std::any(ComparableTestValue{7})));
+    EXPECT_FALSE(ValuesEqual(std::any(ComparableTestValue{7}),
+                             std::any(ComparableTestValue{9})));
 }
 
 TEST(DependencyPropertyTests, FindsPropertiesByExactAndDerivedOwner)

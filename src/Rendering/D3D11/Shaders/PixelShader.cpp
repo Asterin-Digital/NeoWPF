@@ -20,6 +20,8 @@ float4 PSMain(PSIn input) : SV_Target {
     float4 sampled = tex.Sample(samp, input.uv);
     return sampled * input.col;
 }
+)";
+}
 
 const char* GetGradientPixelShaderSource()
 {
@@ -65,8 +67,6 @@ float4 PSMain(PSIn input) : SV_Target {
     }
     float4 sampled = rampAtlas.Sample(rampSampler, float2(ApplySpread(coordinate), gradient.z));
     return float4(sampled.rgb, sampled.a * gradient.w);
-}
-)";
 }
 )";
 }

@@ -103,6 +103,26 @@ if(CONTROL_GALLERY_SOURCES)
             ${X11_X11_LIB}
             ${X11_Xfixes_LIB}
         )
+    elseif(MINGW)
+        target_link_libraries(${NEOWPF_CONTROL_GALLERY_TARGET} PRIVATE
+            "${NEOWPF_LIBRARY}"
+            d3d11
+            dxgi
+            dcomp
+            dbghelp
+            ole32
+            windowscodecs
+            bcrypt
+            crypt32
+            ws2_32
+            wldap32
+            winmm
+            advapi32
+            iphlpapi
+            normaliz
+            secur32
+            dwmapi
+        )
     else()
         target_link_libraries(${NEOWPF_CONTROL_GALLERY_TARGET} PRIVATE "${NEOWPF_LIBRARY}")
     endif()

@@ -2,7 +2,7 @@
 ## I hate all of you!!! i went through 5 hours of debugging just for static lib merging D:
 
 if(NEOWPF_STATIC_DEPENDENCIES)
-    if(WIN32)
+    if(MSVC)
         find_program(NEOWPF_LIB_TOOL NAMES lib.exe lib)
         if(NOT NEOWPF_LIB_TOOL)
             message(FATAL_ERROR "Could not find Microsoft lib.exe for static archive merging.")
@@ -43,7 +43,7 @@ if(NEOWPF_STATIC_DEPENDENCIES)
         else()
             set(_candidate_names "${_link_name}")
             if(NOT _link_name MATCHES "\\.(a|lib)$")
-                if(WIN32)
+                if(MSVC)
                     list(APPEND _candidate_names "${_link_name}.lib")
                 else()
                     list(APPEND _candidate_names "${_link_name}.a")
@@ -52,7 +52,7 @@ if(NEOWPF_STATIC_DEPENDENCIES)
 
             unset(_resolved_path CACHE)
             set(_neowpf_saved_find_library_suffixes "${CMAKE_FIND_LIBRARY_SUFFIXES}")
-            if(WIN32)
+            if(MSVC)
                 set(CMAKE_FIND_LIBRARY_SUFFIXES ".lib")
             else()
                 set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
@@ -68,7 +68,7 @@ if(NEOWPF_STATIC_DEPENDENCIES)
             endif()
             unset(_resolved_path CACHE)
 
-            if(NOT _resolved AND WIN32)
+            if(NOT _resolved AND MSVC)
                 set(_neowpf_windows_sdk_dirs)
                 if(DEFINED ENV{WindowsSdkDir})
                     list(APPEND _neowpf_windows_sdk_dirs
@@ -218,7 +218,7 @@ if(NEOWPF_STATIC_DEPENDENCIES)
         endif()
     endif()
 
-    if(WIN32)
+    if(MSVC)
         set(NEOWPF_WINDOWS_SDK_STATIC_LIBS
             d3d11 dxgi dcomp dbghelp ole32 windowscodecs bcrypt crypt32 ws2_32
             wldap32 winmm advapi32 iphlpapi normaliz secur32 dwmapi)
@@ -297,7 +297,7 @@ if(NEOWPF_STATIC_DEPENDENCIES)
             "list(APPEND NEOWPF_ARCHIVE_INPUTS \${NEOWPF_INPUT_ARCHIVES})\n"
             "list(APPEND NEOWPF_ARCHIVE_INPUTS \${NEOWPF_EXTRA_ARCHIVES})\n"
         )
-        if(WIN32)
+        if(MSVC)
             string(APPEND _merge_script_content
                 "execute_process(COMMAND \"${NEOWPF_LIB_TOOL}\" /NOLOGO /IGNORE:4006 \"/OUT:\${NEOWPF_TARGET}\" \${NEOWPF_ARCHIVE_INPUTS} RESULT_VARIABLE NEOWPF_ARCHIVE_RESULT)\n"
             )

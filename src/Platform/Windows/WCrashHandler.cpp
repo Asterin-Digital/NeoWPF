@@ -1,7 +1,7 @@
 #include <NeoWPF/Diagnostics/CrashHandler.h>
 #include <NeoWPF/Diagnostics/CallStackTracer.h>
 
-#include <Windows.h>
+#include <windows.h>
 #include <cstring>
 #include <string>
 #include <vector>

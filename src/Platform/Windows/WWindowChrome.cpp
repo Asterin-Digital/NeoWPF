@@ -3,6 +3,10 @@
 #include <windows.h>
 #include <dwmapi.h>
 
+#ifndef DWMWA_CAPTION_COLOR
+#define DWMWA_CAPTION_COLOR 35
+#endif
+
 #include <unordered_map>
 
 namespace NeoWPF::Platform::Windows {

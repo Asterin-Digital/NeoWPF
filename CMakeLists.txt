@@ -247,7 +247,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     endif()
 endif()
 
-if(WIN32)
+if(WIN32 AND NOT MINGW)
     find_program(NEOWPF_WHERE_EXECUTABLE where REQUIRED)
     execute_process(
         COMMAND "${NEOWPF_WHERE_EXECUTABLE}" vcpkg
@@ -298,6 +298,30 @@ if(WIN32)
     set(ZLIB_INCLUDE_DIR "${NEOWPF_VCPKG_TRIPLET}/include" CACHE PATH "Zlib include directory" FORCE)
     set(ZLIB_LIBRARY_RELEASE "${NEOWPF_VCPKG_TRIPLET}/lib/zs.lib" CACHE FILEPATH "Zlib release library" FORCE)
     set(ZLIB_LIBRARY_DEBUG "${NEOWPF_VCPKG_TRIPLET}/debug/lib/zsd.lib" CACHE FILEPATH "Zlib debug library" FORCE)
+    find_package(Freetype CONFIG REQUIRED)
+    find_package(harfbuzz CONFIG REQUIRED)
+elseif(MINGW)
+    set(VCPKG_TARGET_TRIPLET "x64-mingw-static" CACHE STRING
+        "vcpkg triplet used for MinGW Windows dependencies")
+    set(VCPKG_LIBRARY_LINKAGE "static" CACHE STRING
+        "Build MinGW vcpkg libraries as static libraries")
+    set(NEOWPF_VCPKG_PREFIX
+        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
+    set(NEOWPF_VCPKG_TRIPLET "${NEOWPF_VCPKG_PREFIX}")
+    if(NOT EXISTS "${NEOWPF_VCPKG_PREFIX}/include/curl/curl.h" OR
+       NOT EXISTS "${NEOWPF_VCPKG_PREFIX}/include/stb_image.h" OR
+       NOT EXISTS "${NEOWPF_VCPKG_PREFIX}/share/stb/FindStb.cmake" OR
+       NOT EXISTS "${NEOWPF_VCPKG_PREFIX}/share/freetype/freetype-config.cmake" OR
+       NOT EXISTS "${NEOWPF_VCPKG_PREFIX}/share/harfbuzz/harfbuzzConfig.cmake")
+        message(FATAL_ERROR
+            "Could not locate MinGW vcpkg dependencies for '${VCPKG_TARGET_TRIPLET}' "
+            "under ${NEOWPF_VCPKG_PREFIX}. Install the manifest dependencies with "
+            "the x64-mingw-static triplet.")
+    endif()
+    list(PREPEND CMAKE_PREFIX_PATH "${NEOWPF_VCPKG_PREFIX}")
+    list(PREPEND CMAKE_MODULE_PATH "${NEOWPF_VCPKG_PREFIX}/share/stb")
+    set(ZLIB_ROOT "${NEOWPF_VCPKG_PREFIX}")
+    set(ZLIB_USE_STATIC_LIBS ON)
     find_package(Freetype CONFIG REQUIRED)
     find_package(harfbuzz CONFIG REQUIRED)
 endif()
@@ -520,7 +544,7 @@ target_sources(NeoWPF PRIVATE
     $<TARGET_OBJECTS:NeoNaml>
 )
 
-if(WIN32)
+if(MSVC)
     set(NEOWPF_HARFBUZZ_DEBUG_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/debug/lib/harfbuzz.lib")
     set(NEOWPF_FREETYPE_DEBUG_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/debug/lib/freetyped.lib")
     set(NEOWPF_HARFBUZZ_RELEASE_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/lib/harfbuzz.lib")
@@ -534,9 +558,23 @@ if(WIN32)
             message(FATAL_ERROR "Missing static text archive: ${NEOWPF_TEXT_ARCHIVE}")
         endif()
     endforeach()
+elseif(MINGW)
+    set(NEOWPF_HARFBUZZ_DEBUG_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/debug/lib/libharfbuzz.a")
+    set(NEOWPF_FREETYPE_DEBUG_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/debug/lib/libfreetyped.a")
+    set(NEOWPF_HARFBUZZ_RELEASE_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/lib/libharfbuzz.a")
+    set(NEOWPF_FREETYPE_RELEASE_ARCHIVE "${NEOWPF_VCPKG_TRIPLET}/lib/libfreetype.a")
+    foreach(NEOWPF_TEXT_ARCHIVE IN ITEMS
+        "${NEOWPF_HARFBUZZ_DEBUG_ARCHIVE}"
+        "${NEOWPF_FREETYPE_DEBUG_ARCHIVE}"
+        "${NEOWPF_HARFBUZZ_RELEASE_ARCHIVE}"
+        "${NEOWPF_FREETYPE_RELEASE_ARCHIVE}")
+        if(NOT EXISTS "${NEOWPF_TEXT_ARCHIVE}")
+            message(FATAL_ERROR "Missing MinGW static text archive: ${NEOWPF_TEXT_ARCHIVE}")
+        endif()
+    endforeach()
 endif()
 
-if(WIN32)
+if(MSVC)
     set(NEOWPF_RELEASE_EXTENSION "lib")
 else()
     set(NEOWPF_RELEASE_EXTENSION "a")

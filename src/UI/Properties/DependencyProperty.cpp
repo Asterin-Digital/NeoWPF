@@ -7,8 +7,16 @@
 namespace NeoWPF::UI::Properties {
 
 namespace {
-std::mutex g_anyEqualityComparersMutex;
-std::unordered_map<std::type_index, AnyEqualityComparer> g_anyEqualityComparers;
+struct AnyEqualityComparerRegistry {
+    std::mutex mutex;
+    std::unordered_map<std::type_index, AnyEqualityComparer> comparers;
+};
+
+AnyEqualityComparerRegistry& GetAnyEqualityComparerRegistry()
+{
+    static AnyEqualityComparerRegistry registry;
+    return registry;
+}
 }
 
 void RegisterAnyEqualityComparer(const std::type_index& valueType,
@@ -19,8 +27,9 @@ void RegisterAnyEqualityComparer(const std::type_index& valueType,
     }
 
     try {
-        const std::lock_guard lock(g_anyEqualityComparersMutex);
-        g_anyEqualityComparers.insert_or_assign(valueType, comparer);
+        auto& registry = GetAnyEqualityComparerRegistry();
+        const std::lock_guard lock(registry.mutex);
+        registry.comparers.insert_or_assign(valueType, comparer);
     } catch (...) {
     }
 }
@@ -61,9 +70,10 @@ bool ValuesEqual(const std::any& left, const std::any& right) noexcept
     try {
         AnyEqualityComparer comparer = nullptr;
         {
-            const std::lock_guard lock(g_anyEqualityComparersMutex);
-            const auto it = g_anyEqualityComparers.find(std::type_index(left.type()));
-            if (it != g_anyEqualityComparers.end()) {
+            auto& registry = GetAnyEqualityComparerRegistry();
+            const std::lock_guard lock(registry.mutex);
+            const auto it = registry.comparers.find(std::type_index(left.type()));
+            if (it != registry.comparers.end()) {
                 comparer = it->second;
             }
         }

@@ -1,6 +1,6 @@
 #include <NeoWPF/DotNet/Hosting/HostFxr/HostFxrLibrary.h>
 
-#include <Windows.h>
+#include <windows.h>
 #include <hostfxr.h>
 
 #include <string>

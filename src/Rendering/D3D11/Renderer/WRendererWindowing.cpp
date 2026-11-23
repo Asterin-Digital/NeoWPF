@@ -8,7 +8,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <stdexcept>
-#include <Windows.h>
+#include <windows.h>
 
 using Microsoft::WRL::ComPtr;
 using namespace NeoWPF::Rendering;

@@ -5,6 +5,7 @@ See LICENSE file in the project root for full license text.
 
 #pragma once
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>

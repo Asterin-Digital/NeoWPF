@@ -1,7 +1,7 @@
 #include <NeoWPF/Diagnostics/CallStackTracer.h>
 
-#include <Windows.h>
-#include <DbgHelp.h>
+#include <windows.h>
+#include <dbghelp.h>
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>

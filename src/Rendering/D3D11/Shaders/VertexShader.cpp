@@ -33,6 +33,8 @@ PSIn VSMain(VSIn input) {
     o.col = input.col;
     return o;
 }
+)";
+}
 
 const char* GetGradientVertexShaderSource()
 {
@@ -58,8 +60,6 @@ PSIn VSMain(VSIn input) {
     output.pos = float4(ndc.xy, 0.0f, 1.0f);
     output.worldPosition = input.worldPosition;
     return output;
-}
-)";
 }
 )";
 }
