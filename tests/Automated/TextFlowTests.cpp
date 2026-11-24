@@ -44,6 +44,18 @@ NeoWPF::UI::Text::FlowResult BreakText(
         text, kFontSize, kFontFamily, width, wrapping, kFontWeight, kFontStyle);
 }
 
+TEST(TextFlowTests, ResolveFontFamilyReturnsEmptyWhenNoFontsAreRegistered)
+{
+    ASSERT_TRUE(NeoWPF::Rendering::Text::GetFontDatabase().Records().empty());
+    EXPECT_TRUE(NeoWPF::Rendering::Text::ResolveFontFamily(L"Missing Font").empty());
+}
+
+TEST(TextFlowTests, ResolveFontFamilyUsesAnAvailableFontWhenRequestedFamilyIsMissing)
+{
+    ASSERT_TRUE(RegisterTextTestFont());
+    EXPECT_EQ(NeoWPF::Rendering::Text::ResolveFontFamily(L"Missing Font"), kFontFamily);
+}
+
 TEST(TextFlowTests, NoWrapPreservesTheLogicalLine)
 {
     ASSERT_TRUE(RegisterTextTestFont());

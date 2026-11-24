@@ -178,7 +178,7 @@ std::wstring ResolveFontFamily(const std::wstring& requestedFontFamily)
     const auto resolved = GetFontDatabase().Resolve({
         WideToUtf8(requestedFontFamily), 400, NeoWPF::UI::FontStyle::Normal});
     if (!resolved) {
-        return requestedFontFamily;
+        return {};
     }
     return Utf8ToWide(resolved->familyUtf8);
 }

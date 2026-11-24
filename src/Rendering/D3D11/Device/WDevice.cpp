@@ -33,6 +33,8 @@ namespace NeoWPF::Rendering::D3D11 {
     ComPtr<ID3D11SamplerState> g_samplerState;
     ComPtr<ID3D11Buffer> g_vertexBuffer;
     ComPtr<ID3D11Buffer> g_constantBuffer;
+    ComPtr<ID3D11RasterizerState> g_rasterizerState;
+    ComPtr<ID3D11DepthStencilState> g_depthStencilState;
 
     HMODULE g_d3dcompiler = nullptr;
     using PFN_D3DCOMPILE = HRESULT(WINAPI*)(LPCVOID, SIZE_T, LPCSTR, const D3D_SHADER_MACRO*, ID3DInclude*, LPCSTR, LPCSTR, UINT, UINT, ID3DBlob**, ID3DBlob**);
@@ -53,6 +55,9 @@ namespace NeoWPF::Rendering::D3D11 {
 }
 
 namespace NeoWPF::Rendering::D3D11 {
+
+constexpr bool kUseExplicitSamplerSettings = false;
+constexpr bool kUseShaderModel5ForTextAndGradients = false;
 
 static void ThrowIfFailed(HRESULT hr, const char* message)
 {
@@ -291,7 +296,13 @@ void CompileShaders()
         ComPtr<ID3DBlob> textVsBlob;
         ComPtr<ID3DBlob> textPsBlob;
 
-        compileShader(textVsSrc, "VSMain", "vs_4_0", textVsBlob, "Text vertex shader compilation failed");
+        const char* vertexProfile = kUseShaderModel5ForTextAndGradients
+            ? "vs_5_0"
+            : "vs_4_0";
+        const char* pixelProfile = kUseShaderModel5ForTextAndGradients
+            ? "ps_5_0"
+            : "ps_4_0";
+        compileShader(textVsSrc, "VSMain", vertexProfile, textVsBlob, "Text vertex shader compilation failed");
         ThrowIfFailed(g_device->CreateVertexShader(textVsBlob->GetBufferPointer(), textVsBlob->GetBufferSize(), nullptr, &g_vsText), "Failed to create text vertex shader");
 
         D3D11_INPUT_ELEMENT_DESC textElems[] = {
@@ -301,7 +312,7 @@ void CompileShaders()
         };
         ThrowIfFailed(g_device->CreateInputLayout(textElems, _countof(textElems), textVsBlob->GetBufferPointer(), textVsBlob->GetBufferSize(), &g_inputLayoutText), "Failed to create text input layout");
 
-        compileShader(textPsSrc, "PSMain", "ps_4_0", textPsBlob, "Text pixel shader compilation failed");
+        compileShader(textPsSrc, "PSMain", pixelProfile, textPsBlob, "Text pixel shader compilation failed");
         ThrowIfFailed(g_device->CreatePixelShader(textPsBlob->GetBufferPointer(), textPsBlob->GetBufferSize(), nullptr, &g_psText), "Failed to create text pixel shader");
     }
 
@@ -311,7 +322,13 @@ void CompileShaders()
         ComPtr<ID3DBlob> gradientVsBlob;
         ComPtr<ID3DBlob> gradientPsBlob;
 
-        compileShader(gradientVsSrc, "VSMain", "vs_4_0",
+        const char* vertexProfile = kUseShaderModel5ForTextAndGradients
+            ? "vs_5_0"
+            : "vs_4_0";
+        const char* pixelProfile = kUseShaderModel5ForTextAndGradients
+            ? "ps_5_0"
+            : "ps_4_0";
+        compileShader(gradientVsSrc, "VSMain", vertexProfile,
                       gradientVsBlob, "Gradient vertex shader compilation failed");
         ThrowIfFailed(g_device->CreateVertexShader(
             gradientVsBlob->GetBufferPointer(), gradientVsBlob->GetBufferSize(),
@@ -320,13 +337,14 @@ void CompileShaders()
         D3D11_INPUT_ELEMENT_DESC gradientElems[] = {
             {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
             {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
+            {"TEXCOORD", 1, DXGI_FORMAT_R32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
         };
         ThrowIfFailed(g_device->CreateInputLayout(
             gradientElems, _countof(gradientElems),
             gradientVsBlob->GetBufferPointer(), gradientVsBlob->GetBufferSize(),
             &g_inputLayoutGradient), "Failed to create gradient input layout");
 
-        compileShader(gradientPsSrc, "PSMain", "ps_4_0",
+        compileShader(gradientPsSrc, "PSMain", pixelProfile,
                       gradientPsBlob, "Gradient pixel shader compilation failed");
         ThrowIfFailed(g_device->CreatePixelShader(
             gradientPsBlob->GetBufferPointer(), gradientPsBlob->GetBufferSize(),
@@ -341,6 +359,10 @@ void CompileShaders()
     sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    if constexpr (kUseExplicitSamplerSettings) {
+        sampDesc.MaxAnisotropy = 1;
+        sampDesc.MipLODBias = 0.0f;
+    }
     ThrowIfFailed(g_device->CreateSamplerState(&sampDesc, &g_samplerState), "Failed to create sampler state");
 }
 

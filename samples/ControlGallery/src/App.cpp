@@ -27,7 +27,7 @@ int main()
     NeoWPF::Diagnostics::SetLevel(Category::Files,            Level::Off);
     NeoWPF::Diagnostics::SetLevel(Category::Input,            Level::Off);
     NeoWPF::Diagnostics::SetLevel(Category::Visual,        Level::Off);
-    NeoWPF::Diagnostics::SetLevel(Category::TextRendering, Level::Off);
+    NeoWPF::Diagnostics::SetLevel(Category::TextRendering, Level::Trace);
 #endif
     NeoWPF::Core::Application::Initialize();
     NeoWPF::Diagnostics::InitializeCrashHandler();

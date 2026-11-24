@@ -37,6 +37,7 @@ cbuffer GradientConstants {
 struct PSIn {
     float4 pos : SV_POSITION;
     float2 worldPosition : TEXCOORD;
+    float opacity : TEXCOORD1;
 };
 float ApplySpread(float coordinate) {
     if (gradient.y < 0.5f) {
@@ -57,16 +58,16 @@ float4 PSMain(PSIn input) : SV_Target {
     } else {
         float2 ellipsePosition = float2(
             mapping0.x * input.worldPosition.x +
-            mapping0.y * input.worldPosition.y +
+            mapping0.z * input.worldPosition.y +
             mapping1.x,
-            mapping0.z * input.worldPosition.x +
+            mapping0.y * input.worldPosition.x +
             mapping0.w * input.worldPosition.y +
             mapping1.y);
         float2 focalPosition = float2(mapping1.z, mapping1.w);
         coordinate = length(ellipsePosition - focalPosition);
     }
     float4 sampled = rampAtlas.Sample(rampSampler, float2(ApplySpread(coordinate), gradient.z));
-    return float4(sampled.rgb, sampled.a * gradient.w);
+    return float4(sampled.rgb, sampled.a * gradient.w * input.opacity);
 }
 )";
 }

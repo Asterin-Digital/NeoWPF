@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <vector>
 #include <cstdint>
+#include <cstddef>
 #include <cstring>
 #include <cmath>
 #include <windows.h>
@@ -33,6 +34,9 @@ using namespace NeoWPF::Rendering;
 */
 
 namespace NeoWPF::Rendering::D3D11 {
+    std::uint64_t g_gradientTextureHash = 0;
+    std::uint32_t g_gradientTextureId = 0;
+
     extern ComPtr<ID3D11Device> g_device;
     extern ComPtr<ID3D11DeviceContext> g_context;
     extern ComPtr<ID3D11VertexShader> g_vs;
@@ -47,6 +51,8 @@ namespace NeoWPF::Rendering::D3D11 {
     extern ComPtr<ID3D11SamplerState> g_samplerState;
     extern ComPtr<ID3D11Buffer> g_vertexBuffer;
     extern ComPtr<ID3D11Buffer> g_constantBuffer;
+    extern ComPtr<ID3D11RasterizerState> g_rasterizerState;
+    extern ComPtr<ID3D11DepthStencilState> g_depthStencilState;
     unsigned int GetRendererWidth(HWND hwnd);
     unsigned int GetRendererHeight(HWND hwnd);
     ID3D11RenderTargetView* GetRendererTargetView(HWND hwnd);
@@ -54,9 +60,19 @@ namespace NeoWPF::Rendering::D3D11 {
     ComPtr<ID3D11ShaderResourceView> GetTextureShaderResourceView(uint32_t id);
     uint32_t CreateTexture(unsigned int width, unsigned int height, const void* rgbaData);
     void DestroyTexture(uint32_t id);
+
+    void ResetGradientAtlas() noexcept
+    {
+        g_gradientTextureHash = 0;
+        g_gradientTextureId = 0;
+    }
 }
 
 namespace NeoWPF::Rendering::D3D11 {
+
+constexpr bool kUseExplicitRasterizerState = false;
+constexpr bool kUseExplicitDepthStencilState = false;
+constexpr bool kClearTextShaderBindings = false;
 
 void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
 {
@@ -90,14 +106,29 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
             ++rectCount;
         }
     }
+    const auto batches = BuildDrawBatches(cmd);
+    std::uint64_t batchShapeHash = 14695981039346656037ull;
+    const auto mixBatchShapeValue = [&batchShapeHash](std::uint64_t value) {
+        batchShapeHash ^= value;
+        batchShapeHash *= 1099511628211ull;
+    };
+    mixBatchShapeValue(batches.size());
+    for (const auto& batch : batches) {
+        mixBatchShapeValue(static_cast<std::uint64_t>(batch.kind));
+        mixBatchShapeValue(batch.firstCommand);
+        mixBatchShapeValue(batch.commandCount);
+        mixBatchShapeValue(batch.textureId);
+    }
     static std::size_t lastCommandCount = std::numeric_limits<std::size_t>::max();
     static std::size_t lastRoundedRectCount = std::numeric_limits<std::size_t>::max();
     static std::size_t lastArcCount = std::numeric_limits<std::size_t>::max();
     static std::size_t lastTextCommandCount = std::numeric_limits<std::size_t>::max();
+    static std::uint64_t lastBatchShapeHash = std::numeric_limits<std::uint64_t>::max();
     const bool commandShapeChanged = cmd.commands.size() != lastCommandCount ||
         roundedRectCount != lastRoundedRectCount ||
         arcCount != lastArcCount ||
-        textCommandCount != lastTextCommandCount;
+        textCommandCount != lastTextCommandCount ||
+        batchShapeHash != lastBatchShapeHash;
     if (commandShapeChanged) {
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
             NeoWPF::Diagnostics::Level::Debug,
@@ -107,6 +138,15 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
         lastRoundedRectCount = roundedRectCount;
         lastArcCount = arcCount;
         lastTextCommandCount = textCommandCount;
+        lastBatchShapeHash = batchShapeHash;
+        for (const auto& batch : batches) {
+            NeoWPF::Diagnostics::Log(
+                NeoWPF::Diagnostics::Category::Renderer,
+                NeoWPF::Diagnostics::Level::Debug,
+                "[D3D11] batch kind=%u firstCommand=%zu commandCount=%zu textureId=%u",
+                static_cast<unsigned int>(batch.kind),
+                batch.firstCommand, batch.commandCount, batch.textureId);
+        }
         for (std::size_t index = 0; index < cmd.commands.size(); ++index) {
             const auto& command = cmd.commands[index];
             if (command.GetKind() != CommandList::CommandKind::RoundedRect) {
@@ -127,6 +167,46 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
     g_context->OMSetRenderTargets(1, &rtv, nullptr);
     D3D11_VIEWPORT vp = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
     g_context->RSSetViewports(1, &vp);
+
+    if constexpr (kUseExplicitRasterizerState) {
+        if (!g_rasterizerState) {
+            D3D11_RASTERIZER_DESC rasterizerDesc = {};
+            rasterizerDesc.CullMode = D3D11_CULL_NONE;
+            rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+            rasterizerDesc.DepthClipEnable = TRUE;
+            rasterizerDesc.ScissorEnable = FALSE;
+            const HRESULT hr = g_device->CreateRasterizerState(
+                &rasterizerDesc, &g_rasterizerState);
+            if (FAILED(hr)) {
+                NeoWPF::Diagnostics::LogError(
+                    "[D3D11] CreateRasterizerState failed with HRESULT 0x%08X",
+                    static_cast<unsigned int>(hr));
+            }
+        }
+        if (g_rasterizerState) {
+            g_context->RSSetState(g_rasterizerState.Get());
+        }
+    }
+
+    if constexpr (kUseExplicitDepthStencilState) {
+        if (!g_depthStencilState) {
+            D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
+            depthStencilDesc.DepthEnable = FALSE;
+            depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+            depthStencilDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+            depthStencilDesc.StencilEnable = FALSE;
+            const HRESULT hr = g_device->CreateDepthStencilState(
+                &depthStencilDesc, &g_depthStencilState);
+            if (FAILED(hr)) {
+                NeoWPF::Diagnostics::LogError(
+                    "[D3D11] CreateDepthStencilState failed with HRESULT 0x%08X",
+                    static_cast<unsigned int>(hr));
+            }
+        }
+        if (g_depthStencilState) {
+            g_context->OMSetDepthStencilState(g_depthStencilState.Get(), 0);
+        }
+    }
 
     const uint32_t bgColor = cmd.hasClearColor ? cmd.clearColor : 0xFFFFFFFFu;
 
@@ -160,11 +240,8 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
             static_cast<unsigned int>(result), blendState ? 1 : 0);
     }
 
-    static std::uint64_t gradientTextureHash = 0;
-    static std::uint32_t gradientTextureId = 0;
-
     struct Vertex { float x, y; float r, g, b, a; };
-    struct GradientVertex { float x, y; float worldX, worldY; };
+    struct GradientVertex { float x, y; float worldX, worldY; float opacity; };
     constexpr size_t kVertexBufferCapacity = 1 << 20;
     constexpr size_t kMaxSolidVertices = (kVertexBufferCapacity / sizeof(Vertex) / 3) * 3;
     std::vector<Vertex> rectVerts;
@@ -331,6 +408,12 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
         g_context->VSSetShader(g_vsText.Get(), nullptr, 0);
         g_context->PSSetShader(g_psText.Get(), nullptr, 0);
         g_context->VSSetConstantBuffers(0, 1, g_constantBuffer.GetAddressOf());
+        if constexpr (kClearTextShaderBindings) {
+            ID3D11ShaderResourceView* nullSrv = nullptr;
+            ID3D11SamplerState* nullSampler = nullptr;
+            g_context->PSSetShaderResources(0, 1, &nullSrv);
+            g_context->PSSetSamplers(0, 1, &nullSampler);
+        }
         g_context->PSSetSamplers(0, 1, g_samplerState.GetAddressOf());
 
         size_t remainingVertices = textVerts.size();
@@ -378,8 +461,19 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
                 ComPtr<ID3D11ShaderResourceView> srv = GetTextureShaderResourceView(textureId);
                 if (srv) {
                     g_context->PSSetShaderResources(0, 1, srv.GetAddressOf());
+                    NeoWPF::Diagnostics::Log(
+                        NeoWPF::Diagnostics::Category::TextRendering,
+                        NeoWPF::Diagnostics::Level::Debug,
+                        "[D3D11] text Draw vertices=%zu startVertex=%zu textureId=%u",
+                        drawEnd - drawStart, drawStart - vertexOffset, textureId);
                     g_context->Draw(static_cast<UINT>(drawEnd - drawStart),
                                     static_cast<UINT>(drawStart - vertexOffset));
+                } else {
+                    NeoWPF::Diagnostics::Log(
+                        NeoWPF::Diagnostics::Category::TextRendering,
+                        NeoWPF::Diagnostics::Level::Debug,
+                        "[D3D11] text batch missing shader resource view textureId=%u",
+                        textureId);
                 }
                 rangeIndex = nextRange;
             }
@@ -402,8 +496,10 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
             return;
         }
 
-        const std::uint64_t nextGradientTextureHash = cmd.ComputeHash();
-        if (gradientTextureId == 0 || gradientTextureHash != nextGradientTextureHash) {
+        const std::uint64_t nextGradientTextureHash = ComputeGradientAtlasHash(
+            cmd.gradients, cmd.gradientStops);
+        if (g_gradientTextureId == 0 ||
+            g_gradientTextureHash != nextGradientTextureHash) {
             constexpr std::uint32_t kRampWidth = 256;
             constexpr std::uint32_t kRampHeight = 256;
             std::vector<std::uint8_t> rgba(kRampWidth * kRampHeight * 4, 0);
@@ -435,14 +531,14 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
                     rgba[rgbaIndex + 3] = static_cast<std::uint8_t>((argb >> 24) & 0xFFu);
                 }
             }
-            if (gradientTextureId != 0) {
-                DestroyTexture(gradientTextureId);
+            if (g_gradientTextureId != 0) {
+                DestroyTexture(g_gradientTextureId);
             }
-            gradientTextureId = CreateTexture(kRampWidth, kRampHeight, rgba.data());
-            gradientTextureHash =
-                gradientTextureId != 0 ? nextGradientTextureHash : 0;
+            g_gradientTextureId = CreateTexture(kRampWidth, kRampHeight, rgba.data());
+            g_gradientTextureHash =
+                g_gradientTextureId != 0 ? nextGradientTextureHash : 0;
         }
-        const auto srv = GetTextureShaderResourceView(gradientTextureId);
+        const auto srv = GetTextureShaderResourceView(g_gradientTextureId);
         if (!srv) {
             gradientVerts.clear();
             return;
@@ -457,10 +553,13 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
         const auto& gradient = cmd.gradients[batch.gradientIndex];
         struct GradientConstants {
             float viewport[2];
+            float padding[2];
             float mapping0[4];
             float mapping1[4];
             float gradient[4];
         } constants{};
+        static_assert(sizeof(GradientConstants) == 64);
+        static_assert(offsetof(GradientConstants, mapping0) == 16);
         constants.viewport[0] = static_cast<float>(
             static_cast<double>(width) / scaleFactor);
         constants.viewport[1] = static_cast<float>(
@@ -522,7 +621,6 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
         gradientVerts.clear();
     };
 
-    const auto batches = BuildDrawBatches(cmd);
     for (const auto& batch : batches) {
         if (batch.kind == DrawBatchKind::Textured) {
             flushSolidBatch();
@@ -586,20 +684,24 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
                  index < batch.firstCommand + batch.commandCount;
                  ++index) {
                 const auto& command = cmd.commands[index];
+                float opacity = 1.0f;
                 if (command.GetKind() == CommandList::CommandKind::Arc) {
                     const auto& arc = command.GetArc();
+                    opacity = arc.opacity;
                     TessellateAnnularArc(
                         geometry, arc.centerX, arc.centerY, arc.radius,
                         arc.thickness, arc.startAngleRadians,
                         arc.sweepAngleRadians, arc.clip);
                 } else if (command.GetKind() == CommandList::CommandKind::RoundedRect) {
                     const auto& rect = command.GetRoundedRect();
+                    opacity = rect.opacity;
                     TessellateRoundedRect(
                         geometry, rect.x, rect.y, rect.w, rect.h,
                         rect.topLeft, rect.topRight, rect.bottomRight, rect.bottomLeft,
                         rect.clip, rect.rotationRadians, rect.pivotX, rect.pivotY);
                 } else {
                     const auto& rect = command.GetRect();
+                    opacity = rect.opacity;
                     TessellateRect(
                         geometry, rect.x, rect.y, rect.w, rect.h,
                         rect.clip, rect.rotationRadians, rect.pivotX, rect.pivotY);
@@ -609,7 +711,8 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
                         static_cast<float>(vertex.x),
                         static_cast<float>(vertex.y),
                         static_cast<float>(vertex.x),
-                        static_cast<float>(vertex.y)});
+                        static_cast<float>(vertex.y),
+                        opacity});
                 }
             }
             flushGradientBatch(batch);

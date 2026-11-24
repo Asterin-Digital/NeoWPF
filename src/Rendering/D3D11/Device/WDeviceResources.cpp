@@ -16,6 +16,7 @@ namespace D3D11 {
     extern ComPtr<ID3D11Device> g_device;
     extern ComPtr<ID3D11DeviceContext> g_context;
     extern ComPtr<ID3D11Buffer> g_constantBuffer;
+    constexpr bool kUseUpdateSubresourceForTextureUpload = false;
 
     static std::unordered_map<uint32_t, ComPtr<ID3D11Texture2D>> g_textures;
     static std::unordered_map<uint32_t, ComPtr<ID3D11ShaderResourceView>> g_textureViews;
@@ -23,6 +24,7 @@ namespace D3D11 {
     static uint32_t g_nextTextureId = 1;
 
     extern std::mutex g_deviceMutex;
+    void ResetGradientAtlas() noexcept;
 
     uint32_t CreateTexture(unsigned int w, unsigned int h, const void* rgbaData)
     {
@@ -32,6 +34,7 @@ namespace D3D11 {
             return 0;
         }
 
+        const uint32_t attemptedTextureId = g_nextTextureId == 0 ? 1 : g_nextTextureId;
         D3D11_TEXTURE2D_DESC desc = {};
         desc.Width = w;
         desc.Height = h;
@@ -43,15 +46,34 @@ namespace D3D11 {
         desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
         desc.CPUAccessFlags = 0;
 
+        ComPtr<ID3D11Texture2D> texture;
         D3D11_SUBRESOURCE_DATA initData = {};
         initData.pSysMem = rgbaData;
         initData.SysMemPitch = w * 4;
 
-        ComPtr<ID3D11Texture2D> texture;
-        HRESULT hr = g_device->CreateTexture2D(&desc, &initData, &texture);
+        HRESULT hr = E_FAIL;
+        if constexpr (kUseUpdateSubresourceForTextureUpload) {
+            hr = g_device->CreateTexture2D(&desc, nullptr, &texture);
+        } else {
+            hr = g_device->CreateTexture2D(&desc, &initData, &texture);
+        }
         if (FAILED(hr) || !texture) {
-            ::NeoWPF::Diagnostics::LogError("CreateTexture failed with HRESULT 0x%08X", static_cast<unsigned int>(hr));
+            ::NeoWPF::Diagnostics::Log(
+                NeoWPF::Diagnostics::Category::TextRendering,
+                NeoWPF::Diagnostics::Level::Debug,
+                "[D3D11] CreateTexture2D textureId=%u size=%ux%u HRESULT=0x%08X result=failed",
+                attemptedTextureId, w, h, static_cast<unsigned int>(hr));
             return 0;
+        }
+        ::NeoWPF::Diagnostics::Log(
+            NeoWPF::Diagnostics::Category::TextRendering,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[D3D11] CreateTexture2D textureId=%u size=%ux%u HRESULT=0x%08X result=success",
+            attemptedTextureId, w, h, static_cast<unsigned int>(hr));
+
+        if constexpr (kUseUpdateSubresourceForTextureUpload) {
+            g_context->UpdateSubresource(
+                texture.Get(), 0, nullptr, rgbaData, w * 4, 0);
         }
 
         D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -62,9 +84,18 @@ namespace D3D11 {
         ComPtr<ID3D11ShaderResourceView> srv;
         hr = g_device->CreateShaderResourceView(texture.Get(), &srvDesc, &srv);
         if (FAILED(hr) || !srv) {
-            ::NeoWPF::Diagnostics::LogError("CreateShaderResourceView failed with HRESULT 0x%08X", static_cast<unsigned int>(hr));
+            ::NeoWPF::Diagnostics::Log(
+                NeoWPF::Diagnostics::Category::TextRendering,
+                NeoWPF::Diagnostics::Level::Debug,
+                "[D3D11] CreateShaderResourceView textureId=%u HRESULT=0x%08X result=failed",
+                attemptedTextureId, static_cast<unsigned int>(hr));
             return 0;
         }
+        ::NeoWPF::Diagnostics::Log(
+            NeoWPF::Diagnostics::Category::TextRendering,
+            NeoWPF::Diagnostics::Level::Debug,
+            "[D3D11] CreateShaderResourceView textureId=%u HRESULT=0x%08X result=success",
+            attemptedTextureId, static_cast<unsigned int>(hr));
 
         uint32_t id = g_nextTextureId++;
         if (id == 0) {
@@ -89,6 +120,7 @@ namespace D3D11 {
         g_textureViews.clear();
         g_textures.clear();
         g_nextTextureId = 1;
+        ResetGradientAtlas();
     }
 
     ComPtr<ID3D11ShaderResourceView> GetTextureShaderResourceView(uint32_t id)

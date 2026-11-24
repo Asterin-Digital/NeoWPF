@@ -42,6 +42,7 @@ const char* GetGradientVertexShaderSource()
 struct VSIn {
     float2 pos : POSITION;
     float2 worldPosition : TEXCOORD;
+    float opacity : TEXCOORD1;
 };
 cbuffer GradientConstants {
     float2 viewport;
@@ -52,6 +53,7 @@ cbuffer GradientConstants {
 struct PSIn {
     float4 pos : SV_POSITION;
     float2 worldPosition : TEXCOORD;
+    float opacity : TEXCOORD1;
 };
 PSIn VSMain(VSIn input) {
     PSIn output;
@@ -59,6 +61,7 @@ PSIn VSMain(VSIn input) {
     float2 ndc = ((input.pos + halfPixel) / viewport) * float2(2.0f, -2.0f) + float2(-1.0f, 1.0f);
     output.pos = float4(ndc.xy, 0.0f, 1.0f);
     output.worldPosition = input.worldPosition;
+    output.opacity = input.opacity;
     return output;
 }
 )";

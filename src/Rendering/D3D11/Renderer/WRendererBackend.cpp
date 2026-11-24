@@ -21,6 +21,8 @@ namespace NeoWPF::Rendering::D3D11 {
     extern ComPtr<ID3D11SamplerState> g_samplerState;
     extern ComPtr<ID3D11Buffer> g_vertexBuffer;
     extern ComPtr<ID3D11Buffer> g_constantBuffer;
+    extern ComPtr<ID3D11RasterizerState> g_rasterizerState;
+    extern ComPtr<ID3D11DepthStencilState> g_depthStencilState;
 
     void InitializeRendererWindowing(HWND hwnd);
     void ShutdownRendererWindowing();
@@ -77,6 +79,8 @@ void ShutdownDevice()
     g_inputLayoutText.Reset();
     g_inputLayoutGradient.Reset();
     g_samplerState.Reset();
+    g_rasterizerState.Reset();
+    g_depthStencilState.Reset();
     g_vertexBuffer.Reset();
     g_constantBuffer.Reset();
 }
