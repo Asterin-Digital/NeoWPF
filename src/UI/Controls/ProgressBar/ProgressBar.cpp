@@ -106,7 +106,7 @@ void ProgressBar::SetIndeterminatePhase(float value) noexcept
     InvalidateVisual();
 }
 
-void ProgressBar::Measure(double availableWidth, double availableHeight)
+void ProgressBar::MeasureOverride(double availableWidth, double availableHeight)
 {
     const bool isVertical = m_orientation == Orientation::Vertical;
     const double primaryAvailable = std::max(0.0, isVertical ? availableHeight : availableWidth);

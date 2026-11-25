@@ -47,6 +47,7 @@ public:
 
     static const Properties::DependencyProperty& PropertyProperty();
     static const Properties::DependencyProperty& ValueProperty();
+    static const Properties::DependencyProperty& TargetNameProperty();
 
     /*
         @summary
@@ -77,6 +78,18 @@ public:
         Returns the value applied by the setter.
     */
     std::any GetValue() const;
+
+    /*
+        @summary
+        Sets the name of the descendant target.
+    */
+    void SetTargetName(const std::string& targetName);
+
+    /*
+        @summary
+        Returns the name of the descendant target.
+    */
+    std::string GetTargetName() const;
 
     /*
         @summary

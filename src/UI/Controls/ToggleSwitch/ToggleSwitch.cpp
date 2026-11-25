@@ -90,13 +90,13 @@ void ToggleSwitch::SetContentText(const std::wstring& text)
     InvalidateVisual();
 }
 
-void ToggleSwitch::Measure(double availableWidth, double availableHeight)
+void ToggleSwitch::MeasureOverride(double availableWidth, double availableHeight)
 {
     const auto metrics = GetToggleSwitchMetrics();
     const double labelAvailableWidth = availableWidth > 0.0
         ? (std::max)(0.0, availableWidth - metrics.TrackWidth - metrics.LabelSpacing)
         : 0.0;
-    Content::ContentControl::Measure(labelAvailableWidth, availableHeight);
+    Content::ContentControl::MeasureOverride(labelAvailableWidth, availableHeight);
 
     double labelWidth = 0.0;
     double labelHeight = 0.0;

@@ -58,7 +58,7 @@ Border::~Border()
     NeoWPF::Core::ApplicationThemes::ThemeManager::Instance().UnsubscribeThemeApplied(m_themeAppliedSubscriptionId);
 }
 
-void Border::Measure(double availableWidth, double availableHeight)
+void Border::MeasureOverride(double availableWidth, double availableHeight)
 {
     const auto padding = GetPadding();
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Visual, NeoWPF::Diagnostics::Level::Info, "[Border::Measure] available=%fx%f explicit=%fx%f padding=(%f,%f,%f,%f) border=%f",

@@ -1,14 +1,13 @@
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
 #include <NeoWPF/UI/Core/Element/Visual.h>
+#include <NeoWPF/UI/Layout/LayoutUtilities.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
 #include <algorithm>
 
 namespace NeoWPF::UI {
 
-void StackPanel::Measure(double availableWidth, double availableHeight)
+void StackPanel::MeasureOverride(double availableWidth, double availableHeight)
 {
-    EvaluateResponsiveRules(availableWidth, availableHeight);
-
     const bool isHorizontal = m_orientation == Orientation::Horizontal;
     const double itemSpacing = isHorizontal ? GetHorizontalSpacing() : GetVerticalSpacing();
     double totalMainExtent = 0.0;
@@ -22,8 +21,8 @@ void StackPanel::Measure(double availableWidth, double availableHeight)
 
         if (auto fe = dynamic_cast<FrameworkElement*>(child)) {
             const auto margin = fe->GetMargin();
-            const double childAvailableWidth = availableWidth > 0.0 ? (std::max)(0.0, availableWidth - margin.Horizontal()) : availableWidth;
-            const double childAvailableHeight = availableHeight > 0.0 ? (std::max)(0.0, availableHeight - margin.Vertical()) : availableHeight;
+            const double childAvailableWidth = Layout::IsBounded(availableWidth) ? (std::max)(0.0, availableWidth - margin.Horizontal()) : Layout::Unbounded;
+            const double childAvailableHeight = Layout::IsBounded(availableHeight) ? (std::max)(0.0, availableHeight - margin.Vertical()) : Layout::Unbounded;
             fe->Measure(childAvailableWidth, childAvailableHeight);
             const double childDesiredW = fe->GetDesiredWidth();
             const double childDesiredH = fe->GetDesiredHeight();

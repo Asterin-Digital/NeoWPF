@@ -131,6 +131,30 @@ bool AWindowing::GetWindowScaleFactor(void* nativeWindowHandle,
     return true;
 }
 
+bool AWindowing::GetWindowInsets(void* nativeWindowHandle,
+                                 NeoWPF::Contracts::WindowInsets& outSafeArea,
+                                 NeoWPF::Contracts::WindowInsets& outKeyboard) const noexcept
+{
+    if (!IsWindowAlive(nativeWindowHandle)) {
+        return false;
+    }
+    outSafeArea = {};
+    outKeyboard = {};
+    return false;
+}
+
+bool AWindowing::GetInputProfile(void* nativeWindowHandle,
+                                 NeoWPF::Contracts::InputProfile& outProfile) const noexcept
+{
+    if (!IsWindowAlive(nativeWindowHandle)) {
+        return false;
+    }
+    outProfile.primaryPointer = NeoWPF::Contracts::PointerPrecision::Coarse;
+    outProfile.canHover = false;
+    outProfile.hasTouch = true;
+    return true;
+}
+
 bool AWindowing::SetDensityDpi(int densityDpi) noexcept
 {
     if (densityDpi == ACONFIGURATION_DENSITY_DEFAULT) {

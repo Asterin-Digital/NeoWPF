@@ -2,12 +2,11 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
 #include <algorithm>
 #include <cmath>
+#include <NeoWPF/UI/Layout/LayoutUtilities.h>
 
 namespace NeoWPF::UI {
 
 namespace {
-
-constexpr double kUnboundedMeasure = 1000000.0;
 
 bool IsSet(double value) noexcept
 {
@@ -31,10 +30,8 @@ Canvas::Canvas() noexcept
 {
 }
 
-void Canvas::Measure(double availableWidth, double availableHeight)
+void Canvas::MeasureOverride(double availableWidth, double availableHeight)
 {
-    EvaluateResponsiveRules(availableWidth, availableHeight);
-
     for (auto child : GetVisualChildren()) {
         if (!child) {
             continue;
@@ -47,7 +44,7 @@ void Canvas::Measure(double availableWidth, double availableHeight)
         }
 
         if (auto frameworkChild = dynamic_cast<FrameworkElement*>(child)) {
-            frameworkChild->Measure(kUnboundedMeasure, kUnboundedMeasure);
+            frameworkChild->Measure(Layout::Unbounded, Layout::Unbounded);
         }
     }
 

@@ -1,8 +1,12 @@
 #include <NeoWPF/UI/Core/Element/FrameworkElement.h>
+#include <NeoWPF/UI/Layout/LayoutUtilities.h>
+#include <NeoWPF/UI/Layout/Responsive/ResponsiveRule.h>
+#include <NeoWPF/UI/Styling/Triggers/Setter.h>
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/UI/Animation/AnimationController.h>
 #include <NeoWPF/UI/Animation/Storyboards/Storyboard.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/CallStackTracer.h>
 #include <algorithm>
@@ -337,6 +341,78 @@ void FrameworkElement::SetHeight(double height) noexcept
     InvalidateVisual();
 }
 
+double FrameworkElement::GetMinWidth() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("MinWidth", *this);
+    return property ? GetValue<double>(*property) : m_minWidth;
+}
+
+void FrameworkElement::SetMinWidth(double width) noexcept
+{
+    const double clampedWidth = std::max(0.0, width);
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("MinWidth", *this);
+    if (property) {
+        SetValue(*property, clampedWidth);
+        return;
+    }
+    m_minWidth = clampedWidth;
+    InvalidateMeasure();
+}
+
+double FrameworkElement::GetMaxWidth() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("MaxWidth", *this);
+    return property ? GetValue<double>(*property) : m_maxWidth;
+}
+
+void FrameworkElement::SetMaxWidth(double width) noexcept
+{
+    const double clampedWidth = std::max(0.0, width);
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("MaxWidth", *this);
+    if (property) {
+        SetValue(*property, clampedWidth);
+        return;
+    }
+    m_maxWidth = clampedWidth;
+    InvalidateMeasure();
+}
+
+double FrameworkElement::GetMinHeight() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("MinHeight", *this);
+    return property ? GetValue<double>(*property) : m_minHeight;
+}
+
+void FrameworkElement::SetMinHeight(double height) noexcept
+{
+    const double clampedHeight = std::max(0.0, height);
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("MinHeight", *this);
+    if (property) {
+        SetValue(*property, clampedHeight);
+        return;
+    }
+    m_minHeight = clampedHeight;
+    InvalidateMeasure();
+}
+
+double FrameworkElement::GetMaxHeight() const noexcept
+{
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("MaxHeight", *this);
+    return property ? GetValue<double>(*property) : m_maxHeight;
+}
+
+void FrameworkElement::SetMaxHeight(double height) noexcept
+{
+    const double clampedHeight = std::max(0.0, height);
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("MaxHeight", *this);
+    if (property) {
+        SetValue(*property, clampedHeight);
+        return;
+    }
+    m_maxHeight = clampedHeight;
+    InvalidateMeasure();
+}
+
 bool FrameworkElement::IsClipToBounds() const noexcept
 {
     const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("ClipToBounds", *this);
@@ -499,32 +575,111 @@ void FrameworkElement::SetVerticalAlignment(VerticalAlignment align) noexcept
     m_verticalAlignment = align;
 }
 
+const std::string& FrameworkElement::GetName() const noexcept
+{
+    return m_name;
+}
+
+void FrameworkElement::SetName(const std::string& name)
+{
+    m_name = name;
+    const auto* property = Properties::DependencyPropertyRegistry::Get().FindProperty("Name", *this);
+    if (property) {
+        SetValue(*property, name);
+        return;
+    }
+    m_name = name;
+}
+
+const std::vector<std::shared_ptr<ResponsiveRule>>&
+FrameworkElement::GetResponsiveRules() const noexcept
+{
+    return m_responsiveRules;
+}
+
+void FrameworkElement::AddResponsiveRule(std::shared_ptr<ResponsiveRule> rule)
+{
+    if (!rule) {
+        return;
+    }
+    m_responsiveRules.push_back(std::move(rule));
+    InvalidateMeasure();
+}
+
+void FrameworkElement::RemoveResponsiveRule(
+    const std::shared_ptr<ResponsiveRule>& rule)
+{
+    const auto removed = std::find(m_responsiveRules.begin(), m_responsiveRules.end(), rule);
+    if (removed == m_responsiveRules.end()) {
+        return;
+    }
+    m_responsiveRules.erase(removed);
+    for (auto& [target, properties] : m_appliedResponsiveValues) {
+        if (!target) {
+            continue;
+        }
+        for (const auto* property : properties) {
+            target->ClearResponsiveValue(*property);
+        }
+    }
+    m_appliedResponsiveValues.clear();
+    InvalidateMeasure();
+}
+
+FrameworkElement* FrameworkElement::FindNameDescendant(const std::string& name) noexcept
+{
+    if (name.empty()) {
+        return this;
+    }
+    for (auto* descendant : GetVisualDescendants()) {
+        auto* element = dynamic_cast<FrameworkElement*>(descendant);
+        if (element && element->GetName() == name) {
+            return element;
+        }
+    }
+    return nullptr;
+}
+
+const FrameworkElement* FrameworkElement::FindNameDescendant(
+    const std::string& name) const noexcept
+{
+    return const_cast<FrameworkElement*>(this)->FindNameDescendant(name);
+}
+
 double FrameworkElement::ResolveWidth(double availableWidth, double desiredWidth) const
 {
     if (GetWidthMode() == LayoutSizeMode::Stretch) {
-        return (std::max)(0.0, availableWidth);
+        double resolved = (std::max)(0.0, availableWidth);
+        resolved = std::clamp(resolved, GetMinWidth(), GetMaxWidth());
+        return resolved;
     }
 
-    if (!GetParent() && availableWidth > 0) {
-        return (std::max)(0.0, availableWidth);
+    if (!GetParent() && Layout::IsBounded(availableWidth)) {
+        double resolved = (std::max)(0.0, availableWidth);
+        resolved = std::clamp(resolved, GetMinWidth(), GetMaxWidth());
+        return resolved;
     }
 
     const double preferredWidth = GetWidth() > 0.0 ? GetWidth() : desiredWidth;
-    return (std::max)(0.0, preferredWidth);
+    return std::clamp((std::max)(0.0, preferredWidth), GetMinWidth(), GetMaxWidth());
 }
 
 double FrameworkElement::ResolveHeight(double availableHeight, double desiredHeight) const
 {
     if (GetHeightMode() == LayoutSizeMode::Stretch) {
-        return (std::max)(0.0, availableHeight);
+        double resolved = (std::max)(0.0, availableHeight);
+        resolved = std::clamp(resolved, GetMinHeight(), GetMaxHeight());
+        return resolved;
     }
 
-    if (!GetParent() && availableHeight > 0) {
-        return (std::max)(0.0, availableHeight);
+    if (!GetParent() && Layout::IsBounded(availableHeight)) {
+        double resolved = (std::max)(0.0, availableHeight);
+        resolved = std::clamp(resolved, GetMinHeight(), GetMaxHeight());
+        return resolved;
     }
 
     const double preferredHeight = GetHeight() > 0.0 ? GetHeight() : desiredHeight;
-    return (std::max)(0.0, preferredHeight);
+    return std::clamp((std::max)(0.0, preferredHeight), GetMinHeight(), GetMaxHeight());
 }
 
 void FrameworkElement::BeginAnimation(double fromWidth, double toWidth, double fromHeight, double toHeight, float durationSeconds)
@@ -539,7 +694,7 @@ void FrameworkElement::BeginAnimation(HorizontalAlignment horizontal, VerticalAl
     this->BeginAnimation("VerticalAlignment", GetVerticalAlignment(), vertical, durationSeconds);
 }
 
-void FrameworkElement::Measure(double availableWidth, double availableHeight)
+void FrameworkElement::MeasureOverride(double availableWidth, double availableHeight)
 {
     if (s_frameworkElementLogging) {
         NeoWPF::Diagnostics::LogInfo(
@@ -561,6 +716,101 @@ void FrameworkElement::Measure(double availableWidth, double availableHeight)
             availableWidth,
             availableHeight);
     }
+}
+
+void FrameworkElement::Measure(double availableWidth, double availableHeight)
+{
+    std::unordered_map<
+        FrameworkElement*,
+        std::vector<const Properties::DependencyProperty*>> desiredValues;
+
+    Layout::LayoutEnvironment fallbackEnvironment;
+    fallbackEnvironment.contentWidth = availableWidth;
+    fallbackEnvironment.contentHeight = availableHeight;
+
+    const Layout::LayoutEnvironment* environment = nullptr;
+    for (Visual* ancestor = this; ancestor; ancestor = ancestor->GetParent()) {
+        auto* frameworkElement = dynamic_cast<FrameworkElement*>(ancestor);
+        if (frameworkElement) {
+            environment = frameworkElement->GetLayoutEnvironment();
+            if (environment) {
+                break;
+            }
+        }
+    }
+    if (!environment) {
+        environment = &fallbackEnvironment;
+    }
+
+    const bool keyboardShown = environment->keyboard.Left > 0.0 ||
+                               environment->keyboard.Top > 0.0 ||
+                               environment->keyboard.Right > 0.0 ||
+                               environment->keyboard.Bottom > 0.0;
+
+    for (const auto& rule : m_responsiveRules) {
+        if (!rule) {
+            continue;
+        }
+
+        double scopeWidth = availableWidth;
+        double scopeHeight = availableHeight;
+        if (rule->GetScope() == ResponsiveScope::Window) {
+            scopeWidth = environment->contentWidth;
+            scopeHeight = environment->contentHeight;
+        }
+        if (!rule->Matches(
+                scopeWidth,
+                scopeHeight,
+                environment->pointer,
+                environment->hover,
+                keyboardShown)) {
+            continue;
+        }
+
+        for (const auto& setter : rule->GetSetters()) {
+            if (!setter || setter->GetProperty().empty()) {
+                continue;
+            }
+
+            FrameworkElement* target = this;
+            if (!setter->GetTargetName().empty()) {
+                target = FindNameDescendant(setter->GetTargetName());
+                if (!target) {
+                    continue;
+                }
+            }
+
+            const Properties::DependencyProperty* property =
+                target->FindDependencyProperty(setter->GetProperty());
+            if (!property) {
+                continue;
+            }
+
+            std::any convertedValue;
+            if (!Properties::TryConvertValue(*property, setter->GetValue(), convertedValue)) {
+                continue;
+            }
+            desiredValues[target].push_back(property);
+            target->SetValueInternal(*property, convertedValue, Properties::PropertyValueSource::Responsive);
+        }
+    }
+
+    for (auto& [target, properties] : m_appliedResponsiveValues) {
+        if (!target) {
+            continue;
+        }
+        const auto desiredTarget = desiredValues.find(target);
+        for (const auto* property : properties) {
+            const bool stillDesired = desiredTarget != desiredValues.end() &&
+                std::find(desiredTarget->second.begin(), desiredTarget->second.end(), property) !=
+                    desiredTarget->second.end();
+            if (!stillDesired) {
+                target->ClearResponsiveValue(*property);
+            }
+        }
+    }
+    m_appliedResponsiveValues = std::move(desiredValues);
+    MeasureOverride(availableWidth, availableHeight);
 }
 
 void FrameworkElement::Arrange(double finalWidth, double finalHeight)

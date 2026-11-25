@@ -31,6 +31,8 @@ public:
     */
     static const Properties::DependencyProperty& WidthProperty();
     static const Properties::DependencyProperty& ModeProperty();
+    static const Properties::DependencyProperty& MinWidthProperty();
+    static const Properties::DependencyProperty& MaxWidthProperty();
 
     /*
         @summary
@@ -46,6 +48,36 @@ public:
         Returns the width assigned to this column.
     */
     Grid::GridLength GetWidth() const;
+
+    /*
+        @summary
+        Returns the minimum width of this column.
+    */
+    double GetMinWidth() const;
+
+    /*
+        @summary
+        Sets the minimum width of this column.
+
+        @param width
+        The minimum width.
+    */
+    void SetMinWidth(double width);
+
+    /*
+        @summary
+        Returns the maximum width of this column.
+    */
+    double GetMaxWidth() const;
+
+    /*
+        @summary
+        Sets the maximum width of this column.
+
+        @param width
+        The maximum width.
+    */
+    void SetMaxWidth(double width);
 
     /*
         @summary

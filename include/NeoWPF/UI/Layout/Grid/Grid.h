@@ -334,7 +334,7 @@ public:
 
         @internal
     */
-    void Measure(double availableWidth, double availableHeight) override;
+    void MeasureOverride(double availableWidth, double availableHeight) override;
 
     /*
         @summary

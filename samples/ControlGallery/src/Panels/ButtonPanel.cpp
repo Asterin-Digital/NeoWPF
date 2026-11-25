@@ -1,7 +1,5 @@
 #include <Gallery/Panels.h>
 #include <NeoWPF/NeoWPF.h>
-#include <NeoWPF/UI/Core/Media/GradientBrush.h>
-#include <NeoWPF/UI/Core/Media/GradientStop.h>
 
 namespace Gallery {
 namespace {

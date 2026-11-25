@@ -31,6 +31,8 @@ public:
     */
     static const Properties::DependencyProperty& HeightProperty();
     static const Properties::DependencyProperty& ModeProperty();
+    static const Properties::DependencyProperty& MinHeightProperty();
+    static const Properties::DependencyProperty& MaxHeightProperty();
 
     /*
         @summary
@@ -46,6 +48,36 @@ public:
         Returns the height assigned to this row.
     */
     Grid::GridLength GetHeight() const;
+
+    /*
+        @summary
+        Returns the minimum height of this row.
+    */
+    double GetMinHeight() const;
+
+    /*
+        @summary
+        Sets the minimum height of this row.
+
+        @param height
+        The minimum height.
+    */
+    void SetMinHeight(double height);
+
+    /*
+        @summary
+        Returns the maximum height of this row.
+    */
+    double GetMaxHeight() const;
+
+    /*
+        @summary
+        Sets the maximum height of this row.
+
+        @param height
+        The maximum height.
+    */
+    void SetMaxHeight(double height);
 
     /*
         @summary

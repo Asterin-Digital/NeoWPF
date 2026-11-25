@@ -51,7 +51,7 @@ public:
     void SetVerticalOffset(double offset);
 
     bool IsHitTestVisible() const noexcept override;
-    void Measure(double availableWidth, double availableHeight) override;
+    void MeasureOverride(double availableWidth, double availableHeight) override;
     void Arrange(double finalWidth, double finalHeight) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 

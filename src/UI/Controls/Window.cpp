@@ -17,6 +17,37 @@ bool Window::IsTransparent() const noexcept
     return GetValue<bool>(AllowsTransparencyProperty());
 }
 
+SafeAreaPolicy Window::GetSafeAreaPolicy() const noexcept
+{
+    return m_safeAreaPolicy;
+}
+
+void Window::SetSafeAreaPolicy(SafeAreaPolicy policy) noexcept
+{
+    if (m_safeAreaPolicy == policy) {
+        return;
+    }
+    m_safeAreaPolicy = policy;
+    InvalidateMeasure();
+}
+
+Thickness Window::GetSafeAreaInsets() const noexcept
+{
+    return m_layoutEnvironment.safeArea;
+}
+
+Thickness Window::GetKeyboardInsets() const noexcept
+{
+    return m_layoutEnvironment.keyboard;
+}
+
+void Window::SetLayoutEnvironment(
+    const NeoWPF::UI::Layout::LayoutEnvironment& environment) noexcept
+{
+    m_layoutEnvironment = environment;
+    InvalidateMeasure();
+}
+
 std::shared_ptr<Brush> Window::GetBackgroundBrush() const
 {
     if (m_backgroundBrush.has_value()) {

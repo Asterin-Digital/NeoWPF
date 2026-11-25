@@ -199,11 +199,11 @@ int RadioButton::GetFontSize() const noexcept { return GetValue<int>(FontSizePro
 int RadioButton::GetFontWeight() const noexcept { return m_fontWeight; }
 NeoWPF::UI::FontStyle RadioButton::GetFontStyle() const noexcept { return m_fontStyle; }
 
-void RadioButton::Measure(double availableWidth, double availableHeight)
+void RadioButton::MeasureOverride(double availableWidth, double availableHeight)
 {
     const auto padding = GetPadding();
     const double contentWidth = availableWidth > 0.0 ? (std::max)(0.0, availableWidth - padding.Horizontal() - 18.0) : 0.0;
-    Content::ContentControl::Measure(contentWidth, availableHeight);
+    Content::ContentControl::MeasureOverride(contentWidth, availableHeight);
     const auto presenter = GetPresenter();
     const double measuredWidth = presenter ? presenter->GetDesiredWidth() : 0.0;
     const double measuredHeight = presenter ? presenter->GetDesiredHeight() : 0.0;

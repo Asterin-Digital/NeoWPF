@@ -134,6 +134,11 @@ public:
     */
     bool GetWindowScaleFactor(void* nativeWindowHandle,
                               double& outScaleFactor) const noexcept override;
+    bool GetWindowInsets(void* nativeWindowHandle,
+                         NeoWPF::Contracts::WindowInsets& outSafeArea,
+                         NeoWPF::Contracts::WindowInsets& outKeyboard) const noexcept override;
+    bool GetInputProfile(void* nativeWindowHandle,
+                         NeoWPF::Contracts::InputProfile& outProfile) const noexcept override;
 
     /*
         @summary

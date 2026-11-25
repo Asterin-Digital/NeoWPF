@@ -203,6 +203,30 @@ bool XWindowing::GetWindowScaleFactor(void* nativeWindowHandle,
     return outScaleFactor > 0.0;
 }
 
+bool XWindowing::GetWindowInsets(void* nativeWindowHandle,
+                                 NeoWPF::Contracts::WindowInsets& outSafeArea,
+                                 NeoWPF::Contracts::WindowInsets& outKeyboard) const noexcept
+{
+    if (!FindWindow(nativeWindowHandle)) {
+        return false;
+    }
+    outSafeArea = {};
+    outKeyboard = {};
+    return true;
+}
+
+bool XWindowing::GetInputProfile(void* nativeWindowHandle,
+                                 NeoWPF::Contracts::InputProfile& outProfile) const noexcept
+{
+    if (!FindWindow(nativeWindowHandle)) {
+        return false;
+    }
+    outProfile.primaryPointer = NeoWPF::Contracts::PointerPrecision::Fine;
+    outProfile.canHover = true;
+    outProfile.hasTouch = false;
+    return true;
+}
+
 void XWindowing::ResizeWindow(void* nativeWindowHandle, int width, int height) noexcept
 {
     if (XWindow* window = FindWindow(nativeWindowHandle)) {

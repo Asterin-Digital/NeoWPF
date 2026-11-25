@@ -2,8 +2,23 @@
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
+#include <NeoWPF/UI/Layout/Responsive/ResponsiveRule.h>
+#include <NeoWPF/UI/Markup/Xaml/Runtime/XamlPropertyBinding.h>
 
 namespace {
+    NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementNameMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(std::string{});
+        metadata.Converter = NeoWPF::UI::Properties::GetStringConverter();
+        return metadata;
+    }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementResponsiveRulesMetadata() {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue =
+            std::vector<std::shared_ptr<NeoWPF::UI::ResponsiveRule>>{};
+        return metadata;
+    }
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementWidthMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(0.0);
@@ -18,6 +33,27 @@ namespace {
         metadata.Converter = NeoWPF::UI::Properties::GetDoubleConverter();
         metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange | NeoWPF::UI::Properties::PropertyFlags::AffectsRender;
         return metadata;
+    }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementMinMaxMetadata(double defaultValue) {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(defaultValue);
+        metadata.Converter = NeoWPF::UI::Properties::GetDoubleConverter();
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange;
+        return metadata;
+    }
+
+    NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementMinWidthMetadata() {
+        return MakeFrameworkElementMinMaxMetadata(0.0);
+    }
+    NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementMaxWidthMetadata() {
+        return MakeFrameworkElementMinMaxMetadata(std::numeric_limits<double>::infinity());
+    }
+    NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementMinHeightMetadata() {
+        return MakeFrameworkElementMinMaxMetadata(0.0);
+    }
+    NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementMaxHeightMetadata() {
+        return MakeFrameworkElementMinMaxMetadata(std::numeric_limits<double>::infinity());
     }
 
     NeoWPF::UI::Properties::PropertyMetadata MakeFrameworkElementWidthModeMetadata() {
@@ -92,8 +128,32 @@ namespace {
     }
 }
 
+namespace NeoWPF::UI {
+
+const Properties::DependencyProperty& FrameworkElement::ResponsiveRulesProperty()
+{
+    static const auto& property =
+        Properties::DependencyProperty::Register<
+            FrameworkElement,
+            std::vector<std::shared_ptr<ResponsiveRule>>>(
+                "ResponsiveRules",
+                [] {
+                    Properties::PropertyMetadata metadata;
+                    metadata.DefaultValue =
+                        std::vector<std::shared_ptr<ResponsiveRule>>{};
+                    return metadata;
+                }());
+    return property;
+}
+
+}
+
 namespace NeoWPF::UI::Properties {
     void RegisterFrameworkElementProperties() {
+        RegisterProperty<UI::FrameworkElement, std::string>("Name",
+            &UI::FrameworkElement::GetName,
+            &UI::FrameworkElement::SetName,
+            MakeFrameworkElementNameMetadata());
         RegisterProperty<UI::FrameworkElement, double>("Width",
             &UI::FrameworkElement::GetWidth,
             &UI::FrameworkElement::SetWidth,
@@ -102,6 +162,22 @@ namespace NeoWPF::UI::Properties {
             &UI::FrameworkElement::GetHeight,
             &UI::FrameworkElement::SetHeight,
             MakeFrameworkElementHeightMetadata());
+        RegisterProperty<UI::FrameworkElement, double>("MinWidth",
+            &UI::FrameworkElement::GetMinWidth,
+            &UI::FrameworkElement::SetMinWidth,
+            MakeFrameworkElementMinMaxMetadata(0.0));
+        RegisterProperty<UI::FrameworkElement, double>("MaxWidth",
+            &UI::FrameworkElement::GetMaxWidth,
+            &UI::FrameworkElement::SetMaxWidth,
+            MakeFrameworkElementMinMaxMetadata(std::numeric_limits<double>::infinity()));
+        RegisterProperty<UI::FrameworkElement, double>("MinHeight",
+            &UI::FrameworkElement::GetMinHeight,
+            &UI::FrameworkElement::SetMinHeight,
+            MakeFrameworkElementMinMaxMetadata(0.0));
+        RegisterProperty<UI::FrameworkElement, double>("MaxHeight",
+            &UI::FrameworkElement::GetMaxHeight,
+            &UI::FrameworkElement::SetMaxHeight,
+            MakeFrameworkElementMinMaxMetadata(std::numeric_limits<double>::infinity()));
         RegisterProperty<UI::FrameworkElement, UI::LayoutSizeMode>("WidthMode",
             &UI::FrameworkElement::GetWidthMode,
             &UI::FrameworkElement::SetWidthMode,
@@ -140,6 +216,11 @@ namespace NeoWPF::UI::Properties {
             MakeFrameworkElementDataContextMetadata());
         NeoWPF::UI::Markup::Xaml::RegisterXamlType<UI::FrameworkElement>(
             "FrameworkElement", "", "NeoWPF::UI::FrameworkElement", "NeoWPF/UI/Core/Element/FrameworkElement.h");
+        NeoWPF::UI::Markup::Xaml::RegisterXamlCollectionProperty<
+            UI::FrameworkElement, UI::ResponsiveRule>(
+                UI::FrameworkElement::ResponsiveRulesProperty(),
+                &UI::FrameworkElement::AddResponsiveRule,
+                "AddResponsiveRule");
     }
 }
 
@@ -150,11 +231,41 @@ DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::FrameworkElement,
                              &NeoWPF::UI::FrameworkElement::SetWidth,
                              MakeFrameworkElementWidthMetadata)
 DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::FrameworkElement,
+                             Name,
+                             std::string,
+                             &NeoWPF::UI::FrameworkElement::GetName,
+                             &NeoWPF::UI::FrameworkElement::SetName,
+                             MakeFrameworkElementNameMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::FrameworkElement,
                              Height,
                              double,
                              &NeoWPF::UI::FrameworkElement::GetHeight,
                              &NeoWPF::UI::FrameworkElement::SetHeight,
                              MakeFrameworkElementHeightMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::FrameworkElement,
+                             MinWidth,
+                             double,
+                             &NeoWPF::UI::FrameworkElement::GetMinWidth,
+                             &NeoWPF::UI::FrameworkElement::SetMinWidth,
+                             MakeFrameworkElementMinWidthMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::FrameworkElement,
+                             MaxWidth,
+                             double,
+                             &NeoWPF::UI::FrameworkElement::GetMaxWidth,
+                             &NeoWPF::UI::FrameworkElement::SetMaxWidth,
+                             MakeFrameworkElementMaxWidthMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::FrameworkElement,
+                             MinHeight,
+                             double,
+                             &NeoWPF::UI::FrameworkElement::GetMinHeight,
+                             &NeoWPF::UI::FrameworkElement::SetMinHeight,
+                             MakeFrameworkElementMinHeightMetadata)
+DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::FrameworkElement,
+                             MaxHeight,
+                             double,
+                             &NeoWPF::UI::FrameworkElement::GetMaxHeight,
+                             &NeoWPF::UI::FrameworkElement::SetMaxHeight,
+                             MakeFrameworkElementMaxHeightMetadata)
 DEFINE_STATIC_PROPERTY_HANDLE(NeoWPF::UI::FrameworkElement,
                              WidthMode,
                              NeoWPF::UI::LayoutSizeMode,

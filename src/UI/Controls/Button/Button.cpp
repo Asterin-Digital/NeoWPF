@@ -271,9 +271,9 @@ void Button::OnBorderThicknessChanged(double)
     InvalidateVisual();
 }
 
-void Button::Measure(double availableWidth, double availableHeight)
+void Button::MeasureOverride(double availableWidth, double availableHeight)
 {
-    Content::ContentControl::Measure(availableWidth, availableHeight);
+    Content::ContentControl::MeasureOverride(availableWidth, availableHeight);
 }
 
 void Button::Arrange(double finalWidth, double finalHeight)

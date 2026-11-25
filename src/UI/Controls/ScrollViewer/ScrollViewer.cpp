@@ -1,17 +1,11 @@
 #include <NeoWPF/UI/Controls/ScrollViewer/ScrollViewer.h>
 #include <NeoWPF/UI/Content/ContentPresenter.h>
+#include <NeoWPF/UI/Layout/LayoutUtilities.h>
 #include <NeoWPF/UI/Layout/Scrolling/IScrollInfo.h>
 #include <NeoWPF/Input/Core/RoutedEvent.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <algorithm>
 #include <cmath>
-
-namespace {
-    /* @note
-    *  Maybe we should unify what unbounded means in one place these constants are getting pretty scattered
-    */
-constexpr double kUnboundedMeasure = 1000000.0; 
-}
 
 namespace NeoWPF::UI {
 
@@ -133,14 +127,14 @@ void ScrollViewer::SetVerticalScrollBarVisibility(ScrollBarVisibility visibility
     InvalidateVisual();
 }
 
-void ScrollViewer::Measure(double availableWidth, double availableHeight)
+void ScrollViewer::MeasureOverride(double availableWidth, double availableHeight)
 {
     const double explicitW = GetWidth();
     const double explicitH = GetHeight();
     m_viewportWidth  = explicitW > 0.0 ? explicitW  : (std::max)(0.0, availableWidth);
     m_viewportHeight = explicitH > 0.0 ? explicitH  : (std::max)(0.0, availableHeight);
 
-    Content::ContentControl::Measure(m_viewportWidth, m_viewportHeight);
+    Content::ContentControl::MeasureOverride(m_viewportWidth, m_viewportHeight);
 
     if (m_contentPresenter) {
         auto content = m_contentPresenter->GetContentElement();
@@ -159,10 +153,10 @@ void ScrollViewer::Measure(double availableWidth, double availableHeight)
     UpdateScrollBarState();
     UpdateScrollBarVisibility();
 
-    const double desiredWidth = explicitW <= 0.0 && availableWidth >= kUnboundedMeasure
+    const double desiredWidth = explicitW <= 0.0 && !Layout::IsBounded(availableWidth)
         ? m_contentWidth
         : m_viewportWidth;
-    const double desiredHeight = explicitH <= 0.0 && availableHeight >= kUnboundedMeasure
+    const double desiredHeight = explicitH <= 0.0 && !Layout::IsBounded(availableHeight)
         ? m_contentHeight
         : m_viewportHeight;
     SetDesiredSize(desiredWidth, desiredHeight);

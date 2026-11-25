@@ -59,6 +59,7 @@ public:
         const std::type_index& targetType,
         std::shared_ptr<NeoWPF::UI::Styling::Style>& outStyle);
     static bool TryGetResource(const std::string& key, std::any& outValue);
+    static bool TryGetDouble(const std::string& key, double& outValue);
 
 private:
     static ResourceDictionary s_applicationResources;

@@ -9,6 +9,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Core/Media/Brush.h>
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Localization/LocaleTable.h>
+#include <NeoWPF/UI/Layout/LayoutEnvironment.h>
 #include <memory>
 #include <optional>
 #include <string>
@@ -16,6 +17,15 @@ See LICENSE file in the project root for full license text.
 namespace NeoWPF::UI {
 class Visual;
 class Popup;
+
+/*
+    @summary
+    Controls whether window content avoids system safe areas.
+*/
+enum class SafeAreaPolicy {
+    Inset,
+    Ignore
+};
 
 /*
     @summary
@@ -29,6 +39,9 @@ public:
     static const Properties::DependencyProperty& LocalesProperty();
     static const Properties::DependencyProperty& BackgroundBrushProperty();
     static const Properties::DependencyProperty& AllowsTransparencyProperty();
+    static const Properties::DependencyProperty& SafeAreaPolicyProperty();
+    static const Properties::DependencyProperty& SafeAreaInsetsProperty();
+    static const Properties::DependencyProperty& KeyboardInsetsProperty();
 
     /*
         @summary
@@ -69,6 +82,41 @@ public:
         True when per-pixel transparency was requested.
     */
     bool IsTransparent() const noexcept;
+
+    /*
+        @summary
+        Returns the safe-area policy.
+    */
+    SafeAreaPolicy GetSafeAreaPolicy() const noexcept;
+
+    /*
+        @summary
+        Sets the safe-area policy.
+    */
+    void SetSafeAreaPolicy(SafeAreaPolicy policy) noexcept;
+
+    /*
+        @summary
+        Updates the window layout environment.
+
+        @param environment
+        Environment owned by the window session.
+
+        @internal
+    */
+    void SetLayoutEnvironment(const NeoWPF::UI::Layout::LayoutEnvironment& environment) noexcept;
+
+    /*
+        @summary
+        Returns the current safe-area inset.
+    */
+    Thickness GetSafeAreaInsets() const noexcept;
+
+    /*
+        @summary
+        Returns the current keyboard inset.
+    */
+    Thickness GetKeyboardInsets() const noexcept;
 
     /*
         @summary
@@ -191,6 +239,18 @@ public:
     */
     const std::vector<std::shared_ptr<Visual>>& GetOverlays() const noexcept { return m_overlays; }
 
+protected:
+    /*
+        @summary
+        Returns the layout environment owned by this window.
+
+        @internal
+    */
+    const NeoWPF::UI::Layout::LayoutEnvironment* GetLayoutEnvironment() const noexcept override
+    {
+        return &m_layoutEnvironment;
+    }
+
 private:
     void RebuildVisualTree() noexcept;
 
@@ -202,6 +262,8 @@ private:
     std::shared_ptr<Visual> m_visualRoot;
     std::vector<std::shared_ptr<Visual>> m_overlays;
     std::vector<std::shared_ptr<NeoWPF::UI::Localization::LocaleTable>> m_locales;
+    NeoWPF::UI::Layout::LayoutEnvironment m_layoutEnvironment;
+    SafeAreaPolicy m_safeAreaPolicy = SafeAreaPolicy::Inset;
 };
 
 }

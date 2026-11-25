@@ -1,10 +1,20 @@
 #include <NeoWPF/UI/Layout/Grid/RowDefinition.h>
 #include <NeoWPF/UI/Layout/Grid/GridDefinitionConverters.h>
+#include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/Registration/DependencyPropertyRegistration.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <algorithm>
+#include <limits>
 
 namespace {
+    NeoWPF::UI::Properties::PropertyMetadata MakeRowDefinitionMinMaxMetadata(double defaultValue) {
+        NeoWPF::UI::Properties::PropertyMetadata metadata;
+        metadata.DefaultValue = std::any(defaultValue);
+        metadata.Converter = NeoWPF::UI::Properties::GetDoubleConverter();
+        metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure | NeoWPF::UI::Properties::PropertyFlags::AffectsArrange;
+        return metadata;
+    }
+
     NeoWPF::UI::Properties::PropertyMetadata MakeRowDefinitionHeightMetadata() {
         NeoWPF::UI::Properties::PropertyMetadata metadata;
         metadata.DefaultValue = std::any(NeoWPF::UI::Grid::GridLength::Star());
@@ -17,6 +27,8 @@ namespace {
 namespace NeoWPF::UI::Properties {
     void RegisterRowDefinitionProperties() {
         RegisterProperty<NeoWPF::UI::RowDefinition, NeoWPF::UI::Grid::GridLength>("Height", MakeRowDefinitionHeightMetadata());
+        RegisterProperty<NeoWPF::UI::RowDefinition, double>("MinHeight", MakeRowDefinitionMinMaxMetadata(0.0));
+        RegisterProperty<NeoWPF::UI::RowDefinition, double>("MaxHeight", MakeRowDefinitionMinMaxMetadata(std::numeric_limits<double>::infinity()));
     }
 }
 
@@ -27,12 +39,42 @@ const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::RowDefinition::Hei
 
 const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::RowDefinition::ModeProperty() { return HeightProperty(); }
 
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::RowDefinition::MinHeightProperty() {
+    static const auto& property =
+        NeoWPF::UI::Properties::DependencyProperty::Register<NeoWPF::UI::RowDefinition, double>(
+            "MinHeight", MakeRowDefinitionMinMaxMetadata(0.0));
+    return property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& NeoWPF::UI::RowDefinition::MaxHeightProperty() {
+    static const auto& property =
+        NeoWPF::UI::Properties::DependencyProperty::Register<NeoWPF::UI::RowDefinition, double>(
+            "MaxHeight", MakeRowDefinitionMinMaxMetadata(std::numeric_limits<double>::infinity()));
+    return property;
+}
+
 void NeoWPF::UI::RowDefinition::SetHeight(NeoWPF::UI::Grid::GridLength height) {
     SetValue(HeightProperty(), height);
 }
 
 NeoWPF::UI::Grid::GridLength NeoWPF::UI::RowDefinition::GetHeight() const {
     return GetValue<NeoWPF::UI::Grid::GridLength>(HeightProperty());
+}
+
+double NeoWPF::UI::RowDefinition::GetMinHeight() const {
+    return GetValue<double>(MinHeightProperty());
+}
+
+void NeoWPF::UI::RowDefinition::SetMinHeight(double height) {
+    SetValue(MinHeightProperty(), (std::max)(0.0, height));
+}
+
+double NeoWPF::UI::RowDefinition::GetMaxHeight() const {
+    return GetValue<double>(MaxHeightProperty());
+}
+
+void NeoWPF::UI::RowDefinition::SetMaxHeight(double height) {
+    SetValue(MaxHeightProperty(), (std::max)(0.0, height));
 }
 
 void NeoWPF::UI::RowDefinition::SetMode(int mode) {

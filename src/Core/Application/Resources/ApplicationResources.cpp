@@ -1,6 +1,8 @@
 #include <NeoWPF/Core/Application/Resources/ApplicationResources.h>
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Styling/Style.h>
+#include <NeoWPF/UI/Layout/Responsive/ResponsiveRule.h>
+#include <NeoWPF/UI/Styling/Triggers/Setter.h>
 
 namespace NeoWPF::Core::ApplicationResources {
 
@@ -87,6 +89,7 @@ void Resources::Initialize()
 {
     NeoWPF::Diagnostics::LogInfo("Resources::Initialize");
     s_applicationResources.Clear();
+    s_applicationResources.Set("Touch.MinTargetSize", 48.0);
 }
 
 void Resources::Shutdown()
@@ -158,6 +161,23 @@ bool Resources::TryFindImplicitStyle(
 bool Resources::TryGetResource(const std::string& key, std::any& outValue)
 {
     return s_applicationResources.TryGet(key, outValue);
+}
+
+bool Resources::TryGetDouble(const std::string& key, double& outValue)
+{
+    std::any value;
+    if (!TryFindResource(key, value)) {
+        return false;
+    }
+    if (const auto* number = std::any_cast<double>(&value)) {
+        outValue = *number;
+        return true;
+    }
+    if (const auto* number = std::any_cast<int>(&value)) {
+        outValue = static_cast<double>(*number);
+        return true;
+    }
+    return false;
 }
 
 }

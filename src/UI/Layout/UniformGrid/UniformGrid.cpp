@@ -178,10 +178,8 @@ void UniformGrid::SetFirstColumn(int firstColumn)
     SetValue(FirstColumnProperty(), firstColumn);
 }
 
-void UniformGrid::Measure(double availableWidth, double availableHeight)
+void UniformGrid::MeasureOverride(double availableWidth, double availableHeight)
 {
-    EvaluateResponsiveRules(availableWidth, availableHeight);
-
     const auto children = GetParticipatingChildren(*this);
     const auto dimensions = ComputeDimensions(*this, children.size());
     const double cellAvailableWidth = (std::max)(

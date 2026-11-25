@@ -159,7 +159,7 @@ public:
 
         @internal
     */
-    void Measure(double availableWidth, double availableHeight) override;
+    void MeasureOverride(double availableWidth, double availableHeight) override;
     /*
         @summary
         Arranges the radio button within its final layout size.

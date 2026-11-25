@@ -31,6 +31,23 @@ NeoWPF::UI::Properties::PropertyMetadata MakeWindowTransparencyMetadata()
     return metadata;
 }
 
+NeoWPF::UI::Properties::PropertyMetadata MakeSafeAreaPolicyMetadata()
+{
+    NeoWPF::UI::Properties::PropertyMetadata metadata;
+    metadata.DefaultValue = std::any(NeoWPF::UI::SafeAreaPolicy::Inset);
+    metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure;
+    return metadata;
+}
+
+NeoWPF::UI::Properties::PropertyMetadata MakeWindowThicknessMetadata()
+{
+    NeoWPF::UI::Properties::PropertyMetadata metadata;
+    metadata.DefaultValue = std::any(NeoWPF::UI::Thickness{});
+    metadata.Converter = NeoWPF::UI::Properties::GetThicknessConverter();
+    metadata.Flags = NeoWPF::UI::Properties::PropertyFlags::AffectsMeasure;
+    return metadata;
+}
+
 }
 
 namespace NeoWPF::UI {
@@ -100,6 +117,33 @@ const NeoWPF::UI::Properties::DependencyProperty& Window::AllowsTransparencyProp
     return property;
 }
 
+const NeoWPF::UI::Properties::DependencyProperty& Window::SafeAreaPolicyProperty()
+{
+    static const auto& property = NeoWPF::UI::Properties::RegisterProperty<
+        Window, SafeAreaPolicy>(
+            "SafeAreaPolicy",
+            &Window::GetSafeAreaPolicy,
+            &Window::SetSafeAreaPolicy,
+            MakeSafeAreaPolicyMetadata());
+    return property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& Window::SafeAreaInsetsProperty()
+{
+    static const auto& property =
+        NeoWPF::UI::Properties::DependencyProperty::Register<
+            Window, Thickness>("SafeAreaInsets", MakeWindowThicknessMetadata());
+    return property;
+}
+
+const NeoWPF::UI::Properties::DependencyProperty& Window::KeyboardInsetsProperty()
+{
+    static const auto& property =
+        NeoWPF::UI::Properties::DependencyProperty::Register<
+            Window, Thickness>("KeyboardInsets", MakeWindowThicknessMetadata());
+    return property;
+}
+
 }
 
 namespace NeoWPF::UI::Properties {
@@ -112,6 +156,9 @@ void RegisterWindowProperties()
     (void)NeoWPF::UI::Window::LocalesProperty();
     (void)NeoWPF::UI::Window::BackgroundBrushProperty();
     (void)NeoWPF::UI::Window::AllowsTransparencyProperty();
+    (void)NeoWPF::UI::Window::SafeAreaPolicyProperty();
+    (void)NeoWPF::UI::Window::SafeAreaInsetsProperty();
+    (void)NeoWPF::UI::Window::KeyboardInsetsProperty();
     NeoWPF::UI::Markup::Xaml::RegisterXamlType<NeoWPF::UI::Window>(
         "Window",
         "Content",

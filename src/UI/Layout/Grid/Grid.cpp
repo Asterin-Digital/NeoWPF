@@ -271,10 +271,8 @@ namespace NeoWPF::UI {
         SetColumnSpan(child.get(), columnSpan);
     }
 
-    void Grid::Measure(double availableWidth, double availableHeight)
+    void Grid::MeasureOverride(double availableWidth, double availableHeight)
     {
-        EvaluateResponsiveRules(availableWidth, availableHeight);
-
         NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::GridLayout, NeoWPF::Diagnostics::Level::Info,
             "[Grid::Measure] Available: %gx%g", availableWidth, availableHeight);
 
@@ -282,7 +280,6 @@ namespace NeoWPF::UI {
         const double contentAvailableWidth = (std::max)(0.0, availableWidth - padding.Horizontal());
         const double contentAvailableHeight = (std::max)(0.0, availableHeight - padding.Vertical());
 
-        const int INF = 1000000;
         const std::size_t numRows = m_rowDefs.empty() ? 1u : m_rowDefs.size();
         const std::size_t numCols = m_colDefs.empty() ? 1u : m_colDefs.size();
 
@@ -356,8 +353,8 @@ namespace NeoWPF::UI {
             bool measureHeight = (rspan == 1 && r < effectiveNumRows && r < effectiveRowDefs.size() && effectiveRowDefs[r].mode == SizeMode::Auto);
 
             if (measureWidth || measureHeight)
-                fe->Measure(measureWidth ? INF : contentAvailableWidth,
-                            measureHeight ? INF : contentAvailableHeight);
+                fe->Measure(measureWidth ? std::numeric_limits<double>::infinity() : contentAvailableWidth,
+                            measureHeight ? std::numeric_limits<double>::infinity() : contentAvailableHeight);
         }
 
         const auto effectiveRowDefs = GridLayout::ResolveDefinitions(m_rowDefs);

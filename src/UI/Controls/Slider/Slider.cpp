@@ -114,7 +114,7 @@ void Slider::SetSelectionEnd(double value) noexcept
     InvalidateVisual();
 }
 
-void Slider::Measure(double availableWidth, double availableHeight)
+void Slider::MeasureOverride(double availableWidth, double availableHeight)
 {
     constexpr double thickness = 16.0;
     constexpr double minimumLength = 24.0;

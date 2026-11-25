@@ -154,7 +154,7 @@ void Image::SetStretchDirection(Core::Media::StretchDirection direction) noexcep
     InvalidateVisual();
 }
 
-void Image::Measure(double availableWidth, double availableHeight)
+void Image::MeasureOverride(double availableWidth, double availableHeight)
 {
     UpdateSourceState();
 

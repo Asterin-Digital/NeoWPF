@@ -75,6 +75,19 @@ std::any Setter::GetValue() const {
     return GetRawValue(ValueProperty());
 }
 
+void Setter::SetTargetName(const std::string& targetName)
+{
+    DependencyObject::SetValue(TargetNameProperty(), targetName);
+}
+
+std::string Setter::GetTargetName() const
+{
+    const std::any& value = GetRawValue(TargetNameProperty());
+    return value.type() == typeid(std::string)
+        ? std::any_cast<std::string>(value)
+        : std::string{};
+}
+
 std::size_t Setter::AddChangedHandler(std::function<void()> handler)
 {
     return m_changed->Subscribe(std::move(handler));

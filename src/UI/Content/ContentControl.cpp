@@ -125,7 +125,7 @@ void ContentControl::SetPresenter(const std::shared_ptr<ContentPresenter>& prese
     InvalidateVisual();
 }
 
-void ContentControl::Measure(double availableWidth, double availableHeight)
+void ContentControl::MeasureOverride(double availableWidth, double availableHeight)
 {
 if (m_presenter && !m_presenter->GetParent()) {
     try {
@@ -153,7 +153,7 @@ if (m_presenter && !m_presenter->GetParent()) {
         return;
     }
 
-    FrameworkElement::Measure(availableWidth, availableHeight);
+    FrameworkElement::MeasureOverride(availableWidth, availableHeight);
     SetDesiredSize(0, 0);
 }
 

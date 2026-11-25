@@ -573,7 +573,8 @@
 │       │   │   └── PrimitiveTessellation.h
 │       │   ├── Paint
 │       │   │   ├── GradientDesc.h
-│       │   │   └── Paint.h
+│       │   │   ├── Paint.h
+│       │   │   └── RampBaker.h
 │       │   ├── RenderSurface.h
 │       │   ├── Renderer.h
 │       │   ├── ShaderSources.h
@@ -792,6 +793,8 @@
 │   │   ├── FNWPF29.md
 │   │   ├── FNWPF3.md
 │   │   ├── FNWPF30.md
+│   │   ├── FNWPF31.md
+│   │   ├── FNWPF32.md
 │   │   ├── FNWPF6.md
 │   │   ├── RNWPF1.md
 │   │   ├── RNWPF13.md
@@ -889,6 +892,7 @@
 │   │   ├── UpdateTreeFile.py
 │   │   ├── build-android-debug
 │   │   └── test.py
+│   ├── backtrace.txt
 │   └── int-mcp
 │       ├── pyproject.toml
 │       ├── src
@@ -966,6 +970,45 @@
 │       ├── CMakeLists.txt
 │       ├── CMakePresets.json
 │       ├── android
+│       │   ├── .cxx
+│       │   ├── .gradle
+│       │   │   ├── 9.5.0
+│       │   │   │   ├── checksums
+│       │   │   │   │   ├── checksums.lock
+│       │   │   │   │   ├── md5-checksums.bin
+│       │   │   │   │   └── sha1-checksums.bin
+│       │   │   │   ├── executionHistory
+│       │   │   │   │   ├── executionHistory.bin
+│       │   │   │   │   └── executionHistory.lock
+│       │   │   │   ├── expanded
+│       │   │   │   ├── fileChanges
+│       │   │   │   │   └── last-build.bin
+│       │   │   │   ├── fileHashes
+│       │   │   │   │   ├── fileHashes.bin
+│       │   │   │   │   ├── fileHashes.lock
+│       │   │   │   │   └── resourceHashesCache.bin
+│       │   │   │   ├── gc.properties
+│       │   │   │   ├── kotlin-dsl-plugin-entries
+│       │   │   │   │   └── kotlin-dsl-plugin-entries.lock
+│       │   │   │   └── vcsMetadata
+│       │   │   ├── 9.8.1
+│       │   │   │   ├── checksums
+│       │   │   │   │   └── checksums.lock
+│       │   │   │   ├── expanded
+│       │   │   │   ├── fileChanges
+│       │   │   │   │   └── last-build.bin
+│       │   │   │   ├── fileHashes
+│       │   │   │   │   ├── fileHashes.bin
+│       │   │   │   │   └── fileHashes.lock
+│       │   │   │   ├── gc.properties
+│       │   │   │   └── vcsMetadata
+│       │   │   ├── buildOutputCleanup
+│       │   │   │   ├── buildOutputCleanup.lock
+│       │   │   │   ├── cache.properties
+│       │   │   │   └── outputFiles.bin
+│       │   │   ├── file-system.probe
+│       │   │   └── vcs-1
+│       │   │       └── gc.properties
 │       │   ├── Launch.py
 │       │   ├── build.gradle.kts
 │       │   ├── gradle.properties
@@ -1006,6 +1049,7 @@
 │   ├── Core
 │   │   ├── Application
 │   │   │   ├── ApplicationProperties.cpp
+│   │   │   ├── Instance
 │   │   │   ├── Resources
 │   │   │   │   ├── ApplicationResources.cpp
 │   │   │   │   ├── ApplicationStorage.cpp
@@ -1143,6 +1187,8 @@
 │   │   │   ├── Clipping.cpp
 │   │   │   ├── DrawBatcher.cpp
 │   │   │   └── PrimitiveTessellation.cpp
+│   │   ├── Paint
+│   │   │   └── RampBaker.cpp
 │   │   ├── Text
 │   │   │   ├── FontDatabase.cpp
 │   │   │   ├── FreeTypeTextRasterizer.cpp
@@ -1157,6 +1203,8 @@
 │   │       │   ├── VRendererDraw.cpp
 │   │       │   └── VRendererWindowing.cpp
 │   │       └── Shaders
+│   │           ├── gradient.frag
+│   │           ├── gradient.vert
 │   │           ├── solid.frag
 │   │           ├── solid.vert
 │   │           ├── textured.frag
@@ -1454,6 +1502,7 @@
 │   │   ├── ProgressBarTests.cpp
 │   │   ├── ProgressRingTests.cpp
 │   │   ├── RadioButtonTests.cpp
+│   │   ├── RampBakerTests.cpp
 │   │   ├── RenderCommandTests.cpp
 │   │   ├── ResourceKeyTests.cpp
 │   │   ├── RoutedEventTests.cpp

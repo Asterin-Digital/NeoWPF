@@ -41,6 +41,20 @@ public:
         scale = 0.0;
         return false;
     }
+    bool GetWindowInsets(void*,
+                         NeoWPF::Contracts::WindowInsets& safeArea,
+                         NeoWPF::Contracts::WindowInsets& keyboard) const noexcept override
+    {
+        safeArea = {};
+        keyboard = {};
+        return false;
+    }
+    bool GetInputProfile(void*,
+                         NeoWPF::Contracts::InputProfile& profile) const noexcept override
+    {
+        profile = {};
+        return false;
+    }
     void ResizeWindow(void*, int, int) noexcept override {}
     void ShowWindow(void*) noexcept override {}
     void HideWindow(void*) noexcept override {}

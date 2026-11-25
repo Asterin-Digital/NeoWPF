@@ -90,6 +90,7 @@
 #include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Diagnostics/FailureHooks.h>
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
+#include <NeoWPF/Diagnostics/CrashHandler.h>
 #include <NeoWPF/Diagnostics/PerformanceMetrics.h>
 #include <NeoWPF/Diagnostics/TextDumper.h>
 ///////////////////////////////////////////////////

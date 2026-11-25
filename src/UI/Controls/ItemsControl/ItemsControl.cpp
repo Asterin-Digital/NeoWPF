@@ -191,7 +191,7 @@ void ItemsControl::RealizeSourceItems()
         this, count, m_realizedItems.size(), GetVisualChildren().size());
 }
 
-void ItemsControl::Measure(double availableWidth, double availableHeight)
+void ItemsControl::MeasureOverride(double availableWidth, double availableHeight)
 {
     const double horizontalPadding = m_padding.Left + m_padding.Right;
     const double verticalPadding = m_padding.Top + m_padding.Bottom;

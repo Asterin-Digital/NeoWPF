@@ -97,7 +97,7 @@ public:
 
         @internal
     */
-    void Measure(double availableWidth, double availableHeight) override;
+    void MeasureOverride(double availableWidth, double availableHeight) override;
     /*
         @summary
         Arranges the content within the final layout size.

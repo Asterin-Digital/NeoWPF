@@ -24,6 +24,15 @@ struct DeveloperWarnings {
 
     /*
         @summary
+        Responsive value masked a lower-precedence value warning code.
+
+        @devwarn NEO-RESP001 Responsive value masks local or binding value.
+        Triggered when an application updates a property while a responsive value controls it.
+    */
+    static constexpr const wchar_t* kResponsiveMaskedValueCode = L"NEO-RESP001";
+
+    /*
+        @summary
         Dangling child reference warning code.
 
         @devwarn NEO-UI101 Dangling child reference detected.

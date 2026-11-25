@@ -59,4 +59,15 @@ const Properties::DependencyProperty& Setter::ValueProperty()
     return property;
 }
 
+const Properties::DependencyProperty& Setter::TargetNameProperty()
+{
+    Properties::PropertyMetadata metadata;
+    metadata.DefaultValue = std::string{};
+    metadata.Converter = Properties::GetStringConverter();
+    static const auto& property =
+        Properties::DependencyProperty::Register<Setter, std::string>(
+            "TargetName", metadata);
+    return property;
+}
+
 }

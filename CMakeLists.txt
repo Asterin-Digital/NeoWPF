@@ -1077,6 +1077,7 @@ if(BUILD_TESTING AND NOT ANDROID)
         tests/Automated/CommandListHashTests.cpp
         tests/Automated/GridTests.cpp
         tests/Automated/PanelTests.cpp
+        tests/Automated/ResponsiveLayoutTests.cpp
         tests/Automated/StackPanelTests.cpp
         tests/Automated/UniformGridTests.cpp
         tests/Automated/CanvasTests.cpp

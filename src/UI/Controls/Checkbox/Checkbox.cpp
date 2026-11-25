@@ -228,11 +228,11 @@ int Checkbox::GetFontSize() const noexcept
     return GetValue<int>(FontSizeProperty());
 }
 
-void Checkbox::Measure(double availableWidth, double availableHeight)
+void Checkbox::MeasureOverride(double availableWidth, double availableHeight)
 {
     const auto padding = GetPadding();
     const double contentAvailableWidth = availableWidth > 0.0 ? (std::max)(0.0, availableWidth - padding.Horizontal()) : 0.0;
-    Content::ContentControl::Measure(contentAvailableWidth, 0);
+    Content::ContentControl::MeasureOverride(contentAvailableWidth, 0);
 
     double contentWidth = 0.0;
     double contentHeight = 0.0;

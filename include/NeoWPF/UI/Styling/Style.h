@@ -14,6 +14,7 @@ See LICENSE file in the project root for full license text.
 
 namespace NeoWPF::UI {
 class UIElement;
+class ResponsiveRule;
 }
 
 namespace NeoWPF::UI::Styling {
@@ -32,6 +33,7 @@ class Style final : public Properties::DependencyObject {
 public:
     static const Properties::DependencyProperty& TargetTypeProperty();
     static const Properties::DependencyProperty& SettersProperty();
+    static const Properties::DependencyProperty& ResponsiveRulesProperty();
 
     /*
         @summary
@@ -63,6 +65,21 @@ public:
 
     /*
         @summary
+        Returns the responsive rules registered on the style.
+    */
+    const std::vector<std::shared_ptr<ResponsiveRule>>& GetResponsiveRules() const noexcept;
+
+    /*
+        @summary
+        Adds a responsive rule to the style.
+
+        @param rule
+        Rule to host on each target element.
+    */
+    void AddResponsiveRule(std::shared_ptr<ResponsiveRule> rule);
+
+    /*
+        @summary
         Applies the style to an element.
 
         @param element
@@ -75,6 +92,7 @@ public:
 
 private:
     std::vector<std::shared_ptr<Triggers::Setter>> m_setters;
+    std::vector<std::shared_ptr<ResponsiveRule>> m_responsiveRules;
 };
 
 void RegisterStyleProperties();

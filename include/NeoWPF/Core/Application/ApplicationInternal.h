@@ -21,6 +21,7 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/Rendering/Renderer.h>
 #include <NeoWPF/Core/Application/Application.h>
 #include <NeoWPF/UI/Controls/Window.h>
+#include <NeoWPF/UI/Layout/LayoutEnvironment.h>
 
 namespace NeoWPF::Diagnostics {
 struct VisualTreeDumpOptions;
@@ -41,6 +42,7 @@ struct WindowSession {
     bool hasScaleFactor = false;
     bool scaleFactorFailureReported = false;
     bool needsLayout = true;
+    NeoWPF::UI::Layout::LayoutEnvironment layoutEnvironment;
     std::shared_ptr<NeoWPF::UI::Window> windowHost;
     NeoWPF::UI::Visual* contentRoot = nullptr;
     NeoWPF::Rendering::CommandList buildCommandList;

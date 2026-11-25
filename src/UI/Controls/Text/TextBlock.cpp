@@ -295,7 +295,7 @@ void TextBlock::OnPaddingChanged(Thickness padding) {
     InvalidateVisual();
 }
 
-void TextBlock::Measure(double availableWidth, double availableHeight)
+void TextBlock::MeasureOverride(double availableWidth, double availableHeight)
 {
     const auto padding = GetPadding();
     if (m_text.empty()) {

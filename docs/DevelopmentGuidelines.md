@@ -64,6 +64,12 @@ Do not duplicate code. If you need utilities, use the existing ones. If there is
 
 Keep files lean and modularize your code. It's not necessary to create a new module out of a file if it's small - it would only annoy the future developer working on that part if they have to browse many other files just to understand one thing. A monolithic file should get split, while a small but focused one shouldn't, unless you expect it to grow a lot.
 
+Code must be formatted so that individual statements and declarations remain easy to distinguish. Do not compress multiple independent statements, function definitions, or other code constructs onto a single line just to save space.
+
+Each function definition must occupy its own lines, with its body properly formatted. Avoid writing entire function implementations on one line, even when they are short.
+
+Prefer readable, consistently formatted code over unnecessarily compact implementations.
+
 5. ## Project Structure
 
 Use this structure:

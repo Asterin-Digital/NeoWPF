@@ -95,7 +95,7 @@ void ProgressRing::SetIndeterminatePhase(float value) noexcept
     InvalidateVisual();
 }
 
-void ProgressRing::Measure(double availableWidth, double availableHeight)
+void ProgressRing::MeasureOverride(double availableWidth, double availableHeight)
 {
     const auto desiredDimension = [](double requested, double available) {
         double desired = requested > 0.0 ? requested : kDefaultSize;

@@ -3,6 +3,7 @@
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/UI/Layout/Responsive/ResponsiveRule.h>
 
 namespace NeoWPF::UI::Styling {
 namespace {
@@ -22,6 +23,14 @@ Properties::PropertyMetadata MakeSettersMetadata()
     return metadata;
 }
 
+Properties::PropertyMetadata MakeResponsiveRulesMetadata()
+{
+    Properties::PropertyMetadata metadata;
+    metadata.DefaultValue =
+        std::vector<std::shared_ptr<ResponsiveRule>>{};
+    return metadata;
+}
+
 }
 
 const Properties::DependencyProperty& Style::TargetTypeProperty()
@@ -35,6 +44,16 @@ const Properties::DependencyProperty& Style::SettersProperty()
 {
     static const auto& property = Properties::DependencyProperty::Register<Style, std::vector<std::shared_ptr<Setter>>>(
         "Setters", MakeSettersMetadata());
+    return property;
+}
+
+const Properties::DependencyProperty& Style::ResponsiveRulesProperty()
+{
+    static const auto& property =
+        Properties::DependencyProperty::Register<
+            Style,
+            std::vector<std::shared_ptr<ResponsiveRule>>>(
+                "ResponsiveRules", MakeResponsiveRulesMetadata());
     return property;
 }
 

@@ -144,6 +144,34 @@ bool WWindowing::GetWindowScaleFactor(void* nativeWindowHandle,
     return std::isfinite(outScaleFactor) && outScaleFactor > 0.0;
 }
 
+bool WWindowing::GetWindowInsets(void* nativeWindowHandle,
+                                 NeoWPF::Contracts::WindowInsets& outSafeArea,
+                                 NeoWPF::Contracts::WindowInsets& outKeyboard) const noexcept
+{
+    if (!IsWindowAlive(nativeWindowHandle)) {
+        return false;
+    }
+    outSafeArea = {};
+    outKeyboard = {};
+    return true;
+}
+
+bool WWindowing::GetInputProfile(void* nativeWindowHandle,
+                                 NeoWPF::Contracts::InputProfile& outProfile) const noexcept
+{
+    if (!IsWindowAlive(nativeWindowHandle)) {
+        return false;
+    }
+    outProfile.primaryPointer = NeoWPF::Contracts::PointerPrecision::Fine;
+    outProfile.canHover = true;
+    outProfile.hasTouch = ::GetSystemMetrics(SM_MAXIMUMTOUCHES) > 0;
+    if (outProfile.hasTouch) {
+        outProfile.primaryPointer = NeoWPF::Contracts::PointerPrecision::Coarse;
+        outProfile.canHover = false;
+    }
+    return true;
+}
+
 void WWindowing::ResizeWindow(void* nativeWindowHandle, int width, int height) noexcept
 {
     if (IsWindowAlive(nativeWindowHandle)) {

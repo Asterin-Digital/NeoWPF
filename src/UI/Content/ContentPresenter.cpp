@@ -102,7 +102,7 @@ void ContentPresenter::ClearContent()
     InvalidateVisual();
 }
 
-void ContentPresenter::Measure(double availableWidth, double availableHeight)
+void ContentPresenter::MeasureOverride(double availableWidth, double availableHeight)
 {
     if (!m_contentElement) {
         RebuildContentElement();

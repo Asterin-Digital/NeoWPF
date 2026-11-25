@@ -68,15 +68,16 @@ void ClearVisualTreeDirtyForRoot(NeoWPF::UI::Visual* rootVisual)
     }
 }
 
-void LayoutVisualTree(NeoWPF::UI::Visual* rootVisual, double width, double height)
+void LayoutVisualTree(NeoWPF::UI::Visual* rootVisual,
+                      const NeoWPF::UI::Layout::LayoutEnvironment& environment)
 {
     if (!rootVisual) {
         return;
     }
 
     if (auto fe = dynamic_cast<NeoWPF::UI::FrameworkElement*>(rootVisual)) {
-        fe->Measure(width, height);
-        fe->Arrange(width, height);
+        fe->Measure(environment.contentWidth, environment.contentHeight);
+        fe->Arrange(environment.contentWidth, environment.contentHeight);
     }
 }
 
@@ -111,6 +112,77 @@ bool TryGetWindowScaleFactor(
         windowSession.scaleFactorFailureReported = true;
     }
     return false;
+}
+
+bool TryUpdateLayoutEnvironment(
+    WindowSession& windowSession,
+    NeoWPF::Contracts::IWindowing& windowing,
+    double logicalWidth,
+    double logicalHeight)
+{
+    NeoWPF::Contracts::WindowInsets safeArea{};
+    NeoWPF::Contracts::WindowInsets keyboard{};
+    NeoWPF::Contracts::InputProfile inputProfile{};
+
+    const bool hasInsets = windowing.GetWindowInsets(
+        windowSession.renderSurface.nativeWindowHandle,
+        safeArea,
+        keyboard);
+    const bool hasInputProfile = windowing.GetInputProfile(
+        windowSession.renderSurface.nativeWindowHandle,
+        inputProfile);
+
+    NeoWPF::UI::Layout::LayoutEnvironment environment;
+    environment.contentWidth = logicalWidth;
+    environment.contentHeight = logicalHeight;
+    environment.scale = windowSession.scaleFactor;
+
+    if (hasInsets) {
+        environment.safeArea = NeoWPF::UI::Thickness{
+            static_cast<double>(safeArea.left) / windowSession.scaleFactor,
+            static_cast<double>(safeArea.top) / windowSession.scaleFactor,
+            static_cast<double>(safeArea.right) / windowSession.scaleFactor,
+            static_cast<double>(safeArea.bottom) / windowSession.scaleFactor};
+        environment.keyboard = NeoWPF::UI::Thickness{
+            static_cast<double>(keyboard.left) / windowSession.scaleFactor,
+            static_cast<double>(keyboard.top) / windowSession.scaleFactor,
+            static_cast<double>(keyboard.right) / windowSession.scaleFactor,
+            static_cast<double>(keyboard.bottom) / windowSession.scaleFactor};
+    }
+
+    if (hasInputProfile) {
+        environment.pointer =
+            inputProfile.primaryPointer == NeoWPF::Contracts::PointerPrecision::Coarse
+                ? NeoWPF::UI::Layout::PointerPrecision::Coarse
+                : NeoWPF::UI::Layout::PointerPrecision::Fine;
+        environment.hover = inputProfile.canHover;
+    }
+
+    const double keyboardVertical = environment.keyboard.Top + environment.keyboard.Bottom;
+    const double keyboardHorizontal = environment.keyboard.Left + environment.keyboard.Right;
+    environment.contentWidth = (std::max)(0.0,
+        logicalWidth - environment.safeArea.Horizontal() - keyboardHorizontal);
+    environment.contentHeight = (std::max)(0.0,
+        logicalHeight - environment.safeArea.Vertical() - keyboardVertical);
+
+    const auto previous = windowSession.layoutEnvironment;
+    windowSession.layoutEnvironment = environment;
+    if (windowSession.windowHost) {
+        windowSession.windowHost->SetLayoutEnvironment(environment);
+    }
+    return previous.contentWidth != environment.contentWidth ||
+           previous.contentHeight != environment.contentHeight ||
+           previous.safeArea.Left != environment.safeArea.Left ||
+           previous.safeArea.Top != environment.safeArea.Top ||
+           previous.safeArea.Right != environment.safeArea.Right ||
+           previous.safeArea.Bottom != environment.safeArea.Bottom ||
+           previous.keyboard.Left != environment.keyboard.Left ||
+           previous.keyboard.Top != environment.keyboard.Top ||
+           previous.keyboard.Right != environment.keyboard.Right ||
+           previous.keyboard.Bottom != environment.keyboard.Bottom ||
+           previous.pointer != environment.pointer ||
+           previous.hover != environment.hover ||
+           previous.scale != environment.scale;
 }
 
 bool OverlayDirty(const NeoWPF::UI::Window& window)
@@ -212,15 +284,27 @@ void BuildWindowCommands(
     }
     if (layoutRequired) {
         NEO_WPF_ACTION("BuildWindowCommands.MeasureArrange");
-        LayoutVisualTree(rootVisual.get(), logicalWidth, logicalHeight);
+        auto* platform = NeoWPF::Platform::CurrentPlatform();
+        if (platform) {
+            TryUpdateLayoutEnvironment(
+                windowSession,
+                platform->Windowing(),
+                logicalWidth,
+                logicalHeight);
+        }
+        LayoutVisualTree(rootVisual.get(), windowSession.layoutEnvironment);
         for (const auto& overlay : windowSession.windowHost->GetOverlays()) {
             if (!overlay) {
                 continue;
             }
             overlay->Initialize();
             if (auto* element = dynamic_cast<NeoWPF::UI::FrameworkElement*>(overlay.get())) {
-                element->Measure(logicalWidth, logicalHeight);
-                element->Arrange(element->GetDesiredWidth(), element->GetDesiredHeight());
+                element->Measure(
+                    windowSession.layoutEnvironment.contentWidth,
+                    windowSession.layoutEnvironment.contentHeight);
+                element->Arrange(
+                    element->GetDesiredWidth(),
+                    element->GetDesiredHeight());
             }
         }
     } else {

@@ -35,7 +35,7 @@ public:
     void SetStretchDirection(Core::Media::StretchDirection direction) noexcept;
     Core::Media::StretchDirection GetStretchDirection() const noexcept { return m_stretchDirection; }
 
-    void Measure(double availableWidth, double availableHeight) override;
+    void MeasureOverride(double availableWidth, double availableHeight) override;
     void Arrange(double finalWidth, double finalHeight) override;
     void BuildRenderCommands(NeoWPF::Rendering::CommandList& commands) override;
 

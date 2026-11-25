@@ -19,6 +19,20 @@ void DependencyObject::SetValueInternal(const DependencyProperty& property,
         return;
     }
 
+#ifndef NDEBUG
+    if ((source == PropertyValueSource::Local ||
+         source == PropertyValueSource::Expression) &&
+        m_responsiveValues.find(&property) != m_responsiveValues.end()) {
+        const std::wstring title =
+            std::wstring(NeoWPF::Diagnostics::DeveloperWarnings::kResponsiveMaskedValueCode) +
+            L": responsive value masks property update";
+        NeoWPF::Diagnostics::QueueDeveloperWarning(
+            title,
+            L"A responsive value is masking a local or binding update for this dependency property.",
+            NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
+    }
+#endif
+
     std::any oldValue = GetRawValue(property);
     const auto& coerceValue = property.GetMetadata().CoerceValueCallback;
     if (coerceValue) {
@@ -216,6 +230,9 @@ PropertyValueSource DependencyObject::GetValueSource(const DependencyProperty& p
     if (m_animatedValues.find(&property) != m_animatedValues.end()) {
         return PropertyValueSource::Animation;
     }
+    if (m_responsiveValues.find(&property) != m_responsiveValues.end()) {
+        return PropertyValueSource::Responsive;
+    }
     if (m_localValues.find(&property) != m_localValues.end()) {
         return PropertyValueSource::Local;
     }
@@ -224,9 +241,6 @@ PropertyValueSource DependencyObject::GetValueSource(const DependencyProperty& p
     }
     if (m_triggerValues.find(&property) != m_triggerValues.end()) {
         return PropertyValueSource::Trigger;
-    }
-    if (m_responsiveValues.find(&property) != m_responsiveValues.end()) {
-        return PropertyValueSource::Responsive;
     }
     if (m_styleValues.find(&property) != m_styleValues.end()) {
         return PropertyValueSource::Style;
@@ -242,6 +256,9 @@ std::any DependencyObject::GetRawValue(const DependencyProperty& property) const
     if (auto it = m_animatedValues.find(&property); it != m_animatedValues.end()) {
         return it->second;
     }
+    if (auto it = m_responsiveValues.find(&property); it != m_responsiveValues.end()) {
+        return it->second;
+    }
     if (auto it = m_localValues.find(&property); it != m_localValues.end()) {
         return it->second;
     }
@@ -249,9 +266,6 @@ std::any DependencyObject::GetRawValue(const DependencyProperty& property) const
         return it->second;
     }
     if (auto it = m_triggerValues.find(&property); it != m_triggerValues.end()) {
-        return it->second;
-    }
-    if (auto it = m_responsiveValues.find(&property); it != m_responsiveValues.end()) {
         return it->second;
     }
     if (auto it = m_styleValues.find(&property); it != m_styleValues.end()) {

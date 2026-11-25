@@ -16,6 +16,24 @@ class Window;
 
 namespace NeoWPF::Contracts {
 
+struct WindowInsets {
+    int left = 0;
+    int top = 0;
+    int right = 0;
+    int bottom = 0;
+};
+
+enum class PointerPrecision {
+    Fine,
+    Coarse
+};
+
+struct InputProfile {
+    PointerPrecision primaryPointer = PointerPrecision::Fine;
+    bool canHover = true;
+    bool hasTouch = false;
+};
+
 enum class NativeWindowSystem {
     Unknown,
     Win32,
@@ -76,6 +94,19 @@ public:
     */
     virtual bool GetWindowScaleFactor(void* nativeWindowHandle,
                                      double& outScaleFactor) const noexcept = 0;
+    /*
+        @summary
+        Returns physical-pixel window insets for the native window.
+    */
+    virtual bool GetWindowInsets(void* nativeWindowHandle,
+                                 WindowInsets& outSafeArea,
+                                 WindowInsets& outKeyboard) const noexcept = 0;
+    /*
+        @summary
+        Returns the static input profile for the native window.
+    */
+    virtual bool GetInputProfile(void* nativeWindowHandle,
+                                 InputProfile& outProfile) const noexcept = 0;
     virtual void ResizeWindow(void* nativeWindowHandle, int width, int height) noexcept = 0;
     virtual void ShowWindow(void* nativeWindowHandle) noexcept = 0;
     virtual void HideWindow(void* nativeWindowHandle) noexcept = 0;

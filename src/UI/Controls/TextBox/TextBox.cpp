@@ -473,7 +473,7 @@ std::shared_ptr<Brush> TextBox::GetCaretBrush() const
     return GetValue<std::shared_ptr<Brush>>(CaretBrushProperty());
 }
 
-void TextBox::Measure(double availableWidth, double availableHeight)
+void TextBox::MeasureOverride(double availableWidth, double availableHeight)
 {
     const auto baseMetrics = NeoWPF::Rendering::Text::MeasureText(L"W", m_fontSize, GetFontFamily(), 0, 0);
     const double minWidth = 120.0;

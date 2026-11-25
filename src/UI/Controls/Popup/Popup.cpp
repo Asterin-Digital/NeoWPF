@@ -164,7 +164,7 @@ bool Popup::IsHitTestVisible() const noexcept
     return GetIsOpen() && Content::ContentControl::IsHitTestVisible();
 }
 
-void Popup::Measure(double availableWidth, double availableHeight)
+void Popup::MeasureOverride(double availableWidth, double availableHeight)
 {
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Popup,
         NeoWPF::Diagnostics::Level::Trace,
@@ -174,7 +174,7 @@ void Popup::Measure(double availableWidth, double availableHeight)
         SetDesiredSize(0, 0);
         return;
     }
-    Content::ContentControl::Measure(availableWidth, availableHeight);
+    Content::ContentControl::MeasureOverride(availableWidth, availableHeight);
 }
 
 void Popup::Arrange(double finalWidth, double finalHeight)

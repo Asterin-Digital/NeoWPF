@@ -207,7 +207,7 @@ void ScrollBar::UpdateValueFromPosition(double x, double y) noexcept
     SetValue(value);
 }
 
-void ScrollBar::Measure(double availableWidth, double availableHeight)
+void ScrollBar::MeasureOverride(double availableWidth, double availableHeight)
 {
     const bool isVertical = m_orientation == Orientation::Vertical;
     const int thickness = 16;

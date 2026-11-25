@@ -14,7 +14,6 @@
 #include <NeoWPF/UI/Layout/Grid/Grid.h>
 #include <NeoWPF/UI/Layout/Grid/RowDefinition.h>
 #include <NeoWPF/UI/Layout/Panel/StackPanel.h>
-#include <NeoWPF/UI/Layout/Panel/ResponsiveRule.h>
 #include <NeoWPF/UI/Styling/Style.h>
 #include <NeoWPF/UI/Styling/Triggers/Setter.h>
 #include <NeoWPF/UI/Data/BindingOperations.h>
@@ -356,32 +355,6 @@ TEST(XamlParserTests, BuildsStyleTargetTypeAndSetterCollection)
     NeoWPF::Core::Application::Shutdown();
 }
 
-TEST(XamlParserTests, BuildsPanelResponsiveRuleAndSetterCollections)
-{
-    NeoWPF::Core::Application::Initialize();
-
-    const auto root = NeoWPF::UI::Markup::Xaml::ParseXaml(R"(
-        <StackPanel>
-            <StackPanel.ResponsiveRules>
-                <ResponsiveRule MinWidth="100" MaxWidth="200"
-                                MinHeight="50" MaxHeight="150">
-                    <Setter Property="Orientation" Value="Horizontal" />
-                </ResponsiveRule>
-            </StackPanel.ResponsiveRules>
-        </StackPanel>
-    )");
-    const auto tree = NeoWPF::UI::Markup::Xaml::BuildXamlTree(root);
-
-    ASSERT_NE(tree, nullptr);
-    const auto panel = std::dynamic_pointer_cast<NeoWPF::UI::StackPanel>(tree);
-    ASSERT_NE(panel, nullptr);
-    ASSERT_EQ(panel->GetResponsiveRules().size(), 1u);
-    ASSERT_EQ(panel->GetResponsiveRules()[0]->GetSetters().size(), 1u);
-    panel->Measure(100.0, 50.0);
-    EXPECT_EQ(panel->GetOrientation(), NeoWPF::UI::Orientation::Horizontal);
-
-    NeoWPF::Core::Application::Shutdown();
-}
 
 TEST(XamlParserTests, DecodesXmlEntitiesInAttributesAndText)
 {

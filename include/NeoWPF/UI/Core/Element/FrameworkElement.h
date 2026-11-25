@@ -9,12 +9,14 @@ See LICENSE file in the project root for full license text.
 #include <NeoWPF/UI/Core/Media/CornerRadius.h>
 #include <NeoWPF/UI/Core/Media/Spacing.h>
 #include <NeoWPF/UI/Core/Media/Thickness.h>
+#include <NeoWPF/UI/Layout/LayoutEnvironment.h>
 #include <NeoWPF/UI/Layout/Placement/Alignment.h>
 #include <algorithm>
-
-namespace NeoWPF::UI::Data {
-class INotifyPropertyChanged;
-}
+#include <limits>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
 #include <any>
 #include <memory>
 #include <type_traits>
@@ -27,7 +29,13 @@ class INotifyPropertyChanged;
 #undef max
 #endif
 
+namespace NeoWPF::UI::Data {
+class INotifyPropertyChanged;
+}
+
 namespace NeoWPF::UI {
+
+class ResponsiveRule;
 
 class ScrollBar;
 
@@ -49,6 +57,12 @@ class FrameworkElement : public UIElement {
 public:
     static const Properties::DependencyProperty& WidthProperty();
     static const Properties::DependencyProperty& HeightProperty();
+    static const Properties::DependencyProperty& NameProperty();
+    static const Properties::DependencyProperty& ResponsiveRulesProperty();
+    static const Properties::DependencyProperty& MinWidthProperty();
+    static const Properties::DependencyProperty& MaxWidthProperty();
+    static const Properties::DependencyProperty& MinHeightProperty();
+    static const Properties::DependencyProperty& MaxHeightProperty();
     static const Properties::DependencyProperty& WidthModeProperty();
     static const Properties::DependencyProperty& HeightModeProperty();
     static const Properties::DependencyProperty& ClipToBoundsProperty();
@@ -106,6 +120,14 @@ public:
         @internal
     */
     void Measure(double availableWidth, double availableHeight) override;
+
+    /*
+        @summary
+        Performs element-specific measurement.
+
+        @internal
+    */
+    virtual void MeasureOverride(double availableWidth, double availableHeight);
 
     /*
         @summary
@@ -306,6 +328,127 @@ public:
         The height to use.
     */
     void SetHeight(double height) noexcept;
+
+    /*
+        @summary
+        Returns the minimum width the element can resolve.
+    */
+    double GetMinWidth() const noexcept;
+
+    /*
+        @summary
+        Sets the minimum width the element can resolve.
+
+        @param width
+        The minimum width.
+    */
+    void SetMinWidth(double width) noexcept;
+
+    /*
+        @summary
+        Returns the maximum width the element can resolve.
+    */
+    double GetMaxWidth() const noexcept;
+
+    /*
+        @summary
+        Sets the maximum width the element can resolve.
+
+        @param width
+        The maximum width.
+    */
+    void SetMaxWidth(double width) noexcept;
+
+    /*
+        @summary
+        Returns the minimum height the element can resolve.
+    */
+    double GetMinHeight() const noexcept;
+
+    /*
+        @summary
+        Sets the minimum height the element can resolve.
+
+        @param height
+        The minimum height.
+    */
+    void SetMinHeight(double height) noexcept;
+
+    /*
+        @summary
+        Returns the maximum height the element can resolve.
+    */
+    double GetMaxHeight() const noexcept;
+
+    /*
+        @summary
+        Sets the maximum height the element can resolve.
+
+        @param height
+        The maximum height.
+    */
+    void SetMaxHeight(double height) noexcept;
+
+    /*
+        @summary
+        Returns the framework element name.
+    */
+    const std::string& GetName() const noexcept;
+
+    /*
+        @summary
+        Sets the framework element name.
+
+        @param name
+        The element name.
+    */
+    void SetName(const std::string& name);
+
+    /*
+        @summary
+        Returns the responsive rules hosted by this element.
+    */
+    const std::vector<std::shared_ptr<ResponsiveRule>>& GetResponsiveRules() const noexcept;
+
+    /*
+        @summary
+        Adds a responsive rule to this element.
+
+        @param rule
+        Rule to evaluate during measurement.
+    */
+    void AddResponsiveRule(std::shared_ptr<ResponsiveRule> rule);
+
+    /*
+        @summary
+        Removes a responsive rule from this element.
+
+        @param rule
+        Rule to remove.
+    */
+    void RemoveResponsiveRule(const std::shared_ptr<ResponsiveRule>& rule);
+
+    /*
+        @summary
+        Finds a descendant by framework element name.
+
+        @param name
+        The name to find.
+
+        @internal
+    */
+    FrameworkElement* FindNameDescendant(const std::string& name) noexcept;
+
+    /*
+        @summary
+        Finds a descendant by framework element name.
+
+        @param name
+        The name to find.
+
+        @internal
+    */
+    const FrameworkElement* FindNameDescendant(const std::string& name) const noexcept;
 
     /*
         @summary
@@ -563,6 +706,17 @@ public:
     void GetAbsoluteLayoutPosition(double& outX, double& outY) const noexcept;
 
 protected:
+    /*
+        @summary
+        Returns the layout environment supplied by an owning window.
+
+        @internal
+    */
+    virtual const Layout::LayoutEnvironment* GetLayoutEnvironment() const noexcept
+    {
+        return nullptr;
+    }
+
     void OnAddChild(Visual* child) override;
 
     void ApplyRenderTransform(double& x, double& y, double& width, double& height) const noexcept;
@@ -580,15 +734,24 @@ private:
     double m_offsetY = 0.0;
     LayoutSizeMode m_widthMode = LayoutSizeMode::Auto;
     double m_width = 0.0;
+    double m_minWidth = 0.0;
+    double m_maxWidth = std::numeric_limits<double>::infinity();
     double m_renderOffsetX = 0.0;
     double m_renderOffsetY = 0.0;
     LayoutSizeMode m_heightMode = LayoutSizeMode::Auto;
     double m_height = 0.0;
+    double m_minHeight = 0.0;
+    double m_maxHeight = std::numeric_limits<double>::infinity();
     Thickness m_margin;
     Spacing m_spacing;
     NeoWPF::UI::CornerRadius m_cornerRadius;
     std::any m_dataContext;
     bool m_clipToBounds = false;
+    std::string m_name;
+    std::vector<std::shared_ptr<ResponsiveRule>> m_responsiveRules;
+    std::unordered_map<
+        FrameworkElement*,
+        std::vector<const Properties::DependencyProperty*>> m_appliedResponsiveValues;
 
 protected:
     void SetRenderOffset(double x, double y) noexcept { m_renderOffsetX = x; m_renderOffsetY = y; InvalidateTransformCache(); InvalidateVisual(); }
