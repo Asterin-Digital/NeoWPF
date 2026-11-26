@@ -1047,6 +1047,7 @@ if(BUILD_TESTING AND NOT ANDROID)
         tests/Automated/EventTests.cpp
         tests/Automated/RoutedEventTests.cpp
         tests/Automated/DependencyPropertyTests.cpp
+        tests/Automated/ResultTests.cpp
         tests/Automated/DiagnosticsTests.cpp
         tests/Automated/BrushTests.cpp
         tests/Automated/BrushPaintResolutionTests.cpp
