@@ -47,7 +47,7 @@ NeoWPF::Result<void> Application::LoadFontFromFile(const std::wstring& filePath)
 {
     NEO_WPF_STARTUP_ACTION("Application.LoadFontFromFile");
     if (filePath.empty()) {
-        NeoWPF::Diagnostics::LogError("Application::LoadFontFromFile: empty file path supplied");
+        NeoWPF::Diagnostics::Catastrophic("Application::LoadFontFromFile: empty file path supplied");
         return NeoWPF::Fail<std::string>{"Font file path cannot be empty"};
     }
 
@@ -72,7 +72,7 @@ NeoWPF::Result<void> Application::LoadFontFromMemory(
 {
     NEO_WPF_STARTUP_ACTION("Application.LoadFontFromMemory");
     if (!data || size == 0 || familyName.empty()) {
-        NeoWPF::Diagnostics::LogError("Application::LoadFontFromMemory: invalid font data or family name");
+        NeoWPF::Diagnostics::Catastrophic("Application::LoadFontFromMemory: invalid font data or family name");
         return NeoWPF::Fail<std::string>{"Font data and family name must be provided"};
     }
 

@@ -289,7 +289,7 @@ void Image::EnsureTexture()
 
     m_textureId = NeoWPF::Rendering::Renderer_CreateTexture(static_cast<unsigned int>(m_pixelWidth), static_cast<unsigned int>(m_pixelHeight), m_pixelData);
     if (m_textureId == 0) {
-        NeoWPF::Diagnostics::LogError("Image: failed to create texture from source pixels");
+        NeoWPF::Diagnostics::Catastrophic("Image: failed to create texture from source pixels");
     }
 }
 

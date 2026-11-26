@@ -102,7 +102,7 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
     const VkResult capabilitiesResult = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
         m_physicalDevice, context.surface, &capabilities);
     if (capabilitiesResult != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Surface capabilities query failed: %d",
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Surface capabilities query failed: %d",
             static_cast<int>(capabilitiesResult));
         return false;
     }
@@ -119,14 +119,14 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
     std::uint32_t formatCount = 0;
     VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, context.surface, &formatCount, nullptr);
     if (result != VK_SUCCESS || formatCount == 0) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Surface format count query failed: result=%d count=%u",
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Surface format count query failed: result=%d count=%u",
             static_cast<int>(result), formatCount);
         return false;
     }
     std::vector<VkSurfaceFormatKHR> formats(formatCount);
     result = vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, context.surface, &formatCount, formats.data());
     if (result != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Surface format list query failed: %d", static_cast<int>(result));
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Surface format list query failed: %d", static_cast<int>(result));
         return false;
     }
     for (std::uint32_t index = 0; index < formatCount; ++index) {
@@ -148,7 +148,7 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
             std::clamp(width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
             std::clamp(height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height)};
     if (context.swapchainExtent.width == 0 || context.swapchainExtent.height == 0) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Surface selected a zero-sized swapchain extent");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Surface selected a zero-sized swapchain extent");
         return false;
     }
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
@@ -161,7 +161,7 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
     const auto compositeAlpha = SelectSurfaceCompositeAlpha(
         context.transparent, capabilities.supportedCompositeAlpha);
     if (!compositeAlpha) {
-        NeoWPF::Diagnostics::LogError(
+        NeoWPF::Diagnostics::Catastrophic(
             "[Vulkan] Surface does not support the required composite alpha mode for this window");
         return false;
     }
@@ -193,7 +193,7 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
         VK_TRUE, VK_NULL_HANDLE};
     result = vkCreateSwapchainKHR(m_device, &swapchainInfo, nullptr, &context.swapchain);
     if (result != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] vkCreateSwapchainKHR failed: %d", static_cast<int>(result));
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] vkCreateSwapchainKHR failed: %d", static_cast<int>(result));
         return false;
     }
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
@@ -205,7 +205,7 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
     std::uint32_t actualCount = 0;
     result = vkGetSwapchainImagesKHR(m_device, context.swapchain, &actualCount, nullptr);
     if (result != VK_SUCCESS || actualCount == 0) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Swapchain image count query failed: result=%d count=%u",
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Swapchain image count query failed: result=%d count=%u",
             static_cast<int>(result), actualCount);
         DestroySwapchainResources(context);
         return false;
@@ -213,7 +213,7 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
     context.swapchainImages.resize(actualCount);
     result = vkGetSwapchainImagesKHR(m_device, context.swapchain, &actualCount, context.swapchainImages.data());
     if (result != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Swapchain image list query failed: %d", static_cast<int>(result));
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Swapchain image list query failed: %d", static_cast<int>(result));
         DestroySwapchainResources(context);
         return false;
     }
@@ -253,17 +253,17 @@ bool VulkanRendering::CreateSwapchainResources(WindowContext& context, unsigned 
         return false;
     }
     if (!CreateSolidPipeline(context, context.renderPass)) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Solid pipeline creation failed");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Solid pipeline creation failed");
         DestroySwapchainResources(context);
         return false;
     }
     if (!CreateTexturedPipeline(context, context.renderPass)) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Textured pipeline creation failed");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Textured pipeline creation failed");
         DestroySwapchainResources(context);
         return false;
     }
     if (!CreateGradientPipeline(context, context.renderPass)) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Gradient pipeline creation failed");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Gradient pipeline creation failed");
         DestroySwapchainResources(context);
         return false;
     }

@@ -182,7 +182,7 @@ void LogWarn(const char* fmt, ...)
     va_end(ap);
 }
 
-void LogError(const char* fmt, ...)
+void Catastrophic(const char* fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);

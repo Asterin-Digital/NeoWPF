@@ -363,7 +363,7 @@ void NeoWPF::Rendering::Renderer_Execute(
     const RenderSurface& surface, const CommandList& cmd, double scaleFactor)
 {
     if (!std::isfinite(scaleFactor) || scaleFactor <= 0.0) {
-        NeoWPF::Diagnostics::LogError(
+        NeoWPF::Diagnostics::Catastrophic(
             "Render commands rejected because the window scale is invalid");
         return;
     }
@@ -427,7 +427,7 @@ uint32_t NeoWPF::Rendering::Renderer_CreateTexture(unsigned int w, unsigned int 
             w, h, rgbaData, textureId, rendering->IsInitialized() ? 1 : 0);
         return textureId;
     }
-    NeoWPF::Diagnostics::LogError("[Renderer] CreateTexture no active rendering backend size=%ux%u", w, h);
+    NeoWPF::Diagnostics::Catastrophic("[Renderer] CreateTexture no active rendering backend size=%ux%u", w, h);
     return 0;
 }
 

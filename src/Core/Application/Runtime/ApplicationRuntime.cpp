@@ -107,7 +107,7 @@ bool TryGetWindowScaleFactor(
 
     windowSession.hasScaleFactor = false;
     if (!windowSession.scaleFactorFailureReported) {
-        NeoWPF::Diagnostics::LogError(
+        NeoWPF::Diagnostics::Catastrophic(
             "Window layout and rendering paused because the window scale is unavailable");
         windowSession.scaleFactorFailureReported = true;
     }
@@ -353,7 +353,7 @@ void StartRenderThread()
                     }
                     if (!platform || !windowSession.renderSurface.IsValid() ||
                         !NeoWPF::Rendering::Renderer_Initialize(windowSession.renderSurface)) {
-                        NeoWPF::Diagnostics::LogError("Render backend initialization failed");
+                        NeoWPF::Diagnostics::Catastrophic("Render backend initialization failed");
                         surfacesInitialized = false;
                         break;
                     }
@@ -378,7 +378,7 @@ void StartRenderThread()
         }
         catch (const std::exception& ex) {
             NeoWPF::Rendering::Renderer_Shutdown();
-            NeoWPF::Diagnostics::LogError("Render thread initialization failed: %s", ex.what());
+            NeoWPF::Diagnostics::Catastrophic("Render thread initialization failed: %s", ex.what());
             {
                 std::lock_guard<std::mutex> lock(s_appState.renderInitMutex);
                 s_appState.renderThreadInitFailed = true;
@@ -391,7 +391,7 @@ void StartRenderThread()
         }
         catch (...) {
             NeoWPF::Rendering::Renderer_Shutdown();
-            NeoWPF::Diagnostics::LogError("Render thread initialization failed with unknown error");
+            NeoWPF::Diagnostics::Catastrophic("Render thread initialization failed with unknown error");
             {
                 std::lock_guard<std::mutex> lock(s_appState.renderInitMutex);
                 s_appState.renderThreadInitFailed = true;
@@ -457,14 +457,14 @@ void StartRenderThread()
                 try {
                     surfaceInitialized = NeoWPF::Rendering::Renderer_Initialize(surface);
                 } catch (const std::exception& ex) {
-                    NeoWPF::Diagnostics::LogError("Render surface initialization failed: %s", ex.what());
+                    NeoWPF::Diagnostics::Catastrophic("Render surface initialization failed: %s", ex.what());
                     continue;
                 } catch (...) {
-                    NeoWPF::Diagnostics::LogError("Render surface initialization failed with unknown error");
+                    NeoWPF::Diagnostics::Catastrophic("Render surface initialization failed with unknown error");
                     continue;
                 }
                 if (!surfaceInitialized) {
-                    NeoWPF::Diagnostics::LogError("Render surface initialization failed");
+                    NeoWPF::Diagnostics::Catastrophic("Render surface initialization failed");
                     continue;
                 }
                 unsigned int w = 0;
@@ -489,9 +489,9 @@ void StartRenderThread()
                         const auto renderElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - renderStart).count();
                         NeoWPF::Diagnostics::PerformanceMetrics::RecordRenderPass(renderElapsed);
                     } catch (const std::exception& ex) {
-                        NeoWPF::Diagnostics::LogError("Render frame failed: %s", ex.what());
+                        NeoWPF::Diagnostics::Catastrophic("Render frame failed: %s", ex.what());
                     } catch (...) {
-                        NeoWPF::Diagnostics::LogError("Render frame failed with unknown error");
+                        NeoWPF::Diagnostics::Catastrophic("Render frame failed with unknown error");
                     }
                 }
             }

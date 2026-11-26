@@ -69,7 +69,7 @@ bool HasPlatform() noexcept
 {
     constexpr auto message = L"NeoWPF could not initialize because no platform backend is available.\n\n"
                              L"Make sure Application::Initialize() is called before using the application.";
-    NeoWPF::Diagnostics::LogError(
+    NeoWPF::Diagnostics::Catastrophic(
         "Application initialization failed: no platform backend is available");
 #ifdef _WIN32
     ::MessageBoxW(nullptr, message, L"NeoWPF Initialization Error", MB_OK | MB_ICONERROR);
@@ -81,7 +81,7 @@ bool HasPlatform() noexcept
 {
     constexpr auto message = L"The NeoWPF application was used before Application::Initialize() was called.\n\n"
                              L"Call NeoWPF::Core::Application::Initialize() before accessing the application.";
-    NeoWPF::Diagnostics::LogError(
+    NeoWPF::Diagnostics::Catastrophic(
         "Application was used before Application::Initialize() was called");
 #ifdef _WIN32
     ::MessageBoxW(nullptr, message, L"NeoWPF Initialization Error", MB_OK | MB_ICONERROR);

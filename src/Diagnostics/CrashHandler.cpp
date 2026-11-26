@@ -55,31 +55,31 @@ std::vector<std::wstring> CaptureCallStackText()
 void EmitCrashReport(const CrashContext& context)
 {
     if (!context.message.empty()) {
-        LogError("Crash report: %s", NeoWPF::Platform::WideToUtf8(context.message).c_str());
+        Catastrophic("Crash report: %s", NeoWPF::Platform::WideToUtf8(context.message).c_str());
     } else {
-        LogError("Crash report: %s", NeoWPF::Platform::WideToUtf8(context.description).c_str());
+        Catastrophic("Crash report: %s", NeoWPF::Platform::WideToUtf8(context.description).c_str());
     }
 
     if (context.exceptionCode != 0) {
-        LogError("Exception code: 0x%08X", context.exceptionCode);
+        Catastrophic("Exception code: 0x%08X", context.exceptionCode);
     }
 
     if (!context.exceptionType.empty()) {
-        LogError("Exception type: %s", NeoWPF::Platform::WideToUtf8(context.exceptionType).c_str());
+        Catastrophic("Exception type: %s", NeoWPF::Platform::WideToUtf8(context.exceptionType).c_str());
     }
 
     if (!context.source.empty()) {
-        LogError("Source: %s", NeoWPF::Platform::WideToUtf8(context.source).c_str());
+        Catastrophic("Source: %s", NeoWPF::Platform::WideToUtf8(context.source).c_str());
     }
 
     if (!context.modulePath.empty()) {
-        LogError("Module: %s", NeoWPF::Platform::WideToUtf8(context.modulePath).c_str());
+        Catastrophic("Module: %s", NeoWPF::Platform::WideToUtf8(context.modulePath).c_str());
     }
 
     if (!context.callStack.empty()) {
-        LogError("Call stack:");
+        Catastrophic("Call stack:");
         for (const auto& frame : context.callStack) {
-            LogError("  %s", NeoWPF::Platform::WideToUtf8(frame).c_str());
+            Catastrophic("  %s", NeoWPF::Platform::WideToUtf8(frame).c_str());
         }
     }
 }

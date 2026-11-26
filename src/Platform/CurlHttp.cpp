@@ -55,7 +55,7 @@ NeoWPF::Result<std::vector<std::uint8_t>> CurlHttp::Fetch(const std::wstring& ur
 
     CURL* handle = curl_easy_init();
     if (!handle) {
-        NeoWPF::Diagnostics::LogError("CurlHttp: curl_easy_init failed");
+        NeoWPF::Diagnostics::Catastrophic("CurlHttp: curl_easy_init failed");
         return NeoWPF::Fail<std::string>{"HTTP request initialization failed"};
     }
 
@@ -80,7 +80,7 @@ NeoWPF::Result<std::vector<std::uint8_t>> CurlHttp::Fetch(const std::wstring& ur
     curl_easy_cleanup(handle);
 
     if (result != CURLE_OK || responseCode < 200 || responseCode >= 300 || data.empty()) {
-        NeoWPF::Diagnostics::LogError(
+        NeoWPF::Diagnostics::Catastrophic(
             "CurlHttp: request failed for URL '%s' (curl=%d, HTTP=%ld)",
             urlUtf8.c_str(), static_cast<int>(result), responseCode);
         return NeoWPF::Fail<std::string>{"HTTP resource request failed"};

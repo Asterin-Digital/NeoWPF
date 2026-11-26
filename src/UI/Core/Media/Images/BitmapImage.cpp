@@ -71,18 +71,18 @@ std::shared_ptr<BitmapImage> BitmapImage::CreateFromMemory(std::vector<std::uint
 void BitmapImage::LoadFromMemory(const std::vector<std::uint8_t>& data)
 {
     if (data.empty()) {
-        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed because input data is empty");
+        NeoWPF::Diagnostics::Catastrophic("BitmapImage::LoadFromMemory failed because input data is empty");
         return;
     }
 
     auto* platform = NeoWPF::Platform::CurrentPlatform();
     if (!platform) {
-        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed because no platform is registered");
+        NeoWPF::Diagnostics::Catastrophic("BitmapImage::LoadFromMemory failed because no platform is registered");
         return;
     }
     auto result = platform->DecodeImageFromMemory(data, m_decodePixelWidth, m_decodePixelHeight);
     if (result.Fail()) {
-        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed to decode image data: %s",
+        NeoWPF::Diagnostics::Catastrophic("BitmapImage::LoadFromMemory failed to decode image data: %s",
                                       result.Error().c_str());
         return;
     }
@@ -100,18 +100,18 @@ void BitmapImage::LoadFromMemory(const std::vector<std::uint8_t>& data)
 void BitmapImage::LoadFromMemory(std::vector<std::uint8_t>&& data)
 {
     if (data.empty()) {
-        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed because input data is empty");
+        NeoWPF::Diagnostics::Catastrophic("BitmapImage::LoadFromMemory failed because input data is empty");
         return;
     }
 
     auto* platform = NeoWPF::Platform::CurrentPlatform();
     if (!platform) {
-        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed because no platform is registered");
+        NeoWPF::Diagnostics::Catastrophic("BitmapImage::LoadFromMemory failed because no platform is registered");
         return;
     }
     auto result = platform->DecodeImageFromMemory(data, m_decodePixelWidth, m_decodePixelHeight);
     if (result.Fail()) {
-        NeoWPF::Diagnostics::LogError("BitmapImage::LoadFromMemory failed to decode image data: %s",
+        NeoWPF::Diagnostics::Catastrophic("BitmapImage::LoadFromMemory failed to decode image data: %s",
                                       result.Error().c_str());
         return;
     }
@@ -134,7 +134,7 @@ void BitmapImage::BeginInit()
 void BitmapImage::EndInit()
 {
     if (!m_isInitPending) {
-        NeoWPF::Diagnostics::LogError("BitmapImage::EndInit called without BeginInit");
+        NeoWPF::Diagnostics::Catastrophic("BitmapImage::EndInit called without BeginInit");
         return;
     }
 
@@ -192,7 +192,7 @@ bool BitmapImage::TryGetPixels(const void*& outPixels, unsigned int& outStride) 
 bool BitmapImage::TryLoad()
 {
     if (m_uriSource.empty()) {
-        NeoWPF::Diagnostics::LogError("BitmapImage::TryLoad failed because UriSource is empty");
+        NeoWPF::Diagnostics::Catastrophic("BitmapImage::TryLoad failed because UriSource is empty");
         return false;
     }
 
@@ -295,7 +295,7 @@ bool BitmapImage::TryLoad()
         return true;
     }
 
-    NeoWPF::Diagnostics::LogError("BitmapImage::TryLoad failed to decode %ls", m_uriSource.c_str());
+    NeoWPF::Diagnostics::Catastrophic("BitmapImage::TryLoad failed to decode %ls", m_uriSource.c_str());
     return false;
 }
 
@@ -309,7 +309,7 @@ void BitmapImage::BeginAsyncLoad() {
         weakSelf = shared_from_this();
     } catch (const std::bad_weak_ptr&) {
         m_isLoading = false;
-        NeoWPF::Diagnostics::LogError("BitmapImage::BeginAsyncLoad requires shared ownership");
+        NeoWPF::Diagnostics::Catastrophic("BitmapImage::BeginAsyncLoad requires shared ownership");
         return;
     }
 
@@ -321,7 +321,7 @@ void BitmapImage::BeginAsyncLoad() {
             }
         })) {
         m_isLoading = false;
-        NeoWPF::Diagnostics::LogError("BitmapImage::BeginAsyncLoad failed because the background executor is stopped");
+        NeoWPF::Diagnostics::Catastrophic("BitmapImage::BeginAsyncLoad failed because the background executor is stopped");
     }
 }
 

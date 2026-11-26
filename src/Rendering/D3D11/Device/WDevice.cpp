@@ -62,7 +62,7 @@ constexpr bool kUseShaderModel5ForTextAndGradients = false;
 static void ThrowIfFailed(HRESULT hr, const char* message)
 {
     if (FAILED(hr)) {
-        ::NeoWPF::Diagnostics::LogError("%s (0x%08X)", message, static_cast<unsigned int>(hr));
+        ::NeoWPF::Diagnostics::Catastrophic("%s (0x%08X)", message, static_cast<unsigned int>(hr));
         throw std::runtime_error(message);
     }
 }
@@ -72,7 +72,7 @@ static void LoadLibraryOrThrow(HMODULE& module, const wchar_t* libraryName, cons
     if (module) return;
     module = LoadLibraryW(libraryName);
     if (!module) {
-        ::NeoWPF::Diagnostics::LogError("%s", errorMessage);
+        ::NeoWPF::Diagnostics::Catastrophic("%s", errorMessage);
         throw std::runtime_error(errorMessage);
     }
 }
@@ -82,7 +82,7 @@ static void LoadProcOrThrow(HMODULE module, void** proc, const char* procName, c
     if (*proc) return;
     *proc = reinterpret_cast<void*>(GetProcAddress(module, procName));
     if (!*proc) {
-        ::NeoWPF::Diagnostics::LogError("%s", errorMessage);
+        ::NeoWPF::Diagnostics::Catastrophic("%s", errorMessage);
         throw std::runtime_error(errorMessage);
     }
 }
@@ -152,7 +152,7 @@ void CreateDevice()
         "[D3D11] CreateDevice: begin");
     if (!g_d3d11Dll) {
         if (::NeoWPF::Diagnostics::GetFailureHookPoint() == ::NeoWPF::Diagnostics::FailureHookPoint::LoadD3D11Dll) {
-            ::NeoWPF::Diagnostics::LogError("Injected failure: Failed to load d3d11.dll");
+            ::NeoWPF::Diagnostics::Catastrophic("Injected failure: Failed to load d3d11.dll");
             throw std::runtime_error("Injected failure: Failed to load d3d11.dll");
         }
         {
@@ -213,7 +213,7 @@ void CreateDevice()
 HRESULT CreateSwapChainForWindow(HWND hwnd, unsigned int width, unsigned int height, IDXGISwapChain** swapChain)
 {
     if (::NeoWPF::Diagnostics::GetFailureHookPoint() == ::NeoWPF::Diagnostics::FailureHookPoint::CreateD3D11SwapChain) {
-        ::NeoWPF::Diagnostics::LogError("Injected failure: CreateD3D11SwapChain");
+        ::NeoWPF::Diagnostics::Catastrophic("Injected failure: CreateD3D11SwapChain");
         return E_FAIL;
     }
 
@@ -260,7 +260,7 @@ void CompileShaders()
     std::string vsSrc = D3D11::GetRectVertexShaderSource();
     std::string psSrc = D3D11::GetRectPixelShaderSource();
     if (vsSrc.empty() || psSrc.empty()) {
-        ::NeoWPF::Diagnostics::LogError("Embedded shader source is missing");
+        ::NeoWPF::Diagnostics::Catastrophic("Embedded shader source is missing");
         throw std::runtime_error("Embedded shader source is missing");
     }
 
@@ -269,7 +269,7 @@ void CompileShaders()
         HRESULT hr = injectedCompileFailure ? E_FAIL : g_D3DCompile(source.c_str(), source.size(), nullptr, nullptr, nullptr, entryPoint, profile, 0, 0, &outputBlob, &errBlob);
         if (FAILED(hr) || !outputBlob) {
             if (errBlob) {
-                ::NeoWPF::Diagnostics::LogError("%s", static_cast<const char*>(errBlob->GetBufferPointer()));
+                ::NeoWPF::Diagnostics::Catastrophic("%s", static_cast<const char*>(errBlob->GetBufferPointer()));
             }
             throw std::runtime_error(failureMessage);
         }

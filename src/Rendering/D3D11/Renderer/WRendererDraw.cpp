@@ -178,7 +178,7 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
             const HRESULT hr = g_device->CreateRasterizerState(
                 &rasterizerDesc, &g_rasterizerState);
             if (FAILED(hr)) {
-                NeoWPF::Diagnostics::LogError(
+                NeoWPF::Diagnostics::Catastrophic(
                     "[D3D11] CreateRasterizerState failed with HRESULT 0x%08X",
                     static_cast<unsigned int>(hr));
             }
@@ -198,7 +198,7 @@ void ExecuteRendererDraw(HWND hwnd, const CommandList& cmd, double scaleFactor)
             const HRESULT hr = g_device->CreateDepthStencilState(
                 &depthStencilDesc, &g_depthStencilState);
             if (FAILED(hr)) {
-                NeoWPF::Diagnostics::LogError(
+                NeoWPF::Diagnostics::Catastrophic(
                     "[D3D11] CreateDepthStencilState failed with HRESULT 0x%08X",
                     static_cast<unsigned int>(hr));
             }

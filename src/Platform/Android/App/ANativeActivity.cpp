@@ -93,9 +93,9 @@ void CleanupAfterFailure(AActivityHost& host) noexcept
     try {
         NeoWPF::Core::Application::Shutdown();
     } catch (const std::exception& exception) {
-        NeoWPF::Diagnostics::LogError("Android application shutdown failed: %s", exception.what());
+        NeoWPF::Diagnostics::Catastrophic("Android application shutdown failed: %s", exception.what());
     } catch (...) {
-        NeoWPF::Diagnostics::LogError("Android application shutdown failed");
+        NeoWPF::Diagnostics::Catastrophic("Android application shutdown failed");
     }
 
     if (auto* const windowing = GetWindowing()) {
@@ -110,10 +110,10 @@ void RunApplication(AActivityHost* host) noexcept
         (void)NeoWPFAndroidApplicationMain();
         host->lifecycle.CompleteApplication(&FinishActivity, host->activity);
     } catch (const std::exception& exception) {
-        NeoWPF::Diagnostics::LogError("Android application failed: %s", exception.what());
+        NeoWPF::Diagnostics::Catastrophic("Android application failed: %s", exception.what());
         CleanupAfterFailure(*host);
     } catch (...) {
-        NeoWPF::Diagnostics::LogError("Android application failed with an unknown exception");
+        NeoWPF::Diagnostics::Catastrophic("Android application failed with an unknown exception");
         CleanupAfterFailure(*host);
     }
 }
@@ -187,7 +187,7 @@ bool UpdateScaleFactor(ANativeActivity* activity) noexcept
 
     AConfiguration* const configuration = AConfiguration_new();
     if (!configuration) {
-        NeoWPF::Diagnostics::LogError(
+        NeoWPF::Diagnostics::Catastrophic(
             "Failed to read Android display density");
         return false;
     }
@@ -201,7 +201,7 @@ bool UpdateScaleFactor(ANativeActivity* activity) noexcept
 void OnConfigurationChanged(ANativeActivity* activity) noexcept
 {
     if (!UpdateScaleFactor(activity)) {
-        NeoWPF::Diagnostics::LogError(
+        NeoWPF::Diagnostics::Catastrophic(
             "Android reported an unavailable display density");
     }
 }
@@ -273,7 +273,7 @@ extern "C" void ANativeActivity_onCreate(
         activity->callbacks->onConfigurationChanged =
             &NeoWPF::Platform::Android::OnConfigurationChanged;
         if (!NeoWPF::Platform::Android::UpdateScaleFactor(activity)) {
-            NeoWPF::Diagnostics::LogError(
+            NeoWPF::Diagnostics::Catastrophic(
                 "Android display density is unavailable");
             activity->instance = nullptr;
             ANativeActivity_finish(activity);
@@ -284,11 +284,11 @@ extern "C" void ANativeActivity_onCreate(
         host.release();
     } catch (const std::exception& exception) {
         activity->instance = nullptr;
-        NeoWPF::Diagnostics::LogError("Failed to start Android host: %s", exception.what());
+        NeoWPF::Diagnostics::Catastrophic("Failed to start Android host: %s", exception.what());
         ANativeActivity_finish(activity);
     } catch (...) {
         activity->instance = nullptr;
-        NeoWPF::Diagnostics::LogError("Failed to start Android host");
+        NeoWPF::Diagnostics::Catastrophic("Failed to start Android host");
         ANativeActivity_finish(activity);
     }
 }

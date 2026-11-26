@@ -58,7 +58,7 @@ bool XWindowing::Connect()
     }
     m_display = XOpenDisplay(nullptr);
     if (!m_display) {
-        NeoWPF::Diagnostics::LogError("[X11] XOpenDisplay failed");
+        NeoWPF::Diagnostics::Catastrophic("[X11] XOpenDisplay failed");
         return false;
     }
     m_screen = DefaultScreen(m_display);
@@ -322,7 +322,7 @@ void XWindowing::RequestQuit(int exitCode) noexcept
 
 void XWindowing::ShowFatalError(const std::wstring&, const std::wstring& message) noexcept
 {
-    NeoWPF::Diagnostics::LogError("%s", NeoWPF::Platform::WideToUtf8(message).c_str());
+    NeoWPF::Diagnostics::Catastrophic("%s", NeoWPF::Platform::WideToUtf8(message).c_str());
 }
 
 void XWindowing::SetConsoleVisible(bool visible) noexcept

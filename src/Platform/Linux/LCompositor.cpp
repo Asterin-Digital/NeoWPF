@@ -25,7 +25,7 @@ public:
     void* CreateWindow(const wchar_t*, int, int,
         std::shared_ptr<NeoWPF::UI::Window> = nullptr) override
     {
-        NeoWPF::Diagnostics::LogError(
+        NeoWPF::Diagnostics::Catastrophic(
             "Linux display backend unavailable. Set NEOWPF_LINUX_BACKEND=wayland or NEOWPF_LINUX_BACKEND=x11.");
         return nullptr;
     }
@@ -65,7 +65,7 @@ public:
     void RequestQuit(int) noexcept override {}
     void ShowFatalError(const std::wstring&, const std::wstring& message) noexcept override
     {
-        NeoWPF::Diagnostics::LogError("%s", NeoWPF::Platform::WideToUtf8(message).c_str());
+        NeoWPF::Diagnostics::Catastrophic("%s", NeoWPF::Platform::WideToUtf8(message).c_str());
     }
     void SetConsoleVisible(bool) noexcept override {}
     bool IsConsoleVisible() const noexcept override { return false; }
@@ -155,7 +155,7 @@ LCompositor::LCompositor()
             m_windowing = std::move(windowing);
             m_connected = true;
         } else {
-            NeoWPF::Diagnostics::LogError(
+            NeoWPF::Diagnostics::Catastrophic(
                 "[Wayland] Selected Linux display backend could not connect");
         }
     } else {
@@ -167,7 +167,7 @@ LCompositor::LCompositor()
             m_windowing = std::move(windowing);
             m_connected = true;
         } else {
-            NeoWPF::Diagnostics::LogError(
+            NeoWPF::Diagnostics::Catastrophic(
                 "[X11] Selected Linux display backend could not connect");
         }
     }

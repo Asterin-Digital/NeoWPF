@@ -76,7 +76,7 @@ bool VulkanRendering::InitializeDeviceForSurface(VkSurfaceKHR surface)
     std::uint32_t deviceCount = 0;
     VkResult result = vkEnumeratePhysicalDevices(m_instance, &deviceCount, nullptr);
     if (result != VK_SUCCESS || deviceCount == 0) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Physical device count query failed: %s (%d), count=%u",
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Physical device count query failed: %s (%d), count=%u",
             VkResultName(result), static_cast<int>(result), deviceCount);
         return false;
     }
@@ -84,7 +84,7 @@ bool VulkanRendering::InitializeDeviceForSurface(VkSurfaceKHR surface)
     std::vector<VkPhysicalDevice> devices(deviceCount);
     result = vkEnumeratePhysicalDevices(m_instance, &deviceCount, devices.data());
     if (result != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Physical device list query failed: %s (%d)",
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Physical device list query failed: %s (%d)",
             VkResultName(result), static_cast<int>(result));
         return false;
     }
@@ -133,7 +133,7 @@ bool VulkanRendering::InitializeDeviceForSurface(VkSurfaceKHR surface)
         }
     }
     if (m_physicalDevice == VK_NULL_HANDLE) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] No device has graphics and surface presentation support");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] No device has graphics and surface presentation support");
         return false;
     }
 
@@ -152,7 +152,7 @@ bool VulkanRendering::InitializeDeviceForSurface(VkSurfaceKHR surface)
         0, nullptr, 1, deviceExtensions, nullptr};
     result = vkCreateDevice(m_physicalDevice, &deviceCreateInfo, nullptr, &m_device);
     if (result != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] vkCreateDevice failed: %s (%d)",
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] vkCreateDevice failed: %s (%d)",
             VkResultName(result), static_cast<int>(result));
         return false;
     }
@@ -180,14 +180,14 @@ void VulkanRendering::DestroySolidPipeline(WindowContext& context) noexcept
 bool VulkanRendering::CreateSolidPipeline(WindowContext& context, VkRenderPass renderPass)
 {
     if (renderPass == VK_NULL_HANDLE) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Cannot create solid pipeline without a render pass");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Cannot create solid pipeline without a render pass");
         return false;
     }
     const VkPushConstantRange pushConstants{VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(float) * 2};
     const VkPipelineLayoutCreateInfo layoutInfo{
         VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO, nullptr, 0, 0, nullptr, 1, &pushConstants};
     if (vkCreatePipelineLayout(m_device, &layoutInfo, nullptr, &context.solidPipelineLayout) != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] vkCreatePipelineLayout failed for solid pipeline");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] vkCreatePipelineLayout failed for solid pipeline");
         return false;
     }
     const VkShaderModule vertexShader = CreateShaderModule(
@@ -195,7 +195,7 @@ bool VulkanRendering::CreateSolidPipeline(WindowContext& context, VkRenderPass r
     const VkShaderModule fragmentShader = CreateShaderModule(
         m_device, neowpf_solid_frag_spv, sizeof(neowpf_solid_frag_spv));
     if (vertexShader == VK_NULL_HANDLE || fragmentShader == VK_NULL_HANDLE) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Failed to create solid shader module");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Failed to create solid shader module");
         if (vertexShader != VK_NULL_HANDLE) vkDestroyShaderModule(m_device, vertexShader, nullptr);
         if (fragmentShader != VK_NULL_HANDLE) vkDestroyShaderModule(m_device, fragmentShader, nullptr);
         return false;
@@ -245,7 +245,7 @@ bool VulkanRendering::CreateSolidPipeline(WindowContext& context, VkRenderPass r
     vkDestroyShaderModule(m_device, vertexShader, nullptr);
     vkDestroyShaderModule(m_device, fragmentShader, nullptr);
     if (pipelineResult != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] vkCreateGraphicsPipelines failed: %d",
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] vkCreateGraphicsPipelines failed: %d",
             static_cast<int>(pipelineResult));
         return false;
     }
@@ -271,7 +271,7 @@ void VulkanRendering::DestroyGradientPipeline(WindowContext& context) noexcept
 bool VulkanRendering::CreateGradientPipeline(WindowContext& context, VkRenderPass renderPass)
 {
     if (renderPass == VK_NULL_HANDLE) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Cannot create gradient pipeline without a render pass");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Cannot create gradient pipeline without a render pass");
         return false;
     }
     if (m_textureDescriptorPool == VK_NULL_HANDLE) {
@@ -365,7 +365,7 @@ bool VulkanRendering::CreateGradientPipeline(WindowContext& context, VkRenderPas
     vkDestroyShaderModule(m_device, vertexShader, nullptr);
     vkDestroyShaderModule(m_device, fragmentShader, nullptr);
     if (pipelineResult != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Gradient pipeline creation failed: %d",
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Gradient pipeline creation failed: %d",
             static_cast<int>(pipelineResult));
         return false;
     }

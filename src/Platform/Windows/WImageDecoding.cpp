@@ -13,35 +13,35 @@ namespace NeoWPF::Platform {
 bool DecodeImageFromMemory(const std::vector<uint8_t>& data, std::vector<uint8_t>& outPixels,
                            int& outWidth, int& outHeight, int decodeWidth, int decodeHeight) {
     if (data.empty()) {
-        NeoWPF::Diagnostics::LogError("DecodeImageFromMemory: Input data is empty");
+        NeoWPF::Diagnostics::Catastrophic("DecodeImageFromMemory: Input data is empty");
         return false;
     }
 
     const HRESULT coResult = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     const bool shouldUninitialize = SUCCEEDED(coResult);
     if (!SUCCEEDED(coResult)) {
-        NeoWPF::Diagnostics::LogError("DecodeImageFromMemory: CoInitializeEx failed, HRESULT: 0x%08X", coResult);
+        NeoWPF::Diagnostics::Catastrophic("DecodeImageFromMemory: CoInitializeEx failed, HRESULT: 0x%08X", coResult);
         return false;
     }
 
     bool success = false;
     IWICImagingFactory* factory = nullptr;
     if (!SUCCEEDED(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory)))) {
-        NeoWPF::Diagnostics::LogError("DecodeImageFromMemory: CoCreateInstance for WICImagingFactory failed");
+        NeoWPF::Diagnostics::Catastrophic("DecodeImageFromMemory: CoCreateInstance for WICImagingFactory failed");
         if (shouldUninitialize) CoUninitialize();
         return false;
     }
 
     IWICStream* stream = nullptr;
     if (!SUCCEEDED(factory->CreateStream(&stream))) {
-        NeoWPF::Diagnostics::LogError("DecodeImageFromMemory: CreateStream failed");
+        NeoWPF::Diagnostics::Catastrophic("DecodeImageFromMemory: CreateStream failed");
         factory->Release();
         if (shouldUninitialize) CoUninitialize();
         return false;
     }
 
     if (!SUCCEEDED(stream->InitializeFromMemory(const_cast<BYTE*>(data.data()), (DWORD)data.size()))) {
-        NeoWPF::Diagnostics::LogError("DecodeImageFromMemory: InitializeFromMemory failed for %u bytes", (unsigned int)data.size());
+        NeoWPF::Diagnostics::Catastrophic("DecodeImageFromMemory: InitializeFromMemory failed for %u bytes", (unsigned int)data.size());
         stream->Release();
         factory->Release();
         if (shouldUninitialize) CoUninitialize();
@@ -50,7 +50,7 @@ bool DecodeImageFromMemory(const std::vector<uint8_t>& data, std::vector<uint8_t
 
     IWICBitmapDecoder* decoder = nullptr;
     if (!SUCCEEDED(factory->CreateDecoderFromStream(stream, nullptr, WICDecodeMetadataCacheOnLoad, &decoder))) {
-        NeoWPF::Diagnostics::LogError("DecodeImageFromMemory: CreateDecoderFromStream failed");
+        NeoWPF::Diagnostics::Catastrophic("DecodeImageFromMemory: CreateDecoderFromStream failed");
         stream->Release();
         factory->Release();
         if (shouldUninitialize) CoUninitialize();
@@ -59,7 +59,7 @@ bool DecodeImageFromMemory(const std::vector<uint8_t>& data, std::vector<uint8_t
 
     IWICBitmapFrameDecode* frame = nullptr;
     if (!SUCCEEDED(decoder->GetFrame(0, &frame))) {
-        NeoWPF::Diagnostics::LogError("DecodeImageFromMemory: GetFrame failed");
+        NeoWPF::Diagnostics::Catastrophic("DecodeImageFromMemory: GetFrame failed");
         decoder->Release();
         stream->Release();
         factory->Release();
@@ -69,7 +69,7 @@ bool DecodeImageFromMemory(const std::vector<uint8_t>& data, std::vector<uint8_t
 
     UINT originalWidth = 0, originalHeight = 0;
     if (!SUCCEEDED(frame->GetSize(&originalWidth, &originalHeight))) {
-        NeoWPF::Diagnostics::LogError("DecodeImageFromMemory: GetSize failed");
+        NeoWPF::Diagnostics::Catastrophic("DecodeImageFromMemory: GetSize failed");
         frame->Release();
         decoder->Release();
         stream->Release();
@@ -96,7 +96,7 @@ bool DecodeImageFromMemory(const std::vector<uint8_t>& data, std::vector<uint8_t
     IWICBitmapScaler* scaler = nullptr;
     if (targetWidth != originalWidth || targetHeight != originalHeight) {
         if (!SUCCEEDED(factory->CreateBitmapScaler(&scaler))) {
-            NeoWPF::Diagnostics::LogError("DecodeImageFromMemory: CreateBitmapScaler failed");
+            NeoWPF::Diagnostics::Catastrophic("DecodeImageFromMemory: CreateBitmapScaler failed");
             frame->Release();
             decoder->Release();
             stream->Release();
@@ -105,7 +105,7 @@ bool DecodeImageFromMemory(const std::vector<uint8_t>& data, std::vector<uint8_t
             return false;
         }
         if (!SUCCEEDED(scaler->Initialize(frame, targetWidth, targetHeight, WICBitmapInterpolationModeFant))) {
-            NeoWPF::Diagnostics::LogError("DecodeImageFromMemory: Scaler Initialize failed");
+            NeoWPF::Diagnostics::Catastrophic("DecodeImageFromMemory: Scaler Initialize failed");
             scaler->Release();
             frame->Release();
             decoder->Release();
@@ -119,7 +119,7 @@ bool DecodeImageFromMemory(const std::vector<uint8_t>& data, std::vector<uint8_t
 
     IWICFormatConverter* converter = nullptr;
     if (!SUCCEEDED(factory->CreateFormatConverter(&converter))) {
-        NeoWPF::Diagnostics::LogError("DecodeImageFromMemory: CreateFormatConverter failed");
+        NeoWPF::Diagnostics::Catastrophic("DecodeImageFromMemory: CreateFormatConverter failed");
         if (scaler) scaler->Release();
         frame->Release();
         decoder->Release();
@@ -130,7 +130,7 @@ bool DecodeImageFromMemory(const std::vector<uint8_t>& data, std::vector<uint8_t
     }
 
     if (!SUCCEEDED(converter->Initialize(source, GUID_WICPixelFormat32bppRGBA, WICBitmapDitherTypeNone, nullptr, 0.0, WICBitmapPaletteTypeCustom))) {
-        NeoWPF::Diagnostics::LogError("DecodeImageFromMemory: Converter Initialize failed");
+        NeoWPF::Diagnostics::Catastrophic("DecodeImageFromMemory: Converter Initialize failed");
         converter->Release();
         if (scaler) scaler->Release();
         frame->Release();
@@ -144,7 +144,7 @@ bool DecodeImageFromMemory(const std::vector<uint8_t>& data, std::vector<uint8_t
     size_t stride = targetWidth * 4;
     outPixels.assign(stride * targetHeight, 0);
     if (!SUCCEEDED(converter->CopyPixels(nullptr, (UINT)stride, (UINT)outPixels.size(), outPixels.data()))) {
-        NeoWPF::Diagnostics::LogError("DecodeImageFromMemory: CopyPixels failed");
+        NeoWPF::Diagnostics::Catastrophic("DecodeImageFromMemory: CopyPixels failed");
         converter->Release();
         if (scaler) scaler->Release();
         frame->Release();

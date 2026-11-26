@@ -33,7 +33,7 @@ void VulkanRendering::PrepareGradientAtlas(const NeoWPF::Rendering::CommandList&
         commands.gradients.size(), commands.gradientStops.size());
     if (!commands.gradients.empty()) {
         if (commands.gradients.size() > kGradientRampHeight) {
-            NeoWPF::Diagnostics::LogError(
+            NeoWPF::Diagnostics::Catastrophic(
                 "[Vulkan] Gradient atlas capacity exceeded: gradients=%zu capacity=%u",
                 commands.gradients.size(), kGradientRampHeight);
             return;
@@ -84,7 +84,7 @@ void VulkanRendering::PrepareGradientAtlas(const NeoWPF::Rendering::CommandList&
         const std::uint32_t newTextureId =
             CreateTexture(kGradientRampWidth, kGradientRampHeight, rgba.data());
         if (newTextureId == 0) {
-            NeoWPF::Diagnostics::LogError(
+            NeoWPF::Diagnostics::Catastrophic(
                 "[Vulkan] Failed to create gradient ramp atlas");
             return;
         }

@@ -132,7 +132,7 @@ void* WlWindowing::CreateWindow(
     std::shared_ptr<NeoWPF::UI::Window> windowHost)
 {
     if (!Connect()) {
-        NeoWPF::Diagnostics::LogError("Wayland connection or xdg-shell setup failed");
+        NeoWPF::Diagnostics::Catastrophic("Wayland connection or xdg-shell setup failed");
         return nullptr;
     }
 
@@ -348,7 +348,7 @@ void WlWindowing::RequestQuit(int exitCode) noexcept
 
 void WlWindowing::ShowFatalError(const std::wstring&, const std::wstring& message) noexcept
 {
-    NeoWPF::Diagnostics::LogError("%s", NeoWPF::Platform::WideToUtf8(message).c_str());
+    NeoWPF::Diagnostics::Catastrophic("%s", NeoWPF::Platform::WideToUtf8(message).c_str());
 }
 
 void WlWindowing::SetConsoleVisible(bool visible) noexcept

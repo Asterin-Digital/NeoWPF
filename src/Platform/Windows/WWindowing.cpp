@@ -50,7 +50,7 @@ void* WWindowing::CreateWindow(
     }
 
     if (!EnsurePerMonitorDpiAwareness()) {
-        NeoWPF::Diagnostics::LogError(
+        NeoWPF::Diagnostics::Catastrophic(
             "CreateWindow requires per-monitor DPI awareness");
         return nullptr;
     }
@@ -58,7 +58,7 @@ void* WWindowing::CreateWindow(
     const bool transparent = windowHost && windowHost->IsTransparent();
     void* nativeHandle = NeoWPF::Platform::Window::CreateWindow(app.hInst, title, width, height, transparent);
     if (!nativeHandle) {
-        NeoWPF::Diagnostics::LogError("CreateWindow failed for title=%ls width=%d height=%d", title, width, height);
+        NeoWPF::Diagnostics::Catastrophic("CreateWindow failed for title=%ls width=%d height=%d", title, width, height);
         return nullptr;
     }
 

@@ -243,7 +243,7 @@ void AWindowing::RequestQuit(int exitCode) noexcept
 
 void AWindowing::ShowFatalError(const std::wstring&, const std::wstring& message) noexcept
 {
-    NeoWPF::Diagnostics::LogError("%s", NeoWPF::Platform::WideToUtf8(message).c_str());
+    NeoWPF::Diagnostics::Catastrophic("%s", NeoWPF::Platform::WideToUtf8(message).c_str());
 }
 
 void AWindowing::SetConsoleVisible(bool) noexcept

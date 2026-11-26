@@ -370,7 +370,7 @@ void Visual::Initialize()
             m_children.size());
     } catch (const std::exception& ex) {
         m_initializationInProgress = false;
-        NeoWPF::Diagnostics::LogError(
+        NeoWPF::Diagnostics::Catastrophic(
             "[Visual::Initialize] failed this=%p parent=%p children=%zu error=%s",
             this,
             m_parent,
@@ -379,7 +379,7 @@ void Visual::Initialize()
         throw;
     } catch (...) {
         m_initializationInProgress = false;
-        NeoWPF::Diagnostics::LogError(
+        NeoWPF::Diagnostics::Catastrophic(
             "[Visual::Initialize] failed this=%p parent=%p children=%zu error=<unknown>",
             this,
             m_parent,

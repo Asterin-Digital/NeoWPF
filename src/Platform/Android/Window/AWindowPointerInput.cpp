@@ -101,7 +101,7 @@ int AWindowing::HandlePointerInputEvent(AInputEvent* inputEvent) noexcept
     NeoWPF::Core::SetInputRoot(m_windows.front().get());
     double scaleFactor = 0.0;
     if (!GetWindowScaleFactor(m_windows.front().get(), scaleFactor)) {
-        NeoWPF::Diagnostics::LogError(
+        NeoWPF::Diagnostics::Catastrophic(
             "Android pointer input rejected because the window scale is unavailable");
         return 0;
     }

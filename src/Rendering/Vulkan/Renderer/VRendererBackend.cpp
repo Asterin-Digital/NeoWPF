@@ -89,7 +89,7 @@ bool VulkanRendering::InitializeDevice(const NeoWPF::Rendering::RenderSurface& s
     auto* platform = NeoWPF::Platform::CurrentPlatform();
     if (!platform || !platform->Windowing().GetNativeWindowInfo(nativeWindowHandle, windowInfo) ||
         !windowInfo.window || !windowInfo.createVulkanSurface) {
-        NeoWPF::Diagnostics::LogError(
+        NeoWPF::Diagnostics::Catastrophic(
             "[Vulkan] Invalid surface factory: platform=%p window=%p display=%p callback=%p",
             platform, windowInfo.window, windowInfo.display,
             reinterpret_cast<void*>(windowInfo.createVulkanSurface));
@@ -103,14 +103,14 @@ bool VulkanRendering::InitializeDevice(const NeoWPF::Rendering::RenderSurface& s
     std::uint32_t extensionCount = 0;
     VkResult result = vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
     if (result != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Instance extension count query failed: %s (%d)",
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Instance extension count query failed: %s (%d)",
                                       VkResultName(result), static_cast<int>(result));
         return false;
     }
     std::vector<VkExtensionProperties> extensions(extensionCount);
     result = vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
     if (result != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Instance extension list query failed: %s (%d)",
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Instance extension list query failed: %s (%d)",
                                       VkResultName(result), static_cast<int>(result));
         return false;
     }
@@ -119,7 +119,7 @@ bool VulkanRendering::InitializeDevice(const NeoWPF::Rendering::RenderSurface& s
         NeoWPF::Diagnostics::LogInfo("[Vulkan] Available extension: %s", extension.extensionName);
     }
     if (!HasExtension(extensions, VK_KHR_SURFACE_EXTENSION_NAME)) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Required extension unavailable: %s", VK_KHR_SURFACE_EXTENSION_NAME);
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Required extension unavailable: %s", VK_KHR_SURFACE_EXTENSION_NAME);
         return false;
     }
 
@@ -135,7 +135,7 @@ bool VulkanRendering::InitializeDevice(const NeoWPF::Rendering::RenderSurface& s
             HasExtension(extensions, windowInfo.vulkanInstanceExtensions[index])) {
             instanceExtensions.push_back(windowInfo.vulkanInstanceExtensions[index]);
         } else {
-            NeoWPF::Diagnostics::LogError("[Vulkan] Required platform instance extension unavailable: %s",
+            NeoWPF::Diagnostics::Catastrophic("[Vulkan] Required platform instance extension unavailable: %s",
                 windowInfo.vulkanInstanceExtensions[index] ? windowInfo.vulkanInstanceExtensions[index] : "<null>");
             return false;
         }
@@ -167,7 +167,7 @@ bool VulkanRendering::InitializeDevice(const NeoWPF::Rendering::RenderSurface& s
 
     const VkResult instanceResult = vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance);
     if (instanceResult != VK_SUCCESS) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] vkCreateInstance failed: %s (%d)",
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] vkCreateInstance failed: %s (%d)",
             VkResultName(instanceResult), static_cast<int>(instanceResult));
         return false;
     }
@@ -179,7 +179,7 @@ bool VulkanRendering::InitializeDevice(const NeoWPF::Rendering::RenderSurface& s
             windowInfo.vulkanSurfaceUserData, m_instance, windowInfo.window,
             windowInfo.display, &compatibilitySurface);
     if (!compatibilitySurfaceCreated || compatibilitySurface == VK_NULL_HANDLE) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Temporary surface creation failed");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Temporary surface creation failed");
         if (compatibilitySurface != VK_NULL_HANDLE) {
             vkDestroySurfaceKHR(m_instance, compatibilitySurface, nullptr);
         }
@@ -232,7 +232,7 @@ bool VulkanRendering::CreateSurface(const NeoWPF::Rendering::RenderSurface& surf
     auto* platform = NeoWPF::Platform::CurrentPlatform();
     if (!platform || !platform->Windowing().GetNativeWindowInfo(surface.nativeWindowHandle, windowInfo) ||
         !windowInfo.window || !windowInfo.createVulkanSurface) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Invalid surface factory for rendering surface");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Invalid surface factory for rendering surface");
         return false;
     }
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::Renderer,
@@ -256,14 +256,14 @@ bool VulkanRendering::CreateSurface(const NeoWPF::Rendering::RenderSurface& surf
         static_cast<unsigned long long>(surface.GetGenerationId()),
         nativeSurfaceCreated ? 1 : 0, context->surface == VK_NULL_HANDLE ? 1 : 0);
     if (!nativeSurfaceCreated || context->surface == VK_NULL_HANDLE) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Platform surface creation failed");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Platform surface creation failed");
         if (context->surface != VK_NULL_HANDLE) {
             vkDestroySurfaceKHR(m_instance, context->surface, nullptr);
         }
         return false;
     }
     if (!CreateSwapchainResources(*context, 1, 1)) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Swapchain resource creation failed for rendering surface");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Swapchain resource creation failed for rendering surface");
         DestroySwapchainResources(*context);
         vkDestroySurfaceKHR(m_instance, context->surface, nullptr);
         return false;
@@ -355,7 +355,7 @@ void VulkanRendering::Resize(const NeoWPF::Rendering::RenderSurface& surface,
         (context->swapchainExtent.width != width || context->swapchainExtent.height != height)) {
         vkDeviceWaitIdle(m_device);
         if (!CreateSwapchainResources(*context, width, height)) {
-            NeoWPF::Diagnostics::LogError("[Vulkan] Resize failed: swapchain resources are unavailable");
+            NeoWPF::Diagnostics::Catastrophic("[Vulkan] Resize failed: swapchain resources are unavailable");
             context->swapchainExtent = {};
             context->frameActive = false;
         }

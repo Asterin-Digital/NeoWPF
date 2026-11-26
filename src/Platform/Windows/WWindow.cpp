@@ -107,7 +107,7 @@ void SubmitNativePointerInput(HWND hwnd,
     double scaleFactor = 0.0;
     if (!platform ||
         !platform->Windowing().GetWindowScaleFactor(hwnd, scaleFactor)) {
-        NeoWPF::Diagnostics::LogError(
+        NeoWPF::Diagnostics::Catastrophic(
             "Windows pointer input rejected because the window scale is unavailable");
         return;
     }

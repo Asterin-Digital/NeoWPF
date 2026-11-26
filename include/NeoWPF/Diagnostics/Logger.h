@@ -45,7 +45,7 @@ void LogWarn(const char* fmt, ...);
 	@param fmt
 	Printf-style format string.
 */
-void LogError(const char* fmt, ...);
+void Catastrophic(const char* fmt, ...);
 
 /*
 	@summary

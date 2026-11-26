@@ -138,7 +138,7 @@ bool VulkanRendering::EnsureVertexBuffer(VertexBuffer& buffer, VkDeviceSize requ
 bool VulkanRendering::CreateTexturedPipeline(WindowContext& context, VkRenderPass renderPass)
 {
     if (renderPass == VK_NULL_HANDLE) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Cannot create textured pipeline without a render pass");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Cannot create textured pipeline without a render pass");
         return false;
     }
     if (m_textureDescriptorPool == VK_NULL_HANDLE) {
@@ -281,7 +281,7 @@ std::uint32_t VulkanRendering::CreateTexture(unsigned int width, unsigned int he
         return 0;
     }
     if (m_textureDescriptorPool == VK_NULL_HANDLE && !CreateTexturedPipeline(*context, context->renderPass)) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Failed to initialize textured resources on demand");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Failed to initialize textured resources on demand");
         return 0;
     }
     {
@@ -304,7 +304,7 @@ std::uint32_t VulkanRendering::CreateTexture(unsigned int width, unsigned int he
     if (!CreateBuffer(m_physicalDevice, m_device, dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                       stagingBuffer, stagingMemory)) {
-        NeoWPF::Diagnostics::LogError("[Vulkan] Failed to create texture staging buffer");
+        NeoWPF::Diagnostics::Catastrophic("[Vulkan] Failed to create texture staging buffer");
         return 0;
     }
     void* mapped = nullptr;
