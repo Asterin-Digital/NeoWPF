@@ -19,7 +19,6 @@ The following CMake options are available:
 NEOWPF_RENDERER_BACKEND
 NEOWPF_STATIC_DEPENDENCIES
 NEOWPF_USE_NEOLINT
-NEOWPF_BUILD_MEDIA
 NEOWPF_BUILD_DOTNET
 NEOWPF_IGNORE_BAD_XAML
 ```
@@ -32,7 +31,6 @@ NEOWPF_RENDERER_BACKEND    Windows: D3D11
 
 NEOWPF_STATIC_DEPENDENCIES ON
 NEOWPF_USE_NEOLINT         ON
-NEOWPF_BUILD_MEDIA         OFF
 NEOWPF_BUILD_DOTNET        OFF
 NEOWPF_IGNORE_BAD_XAML     OFF
 ```
@@ -493,29 +491,6 @@ For a normal committed/default build:
 -DNEOWPF_BUILD_DOTNET=OFF
 ```
 
-## NeoWPF.Media
-
-`NeoWPF.Media` is optional and OFF by default.
-
-Enable it with:
-
-```
--DNEOWPF_BUILD_MEDIA=ON
-```
-
-This fetches LuAudio from:
-
-```
-https://github.com/Past-Horizon/LuAudio.git
-```
-
-The repository and Git tag/branch can be overridden with:
-
-```
--DNEOWPF_LUAUDIO_GIT_REPOSITORY=<repository>
--DNEOWPF_LUAUDIO_GIT_TAG=<tag-or-commit>
-```
-
 ## XAML compiler
 
 NeoWPF normally expects the XAML compiler to already exist as a prebuilt tool.
@@ -586,7 +561,6 @@ Renderer: D3D11
 vcpkg triplet: x64-windows-static-md
 Static dependency merging: ON
 NeoLint: ON
-NeoWPF.Media: OFF
 NeoWPF.DotNet: OFF
 ```
 
@@ -598,7 +572,6 @@ Renderer: Vulkan
 vcpkg triplet: x64-linux
 Static dependency merging: ON
 NeoLint: ON
-NeoWPF.Media: OFF
 NeoWPF.DotNet: OFF
 ```
 

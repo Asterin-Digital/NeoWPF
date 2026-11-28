@@ -54,9 +54,6 @@
  * Development guidelines: DevelopmentGuidelines.md
  * AI usage guidelines: AI-Usage.md
  *
- * Media support is optional and requires enabling
- * NEOWPF_ENABLE_MEDIA when building NeoWPF or using NeoPM to enable it.
- *
  * Apache-2.0 License
  * Copyright (c) 2026 Asterin Digital
  * See LICENSE in the project root for the full license text.
@@ -100,16 +97,6 @@
 #include <NeoWPF/Core/Application/Resources/ExternalFileResourceProvider.h>
 #include <NeoWPF/Core/Application/Resources/ResourceManager.h>
 #include <NeoWPF/UI/Markup/Xaml/Loading/CompiledXaml.h>
-///////////////////////////////////////////////////
-// Media is not merged inside NeoWPF.Foundation. If you want to use media compile NeoWPF from scratch to get the library file
-// or use NeoPM to turn NeoWPF.Media on for your project so you can use it.
-//////////
-// NeoWPF.Foundation media (like where bitmap image, colors) live in are separate from NeoWPF.Media
-// This is to keep NeoWPF.Media (may contain heavy dependencies/features) that other people might not use
-#if defined(NEOWPF_ENABLE_MEDIA) && NEOWPF_ENABLE_MEDIA
-#include <NeoWPF/Media/Media.h>
-#endif
-
 // We recommend not including individual header files for public usage in your own code.
 // NeoWPF reserves the right to update paths or method signatures for any implementation.
 // Using this header file for public usage ensures that even if method signatures or the API

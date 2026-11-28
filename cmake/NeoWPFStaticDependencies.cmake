@@ -362,7 +362,4 @@ if(NEOWPF_STATIC_DEPENDENCIES)
         neowpf_add_static_dependency_merge(NeoWPF)
     endif()
 
-    if(NEOWPF_BUILD_MEDIA AND TARGET NeoWPF.Media)
-        neowpf_add_static_dependency_merge(NeoWPF.Media $<TARGET_FILE:LuAudio>)
-    endif()
 endif()

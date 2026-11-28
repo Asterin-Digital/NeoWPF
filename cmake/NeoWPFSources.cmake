@@ -14,7 +14,6 @@ endif()
 # excluded since each is compiled separately below
 list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/Rendering/(D3D11|Vulkan)/")
 list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/NeoNaml/")
-list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/Media/")
 list(FILTER NEOWPF_SOURCES EXCLUDE REGEX "/src/DotNet/")
 list(FILTER NEOWPF_SOURCES EXCLUDE REGEX
     "/src/Platform/(Windows/WEntryPoint|Linux/LEntryPoint)\\.cpp$")
@@ -36,19 +35,6 @@ foreach(NEOWPF_PLATFORM_DIRECTORY IN LISTS NEOWPF_PLATFORM_DIRECTORIES)
 endforeach()
 
 list(APPEND NEOWPF_SOURCES ${NEOWPF_BACKEND_SOURCES})
-
-file(GLOB_RECURSE NEOWPF_MEDIA_SOURCES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/Media/*.cpp"
-)
-
-file(GLOB_RECURSE NEOWPF_MEDIA_HEADERS CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/Media/*.h"
-)
-
-if(NOT NEOWPF_MEDIA_SOURCES)
-    message(FATAL_ERROR
-        "No sources found under ${CMAKE_CURRENT_SOURCE_DIR}/src/Media for NeoWPF.Media.")
-endif()
 
 file(GLOB_RECURSE NEOWPF_HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/include/NeoWPF/*.h"
