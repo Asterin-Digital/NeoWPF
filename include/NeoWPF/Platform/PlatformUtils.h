@@ -3,8 +3,15 @@ Apache 2.0 License — Copyright (c) 2026 Asterin Digital
 See LICENSE file in the project root for full license text.
 */
 
+/*
+Do not include this in your project!
+This is a NeoWPF internal header file.
+Include the master umbrella instead via #include <NeoWPF/NeoWPF.h>
+*/
 
 #pragma once
+
+#include <NeoWPF/Feedback/Result.h>
 
 #include <cstdint>
 #include <string>
@@ -19,22 +26,22 @@ namespace NeoWPF::Platform {
 	@param input
 	The wide string to convert.
 
-	@return
-	The UTF-8 string, or an empty string when conversion fails.
+	@returns
+	The UTF-8 string, or a string describing the Cudev codec error.
 */
-std::string WideToUtf8(const std::wstring& input);
+NeoWPF::Result<std::string> WideToUtf8(const std::wstring& input);
 
 /*
 	@summary
-	Converts a UTF-8 string to a wide string.
+	Converts UTF-8 to a wide string.
 
 	@param input
 	The UTF-8 string to convert.
 
-	@return
-	The wide string, or an empty string when conversion fails.
+	@returns
+	The wide string, or a string describing the Cudev codec error.
 */
-std::wstring Utf8ToWide(const std::string& input);
+NeoWPF::Result<std::wstring> Utf8ToWide(const std::string& input);
 
 /*
 	@summary

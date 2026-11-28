@@ -125,6 +125,14 @@ std::optional<SdkRelease> SdkManifestParser::Parse(
 
     release.debugLibraryPath = ReadConfigurationLibrary(selectedPlatform, "debug");
     release.releaseLibraryPath = ReadConfigurationLibrary(selectedPlatform, "release");
+    if (selectedPlatform.contains("entry_object_path")) {
+        release.entryObjectPath = ReadString(selectedPlatform, "entry_object_path");
+        if (!IsSafeRelativePath(release.entryObjectPath)) {
+            throw std::invalid_argument("SDK manifest contains an unsafe entry object path");
+        }
+    } else if (platform != "Android") {
+        throw std::invalid_argument("SDK manifest is missing the platform entry object path");
+    }
     release.platform = platform;
     release.architecture = architecture;
     return release;

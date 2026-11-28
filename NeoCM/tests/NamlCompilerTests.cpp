@@ -387,7 +387,7 @@ TEST(CppEmitterTests, EmitsLocaleOperations)
 
     ASSERT_TRUE(generated.success) << generated.error;
     EXPECT_NE(generated.source.find(
-        "LocaleOperations::SetLocale(*element1, NeoWPF::UI::TextBlock::TextProperty(), NeoWPF::Platform::Utf8ToWide(\"Greeting\"))"),
+        "LocaleOperations::SetLocale(*element1, NeoWPF::UI::TextBlock::TextProperty(), NeoWPF::Platform::Utf8ToWide(\"Greeting\").Value())"),
         std::string::npos);
 }
 

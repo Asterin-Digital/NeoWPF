@@ -40,14 +40,19 @@ private:
                             std::size_t line,
                             std::size_t column)
     {
-        std::string error;
-        const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
-            value,
-            {line, column},
-            error);
+        auto extensionResult =
+            NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(value, {line, column});
+        if (extensionResult.Fail()) {
+            m_failed = true;
+            m_error = "Invalid markup extension at " + std::to_string(line) +
+                ":" + std::to_string(column) + ": " + extensionResult.Error();
+            return false;
+        }
+        auto extension = std::move(extensionResult).Value();
         if (!extension) {
             m_failed = true;
-            m_error = error.empty() ? "Invalid markup extension" : error;
+            m_error = "Invalid markup extension at " + std::to_string(line) +
+                ":" + std::to_string(column);
             return false;
         }
 
@@ -67,7 +72,15 @@ private:
         }
 
         std::string localeKey;
-        if (NeoWPF::UI::Markup::Xaml::TryGetXamlLocaleKey(*extension, localeKey)) {
+        const auto localeKeyResult =
+            NeoWPF::UI::Markup::Xaml::TryGetXamlLocaleKey(*extension, localeKey);
+        if (localeKeyResult.Fail()) {
+            m_failed = true;
+            m_error = "Locale key conversion failed at " + std::to_string(line) +
+                ":" + std::to_string(column) + ": " + localeKeyResult.Error();
+            return false;
+        }
+        if (localeKeyResult.Value()) {
             m_artifact.properties.push_back({
                 objectId,
                 propertyId,

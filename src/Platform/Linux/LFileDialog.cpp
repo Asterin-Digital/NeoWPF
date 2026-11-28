@@ -10,6 +10,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace NeoWPF::Platform::Linux {
@@ -17,19 +18,18 @@ namespace {
 
 std::wstring EscapeForShell(const std::wstring& value)
 {
-    const auto utf8 = NeoWPF::Platform::WideToUtf8(value);
-    std::string escaped;
-    escaped.reserve(utf8.size() + 2);
-    escaped.push_back('\'');
-    for (char ch : utf8) {
-        if (ch == '\'') {
-            escaped += "'\"'\"'";
+    std::wstring escaped;
+    escaped.reserve(value.size() + 2);
+    escaped.push_back(L'\'');
+    for (wchar_t character : value) {
+        if (character == L'\'') {
+            escaped += L"'\"'\"'";
         } else {
-            escaped.push_back(ch);
+            escaped.push_back(character);
         }
     }
-    escaped.push_back('\'');
-    return NeoWPF::Platform::Utf8ToWide(escaped);
+    escaped.push_back(L'\'');
+    return escaped;
 }
 
 std::string CommandExists(const std::string& command)
@@ -112,12 +112,13 @@ std::wstring MakeFilterEntry(const NeoWPF::Contracts::FileDialogFilter& filter)
     return name + L" | " + pattern;
 }
 
-std::string BuildCommonCommandPrefix(const std::wstring& title,
-                                    const std::wstring& initialDirectory,
-                                    const std::wstring& defaultFileName,
-                                    bool saveDialog,
-                                    bool allowMultiSelect,
-                                    const std::vector<NeoWPF::Contracts::FileDialogFilter>& filters)
+NeoWPF::Result<std::string> BuildCommonCommandPrefix(
+    const std::wstring& title,
+    const std::wstring& initialDirectory,
+    const std::wstring& defaultFileName,
+    bool saveDialog,
+    bool allowMultiSelect,
+    const std::vector<NeoWPF::Contracts::FileDialogFilter>& filters)
 {
     std::string command = "zenity";
     if (saveDialog) {
@@ -130,7 +131,11 @@ std::string BuildCommonCommandPrefix(const std::wstring& title,
     }
 
     if (!title.empty()) {
-        command += " --title=" + NeoWPF::Platform::WideToUtf8(EscapeForShell(title));
+        auto titleUtf8 = NeoWPF::Platform::WideToUtf8(EscapeForShell(title));
+        if (titleUtf8.Fail()) {
+            return NeoWPF::Fail<std::string>{titleUtf8.Error()};
+        }
+        command += " --title=" + std::move(titleUtf8).Value();
     }
 
     std::wstring startPath;
@@ -144,18 +149,26 @@ std::string BuildCommonCommandPrefix(const std::wstring& title,
     }
 
     if (!startPath.empty()) {
-        command += " --filename=" + NeoWPF::Platform::WideToUtf8(EscapeForShell(startPath));
+        auto startPathUtf8 = NeoWPF::Platform::WideToUtf8(EscapeForShell(startPath));
+        if (startPathUtf8.Fail()) {
+            return NeoWPF::Fail<std::string>{startPathUtf8.Error()};
+        }
+        command += " --filename=" + std::move(startPathUtf8).Value();
     }
 
     if (!filters.empty()) {
         for (const auto& filter : filters) {
             const auto filterEntry = MakeFilterEntry(filter);
-            command += " --file-filter=" + NeoWPF::Platform::WideToUtf8(EscapeForShell(filterEntry));
+            auto filterUtf8 = NeoWPF::Platform::WideToUtf8(EscapeForShell(filterEntry));
+            if (filterUtf8.Fail()) {
+                return NeoWPF::Fail<std::string>{filterUtf8.Error()};
+            }
+            command += " --file-filter=" + std::move(filterUtf8).Value();
         }
     }
 
     command += " --separator='|'";
-    return command;
+    return NeoWPF::Success<std::string>{std::move(command)};
 }
 
 NeoWPF::Contracts::FileDialogResult MakeResultFromOutput(const std::wstring& rawOutput)
@@ -180,13 +193,21 @@ NeoWPF::Contracts::FileDialogResult TryZenityDialog(const std::wstring& title,
         return NeoWPF::Fail<std::string>{"Zenity is not installed"};
     }
 
-    const auto command = BuildCommonCommandPrefix(title, initialDirectory, defaultFileName, saveDialog, allowMultiSelect, filters);
-    const auto output = CaptureCommandOutput(command);
+    auto command = BuildCommonCommandPrefix(
+        title, initialDirectory, defaultFileName, saveDialog, allowMultiSelect, filters);
+    if (command.Fail()) {
+        return NeoWPF::Fail<std::string>{command.Error()};
+    }
+    const auto output = CaptureCommandOutput(command.Value());
     if (output.empty()) {
         return NeoWPF::Success<std::optional<NeoWPF::Contracts::FileDialogSelection>>{std::nullopt};
     }
 
-    return MakeResultFromOutput(NeoWPF::Platform::Utf8ToWide(output));
+    auto wideOutput = NeoWPF::Platform::Utf8ToWide(output);
+    if (wideOutput.Fail()) {
+        return NeoWPF::Fail<std::string>{wideOutput.Error()};
+    }
+    return MakeResultFromOutput(std::move(wideOutput).Value());
 }
 
 NeoWPF::Contracts::FileDialogResult TryKDialogDialog(const std::wstring& title,
@@ -211,7 +232,11 @@ NeoWPF::Contracts::FileDialogResult TryKDialogDialog(const std::wstring& title,
     }
 
     if (!initialDirectory.empty()) {
-        command += " '" + NeoWPF::Platform::WideToUtf8(initialDirectory) + "'";
+        auto directoryUtf8 = NeoWPF::Platform::WideToUtf8(initialDirectory);
+        if (directoryUtf8.Fail()) {
+            return NeoWPF::Fail<std::string>{directoryUtf8.Error()};
+        }
+        command += " '" + std::move(directoryUtf8).Value() + "'";
     }
 
     if (!filters.empty()) {
@@ -221,7 +246,11 @@ NeoWPF::Contracts::FileDialogResult TryKDialogDialog(const std::wstring& title,
             if (!filterList.empty()) {
                 filterList += " ";
             }
-            filterList += "'" + NeoWPF::Platform::WideToUtf8(filterEntry) + "'";
+            auto filterUtf8 = NeoWPF::Platform::WideToUtf8(filterEntry);
+            if (filterUtf8.Fail()) {
+                return NeoWPF::Fail<std::string>{filterUtf8.Error()};
+            }
+            filterList += "'" + std::move(filterUtf8).Value() + "'";
         }
         if (!filterList.empty()) {
             command += " " + filterList;
@@ -229,11 +258,19 @@ NeoWPF::Contracts::FileDialogResult TryKDialogDialog(const std::wstring& title,
     }
 
     if (!title.empty()) {
-        command += " --title '" + NeoWPF::Platform::WideToUtf8(title) + "'";
+        auto titleUtf8 = NeoWPF::Platform::WideToUtf8(title);
+        if (titleUtf8.Fail()) {
+            return NeoWPF::Fail<std::string>{titleUtf8.Error()};
+        }
+        command += " --title '" + std::move(titleUtf8).Value() + "'";
     }
 
     if (saveDialog && !defaultFileName.empty()) {
-        command += " '" + NeoWPF::Platform::WideToUtf8(defaultFileName) + "'";
+        auto fileNameUtf8 = NeoWPF::Platform::WideToUtf8(defaultFileName);
+        if (fileNameUtf8.Fail()) {
+            return NeoWPF::Fail<std::string>{fileNameUtf8.Error()};
+        }
+        command += " '" + std::move(fileNameUtf8).Value() + "'";
     }
 
     const auto output = CaptureCommandOutput(command);
@@ -241,7 +278,11 @@ NeoWPF::Contracts::FileDialogResult TryKDialogDialog(const std::wstring& title,
         return NeoWPF::Success<std::optional<NeoWPF::Contracts::FileDialogSelection>>{std::nullopt};
     }
 
-    return MakeResultFromOutput(NeoWPF::Platform::Utf8ToWide(output));
+    auto wideOutput = NeoWPF::Platform::Utf8ToWide(output);
+    if (wideOutput.Fail()) {
+        return NeoWPF::Fail<std::string>{wideOutput.Error()};
+    }
+    return MakeResultFromOutput(std::move(wideOutput).Value());
 }
 
 }

@@ -6,12 +6,13 @@
 #include <NeoPM/Core/Commands/RepairCommand.h>
 #include <NeoPM/Core/ToolchainBootstrap.h>
 #include <NeoPM/Utils/Logger.h>
-#include <NeoPM/Utils/TextEncoding.h>
+#include <NeoWPF/Platform/PlatformUtils.h>
 #include <algorithm>
 #include <array>
 #include <cctype>
 #include <iostream>
 #include <string_view>
+#include <utility>
 
 namespace NeoPM::Core {
         namespace {
@@ -71,13 +72,14 @@ Options:
     --sdk-config <debug|release>    SDK configuration (default: debug)
     --sdk-include-dir <path>        User SDK include directory (repeatable)
     --sdk-lib <path>                User SDK library root with Debug and Release subdirectories
+    --sdk-entry-object <path>       User SDK platform entry object file
     --help, -h                      Show this help message
 
 Examples:
     NeoPM new MyApplication
     NeoPM new MyApp --output D:\Projects
     NeoPM new MyApp --template mvvm
-    NeoPM new MyApp --sdk user --sdk-config debug --sdk-include-dir C:\NeoWPF\include --sdk-include-dir C:\NeoWPF\third_party\include --sdk-lib C:\NeoWPF\x64
+    NeoPM new MyApp --sdk user --sdk-config debug --sdk-include-dir C:\NeoWPF\include --sdk-include-dir C:\NeoWPF\third_party\include --sdk-lib C:\NeoWPF\x64 --sdk-entry-object C:\NeoWPF\Entry\NeoWPF.Windows.Entry.obj
 )"},
                         {"sync-resources", R"(NeoPM sync-resources - Synchronize resources and generate code
 
@@ -143,15 +145,30 @@ Installs the CMake resource sync module at:
         return instance;
     }
 
-    std::unique_ptr<ICommand> CommandParser::Parse(int argc, char* argv[]) {
+    std::unique_ptr<ICommand> CommandParser::Parse(
+        const std::vector<std::wstring>& arguments)
+    {
         auto& logger = Utils::Logger::Instance();
+        std::vector<std::string> utf8Arguments;
+        utf8Arguments.reserve(arguments.size());
+        for (std::size_t index = 0; index < arguments.size(); ++index) {
+            auto converted = NeoWPF::Platform::WideToUtf8(arguments[index]);
+            if (converted.Fail()) {
+                logger.Error(
+                    "CommandParser",
+                    "Failed to convert command-line argument " + std::to_string(index) +
+                        " to UTF-8: " + converted.Error());
+                return nullptr;
+            }
+            utf8Arguments.push_back(std::move(converted).Value());
+        }
 
-        if (argc < 2) {
+        if (utf8Arguments.size() < 2) {
             PrintUsage();
             return nullptr;
         }
 
-        CommandArguments args = ParseArguments(argc, argv);
+        CommandArguments args = ParseArguments(utf8Arguments);
 
         if (args.commandName == "daemon --background") {
             args.commandName = "daemon";
@@ -217,10 +234,11 @@ Installs the CMake resource sync module at:
                 return nullptr;
             }
             if (args.sdkSource == "user" &&
-                (!args.sdkConfigurationSpecified || args.sdkIncludeDirectories.empty() || !args.sdkLibraryPath)) {
+                (!args.sdkConfigurationSpecified || args.sdkIncludeDirectories.empty() ||
+                 !args.sdkLibraryPath || !args.sdkEntryObjectPath)) {
                 logger.Error(
                     "CommandParser",
-                    "User SDKs require --sdk-config, at least one --sdk-include-dir, and --sdk-lib"
+                    "User SDKs require --sdk-config, at least one --sdk-include-dir, --sdk-lib, and --sdk-entry-object"
                 );
                 PrintCommandHelp("new");
                 return nullptr;
@@ -231,7 +249,8 @@ Installs the CMake resource sync module at:
                 args.sdkSource,
                 args.sdkConfiguration,
                 args.sdkIncludeDirectories,
-                args.sdkLibraryPath
+                args.sdkLibraryPath,
+                args.sdkEntryObjectPath
             );
         }
 
@@ -300,16 +319,18 @@ Installs the CMake resource sync module at:
         }
     }
 
-    CommandArguments CommandParser::ParseArguments(int argc, char* argv[]) {
+    CommandArguments CommandParser::ParseArguments(
+        const std::vector<std::string>& arguments)
+    {
         CommandArguments args;
 
-        for (int i = 1; i < argc; ++i) {
-            auto arg = std::string(argv[i]);
+        for (std::size_t i = 1; i < arguments.size(); ++i) {
+            auto arg = arguments[i];
 
             if (arg == "--help" || arg == "-h") {
                 args.showHelp = true;
-                if (i > 1 && argv[1][0] != '-') {
-                    args.commandName = argv[1];
+                if (i > 1 && !arguments[1].empty() && arguments[1][0] != '-') {
+                    args.commandName = arguments[1];
                 }
                 continue;
             }
@@ -325,36 +346,36 @@ Installs the CMake resource sync module at:
             }
 
             if (arg == "--output" || arg == "-o") {
-                if (i + 1 < argc) {
-                    args.outputPath = NormalizePathArgument(argv[++i]);
+                if (i + 1 < arguments.size()) {
+                    args.outputPath = NormalizePathArgument(arguments[++i]);
                 }
                 continue;
             }
 
             if (arg == "--copy-to") {
-                if (i + 1 < argc) {
-                    args.copyOutputPath = NormalizePathArgument(argv[++i]);
+                if (i + 1 < arguments.size()) {
+                    args.copyOutputPath = NormalizePathArgument(arguments[++i]);
                 }
                 continue;
             }
 
             if (arg == "--template" || arg == "-t") {
-                if (i + 1 < argc) {
-                    args.templateName = argv[++i];
+                if (i + 1 < arguments.size()) {
+                    args.templateName = arguments[++i];
                 }
                 continue;
             }
 
             if (arg == "--sdk") {
-                if (i + 1 < argc) {
-                    args.sdkSource = argv[++i];
+                if (i + 1 < arguments.size()) {
+                    args.sdkSource = arguments[++i];
                 }
                 continue;
             }
 
             if (arg == "--sdk-config") {
-                if (i + 1 < argc) {
-                    args.sdkConfiguration = argv[++i];
+                if (i + 1 < arguments.size()) {
+                    args.sdkConfiguration = arguments[++i];
                     std::transform(
                         args.sdkConfiguration.begin(),
                         args.sdkConfiguration.end(),
@@ -367,20 +388,27 @@ Installs the CMake resource sync module at:
             }
 
             if (arg == "--sdk-include-dir") {
-                if (i + 1 < argc) {
-                    args.sdkIncludeDirectories.push_back(NormalizePathArgument(argv[++i]));
+                if (i + 1 < arguments.size()) {
+                    args.sdkIncludeDirectories.push_back(NormalizePathArgument(arguments[++i]));
                 }
                 continue;
             }
 
             if (arg == "--sdk-lib") {
-                if (i + 1 < argc) {
-                    args.sdkLibraryPath = NormalizePathArgument(argv[++i]);
+                if (i + 1 < arguments.size()) {
+                    args.sdkLibraryPath = NormalizePathArgument(arguments[++i]);
                 }
                 continue;
             }
 
-            if (arg[0] != '-') {
+            if (arg == "--sdk-entry-object") {
+                if (i + 1 < arguments.size()) {
+                    args.sdkEntryObjectPath = NormalizePathArgument(arguments[++i]);
+                }
+                continue;
+            }
+
+            if (arg.empty() || arg[0] != '-') {
                 if (args.commandName.empty()) {
                     args.commandName = arg;
                 }

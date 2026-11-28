@@ -181,7 +181,10 @@ TEST(XamlMarkupExtensionTests, ParsesLocaleExtension)
         const auto& extension = extensionResult.Value();
         ASSERT_NE(extension, nullptr) << value;
         std::string key;
-        ASSERT_TRUE(NeoWPF::UI::Markup::Xaml::TryGetXamlLocaleKey(*extension, key));
+        const auto localeKeyResult =
+            NeoWPF::UI::Markup::Xaml::TryGetXamlLocaleKey(*extension, key);
+        ASSERT_TRUE(localeKeyResult.Success()) << localeKeyResult.Error();
+        ASSERT_TRUE(localeKeyResult.Value());
         EXPECT_EQ(key, "Greeting");
     }
 

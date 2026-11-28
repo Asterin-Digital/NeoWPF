@@ -93,6 +93,24 @@ namespace NeoWPF::Input
         return instance;
     }
 
+    void InputManager::Reset()
+    {
+        auto* focusedElement = m_focusedElement;
+        m_focusedElement = nullptr;
+        m_rootElement = nullptr;
+        m_overlayElements.clear();
+        m_keyStates.fill(false);
+        m_pointerCaptures.clear();
+        m_pointerOverElements.clear();
+        m_lastHitTestResult = nullptr;
+        ++m_treeEpoch;
+
+        if (focusedElement) {
+            focusedElement->SetFocused(false);
+            focusedElement->OnLostFocus();
+        }
+    }
+
     void InputManager::SetRootElement(NeoWPF::UI::UIElement* root)
     {
         if (m_rootElement == root)

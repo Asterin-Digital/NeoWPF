@@ -9,6 +9,29 @@
 
 namespace NeoWPF::Platform {
 
+namespace {
+
+std::string GetCodecErrorName(Cudev::CodecError error)
+{
+    switch (error) {
+    case Cudev::CodecError::InvalidLeadingByte:
+        return "InvalidLeadingByte";
+    case Cudev::CodecError::InvalidContinuationByte:
+        return "InvalidContinuationByte";
+    case Cudev::CodecError::TruncatedSequence:
+        return "TruncatedSequence";
+    case Cudev::CodecError::OverlongEncoding:
+        return "OverlongEncoding";
+    case Cudev::CodecError::SurrogateCodePoint:
+        return "SurrogateCodePoint";
+    case Cudev::CodecError::CodePointOutOfRange:
+        return "CodePointOutOfRange";
+    }
+    return "UnknownCodecError";
+}
+
+}
+
 std::string Trim(const std::string& value)
 {
     const auto begin = std::find_if_not(value.begin(), value.end(), [](unsigned char ch) {
@@ -178,16 +201,24 @@ bool IsValidUuid(const std::string& value) noexcept
     return true;
 }
 
-std::string WideToUtf8(const std::wstring& input)
+NeoWPF::Result<std::string> WideToUtf8(const std::wstring& input)
 {
     auto converted = Cudev::Wide::ToUtf8(input);
-    return converted.succeeded() ? std::move(converted).value() : std::string{};
+    if (converted.failed()) {
+        return NeoWPF::Fail<std::string>{
+            "Cudev wide-to-UTF-8 conversion failed: " + GetCodecErrorName(*converted.error())};
+    }
+    return NeoWPF::Success<std::string>{std::move(converted).value()};
 }
 
-std::wstring Utf8ToWide(const std::string& input)
+NeoWPF::Result<std::wstring> Utf8ToWide(const std::string& input)
 {
     auto converted = Cudev::Wide::FromUtf8(input);
-    return converted.succeeded() ? std::move(converted).value() : std::wstring{};
+    if (converted.failed()) {
+        return NeoWPF::Fail<std::string>{
+            "Cudev UTF-8 conversion failed: " + GetCodecErrorName(*converted.error())};
+    }
+    return NeoWPF::Success<std::wstring>{std::move(converted).value()};
 }
 
 }

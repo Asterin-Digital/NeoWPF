@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <mutex>
+#include <utility>
 
 namespace NeoWPF::Platform::Android {
 namespace {
@@ -50,8 +51,14 @@ bool LoadEmbeddedFallbackFont()
             continue;
         }
 
-        const auto familyName = NeoWPF::Platform::Utf8ToWide(record.name ? record.name : "Noto Sans");
-        if (NeoWPF::Rendering::Text::RegisterFontMemory(record.data, record.size, familyName)) {
+        auto familyName = NeoWPF::Platform::Utf8ToWide(record.name ? record.name : "Noto Sans");
+        if (familyName.Fail()) {
+            NeoWPF::Diagnostics::LogWarn(
+                "Embedded fallback font name conversion failed: %s", familyName.Error().c_str());
+            continue;
+        }
+        if (NeoWPF::Rendering::Text::RegisterFontMemory(
+                record.data, record.size, familyName.Value())) {
             return true;
         }
     }
@@ -99,9 +106,9 @@ NeoWPF::Result<std::vector<std::uint8_t>> APlatform::LoadResourceData(const std:
     return NeoWPF::Fail<std::string>{"Android embedded resource loading is not implemented"};
 }
 
-std::filesystem::path APlatform::GetExecutableDirectory() const
+NeoWPF::Result<std::filesystem::path> APlatform::GetExecutableDirectory() const
 {
-    return {};
+    return NeoWPF::Success<std::filesystem::path>{};
 }
 
 NeoWPF::Result<std::filesystem::path> APlatform::GetAppDataDirectory() const
@@ -198,7 +205,13 @@ std::wstring APlatform::CurrentModulePath() const
     if (!symbol || dladdr(symbol, &moduleInfo) == 0 || !moduleInfo.dli_fname) {
         return {};
     }
-    return NeoWPF::Platform::Utf8ToWide(moduleInfo.dli_fname);
+    auto modulePath = NeoWPF::Platform::Utf8ToWide(moduleInfo.dli_fname);
+    if (modulePath.Fail()) {
+        NeoWPF::Diagnostics::LogWarn(
+            "Android module path conversion failed: %s", modulePath.Error().c_str());
+        return {};
+    }
+    return std::move(modulePath).Value();
 }
 
 std::uint32_t APlatform::CurrentThreadId() const noexcept

@@ -23,6 +23,7 @@ PLATFORMS = {
         "architecture": "x64",
         "package_platform": "windows",
         "extension": ".lib",
+        "entry_filename": "NeoWPF.Windows.Entry.obj",
     },
     "linux": {
         "folder": "Linux",
@@ -30,6 +31,7 @@ PLATFORMS = {
         "architecture": "x64",
         "package_platform": "linux",
         "extension": ".a",
+        "entry_filename": "NeoWPF.Linux.Entry.o",
     },
     "android": {
         "folder": "Android",
@@ -37,6 +39,7 @@ PLATFORMS = {
         "architecture": "arm64",
         "package_platform": "android",
         "extension": ".a",
+        "entry_filename": None,
     },
 }
 
@@ -136,6 +139,21 @@ def find_library(platform_key: str, config: str, version: str) -> Path | None:
     return candidate if candidate.is_file() else None
 
 
+def find_entry_object(platform_key: str, configs: list[str]) -> Path | None:
+    filename = PLATFORMS[platform_key]["entry_filename"]
+    if filename is None:
+        return None
+
+    preferred_configs = ["Release", "Debug"]
+    for config in preferred_configs:
+        if config not in configs:
+            continue
+        candidate = BUILD_ROOT / PLATFORMS[platform_key]["folder"] / config / filename
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 def validate_package_files() -> None:
     if not LICENSE_FILE.is_file():
         raise FileNotFoundError(f"couldn't find LICENSE: {LICENSE_FILE}")
@@ -170,6 +188,7 @@ def add_directory_to_zip(
 def package_platform(
     platform_key: str,
     sources: list[tuple[str, Path]],
+    entry_source: Path | None,
     version: str,
 ) -> Path:
     info = PLATFORMS[platform_key]
@@ -191,6 +210,11 @@ def package_platform(
 
         for config, source in sources:
             archive.write(source, (Path(config) / source.name).as_posix())
+        if entry_source is not None:
+            archive.write(
+                entry_source,
+                (Path("Entry") / entry_source.name).as_posix(),
+            )
 
     return package_path
 
@@ -203,6 +227,7 @@ def add_common_package_files(archive: zipfile.ZipFile) -> None:
 
 def package_combined(
     sources: list[tuple[str, str, Path]],
+    entry_sources: dict[str, Path],
     version: str,
 ) -> Path:
     PACKAGE_ROOT.mkdir(parents=True, exist_ok=True)
@@ -220,6 +245,11 @@ def package_combined(
             archive.write(
                 source,
                 (Path(platform) / config / source.name).as_posix(),
+            )
+        for platform, source in entry_sources.items():
+            archive.write(
+                source,
+                (Path(platform) / "Entry" / source.name).as_posix(),
             )
 
     return package_path
@@ -248,6 +278,7 @@ def main() -> int:
     missing: list[tuple[str, str]] = []
     packed: list[Path] = []
     combined_sources: list[tuple[str, str, Path]] = []
+    combined_entry_sources: dict[str, Path] = {}
 
     for platform_key in platforms:
         platform_name = PLATFORMS[platform_key]["file_platform"]
@@ -270,6 +301,14 @@ def main() -> int:
                 )
             print(f"[found]   {source}")
 
+        entry_source = find_entry_object(platform_key, configs)
+        if PLATFORMS[platform_key]["entry_filename"] and entry_source is None:
+            missing.append((platform_name, "Entry"))
+            platform_missing = True
+            print(f"[missing] {platform_name} Entry")
+        elif entry_source is not None:
+            combined_entry_sources[PLATFORMS[platform_key]["folder"]] = entry_source
+
         if args.combined:
             continue
 
@@ -277,13 +316,13 @@ def main() -> int:
             print(f"[skipped] {platform_name} archive (missing requested build)")
             continue
 
-        package = package_platform(platform_key, sources, version)
+        package = package_platform(platform_key, sources, entry_source, version)
         packed.append(package)
         print(f"[packed]  {package}")
         print()
 
     if args.combined and combined_sources:
-        package = package_combined(combined_sources, version)
+        package = package_combined(combined_sources, combined_entry_sources, version)
         packed.append(package)
         print(f"[packed]  {package}")
         print()

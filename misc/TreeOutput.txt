@@ -1,11 +1,13 @@
-﻿NeoWPF
+﻿Code Statistics:
+Total lines (including whitespace): 267,942
+Lines of code (excluding whitespace): 240,907
+NeoWPF
 ├── .git_hooks
 │   ├── commit-msg
 │   └── pre-commit
 ├── .gitignore
 ├── .gitmessage
 ├── .neolint.json
-├── .vcpkg-backup-windows.txt
 ├── AI-Usage.md
 ├── CMakeLists.txt
 ├── CMakePresets.json
@@ -16,9 +18,6 @@
 │   ├── .gitignore
 │   ├── CMakeLists.txt
 │   ├── CMakePresets.json
-│   ├── artifacts
-│   │   └── Raspy
-│   │       └── Main.xaml.g.naml
 │   ├── include
 │   │   └── NeoCM
 │   │       ├── Core
@@ -35,8 +34,6 @@
 │   │       └── Utils
 │   │           ├── Logger.h
 │   │           └── StringUtils.h
-│   ├── scripts
-│   │   └── compile_raspy_xaml.py
 │   ├── src
 │   │   ├── Core
 │   │   │   ├── CommandParser.cpp
@@ -311,7 +308,6 @@
 │   │   ├── SdkLocatorTests.cpp
 │   │   └── XamlCodegenTests.cpp
 │   └── vcpkg.json
-├── NeoWPF.code-workspace
 ├── NeoWPFVersion.txt
 ├── README.md
 ├── benchmarks
@@ -423,6 +419,9 @@
 ├── include
 │   ├── Internal
 │   │   └── NeoWPF
+│   │       ├── Core
+│   │       │   └── Application
+│   │       │       └── EntryRunner.h
 │   │       └── Platform
 │   │           ├── Android
 │   │           │   ├── AActivityHost.h
@@ -472,6 +471,9 @@
 │       │   │   ├── ApplicationInternal.h
 │       │   │   ├── ApplicationTheme.h
 │       │   │   ├── DeviceCategory.h
+│       │   │   ├── Entry.h
+│       │   │   ├── Instance
+│       │   │   ├── LaunchContext.h
 │       │   │   └── Resources
 │       │   │       ├── ApplicationResources.h
 │       │   │       ├── Embedded
@@ -707,15 +709,18 @@
 │           │   │   ├── GridDefinitionConverters.h
 │           │   │   ├── GridLayout.h
 │           │   │   └── RowDefinition.h
+│           │   ├── LayoutEnvironment.h
+│           │   ├── LayoutUtilities.h
 │           │   ├── Panel
 │           │   │   ├── Panel.h
-│           │   │   ├── ResponsiveRule.h
 │           │   │   └── StackPanel.h
 │           │   ├── Placement
 │           │   │   ├── Alignment.h
 │           │   │   ├── Orientation.h
 │           │   │   ├── TextAlignment.h
 │           │   │   └── TextWrapping.h
+│           │   ├── Responsive
+│           │   │   └── ResponsiveRule.h
 │           │   ├── Scrolling
 │           │   │   └── IScrollInfo.h
 │           │   └── UniformGrid
@@ -778,174 +783,11 @@
 ├── misc
 │   ├── GitTree.txt
 │   └── TreeOutput.txt
-├── out.txt
-├── private
-│   ├── BrushesAndGradients_Plan.old.md
-│   ├── Commits
-│   │   ├── CNWPF10.md
-│   │   ├── CNWPF7.md
-│   │   ├── CommitTemplate.md
-│   │   ├── FNWPF11.md
-│   │   ├── FNWPF12.md
-│   │   ├── FNWPF17.md
-│   │   ├── FNWPF26.md
-│   │   ├── FNWPF27.md
-│   │   ├── FNWPF29.md
-│   │   ├── FNWPF3.md
-│   │   ├── FNWPF30.md
-│   │   ├── FNWPF31.md
-│   │   ├── FNWPF32.md
-│   │   ├── FNWPF6.md
-│   │   ├── RNWPF1.md
-│   │   ├── RNWPF13.md
-│   │   ├── RNWPF14.md
-│   │   ├── RNWPF15.md
-│   │   ├── RNWPF16.md
-│   │   ├── RNWPF18.md
-│   │   ├── RNWPF19.md
-│   │   ├── RNWPF2.md
-│   │   ├── RNWPF20.md
-│   │   ├── RNWPF21.md
-│   │   ├── RNWPF22.md
-│   │   ├── RNWPF23.md
-│   │   ├── RNWPF24.md
-│   │   ├── RNWPF25.md
-│   │   ├── RNWPF28.md
-│   │   ├── RNWPF4.md
-│   │   ├── RNWPF5.md
-│   │   ├── RNWPF8.md
-│   │   └── RNWPF9.md
-│   ├── Embedded
-│   │   └── NotoSans-Regular.ttf
-│   ├── Etc
-│   │   ├── Control
-│   │   │   ├── README.md
-│   │   │   ├── requirements.txt
-│   │   │   └── server.py
-│   │   ├── CurrentGitChanges.md
-│   │   ├── Debugging.md
-│   │   ├── Desc.md
-│   │   ├── NeoWPF.Map.md
-│   │   ├── ReviewModel.md
-│   │   ├── Tree.md
-│   │   └── UserProfile.md
-│   ├── FixedOrComplete
-│   │   ├── .DoNotDeleteThese!
-│   │   ├── AndroidBootstrap_Plan.md
-│   │   ├── AndroidPlatform_Plan.old.md
-│   │   ├── AndroidTextureLifetimeAndMore_Plan.md
-│   │   ├── AndroidVulkanFollowupResearch.md
-│   │   ├── CanvasPlan.md
-│   │   ├── ChromeCustomizationPlan.md
-│   │   ├── ComboBoxPlan.md
-│   │   ├── ContentMigration.md
-│   │   ├── CrossPlatformPlan.md
-│   │   ├── DWriteDoc.md
-│   │   ├── DataBindingImpl.md
-│   │   ├── DataBindingNotes.md
-│   │   ├── DirectWrite.Local.h
-│   │   ├── DotNetFollowupPlan.md
-│   │   ├── DotNetFollowupPlan2.md
-│   │   ├── DotNetReviewPlan.md
-│   │   ├── FrameworkNotes.md
-│   │   ├── FrameworkRefactor.md
-│   │   ├── LayoutIntCallers.md
-│   │   ├── ListBoxPlan.md
-│   │   ├── LocalesPlan.md
-│   │   ├── NeoLintPlan.md
-│   │   ├── NeoLintSpeedIssuesPlan.md
-│   │   ├── PrePlatformMigrationIssues.md
-│   │   ├── ProjectManagerPlan.md
-│   │   ├── RotationDriftFix.md
-│   │   ├── ScrollbarRefactor.md
-│   │   ├── TextBlockRotationDrift.md
-│   │   ├── TextBoxIssues.md
-│   │   ├── TextBoxRefactor.md
-│   │   ├── TextUsageMap.md
-│   │   ├── ThreadingPlan.md
-│   │   ├── TransparentAndOverlayWindowsPlan.md
-│   │   ├── TriggersAndAnimationsPlan.md
-│   │   ├── UniformGridPlan.md
-│   │   ├── VirtualizationPlan.md
-│   │   ├── WindowsDependencyMap.md
-│   │   ├── XAMLBaseImplPlan.md
-│   │   ├── XAMLCodeBehindPlan.md
-│   │   ├── XAMLNotes.md
-│   │   ├── XAMLPlan.md
-│   │   ├── XAMLTypePlan.md
-│   │   ├── XamlApplicationPlan.md
-│   │   └── XamlStylingPlan.md
-│   ├── Future
-│   │   ├── Activities_Plan.md
-│   │   ├── BackwardsCompatibility_Plan.md
-│   │   ├── DotNetStructure.md
-│   │   ├── NWpfDotNet_Plan.md
-│   │   └── NeoWPF.Roadmap.md
-│   ├── GradientsAndBrushes_Plan.md
-│   ├── ReaponsiveLayout_Plan.md
-│   ├── Scripts
-│   │   ├── BackupSource.py
-│   │   ├── Build.py
-│   │   ├── PrepareActivityReview.py
-│   │   ├── PullChangesToFile.py
-│   │   ├── Tests.py
-│   │   ├── UpdateTreeFile.py
-│   │   ├── build-android-debug
-│   │   └── test.py
-│   ├── backtrace.txt
-│   └── int-mcp
-│       ├── pyproject.toml
-│       ├── src
-│       │   ├── int_mcp
-│       │   │   ├── __init__.py
-│       │   │   ├── __main__.py
-│       │   │   ├── build.py
-│       │   │   ├── commits.py
-│       │   │   ├── server.py
-│       │   │   └── tests.py
-│       │   └── neowpf_int_mcp.egg-info
-│       │       ├── PKG-INFO
-│       │       ├── SOURCES.txt
-│       │       ├── dependency_links.txt
-│       │       ├── entry_points.txt
-│       │       ├── requires.txt
-│       │       └── top_level.txt
-│       └── uv.lock
 ├── samples
 │   ├── Android
-│   │   ├── .gradle
-│   │   │   ├── 9.5.0
-│   │   │   │   ├── checksums
-│   │   │   │   │   └── checksums.lock
-│   │   │   │   ├── executionHistory
-│   │   │   │   │   └── executionHistory.lock
-│   │   │   │   ├── expanded
-│   │   │   │   ├── fileChanges
-│   │   │   │   │   └── last-build.bin
-│   │   │   │   ├── fileHashes
-│   │   │   │   │   └── fileHashes.lock
-│   │   │   │   ├── gc.properties
-│   │   │   │   └── vcsMetadata
-│   │   │   ├── 9.8.1
-│   │   │   │   ├── checksums
-│   │   │   │   │   └── checksums.lock
-│   │   │   │   ├── expanded
-│   │   │   │   ├── fileChanges
-│   │   │   │   │   └── last-build.bin
-│   │   │   │   ├── fileHashes
-│   │   │   │   │   ├── fileHashes.bin
-│   │   │   │   │   └── fileHashes.lock
-│   │   │   │   ├── gc.properties
-│   │   │   │   └── vcsMetadata
-│   │   │   ├── buildOutputCleanup
-│   │   │   │   ├── buildOutputCleanup.lock
-│   │   │   │   └── cache.properties
-│   │   │   └── vcs-1
-│   │   │       └── gc.properties
 │   │   ├── .kotlin
 │   │   │   └── sessions
 │   │   ├── app
-│   │   │   ├── .cxx
 │   │   │   ├── build.gradle.kts
 │   │   │   └── src
 │   │   │       └── main
@@ -970,45 +812,6 @@
 │       ├── CMakeLists.txt
 │       ├── CMakePresets.json
 │       ├── android
-│       │   ├── .cxx
-│       │   ├── .gradle
-│       │   │   ├── 9.5.0
-│       │   │   │   ├── checksums
-│       │   │   │   │   ├── checksums.lock
-│       │   │   │   │   ├── md5-checksums.bin
-│       │   │   │   │   └── sha1-checksums.bin
-│       │   │   │   ├── executionHistory
-│       │   │   │   │   ├── executionHistory.bin
-│       │   │   │   │   └── executionHistory.lock
-│       │   │   │   ├── expanded
-│       │   │   │   ├── fileChanges
-│       │   │   │   │   └── last-build.bin
-│       │   │   │   ├── fileHashes
-│       │   │   │   │   ├── fileHashes.bin
-│       │   │   │   │   ├── fileHashes.lock
-│       │   │   │   │   └── resourceHashesCache.bin
-│       │   │   │   ├── gc.properties
-│       │   │   │   ├── kotlin-dsl-plugin-entries
-│       │   │   │   │   └── kotlin-dsl-plugin-entries.lock
-│       │   │   │   └── vcsMetadata
-│       │   │   ├── 9.8.1
-│       │   │   │   ├── checksums
-│       │   │   │   │   └── checksums.lock
-│       │   │   │   ├── expanded
-│       │   │   │   ├── fileChanges
-│       │   │   │   │   └── last-build.bin
-│       │   │   │   ├── fileHashes
-│       │   │   │   │   ├── fileHashes.bin
-│       │   │   │   │   └── fileHashes.lock
-│       │   │   │   ├── gc.properties
-│       │   │   │   └── vcsMetadata
-│       │   │   ├── buildOutputCleanup
-│       │   │   │   ├── buildOutputCleanup.lock
-│       │   │   │   ├── cache.properties
-│       │   │   │   └── outputFiles.bin
-│       │   │   ├── file-system.probe
-│       │   │   └── vcs-1
-│       │   │       └── gc.properties
 │       │   ├── Launch.py
 │       │   ├── build.gradle.kts
 │       │   ├── gradle.properties
@@ -1043,12 +846,14 @@
 │   ├── InstallDroidApp.py
 │   ├── Logcat.py
 │   ├── PackNeoWPF.py
-│   └── PullWslLib.py
+│   ├── PullWslLib.py
+│   └── ZipSrc.py
 ├── sdk-releases.json
 ├── src
 │   ├── Core
 │   │   ├── Application
 │   │   │   ├── ApplicationProperties.cpp
+│   │   │   ├── EntryRunner.cpp
 │   │   │   ├── Instance
 │   │   │   ├── Resources
 │   │   │   │   ├── ApplicationResources.cpp
@@ -1136,6 +941,7 @@
 │   │   │   ├── LClientSideTitleBar.cpp
 │   │   │   ├── LCompositor.cpp
 │   │   │   ├── LCrashHandler.cpp
+│   │   │   ├── LEntryPoint.cpp
 │   │   │   ├── LFileDialog.cpp
 │   │   │   ├── LImageDecoding.cpp
 │   │   │   ├── LKeyboard.cpp
@@ -1160,6 +966,7 @@
 │   │       ├── WCallStack.cpp
 │   │       ├── WClipboard.cpp
 │   │       ├── WCrashHandler.cpp
+│   │       ├── WEntryPoint.cpp
 │   │       ├── WFileDialog.cpp
 │   │       ├── WImageDecoding.cpp
 │   │       ├── WPlatform.cpp
@@ -1385,13 +1192,14 @@
 │       │   ├── Panel
 │       │   │   ├── Panel.cpp
 │       │   │   ├── PanelProperties.cpp
-│       │   │   ├── ResponsiveRule.cpp
-│       │   │   ├── ResponsiveRuleProperties.cpp
 │       │   │   └── StackPanel.cpp
 │       │   ├── Placement
 │       │   │   ├── Alignment.cpp
 │       │   │   ├── Orientation.cpp
 │       │   │   └── TextAlignment.cpp
+│       │   ├── Responsive
+│       │   │   ├── ResponsiveRule.cpp
+│       │   │   └── ResponsiveRuleConverters.cpp
 │       │   └── UniformGrid
 │       │       ├── UniformGrid.cpp
 │       │       └── UniformGridProperties.cpp
@@ -1449,6 +1257,7 @@
 │           ├── TextFlow.cpp
 │           └── TextRasterCache.cpp
 ├── tests
+│   ├── .DontPutTestsInRoot
 │   ├── Automated
 │   │   ├── AndroidNativeActivityTests.cpp
 │   │   ├── ApplicationHostTests.cpp
@@ -1479,7 +1288,11 @@
 │   │   │   └── DotNetValueTests.cpp
 │   │   ├── DrawBatcherTests.cpp
 │   │   ├── EmbeddedResourceProviderTests.cpp
+│   │   ├── EntryDuplicateMain.cpp
+│   │   ├── EntryMissingDefinition.cpp
+│   │   ├── EntryRunnerTests.cpp
 │   │   ├── EventTests.cpp
+│   │   ├── ExpectEntryLinkFailure.cmake
 │   │   ├── ExternalFileResourceProviderTests.cpp
 │   │   ├── FileDialogTests.cpp
 │   │   ├── GridTests.cpp
@@ -1505,6 +1318,8 @@
 │   │   ├── RampBakerTests.cpp
 │   │   ├── RenderCommandTests.cpp
 │   │   ├── ResourceKeyTests.cpp
+│   │   ├── ResponsiveLayoutTests.cpp
+│   │   ├── ResultTests.cpp
 │   │   ├── RoutedEventTests.cpp
 │   │   ├── ScrollViewerTests.cpp
 │   │   ├── SliderTests.cpp
@@ -1553,7 +1368,7 @@
 │   │       ├── TextBoxStyling.cpp
 │   │       ├── TextPositioning.cpp
 │   │       └── Triggers.cpp
-│   └── ResultTests.cpp
+│   └── Tests.cmake
 ├── triplets
 │   └── arm64-android.cmake
 └── vcpkg.json

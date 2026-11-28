@@ -10,6 +10,7 @@
   },
   "platforms": {
     "windows": {
+      "entry_object_path": "Windows/Entry/NeoWPF.Windows.Entry.obj",
       "debug": {
         "libraries": [
           "Windows/Debug/NeoWPF.Windows.Debug.0.1.0.lib"
@@ -22,6 +23,7 @@
       }
     },
     "linux": {
+      "entry_object_path": "Linux/Entry/NeoWPF.Linux.Entry.o",
       "debug": {
         "libraries": [
           "Linux/Debug/NeoWPF.Linux.Debug.0.1.0.a"

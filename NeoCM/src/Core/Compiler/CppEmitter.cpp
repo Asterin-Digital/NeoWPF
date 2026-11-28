@@ -229,7 +229,7 @@ void EmitBindings(const ElementRecord& record,
         if (!property.localeKey.empty()) {
             output.Line("    NeoWPF::UI::Localization::LocaleOperations::SetLocale(*" + record.variable + ", " +
                         property.propertyExpression + ", NeoWPF::Platform::Utf8ToWide(" +
-                        StringLiteral(property.localeKey) + "));" );
+                        StringLiteral(property.localeKey) + ").Value());" );
             continue;
         }
         const auto mode = property.bindingMode.empty() ? "OneWay" : property.bindingMode;

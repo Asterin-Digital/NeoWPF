@@ -24,6 +24,9 @@ public:
         const std::string& configuration,
         const std::string& architecture,
         const std::string& version) const;
+    std::optional<std::filesystem::path> FindEntryObject(
+        const std::string& architecture,
+        const std::string& version) const;
     std::vector<std::filesystem::path> FindIncludeDirectories(const std::string& architecture) const;
     std::vector<std::filesystem::path> FindIncludeDirectories(
         const std::string& architecture,

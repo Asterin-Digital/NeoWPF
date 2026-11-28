@@ -19,6 +19,7 @@ struct SdkInstallation {
     std::vector<std::filesystem::path> includeDirectories;
     std::filesystem::path debugLibraryPath;
     std::filesystem::path releaseLibraryPath;
+    std::filesystem::path entryObjectPath;
 };
 
 class SdkManager {

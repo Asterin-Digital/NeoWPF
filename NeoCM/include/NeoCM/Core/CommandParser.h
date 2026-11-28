@@ -6,6 +6,7 @@ See LICENSE file in the project root for full license text.
 #pragma once
 
 #include <NeoCM/Core/ICommand.h>
+#include <NeoWPF/Feedback/Result.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -35,8 +36,36 @@ private:
     CommandParser(const CommandParser&) = delete;
     CommandParser& operator=(const CommandParser&) = delete;
 
-    CommandArguments ParseArguments(int argc, wchar_t* argv[]) const;
-    std::string WideStringToString(const wchar_t* wide) const;
+    /*
+        @summary
+        Parses command-line arguments while retaining conversion failures.
+
+        @param argc
+        Number of command-line arguments.
+
+        @param argv
+        Command-line arguments.
+
+        @returns
+        Parsed arguments, or the reason parsing failed.
+
+        @internal
+    */
+    NeoWPF::Result<CommandArguments> ParseArguments(int argc, wchar_t* argv[]) const;
+
+    /*
+        @summary
+        Converts a wide command-line value to UTF-8.
+
+        @param wide
+        Value to convert.
+
+        @returns
+        UTF-8 value, or the conversion error.
+
+        @internal
+    */
+    NeoWPF::Result<std::string> WideStringToString(const std::wstring& wide) const;
     void PrintCommandHelp(const std::string& commandName) const;
 };
 

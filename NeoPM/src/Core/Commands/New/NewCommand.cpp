@@ -19,14 +19,16 @@ namespace NeoPM::Core::Commands {
         const std::string& sdkSource,
         const std::string& sdkConfiguration,
         const std::vector<std::string>& sdkIncludeDirectories,
-        const std::optional<std::string>& sdkLibraryPath
+        const std::optional<std::string>& sdkLibraryPath,
+        const std::optional<std::string>& sdkEntryObjectPath
     )
         : m_projectName(projectName),
           m_outputPath(outputPath),
           m_sdkSource(sdkSource),
           m_sdkConfiguration(sdkConfiguration),
           m_sdkIncludeDirectories(sdkIncludeDirectories),
-          m_sdkLibraryPath(sdkLibraryPath) {
+          m_sdkLibraryPath(sdkLibraryPath),
+          m_sdkEntryObjectPath(sdkEntryObjectPath) {
     }
 
     int NewCommand::Execute() {
@@ -139,15 +141,20 @@ namespace NeoPM::Core::Commands {
             return true;
         }
 
-        if (m_sdkIncludeDirectories.empty() || !m_sdkLibraryPath) {
+        if (m_sdkIncludeDirectories.empty() || !m_sdkLibraryPath || !m_sdkEntryObjectPath) {
             logger.Error(
                 "NewCommand",
-                "User SDKs require at least one --sdk-include-dir and --sdk-lib"
+                "User SDKs require at least one --sdk-include-dir, --sdk-lib, and --sdk-entry-object"
             );
             return false;
         }
 
         auto libraryPath = std::filesystem::path(*m_sdkLibraryPath);
+        const auto entryObjectPath = std::filesystem::path(*m_sdkEntryObjectPath);
+        if (!std::filesystem::is_regular_file(entryObjectPath)) {
+            logger.Error("NewCommand", "SDK entry object does not exist: " + entryObjectPath.string());
+            return false;
+        }
         std::vector<std::filesystem::path> includeDirectories;
         for (const auto& includeDirectory : m_sdkIncludeDirectories) {
             const auto path = std::filesystem::path(includeDirectory);

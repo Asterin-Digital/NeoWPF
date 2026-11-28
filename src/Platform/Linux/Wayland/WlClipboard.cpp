@@ -31,8 +31,14 @@ void HandleDataSourceSend(void* data, wl_data_source*, const char*, int fd)
 {
     auto* clipboard = static_cast<WlClipboard*>(data);
     const auto text = NeoWPF::Platform::WideToUtf8(clipboard->OwnedText());
-    const char* cursor = text.data();
-    std::size_t remaining = text.size();
+    if (text.Fail()) {
+        NeoWPF::Diagnostics::LogWarn(
+            "Wayland clipboard text conversion failed: %s", text.Error().c_str());
+        close(fd);
+        return;
+    }
+    const char* cursor = text.Value().data();
+    std::size_t remaining = text.Value().size();
     while (remaining != 0) {
         const auto written = write(fd, cursor, remaining);
         if (written <= 0) {
@@ -383,8 +389,13 @@ void WlClipboard::ProcessPendingReads() noexcept
             "[LinuxClipboard] Clipboard read completed: bytes=%zd succeeded=%d errno=%d",
             count, succeeded, count < 0 ? errno : 0);
         if (succeeded) {
-            CompleteRead(NeoWPF::Success<std::optional<std::wstring>>{
-                NeoWPF::Platform::Utf8ToWide(m_pendingReadText)});
+            auto wideText = NeoWPF::Platform::Utf8ToWide(m_pendingReadText);
+            if (wideText.Fail()) {
+                CompleteRead(NeoWPF::Fail<std::string>{wideText.Error()});
+            } else {
+                CompleteRead(NeoWPF::Success<std::optional<std::wstring>>{
+                    std::move(wideText).Value()});
+            }
         } else {
             CompleteRead(NeoWPF::Fail<std::string>{"Linux clipboard text could not be read"});
         }

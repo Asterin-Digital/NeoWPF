@@ -47,6 +47,9 @@ namespace NeoPM::Core::Project {
                        << "    endif()\n"
                        << "    if(NOT DEFINED NEOWPF_LIBRARY_RELEASE)\n"
                        << "        set(NEOWPF_LIBRARY_RELEASE \"\")\n"
+                       << "    endif()\n"
+                       << "    if(NOT DEFINED NEOWPF_ENTRY_OBJECT)\n"
+                       << "        set(NEOWPF_ENTRY_OBJECT \"\")\n"
                        << "    endif()\n";
                 return;
             }
@@ -65,6 +68,10 @@ namespace NeoPM::Core::Project {
                    << "    if(NOT DEFINED NEOWPF_LIBRARY_RELEASE)\n"
                    << "        set(NEOWPF_LIBRARY_RELEASE \""
                    << NormalizeCMakePath(configuration->releaseLibraryPath.string()) << "\")\n"
+                   << "    endif()\n"
+                   << "    if(NOT DEFINED NEOWPF_ENTRY_OBJECT)\n"
+                   << "        set(NEOWPF_ENTRY_OBJECT \""
+                   << NormalizeCMakePath(configuration->entryObjectPath.string()) << "\")\n"
                    << "    endif()\n";
         }
 
@@ -183,6 +190,9 @@ namespace NeoPM::Core::Project {
             ss << "if(NOT EXISTS \"${NEOWPF_LIBRARY_DEBUG}\" OR NOT EXISTS \"${NEOWPF_LIBRARY_RELEASE}\")\n";
             ss << "    message(FATAL_ERROR \"Pinned NeoWPF SDK libraries are missing for ${NEOWPF_SDK_VERSION}\")\n";
             ss << "endif()\n\n";
+            ss << "if(NOT EXISTS \"${NEOWPF_ENTRY_OBJECT}\")\n";
+            ss << "    message(FATAL_ERROR \"Pinned NeoWPF SDK entry object is missing for ${NEOWPF_SDK_VERSION}\")\n";
+            ss << "endif()\n\n";
         }
 
         ss << "add_executable(" << m_projectName << "\n";
@@ -204,10 +214,14 @@ namespace NeoPM::Core::Project {
         ss << ")\n\n";
 
         if (!m_sdkPlatforms.empty()) {
+            ss << "target_sources(" << m_projectName << " PRIVATE \"${NEOWPF_ENTRY_OBJECT}\")\n\n";
             ss << "target_link_libraries(" << m_projectName << " PRIVATE\n"
                << "    \"$<$<CONFIG:Debug>:${NEOWPF_LIBRARY_DEBUG}>\"\n"
                << "    \"$<$<NOT:$<CONFIG:Debug>>:${NEOWPF_LIBRARY_RELEASE}>\"\n"
                << ")\n\n";
+            ss << "if(WIN32)\n"
+               << "    target_link_libraries(" << m_projectName << " PRIVATE shell32)\n"
+               << "endif()\n\n";
         }
 
         if (m_addResourceAssetGlob) {
@@ -245,6 +259,7 @@ namespace NeoPM::Core::Project {
                 cacheVariables["NEOWPF_SDK_VERSION"] = sdk->version;
                 cacheVariables["NEOWPF_LIBRARY_DEBUG"] = NormalizeCMakePath(sdk->debugLibraryPath.string());
                 cacheVariables["NEOWPF_LIBRARY_RELEASE"] = NormalizeCMakePath(sdk->releaseLibraryPath.string());
+                cacheVariables["NEOWPF_ENTRY_OBJECT"] = NormalizeCMakePath(sdk->entryObjectPath.string());
             } else {
                 cacheVariables["NEOWPF_INCLUDE_DIRECTORIES"] = "${sourceDir}/../NeoWPF/include";
             }

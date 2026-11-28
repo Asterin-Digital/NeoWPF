@@ -1,5 +1,6 @@
 #include <NeoWPF/UI/Properties/Converters/CommonConverters.h>
 #include <NeoWPF/UI/Properties/DependencyProperty.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlTypeRegistry.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/UI/Controls/Text/TextBlock.h>
@@ -23,6 +24,7 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace NeoWPF::UI::Properties {
@@ -218,8 +220,14 @@ bool StringConverter::TryConvertToCode(const std::string& rawValue, std::string&
 
 bool ContentConverter::ConvertFromString(const std::string& rawValue, std::any& convertedValue) const
 {
+    auto wideValue = NeoWPF::Platform::Utf8ToWide(rawValue);
+    if (wideValue.Fail()) {
+        NeoWPF::Diagnostics::LogWarn(
+            "Content conversion failed: %s", wideValue.Error().c_str());
+        return false;
+    }
     std::shared_ptr<NeoWPF::UI::UIElement> textElement =
-        std::make_shared<NeoWPF::UI::TextBlock>(NeoWPF::Platform::Utf8ToWide(rawValue));
+        std::make_shared<NeoWPF::UI::TextBlock>(std::move(wideValue).Value());
     convertedValue = std::move(textElement);
     return true;
 }
@@ -251,7 +259,13 @@ bool ContentConverter::TryConvertToText(const std::any& value, std::wstring& tex
         return true;
     }
     if (const auto* stringValue = std::any_cast<std::string>(&value)) {
-        text = NeoWPF::Platform::Utf8ToWide(*stringValue);
+        auto converted = NeoWPF::Platform::Utf8ToWide(*stringValue);
+        if (converted.Fail()) {
+            NeoWPF::Diagnostics::LogWarn(
+                "Text conversion failed: %s", converted.Error().c_str());
+            return false;
+        }
+        text = std::move(converted).Value();
         return true;
     }
     if (const auto* number = std::any_cast<int>(&value)) {
@@ -755,7 +769,13 @@ bool TryConvertValue(const DependencyProperty& property,
 
     std::string text;
     if (value.type() == typeid(std::wstring)) {
-        text = NeoWPF::Platform::WideToUtf8(std::any_cast<std::wstring>(value));
+        auto converted = NeoWPF::Platform::WideToUtf8(std::any_cast<std::wstring>(value));
+        if (converted.Fail()) {
+            NeoWPF::Diagnostics::LogWarn(
+                "Property value conversion failed: %s", converted.Error().c_str());
+            return false;
+        }
+        text = std::move(converted).Value();
     } else if (value.type() == typeid(std::string)) {
         text = std::any_cast<std::string>(value);
     } else if (value.type() == typeid(const char*)) {
@@ -775,13 +795,25 @@ bool TryConvertValue(const DependencyProperty& property,
         if (!stringValue) {
             return false;
         }
-        text = NeoWPF::Platform::WideToUtf8(std::wstring(stringValue));
+        auto converted = NeoWPF::Platform::WideToUtf8(std::wstring(stringValue));
+        if (converted.Fail()) {
+            NeoWPF::Diagnostics::LogWarn(
+                "Property value conversion failed: %s", converted.Error().c_str());
+            return false;
+        }
+        text = std::move(converted).Value();
     } else if (value.type() == typeid(wchar_t*)) {
         const auto stringValue = std::any_cast<wchar_t*>(value);
         if (!stringValue) {
             return false;
         }
-        text = NeoWPF::Platform::WideToUtf8(std::wstring(stringValue));
+        auto converted = NeoWPF::Platform::WideToUtf8(std::wstring(stringValue));
+        if (converted.Fail()) {
+            NeoWPF::Diagnostics::LogWarn(
+                "Property value conversion failed: %s", converted.Error().c_str());
+            return false;
+        }
+        text = std::move(converted).Value();
     } else {
         return false;
     }

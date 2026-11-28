@@ -4,6 +4,12 @@ See LICENSE file in the project root for full license text.
 */
 
 /*
+Do not include this in your project!
+This is a NeoWPF internal header file.
+Include the master umbrella instead via #include <NeoWPF/NeoWPF.h>
+*/
+
+/*
  * Notes:
  * Keep src implementations out of this file.
  * Don't create a src file for UI.h (this) I prefer to keep it header only.

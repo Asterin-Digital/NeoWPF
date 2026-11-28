@@ -1,6 +1,7 @@
 #include <NeoWPF/UI/Markup/Xaml/Runtime/XamlResourceBuilder.h>
 
 #include <NeoWPF/Diagnostics/DeveloperWarnings.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/UI/Styling/Style.h>
 
@@ -8,6 +9,7 @@
 #include <string>
 #include <unordered_set>
 #include <typeindex>
+#include <utility>
 
 namespace NeoWPF::UI::Markup::Xaml {
 namespace {
@@ -86,10 +88,17 @@ bool BuildXamlResourceDictionary(
         }
 
         if (!localKeys.insert(entry.XamlKey).second) {
-            NeoWPF::Diagnostics::QueueDeveloperWarning(
-                NeoWPF::Diagnostics::DeveloperWarnings::kXamlResourceKeyCode,
-                L"Duplicate resource key: " + NeoWPF::Platform::Utf8ToWide(entry.XamlKey),
-                NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
+            auto wideKey = NeoWPF::Platform::Utf8ToWide(entry.XamlKey);
+            if (wideKey.Fail()) {
+                NeoWPF::Diagnostics::LogWarn(
+                    "Duplicate XAML resource key conversion failed: %s",
+                    wideKey.Error().c_str());
+            } else {
+                NeoWPF::Diagnostics::QueueDeveloperWarning(
+                    NeoWPF::Diagnostics::DeveloperWarnings::kXamlResourceKeyCode,
+                    L"Duplicate resource key: " + std::move(wideKey).Value(),
+                    NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
+            }
             continue;
         }
 

@@ -3,6 +3,12 @@ Apache 2.0 License — Copyright (c) 2026 Asterin Digital
 See LICENSE file in the project root for full license text.
 */
 
+/*
+Do not include this in your project!
+This is a NeoWPF internal header file.
+Include the master umbrella instead via #include <NeoWPF/NeoWPF.h>
+*/
+
 #pragma once
 
 #include <NeoWPF/Contracts/IPlatform.h>
@@ -38,7 +44,16 @@ public:
     NeoWPF::Core::DeviceCategory GetDeviceCategory() const noexcept override;
     int RunApplication(std::chrono::seconds startupTimeout) override;
     NeoWPF::Result<std::vector<std::uint8_t>> LoadResourceData(const std::wstring& resourcePath) override;
-    std::filesystem::path GetExecutableDirectory() const override;
+    /*
+        @summary
+        Returns the directory containing the Linux executable.
+
+        @returns
+        The executable directory, or the failure reason when it cannot be resolved.
+
+        @internal
+    */
+    NeoWPF::Result<std::filesystem::path> GetExecutableDirectory() const override;
     /*
         @summary
         Returns the Linux per-user data directory.

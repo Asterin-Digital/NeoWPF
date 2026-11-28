@@ -14,6 +14,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 
 namespace NeoWPF::Rendering::Text {
 namespace {
@@ -65,7 +66,10 @@ std::mutex& MetricsCacheMutex()
 using NeoWPF::Platform::Utf8ToWide;
 using NeoWPF::Platform::WideToUtf8;
 
-FontRequest MakeRequest(const std::wstring& family, int weight, NeoWPF::UI::FontStyle style)
+NeoWPF::Result<FontRequest> MakeRequest(
+    const std::wstring& family,
+    int weight,
+    NeoWPF::UI::FontStyle style)
 {
     std::wstring effectiveFamily = family;
     if (effectiveFamily.empty()) {
@@ -93,7 +97,13 @@ FontRequest MakeRequest(const std::wstring& family, int weight, NeoWPF::UI::Font
         }
     }
 
-    FontRequest request{WideToUtf8(effectiveFamily), weight > 0 ? weight : 400, style};
+    auto familyUtf8 = WideToUtf8(effectiveFamily);
+    if (familyUtf8.Fail()) {
+        return NeoWPF::Fail<std::string>{familyUtf8.Error()};
+    }
+
+    FontRequest request{
+        std::move(familyUtf8).Value(), weight > 0 ? weight : 400, style};
     auto record = GetFontDatabase().Resolve(request);
     if (record) {
         request.familyUtf8 = record->familyUtf8;
@@ -109,16 +119,29 @@ FontRequest MakeRequest(const std::wstring& family, int weight, NeoWPF::UI::Font
             record ? record->familyUtf8.c_str() : "<none>",
             GetFontDatabase().Records().size());
     });
-    return request;
+    return NeoWPF::Success<FontRequest>{std::move(request)};
 }
 
 TextBitmap Rasterize(const std::wstring& text, int fontSize, const std::wstring& family,
                     int weight, NeoWPF::UI::FontStyle style)
 {
     auto& fonts = GetFontDatabase();
-    const auto request = MakeRequest(family, weight, style);
-    const auto glyphs = CreateHarfBuzzTextShaper(fonts)->Shape(WideToUtf8(text), request, fontSize);
-    auto bitmap = CreateFreeTypeTextRasterizer(fonts)->Rasterize(glyphs, request, fontSize);
+    auto request = MakeRequest(family, weight, style);
+    if (request.Fail()) {
+        NeoWPF::Diagnostics::LogWarn(
+            "Font family conversion failed: %s", request.Error().c_str());
+        return {};
+    }
+    auto textUtf8 = WideToUtf8(text);
+    if (textUtf8.Fail()) {
+        NeoWPF::Diagnostics::LogWarn(
+            "Text conversion failed before rasterization: %s", textUtf8.Error().c_str());
+        return {};
+    }
+    const auto glyphs = CreateHarfBuzzTextShaper(fonts)->Shape(
+        std::move(textUtf8).Value(), request.Value(), fontSize);
+    auto bitmap = CreateFreeTypeTextRasterizer(fonts)->Rasterize(
+        glyphs, request.Value(), fontSize);
     return bitmap;
 }
 
@@ -175,12 +198,24 @@ std::mutex& RegisteredFilesMutex()
 
 std::wstring ResolveFontFamily(const std::wstring& requestedFontFamily)
 {
+    auto familyUtf8 = WideToUtf8(requestedFontFamily);
+    if (familyUtf8.Fail()) {
+        NeoWPF::Diagnostics::LogWarn(
+            "Requested font family conversion failed: %s", familyUtf8.Error().c_str());
+        return {};
+    }
     const auto resolved = GetFontDatabase().Resolve({
-        WideToUtf8(requestedFontFamily), 400, NeoWPF::UI::FontStyle::Normal});
+        std::move(familyUtf8).Value(), 400, NeoWPF::UI::FontStyle::Normal});
     if (!resolved) {
         return {};
     }
-    return Utf8ToWide(resolved->familyUtf8);
+    auto resolvedFamily = Utf8ToWide(resolved->familyUtf8);
+    if (resolvedFamily.Fail()) {
+        NeoWPF::Diagnostics::LogWarn(
+            "Resolved font family conversion failed: %s", resolvedFamily.Error().c_str());
+        return {};
+    }
+    return std::move(resolvedFamily).Value();
 }
 
 bool RegisterFontFile(const std::wstring& filePath)
@@ -207,7 +242,15 @@ bool RegisterFontMemory(const unsigned char* data, size_t size, const std::wstri
     std::transform(data, data + size, bytes->begin(), [](unsigned char value) {
         return static_cast<std::byte>(value);
     });
-    const bool registered = GetFontDatabase().RegisterMemory(std::move(bytes), WideToUtf8(familyName));
+    auto familyUtf8 = WideToUtf8(familyName);
+    if (familyUtf8.Fail()) {
+        NeoWPF::Diagnostics::LogWarn(
+            "Font family conversion failed before memory registration: %s",
+            familyUtf8.Error().c_str());
+        return false;
+    }
+    const bool registered = GetFontDatabase().RegisterMemory(
+        std::move(bytes), std::move(familyUtf8).Value());
     NeoWPF::Diagnostics::Log(NeoWPF::Diagnostics::Category::TextRendering,
         NeoWPF::Diagnostics::Level::Info,
         "[TextRenderer] RegisterFontMemory family='%ls' bytes=%zu result=%d records=%zu",

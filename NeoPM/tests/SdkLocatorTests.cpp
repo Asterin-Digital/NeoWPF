@@ -35,12 +35,15 @@ namespace {
         const auto sdkPath = platformPath / "1.4.0";
         std::filesystem::create_directories(sdkPath / "Debug");
         std::filesystem::create_directories(sdkPath / "Release");
+        std::filesystem::create_directories(sdkPath / "Entry");
         std::filesystem::create_directories(sdkPath / "include" / "NeoWPF");
         std::filesystem::create_directories(sdkPath / "third_party" / "include" / "NeoNaml");
         std::ofstream(sdkPath / ".include_paths") << "include\nthird_party/include\n";
         std::ofstream(platformPath / ".version") << "1.4.0";
         std::ofstream(sdkPath / "Debug" / "NeoWPF.Windows.Debug.1.0.0.lib");
         std::ofstream(sdkPath / "Release" / "NeoWPF.Windows.Release.1.0.0.lib");
+        std::ofstream(sdkPath / "Entry" / "NeoWPF.Windows.Entry.obj");
+        std::ofstream(sdkPath / ".entry_object") << "Entry/NeoWPF.Windows.Entry.obj\n";
     }
 }
 
@@ -56,6 +59,9 @@ TEST(SdkLocatorTests, FindsBothConfigurationsInPlatformArchiveLayout) {
     EXPECT_EQ(
         locator.FindLibrary("release", "x64"),
         directory.Path() / "Windows-x64" / "1.4.0" / "Release" / "NeoWPF.Windows.Release.1.0.0.lib");
+    EXPECT_EQ(
+        locator.FindEntryObject("x64", "1.4.0"),
+        directory.Path() / "Windows-x64" / "1.4.0" / "Entry" / "NeoWPF.Windows.Entry.obj");
     EXPECT_EQ(locator.FindIncludeDirectories("x64"), (std::vector<std::filesystem::path>{
         directory.Path() / "Windows-x64" / "1.4.0" / "include",
         directory.Path() / "Windows-x64" / "1.4.0" / "third_party" / "include"}));
@@ -76,6 +82,19 @@ TEST(SdkLocatorTests, RejectsPlatformSdkMissingAConfiguration) {
     NeoPM::Core::SdkLocator locator(directory.Path(), "Windows");
 
     EXPECT_FALSE(locator.FindLibrary("release", "x64"));
+    EXPECT_FALSE(locator.HasAnySdk());
+}
+
+TEST(SdkLocatorTests, RejectsPlatformSdkMissingItsEntryObject)
+{
+    TemporarySdkDirectory directory;
+    CreatePlatformSdk(directory.Path());
+    const auto sdkPath = directory.Path() / "Windows-x64" / "1.4.0";
+    std::filesystem::remove(sdkPath / ".entry_object");
+
+    NeoPM::Core::SdkLocator locator(directory.Path(), "Windows");
+
+    EXPECT_FALSE(locator.FindEntryObject("x64", "1.4.0"));
     EXPECT_FALSE(locator.HasAnySdk());
 }
 

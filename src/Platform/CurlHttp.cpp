@@ -59,10 +59,14 @@ NeoWPF::Result<std::vector<std::uint8_t>> CurlHttp::Fetch(const std::wstring& ur
         return NeoWPF::Fail<std::string>{"HTTP request initialization failed"};
     }
 
-    const std::string urlUtf8 = NeoWPF::Platform::WideToUtf8(url);
+    auto urlUtf8 = NeoWPF::Platform::WideToUtf8(url);
+    if (urlUtf8.Fail()) {
+        curl_easy_cleanup(handle);
+        return NeoWPF::Fail<std::string>{urlUtf8.Error()};
+    }
     std::vector<std::uint8_t> data;
     CurlBuffer buffer{&data};
-    curl_easy_setopt(handle, CURLOPT_URL, urlUtf8.c_str());
+    curl_easy_setopt(handle, CURLOPT_URL, urlUtf8.Value().c_str());
     curl_easy_setopt(handle, CURLOPT_HTTPGET, 1L);
     curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(handle, CURLOPT_MAXREDIRS, 5L);
@@ -82,7 +86,7 @@ NeoWPF::Result<std::vector<std::uint8_t>> CurlHttp::Fetch(const std::wstring& ur
     if (result != CURLE_OK || responseCode < 200 || responseCode >= 300 || data.empty()) {
         NeoWPF::Diagnostics::Catastrophic(
             "CurlHttp: request failed for URL '%s' (curl=%d, HTTP=%ld)",
-            urlUtf8.c_str(), static_cast<int>(result), responseCode);
+            urlUtf8.Value().c_str(), static_cast<int>(result), responseCode);
         return NeoWPF::Fail<std::string>{"HTTP resource request failed"};
     }
 

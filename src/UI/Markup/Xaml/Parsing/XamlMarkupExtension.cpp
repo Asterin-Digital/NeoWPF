@@ -216,15 +216,21 @@ bool TryGetXamlStaticResource(const XamlMarkupExtension& extension, std::string&
     return true;
 }
 
-bool TryGetXamlLocaleKey(const XamlMarkupExtension& extension, std::string& outKey)
+NeoWPF::Result<bool> TryGetXamlLocaleKey(
+    const XamlMarkupExtension& extension,
+    std::string& outKey)
 {
     const auto* locale = dynamic_cast<const LocaleMarkupExtension*>(&extension);
     if (!locale) {
-        return false;
+        return NeoWPF::Success<bool>{false};
     }
 
-    outKey = NeoWPF::Platform::WideToUtf8(locale->GetKey());
-    return !outKey.empty();
+    auto key = NeoWPF::Platform::WideToUtf8(locale->GetKey());
+    if (key.Fail()) {
+        return NeoWPF::Fail<std::string>{key.Error()};
+    }
+    outKey = std::move(key).Value();
+    return NeoWPF::Success<bool>{!outKey.empty()};
 }
 
 void RegisterXamlMarkupExtensions()
@@ -325,12 +331,15 @@ void RegisterXamlMarkupExtensions()
                 return NeoWPF::Fail<std::string>{"Locale key is required"};
             }
 
-            const auto wideKey = NeoWPF::Platform::Utf8ToWide(key);
-            if (wideKey.empty()) {
-                return NeoWPF::Fail<std::string>{"Locale key is not valid UTF-8"};
+            auto wideKey = NeoWPF::Platform::Utf8ToWide(key);
+            if (wideKey.Fail()) {
+                return NeoWPF::Fail<std::string>{wideKey.Error()};
+            }
+            if (wideKey.Value().empty()) {
+                return NeoWPF::Fail<std::string>{"Locale key is empty"};
             }
             return NeoWPF::Success<std::shared_ptr<XamlMarkupExtension>>{
-                std::make_shared<LocaleMarkupExtension>(wideKey)};
+                std::make_shared<LocaleMarkupExtension>(std::move(wideKey).Value())};
         });
 }
 

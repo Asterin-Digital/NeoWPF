@@ -22,10 +22,12 @@ const std::string ValidManifest = R"({
     },
     "platforms": {
         "windows": {
+            "entry_object_path": "Windows/Entry/NeoWPF.Windows.Entry.obj",
             "debug": {"libraries": ["lib/windows/debug/NeoWPF.lib"]},
             "release": {"libraries": ["lib/windows/release/NeoWPF.lib"]}
         },
         "linux": {
+            "entry_object_path": "Linux/Entry/NeoWPF.Linux.Entry.o",
             "debug": {"libraries": ["lib/linux/debug/libNeoWPF.a"]},
             "release": {"libraries": ["lib/linux/release/libNeoWPF.a"]}
         },
@@ -91,6 +93,7 @@ TEST(SdkManifestTests, SelectsAndroidLibraryPaths) {
     ASSERT_TRUE(release);
     EXPECT_EQ(release->debugLibraryPath, "lib/android/debug/libNeoWPF.a");
     EXPECT_EQ(release->releaseLibraryPath, "lib/android/release/libNeoWPF.a");
+    EXPECT_TRUE(release->entryObjectPath.empty());
 }
 
 TEST(SdkManifestTests, RejectsUnsupportedSchemaVersion) {
@@ -114,16 +117,34 @@ TEST(SdkManifestTests, RejectsMoreThanOneLibraryPerConfiguration) {
     EXPECT_TRUE(RejectsManifest(manifest.dump(), "Windows"));
 }
 
+TEST(SdkManifestTests, RejectsDesktopManifestWithoutEntryObject)
+{
+    auto manifest = nlohmann::json::parse(ValidManifest);
+    manifest["platforms"]["windows"].erase("entry_object_path");
+
+    EXPECT_TRUE(RejectsManifest(manifest.dump(), "Windows"));
+}
+
+TEST(SdkManifestTests, RejectsUnsafeEntryObjectPath)
+{
+    auto manifest = nlohmann::json::parse(ValidManifest);
+    manifest["platforms"]["windows"]["entry_object_path"] = "../outside.obj";
+
+    EXPECT_TRUE(RejectsManifest(manifest.dump(), "Windows"));
+}
+
 TEST(SdkManifestTests, InstallsSelectedPathsAndPreservesIncludeRoots) {
     TemporarySdkDirectory temporaryDirectory;
     const auto archiveRoot = temporaryDirectory.Path() / "archive";
     const auto sdkRoot = temporaryDirectory.Path() / "installed";
     std::filesystem::create_directories(archiveRoot / "lib/windows/debug");
     std::filesystem::create_directories(archiveRoot / "lib/windows/release");
+    std::filesystem::create_directories(archiveRoot / "Windows/Entry");
     std::filesystem::create_directories(archiveRoot / "include/NeoWPF");
     std::filesystem::create_directories(archiveRoot / "third_party/include/NeoNaml");
     std::ofstream(archiveRoot / "lib/windows/debug/NeoWPF.lib");
     std::ofstream(archiveRoot / "lib/windows/release/NeoWPF.lib");
+    std::ofstream(archiveRoot / "Windows/Entry/NeoWPF.Windows.Entry.obj");
     std::ofstream(archiveRoot / "include/NeoWPF/NeoWPF.h");
     std::ofstream(archiveRoot / "third_party/include/NeoNaml/NeoNaml.h");
     std::ofstream(archiveRoot / "LICENSE");
@@ -134,6 +155,8 @@ TEST(SdkManifestTests, InstallsSelectedPathsAndPreservesIncludeRoots) {
 
     EXPECT_TRUE(std::filesystem::is_regular_file(sdkRoot / "Debug/NeoWPF.lib"));
     EXPECT_TRUE(std::filesystem::is_regular_file(sdkRoot / "Release/NeoWPF.lib"));
+    EXPECT_TRUE(std::filesystem::is_regular_file(
+        sdkRoot / "Entry/NeoWPF.Windows.Entry.obj"));
     EXPECT_TRUE(std::filesystem::is_regular_file(sdkRoot / "LICENSE"));
     EXPECT_TRUE(std::filesystem::is_regular_file(sdkRoot / "include/NeoWPF/NeoWPF.h"));
     EXPECT_TRUE(std::filesystem::is_regular_file(sdkRoot / "third_party/include/NeoNaml/NeoNaml.h"));
@@ -157,16 +180,42 @@ TEST(SdkManifestTests, InstallerRejectsUnsafeLibraryPaths) {
         temporaryDirectory.Path() / "installed"));
 }
 
+TEST(SdkManifestTests, InstallerRejectsMissingEntryObject)
+{
+    TemporarySdkDirectory temporaryDirectory;
+    const auto archiveRoot = temporaryDirectory.Path() / "archive";
+    const auto sdkRoot = temporaryDirectory.Path() / "installed";
+    std::filesystem::create_directories(archiveRoot / "lib/windows/debug");
+    std::filesystem::create_directories(archiveRoot / "lib/windows/release");
+    std::filesystem::create_directories(archiveRoot / "include/NeoWPF");
+    std::filesystem::create_directories(archiveRoot / "third_party/include/NeoNaml");
+    std::ofstream(archiveRoot / "lib/windows/debug/NeoWPF.lib");
+    std::ofstream(archiveRoot / "lib/windows/release/NeoWPF.lib");
+    std::ofstream(archiveRoot / "include/NeoWPF/NeoWPF.h");
+    std::ofstream(archiveRoot / "third_party/include/NeoNaml/NeoNaml.h");
+    std::ofstream(archiveRoot / "LICENSE");
+
+    const auto release = NeoPM::Core::SdkManifestParser::Parse(ValidManifest, "Windows", "x64");
+    ASSERT_TRUE(release);
+
+    EXPECT_FALSE(NeoPM::Core::SdkArchiveInstaller::Install(
+        *release,
+        archiveRoot,
+        sdkRoot));
+}
+
 TEST(SdkManifestTests, InstallsPackNeoWpfCombinedRootLayout) {
     TemporarySdkDirectory temporaryDirectory;
     const auto archiveRoot = temporaryDirectory.Path() / "archive";
     const auto sdkRoot = temporaryDirectory.Path() / "installed";
     std::filesystem::create_directories(archiveRoot / "Windows/Debug");
     std::filesystem::create_directories(archiveRoot / "Windows/Release");
+    std::filesystem::create_directories(archiveRoot / "Windows/Entry");
     std::filesystem::create_directories(archiveRoot / "NeoWPF");
     std::filesystem::create_directories(archiveRoot / "NeoNaml");
     std::ofstream(archiveRoot / "Windows/Debug/NeoWPF.Windows.Debug.0.1.0.lib");
     std::ofstream(archiveRoot / "Windows/Release/NeoWPF.Windows.Release.0.1.0.lib");
+    std::ofstream(archiveRoot / "Windows/Entry/NeoWPF.Windows.Entry.obj");
     std::ofstream(archiveRoot / "NeoWPF/Control.h");
     std::ofstream(archiveRoot / "NeoNaml/Document.h");
     std::ofstream(archiveRoot / "LICENSE");
@@ -177,6 +226,8 @@ TEST(SdkManifestTests, InstallsPackNeoWpfCombinedRootLayout) {
         "Windows/Debug/NeoWPF.Windows.Debug.0.1.0.lib"};
     manifest["platforms"]["windows"]["release"]["libraries"] = {
         "Windows/Release/NeoWPF.Windows.Release.0.1.0.lib"};
+    manifest["platforms"]["windows"]["entry_object_path"] =
+        "Windows/Entry/NeoWPF.Windows.Entry.obj";
     const auto release = NeoPM::Core::SdkManifestParser::Parse(
         manifest.dump(), "Windows", "x64");
     ASSERT_TRUE(release);

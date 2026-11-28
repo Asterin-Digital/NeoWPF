@@ -13,6 +13,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace NeoWPF::Diagnostics {
@@ -54,10 +55,18 @@ std::vector<std::wstring> CaptureCallStackText()
 
 void EmitCrashReport(const CrashContext& context)
 {
+    const auto toUtf8 = [](const std::wstring& value) {
+        auto converted = NeoWPF::Platform::WideToUtf8(value);
+        if (converted.Fail()) {
+            return std::string("Wide-to-UTF-8 conversion failed: ") + converted.Error();
+        }
+        return std::move(converted).Value();
+    };
+
     if (!context.message.empty()) {
-        Catastrophic("Crash report: %s", NeoWPF::Platform::WideToUtf8(context.message).c_str());
+        Catastrophic("Crash report: %s", toUtf8(context.message).c_str());
     } else {
-        Catastrophic("Crash report: %s", NeoWPF::Platform::WideToUtf8(context.description).c_str());
+        Catastrophic("Crash report: %s", toUtf8(context.description).c_str());
     }
 
     if (context.exceptionCode != 0) {
@@ -65,21 +74,21 @@ void EmitCrashReport(const CrashContext& context)
     }
 
     if (!context.exceptionType.empty()) {
-        Catastrophic("Exception type: %s", NeoWPF::Platform::WideToUtf8(context.exceptionType).c_str());
+        Catastrophic("Exception type: %s", toUtf8(context.exceptionType).c_str());
     }
 
     if (!context.source.empty()) {
-        Catastrophic("Source: %s", NeoWPF::Platform::WideToUtf8(context.source).c_str());
+        Catastrophic("Source: %s", toUtf8(context.source).c_str());
     }
 
     if (!context.modulePath.empty()) {
-        Catastrophic("Module: %s", NeoWPF::Platform::WideToUtf8(context.modulePath).c_str());
+        Catastrophic("Module: %s", toUtf8(context.modulePath).c_str());
     }
 
     if (!context.callStack.empty()) {
         Catastrophic("Call stack:");
         for (const auto& frame : context.callStack) {
-            Catastrophic("  %s", NeoWPF::Platform::WideToUtf8(frame).c_str());
+            Catastrophic("  %s", toUtf8(frame).c_str());
         }
     }
 }

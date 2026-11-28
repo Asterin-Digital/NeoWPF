@@ -196,8 +196,13 @@ bool BitmapImage::TryLoad()
         return false;
     }
 
-    const std::string uriStr = NeoWPF::Platform::WideToUtf8(m_uriSource);
-    const std::string cacheKey = uriStr + "_" +
+    auto uriStr = NeoWPF::Platform::WideToUtf8(m_uriSource);
+    if (uriStr.Fail()) {
+        NeoWPF::Diagnostics::Catastrophic(
+            "BitmapImage::TryLoad URI conversion failed: %s", uriStr.Error().c_str());
+        return false;
+    }
+    const std::string cacheKey = uriStr.Value() + "_" +
                                 std::to_string(m_decodePixelWidth) + "x" + std::to_string(m_decodePixelHeight);
 
     if (m_cachePolicy == CachePolicy::OnLoad) {
@@ -326,10 +331,18 @@ void BitmapImage::BeginAsyncLoad() {
 }
 
 void BitmapImage::PerformAsyncLoad() {
-    const std::string cacheKey = NeoWPF::Platform::WideToUtf8(m_uriSource) + "_" +
-                                std::to_string(m_decodePixelWidth) + "x" + std::to_string(m_decodePixelHeight);
+    auto uriStr = NeoWPF::Platform::WideToUtf8(m_uriSource);
+    if (uriStr.Fail()) {
+        NeoWPF::Diagnostics::Catastrophic(
+            "BitmapImage::PerformAsyncLoad URI conversion failed: %s",
+            uriStr.Error().c_str());
+    }
+    const std::string cacheKey = uriStr.Success()
+        ? uriStr.Value() + "_" + std::to_string(m_decodePixelWidth) + "x" +
+            std::to_string(m_decodePixelHeight)
+        : std::string{};
 
-    if (m_cachePolicy != CachePolicy::None) {
+    if (uriStr.Success() && m_cachePolicy != CachePolicy::None) {
         std::lock_guard<std::mutex> lock(g_cacheMutex);
         auto it = g_imageCache.find(cacheKey);
         if (it != g_imageCache.end()) {
@@ -346,7 +359,7 @@ void BitmapImage::PerformAsyncLoad() {
         }
     }
 
-    if (TryLoad()) {
+    if (uriStr.Success() && TryLoad()) {
         if (m_cachePolicy != CachePolicy::None && m_cachePolicy != CachePolicy::OnDemand) {
             std::lock_guard<std::mutex> lock(g_cacheMutex);
             g_imageCache[cacheKey] = std::make_shared<BitmapSource>(m_width, m_height, m_pixels);

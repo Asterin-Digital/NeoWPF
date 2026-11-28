@@ -81,6 +81,28 @@ std::optional<std::filesystem::path> SdkLocator::FindLibrary(
     return std::nullopt;
 }
 
+std::optional<std::filesystem::path> SdkLocator::FindEntryObject(
+    const std::string& architecture,
+    const std::string& version) const
+{
+    const auto sdkPath = FindSdk(architecture, version);
+    if (!sdkPath) {
+        return std::nullopt;
+    }
+
+    std::ifstream entryObjectFile(*sdkPath / ".entry_object");
+    std::string relativePath;
+    if (!entryObjectFile || !std::getline(entryObjectFile, relativePath) ||
+        !SdkManifestParser::IsSafeRelativePath(relativePath)) {
+        return std::nullopt;
+    }
+
+    const auto entryObjectPath = *sdkPath / relativePath;
+    return std::filesystem::is_regular_file(entryObjectPath)
+        ? std::optional<std::filesystem::path>(entryObjectPath)
+        : std::nullopt;
+}
+
 std::vector<std::filesystem::path> SdkLocator::FindIncludeDirectories(
     const std::string& architecture) const
 {
@@ -146,7 +168,11 @@ bool SdkLocator::HasAnySdk() const {
             auto architecture = entry.path().filename().string().substr(m_platform.size() + 1);
             if (!FindIncludeDirectories(architecture).empty() &&
                 FindLibrary("debug", architecture) &&
-                FindLibrary("release", architecture)) {
+                FindLibrary("release", architecture) &&
+                (m_platform == "Android" ||
+                 FindEntryObject(
+                     architecture,
+                     SdkVersionManager(m_sdkRoot).GetInstalledVersion(m_platform, architecture)))) {
                 return true;
             }
         }

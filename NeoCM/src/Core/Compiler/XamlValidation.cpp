@@ -107,15 +107,13 @@ bool ValidateNode(const XamlNode& node,
         }
 
         if (!value.empty() && value.front() == '{') {
-            std::string extensionError;
-            if (!NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
-                    value, {node.Line, node.Column}, extensionError)) {
-                error = (extensionError.empty() ? "invalid markup extension" : extensionError) + Location(node);
+            auto extensionResult = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
+                value, {node.Line, node.Column});
+            if (extensionResult.Fail()) {
+                error = extensionResult.Error() + Location(node);
                 return false;
             }
-
-            const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
-                value, {node.Line, node.Column}, extensionError);
+            auto extension = std::move(extensionResult).Value();
             std::string resourceKey;
             if (extension && NeoWPF::UI::Markup::Xaml::TryGetXamlStaticResource(*extension, resourceKey)) {
                 const auto found = std::find_if(

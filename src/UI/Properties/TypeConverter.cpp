@@ -16,14 +16,14 @@ bool TypeConverter::TryConvertToCode(const std::string&, std::string& expression
     return false;
 }
 
-std::string TypeConverter::ConvertToString(const std::any& value) const {
+NeoWPF::Result<std::string> TypeConverter::ConvertToString(const std::any& value) const {
     if (value.type() == typeid(std::string)) {
-        return std::any_cast<std::string>(value);
+        return NeoWPF::Success<std::string>{std::any_cast<std::string>(value)};
     }
     if (value.type() == typeid(std::wstring)) {
         return NeoWPF::Platform::WideToUtf8(std::any_cast<std::wstring>(value));
     }
-    return {};
+    return NeoWPF::Fail<std::string>{"Value cannot be converted to a string"};
 }
 
 }

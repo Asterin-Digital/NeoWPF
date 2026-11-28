@@ -107,10 +107,13 @@ bool SdkManager::RefreshSdks() {
             if (!candidate) continue;
 
             SdkLocator locator(m_sdkRoot, platform);
+            const bool entryObjectInstalled = platform == "Android" ||
+                locator.FindEntryObject(architecture, candidate->version).has_value();
             const bool versionAlreadyInstalled =
                 !locator.FindIncludeDirectories(architecture, candidate->version).empty() &&
                 locator.FindLibrary("debug", architecture, candidate->version) &&
-                locator.FindLibrary("release", architecture, candidate->version);
+                locator.FindLibrary("release", architecture, candidate->version) &&
+                entryObjectInstalled;
             if (versionAlreadyInstalled) {
                 versionManager.SaveInstalledVersion(platform, architecture, candidate->version);
                 continue;
@@ -236,7 +239,9 @@ std::optional<SdkInstallation> SdkManager::GetSdkInstallation(
     auto includeDirectories = locator.FindIncludeDirectories(architecture, version);
     auto debugLibraryPath = locator.FindLibrary("debug", architecture, version);
     auto releaseLibraryPath = locator.FindLibrary("release", architecture, version);
-    if (includeDirectories.empty() || !debugLibraryPath || !releaseLibraryPath) {
+    auto entryObjectPath = locator.FindEntryObject(architecture, version);
+    if (includeDirectories.empty() || !debugLibraryPath || !releaseLibraryPath ||
+        (platform != "Android" && !entryObjectPath)) {
         return std::nullopt;
     }
 
@@ -244,7 +249,8 @@ std::optional<SdkInstallation> SdkManager::GetSdkInstallation(
         version,
         std::move(includeDirectories),
         std::move(*debugLibraryPath),
-        std::move(*releaseLibraryPath)};
+        std::move(*releaseLibraryPath),
+        entryObjectPath.value_or(std::filesystem::path{})};
 }
 
 bool SdkManager::HasLocalSdks() const {

@@ -20,7 +20,8 @@ namespace NeoPM::Core::Commands {
             const std::string& sdkSource = "production",
             const std::string& sdkConfiguration = "debug",
             const std::vector<std::string>& sdkIncludeDirectories = {},
-            const std::optional<std::string>& sdkLibraryPath = std::nullopt
+            const std::optional<std::string>& sdkLibraryPath = std::nullopt,
+            const std::optional<std::string>& sdkEntryObjectPath = std::nullopt
         );
 
         int Execute() override;
@@ -34,6 +35,7 @@ namespace NeoPM::Core::Commands {
         std::string m_sdkConfiguration;
         std::vector<std::string> m_sdkIncludeDirectories;
         std::optional<std::string> m_sdkLibraryPath;
+        std::optional<std::string> m_sdkEntryObjectPath;
 
         bool ValidateProjectName() const;
         bool ValidateSdkSelection() const;

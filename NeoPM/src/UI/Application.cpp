@@ -11,12 +11,11 @@ namespace NeoPM::UI {
 int Run()
 {
     NeoWPF::Core::Application::Initialize();
-    if (!NeoWPF::Core::Application::LoadFontFromMemory(
-        const auto fontResult = NeoWPF::Core::Application::LoadFontFromMemory(
-            Resources::FontData,
-            Resources::FontDataSize,
-            Theme::FontFamily);
-        if (fontResult.Fail()) {
+    const auto fontResult = NeoWPF::Core::Application::LoadFontFromMemory(
+        Resources::FontData,
+        Resources::FontDataSize,
+        Theme::FontFamily);
+    if (fontResult.Fail()) {
         NeoPM::Utils::Logger::Instance().Error(
             "GuiApplication", "Failed to register embedded Noto Sans font");
     }

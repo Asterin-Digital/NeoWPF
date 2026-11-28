@@ -4,6 +4,7 @@
 #include <NeoWPF/Platform/Linux/LImageDecoding.h>
 
 #include <NeoWPF/Platform/PlatformUtils.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -116,11 +117,17 @@ bool LImageDecoding::DecodeImageFile(const std::wstring& filePath,
         return false;
     }
 
-    const std::string pathUtf8 = NeoWPF::Platform::WideToUtf8(filePath);
+    auto pathUtf8 = NeoWPF::Platform::WideToUtf8(filePath);
+    if (pathUtf8.Fail()) {
+        NeoWPF::Diagnostics::LogWarn(
+            "Image path conversion failed: %s", pathUtf8.Error().c_str());
+        return false;
+    }
     int sourceWidth = 0;
     int sourceHeight = 0;
     int channels = 0;
-    unsigned char* source = stbi_load(pathUtf8.c_str(), &sourceWidth, &sourceHeight, &channels, 4);
+    unsigned char* source = stbi_load(
+        pathUtf8.Value().c_str(), &sourceWidth, &sourceHeight, &channels, 4);
     if (!source) {
         return false;
     }

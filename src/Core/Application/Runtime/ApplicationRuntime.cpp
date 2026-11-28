@@ -519,17 +519,49 @@ void ShutdownApp()
         if (s_appState.applicationHost) {
             s_appState.applicationHost->Shutdown();
             s_appState.applicationHost->RequestQuit(0);
-        } else {
-            NeoWPF::Platform::CurrentPlatform()->Windowing().RequestQuit(0);
+        } else if (auto* platform = NeoWPF::Platform::CurrentPlatform()) {
+            platform->Windowing().RequestQuit(0);
         }
     }
     if (s_appState.renderThread.joinable()) {
         s_appState.renderThread.join();
     }
+    try {
+        NeoWPF::Input::InputManager::GetInstance().Reset();
+    } catch (const std::exception& exception) {
+        NeoWPF::Diagnostics::Catastrophic(
+            "Input state reset failed during application shutdown: %s", exception.what());
+    } catch (...) {
+        NeoWPF::Diagnostics::Catastrophic(
+            "Input state reset failed during application shutdown");
+    }
+    {
+        std::lock_guard<std::mutex> lock(s_appState.applicationHostMutex);
+        s_appState.applicationHost.reset();
+    }
     {
         std::lock_guard<std::mutex> lock(s_appState.windowSessionsMutex);
         s_appState.windowSessions.clear();
+        s_appState.pendingSurfaceDestroy.clear();
+        s_appState.hasCreatedWindow = false;
+        s_appState.renderThreadShuttingDown = false;
     }
+    s_appState.applicationSession.SetContentHost({});
+    s_appState.developerWarningOverlayHost.reset();
+    s_appState.textInspectionOverlayHost.reset();
+    s_appState.developerOverlayVisuals.clear();
+    s_appState.textInspectionOverlayVisuals.clear();
+    s_appState.pendingDeveloperMessages.clear();
+    s_appState.pendingTextInspectionLines.clear();
+    s_appState.renderThreadInitialized = false;
+    s_appState.renderThreadInitFailed = false;
+    s_appState.layoutDebugLogging = false;
+    s_appState.exitCode = 0;
+    {
+        std::lock_guard<std::mutex> lock(s_appState.renderRequestMutex);
+        s_appState.renderRequested = false;
+    }
+    s_appState.surfaceDestroyCondition.notify_all();
 }
 
 int RunMessageLoop()

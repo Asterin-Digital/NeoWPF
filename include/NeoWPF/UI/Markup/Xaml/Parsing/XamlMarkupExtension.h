@@ -3,6 +3,12 @@ Apache 2.0 License — Copyright (c) 2026 Asterin Digital
 See LICENSE file in the project root for full license text.
 */
 
+/*
+Do not include this in your project!
+This is a NeoWPF internal header file.
+Include the master umbrella instead via #include <NeoWPF/NeoWPF.h>
+*/
+
 #pragma once
 
 #include <any>
@@ -107,7 +113,9 @@ bool TryGetXamlBinding(const XamlMarkupExtension& extension, XamlBindingInfo& ou
 
 bool TryGetXamlStaticResource(const XamlMarkupExtension& extension, std::string& outKey);
 
-bool TryGetXamlLocaleKey(const XamlMarkupExtension& extension, std::string& outKey);
+NeoWPF::Result<bool> TryGetXamlLocaleKey(
+    const XamlMarkupExtension& extension,
+    std::string& outKey);
 
 void RegisterXamlMarkupExtensions();
 

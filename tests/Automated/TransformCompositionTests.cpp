@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #if defined(_WIN32)
-#include <Windows.h>
+#include <windows.h>
 #ifdef CreateWindow
 #undef CreateWindow
 #endif

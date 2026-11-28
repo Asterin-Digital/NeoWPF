@@ -7,6 +7,7 @@
 #include <chrono>
 #include <fstream>
 #include <thread>
+#include <vector>
 
 namespace NeoPM::Net
 {
@@ -90,13 +91,47 @@ namespace NeoPM::Net
             }
         }
 
+        std::wstring ConversionErrorMessage(
+            const wchar_t* field,
+            const std::string& error)
+        {
+            std::wstring message = L"Failed to convert ";
+            message += field;
+            const auto wideError = NeoWPF::Platform::Utf8ToWide(error);
+            if (wideError.Success()) {
+                message += L": ";
+                message += wideError.Value();
+            } else {
+                message += L".";
+            }
+            return message;
+        }
+
+        DownloadOutcome MakeConversionError(
+            DownloadResult result,
+            const wchar_t* field,
+            const std::string& error)
+        {
+            DownloadOutcome outcome;
+            outcome.result = result;
+            outcome.message = ConversionErrorMessage(field, error);
+            return outcome;
+        }
+
         DownloadOutcome MakeCurlError(CURLcode code, const RequestContext& context)
         {
             DownloadOutcome outcome;
             outcome.result = context.writeFailed ? DownloadResult::IoError :
                 context.callbackCancelled ? DownloadResult::Cancelled : ClassifyError(code);
             outcome.win32Error = static_cast<uint32_t>(code);
-            outcome.message = NeoWPF::Platform::Utf8ToWide(curl_easy_strerror(code));
+            auto message = NeoWPF::Platform::Utf8ToWide(curl_easy_strerror(code));
+            if (message.Success()) {
+                outcome.message = std::move(message).Value();
+            } else {
+                outcome.message = ConversionErrorMessage(
+                    L"curl error message",
+                    message.Error());
+            }
             outcome.bytesWritten = context.bytesReceived;
             return outcome;
         }
@@ -160,18 +195,45 @@ namespace NeoPM::Net
 
         auto* handle = static_cast<CURL*>(m_handle);
         auto urlUtf8 = NeoWPF::Platform::WideToUtf8(url);
+        if (urlUtf8.Fail()) {
+            return MakeConversionError(
+                DownloadResult::InvalidUrl,
+                L"request URL",
+                urlUtf8.Error());
+        }
         auto userAgentUtf8 = NeoWPF::Platform::WideToUtf8(m_options.userAgent);
-        curl_slist* headers = nullptr;
+        if (userAgentUtf8.Fail()) {
+            return MakeConversionError(
+                DownloadResult::Unknown,
+                L"HTTP user agent",
+                userAgentUtf8.Error());
+        }
+
+        std::vector<std::string> headersUtf8;
+        headersUtf8.reserve(m_options.extraHeaders.size());
         for (const auto& header : m_options.extraHeaders)
         {
             auto headerUtf8 = NeoWPF::Platform::WideToUtf8(header);
-            headers = curl_slist_append(headers, headerUtf8.c_str());
+            if (headerUtf8.Fail()) {
+                return MakeConversionError(
+                    DownloadResult::Unknown,
+                    L"HTTP header",
+                    headerUtf8.Error());
+            }
+            headersUtf8.push_back(std::move(headerUtf8).Value());
+        }
+
+        auto urlString = std::move(urlUtf8).Value();
+        auto userAgent = std::move(userAgentUtf8).Value();
+        curl_slist* headers = nullptr;
+        for (const auto& header : headersUtf8) {
+            headers = curl_slist_append(headers, header.c_str());
         }
 
         RequestContext context{&onProgress, &onChunk};
         curl_easy_reset(handle);
-        curl_easy_setopt(handle, CURLOPT_URL, urlUtf8.c_str());
-        curl_easy_setopt(handle, CURLOPT_USERAGENT, userAgentUtf8.c_str());
+        curl_easy_setopt(handle, CURLOPT_URL, urlString.c_str());
+        curl_easy_setopt(handle, CURLOPT_USERAGENT, userAgent.c_str());
         curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_setopt(handle, CURLOPT_FAILONERROR, 0L);

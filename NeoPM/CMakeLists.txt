@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
+set(CMAKE_POLICY_DEFAULT_CMP0135 NEW)
+
 project(NeoPM LANGUAGES CXX)
 
 include(CTest)
@@ -67,15 +69,20 @@ if(WIN32)
     set(NEOWPF_PLATFORM_DIR "Windows")
     set(NEOWPF_LIBRARY_SUFFIX ".lib")
     set(NEOWPF_LIBRARY_PREFIX "NeoWPF.Windows.${NEOWPF_CONFIGURATION}.${NEOWPF_VERSION}")
+    set(NEOWPF_ENTRY_OBJECT_FILENAME "NeoWPF.Windows.Entry.obj")
     set(NEOWPF_LIBRARY_CANDIDATES
         "${NEOWPF_ROOT}/NWpfBuild/Windows/${NEOWPF_CONFIGURATION}/${NEOWPF_LIBRARY_PREFIX}${NEOWPF_LIBRARY_SUFFIX}")
 else()
     set(NEOWPF_PLATFORM_DIR "Linux")
     set(NEOWPF_LIBRARY_SUFFIX ".a")
     set(NEOWPF_LIBRARY_PREFIX "NeoWPF.Linux.${NEOWPF_CONFIGURATION}.${NEOWPF_VERSION}")
+    set(NEOWPF_ENTRY_OBJECT_FILENAME "NeoWPF.Linux.Entry.o")
     set(NEOWPF_LIBRARY_CANDIDATES
         "${NEOWPF_ROOT}/NWpfBuild/Linux/${NEOWPF_CONFIGURATION}/${NEOWPF_LIBRARY_PREFIX}${NEOWPF_LIBRARY_SUFFIX}")
 endif()
+
+set(NEOWPF_ENTRY_OBJECT
+    "${NEOWPF_ROOT}/NWpfBuild/${NEOWPF_PLATFORM_DIR}/${NEOWPF_CONFIGURATION}/${NEOWPF_ENTRY_OBJECT_FILENAME}")
 
 set(NEOWPF_DEFAULT_LIBRARY "")
 foreach(_neowpf_candidate IN LISTS NEOWPF_LIBRARY_CANDIDATES)
@@ -89,6 +96,12 @@ if(NOT NEOWPF_DEFAULT_LIBRARY)
     message(FATAL_ERROR
         "Could not locate a NeoWPF library under ${NEOWPF_ROOT}/NWpfBuild/${NEOWPF_PLATFORM_DIR}/${NEOWPF_CONFIGURATION}. "
         "Expected a versioned artifact NeoWPF.${NEOWPF_PLATFORM_DIR}.${NEOWPF_CONFIGURATION}.${NEOWPF_VERSION}.lib/a")
+endif()
+
+if(NOT EXISTS "${NEOWPF_ENTRY_OBJECT}")
+    message(FATAL_ERROR
+        "Could not locate the NeoWPF desktop entry object: ${NEOWPF_ENTRY_OBJECT}. "
+        "Build NeoWPF for ${NEOWPF_PLATFORM_DIR} ${NEOWPF_CONFIGURATION} first.")
 endif()
 
 set(NEOWPF_LIBRARY "${NEOWPF_DEFAULT_LIBRARY}" CACHE FILEPATH
@@ -129,9 +142,14 @@ if(UNIX AND NOT APPLE)
     find_package(Vulkan REQUIRED)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(WAYLAND REQUIRED IMPORTED_TARGET wayland-client)
+    find_package(X11 REQUIRED)
+    if(NOT X11_Xfixes_FOUND)
+        message(FATAL_ERROR "NeoWPF requires libXfixes development files on Linux.")
+    endif()
     pkg_check_modules(XKBCOMMON REQUIRED IMPORTED_TARGET xkbcommon)
     set_target_properties(NeoWPF::NeoWPF PROPERTIES
-        INTERFACE_LINK_LIBRARIES "Vulkan::Vulkan;PkgConfig::WAYLAND;PkgConfig::XKBCOMMON"
+        INTERFACE_LINK_LIBRARIES
+            "Vulkan::Vulkan;PkgConfig::WAYLAND;${X11_X11_LIB};${X11_Xfixes_LIB};PkgConfig::XKBCOMMON"
     )
 endif()
 
@@ -154,6 +172,7 @@ include(cmake/NeoPMSources.cmake)
 add_executable(NeoPM
     ${NEOPM_SOURCES}
     ${NEOPM_HEADERS}
+    "${NEOWPF_ENTRY_OBJECT}"
 )
 
 set_target_properties(NeoPM PROPERTIES
@@ -205,7 +224,7 @@ target_link_libraries(
 )
 
 if(WIN32)
-    target_link_libraries(NeoPM PRIVATE advapi32)
+    target_link_libraries(NeoPM PRIVATE advapi32 shell32)
 endif()
 
     target_compile_definitions(

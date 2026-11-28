@@ -1,6 +1,7 @@
 #include <NeoWPF/Platform/Linux/X11/XWindow.h>
 
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Input/InputManager.h>
 #include <NeoWPF/Platform/Linux/LKeyboard.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
@@ -12,6 +13,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <utility>
 
 namespace NeoWPF::Platform::Linux {
 namespace {
@@ -73,7 +75,12 @@ XWindow::XWindow(XWindowing& windowing, const wchar_t* title, int width, int hei
     }
 
     const auto titleUtf8 = NeoWPF::Platform::WideToUtf8(m_title);
-    XStoreName(m_display, m_window, titleUtf8.c_str());
+    if (titleUtf8.Fail()) {
+        NeoWPF::Diagnostics::LogWarn(
+            "X11 window title conversion failed: %s", titleUtf8.Error().c_str());
+    } else {
+        XStoreName(m_display, m_window, titleUtf8.Value().c_str());
+    }
     XClassHint classHint{};
     classHint.res_name = const_cast<char*>("NeoWPF");
     classHint.res_class = const_cast<char*>("NeoWPF");
@@ -276,9 +283,17 @@ void XWindow::HandleEvent(XEvent& event) noexcept
         XLookupString(&event.xkey, text, sizeof(text), &keysym, nullptr);
         const std::uint32_t virtualKey = TranslateXkbKeysymToVirtualKey(
             static_cast<std::uint32_t>(keysym));
-        const std::wstring wideText = text[0] != '\0'
-            ? NeoWPF::Platform::Utf8ToWide(text)
-            : std::wstring();
+        std::wstring wideText;
+        if (text[0] != '\0') {
+            auto convertedText = NeoWPF::Platform::Utf8ToWide(text);
+            if (convertedText.Fail()) {
+                NeoWPF::Diagnostics::LogWarn(
+                    "X11 keyboard text conversion failed: %s",
+                    convertedText.Error().c_str());
+            } else {
+                wideText = std::move(convertedText).Value();
+            }
+        }
         const wchar_t character = wideText.empty() ? L'\0' : wideText[0];
         NeoWPF::Core::SetInputRoot(this);
         NeoWPF::Input::InputManager::GetInstance().ProcessKeyboardInput(

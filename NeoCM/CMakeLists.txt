@@ -112,13 +112,7 @@ target_include_directories(
 if(TARGET "${NEOWPF_FOUNDATION_TARGET}")
     target_link_libraries(NeoCM PRIVATE "${NEOWPF_FOUNDATION_TARGET}")
 elseif(UNIX)
-    target_link_libraries(
-        NeoCM
-        PRIVATE
-            "-Wl,--start-group"
-            "${NEOWPF_LIBRARY}"
-            "-Wl,--end-group"
-    )
+    target_link_libraries(NeoCM PRIVATE "${NEOWPF_LIBRARY}")
 else()
     target_link_libraries(NeoCM PRIVATE "${NEOWPF_LIBRARY}")
 endif()

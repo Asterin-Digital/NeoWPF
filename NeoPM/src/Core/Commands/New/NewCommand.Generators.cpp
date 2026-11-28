@@ -25,6 +25,7 @@ namespace NeoPM::Core::Commands {
             "namespace " + m_projectName + " {\n"
             "    class MainWindow : public NeoWPF::UI::Window {\n"
             "    public:\n"
+            "        MainWindow();\n"
             "        void InitializeComponent();\n"
             "    };\n"
             "}\n";
@@ -83,6 +84,7 @@ namespace NeoPM::Core::Commands {
             "namespace " + m_projectName + " {\n"
             "    class App : public NeoWPF::Core::Application {\n"
             "    public:\n"
+            "        App();\n"
             "        void InitializeComponent();\n"
             "    };\n"
             "}\n";
@@ -92,28 +94,35 @@ namespace NeoPM::Core::Commands {
             "#include <" + m_projectName + "/Xaml.h>\n"
             "#include <" + m_projectName + "/AssemblyInfo.h>\n"
             "#include <" + m_projectName + "/Generated/Resources.generated.h>\n"
-            "#include <filesystem>\n\n"
+            "\n"
             "namespace " + m_projectName + " {\n"
             "    App::App()\n"
             "    {\n"
             "        InitializeComponent();\n"
             "    }\n"
             "}\n\n"
-            "int main(int, char** arguments) {\n"
-            "    NeoWPF::Core::Application::Initialize();\n"
+            "int NeoWPF::Core::Entry(const NeoWPF::Core::LaunchContext& launch) {\n"
             "    auto app = std::make_shared<" + m_projectName + "::App>();\n"
             "    NeoWPF::Core::Application::SetCurrent(app);\n"
+            "    NeoWPF::Core::Application::Initialize();\n"
             "    auto& runtimeApp = NeoWPF::Core::Application::Current();\n\n"
+            "    const auto& executableDirectory = launch.ExecutableDirectory();\n"
+            "    if (executableDirectory.Fail()) {\n"
+            "        NeoWPF::Diagnostics::Catastrophic(\n"
+            "            \"Failed to resolve the application executable directory: %s\",\n"
+            "            executableDirectory.Error().c_str());\n"
+            "        return 1;\n"
+            "    }\n\n"
             "    // Register resource providers\n"
-            "    runtimeApp.Resources().RegisterProvider(\n"
-            "        std::make_unique<NeoWPF::ExternalFileResourceProvider>(\n"
-            "            std::filesystem::absolute(arguments[0]).parent_path()));\n"
+            "    if (!executableDirectory.Value().empty()) {\n"
+            "        runtimeApp.Resources().RegisterProvider(\n"
+            "            std::make_unique<NeoWPF::ExternalFileResourceProvider>(\n"
+            "                executableDirectory.Value()));\n"
+            "    }\n"
             "    " + m_projectName + "::Resources::RegisterAll();\n\n"
             "    auto mainWindow = std::make_shared<" + m_projectName + "::MainWindow>();\n"
             "    auto window = runtimeApp.CreateWindow(mainWindow, 900, 680);\n\n"
-            "    auto result = NeoWPF::Core::Application::Run();\n"
-            "    NeoWPF::Core::Application::Shutdown();\n"
-            "    return result;\n"
+            "    return NeoWPF::Core::Application::Run();\n"
             "}\n";
 
         auto xamlContent =
@@ -216,6 +225,7 @@ namespace NeoPM::Core::Commands {
             const auto libraryRoot = std::filesystem::path(*m_sdkLibraryPath);
             configuration.debugLibraryPath = findLibrary(libraryRoot / "Debug");
             configuration.releaseLibraryPath = findLibrary(libraryRoot / "Release");
+            configuration.entryObjectPath = std::filesystem::path(*m_sdkEntryObjectPath);
             sdkPlatforms.emplace(NEOPM_SDK_PLATFORM, std::move(configuration));
             logger.Info("NewCommand", "Using user SDK (" + m_sdkConfiguration + ")");
         }
@@ -238,7 +248,8 @@ namespace NeoPM::Core::Commands {
                     installation->version,
                     installation->includeDirectories,
                     installation->debugLibraryPath,
-                    installation->releaseLibraryPath});
+                    installation->releaseLibraryPath,
+                    installation->entryObjectPath});
             }
         }
 

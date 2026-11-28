@@ -75,7 +75,13 @@ WlWindow::WlWindow(WlWindowing& windowing, const wchar_t* title, int width, int 
             if (m_xdgToplevel) {
                 xdg_toplevel_add_listener(m_xdgToplevel, &ToplevelListener, this);
                 const auto titleUtf8 = NeoWPF::Platform::WideToUtf8(m_title);
-                xdg_toplevel_set_title(m_xdgToplevel, titleUtf8.c_str());
+                if (titleUtf8.Fail()) {
+                    NeoWPF::Diagnostics::LogWarn(
+                        "Wayland window title conversion failed: %s",
+                        titleUtf8.Error().c_str());
+                } else {
+                    xdg_toplevel_set_title(m_xdgToplevel, titleUtf8.Value().c_str());
+                }
                 xdg_toplevel_set_app_id(m_xdgToplevel, "NeoWPF");
                 wl_surface_commit(m_surface);
                 wl_display_flush(m_display);

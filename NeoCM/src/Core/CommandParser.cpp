@@ -19,7 +19,13 @@ CommandParser& CommandParser::Instance()
 
 std::unique_ptr<ICommand> CommandParser::Parse(int argc, wchar_t* argv[])
 {
-    const auto args = ParseArguments(argc, argv);
+    auto parsedArguments = ParseArguments(argc, argv);
+    if (parsedArguments.Fail()) {
+        NeoCM::Utils::Logger::Instance().Error(
+            "Failed to parse command-line arguments: " + parsedArguments.Error());
+        return nullptr;
+    }
+    const auto& args = parsedArguments.Value();
 
     if (args.showHelp || args.commandName.empty()) {
         PrintUsage();
@@ -56,41 +62,66 @@ void CommandParser::PrintUsage() const
     NeoCM::Utils::Logger::Instance().PrintUsage();
 }
 
-CommandArguments CommandParser::ParseArguments(int argc, wchar_t* argv[]) const
+NeoWPF::Result<CommandArguments> CommandParser::ParseArguments(int argc, wchar_t* argv[]) const
 {
+    if (argc < 0 || (argc > 0 && !argv)) {
+        return NeoWPF::Fail<std::string>{"Invalid command-line argument array."};
+    }
+
     CommandArguments args;
     std::vector<std::wstring> values;
     for (int i = 1; i < argc; ++i) {
+        if (!argv[i]) {
+            return NeoWPF::Fail<std::string>{
+                "Command-line argument at index " + std::to_string(i) + " is null."};
+        }
         values.emplace_back(argv[i]);
     }
 
     if (values.empty()) {
-        return args;
+        return NeoWPF::Success<CommandArguments>{std::move(args)};
     }
 
-    args.commandName = WideStringToString(values[0].c_str());
+    auto commandName = WideStringToString(values[0]);
+    if (commandName.Fail()) {
+        return NeoWPF::Fail<std::string>{
+            "Failed to convert command name: " + commandName.Error()};
+    }
+    args.commandName = std::move(commandName).Value();
 
     for (size_t i = 1; i < values.size(); ++i) {
-        const std::string value = WideStringToString(values[i].c_str());
+        auto valueResult = WideStringToString(values[i]);
+        if (valueResult.Fail()) {
+            return NeoWPF::Fail<std::string>{
+                "Failed to convert command-line argument at index " +
+                std::to_string(i + 1) + ": " + valueResult.Error()};
+        }
+        const std::string value = std::move(valueResult).Value();
         if (value == "--help" || value == "-h") {
             args.showHelp = true;
         } else if (value == "--version" || value == "-v") {
             args.showVersion = true;
         } else if (value == "--output" || value == "-o") {
             if (i + 1 < values.size()) {
-                args.outputPath = WideStringToString(values[++i].c_str());
+                ++i;
+                auto outputPath = WideStringToString(values[i]);
+                if (outputPath.Fail()) {
+                    return NeoWPF::Fail<std::string>{
+                        "Failed to convert output path: " + outputPath.Error()};
+                }
+                args.outputPath = std::move(outputPath).Value();
             }
         } else if (args.inputPath.empty()) {
             args.inputPath = value;
         }
     }
 
-    return args;
+    return NeoWPF::Success<CommandArguments>{std::move(args)};
 }
 
-std::string CommandParser::WideStringToString(const wchar_t* wide) const
+NeoWPF::Result<std::string> CommandParser::WideStringToString(const std::wstring& wide) const
 {
-    return wide ? NeoWPF::Platform::WideToUtf8(std::wstring(wide)) : std::string{};
+    return NeoWPF::Platform::WideToUtf8(wide);
 }
 
 void CommandParser::PrintCommandHelp(const std::string& commandName) const

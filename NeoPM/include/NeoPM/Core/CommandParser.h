@@ -25,6 +25,7 @@ namespace NeoPM::Core {
         bool sdkConfigurationSpecified = false;
         std::vector<std::string> sdkIncludeDirectories;
         std::optional<std::string> sdkLibraryPath;
+        std::optional<std::string> sdkEntryObjectPath;
         std::optional<std::string> invalidOption;
         bool daemonBackground = false;
 
@@ -36,7 +37,7 @@ namespace NeoPM::Core {
     public:
         static CommandParser& Instance();
 
-        std::unique_ptr<ICommand> Parse(int argc, char* argv[]);
+        std::unique_ptr<ICommand> Parse(const std::vector<std::wstring>& arguments);
         const char* GetVersion() const;
         void PrintUsage() const;
 
@@ -47,7 +48,7 @@ namespace NeoPM::Core {
         CommandParser(const CommandParser&) = delete;
         CommandParser& operator=(const CommandParser&) = delete;
 
-        CommandArguments ParseArguments(int argc, char* argv[]);
+        CommandArguments ParseArguments(const std::vector<std::string>& arguments);
         void PrintCommandHelp(const std::string& commandName) const;
     };
 }

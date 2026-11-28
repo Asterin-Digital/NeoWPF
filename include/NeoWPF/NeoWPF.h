@@ -21,7 +21,7 @@
  * #include <NeoWPF/NeoWPF.h>
  * #include <MyApp/Xaml.h>
  *
- * int main()
+ * int NeoWPF::Core::Entry(const NeoWPF::Core::LaunchContext&)
  * {
  *     auto app = std::make_shared<MyApp::App>();
  *     NeoWPF::Core::Application::SetCurrent(app);
@@ -33,9 +33,7 @@
  *
  *     runtimeApp.CreateWindow(mainWindow, 900, 680);
  *
- *     const auto result = NeoWPF::Core::Application::Run();
- *     NeoWPF::Core::Application::Shutdown();
- *     return result;
+ *     return NeoWPF::Core::Application::Run();
  * }
  *
  * CONTROLS
@@ -73,6 +71,7 @@
 
 ///////////////////////////////////////////////////
 #include <NeoWPF/Core/Application/Application.h>
+#include <NeoWPF/Core/Application/Entry.h>
 #include <NeoWPF/Core/Application/ApplicationTheme.h>
 #include <NeoWPF/Core/Threading/BackgroundExecutor.h>
 #include <NeoWPF/Core/Threading/Cancellation.h>

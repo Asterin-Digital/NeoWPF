@@ -24,6 +24,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace NeoWPF::UI::Markup::Xaml {
@@ -204,10 +205,15 @@ private:
             return false;
         }
         if (record.value.kind == NeoNaml::NamlValueKind::LocaleReference) {
+            auto localeValue = NeoWPF::Platform::Utf8ToWide(record.value.text);
+            if (localeValue.Fail()) {
+                m_error = localeValue.Error();
+                return false;
+            }
             if (!NeoWPF::UI::Localization::LocaleOperations::SetLocale(
                     object,
                     *property,
-                    NeoWPF::Platform::Utf8ToWide(record.value.text))) {
+                    std::move(localeValue).Value())) {
                 m_error = "compiled Locale could not be attached: " + record.value.text;
                 return false;
             }
@@ -224,11 +230,21 @@ private:
             const auto& extension = extensionResult.Value();
 
             std::string localeKey;
-            if (TryGetXamlLocaleKey(*extension, localeKey)) {
+            auto localeKeyResult = TryGetXamlLocaleKey(*extension, localeKey);
+            if (localeKeyResult.Fail()) {
+                m_error = localeKeyResult.Error();
+                return false;
+            }
+            if (localeKeyResult.Value()) {
+                auto wideLocaleKey = NeoWPF::Platform::Utf8ToWide(localeKey);
+                if (wideLocaleKey.Fail()) {
+                    m_error = wideLocaleKey.Error();
+                    return false;
+                }
                 if (!NeoWPF::UI::Localization::LocaleOperations::SetLocale(
                         object,
                         *property,
-                        NeoWPF::Platform::Utf8ToWide(localeKey))) {
+                        std::move(wideLocaleKey).Value())) {
                     m_error = "compiled Locale could not be attached: " + localeKey;
                     return false;
                 }
@@ -283,10 +299,15 @@ private:
             m_error = "NAML locale property is not registered: " + propertyName;
             return false;
         }
+        auto wideKey = NeoWPF::Platform::Utf8ToWide(record.key);
+        if (wideKey.Fail()) {
+            m_error = wideKey.Error();
+            return false;
+        }
         if (!NeoWPF::UI::Localization::LocaleOperations::SetLocale(
                 object,
                 *property,
-                NeoWPF::Platform::Utf8ToWide(record.key))) {
+                std::move(wideKey).Value())) {
             m_error = "NAML Locale could not be attached: " + propertyName;
             return false;
         }
@@ -308,13 +329,24 @@ private:
                 return false;
             }
             for (const auto& stringRecord : m_artifact.localeStrings) {
-                if (stringRecord.tableId != tableRecord.id ||
-                    !table.Add(NeoWPF::Platform::Utf8ToWide(stringRecord.key),
-                               NeoWPF::Platform::Utf8ToWide(stringRecord.value))) {
-                    if (stringRecord.tableId == tableRecord.id) {
-                        m_error = "NAML locale table contains an invalid or duplicate string";
-                        return false;
-                    }
+                if (stringRecord.tableId != tableRecord.id) {
+                    continue;
+                }
+                auto wideKey = NeoWPF::Platform::Utf8ToWide(stringRecord.key);
+                if (wideKey.Fail()) {
+                    m_error = wideKey.Error();
+                    return false;
+                }
+                auto wideValue = NeoWPF::Platform::Utf8ToWide(stringRecord.value);
+                if (wideValue.Fail()) {
+                    m_error = wideValue.Error();
+                    return false;
+                }
+                if (!table.Add(
+                        std::move(wideKey).Value(),
+                        std::move(wideValue).Value())) {
+                    m_error = "NAML locale table contains an invalid or duplicate string";
+                    return false;
                 }
             }
             if (application) {

@@ -322,7 +322,9 @@ void XWindowing::RequestQuit(int exitCode) noexcept
 
 void XWindowing::ShowFatalError(const std::wstring&, const std::wstring& message) noexcept
 {
-    NeoWPF::Diagnostics::Catastrophic("%s", NeoWPF::Platform::WideToUtf8(message).c_str());
+    const auto converted = NeoWPF::Platform::WideToUtf8(message);
+    NeoWPF::Diagnostics::Catastrophic(
+        "%s", converted.Success() ? converted.Value().c_str() : converted.Error().c_str());
 }
 
 void XWindowing::SetConsoleVisible(bool visible) noexcept

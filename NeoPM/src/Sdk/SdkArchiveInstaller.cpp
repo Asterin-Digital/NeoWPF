@@ -26,6 +26,47 @@ bool CopyLibrary(
     return !error;
 }
 
+bool CopyEntryObject(
+    const SdkRelease& release,
+    const std::filesystem::path& archiveRoot,
+    const std::filesystem::path& sdkRoot)
+{
+    if (release.entryObjectPath.empty()) {
+        return release.platform == "Android";
+    }
+    if (!SdkManifestParser::IsSafeRelativePath(release.entryObjectPath)) {
+        return false;
+    }
+
+    const auto source = archiveRoot / release.entryObjectPath;
+    if (!std::filesystem::is_regular_file(source)) {
+        return false;
+    }
+
+    std::error_code error;
+    const auto destinationDirectory = sdkRoot / "Entry";
+    std::filesystem::create_directories(destinationDirectory, error);
+    if (error) {
+        return false;
+    }
+    const auto destination = destinationDirectory / source.filename();
+    std::filesystem::copy_file(
+        source,
+        destination,
+        std::filesystem::copy_options::overwrite_existing,
+        error);
+    if (error) {
+        return false;
+    }
+
+    std::ofstream entryObjectFile(sdkRoot / ".entry_object", std::ios::out | std::ios::trunc);
+    if (!entryObjectFile) {
+        return false;
+    }
+    entryObjectFile << (std::filesystem::path("Entry") / source.filename()).generic_string() << '\n';
+    return static_cast<bool>(entryObjectFile);
+}
+
 }
 
 bool SdkArchiveInstaller::Install(
@@ -35,7 +76,8 @@ bool SdkArchiveInstaller::Install(
 {
     if (release.includePaths.empty() || !SdkManifestParser::IsSafeRelativePath(release.licensePath) ||
         !CopyLibrary(archiveRoot, sdkRoot, release.debugLibraryPath, "Debug") ||
-        !CopyLibrary(archiveRoot, sdkRoot, release.releaseLibraryPath, "Release")) {
+        !CopyLibrary(archiveRoot, sdkRoot, release.releaseLibraryPath, "Release") ||
+        !CopyEntryObject(release, archiveRoot, sdkRoot)) {
         return false;
     }
 

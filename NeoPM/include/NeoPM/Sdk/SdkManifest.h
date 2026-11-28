@@ -18,6 +18,7 @@ struct SdkRelease {
     std::string downloadUrl;
     std::string debugLibraryPath;
     std::string releaseLibraryPath;
+    std::string entryObjectPath;
     std::string licensePath;
     std::vector<std::string> includePaths;
 };

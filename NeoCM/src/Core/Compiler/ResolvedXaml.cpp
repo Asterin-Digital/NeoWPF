@@ -56,11 +56,13 @@ bool ResolveProperty(const XamlNode& node,
     result.value = value;
     result.isMarkupExtension = !value.empty() && value.front() == '{';
     if (result.isMarkupExtension) {
-        std::string extensionError;
-        const auto extension = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
-            value,
-            {node.Line, node.Column},
-            extensionError);
+        auto extensionResult = NeoWPF::UI::Markup::Xaml::ParseXamlMarkupExtension(
+            value, {node.Line, node.Column});
+        if (extensionResult.Fail()) {
+            error = extensionResult.Error() + Location(node);
+            return false;
+        }
+        auto extension = std::move(extensionResult).Value();
         NeoWPF::UI::Markup::Xaml::XamlBindingInfo binding;
         if (!extension) {
             error = "XAML property '" + name + "' has an unsupported markup extension" + Location(node);
@@ -78,7 +80,14 @@ bool ResolveProperty(const XamlNode& node,
             return true;
         }
 
-        if (NeoWPF::UI::Markup::Xaml::TryGetXamlLocaleKey(*extension, result.localeKey)) {
+        const auto localeKeyResult =
+            NeoWPF::UI::Markup::Xaml::TryGetXamlLocaleKey(*extension, result.localeKey);
+        if (localeKeyResult.Fail()) {
+            error = "XAML locale key conversion failed: " +
+                localeKeyResult.Error() + Location(node);
+            return false;
+        }
+        if (localeKeyResult.Value()) {
             return true;
         }
 

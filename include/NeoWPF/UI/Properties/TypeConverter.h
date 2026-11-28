@@ -3,11 +3,19 @@ Apache 2.0 License — Copyright (c) 2026 Asterin Digital
 See LICENSE file in the project root for full license text.
 */
 
+/*
+Do not include this in your project!
+This is a NeoWPF internal header file.
+Include the master umbrella instead via #include <NeoWPF/NeoWPF.h>
+*/
+
 #pragma once
 
 #include <any>
 #include <string>
 #include <typeinfo>
+
+#include <NeoWPF/Feedback/Result.h>
 
 namespace NeoWPF::UI::Properties {
 
@@ -20,7 +28,7 @@ public:
     virtual bool ConvertFromString(const std::string& rawValue, std::any& convertedValue) const = 0;
     virtual bool TryConvertToCode(const std::string& rawValue, std::string& expression) const;
 
-    virtual std::string ConvertToString(const std::any& value) const;
+    virtual NeoWPF::Result<std::string> ConvertToString(const std::any& value) const;
 };
 
 }

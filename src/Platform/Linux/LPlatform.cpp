@@ -2,6 +2,7 @@
 
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Core/Application/Resources/Embedded/FallbackFont.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 
@@ -13,7 +14,11 @@
 #include <cstdlib>
 #include <cwctype>
 #include <mutex>
+#include <cerrno>
+#include <cstring>
+#include <limits>
 #include <unistd.h>
+#include <vector>
 
 namespace NeoWPF::Platform::Linux {
 
@@ -85,8 +90,14 @@ bool LoadEmbeddedFallbackFont()
             continue;
         }
 
-        const auto familyName = NeoWPF::Platform::Utf8ToWide(record.name ? record.name : "Noto Sans");
-        if (NeoWPF::Rendering::Text::RegisterFontMemory(record.data, record.size, familyName)) {
+        auto familyName = NeoWPF::Platform::Utf8ToWide(record.name ? record.name : "Noto Sans");
+        if (familyName.Fail()) {
+            NeoWPF::Diagnostics::LogWarn(
+                "Embedded fallback font name conversion failed: %s", familyName.Error().c_str());
+            continue;
+        }
+        if (NeoWPF::Rendering::Text::RegisterFontMemory(
+                record.data, record.size, familyName.Value())) {
             return true;
         }
     }
@@ -107,8 +118,16 @@ bool LoadSystemFontFamily(const std::wstring& requestedFamily)
         return false;
     }
 
-    const auto familyUtf8 = NeoWPF::Platform::WideToUtf8(requestedFamily);
-    FcPatternAddString(pattern, FC_FAMILY, reinterpret_cast<const FcChar8*>(familyUtf8.c_str()));
+    auto familyUtf8 = NeoWPF::Platform::WideToUtf8(requestedFamily);
+    if (familyUtf8.Fail()) {
+        NeoWPF::Diagnostics::LogWarn(
+            "Font family conversion failed: %s", familyUtf8.Error().c_str());
+        FcPatternDestroy(pattern);
+        FcConfigDestroy(config);
+        return false;
+    }
+    FcPatternAddString(
+        pattern, FC_FAMILY, reinterpret_cast<const FcChar8*>(familyUtf8.Value().c_str()));
     FcConfigSubstitute(config, pattern, FcMatchPattern);
     FcDefaultSubstitute(pattern);
 
@@ -118,8 +137,14 @@ bool LoadSystemFontFamily(const std::wstring& requestedFamily)
     if (match && result == FcResultMatch) {
         FcChar8* file = nullptr;
         if (FcPatternGetString(match, FC_FILE, 0, &file) == FcResultMatch && file) {
-            loaded = NeoWPF::Rendering::Text::RegisterFontFile(
-                NeoWPF::Platform::Utf8ToWide(reinterpret_cast<const char*>(file)));
+            auto filePath = NeoWPF::Platform::Utf8ToWide(
+                reinterpret_cast<const char*>(file));
+            if (filePath.Fail()) {
+                NeoWPF::Diagnostics::LogWarn(
+                    "Font file path conversion failed: %s", filePath.Error().c_str());
+            } else {
+                loaded = NeoWPF::Rendering::Text::RegisterFontFile(filePath.Value());
+            }
         }
     }
     if (match) FcPatternDestroy(match);
@@ -129,6 +154,33 @@ bool LoadSystemFontFamily(const std::wstring& requestedFamily)
 
 }
 
+}
+
+NeoWPF::Result<std::filesystem::path> ResolveExecutableDirectory()
+{
+    std::vector<char> buffer(256);
+    for (;;) {
+        const ssize_t length = ::readlink("/proc/self/exe", buffer.data(), buffer.size());
+        if (length < 0) {
+            return NeoWPF::Fail<std::string>{
+                std::string{"Failed to resolve /proc/self/exe: "} + std::strerror(errno)};
+        }
+        if (static_cast<std::size_t>(length) < buffer.size()) {
+            const std::filesystem::path executablePath(
+                std::string(buffer.data(), static_cast<std::size_t>(length)));
+            const auto directory = executablePath.parent_path();
+            if (!executablePath.is_absolute() || directory.empty()) {
+                return NeoWPF::Fail<std::string>{
+                    "/proc/self/exe did not provide an absolute executable path."};
+            }
+            return NeoWPF::Success<std::filesystem::path>{directory};
+        }
+        if (buffer.size() > buffer.max_size() / 2) {
+            return NeoWPF::Fail<std::string>{
+                "The Linux executable path exceeds the supported buffer size."};
+        }
+        buffer.resize(buffer.size() * 2);
+    }
 }
 
 LPlatform::LPlatform()
@@ -175,7 +227,10 @@ NeoWPF::Result<std::vector<std::uint8_t>> LPlatform::LoadResourceData(const std:
 {
     return NeoWPF::Fail<std::string>{"Linux embedded resource loading is unavailable"};
 }
-std::filesystem::path LPlatform::GetExecutableDirectory() const { return std::filesystem::current_path(); }
+NeoWPF::Result<std::filesystem::path> LPlatform::GetExecutableDirectory() const
+{
+    return ResolveExecutableDirectory();
+}
 NeoWPF::Result<std::filesystem::path> LPlatform::GetAppDataDirectory() const
 {
     if (m_applicationDataDirectory.empty()) {
@@ -268,7 +323,15 @@ std::wstring LPlatform::ResolveFontFamily(const std::wstring& requestedFontFamil
                 continue;
             }
 
-            const auto resolved = NeoWPF::Rendering::Text::ResolveFontFamily(NeoWPF::Platform::Utf8ToWide(record.name));
+            auto familyName = NeoWPF::Platform::Utf8ToWide(record.name);
+            if (familyName.Fail()) {
+                NeoWPF::Diagnostics::LogWarn(
+                    "Embedded fallback font family conversion failed: %s",
+                    familyName.Error().c_str());
+                continue;
+            }
+            const auto resolved =
+                NeoWPF::Rendering::Text::ResolveFontFamily(familyName.Value());
             if (!resolved.empty()) {
                 return resolved;
             }

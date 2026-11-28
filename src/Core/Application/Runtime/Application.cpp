@@ -16,6 +16,7 @@
 #include <NeoWPFBuildInfo.h>
 
 #include <atomic>
+#include <exception>
 #include <mutex>
 
 namespace NeoWPF::Core {
@@ -23,6 +24,7 @@ namespace NeoWPF::Core {
 namespace {
 
 std::atomic<bool> s_initialized{false};
+std::atomic<bool> s_shutdown{false};
 
 }
 
@@ -40,6 +42,7 @@ void Application::AddLocale(std::shared_ptr<NeoWPF::UI::Localization::LocaleTabl
 
 void Application::Initialize()
 {
+    s_shutdown.store(false, std::memory_order_release);
     NEO_WPF_STARTUP_ACTION("Application.Initialize");
     NeoWPF::Core::Threading::ThreadAffinity::RegisterMainThread();
     NeoWPF::Diagnostics::Log(
@@ -193,8 +196,20 @@ DeviceCategory Application::GetDeviceCategory() const noexcept
 
 void Application::Shutdown()
 {
+    if (s_shutdown.exchange(true, std::memory_order_acq_rel)) {
+        return;
+    }
+
     if (s_initialized.load(std::memory_order_acquire) && s_current) {
-        s_current->OnApplicationQuit();
+        try {
+            s_current->OnApplicationQuit();
+        } catch (const std::exception& exception) {
+            NeoWPF::Diagnostics::Catastrophic(
+                "Application::OnApplicationQuit threw an exception: %s", exception.what());
+        } catch (...) {
+            NeoWPF::Diagnostics::Catastrophic(
+                "Application::OnApplicationQuit threw an unknown exception");
+        }
     }
 
     auto& appState = GetAppState();
@@ -212,6 +227,7 @@ void Application::Shutdown()
     NeoWPF::Core::ApplicationResources::Resources::Shutdown();
     NeoWPF::Diagnostics::PerformanceMetrics::Shutdown();
     ShutdownApp();
+    s_current.reset();
 }
 
 void Application::InitializeOnLoad()

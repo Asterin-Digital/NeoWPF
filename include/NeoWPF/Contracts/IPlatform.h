@@ -3,6 +3,12 @@ Apache 2.0 License — Copyright (c) 2026 Asterin Digital
 See LICENSE file in the project root for full license text.
 */
 
+/*
+Do not include this in your project!
+This is a NeoWPF internal header file.
+Include the master umbrella instead via #include <NeoWPF/NeoWPF.h>
+*/
+
 #pragma once
 
 #include <cstddef>
@@ -100,8 +106,13 @@ public:
     /*
         @summary
         Returns the directory containing the application executable.
+
+        @returns
+        The executable directory, or the failure reason when it cannot be resolved.
+
+        @internal
     */
-    virtual std::filesystem::path GetExecutableDirectory() const = 0;
+    virtual NeoWPF::Result<std::filesystem::path> GetExecutableDirectory() const = 0;
 
     /*
         @summary

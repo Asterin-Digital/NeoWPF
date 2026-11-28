@@ -1,5 +1,6 @@
 #include <NeoWPF/Platform/Linux/X11/XClipboard.h>
 
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Platform/PlatformUtils.h>
 
 #include <X11/Xatom.h>
@@ -101,13 +102,18 @@ void XClipboard::ProcessSelectionRequest(const XEvent& event) noexcept
 
     if (XGetSelectionOwner(display, m_clipboard) == m_owner &&
         (request.target == m_utf8 || request.target == XA_STRING)) {
-        const std::string text = NeoWPF::Platform::WideToUtf8(m_ownedText);
-        XChangeProperty(display, request.requestor, request.property,
-            request.target == m_utf8 ? m_utf8 : XA_STRING,
-            8,
-            PropModeReplace,
-            reinterpret_cast<const unsigned char*>(text.data()),
-            static_cast<int>(text.size()));
+        auto text = NeoWPF::Platform::WideToUtf8(m_ownedText);
+        if (text.Fail()) {
+            NeoWPF::Diagnostics::LogWarn(
+                "X11 clipboard text conversion failed: %s", text.Error().c_str());
+        } else {
+            XChangeProperty(display, request.requestor, request.property,
+                request.target == m_utf8 ? m_utf8 : XA_STRING,
+                8,
+                PropModeReplace,
+                reinterpret_cast<const unsigned char*>(text.Value().data()),
+                static_cast<int>(text.Value().size()));
+        }
     } else if (request.target == m_targets) {
         const Atom targets[] = {m_targets, m_utf8, XA_STRING};
         XChangeProperty(display, request.requestor, request.property, XA_ATOM,
@@ -152,8 +158,13 @@ void XClipboard::ProcessSelectionNotify(const XEvent& event) noexcept
             &data) == 0 && data) {
         if (itemCount > 0) {
             std::string text(reinterpret_cast<const char*>(data), itemCount);
-            m_pendingCallback(NeoWPF::Success<std::optional<std::wstring>>{
-                NeoWPF::Platform::Utf8ToWide(text)});
+            auto wideText = NeoWPF::Platform::Utf8ToWide(text);
+            if (wideText.Fail()) {
+                m_pendingCallback(NeoWPF::Fail<std::string>{wideText.Error()});
+            } else {
+                m_pendingCallback(NeoWPF::Success<std::optional<std::wstring>>{
+                    std::move(wideText).Value()});
+            }
         } else {
             m_pendingCallback(NeoWPF::Success<std::optional<std::wstring>>{std::nullopt});
         }

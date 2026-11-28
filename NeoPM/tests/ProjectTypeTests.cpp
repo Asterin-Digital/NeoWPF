@@ -88,12 +88,14 @@ TEST(ProjectTypeTests, MapsPlatformPresetsToTheirPinnedSdkInstallations) {
             "1.4.0",
             {windowsRoot / "include", windowsRoot / "third_party" / "include"},
             windowsRoot / "Debug" / "NeoWPF.Windows.Debug.lib",
-            windowsRoot / "Release" / "NeoWPF.Windows.Release.lib"}},
+            windowsRoot / "Release" / "NeoWPF.Windows.Release.lib",
+            windowsRoot / "Entry" / "NeoWPF.Windows.Entry.obj"}},
         {"Linux", {
             "1.3.2",
             {linuxRoot / "include", linuxRoot / "third_party" / "include"},
             linuxRoot / "Debug" / "libNeoWPF.Linux.Debug.a",
-            linuxRoot / "Release" / "libNeoWPF.Linux.Release.a"}}};
+            linuxRoot / "Release" / "libNeoWPF.Linux.Release.a",
+            linuxRoot / "Entry" / "NeoWPF.Linux.Entry.o"}}};
     auto context = MakeContext(directory.Path());
     context.defaultConfiguration = "release";
     context.sdkPlatforms = sdkPlatforms;
@@ -115,6 +117,8 @@ TEST(ProjectTypeTests, MapsPlatformPresetsToTheirPinnedSdkInstallations) {
     EXPECT_NE(cmakeContent.find("Linux-x64/1.3.2/third_party/include"), std::string::npos);
     EXPECT_NE(cmakeContent.find("Windows-x64/1.4.0/Debug/NeoWPF.Windows.Debug.lib"), std::string::npos);
     EXPECT_NE(cmakeContent.find("Linux-x64/1.3.2/Release/libNeoWPF.Linux.Release.a"), std::string::npos);
+    EXPECT_NE(cmakeContent.find("target_sources(SampleApp PRIVATE \"${NEOWPF_ENTRY_OBJECT}\")"), std::string::npos);
+    EXPECT_NE(cmakeContent.find("NEOWPF_ENTRY_OBJECT"), std::string::npos);
     const auto findPreset = [&presets](const std::string& name) {
         return std::find_if(presets["configurePresets"].begin(), presets["configurePresets"].end(),
             [&name](const auto& preset) { return preset["name"] == name; });
@@ -133,5 +137,9 @@ TEST(ProjectTypeTests, MapsPlatformPresetsToTheirPinnedSdkInstallations) {
         (linuxRoot / "Debug" / "libNeoWPF.Linux.Debug.a").generic_string());
     EXPECT_EQ((*linuxPreset)["cacheVariables"]["NEOWPF_LIBRARY_RELEASE"],
         (linuxRoot / "Release" / "libNeoWPF.Linux.Release.a").generic_string());
+    EXPECT_EQ((*windowsPreset)["cacheVariables"]["NEOWPF_ENTRY_OBJECT"],
+        (windowsRoot / "Entry" / "NeoWPF.Windows.Entry.obj").generic_string());
+    EXPECT_EQ((*linuxPreset)["cacheVariables"]["NEOWPF_ENTRY_OBJECT"],
+        (linuxRoot / "Entry" / "NeoWPF.Linux.Entry.o").generic_string());
     EXPECT_EQ(cmakeContent.find("NEOWPF_ROOT"), std::string::npos);
 }

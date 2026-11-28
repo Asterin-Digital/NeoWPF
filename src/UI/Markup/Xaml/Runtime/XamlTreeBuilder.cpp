@@ -32,6 +32,7 @@
 #include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace NeoWPF::UI::Markup::Xaml {
@@ -43,6 +44,21 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
 
 namespace {
 
+void QueueUtf8DeveloperWarning(
+    const wchar_t* warningTitle,
+    const std::string& message,
+    NeoWPF::Diagnostics::DeveloperWarningSeverity severity)
+{
+    auto wideMessage = NeoWPF::Platform::Utf8ToWide(message);
+    if (wideMessage.Fail()) {
+        NeoWPF::Diagnostics::LogWarn(
+            "XAML warning text conversion failed: %s", wideMessage.Error().c_str());
+        return;
+    }
+    NeoWPF::Diagnostics::QueueDeveloperWarning(
+        warningTitle, std::move(wideMessage).Value(), severity);
+}
+
 void ApplyAttributes(const XamlNode& node,
                      NeoWPF::UI::Properties::DependencyObject& target,
                      const XamlBuildContext& context)
@@ -50,12 +66,11 @@ void ApplyAttributes(const XamlNode& node,
     for (const auto& [name, value] : node.Attributes) {
         const auto* property = target.FindDependencyProperty(name);
         if (!property) {
-            NeoWPF::Diagnostics::QueueDeveloperWarning(
+            QueueUtf8DeveloperWarning(
                 NeoWPF::Diagnostics::DeveloperWarnings::kXamlPropertyNotFoundCode,
-                L"Unknown attribute property '" + NeoWPF::Platform::Utf8ToWide(name) + L"' on XAML object at " +
-                    NeoWPF::Platform::Utf8ToWide(std::to_string(node.Line)) + L":" +
-                    NeoWPF::Platform::Utf8ToWide(std::to_string(node.Column)) +
-                    L" (value='" + NeoWPF::Platform::Utf8ToWide(value) + L"')",
+                "Unknown attribute property '" + name + "' on XAML object at " +
+                    std::to_string(node.Line) + ":" + std::to_string(node.Column) +
+                    " (value='" + value + "')",
                 NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
             continue;
         }
@@ -74,20 +89,17 @@ void ApplyAttributes(const XamlNode& node,
                 CreateXamlResourceResolver(target, context)};
             const auto extensionResult = ParseXamlMarkupExtension(trimmedValue, extensionContext);
             if (extensionResult.Fail()) {
-                NeoWPF::Diagnostics::QueueDeveloperWarning(
+                QueueUtf8DeveloperWarning(
                     NeoWPF::Diagnostics::DeveloperWarnings::kXamlMarkupExtensionCode,
-                    NeoWPF::Platform::Utf8ToWide(
-                        extensionResult.Error()) +
-                        L" on property '" + NeoWPF::Platform::Utf8ToWide(name) + L"'",
+                    extensionResult.Error() + " on property '" + name + "'",
                     NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
                 continue;
             }
             const auto applyResult = extensionResult.Value()->Apply(target, *property);
             if (applyResult.Fail()) {
-                NeoWPF::Diagnostics::QueueDeveloperWarning(
+                QueueUtf8DeveloperWarning(
                     NeoWPF::Diagnostics::DeveloperWarnings::kXamlMarkupExtensionCode,
-                    NeoWPF::Platform::Utf8ToWide(applyResult.Error()) +
-                        L" on property '" + NeoWPF::Platform::Utf8ToWide(name) + L"'",
+                    applyResult.Error() + " on property '" + name + "'",
                     NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
             }
             continue;
@@ -115,7 +127,13 @@ void ApplyTextContent(const XamlNode& node, NeoWPF::UI::Properties::DependencyOb
 
     const auto* textProperty = target.FindDependencyProperty("Text");
     if (textProperty && textProperty->GetPropertyType() == typeid(std::wstring)) {
-        target.SetValue(*textProperty, NeoWPF::Platform::Utf8ToWide(node.TextContent));
+        auto textContent = NeoWPF::Platform::Utf8ToWide(node.TextContent);
+        if (textContent.Fail()) {
+            NeoWPF::Diagnostics::LogWarn(
+                "XAML text content conversion failed: %s", textContent.Error().c_str());
+            return;
+        }
+        target.SetValue(*textProperty, std::move(textContent).Value());
     }
 }
 
@@ -139,9 +157,9 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
 
     const auto* typeInfo = XamlTypeRegistry::Get().Find(node.Name);
     if (!typeInfo) {
-        NeoWPF::Diagnostics::QueueDeveloperWarning(
+        QueueUtf8DeveloperWarning(
             NeoWPF::Diagnostics::DeveloperWarnings::kXamlTypeNotFoundCode,
-            L"Unknown XAML type: " + NeoWPF::Platform::Utf8ToWide(node.Name),
+            "Unknown XAML type: " + node.Name,
             NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
         return nullptr;
     }
@@ -153,9 +171,9 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
     }
 
     if (namescope && !node.XamlName.empty() && !namescope->Register(node.XamlName, obj)) {
-        NeoWPF::Diagnostics::QueueDeveloperWarning(
+        QueueUtf8DeveloperWarning(
             NeoWPF::Diagnostics::DeveloperWarnings::kXamlNameScopeCode,
-            L"Duplicate or invalid XAML name: " + NeoWPF::Platform::Utf8ToWide(node.XamlName),
+            "Duplicate or invalid XAML name: " + node.XamlName,
             NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
     }
 
@@ -200,18 +218,18 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
 
             const auto* prop = obj->FindDependencyProperty(propName);
             if (!prop) {
-                NeoWPF::Diagnostics::QueueDeveloperWarning(
+                QueueUtf8DeveloperWarning(
                     NeoWPF::Diagnostics::DeveloperWarnings::kXamlPropertyNotFoundCode,
-                    L"Unknown property: " + NeoWPF::Platform::Utf8ToWide(propName),
+                    "Unknown property: " + propName,
                     NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
                 continue;
             }
 
             const auto* binding = prop->GetXamlBinding();
             if (!binding) {
-                NeoWPF::Diagnostics::QueueDeveloperWarning(
+                QueueUtf8DeveloperWarning(
                     NeoWPF::Diagnostics::DeveloperWarnings::kXamlNoBindingCode,
-                    L"Property not registered for XAML: " + NeoWPF::Platform::Utf8ToWide(propName),
+                    "Property not registered for XAML: " + propName,
                     NeoWPF::Diagnostics::DeveloperWarningSeverity::Error);
                 continue;
             }
@@ -243,10 +261,9 @@ std::shared_ptr<NeoWPF::UI::Properties::DependencyObject> BuildXamlObjectInterna
                         binding->Assign(*obj, child);
                     }
                 } else if (childNode.Children.empty()) {
-                    NeoWPF::Diagnostics::QueueDeveloperWarning(
+                    QueueUtf8DeveloperWarning(
                         NeoWPF::Diagnostics::DeveloperWarnings::kXamlElementEmptyCode,
-                        L"Element property must have exactly one child: " +
-                            NeoWPF::Platform::Utf8ToWide(propName),
+                        "Element property must have exactly one child: " + propName,
                         NeoWPF::Diagnostics::DeveloperWarningSeverity::Warning);
                 }
             }

@@ -3,6 +3,7 @@
 #include <NeoWPF/Core/Application/ApplicationInternal.h>
 #include <NeoWPF/Core/Application/Resources/Embedded/FallbackFont.h>
 #include <NeoWPF/Diagnostics/CallStackTracer.h>
+#include <NeoWPF/Diagnostics/Logger.h>
 #include <NeoWPF/Rendering/TextRenderer.h>
 #include <windows.h>
 #include <shlobj.h>
@@ -13,7 +14,7 @@
 namespace NeoWPF::Platform {
 
 NeoWPF::Result<std::vector<std::uint8_t>> LoadResourceData(const std::wstring& resourcePath);
-std::filesystem::path GetExecutableDirectory();
+NeoWPF::Result<std::filesystem::path> GetExecutableDirectory();
 bool DecodeImageFromMemory(const std::vector<std::uint8_t>& data, std::vector<std::uint8_t>& outPixels,
                            int& outWidth, int& outHeight, int decodeWidth, int decodeHeight);
 bool DecodeImageFile(const std::wstring& filePath, std::vector<std::uint8_t>& outPixels,
@@ -77,8 +78,14 @@ bool LoadEmbeddedFallbackFont()
             continue;
         }
 
-        const auto familyName = NeoWPF::Platform::Utf8ToWide(record.name ? record.name : "Noto Sans");
-        if (NeoWPF::Rendering::Text::RegisterFontMemory(record.data, record.size, familyName)) {
+        auto familyName = NeoWPF::Platform::Utf8ToWide(record.name ? record.name : "Noto Sans");
+        if (familyName.Fail()) {
+            NeoWPF::Diagnostics::LogWarn(
+                "Embedded fallback font name conversion failed: %s", familyName.Error().c_str());
+            continue;
+        }
+        if (NeoWPF::Rendering::Text::RegisterFontMemory(
+                record.data, record.size, familyName.Value())) {
             return true;
         }
     }
@@ -200,7 +207,7 @@ NeoWPF::Result<std::vector<std::uint8_t>> WPlatform::LoadResourceData(const std:
     return NeoWPF::Platform::LoadResourceData(resourcePath);
 }
 
-std::filesystem::path WPlatform::GetExecutableDirectory() const
+NeoWPF::Result<std::filesystem::path> WPlatform::GetExecutableDirectory() const
 {
     return NeoWPF::Platform::GetExecutableDirectory();
 }
@@ -313,7 +320,15 @@ std::wstring WPlatform::ResolveFontFamily(const std::wstring& requestedFontFamil
             if (!TryGetEmbeddedFallbackFont(index, record) || !record.name || !record.data || record.size == 0) {
                 continue;
             }
-            const auto resolved = NeoWPF::Rendering::Text::ResolveFontFamily(NeoWPF::Platform::Utf8ToWide(record.name));
+            auto familyName = NeoWPF::Platform::Utf8ToWide(record.name);
+            if (familyName.Fail()) {
+                NeoWPF::Diagnostics::LogWarn(
+                    "Embedded fallback font family conversion failed: %s",
+                    familyName.Error().c_str());
+                continue;
+            }
+            const auto resolved =
+                NeoWPF::Rendering::Text::ResolveFontFamily(familyName.Value());
             if (!resolved.empty()) {
                 return resolved;
             }

@@ -65,7 +65,9 @@ public:
     void RequestQuit(int) noexcept override {}
     void ShowFatalError(const std::wstring&, const std::wstring& message) noexcept override
     {
-        NeoWPF::Diagnostics::Catastrophic("%s", NeoWPF::Platform::WideToUtf8(message).c_str());
+        const auto converted = NeoWPF::Platform::WideToUtf8(message);
+        NeoWPF::Diagnostics::Catastrophic(
+            "%s", converted.Success() ? converted.Value().c_str() : converted.Error().c_str());
     }
     void SetConsoleVisible(bool) noexcept override {}
     bool IsConsoleVisible() const noexcept override { return false; }
